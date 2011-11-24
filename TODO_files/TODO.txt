@@ -1,0 +1,78 @@
+Project GLIP-LIB (OpenGL Image Processing Library)
+Current Version : 0.6
+[X.X] represent the target version
+
+[0.6]  Open FBO to multiple rendering target offered in OpenGL 3.0 (backward compatibility with OpenGL 2.1?).
+	       - using http://bakura.developpez.com/tutoriels/jeux/utilisation-shaders-avec-opengl-3-x/
+	   Status : DONE
+
+[0.6]  Update output mode for HdlFilter according to FBO improvements.
+	   Status : DONE
+
+[0.6]  Make a compatibility testing functions based on Extensions string.
+	   Status : DONE
+
+[0.6]  Documentation on the library concept.
+	   Status : DONE
+
+[0.7]  End the Doxygen Temporary Documentation
+	   Status : TODO
+
+[0.7]  Change the way FBO target is hold (std algorithm?).
+	   Status : TODO
+
+[0.7]  Remove all the const char* to std::string.
+	   Status : DONE
+
+[0.7]  Histogram like algorithm support.
+       Status : DONE
+
+[0.7]  Problem with texture parameters support.
+       Status : DONE
+
+[0.7]  Mixed multi-target and history mode for filters.
+       Status : CANCELED
+
+[0.7]  Change any error to the new Exception Class
+       Status : TODO
+
+[0.7]  Build the new architecture with Workspaces
+       Status : CANCELED
+
+[0.7]  Swap Modules Camera to locked system
+       Status : TODO
+
+[0.7]  Improve camera by giving the object a generic shape.
+       Status : TODO
+
+[0.7]  Remove MultiTexturing Class
+       Status : TODO
+
+[0.8]  Compilation as a Windows Static Library (MINGW -> libglip.a)
+       Status : TODO
+
+[0.8]  Debugging improvement for shaders : more informations, position of errors...
+	   Status : DONE
+
+[0.8]  Change the std::cout error management to a real Exception with catch and rethrow
+       Status : TODO
+
+[0.8]  Item naming : pipelines, sockets, etc. for debugging.
+	   Status : DONE
+
+[0.8]  Namespace addition.
+       Status : DONE
+
+[0.8]  Rights and lock management for sockets.
+       Status : CANCELED
+
+[0.9]  Develop the same module for Windows (and OSX?).
+	   Status : TODO
+
+[0.9]  Branch for Windows tests.
+       Status : TODO
+
+[1.0]  Pipeline Programming Language : PPL and XML parser.
+       Status : TODO
+
+

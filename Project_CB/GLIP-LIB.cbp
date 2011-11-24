@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="GLIP-LIB" />
+		<Option makefile_is_custom="1" />
+		<Option execution_dir="../GLIP-Lib" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<MakeCommands>
+			<Build command="$make -f $makefile" />
+			<CompileFile command="$make -f $makefile $file" />
+			<Clean command="$make -f $makefile clean" />
+			<DistClean command="$make -f $makefile distclean$target" />
+			<AskRebuildNeeded command="$make -q -f $makefile" />
+			<SilentBuild command="$make -s -f $makefile" />
+		</MakeCommands>
+		<Build>
+			<Target title="Debug">
+				<Option output="../GLIP-Lib/lib/libglip.a" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile" />
+					<SilentBuild command="$make -s -f $makefile" />
+				</MakeCommands>
+			</Target>
+			<Target title="Release">
+				<Option output="../GLIP-Lib/lib/libglip.a" prefix_auto="0" extension_auto="0" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile " />
+					<SilentBuild command="$make -s -f $makefile" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<ExtraCommands>
+			<Add before='cmake . -G&quot;Unix Makefiles&quot;' />
+			<Mode after="always" />
+		</ExtraCommands>
+		<Unit filename="../GLIP-Lib/include/GLIPLib.hpp" />
+		<Unit filename="../GLIP-Lib/src/Component.cpp" />
+		<Unit filename="../GLIP-Lib/src/Component.hpp" />
+		<Unit filename="../GLIP-Lib/src/DEPRECATED_Workspace.cpp" />
+		<Unit filename="../GLIP-Lib/src/DEPRECATED_Workspace.hpp" />
+		<Unit filename="../GLIP-Lib/src/Devices.cpp" />
+		<Unit filename="../GLIP-Lib/src/Devices.hpp" />
+		<Unit filename="../GLIP-Lib/src/Exception.cpp" />
+		<Unit filename="../GLIP-Lib/src/Exception.hpp" />
+		<Unit filename="../GLIP-Lib/src/Filter.cpp" />
+		<Unit filename="../GLIP-Lib/src/Filter.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlFBO.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlFBO.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlFilter.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlFilter.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlGeBO.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlGeBO.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlInfo.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlInfo.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlModificator.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlModificator.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlPBO.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlPBO.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlShader.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlShader.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlTexture.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlTexture.hpp" />
+		<Unit filename="../GLIP-Lib/src/HdlVBO.cpp" />
+		<Unit filename="../GLIP-Lib/src/HdlVBO.hpp" />
+		<Unit filename="../GLIP-Lib/src/IOModules.cpp" />
+		<Unit filename="../GLIP-Lib/src/IOModules.hpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/Cameras/Cameras_Unicap2.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/Cameras/Cameras_Unicap2.hpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/Cameras/Cameras_Unicap2_Tools.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/HdlCamera.hpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/Modules.hpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.hpp" />
+		<Unit filename="../GLIP-Lib/src/NamingLayout.cpp" />
+		<Unit filename="../GLIP-Lib/src/NamingLayout.hpp" />
+		<Unit filename="../GLIP-Lib/src/OglInclude.hpp" />
+		<Unit filename="../GLIP-Lib/src/OglTools.cpp" />
+		<Unit filename="../GLIP-Lib/src/Pipeline.cpp" />
+		<Unit filename="../GLIP-Lib/src/Pipeline.hpp" />
+		<Unit filename="../GLIP-Lib/src/ShaderSource.cpp" />
+		<Unit filename="../GLIP-Lib/src/ShaderSource.hpp" />
+		<Unit filename="../GLIP-Lib/src/StreamManager.cpp" />
+		<Unit filename="../GLIP-Lib/src/StreamManager.hpp" />
+		<Unit filename="../GLIP-Lib/src/glew.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../GLIP-Lib/src/glew.h" />
+		<Unit filename="../GLIP-Lib/src/glxew.h" />
+		<Unit filename="../GLIP-Lib/src/wglew.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
