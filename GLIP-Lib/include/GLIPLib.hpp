@@ -34,30 +34,30 @@
 			#include <string>
 
 		// GL include
-			#include "OglInclude.hpp"
+			#include "Core/OglInclude.hpp"
 
 		// Objects :
 			// Tools
-			#include "Exception.hpp"
+			#include "Core/Exception.hpp"
 
 			// GL wrappers
-			#include "ShaderSource.hpp"
-			#include "HdlTexture.hpp"
-			#include "HdlFBO.hpp"
-			#include "HdlGeBO.hpp"
-			#include "HdlPBO.hpp"
-			#include "HdlShader.hpp"
-			#include "HdlVBO.hpp"
+			#include "Core/ShaderSource.hpp"
+			#include "Core/HdlTexture.hpp"
+			#include "Core/HdlFBO.hpp"
+			#include "Core/HdlGeBO.hpp"
+			#include "Core/HdlPBO.hpp"
+			#include "Core/HdlShader.hpp"
+			#include "Core/HdlVBO.hpp"
 
 			// Pipeline Tools
-			#include "Filter.hpp"
-			#include "Pipeline.hpp"
-			#include "HdlInfo.hpp"
+			#include "Core/Filter.hpp"
+			#include "Core/Pipeline.hpp"
+			#include "Core/HdlInfo.hpp"
 
 			// Modules
 			//#define GLIP_LOAD_ALL_MODULES
 			#define GLIP_DONT_LOAD_ANY_MODULE
-			#include "Modules.hpp"
+			#include "Modules/Modules.hpp"
 	#endif
 
 #endif

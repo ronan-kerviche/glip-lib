@@ -49,8 +49,6 @@
 			<Add before="qmake" />
 			<Mode after="always" />
 		</ExtraCommands>
-		<Unit filename="../../../../../../../../../../home/arkh/Downloads/TestCpp" />
-		<Unit filename="../Examples/Test_Layouts/Test_Layouts.pro" />
 		<Unit filename="../Examples/Test_Layouts/src/main.cpp" />
 		<Extensions>
 			<code_completion />

@@ -62,12 +62,12 @@
         return *fragmentSource;
     }
 
-    bool __ReadOnly_FilterLayout::isBlendingEnable(void) { return blending;  }
-    void __ReadOnly_FilterLayout::enableBlending(void)   { blending = true;  }
-    void __ReadOnly_FilterLayout::disableBlending(void)  { blending = false; }
-    bool __ReadOnly_FilterLayout::isClearingEnable(void) { return clearing;  }
-    void __ReadOnly_FilterLayout::enableClearing(void)   { clearing = true;  }
-    void __ReadOnly_FilterLayout::disableClearing(void)  { clearing = false;  }
+    bool __ReadOnly_FilterLayout::isBlendingEnabled(void) 	{ return blending;  }
+    void __ReadOnly_FilterLayout::enableBlending(void)   	{ blending = true;  }
+    void __ReadOnly_FilterLayout::disableBlending(void)  	{ blending = false; }
+    bool __ReadOnly_FilterLayout::isClearingEnabled(void) 	{ return clearing;  }
+    void __ReadOnly_FilterLayout::enableClearing(void)   	{ clearing = true;  }
+    void __ReadOnly_FilterLayout::disableClearing(void)  	{ clearing = false;  }
 
 // FilterLayout
     FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
@@ -157,8 +157,8 @@
         for(int i=0; i<getNumInputPort(); i++)
             program->setFragmentLocation(getInputPortName(i), i);
 
-        /*if(getNumOutputPort()>1) // more than 1 target (non-classic)
-            throw Exception("Filter::Filter - INTERNAL ERROR, the multi-target rendering is not effective yet", __FILE__, __LINE__);*/
+        if(getNumOutputPort()>1) // more than 1 target (non-classic)
+            std::cerr << __HERE__ <<  "Filter::Filter - INTERNAL ERROR, the multi-target rendering is not effective yet" << std::endl;
     }
 
     Filter::~Filter(void)

@@ -78,24 +78,24 @@ namespace Glip
                         __ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c);
                         //~__ReadOnly_PipelineLayout(void);
 
-                        void checkElement(int i) const;
-                        int  getNumElements(void);
-                        int  getElementIndex(const std::string& name) const;
-                        ComponentKind getElementKind(int i) const;
-                        static ObjectName&                 componentName(int i, const void* obj);
-                        __ReadOnly_ComponentLayout& componentLayout(int i) const;
-                        __ReadOnly_ComponentLayout& componentLayout(const std::string& name) const;
+                        void 				checkElement(int i) const;
+                        int  				getNumElements(void);
+                        int  				getElementIndex(const std::string& name) const;
+                        ComponentKind 			getElementKind(int i) const;
+                        static ObjectName&      	componentName(int i, const void* obj);
+                        __ReadOnly_ComponentLayout& 	componentLayout(int i) const;
+                        __ReadOnly_ComponentLayout& 	componentLayout(const std::string& name) const;
 
-                        __ReadOnly_FilterLayout&   filterLayout(int i) const;
-                        __ReadOnly_FilterLayout&   filterLayout(const std::string& name) const;
-                        __ReadOnly_PipelineLayout& pipelineLayout(int i) const;
-                        __ReadOnly_PipelineLayout& pipelineLayout(const std::string& name) const;
+                        __ReadOnly_FilterLayout&   	filterLayout(int i) const;
+                        __ReadOnly_FilterLayout&   	filterLayout(const std::string& name) const;
+                        __ReadOnly_PipelineLayout& 	pipelineLayout(int i) const;
+                        __ReadOnly_PipelineLayout& 	pipelineLayout(const std::string& name) const;
 
-                        std::string getConnexionDestinationsName(int filterSource, int port);
-                        std::string getConnexionDestinationsName(const std::string& filterSource, const std::string& port);
-                        std::string getConnexionSourceName(int filterDestination, int port);
-                        std::string getConnexionSourceName(const std::string& filterDestination, const std::string& port);
-                        bool check(bool exception = true);
+                        std::string 			getConnexionDestinationsName(int filterSource, int port);
+                        std::string 			getConnexionDestinationsName(const std::string& filterSource, const std::string& port);
+                        std::string 			getConnexionSourceName(int filterDestination, int port);
+                        std::string 			getConnexionSourceName(const std::string& filterDestination, const std::string& port);
+                        bool 				check(bool exception = true);
             };
 
             class PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
@@ -104,17 +104,17 @@ namespace Glip
                     // Tools
                         PipelineLayout(const std::string& type);
                         PipelineLayout(__ReadOnly_PipelineLayout& c);
-                        int  add(const __ReadOnly_FilterLayout& filterLayout,     const std::string& name);
-                        int  add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name);
-                        int  addInput(const std::string& name);
-                        int  addOutput(const std::string& name);
+                        int  				add(const __ReadOnly_FilterLayout& filterLayout,     const std::string& name);
+                        int  				add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name);
+                        int  				addInput(const std::string& name);
+                        int  				addOutput(const std::string& name);
 
-                        void connect(int filterOut, int portOut, int filterIn, int portIn);
-                        void connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn);
-                        void connectToInput(int port, int filterIn, int portIn);
-                        void connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn);
-                        void connectToOutput(int filterOut, int portOut, int port);
-                        void connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port);
+                        void 				connect(int filterOut, int portOut, int filterIn, int portIn);
+                        void 				connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn);
+                        void 				connectToInput(int port, int filterIn, int portIn);
+                        void				connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn);
+                        void 				connectToOutput(int filterOut, int portOut, int port);
+                        void 				connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port);
             };
 
             class Pipeline : public __ReadOnly_PipelineLayout, public Component
@@ -124,10 +124,11 @@ namespace Glip
                         typedef std::vector<HdlTexture*> TablePtr;
                         typedef std::vector<Filter*>     TableFilter;
                         typedef std::vector<Connexion>   TableConnexion;
-                        TablePtr       input;
-                        TablePtr       output;
-                        TableFilter    filters;
-                        TableConnexion connexions;
+                        TablePtr       			input;
+                        TablePtr       			output;
+                        TableFilter    			filters;
+                        std::vector<int> 		actionFilter;
+                        std::vector<TableConnexion*> 	connexions;
                     // Tools
                         void cleanInput(void);
                         void build(void);

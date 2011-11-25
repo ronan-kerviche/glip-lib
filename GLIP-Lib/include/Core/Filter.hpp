@@ -2,7 +2,8 @@
 #define __GLIPLIB_FILTER__
 
     // Includes
-        #include "./Component.hpp"
+	#include "devDebugTools.hpp"
+        #include "Component.hpp"
         #include "HdlTexture.hpp"
 
 namespace Glip
@@ -43,10 +44,10 @@ namespace Glip
                         ShaderSource& getVertexSource(void) const;
                         ShaderSource& getFragmentSource(void) const;
 
-                        bool isBlendingEnable(void);
+                        bool isBlendingEnabled(void);
                         void enableBlending(void);
                         void disableBlending(void);
-                        bool isClearingEnable(void);
+                        bool isClearingEnabled(void);
                         void enableClearing(void);
                         void disableClearing(void);
             };

@@ -432,7 +432,6 @@
             std::list<__ReadOnly_PipelineLayout*> waitList;
             waitList.push_back(this);
 
-
             while(!waitList.empty())
             {
                 __ReadOnly_PipelineLayout* tmp = waitList.front();
@@ -443,7 +442,7 @@
                         case FILTER :
                             //std::cout << "    Adding a new component" << std::endl;
                             filters.push_back(new Filter(tmp->filterLayout(i)));
-                            tmp->setElementID(i, filters.size()-1);
+                            tmp->setElementID(i, filters.size()-1); //?
                             //std::cout << "    Adding : " << filters.back().getNameExtended() << std::endl;
                             //std::cout << "    ID     : " << filters.size()-1 << std::endl;
                             break;
@@ -460,10 +459,13 @@
             // 2nd Step
 
             // Build the links
+            // Push the links for the input of THIS pipeline into a waitList
+            // For all links in the waitList
+            //
 
-            // 3rd Step
+            // 3nd Step
 
-            // Analyze memory needs
+            //
         }
         catch(std::exception& e)
         {
