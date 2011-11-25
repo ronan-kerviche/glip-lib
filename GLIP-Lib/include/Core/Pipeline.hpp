@@ -49,7 +49,7 @@ namespace Glip
             {
                 public :
                     // Constants
-                        struct Connexion
+                        struct Connection
                         {
                             int idIn;
                             int portIn;
@@ -58,7 +58,7 @@ namespace Glip
                         };
                 private :
                     // Data
-                        std::vector<Connexion>     connexions;
+                        std::vector<Connection>    connections;
                         ComponentList              elementsLayout;
                         std::vector<ComponentKind> elementsKind;
                         std::vector<int>           elementsID;
@@ -67,10 +67,11 @@ namespace Glip
                 protected :
                     // Tools
                         __ReadOnly_PipelineLayout(const std::string& type);
-                        int                    getElementID(int i);
-                        void                   setElementID(int i, int ID);
-                        std::vector<Connexion> getConnexionDestinations(int id, int p);
-                        Connexion              getConnexionSource(int id, int p);
+                        int                    	getElementID(int i);
+                        void                   	setElementID(int i, int ID);
+                        Connection              getConnection(int i);
+                        std::vector<Connection> getConnectionDestinations(int id, int p);
+                        Connection              getConnectionSource(int id, int p);
                     // Friends
                         friend class Pipeline;
                 public :
@@ -80,6 +81,8 @@ namespace Glip
 
                         void 				checkElement(int i) const;
                         int  				getNumElements(void);
+                        int  				getNumConnections(void);
+                        void				getInfoElements(int& numFilters, int& numPipelines);
                         int  				getElementIndex(const std::string& name) const;
                         ComponentKind 			getElementKind(int i) const;
                         static ObjectName&      	componentName(int i, const void* obj);
@@ -91,10 +94,10 @@ namespace Glip
                         __ReadOnly_PipelineLayout& 	pipelineLayout(int i) const;
                         __ReadOnly_PipelineLayout& 	pipelineLayout(const std::string& name) const;
 
-                        std::string 			getConnexionDestinationsName(int filterSource, int port);
-                        std::string 			getConnexionDestinationsName(const std::string& filterSource, const std::string& port);
-                        std::string 			getConnexionSourceName(int filterDestination, int port);
-                        std::string 			getConnexionSourceName(const std::string& filterDestination, const std::string& port);
+                        std::string 			getConnectionDestinationsName(int filterSource, int port);
+                        std::string 			getConnectionDestinationsName(const std::string& filterSource, const std::string& port);
+                        std::string 			getConnectionSourceName(int filterDestination, int port);
+                        std::string 			getConnectionSourceName(const std::string& filterDestination, const std::string& port);
                         bool 				check(bool exception = true);
             };
 
@@ -121,14 +124,15 @@ namespace Glip
             {
                 private :
                     // Data
-                        typedef std::vector<HdlTexture*> TablePtr;
-                        typedef std::vector<Filter*>     TableFilter;
-                        typedef std::vector<Connexion>   TableConnexion;
-                        TablePtr       			input;
-                        TablePtr       			output;
-                        TableFilter    			filters;
-                        std::vector<int> 		actionFilter;
-                        std::vector<TableConnexion*> 	connexions;
+                        typedef std::vector<HdlTexture*> 	TablePtr;
+                        typedef std::vector<Filter*>     	TableFilter;
+                        typedef std::vector<Connection>   	TableConnection;
+                        TablePtr       				input;
+                        TablePtr       				output;
+                        TableFilter    				filters;
+                        std::vector<int> 			actionFilter;
+                        std::vector<TableConnection*> 		connexions;
+                        std::vector<HdlFBO*>			buffers;
                     // Tools
                         void cleanInput(void);
                         void build(void);
@@ -139,6 +143,7 @@ namespace Glip
                     // Tools
                         Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
                         //Pipeline(const std::string& filename); TODO
+                        //~Pipeline(void);
 
                         Pipeline&  operator<<(HdlTexture&);
                         Pipeline&  operator<<(ActionType);

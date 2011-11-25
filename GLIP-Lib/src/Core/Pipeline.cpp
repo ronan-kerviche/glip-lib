@@ -1,59 +1,99 @@
 #include "Pipeline.hpp"
 #include "Component.hpp"
 
-    using namespace Glip::CoreGL;
-    using namespace Glip::CorePipeline;
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
 
 // __ReadOnly_PipelineLayout
-    __ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const std::string& type) : __ReadOnly_ComponentLayout(type)
-    { }
+	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const std::string& type) : __ReadOnly_ComponentLayout(type)
+	{ }
 
-    __ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c) : __ReadOnly_ComponentLayout(c)
-    {
-        //std::cout << "Starting copy of pipeline layout for " << getNameExtended() << std::endl;
-        // Copy of the whole vector
-        elementsKind   = c.elementsKind;
-        elementsID     = c.elementsID;
+	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c) : __ReadOnly_ComponentLayout(c)
+	{
+		//std::cout << "Starting copy of pipeline layout for " << getNameExtended() << std::endl;
+		// Copy of the whole vector
+		elementsKind   = c.elementsKind;
+		elementsID     = c.elementsID;
 
-        for(int i=0; i<c.elementsLayout.size(); i++)
-        {
-            switch(elementsKind[i])
-            {
-                case FILTER:
-                    elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_FilterLayout(c.filterLayout(i))));
-                    break;
-                case PIPELINE:
-                    elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_PipelineLayout(c.pipelineLayout(i))));
-                    break;
-                default:
-                    throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy", __FILE__, __LINE__);
-            }
-        }
-        //std::cout << "end copy of pipeline layout for " << getNameExtended() << std::endl;
-    }
+		for(int i=0; i<c.elementsLayout.size(); i++)
+		{
+			switch(elementsKind[i])
+			{
+				case FILTER:
+					elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_FilterLayout(c.filterLayout(i))));
+					break;
+				case PIPELINE:
+					elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_PipelineLayout(c.pipelineLayout(i))));
+					break;
+				default:
+				throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy", __FILE__, __LINE__);
+			}
+		}
+		//std::cout << "end copy of pipeline layout for " << getNameExtended() << std::endl;
+	}
 
-    int __ReadOnly_PipelineLayout::getElementID(int i)
-    {
-        checkElement(i);
-        return elementsID[i];
-    }
+	int __ReadOnly_PipelineLayout::getElementID(int i)
+	{
+		checkElement(i);
+		return elementsID[i];
+	}
 
-    void __ReadOnly_PipelineLayout::setElementID(int i, int ID)
-    {
-        checkElement(i);
-        elementsID[i] = ID;
-    }
+	void __ReadOnly_PipelineLayout::setElementID(int i, int ID)
+	{
+		checkElement(i);
+		elementsID[i] = ID;
+	}
 
-    void __ReadOnly_PipelineLayout::checkElement(int i) const
-    {
-        if(i<0 || i>=elementsLayout.size())
-            throw Exception("FilterLayout - Bad input port ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
-    }
+	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i)
+	{
+		if(i<0 || i>=connections.size())
+			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
+		return connections[i];
+	}
 
-    int __ReadOnly_PipelineLayout::getNumElements(void)
-    {
-        return elementsLayout.size();
-    }
+	void __ReadOnly_PipelineLayout::checkElement(int i) const
+	{
+		if(i<0 || i>=elementsLayout.size())
+			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
+	}
+
+	int __ReadOnly_PipelineLayout::getNumElements(void)
+	{
+		return elementsLayout.size();
+	}
+
+	int __ReadOnly_PipelineLayout::getNumConnections(void)
+	{
+		return connections.size();
+	}
+
+	void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines)
+	{
+		int a, b;
+		__ReadOnly_PipelineLayout* tmp = NULL;
+		numFilters  	= 0;
+		numPipelines	= 0;
+
+		for(int i=0; i<elementsLayout.size(); i++)
+		{
+			switch(elementsKind[i])
+			{
+				case FILTER:
+					numFilters++;
+					break;
+				case PIPELINE:
+					tmp = reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
+					tmp->getInfoElements(a,b);
+					numFilters   += a;
+					numPipelines += b+1;
+					break;
+				default:
+					throw Exception("__ReadOnly_PipelineLayout::getInfoElements - Unknown type", __FILE__, __LINE__);
+			}
+		}
+
+		numPipelines++; // include this
+	}
 
     int __ReadOnly_PipelineLayout::getElementIndex(const std::string& name) const
     {
@@ -143,7 +183,7 @@
         return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
     }
 
-    std::vector<__ReadOnly_PipelineLayout::Connexion> __ReadOnly_PipelineLayout::getConnexionDestinations(int id, int p)
+    std::vector<__ReadOnly_PipelineLayout::Connection> __ReadOnly_PipelineLayout::getConnectionDestinations(int id, int p)
     {
         if(id!=THIS_PIPELINE)
         {
@@ -154,14 +194,14 @@
             checkInputPort(p);
 
         // The Element and its port exist, now find their connexions
-        std::vector<Connexion> result;
-        for(std::vector<Connexion>::iterator it=connexions.begin(); it!=connexions.end(); it++)
+        std::vector<Connection> result;
+        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
             if( (*it).idOut==id && (*it).portOut==p) result.push_back(*it);
 
         return result;
     }
 
-    __ReadOnly_PipelineLayout::Connexion __ReadOnly_PipelineLayout::getConnexionSource(int id, int p)
+    __ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnectionSource(int id, int p)
     {
         std::string str;
 
@@ -174,7 +214,7 @@
             checkOutputPort(p);
 
         // The Element and its port exist, now find the connexion
-        for(std::vector<Connexion>::iterator it=connexions.begin(); it!=connexions.end(); it++)
+        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
             if( (*it).idIn==id && (*it).portIn==p) return (*it);
 
         if(id!=THIS_PIPELINE)
@@ -186,12 +226,12 @@
             throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p), __FILE__, __LINE__);
     }
 
-    std::string __ReadOnly_PipelineLayout::getConnexionDestinationsName(int source, int port)
+    std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(int source, int port)
     {
-        std::vector<Connexion> res = getConnexionDestinations(source, port);
+        std::vector<Connection> res = getConnectionDestinations(source, port);
         std::string result;
 
-        for(std::vector<Connexion>::iterator it=res.begin(); it!=res.end(); it++)
+        for(std::vector<Connection>::iterator it=res.begin(); it!=res.end(); it++)
         {
             __ReadOnly_ComponentLayout& tmp = componentLayout((*it).idIn);
             result += tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended((*it).portIn) + "\n";
@@ -200,25 +240,25 @@
         return result;
     }
 
-    std::string __ReadOnly_PipelineLayout::getConnexionDestinationsName(const std::string& source, const std::string& port)
+    std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
     {
         int id = getElementIndex(source);
         int p  = componentLayout(id).getOutputPortID(port);
-        return getConnexionDestinationsName(id, p);
+        return getConnectionDestinationsName(id, p);
     }
 
-    std::string __ReadOnly_PipelineLayout::getConnexionSourceName(int dest, int port)
+    std::string __ReadOnly_PipelineLayout::getConnectionSourceName(int dest, int port)
     {
-        Connexion c = getConnexionSource(dest, port);
+        Connection c = getConnectionSource(dest, port);
         __ReadOnly_ComponentLayout& tmp = componentLayout(c.idOut);
         return tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended(c.portOut) + "\n";
     }
 
-    std::string __ReadOnly_PipelineLayout::getConnexionSourceName(const std::string& dest, const std::string& port)
+    std::string __ReadOnly_PipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
     {
         int id = getElementIndex(dest);
         int p  = componentLayout(id).getOutputPortID(port);
-        return getConnexionSourceName(id, p);
+        return getConnectionSourceName(id, p);
     }
 
     bool __ReadOnly_PipelineLayout::check(bool exception)
@@ -232,7 +272,7 @@
             {
                 try
                 {
-                    getConnexionSource(i, j);
+                    getConnectionSource(i, j);
                 }
                 catch(std::exception& e)
                 {
@@ -246,7 +286,7 @@
         {
             try
             {
-                getConnexionSource(THIS_PIPELINE, i);
+                getConnectionSource(THIS_PIPELINE, i);
             }
             catch(std::exception& e)
             {
@@ -322,14 +362,14 @@
             checkOutputPort(portIn);
 
         // Check if a connexion already exist to the destination :
-        for(std::vector<Connexion>::iterator it=connexions.begin(); it!=connexions.end(); it++)
+        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
             if( (*it).idIn==filterIn && (*it).portIn==portIn)
                 if(filterIn!=THIS_PIPELINE)
                     throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn), __FILE__, __LINE__);
                 else
                     throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn), __FILE__, __LINE__);
 
-        Connexion c;
+        Connection c;
         c.idOut   = filterOut;
         c.portOut = portOut;
         c.idIn    = filterIn;
@@ -337,7 +377,7 @@
 
         //std::cout << "Connexion de " << filterOut << ':' << portOut << " à " << filterIn << ':' << portIn << std::endl;
 
-        connexions.push_back(c);
+        connections.push_back(c);
     }
 
     void PipelineLayout::connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn)
@@ -393,179 +433,276 @@
     }
 
 // Pipeline
-    Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
-    {
-        input.resize(getNumInputPort());
-        output.resize(getNumOutputPort());
+	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
+	{
+		input.resize(getNumInputPort());
+		output.resize(getNumOutputPort());
 
-        for(TablePtr::iterator it = input.begin(); it!=input.end(); it++)
-            (*it) = NULL;
+		for(TablePtr::iterator it = input.begin(); it!=input.end(); it++)
+			(*it) = NULL;
 
-        for(TablePtr::iterator it = output.begin(); it!=output.end(); it++)
-            (*it) = NULL;
+		for(TablePtr::iterator it = output.begin(); it!=output.end(); it++)
+			(*it) = NULL;
 
-        build();
-    }
+		build();
+	}
 
-    void Pipeline::cleanInput(void)
-    {
-        input.clear();
-        input.resize(getNumInputPort()); // Usefull?
-    }
+	void Pipeline::cleanInput(void)
+	{
+		input.clear();
+		input.resize(getNumInputPort()); // Usefull?
+	}
 
-    void Pipeline::build(void)
-    {
-        std::cout << "Building pipeline " << getNameExtended() << std::endl;
+	void Pipeline::build(void)
+	{
+		int dummy;
+		std::cout << "Building pipeline " << getNameExtended() << std::endl;
 
-        try
-        {
-            // 1st Step
+		try
+		{
+			// 1st Step
 
-            // Push this as the first item of the wait list
-            // While the wait list is not empty
-            //     Take the first/last element in the list and look for all its elements
-            //          If the element is a pipeline, push it in the wait list
-            //          If the element is a filter, create an instance of it and set its ID
-            //     Done.
-            // Done.
+			// Push this as the first item of the wait list
+			// While the wait list is not empty
+			//     	Take the first/last element in the list and look for all its elements
+			//          	If the element is a pipeline, push it in the wait list and add it an INDEX
+			//          	If the element is a filter, create an instance of it and set its ID
+			//     	Done.
+			//	For each link of the current pipeline :
+			//		Change coordinates to absolute ones
+			//	Done.
+			// Done.
 
-            std::list<__ReadOnly_PipelineLayout*> waitList;
-            waitList.push_back(this);
+			std::cout << "First step" << std::endl;
 
-            while(!waitList.empty())
-            {
-                __ReadOnly_PipelineLayout* tmp = waitList.front();
-                for(int i=0; i<tmp->getNumElements(); i++)
-                {
-                    switch(tmp->getElementKind(i))
-                    {
-                        case FILTER :
-                            //std::cout << "    Adding a new component" << std::endl;
-                            filters.push_back(new Filter(tmp->filterLayout(i)));
-                            tmp->setElementID(i, filters.size()-1); //?
-                            //std::cout << "    Adding : " << filters.back().getNameExtended() << std::endl;
-                            //std::cout << "    ID     : " << filters.size()-1 << std::endl;
-                            break;
-                        case PIPELINE :
-                            waitList.push_back(&tmp->pipelineLayout(i));
-                            break;
-                        default :
-                            throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended(), __FILE__, __LINE__);
-                    }
-                }
-                waitList.pop_front();
-            }
+			int startPipeline = 0;
+			std::vector<__ReadOnly_PipelineLayout*> pipeList;
+			std::list<int> waitList;
+			TableConnection tmpConnections;
 
-            // 2nd Step
+			getInfoElements(startPipeline, dummy); //startPipeline will contain the number of filter
+			pipeList.push_back(this);
+			waitList.push_back(startPipeline);
 
-            // Build the links
-            // Push the links for the input of THIS pipeline into a waitList
-            // For all links in the waitList
-            //
+			while(!waitList.empty())
+			{
+				int 	currentPipeline	= waitList.front(),
+				 	offsetPipeline	= pipeList.size()+startPipeline,
+					offsetFilter	= filters.size();
+				__ReadOnly_PipelineLayout* tmp = pipeList[currentPipeline-startPipeline];
 
-            // 3nd Step
+				// Create instance of all elements :
+				for(int i=0; i<tmp->getNumElements(); i++)
+				{
+					switch(tmp->getElementKind(i))
+					{
+					case FILTER :
+						//std::cout << "    Adding a new component" << std::endl;
+						filters.push_back(new Filter(tmp->filterLayout(i)));
+						tmp->setElementID(i, filters.size()-1); //?
+						//std::cout << "    Adding : " << filters.back().getNameExtended() << std::endl;
+						//std::cout << "    ID     : " << filters.size()-1 << std::endl;
+						break;
+					case PIPELINE :
+						pipeList.push_back(&tmp->pipelineLayout(i));
+						waitList.push_back(pipeList.size()-1 + startPipeline);
+						break;
+					default :
+						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended(), __FILE__, __LINE__);
+					}
+				}
 
-            //
-        }
-        catch(std::exception& e)
-        {
-            Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
-    }
+				// Save all the connections to absolute basis :
+				for(int i=0; i<tmp->getNumConnections(); i++)
+				{
+					Connection c = tmp->getConnection(i);
 
-    void Pipeline::process(void)
-    {
-        // TODO
-    }
+					// Replace to absolute coordinates :
+					if(c.idIn==THIS_PIPELINE && currentPipeline>startPipeline)
+						c.idIn = currentPipeline;
+					else
+					{
+						if(tmp->getElementKind(c.idIn)==PIPELINE)
+							c.idIn = c.idIn + offsetPipeline;
+						else
+							c.idIn = c.idIn + offsetFilter;
+					}
+					if(c.idOut==THIS_PIPELINE && currentPipeline>startPipeline)
+						c.idOut = currentPipeline;
+					else
+					{
+						if(tmp->getElementKind(c.idOut)==PIPELINE)
+							c.idOut = c.idOut + offsetPipeline;
+						else
+							c.idOut = c.idOut + offsetFilter;
+					}
 
-    Pipeline& Pipeline::operator<<(HdlTexture& t)
-    {
-        if(input.size()>=getNumInputPort())
-            throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
+					tmpConnections.push_back(c);
+				}
 
-        input.push_back(&t);
-    }
+				waitList.pop_front();
+			}
 
-    Pipeline& Pipeline::operator<<(ActionType a)
-    {
-        // Check the number of arguments given :
-        if(input.size()!=getNumInputPort())
-            throw Exception("Pipeline::operator<<(HdlTexture&) - Too few arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
+			// 2nd Step
 
-        switch(a)
-        {
-            case Process:
-                process();
-            case Reset:            // After Process do Reset of the Input
-                cleanInput();
-                break;
-            default:
-                throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getNameExtended(), __FILE__, __LINE__);
-        }
-    }
+			// Do
+			//	For each links in tmpConnections
+			//		If the idOut is a Pipeline and not THIS_PIPELINE
+			//			For each links in tmpConnections
+			//				If current links input is the same as upper links output
+			//					Add a link using input of upperlinks and output of  this link
+			//					Remove this link
+			//			Done.
+			//	Done.
+			//	Update proposition (there is Pipeline links in tmpConnections)
+			// While (there is Pipeline links in tmpConnections)
 
-    HdlTexture& Pipeline::out(int i)
-    {
-        checkOutputPort(i);
+			std::cout << "Second step" << std::endl;
+			bool test = true;
 
-        if(output[i]==NULL)
-            throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + to_string(i), __FILE__, __LINE__);
+			do
+			{
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end();)
+				{
+					if((*it).idOut>startPipeline)
+					{
+						for(TableConnection::iterator it2=tmpConnections.begin(); it2!=tmpConnections.end();)
+						{
+							if((*it2).idIn==(*it).idOut && (*it2).portIn==(*it).portOut)
+							{
+								Connection c;
+								c.idIn 		= (*it).idIn;
+								c.portIn 	= (*it).portIn;
+								c.idOut 	= (*it2).idOut;
+								c.portOut 	= (*it2).portOut;
+								it2++;
+								TableConnection::iterator tmpIt = it2;
+								tmpConnections.erase(tmpIt);
+								tmpConnections.push_back(c);
+							}
+							else
+								it2++;
+						}
+						it++;
+						TableConnection::iterator tmpIt = it;
+						tmpConnections.erase(tmpIt);
+					}
+					else
+						it++;
+				}
 
-        return *output[i];
-    }
+				// Is there any modification to do?
+				test = false;
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end() && !test; it++)
+					if((*it).idOut>startPipeline)
+						test = true;
+			} while(test);
 
-    HdlTexture& Pipeline::out(const std::string& portName)
-    {
-        int index = getInputPortID(portName);
-        HdlTexture* tmp = output[index];
+			// 3nd Step
 
-        if(tmp==NULL)
-            throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + portName, __FILE__, __LINE__);
+			// Manage memory
 
-        return *tmp;
-    }
+			std::cout << "Third step" << std::endl;
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
 
-    Filter& Pipeline::operator[](const std::string& name)
-    {
-        try
-        {
-            __ReadOnly_PipelineLayout* p = this;
-            // Parse the identification name and return a filter if so
-            std::vector<std::string> tree = ObjectName::parse(name);
-            //std::cout << tree[0] << std::endl;
-            //std::cout << tree[1] << std::endl;
-            std::string filter = tree.back();
-            tree.pop_back();
+	void Pipeline::process(void)
+	{
+		// TODO
+	}
 
-            for(std::vector<std::string>::iterator it=tree.begin(); it!=tree.end(); it++)
-            {
-                //std::cout << "->" << *it << std::endl;
-                __ReadOnly_PipelineLayout& tmp = p->pipelineLayout(*it);
-                //std::cout << "Test name : " << tmp.getName() << std::endl;
-                p = &tmp;
-            }
+	Pipeline& Pipeline::operator<<(HdlTexture& t)
+	{
+		if(input.size()>=getNumInputPort())
+			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
 
-            //std::cout << "Filter : " << filter << std::endl;
-            //std::cout << "Num elem : " << p->getNumElements() << std::endl;
-            int id = p->getElementIndex(filter);
-            //std::cout << "ID1 " << id << std::endl;
-            //std::cout << "INDEX : " << p->getElementID(id) << std::endl;
+		input.push_back(&t);
+	}
 
-            if(p->getElementKind(id)!=FILTER)
-                throw Exception("Pipeline::operator[] - The element " + name + " isn't a filter", __FILE__, __LINE__);
+	Pipeline& Pipeline::operator<<(ActionType a)
+	{
+		// Check the number of arguments given :
+		if(input.size()!=getNumInputPort())
+			throw Exception("Pipeline::operator<<(HdlTexture&) - Too few arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
 
-            if(p->getElementID(id)==ELEMENT_NOT_ASSOCIATED)
-                throw Exception("Pipeline::operator[] - The element " + name + " exists but wasn't associated (internal error)", __FILE__, __LINE__);
+		switch(a)
+		{
+			case Process:
+				process();
+			case Reset:            // After Process do Reset of the Input
+				cleanInput();
+				break;
+			default:
+				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getNameExtended(), __FILE__, __LINE__);
+		}
+	}
 
-            //std::cout << "Test : " << std::endl;
-            //std::cout << "NameTest : " << filters[p->getElementID(id)].getNameExtended() << std::endl;
+	HdlTexture& Pipeline::out(int i)
+	{
+		checkOutputPort(i);
 
-            return *filters[p->getElementID(id)];
-        }
-        catch(std::exception& e)
-        {
-            Exception m("Pipeline::operator[] - Error while processing request on " + name, __FILE__, __LINE__);
-            throw m+e;
-        }
-    }
+		if(output[i]==NULL)
+			throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + to_string(i), __FILE__, __LINE__);
+
+		return *output[i];
+	}
+
+	HdlTexture& Pipeline::out(const std::string& portName)
+	{
+		int index = getInputPortID(portName);
+		HdlTexture* tmp = output[index];
+
+		if(tmp==NULL)
+			throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + portName, __FILE__, __LINE__);
+
+		return *tmp;
+	}
+
+	Filter& Pipeline::operator[](const std::string& name)
+	{
+		try
+		{
+			__ReadOnly_PipelineLayout* p = this;
+			// Parse the identification name and return a filter if so
+			std::vector<std::string> tree = ObjectName::parse(name);
+			//std::cout << tree[0] << std::endl;
+			//std::cout << tree[1] << std::endl;
+			std::string filter = tree.back();
+			tree.pop_back();
+
+			for(std::vector<std::string>::iterator it=tree.begin(); it!=tree.end(); it++)
+			{
+				//std::cout << "->" << *it << std::endl;
+				__ReadOnly_PipelineLayout& tmp = p->pipelineLayout(*it);
+				//std::cout << "Test name : " << tmp.getName() << std::endl;
+				p = &tmp;
+			}
+
+			//std::cout << "Filter : " << filter << std::endl;
+			//std::cout << "Num elem : " << p->getNumElements() << std::endl;
+			int id = p->getElementIndex(filter);
+			//std::cout << "ID1 " << id << std::endl;
+			//std::cout << "INDEX : " << p->getElementID(id) << std::endl;
+
+			if(p->getElementKind(id)!=FILTER)
+				throw Exception("Pipeline::operator[] - The element " + name + " isn't a filter", __FILE__, __LINE__);
+
+			if(p->getElementID(id)==ELEMENT_NOT_ASSOCIATED)
+				throw Exception("Pipeline::operator[] - The element " + name + " exists but wasn't associated (internal error)", __FILE__, __LINE__);
+
+			//std::cout << "Test : " << std::endl;
+			//std::cout << "NameTest : " << filters[p->getElementID(id)].getNameExtended() << std::endl;
+
+			return *filters[p->getElementID(id)];
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Pipeline::operator[] - Error while processing request on " + name, __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
