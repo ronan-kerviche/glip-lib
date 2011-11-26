@@ -49,6 +49,7 @@ int main(int argc, char** argv)
 		pl.connectToOutput("Test1", "red",  "Output1");
 		pl.connectToOutput("Test2", "blue", "Output2");
 		pl.connectToOutput("Test1", "green", "Output3");
+		std::cout << "Num connections : " << pl.getNumConnections() << std::endl;
 
 		std::cout << ">> Creating the pipeline..." << std::endl;
 

@@ -127,12 +127,15 @@ namespace Glip
                         typedef std::vector<HdlTexture*> 	TablePtr;
                         typedef std::vector<Filter*>     	TableFilter;
                         typedef std::vector<Connection>   	TableConnection;
+                        typedef std::vector<int>		TableIndex;
+                        typedef std::vector<HdlFBO*>		TableBuffer;
                         TablePtr       				input;
                         TablePtr       				output;
                         TableFilter    				filters;
-                        std::vector<int> 			actionFilter;
-                        std::vector<TableConnection*> 		connexions;
-                        std::vector<HdlFBO*>			buffers;
+                        TableBuffer				buffers;
+                        TableIndex				actionFilter;
+                        TableIndex				bufferToUse;
+			std::vector<TableIndex*>		listOfArgBuffers;
                     // Tools
                         void cleanInput(void);
                         void build(void);

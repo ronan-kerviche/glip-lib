@@ -1,5 +1,7 @@
+#include <limits>
 #include "Pipeline.hpp"
 #include "Component.hpp"
+#include "HdlFBO.hpp"
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -12,8 +14,9 @@
 	{
 		//std::cout << "Starting copy of pipeline layout for " << getNameExtended() << std::endl;
 		// Copy of the whole vector
-		elementsKind   = c.elementsKind;
-		elementsID     = c.elementsID;
+		elementsKind   	= c.elementsKind;
+		elementsID     	= c.elementsID;
+		connections	= c.connections;
 
 		for(int i=0; i<c.elementsLayout.size(); i++)
 		{
@@ -513,13 +516,18 @@
 				}
 
 				// Save all the connections to absolute basis :
+				std::cout << "Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << std::endl;
 				for(int i=0; i<tmp->getNumConnections(); i++)
 				{
 					Connection c = tmp->getConnection(i);
 
 					// Replace to absolute coordinates :
-					if(c.idIn==THIS_PIPELINE && currentPipeline>startPipeline)
-						c.idIn = currentPipeline;
+					if(c.idIn==THIS_PIPELINE)
+					{
+						if(currentPipeline>startPipeline)
+							c.idIn = currentPipeline;
+						// else nothing
+					}
 					else
 					{
 						if(tmp->getElementKind(c.idIn)==PIPELINE)
@@ -527,8 +535,12 @@
 						else
 							c.idIn = c.idIn + offsetFilter;
 					}
-					if(c.idOut==THIS_PIPELINE && currentPipeline>startPipeline)
-						c.idOut = currentPipeline;
+					if(c.idOut==THIS_PIPELINE)
+					{
+						if(currentPipeline>startPipeline)
+							c.idOut = currentPipeline;
+						//else nothing
+					}
 					else
 					{
 						if(tmp->getElementKind(c.idOut)==PIPELINE)
@@ -562,11 +574,11 @@
 
 			do
 			{
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end();)
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 				{
 					if((*it).idOut>startPipeline)
 					{
-						for(TableConnection::iterator it2=tmpConnections.begin(); it2!=tmpConnections.end();)
+						for(TableConnection::iterator it2=tmpConnections.begin(); it2!=tmpConnections.end(); it2++)
 						{
 							if((*it2).idIn==(*it).idOut && (*it2).portIn==(*it).portOut)
 							{
@@ -575,20 +587,13 @@
 								c.portIn 	= (*it).portIn;
 								c.idOut 	= (*it2).idOut;
 								c.portOut 	= (*it2).portOut;
-								it2++;
-								TableConnection::iterator tmpIt = it2;
-								tmpConnections.erase(tmpIt);
+								tmpConnections.erase(it2);
+								it2--;
 								tmpConnections.push_back(c);
 							}
-							else
-								it2++;
 						}
-						it++;
-						TableConnection::iterator tmpIt = it;
-						tmpConnections.erase(tmpIt);
+						tmpConnections.erase(it);
 					}
-					else
-						it++;
 				}
 
 				// Is there any modification to do?
@@ -598,11 +603,162 @@
 						test = true;
 			} while(test);
 
+			#ifdef __VERBOSE__
+				std::cout << "Connection list : " << std::endl;
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
+				{
+					std::cout << "    Connection  : " << std::endl;
+					std::cout << "        idIn    : " << (*it).idIn << std::endl;
+					std::cout << "        portIn  : " << (*it).portIn << std::endl;
+					std::cout << "        idOut   : " << (*it).idOut << std::endl;
+					std::cout << "        portOut : " << (*it).portOut << std::endl;
+				}
+				std::cout << "End Connection list" << std::endl;
+			#endif
+
 			// 3nd Step
 
 			// Manage memory
-
 			std::cout << "Third step" << std::endl;
+
+			std::vector<int> 	availabilty;
+			TableConnection		remainingConnections = tmpConnections;
+			TableIndex		options;
+
+			// Prepare the buffer list :
+			buffers.assign(filters.size(), NULL);
+			listOfArgBuffers.assign(filters.size(), NULL);
+
+			buffers[10] = NULL;
+
+			std::cout << "Updating availability" << std::endl;
+			// Update availability :
+			for(TableFilter::iterator it=filters.begin(); it!=filters.end(); it++)
+				availabilty.push_back((*it)->getNumInputPort());
+
+			std::cout << "Updating first links" << std::endl;
+			// Update the first links :
+			for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
+			{
+				if((*it).idOut==THIS_PIPELINE)
+				{
+					availabilty[(*it).idIn]--;
+					remainingConnections.erase(it);
+					it--;
+				}
+			}
+
+			std::cout << "Starting decision loop" << std::endl;
+			do
+			{
+				// Put the available filters in options
+				std::cout << "    Options list" << std::endl;
+				for(int id=0; id<availabilty.size(); id++)
+				{
+					if(availabilty[id]==0)
+					{
+						std::cout << "        adding filter " << id << " to the option list" << std::endl;
+						availabilty[id] = -1;
+						options.push_back(id);
+					}
+					else
+						std::cout << "        discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
+				}
+
+				std::cout << "    Best Filter" << std::endl;
+				// Search the best next filter in 'options'
+				TableIndex::iterator bestIt = options.begin();
+				bool notFoundMandatory = true;
+				int size = std::numeric_limits<int>::max();
+
+				for(TableIndex::iterator it=options.begin(); it!=options.end() && notFoundMandatory; it++)
+				{
+					std::cout << "        Monitoring : " << *it << '/' << filters.size() << std::endl;
+					std::cout << "        Name       : " << filters[(*it)]->getName() << std::endl; //SEGFAULT if extended
+					// Is it a mandatory step?
+						// Look for the format in the FBO list
+						bool alreadyExist = false;
+						for(TableBuffer::iterator it2=buffers.begin(); it2!=buffers.end() && !alreadyExist; it2++)
+						{
+							if((*it2)!=NULL)
+								if((*(*it2))==(*filters[*it])) // Same texture format between the FBO and the target filter
+									alreadyExist = true;
+						}
+
+					if(alreadyExist)
+					{
+						// Compare the size with the best one found for the moment :
+						int s = filters[*it]->getSize();
+						if(size>s)
+						{
+							size = s;
+							bestIt = it;
+						}
+					}
+					else // If not alreadyExist, hen it is mandatory to create it :
+					{
+						notFoundMandatory = false;
+						bestIt = it;
+					}
+				}
+
+				std::cout << "    Saving Best Filter" << std::endl;
+
+				// Remove it from the options :
+				int best = *bestIt;
+				options.erase(bestIt);
+
+				// Create the FBO :
+				buffers[best] = new HdlFBO(*filters[best]);
+
+				// Save the corresponding action in the action list :
+				actionFilter.push_back(best);
+
+				// Create the argument list :
+				TableIndex* arg = new TableIndex;
+				arg->resize(filters[best]->getNumInputPort());
+
+				// Find in the connections, the input parts
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
+				{
+					if((*it).idIn==best)
+						(*arg)[(*it).portIn] = (*it).portOut;
+				}
+
+				listOfArgBuffers[best] = arg;
+
+				std::cout << "    Removing connection outgoing from best filter" << std::endl;
+				// Find in the connections, the filters that depends on this step
+				for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
+				{
+					if((*it).idOut==best && (*it).idIn!=THIS_PIPELINE) // find a filter that is not this!
+					{
+						availabilty[(*it).idIn]--;
+						remainingConnections.erase(it);
+						it--;
+					}
+				}
+
+			} while(!options.empty());
+
+			std::cout << "End decision loop" << std::endl;
+
+			// Check if all filters are in :
+			for(std::vector<int>::iterator it=availabilty.begin(); it!=availabilty.end(); it++)
+				if((*it)!=-1)
+					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended(), __FILE__, __LINE__);
+
+			// Print the final layout :
+			#ifdef __VERBOSE__
+				std::cout << "Actions : " << std::endl;
+				for(int i=0; i<actionFilter.size(); i++)
+				{
+					std::cout << "    Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << std::endl;
+					for(int j=0; j<listOfArgBuffers[actionFilter[i]]->size(); j++)
+						std::cout << "        Connection " << j << " to : " << (*listOfArgBuffers[actionFilter[i]])[j] << std::endl;
+				}
+				std::cout << "End Actions" << std::endl;
+			#endif
 		}
 		catch(std::exception& e)
 		{
