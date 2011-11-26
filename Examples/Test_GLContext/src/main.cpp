@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 		QApplication app(argc,argv);
 		WindowRenderer window(640, 480);
 
-		// Create a pipeline
+		/*// Create a pipeline
 		std::fstream file;
 		file.open("./Filters/gradient2.glsl");
 		if(!file.is_open())
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
 		Pipeline p(pl, "TestPipeline");
 
-		std::cout << " === Creating test ended successfully === " << std::endl;
+		std::cout << " === Creating test ended successfully === " << std::endl;*/
 		return app.exec();
 	}
 	catch(std::exception& e)

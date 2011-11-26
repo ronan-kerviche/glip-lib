@@ -39,7 +39,7 @@ namespace Glip
             private :
                 // Data
                     int nVert, nElements, dim, nIndPerElement, dimTexCoords;
-                    HdlGeBO *vertices, *elements, *texcoords;
+                    HdlGeBO *vertices, *elements;
                     GLenum type;
             public :
                 // Tools

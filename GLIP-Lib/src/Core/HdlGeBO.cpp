@@ -23,9 +23,13 @@
 */
 
 #include "HdlGeBO.hpp"
-#include "../include/GLIPLib.hpp"
+#include "GLIPLib.hpp"
 
 using namespace Glip::CoreGL;
+
+// Data
+	bool HdlGeBO::binding[4] = {false, false, false, false};
+	bool HdlGeBO::mapping[4] = {false, false, false, false};
 
 // Functions
     /**
@@ -52,6 +56,9 @@ using namespace Glip::CoreGL;
 
         buildTarget = infoTarget;
         buildUsage  = infoUsage;
+
+        std::cout << "New GeBO : ";
+        glErrors(true, false);
     }
 
     /**
@@ -130,6 +137,7 @@ using namespace Glip::CoreGL;
     void HdlGeBO::bind(GLenum target)
     {
         glBindBuffer(target, bufferId);
+        binding[getIDTarget(target)] = true;
     }
 
     /**
@@ -143,65 +151,62 @@ using namespace Glip::CoreGL;
     **/
     void* HdlGeBO::map(GLenum target, GLenum access)
     {
+    	glDebug();
         HdlGeBO::unmap(target);
+        std::cout << "Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
         bind(target);
+        std::cout << "Bind : "; glErrors(true, false);
+        mapping[getIDTarget(target)] = true;
         return glMapBufferARB(target, access);
     }
 
 // Static tools
-    /**
-     \fn    void HdlGeBO::unbind(GLenum target)
-     \brief Unbind any Buffer Object.
+	int HdlGeBO::getIDTarget(GLenum target)
+	{
+		switch(target)
+		{
+			case GL_ARRAY_BUFFER_ARB :		return 0;
+			case GL_ELEMENT_ARRAY_BUFFER_ARB :	return 1;
+			case GL_PIXEL_UNPACK_BUFFER_ARB :	return 2;
+			case GL_PIXEL_PACK_BUFFER_ARB :		return 3;
+			default :
+				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + glParamName(target), __FILE__, __LINE__);
+		}
+	}
 
-     \param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-    **/
-    void HdlGeBO::unbind(GLenum target)
-    {
-        glBindBuffer(target, 0);
-    }
+	/**
+	\fn    void HdlGeBO::unbind(GLenum target)
+	\brief Unbind any Buffer Object.
 
-    /**
-     \fn    void HdlGeBO::unbind(GLenum target)
-     \brief Unmap any Buffer Object.
+	\param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	**/
+	void HdlGeBO::unbind(GLenum target)
+	{
+		glBindBuffer(target, 0);
+		binding[getIDTarget(target)] = false;
+	}
 
-     \param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-    **/
-    void HdlGeBO::unmap(GLenum target)
-    {
-        glUnmapBufferARB(target);
-    }
+	/**
+	\fn    void HdlGeBO::unbind(GLenum target)
+	\brief Unmap any Buffer Object.
 
-    /*
-    std::string HdlGeBO::getTargetName(GLenum target)
-    {
-        #define NAMEIT(X) case X : return #X;
-        switch(target)
-        {
-            NAMEIT( GL_ARRAY_BUFFER_ARB )
-            NAMEIT( GL_ELEMENT_ARRAY_BUFFER_ARB )
-            NAMEIT( GL_PIXEL_UNPACK_BUFFER_ARB )
-            NAMEIT( GL_PIXEL_PACK_BUFFER_ARB )
-            default : return "Taget not recognized";
-        }
-        #undef NAMEIT
-    }
+	\param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	**/
+	void HdlGeBO::unmap(GLenum target)
+	{
+		if(isMapped(target))
+		{
+			glUnmapBufferARB(target);
+			mapping[getIDTarget(target)] = false;
+		}
+	}
 
-    std::string HdlGeBO::getUsageName(GLenum usage)
-    {
-        #define NAMEIT(X) case X : return #X;
-        switch(usage)
-        {
-            NAMEIT( GL_STATIC_DRAW_ARB )
-            NAMEIT( GL_STATIC_READ_ARB )
-            NAMEIT( GL_STATIC_COPY_ARB )
-            NAMEIT( GL_DYNAMIC_DRAW_ARB )
-            NAMEIT( GL_DYNAMIC_READ_ARB )
-            NAMEIT( GL_DYNAMIC_COPY_ARB )
-            NAMEIT( GL_STREAM_DRAW_ARB )
-            NAMEIT( GL_STREAM_READ_ARB )
-            NAMEIT( GL_STREAM_COPY_ARB )
-            default : return "Usage not recognized";
-        }
-        #undef NAMEIT
-    }
-    */
+	bool HdlGeBO::isBound(GLenum target)
+	{
+		return binding[getIDTarget(target)];
+	}
+
+	bool HdlGeBO::isMapped(GLenum target)
+	{
+		return mapping[getIDTarget(target)];
+	}

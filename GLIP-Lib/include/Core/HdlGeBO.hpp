@@ -41,29 +41,34 @@ namespace Glip
             {
                 private :
                     // Data
-                        GLuint bufferId;
-                        GLenum buildTarget, buildUsage;
-                        unsigned int size;
+                        GLuint 		bufferId;
+                        GLenum		buildTarget,
+					buildUsage;
+                        unsigned int 	size;
+                        static bool 	binding[4],
+					mapping[4];
                     // No copy constructor
                         HdlGeBO(const HdlGeBO&);
+                    // Tools
+			static int getIDTarget(GLenum target);
                 public :
                     // Tools
                         HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage);
                         HdlGeBO(GLuint id, unsigned int _size, GLenum infoTarget, GLenum infoUsage);
                         ~HdlGeBO(void);
 
-                        unsigned int getSize(void);
-                        GLuint       getID(void);
-                        GLenum       getTarget(void);
-                        GLenum       getUsage(void);
-                        void         bind(GLenum target);
-                        void*        map(GLenum target, GLenum access);
+                        unsigned int 	getSize(void);
+                        GLuint       	getID(void);
+                        GLenum       	getTarget(void);
+                        GLenum       	getUsage(void);
+                        void        	bind(GLenum target);
+                        void*        	map(GLenum target, GLenum access);
 
                     // Static tools
-                        static void        unbind(GLenum target);
-                        static void        unmap(GLenum target);
-                        //DEPRECATED : static std::string getTargetName(GLenum target);
-                        //DEPRECATED : static std::string getUsageName(GLenum usage);
+                        static void     unbind(GLenum target);
+                        static void     unmap(GLenum target);
+                        static bool 	isBound(GLenum target);
+			static bool 	isMapped(GLenum target);
             };
 
         /*

@@ -19,6 +19,7 @@
 			double vp_x, vp_y, vp_w, vp_h, fmtImg;
 			QTimer *timer;
 			HdlVBO *vbo;
+			HdlTexture* texture;
 
 			void quad(float aX, float aY, float bX, float bY);
 		public :
