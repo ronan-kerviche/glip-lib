@@ -111,8 +111,11 @@
 
 // Filter
     Filter::Filter(const __ReadOnly_FilterLayout& c)
-     : __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c)
+     : __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
     {
+    	// Build arguments table :
+    	arguments.assign(getNumInputPort(), NULL);
+
         try
         {
             // Build the shaders :
@@ -177,20 +180,32 @@
         delete vbo;
     }
 
-    void process(void)
-    {
+	void Filter::setInputForNextRendering(int id, HdlTexture* ptr)
+	{
+		if(id<0 || id>getNumInputPort())
+			throw Exception("Filter::setInputForNextRendering - Index out of range", __FILE__, __LINE__);
+		arguments[id] = ptr;
+	}
 
-    }
+	void Filter::process(HdlFBO& renderer)
+	{
+		// Prepare the renderer
+		// Enable states
+		// Link the textures
+		// Load the shader
+		// Draw
+		// Unload
+	}
 
-    HdlProgram& Filter::operator->(void)
-    {
-        return *program;
-    }
+	HdlProgram& Filter::operator->(void)
+	{
+		return *program;
+	}
 
-    void Filter::setGeometry(HdlVBO* v)
-    {
-        if(v==NULL)
-            throw Exception("Filter::setGeometry - You can't set a pointer to NULL for the geometry!", __FILE__, __LINE__);
-        delete vbo;
-        vbo = v;
-    }
+	void Filter::setGeometry(HdlVBO* v)
+	{
+		if(v==NULL)
+			throw Exception("Filter::setGeometry - You can't set a pointer to NULL for the geometry!", __FILE__, __LINE__);
+		delete vbo;
+		vbo = v;
+	}

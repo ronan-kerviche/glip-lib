@@ -63,10 +63,11 @@ namespace Glip
             {
                 private :
                     // Data
-                        HdlShader*  vertexShader;
-                        HdlShader*  fragmentShader;
-                        HdlProgram* program;
-                        HdlVBO*     vbo;
+                        HdlShader*  			vertexShader;
+                        HdlShader*  			fragmentShader;
+                        HdlProgram* 			program;
+                        HdlVBO*     			vbo;
+                        std::vector<HdlTexture*>	arguments;
                 protected :
                     // Tools
                         Filter(const __ReadOnly_FilterLayout&); // A filter can't be created outside a Pipeline

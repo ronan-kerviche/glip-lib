@@ -26,6 +26,7 @@
 #define __OGLINCLUDE_INCLUDE__
 
     #include <iostream>
+    #include "devDebugTools.hpp"
 
     #ifdef _WIN32
         #define WINDOWS_LEAN_AND_MEAN

@@ -250,6 +250,7 @@ using namespace Glip::CoreGL;
     bool HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
     {
         glErrors(); // clean error buffer
+	std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
         glBindFragDataLocation(program, frag, fragName.c_str());
         return !glErrors(); //return false if any error
     }

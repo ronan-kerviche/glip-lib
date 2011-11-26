@@ -130,7 +130,7 @@ namespace Glip
                         typedef std::vector<int>		TableIndex;
                         typedef std::vector<HdlFBO*>		TableBuffer;
                         TablePtr       				input;
-                        TablePtr       				output;
+                        TableIndex       			output;
                         TableFilter    				filters;
                         TableBuffer				buffers;
                         TableIndex				actionFilter;

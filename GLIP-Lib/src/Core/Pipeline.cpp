@@ -438,14 +438,8 @@
 // Pipeline
 	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
 	{
-		input.resize(getNumInputPort());
-		output.resize(getNumOutputPort());
-
-		for(TablePtr::iterator it = input.begin(); it!=input.end(); it++)
-			(*it) = NULL;
-
-		for(TablePtr::iterator it = output.begin(); it!=output.end(); it++)
-			(*it) = NULL;
+		input.assign(getNumInputPort(), NULL);
+		output.assign(getNumOutputPort(), 0);
 
 		build();
 	}
@@ -748,6 +742,14 @@
 				if((*it)!=-1)
 					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
+			// Add the coordinates of the output buffers :
+			output.assign(getNumOutputPort(), 0);
+			for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
+			{
+				if((*it).idIn==THIS_PIPELINE)
+					output[(*it).portOut] = (*it).idOut;
+			}
+
 			// Print the final layout :
 			#ifdef __VERBOSE__
 				std::cout << "Actions : " << std::endl;
@@ -769,7 +771,14 @@
 
 	void Pipeline::process(void)
 	{
-		// TODO
+		// First process the input arguments
+
+		// Then process the remaining ones
+		for(int i = 1; i<actionFilter.size(); i++)
+		{
+			// Apply filter *filter[actionFilter
+			// On buffer
+		}
 	}
 
 	Pipeline& Pipeline::operator<<(HdlTexture& t)
@@ -801,22 +810,13 @@
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-
-		if(output[i]==NULL)
-			throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + to_string(i), __FILE__, __LINE__);
-
-		return *output[i];
+		return (*buffers[output[i]])[i];
 	}
 
 	HdlTexture& Pipeline::out(const std::string& portName)
 	{
 		int index = getInputPortID(portName);
-		HdlTexture* tmp = output[index];
-
-		if(tmp==NULL)
-			throw Exception("Pipeline::operator<<(ActionType) - Output is NULL for Pipeline " + getNameExtended() + " port ID : " + portName, __FILE__, __LINE__);
-
-		return *tmp;
+		return (*buffers[output[index]])[index];
 	}
 
 	Filter& Pipeline::operator[](const std::string& name)
