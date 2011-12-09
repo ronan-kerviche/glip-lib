@@ -301,7 +301,10 @@ using namespace Glip::CoreGL;
         // create the texture
         glGenTextures(1, &texID);
 
+        // COMMON ERROR : USE OF MIPMAP : LINEAR_MIPMAP_NEAREST... when max level = 0 (leads to Invalid Enum)
+
         // Set it up
+        glBindTexture(GL_TEXTURE_2D,texID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getMagFilter() );
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     getSWrapping() );
@@ -311,6 +314,8 @@ using namespace Glip::CoreGL;
 
         if( getMaxLevel()>0 )
             glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+        HdlTexture::unbind();
     }
 
     HdlTexture::~HdlTexture(void)
@@ -359,8 +364,6 @@ using namespace Glip::CoreGL;
 
     void HdlTexture::bind(GLenum unit)
     {
-        //glBindTexture(GL_TEXTURE_2D, texID);
-
         glActiveTextureARB(unit);
         glBindTexture(GL_TEXTURE_2D, texID);
 
@@ -386,10 +389,13 @@ using namespace Glip::CoreGL;
         // Bind it
         glBindTexture(GL_TEXTURE_2D, texID);
 
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
         //write
         glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 
-        glGenerateMipmap(GL_TEXTURE_2D);
+        if( getMaxLevel()>0 )
+		glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     void HdlTexture::fill(char dataByte)

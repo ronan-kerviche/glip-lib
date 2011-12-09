@@ -40,7 +40,7 @@ using namespace Glip::CoreGL;
      \param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
      \param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
     **/
-    HdlGeBO::HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+    HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
     {
         // Generate the buffer
         glGenBuffers(1, &bufferId);
@@ -70,8 +70,9 @@ using namespace Glip::CoreGL;
      \param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
      \param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
     **/
-    HdlGeBO::HdlGeBO(GLuint id, unsigned int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+    HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
     {
+    	std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
         // Just copy the link
         bufferId = id;
 
@@ -92,7 +93,7 @@ using namespace Glip::CoreGL;
 
      \return Size of the BO in bytes.
     **/
-    unsigned int HdlGeBO::getSize(void)
+    int HdlGeBO::getSize(void)
     {
         return size;
     }
@@ -136,6 +137,7 @@ using namespace Glip::CoreGL;
     **/
     void HdlGeBO::bind(GLenum target)
     {
+    	if(target==GL_NONE) target = getTarget();
         glBindBuffer(target, bufferId);
         binding[getIDTarget(target)] = true;
     }
@@ -159,6 +161,21 @@ using namespace Glip::CoreGL;
         mapping[getIDTarget(target)] = true;
         return glMapBufferARB(target, access);
     }
+
+	void HdlGeBO::write(void* data)
+	{
+		bind();
+
+		glBufferData(getTarget(), static_cast<GLsizeiptr>(size), reinterpret_cast<const GLvoid *>(data), getUsage());
+	}
+
+	void HdlGeBO::subWrite(void* data, int size, int offset)
+	{
+		bind();
+
+		glBufferSubData(getTarget(),  static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(size),  reinterpret_cast<const GLvoid *>(data));
+	}
+
 
 // Static tools
 	int HdlGeBO::getIDTarget(GLenum target)

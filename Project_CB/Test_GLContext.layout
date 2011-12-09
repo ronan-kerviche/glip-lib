@@ -4,13 +4,13 @@
 	<File name="../Examples/Test_GLContext/Test_GLContext.pro" open="0" top="0" tabpos="3">
 		<Cursor position="16" topLine="0" />
 	</File>
-	<File name="../Examples/Test_GLContext/src/WindowRendering.cpp" open="1" top="0" tabpos="2">
-		<Cursor position="890" topLine="0" />
+	<File name="../Examples/Test_GLContext/src/WindowRendering.cpp" open="1" top="1" tabpos="0">
+		<Cursor position="2409" topLine="85" />
 	</File>
-	<File name="../Examples/Test_GLContext/src/WindowRendering.hpp" open="1" top="0" tabpos="3">
+	<File name="../Examples/Test_GLContext/src/WindowRendering.hpp" open="0" top="0" tabpos="3">
 		<Cursor position="415" topLine="0" />
 	</File>
-	<File name="../Examples/Test_GLContext/src/main.cpp" open="1" top="1" tabpos="1">
+	<File name="../Examples/Test_GLContext/src/main.cpp" open="0" top="0" tabpos="1">
 		<Cursor position="1910" topLine="22" />
 	</File>
 </CodeBlocks_layout_file>

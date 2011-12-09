@@ -40,8 +40,8 @@ using namespace Glip::CoreGL;
                 glewInit();
                 initDone = true;
 
-				// Init Multitexturing if not done yet...
-				HdlMultiTexturing::init();
+		// Init Multitexturing if not done yet...
+		HdlMultiTexturing::init();
             }
         }
 
@@ -120,6 +120,18 @@ using namespace Glip::CoreGL;
 		#define NMTOOL(X) case X: return #X;
 		switch(param)
 		{
+			// Geometry
+			NMTOOL( GL_POINTS )
+			NMTOOL( GL_LINES )
+			NMTOOL( GL_LINE_STRIP )
+			NMTOOL( GL_LINE_LOOP )
+			NMTOOL( GL_TRIANGLES )
+			NMTOOL( GL_TRIANGLE_STRIP )
+			NMTOOL( GL_TRIANGLE_FAN )
+			NMTOOL( GL_QUADS )
+			NMTOOL( GL_QUAD_STRIP )
+			NMTOOL( GL_POLYGON )
+
 			// Texture Mode
 			NMTOOL( GL_TEXTURE_1D )
 			NMTOOL( GL_TEXTURE_2D )
@@ -185,7 +197,7 @@ using namespace Glip::CoreGL;
 			NMTOOL( GL_NEAREST_MIPMAP_LINEAR )
 			NMTOOL( GL_LINEAR_MIPMAP_LINEAR )
 
-			//	Errors
+			// Errors
 			NMTOOL( GL_INVALID_ENUM )
 			NMTOOL( GL_INVALID_VALUE )
 			NMTOOL( GL_INVALID_OPERATION )

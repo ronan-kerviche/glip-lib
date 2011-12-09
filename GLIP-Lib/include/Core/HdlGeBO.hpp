@@ -44,7 +44,7 @@ namespace Glip
                         GLuint 		bufferId;
                         GLenum		buildTarget,
 					buildUsage;
-                        unsigned int 	size;
+                        int 		size;
                         static bool 	binding[4],
 					mapping[4];
                     // No copy constructor
@@ -53,16 +53,18 @@ namespace Glip
 			static int getIDTarget(GLenum target);
                 public :
                     // Tools
-                        HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage);
-                        HdlGeBO(GLuint id, unsigned int _size, GLenum infoTarget, GLenum infoUsage);
+                        HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage);
+                        HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage);
                         ~HdlGeBO(void);
 
-                        unsigned int 	getSize(void);
+                        int 	getSize(void);
                         GLuint       	getID(void);
                         GLenum       	getTarget(void);
                         GLenum       	getUsage(void);
-                        void        	bind(GLenum target);
+                        void        	bind(GLenum target = GL_NONE);
                         void*        	map(GLenum target, GLenum access);
+                        void		write(void* data);
+                        void		subWrite(void* data, int size, int offset);
 
                     // Static tools
                         static void     unbind(GLenum target);

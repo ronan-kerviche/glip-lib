@@ -31,46 +31,50 @@ using namespace Glip::CoreGL;
 
 // Tools
     HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
-     : nVert(_nVert), dim(_dim), nElements(_nElements), type(_type), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords)
+     : nVert(_nVert), dim(_dim), nElements(_nElements), type(_type), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL)
     {
         void* ptr = NULL;
 
         if(dimTexCoords!=0 && _texcoords==NULL)
 		throw Exception("HdlVBO::HdlVBO - attempt to create texcoords without any data", __FILE__, __LINE__);
 
+	/*std::cout << "Creating VBO : " << std::endl;
+	std::cout << "    Vertices : " << nVert << std::endl;
+	std::cout << "    Dim      : " << dim << std::endl;
+	std::cout << "    Elements : " << nElements << std::endl;
+	std::cout << "    Index    : " << nIndPerElement << std::endl;
+	std::cout << "    Type     : " << glParamName(type) << std::endl;
+	std::cout << "    DimTex   : " << dimTexCoords << std::endl;*/
+
         // For the vertices and the texcoords :
-        std::cout << " - Vertices - " << nVert*dim << std::endl;
-        vertices = new HdlGeBO(nVert*dim*sizeof(GLfloat)+nVert*dimTexCoords*sizeof(GLfloat), GL_ARRAY_BUFFER_ARB, freq);
-        ptr      = vertices->map(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
-        std::cout << "Mapping : "; glErrors(true, false);
-        if(ptr!=NULL)
+        //std::cout << " - Vertices - " << nVert*dim << std::endl;
+        if(_texcoords!=NULL)
         {
-            memcpy(ptr, 				_vertices, 	nVert*dim*sizeof(GLfloat));
-            if(_texcoords!=NULL) memcpy((ptr+nVert*dim*sizeof(GLfloat)), 	_texcoords, 	nVert*dimTexCoords*sizeof(GLfloat));
+        	//std::cout << " - Texcoords - " << nVert*dimTexCoords*sizeof(GLfloat) << std::endl;
+		vertices = new HdlGeBO(nVert*(dim+dimTexCoords)*sizeof(GLfloat), GL_ARRAY_BUFFER_ARB, freq);
         }
         else
-            throw Exception("HdlVBO::HdlVBO - cannot map the VBO to set up the vertices", __FILE__, __LINE__);
-        std::cout << "Unmapping..." << std::endl;
-        HdlVBO::unmap();
-        std::cout << "Vertices : "; glErrors(true, false);
+		vertices = new HdlGeBO(nVert*dim*sizeof(GLfloat), GL_ARRAY_BUFFER_ARB, freq);
 
+        vertices->subWrite(_vertices, nVert*dim*sizeof(GLfloat),0);
+        //std::cout << "Vertices : "; glErrors(true, false);
+
+        if(_texcoords!=NULL)
+        {
+		vertices->subWrite(_texcoords, nVert*dimTexCoords*sizeof(GLfloat), nVert*dim*sizeof(GLfloat));
+		//std::cout << "Texcoords : "; glErrors(true, false);
+        }
 
         // For the elements :
-        std::cout << " - Elements - " << nElements*nIndPerElement << std::endl;
         if(_elements!=NULL)
         {
-            elements = new HdlGeBO(nElements*nIndPerElement*sizeof(GLuint), GL_ELEMENT_ARRAY_BUFFER_ARB, freq);
-            ptr      = elements->map(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB);
-            if(ptr!=NULL)
-                memcpy(ptr, _elements, nElements*nIndPerElement*sizeof(GLuint));
-            else
-                throw Exception("HdlVBO::HdlVBO - cannot map the VBO to set up the elements", __FILE__, __LINE__);
-            HdlVBO::unmap();
-            glIndexPointer(GL_UNSIGNED_INT, 0, 0);
+		//std::cout << " - Elements - " << nElements*nIndPerElement*sizeof(GLuint) << std::endl;
+		elements = new HdlGeBO(nElements*nIndPerElement*sizeof(GLuint), GL_ELEMENT_ARRAY_BUFFER_ARB, freq);
+		elements->subWrite(_elements, nElements*nIndPerElement*sizeof(GLuint), 0);
+		//std::cout << "Elements : "; glErrors(true, false);
         }
-        std::cout << "Elements : "; glErrors(true, false);
 
-	std::cout << "Exit VBO : "; glErrors(true, false);
+	//std::cout << "Exit VBO : "; glErrors(true, false);
 	HdlVBO::unbind();
     }
 
@@ -87,52 +91,55 @@ using namespace Glip::CoreGL;
 
 	void HdlVBO::draw(void)
 	{
-		std::cout << "    Rendering start : "; glErrors(true, false);
+		//std::cout << "    Rendering start : "; glErrors(true, false);
 
 		// First, bind the data
-					vertices->bind(GL_ARRAY_BUFFER_ARB);
-		if(elements!=NULL)   	elements->bind(GL_ELEMENT_ARRAY_BUFFER);
-		std::cout << "    Binding : "; glErrors(true, false);
+			vertices->bind(GL_ARRAY_BUFFER_ARB);
+		//std::cout << "    Binding : "; glErrors(true, false);
+			glVertexPointer(dim, GL_FLOAT, 0, 0);
+		//std::cout << "    Vertex description 1 : "; glErrors(true, false);
+		if(dimTexCoords>0)
+		{
+			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(NULL + nVert*dim*sizeof(GLfloat)));
+			//std::cout << "    Texcoords description 1 : "; glErrors(true, false);
+		}
 
-		// Then Enable client state :
+		if(elements!=NULL)
+		{
+			elements->bind(GL_ELEMENT_ARRAY_BUFFER);
+			//std::cout << "    Binding : "; glErrors(true, false);
+		}
+
+		// Enable :
 		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		//glEnableClientState(GL_INDEX_ARRAY);
-		std::cout << "    Enabling : "; glErrors(true, false);
+		if(dimTexCoords>0)
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		// Then, describe the format given for this VBO
-					glVertexPointer(dim, GL_FLOAT, 0, 0);
-		if(dimTexCoords>0) 	glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, (GLvoid*)((char*)NULL+nVert*dim)); //*sizeof(GLfloat)
-		std::cout << "    Vertex description 1 : "; glErrors(true, false);
-		/*if(elements!=NULL) 	glIndexPointer(GL_UNSIGNED_INT, 0, 0);
-		std::cout << "    Vertex description 2 : "; glErrors(true, false);*/
-
-		if(elements==NULL) 	glDrawArrays(GL_POINTS, 0, nVert);
-		else               	glDrawElements(type, nElements, GL_UNSIGNED_INT, 0);
-		std::cout << "    Drawing : "; glErrors(true, false);
+		if(elements==NULL) 	glDrawArrays(GL_POINTS, 0, nVert); //Test with GL_TRIANGLE_STRIP
+		else               	glDrawElements(type, nElements*nIndPerElement, GL_UNSIGNED_INT, 0);
+		//std::cout << "    Drawing : "; glErrors(true, false);
 
 					glDisableClientState(GL_VERTEX_ARRAY);
-		//if(elements!=NULL)  	glDisableClientState(GL_INDEX_ARRAY);
 		if(dimTexCoords>0) 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		std::cout << "    Disabling : "; glErrors(true, false);
+		//std::cout << "    Disabling : "; glErrors(true, false);
 
-		//HdlVBO::unbind();
-		std::cout << "    Rendering end : "; glErrors(true, false);
+		HdlVBO::unbind();
+		//std::cout << "    Rendering end : "; glErrors(true, false);
 	}
 
 // Static tools
     HdlVBO* HdlVBO::generate2DStandardQuad(void)
     {
-        GLfloat vertices[]  = { 100.0,  100.0,
-                                100.0, -100.0,
-                               -100.0, -100.0,
-                               -100.0,  100.0};
-        GLuint elements[]   = { 0, 1, 2, 3};
-        GLfloat texcoords[] = { 1.0,  1.0,
-                                1.0, -1.0,
-                               -1.0, -1.0,
-                               -1.0,  1.0};
-        return new HdlVBO(4, 2, GL_STREAM_DRAW_ARB, vertices, 1, 4, elements, GL_QUADS, 2, texcoords);
+        GLfloat vertices[]  = {	-0.5,  0.5,
+                                -0.5, -0.5,
+                                 0.5,  0.5,
+                                 0.5, -0.5};
+        GLuint elements[]   = { 0, 1, 3, 2};
+        GLfloat texcoords[] = {  0.0,  1.0,
+                                 0.0,  0.0,
+                                 1.0,  1.0,
+                                 1.0,  0.0};
+        return new HdlVBO(4, 2, GL_STATIC_DRAW_ARB, vertices, 1, 4, elements, GL_QUADS, 2, texcoords);
     }
 
     HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
@@ -150,6 +157,7 @@ using namespace Glip::CoreGL;
         cY = cY - appH/2.0;
 
         GLfloat* data = new GLfloat[w*h*2];
+        GLfloat* tex  = new GLfloat[w*h*2];
         unsigned int index = 0;
 
         for(unsigned int i=0; i<h; i++)
@@ -157,11 +165,14 @@ using namespace Glip::CoreGL;
             {
                 data[index + 0] = i*y + cY;
                 data[index + 1] = j*x + cX;
+                tex[index + 0]	= static_cast<GLfloat>(i)/static_cast<GLfloat>(h);
+                tex[index + 1]	= static_cast<GLfloat>(j)/static_cast<GLfloat>(w);
                 index += 2;
             }
 
-        HdlVBO* result = new HdlVBO(w*h, 2, GL_STREAM_DRAW_ARB, data);
+        HdlVBO* result = new HdlVBO(w*h, 2, GL_STREAM_DRAW_ARB, data, 0, 0, NULL, GL_NONE, 2, tex);
         delete[] data;
+        delete[] tex;
 
         return result;
     }
