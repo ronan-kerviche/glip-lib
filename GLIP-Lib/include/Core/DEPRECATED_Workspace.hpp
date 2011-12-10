@@ -1,12 +1,12 @@
 
-#ifndef __GLIP_WORKSPACE__
+/*#ifndef __GLIP_WORKSPACE__
 #define __GLIP_WORKSPACE__
 
     // Includes
         #include <vector>
         #include "Devices.hpp"
 
-/*namespace Glip
+namespace Glip
 {
     namespace CorePipeline
     {
@@ -61,6 +61,6 @@
                             virtual void process(void);
             };
     }
-}*/
+}
 
-#endif
+#endif*/
