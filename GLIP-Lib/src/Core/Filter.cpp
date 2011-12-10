@@ -2,6 +2,7 @@
 #include "HdlTexture.hpp"
 #include "HdlShader.hpp"
 #include "HdlVBO.hpp"
+#include "HdlFBO.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
@@ -110,91 +111,146 @@
     }
 
 // Filter
-    Filter::Filter(const __ReadOnly_FilterLayout& c)
-     : __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
-    {
-    	// Build arguments table :
-    	arguments.assign(getNumInputPort(), NULL);
+	Filter::Filter(const __ReadOnly_FilterLayout& c)
+	: __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
+	{
+		// Build arguments table :
+		arguments.assign(getNumInputPort(), NULL);
 
-        try
-        {
-            // Build the shaders :
-            vertexShader   = new HdlShader(GL_VERTEX_SHADER, getVertexSource());
-            fragmentShader = new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
-            program        = new HdlProgram(*vertexShader, *fragmentShader);
-        }
-        catch(std::exception& e)
-        {
-            Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
+		try
+		{
+			// Build the shaders :
+			vertexShader   = new HdlShader(GL_VERTEX_SHADER, getVertexSource());
+			fragmentShader = new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
+			program        = new HdlProgram(*vertexShader, *fragmentShader);
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 
-        try
-        {
-            // Set the names of the samplers :
-            for(int i=0; i<getNumInputPort(); i++)
-                program->modifyVar(getInputPortName(i), HdlProgram::SHADER_VAR, i);
+		try
+		{
+			// Set the names of the samplers :
+			for(int i=0; i<getNumInputPort(); i++)
+				program->modifyVar(getInputPortName(i), HdlProgram::SHADER_VAR, i);
 
-            for(int i=0; i<getNumInputPort(); i++)
-                program->setFragmentLocation(getOutputPortName(i), i);
+			for(int i=0; i<getNumInputPort(); i++)
+				program->setFragmentLocation(getOutputPortName(i), i);
 
-            program->stopProgram();
-        }
-        catch(std::exception& e)
-        {
-            Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
+			program->stopProgram();
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 
-        try
-        {
-            // Create a basic geometry :
-            vbo = HdlVBO::generate2DStandardQuad();
-        }
-        catch(std::exception& e)
-        {
-            throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
-        }
+		try
+		{
+			// Create a basic geometry :
+			vbo = HdlVBO::generate2DStandardQuad();
+		}
+		catch(std::exception& e)
+		{
+			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
+		}
 
-        // Set up the data on the program :
-        for(int i=0; i<getNumInputPort(); i++)
-            program->setFragmentLocation(getInputPortName(i), i);
+		// Set up the data on the program :
+		for(int i=0; i<getNumInputPort(); i++)
+			program->setFragmentLocation(getInputPortName(i), i);
 
-        if(getNumOutputPort()>1) // more than 1 target (non-classic)
-            std::cerr << __HERE__ <<  "Filter::Filter - INTERNAL ERROR, the multi-target rendering is not effective yet" << std::endl;
-    }
+		if(getNumOutputPort()>1) // more than 1 target (non-classic)
+			std::cerr << __HERE__ <<  "Filter::Filter - INTERNAL ERROR, the multi-target rendering is not effective yet" << std::endl;
+	}
 
-    Filter::~Filter(void)
-    {
-        if(program==NULL)
-            throw Exception("Filter::~Filter - Internal error : program is NULL", __FILE__, __LINE__);
-        if(vertexShader==NULL)
-            throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
-        if(fragmentShader==NULL)
-            throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-        if(vbo==NULL)
-            throw Exception("Filter::~Filter - Internal error : vbo is NULL", __FILE__, __LINE__);
-        delete program;
-        delete vertexShader;
-        delete fragmentShader;
-        delete vbo;
-    }
+	Filter::~Filter(void)
+	{
+		if(program==NULL)
+			throw Exception("Filter::~Filter - Internal error : program is NULL", __FILE__, __LINE__);
+		if(vertexShader==NULL)
+			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
+		if(fragmentShader==NULL)
+			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
+		if(vbo==NULL)
+			throw Exception("Filter::~Filter - Internal error : vbo is NULL", __FILE__, __LINE__);
+		delete program;
+		delete vertexShader;
+		delete fragmentShader;
+		delete vbo;
+	}
 
 	void Filter::setInputForNextRendering(int id, HdlTexture* ptr)
 	{
 		if(id<0 || id>getNumInputPort())
 			throw Exception("Filter::setInputForNextRendering - Index out of range", __FILE__, __LINE__);
 		arguments[id] = ptr;
+		//std::cout << "Adding : " << arguments[id] << " at " << id << std::endl;
 	}
 
 	void Filter::process(HdlFBO& renderer)
 	{
+		//std::cout << "Processing " << getNameExtended() << std::endl;
+
 		// Prepare the renderer
+			renderer.beginRendering();
+			//std::cout << "Begin rendering 		: "; glErrors(true, false);
+
 		// Enable states
+			if(isBlendingEnabled())
+			{
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ONE);
+			}
+
+			if(isClearingEnabled())
+			{
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			}
+			//std::cout << "Clearing states 		: "; glErrors(true, false);
+
 		// Link the textures
+			for(int i=0; i<getNumInputPort(); i++)
+			{
+				//std::cout << "Using : " << arguments[i] << std::endl;
+				/*if(arguments[i]==NULL)
+					throw Exception("Argument is NULL", __FILE__, __LINE__);*/
+				arguments[i]->bind(i);
+			}
+			//std::cout << "Binding	 		: "; glErrors(true, false);
+
+		// Prepare geometry
+			glLoadIdentity();
+
 		// Load the shader
+			program->use();
+			//std::cout << "Using shader 		: "; glErrors(true, false);
+
 		// Draw
+			vbo->draw();
+			//std::cout << "drawing VBO 		: "; glErrors(true, false);
+
+		// Stop using the shader
+			HdlProgram::stopProgram();
+			//std::cout << "Stop program 		: "; glErrors(true, false);
+
+		// Remove from stack
+			if(isBlendingEnabled())
+			    glDisable(GL_BLEND);
+
+		// End rendering
+			renderer.endRendering();
+			//std::cout << "End rendering 		: "; glErrors(true, false);
+
 		// Unload
+			for(int i=0; i<getNumInputPort(); i++)
+			{
+				//std::cout << "Unbinding " << i << std::endl;
+				HdlTexture::unbind(i);
+			}
+			//std::cout << "Unbinding 		: "; glErrors(true, false);
 	}
 
 	HdlProgram& Filter::operator->(void)

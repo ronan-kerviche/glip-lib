@@ -134,8 +134,8 @@ namespace Glip
                         TableFilter    				filters;
                         TableBuffer				buffers;
                         TableIndex				actionFilter;
-                        TableIndex				bufferToUse;
 			std::vector<TableIndex*>		listOfArgBuffers;
+			std::vector<TableIndex*>		listOfArgBuffersOutput;
                     // Tools
                         void cleanInput(void);
                         void build(void);
@@ -148,8 +148,8 @@ namespace Glip
                         //Pipeline(const std::string& filename); TODO
                         //~Pipeline(void);
 
-                        Pipeline&  operator<<(HdlTexture&);
-                        Pipeline&  operator<<(ActionType);
+                        Pipeline& operator<<(HdlTexture&);
+                        Pipeline& operator<<(ActionType);
                         HdlTexture& out(int);
                         HdlTexture& out(const std::string&);
                         Filter& operator[](const std::string& name);

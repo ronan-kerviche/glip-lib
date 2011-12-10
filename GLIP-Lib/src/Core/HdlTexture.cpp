@@ -371,9 +371,9 @@ using namespace Glip::CoreGL;
         glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_REPLACE);
     }
 
-    void bind(int unit)
+    void HdlTexture::bind(int unit)
     {
-        bind(GL_TEXTURE0_ARB+unit);
+        bind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
     }
 
     void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
@@ -419,7 +419,7 @@ using namespace Glip::CoreGL;
 
     void HdlTexture::unbind(int unit)
     {
-        unbind(GL_TEXTURE0_ARB+unit);
+        unbind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
     }
 
 // HdlMultiTexturing - Functions & data

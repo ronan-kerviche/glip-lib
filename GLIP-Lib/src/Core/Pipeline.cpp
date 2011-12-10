@@ -438,7 +438,7 @@
 // Pipeline
 	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
 	{
-		input.assign(getNumInputPort(), NULL);
+		cleanInput();
 		output.assign(getNumOutputPort(), 0);
 
 		build();
@@ -447,7 +447,6 @@
 	void Pipeline::cleanInput(void)
 	{
 		input.clear();
-		input.resize(getNumInputPort()); // Usefull?
 	}
 
 	void Pipeline::build(void)
@@ -622,8 +621,9 @@
 			// Prepare the buffer list :
 			buffers.assign(filters.size(), NULL);
 			listOfArgBuffers.assign(filters.size(), NULL);
+			listOfArgBuffersOutput.assign(filters.size(), NULL);
 
-			buffers[10] = NULL;
+			buffers[10] = NULL; // ?????????????????????
 
 			std::cout << "Updating availability" << std::endl;
 			// Update availability :
@@ -704,22 +704,30 @@
 
 				// Create the FBO :
 				buffers[best] = new HdlFBO(*filters[best]);
+				std::cout << "Creating : " << (*buffers[best])[0] << std::endl;
 
 				// Save the corresponding action in the action list :
 				actionFilter.push_back(best);
 
 				// Create the argument list :
-				TableIndex* arg = new TableIndex;
-				arg->resize(filters[best]->getNumInputPort());
+				TableIndex 	*bufferArg = new TableIndex,
+						*outputArg = new TableIndex;
+				bufferArg->resize(filters[best]->getNumInputPort());
+				outputArg->resize(filters[best]->getNumInputPort());
 
 				// Find in the connections, the input parts
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 				{
 					if((*it).idIn==best)
-						(*arg)[(*it).portIn] = (*it).portOut;
+					{
+						(*bufferArg)[(*it).portIn] = (*it).idOut;
+						(*outputArg)[(*it).portIn] = (*it).portOut;
+					}
+
 				}
 
-				listOfArgBuffers[best] = arg;
+				listOfArgBuffers[best] 		= bufferArg;
+				listOfArgBuffersOutput[best] 	= outputArg;
 
 				std::cout << "    Removing connection outgoing from best filter" << std::endl;
 				// Find in the connections, the filters that depends on this step
@@ -757,7 +765,7 @@
 				{
 					std::cout << "    Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << std::endl;
 					for(int j=0; j<listOfArgBuffers[actionFilter[i]]->size(); j++)
-						std::cout << "        Connection " << j << " to : " << (*listOfArgBuffers[actionFilter[i]])[j] << std::endl;
+						std::cout << "        Connection " << j << " to : (" << (*listOfArgBuffers[actionFilter[i]])[j] << ';' << (*listOfArgBuffersOutput[actionFilter[i]])[j] << ')' << std::endl;
 				}
 				std::cout << "End Actions" << std::endl;
 			#endif
@@ -771,13 +779,22 @@
 
 	void Pipeline::process(void)
 	{
-		// First process the input arguments
+		//std::cout << "Processing : " << getNameExtended() << std::endl;
 
-		// Then process the remaining ones
-		for(int i = 1; i<actionFilter.size(); i++)
+		for(int i = 0; i<actionFilter.size(); i++)
 		{
-			// Apply filter *filter[actionFilter
-			// On buffer
+			// Apply filter *filter[actionFilter]
+			Filter* f = filters[actionFilter[i]];
+			for(int j=0; j<f->getNumInputPort(); j++)
+			{
+				int bufferID 	= (*listOfArgBuffers[i])[j];
+				int portID 	= (*listOfArgBuffersOutput[i])[j];
+				if(bufferID==THIS_PIPELINE)
+					f->setInputForNextRendering(j, input[portID]);
+				else
+					f->setInputForNextRendering(j, (*buffers[bufferID])[portID]);
+			}
+			f->process(*buffers[i]);
 		}
 	}
 
@@ -787,6 +804,8 @@
 			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 		input.push_back(&t);
+
+		return *this;
 	}
 
 	Pipeline& Pipeline::operator<<(ActionType a)
@@ -805,18 +824,20 @@
 			default:
 				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getNameExtended(), __FILE__, __LINE__);
 		}
+
+		return *this;
 	}
 
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-		return (*buffers[output[i]])[i];
+		return *((*buffers[output[i]])[i]);
 	}
 
 	HdlTexture& Pipeline::out(const std::string& portName)
 	{
 		int index = getInputPortID(portName);
-		return (*buffers[output[index]])[index];
+		return *((*buffers[output[index]])[index]);
 	}
 
 	Filter& Pipeline::operator[](const std::string& name)

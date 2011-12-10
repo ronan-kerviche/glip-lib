@@ -88,6 +88,7 @@ using namespace Glip::CoreGL;
         {
             int i = targets.size();
             targets.push_back(new HdlTexture(*this));
+            targets[i]->fill(0);
             bindTextureToFBO(i);
             return i;
         }
@@ -149,12 +150,12 @@ using namespace Glip::CoreGL;
         glPopAttrib();
     }
 
-    HdlTexture& HdlFBO::operator[](int i)
+    HdlTexture* HdlFBO::operator[](int i)
     {
         if(i<0 || i>targets.size())
             throw Exception("HdlFBO::operator[] - Invalid index : " + to_string(i) + " of " + to_string(targets.size()), __FILE__, __LINE__);
         else
-            return *targets[i];
+            return targets[i];
     }
 
     /**

@@ -23,39 +23,40 @@ namespace Glip
             {
                 private :
                     // Data
-                        HdlTexture* texture;
-                        bool        newImage;
-                        int         imagesMissed;
+                        HdlTexture* 	texture;
+                        bool        	newImage;
+                        int         	imagesMissed;
                 protected :
                     // Tools
                         InputDevice(const std::string& name);
 
-                        void        declareNewImage(void);
-                        HdlTexture* ownerTexturePtr(void);
+                        void        	declareNewImage(void);
+                        HdlTexture* 	ownerTexturePtr(void);
                 public :
                     // Tools
                         ~InputDevice(void);
-                        bool        isNewImage(void);
-                        int         getMissedImagesCount(void);
-                        HdlTexture* texturePtr(void);
+                        bool        	isNewImage(void);
+                        int         	getMissedImagesCount(void);
+                        HdlTexture* 	texturePtr(void);
             };
 
             class OutputDevice : public ObjectName
             {
                 private :
                     // Data
-                        HdlTexture* texture;
-                        bool        newImage;
-                        int         imagesMissed;
+                        HdlTexture* 	texture;
+                        bool       	newImage;
+                        int         	imagesMissed;
                 protected :
                     // Tools
                         OutputDevice(const std::string& name);
-                        bool        isNewImage(void);
-                        HdlTexture* readTexture();
+                        bool        	isNewImage(void);
+                        HdlTexture* 	readTexture(void);
                 public :
                     // Tools
-                        void        giveTexture(HdlTexture*);
-                        int         getMissedImagesCount(void);
+                        void        	giveTexture(HdlTexture*);
+                        void		forgetLastTexture(void);
+                        int         	getMissedImagesCount(void);
             };
     }
 }

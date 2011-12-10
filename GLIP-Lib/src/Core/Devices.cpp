@@ -43,30 +43,40 @@
     }
 
 // Tools - OutputDevice
-    OutputDevice::OutputDevice(const std::string& name) : texture(NULL), newImage(false), imagesMissed(0), ObjectName(name, "Output Device")
-    { }
+	OutputDevice::OutputDevice(const std::string& name) : texture(NULL), newImage(false), imagesMissed(0), ObjectName(name, "Output Device")
+	{ }
 
-    bool OutputDevice::isNewImage(void)
-    {
-        return newImage;
-    }
+	bool OutputDevice::isNewImage(void)
+	{
+		return newImage;
+	}
 
-    HdlTexture* OutputDevice::readTexture()
-    {
-        newImage = false;
-        return texture;
-    }
+	HdlTexture* OutputDevice::readTexture(void)
+	{
+		newImage = false;
+		return texture;
+	}
 
-    void OutputDevice::giveTexture(HdlTexture* t)
-    {
-        if(newImage)
-            imagesMissed++;
+	void OutputDevice::giveTexture(HdlTexture* t)
+	{
+		if(t!=NULL)
+		{
+			if(newImage)
+				imagesMissed++;
 
-        newImage = true;
-        texture = t;
-    }
+			newImage = true;
+			texture = t;
+		}
+		else
+			forgetLastTexture();
+	}
 
-    int OutputDevice::getMissedImagesCount(void)
-    {
-        return imagesMissed;
-    }
+	void OutputDevice::forgetLastTexture(void)
+	{
+		newImage = false;
+	}
+
+	int OutputDevice::getMissedImagesCount(void)
+	{
+		return imagesMissed;
+	}

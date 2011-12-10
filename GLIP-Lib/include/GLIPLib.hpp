@@ -53,6 +53,7 @@
 			#include "Core/Filter.hpp"
 			#include "Core/Pipeline.hpp"
 			#include "Core/HdlInfo.hpp"
+			#include "Core/Devices.hpp"
 
 			// Modules
 			//#define GLIP_LOAD_ALL_MODULES

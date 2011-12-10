@@ -66,7 +66,7 @@ namespace Glip
                     void        beginRendering(void);
                     void        endRendering(void);
                     void        bind(void);
-                    HdlTexture& operator[](int i);
+                    HdlTexture* operator[](int i);
 
                 // Static tools :
                     static int    getMaximumColorAttachment(void);

@@ -130,10 +130,10 @@ using namespace Glip::CoreGL;
 // Static tools
     HdlVBO* HdlVBO::generate2DStandardQuad(void)
     {
-        GLfloat vertices[]  = {	-0.5,  0.5,
-                                -0.5, -0.5,
-                                 0.5,  0.5,
-                                 0.5, -0.5};
+        GLfloat vertices[]  = {	-1.0,  1.0,
+                                -1.0, -1.0,
+                                 1.0,  1.0,
+                                 1.0, -1.0};
         GLuint elements[]   = { 0, 1, 3, 2};
         GLfloat texcoords[] = {  0.0,  1.0,
                                  0.0,  0.0,
