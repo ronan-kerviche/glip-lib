@@ -14,28 +14,29 @@
 /**                                                                                                             **/
 /*****************************************************************************************************************/
 
-#include "HdlTexture.hpp"
-#include "IOModules.hpp"
-#include "StreamManager.hpp"
 #include "TextureReader.hpp"
+#include "Exception.hpp"
 
-	TextureReader::TextureReader(int _nSocket) : InputModule(_nSocket, "Texture reader")
+	TextureReader::TextureReader(const std::string& name) : OutputDevice(name)
 	{}
 
-	__HdlTextureFormat_OnlyData& TextureReader::getFormat(int i)
+	__HdlTextureFormat_OnlyData& TextureReader::getFormat(void)
 	{
-		return reinterpret_cast<__HdlTextureFormat_OnlyData&>(texture(i));
+		if(readTexture()!=NULL)
+			return reinterpret_cast<__HdlTextureFormat_OnlyData&>(*readTexture());
+		else
+			throw Exception("TextureReader::getFormat - no texture bound to " + getNameExtended(), __FILE__, __LINE__);
 	}
 
 	bool TextureReader::read(int i, GLint level, GLenum format, GLenum type, GLvoid* img)
 	{
-		if( connected(i) )
+		if(readTexture()!=NULL)
 		{
-			texture(i).bind();
+			readTexture()->bind();
 			glGetTexImage(GL_TEXTURE_2D, level, format, type, img);
 			HdlTexture::unbind();
 			return true;
 		}
 		else
-			return false;
+			throw Exception("TextureReader::read - no texture bound to " + getNameExtended(), __FILE__, __LINE__);
 	}

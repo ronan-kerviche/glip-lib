@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 **/
 
-#include "StreamManager.hpp"
+/*#include "StreamManager.hpp"
 #include <iostream>
 
 using namespace Glip::CoreGL;
@@ -36,8 +36,8 @@ using namespace Glip::CorePipeline;
 	int          StreamManager::inst_count=0;
 
 // Shield Macro :
-	#define STREAMMANAGER_VERIFICATION if(!built) { std::cout << "StreamManager NOT built yet!" << std::endl; /*throw std::string("StreamManager NOT built yet!");*/ }
-	#define THROW_ERROR(MESSAGE)       { std::cout << MESSAGE << std::endl; /*throw std::string(MESSAGE);*/ }
+	#define STREAMMANAGER_VERIFICATION if(!built) { std::cout << "StreamManager NOT built yet!" << std::endl; }
+	#define THROW_ERROR(MESSAGE)       { std::cout << MESSAGE << std::endl; }
 
 // Functions
 	StreamManager::StreamManager(void)
@@ -257,5 +257,5 @@ using namespace Glip::CorePipeline;
 		std::cout << "End" << std::endl;
 	}
 
-
+*/
 

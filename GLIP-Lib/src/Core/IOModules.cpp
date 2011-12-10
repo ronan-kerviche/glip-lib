@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 **/
 
-#include "IOModules.hpp"
+/*#include "IOModules.hpp"
 
 // Includes
 	#include "StreamManager.hpp"
@@ -219,4 +219,4 @@ using namespace Glip::CorePipeline;
         return nOut;
     }
 
-
+*/

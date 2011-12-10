@@ -423,7 +423,7 @@ using namespace Glip::CoreGL;
     }
 
 // HdlMultiTexturing - Functions & data
-    GLenum HdlMultiTexturing::currentUnit = GL_TEXTURE0_ARB;
+    /*GLenum HdlMultiTexturing::currentUnit = GL_TEXTURE0_ARB;
     GLint  HdlMultiTexturing::maxUnit     = 0;
 
     void HdlMultiTexturing::init(void)
@@ -510,5 +510,5 @@ using namespace Glip::CoreGL;
     GLint HdlMultiTexturing::getMaxUnit(void)
     {
         return maxUnit;
-    }
+    }*/
 

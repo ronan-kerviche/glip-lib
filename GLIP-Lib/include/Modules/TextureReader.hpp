@@ -24,34 +24,37 @@
 
 	// Include :
 	#include "OglInclude.hpp"
+	#include "HdlTexture.hpp"
+	#include "Devices.hpp"
 
 	// Prototypes
 	namespace Glip
 	{
-	    namespace CoreGL
-	    {
-	        class __HdlTextureFormat_OnlyData;
-	    }
+		namespace CoreGL
+		{
+			class __HdlTextureFormat_OnlyData;
+		}
 
-	    namespace CorePipeline
-	    {
-	        class InputModule;
-	    }
+		namespace CorePipeline
+		{
+			class OutputDevice;
+		}
 	}
 
+	using namespace Glip;
 	using namespace Glip::CoreGL;
-    using namespace Glip::CorePipeline;
+	using namespace Glip::CorePipeline;
 
 	// Structure
-	class TextureReader : public InputModule
+	class TextureReader : public OutputDevice
 	{
 		private :
 		public :
 			// Functions
-				TextureReader(int _nSocket);
+			TextureReader(const std::string& name);
 
-				__HdlTextureFormat_OnlyData& getFormat(int i=0);
-				bool read(int i, GLint level, GLenum format, GLenum type, GLvoid* img);
+			__HdlTextureFormat_OnlyData& getFormat(void);
+			bool read(int i, GLint level, GLenum format, GLenum type, GLvoid* img);
 	};
 
 #endif

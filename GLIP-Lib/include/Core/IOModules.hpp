@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 **/
 
-#ifndef __GLIP_IOMODULES__
+/*#ifndef __GLIP_IOMODULES__
 #define __GLIP_IOMODULES__
 
 // Includes
@@ -124,4 +124,4 @@ namespace Glip
     }
 }
 
-#endif
+#endif*/

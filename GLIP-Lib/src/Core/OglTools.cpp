@@ -41,7 +41,7 @@ using namespace Glip::CoreGL;
                 initDone = true;
 
 		// Init Multitexturing if not done yet...
-		HdlMultiTexturing::init();
+		//HdlMultiTexturing::init();
             }
         }
 

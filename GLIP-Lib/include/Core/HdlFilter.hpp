@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 */
 
-#ifndef __HDLFILTER_INCLUDE__
+/*#ifndef __HDLFILTER_INCLUDE__
 #define __HDLFILTER_INCLUDE__
 
 // Include
@@ -147,5 +147,5 @@ namespace Glip
 // No fragment var :
     extern const char* FragmentNone[];
 
-#endif
+#endif*/
 

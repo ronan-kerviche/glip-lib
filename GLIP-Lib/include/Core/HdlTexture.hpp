@@ -137,7 +137,7 @@ namespace Glip
                  \class HdlMultiTexturing
                  \brief Singleton handle for OpenGL Multitexturing skills
                 **/
-            class HdlMultiTexturing
+            /*class HdlMultiTexturing
             {
                 private :
                     // Data
@@ -160,7 +160,7 @@ namespace Glip
 
                         static GLenum getCurrentUnit(void);
                         static GLint  getMaxUnit(void);
-            };
+            };*/
     }
 }
 

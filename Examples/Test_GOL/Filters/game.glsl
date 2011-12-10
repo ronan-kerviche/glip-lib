@@ -14,16 +14,16 @@ void main()
 	// Read all the eight previous :
 	ivec2 sz 	= textureSize(inText, 0);
 	float sx 	= 1.0/(float(sz.x));
-	float sy 	= 1.0/(float(sz.x));
-	vec4 a00	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,-sy)	, 0.0);
-	vec4 a01	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,0.0)	, 0.0);
-	vec4 a02	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,+sy)	, 0.0);
-	vec4 a10	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,-sy)	, 0.0);
-	vec4 a11	= textureLod(inText, gl_TexCoord[0].st			, 0.0);
-	vec4 a12	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,+sy)	, 0.0);
-	vec4 a20	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,-sy)	, 0.0);
-	vec4 a21	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,0.0)	, 0.0);
-	vec4 a22	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,+sy)	, 0.0);
+	float sy 	= 1.0/(float(sz.y));
+	vec4 a00	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,-sy)	, 0);
+	vec4 a01	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,0.0)	, 0);
+	vec4 a02	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,+sy)	, 0);
+	vec4 a10	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,-sy)	, 0);
+	vec4 a11	= textureLod(inText, gl_TexCoord[0].st			, 0);
+	vec4 a12	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,+sy)	, 0);
+	vec4 a20	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,-sy)	, 0);
+	vec4 a21	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,0.0)	, 0);
+	vec4 a22	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,+sy)	, 0);
 
 	float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
 

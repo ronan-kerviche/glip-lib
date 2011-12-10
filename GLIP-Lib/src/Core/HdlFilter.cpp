@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 */
 
-#include <sstream>
+/*#include <sstream>
 #include "HdlFilter.hpp"
 #include "HdlTexture.hpp"
 #include "HdlFBO.hpp"
@@ -40,10 +40,10 @@
                                            0 };
 
 using namespace Glip::CoreGL;
-using namespace Glip::CorePipeline;
+using namespace Glip::CorePipeline;*/
 
 // Static vars init :
-    std::string getVertexSource(void)
+    /*std::string getVertexSource(void)
     {
         int nUnits = HdlMultiTexturing::getMaxUnit();
 
@@ -57,7 +57,7 @@ using namespace Glip::CorePipeline;
         str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
 
         return std::string(str.str());
-    }
+    }*/
 
 // methods :
 

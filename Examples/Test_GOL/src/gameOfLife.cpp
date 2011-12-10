@@ -11,12 +11,8 @@
 			window = new WindowRenderer(100,w, h);
 
 			// Create the pipeline :
-				std::fstream file;
-				file.open("./Filters/game.glsl");
-				if(!file.is_open())
-				    throw Exception("UPPER LEVEL - File not opened", __FILE__, __LINE__);
 				HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-				ShaderSource src(file, "./Filters/game.glsl");
+				ShaderSource src("./Filters/game.glsl");
 
 				FilterLayout fl("GameOfLife_Layout", fmt, src);
 
@@ -76,7 +72,6 @@
 	void GameOfLife::compute(void)
 	{
 		static int i = 0;
-		//std::cout << "Computing..." << std::endl;
 
 		if(i==10)
 		{

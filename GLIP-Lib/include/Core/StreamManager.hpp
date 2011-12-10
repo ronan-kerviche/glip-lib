@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 **/
 
-#ifndef __STREAM_MANAGER_INCLUDE__
+/*#ifndef __STREAM_MANAGER_INCLUDE__
 #define __STREAM_MANAGER_INCLUDE__
 
 	// Lib
@@ -94,16 +94,16 @@ namespace Glip
                     static void debugInformation(void);
             };
 
-        /** Function
-            Creates socket for a texture
-
-            SocketID s;
-
-            s<0 => s is a port
-            s>0 => s is a texture
-            s=0 => s is free
-            s=s => s is not yet initialized (allocated but not linked)
-        **/
+        //  Function
+        //    Creates socket for a texture
+	//
+        //    SocketID s;
+	//
+        //    s<0 => s is a port
+        //    s>0 => s is a texture
+        //    s=0 => s is free
+        //    s=s => s is not yet initialized (allocated but not linked)
+        //
 
         // Global Connect operator :
         //void connectStream(SocketID src,  SocketID& dst);
@@ -112,4 +112,4 @@ namespace Glip
 }
 
 #endif
-
+*/

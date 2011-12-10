@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 */
 
-#ifndef __HANDLE_MODIFICATOR_INCLUDE__
+/*#ifndef __HANDLE_MODIFICATOR_INCLUDE__
 #define __HANDLE_MODIFICATOR_INCLUDE__
 
 /// Include
@@ -59,5 +59,5 @@ namespace Glip
     }
 }
 
-#endif
+#endif*/
 

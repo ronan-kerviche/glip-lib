@@ -22,7 +22,7 @@
  * \date    October 17th 2010
 */
 
-#include "HdlModificator.hpp"
+/*#include "HdlModificator.hpp"
 
 using namespace Glip::CorePipeline;
 
@@ -83,3 +83,4 @@ using namespace Glip::CorePipeline;
         glScalef(hscale, vscale, 1.0);
     }
 
+*/

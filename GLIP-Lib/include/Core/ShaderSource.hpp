@@ -222,7 +222,6 @@ namespace Glip
                     // Tools
                         ShaderSource(const char** src, bool eol = true, int lines=-1);
                         ShaderSource(const std::string& src);
-                        ShaderSource(std::fstream& file, const std::string& filename);
                         ShaderSource(const ShaderSource& ss);
 
                         const std::string& getSource(void)     const;

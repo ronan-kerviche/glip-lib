@@ -61,47 +61,46 @@
      \fn    bool ShaderSource::loadSource(const std::string& src)
      \brief Load a source code from a standard char string.
 
-     \param src Source data.
+     \param src Source data (must have at least one '\n') or filename (without '\n')
 
      \param False if it failed, true otherwise.
     **/
     ShaderSource::ShaderSource(const std::string& src)
     {
-        sourceName = "<Inner String>";
-        source.clear();
-        source = src;
+    	size_t newline = src.find('\n');
 
-        parseGlobals();
-    }
+	if(newline==std::string::npos)
+    	{
+		// Open File
+		std::fstream file;
+		file.open(src.c_str());
 
-    /**
-     \fn    bool ShaderSource::loadSourceFile(std::string filename)
-     \brief Load a source code from a file.
+		// Did it fail?
+		if(!file.is_open())
+			throw Exception("ShaderSource::ShaderSource - File isn't open for reading!", __FILE__, __LINE__);
 
-     \param filename Name of the file to load.
+		source.clear();
+		sourceName = src;
 
-     \return False if it failed, true otherwise.
-    **/
-    ShaderSource::ShaderSource(std::fstream& file, const std::string& filename)
-    {
-        // Did it fail?
-        if(!file.is_open())
-            throw Exception("ShaderSource::ShaderSource - File isn't open for reading!", __FILE__, __LINE__);
+		// Set starting position
+		file.seekg(0, std::ios::beg);
 
-        source.clear();
-        sourceName = filename;
+		std::string line;
+		while(std::getline(file,line)) // loop while extraction from file is possible
+		{
+			source += line;
+			source += "\n";
+		}
+    	}
+    	else
+    	{
+		// Inner string
+		sourceName = "<Inner String>";
+		source.clear();
+		source = src;
+    	}
 
-        // Set starting position
-        file.seekg(0, std::ios::beg);
-
-        std::string line;
-        while(std::getline(file,line)) // loop while extraction from file is possible
-        {
-            source += line;
-            source += "\n";
-        }
-
-        parseGlobals();
+    	parseGlobals();
     }
 
     /**
