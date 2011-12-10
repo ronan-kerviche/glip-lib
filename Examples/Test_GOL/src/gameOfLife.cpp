@@ -8,21 +8,26 @@
 	{
 		try
 		{
-			window = new WindowRenderer(100,w, h);
+			window = new WindowRenderer(500,w, h);
 
 			// Create the pipeline :
 				HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 				ShaderSource src("./Filters/game.glsl");
 
 				FilterLayout fl("GameOfLife_Layout", fmt, src);
+				std::cout << ">>>>>>> Num output : " << fl.getNumOutputPort() << std::endl;
 
-				PipelineLayout pl("MainPipeline");
+				PipelineLayout pl("MainPipeline_2Steps");
 				pl.addInput("Input");
 				pl.addOutput("Output");
-				pl.add(fl, "GameOfLife");
+				pl.addOutput("Test");
+				pl.add(fl, "GameOfLife_1");
+				pl.add(fl, "GameOfLife_2");
 
-				pl.connectToInput("Input", "GameOfLife", "inText");
-				pl.connectToOutput("GameOfLife", "outText", "Output");
+				pl.connectToInput("Input", "GameOfLife_1", "inText");
+				pl.connect("GameOfLife_1", "outText", "GameOfLife_2", "inText");
+				pl.connectToOutput("GameOfLife_2", "outText", "Output");
+				pl.connectToOutput("GameOfLife_2", "test", "Test");
 
 				p1 = new Pipeline(pl, "Ping");
 				p2 = new Pipeline(pl, "Pong");
@@ -40,7 +45,7 @@
 				(*p2) << (*t) << Process;
 
 			timer = new QTimer;
-			timer->setInterval(100);
+			timer->setInterval(500);
 			connect(timer, SIGNAL(timeout()),this, SLOT(compute()));
 			timer->start();
 		}
@@ -87,7 +92,8 @@
 			if(i%2==0)
 			{
 				(*p2) << p1->out(0) << Process;
-				window->giveTexture(&p2->out(0));
+				//window->giveTexture(&p2->out(0));
+				window->giveTexture(&p2->out(1));
 			}
 			else
 			{

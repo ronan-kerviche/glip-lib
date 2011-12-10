@@ -439,7 +439,8 @@
 	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
 	{
 		cleanInput();
-		output.assign(getNumOutputPort(), 0);
+		outputBuffer.assign(getNumOutputPort(), 0);
+                outputBufferPort.assign(getNumOutputPort(), 0);
 
 		build();
 	}
@@ -643,8 +644,13 @@
 			}
 
 			std::cout << "Starting decision loop" << std::endl;
+			bool remaingFilter 	= false;
+			bool stuck 		= true;
 			do
 			{
+				remaingFilter 	= false;
+				stuck 		= true;
+
 				// Put the available filters in options
 				std::cout << "    Options list" << std::endl;
 				for(int id=0; id<availabilty.size(); id++)
@@ -654,10 +660,20 @@
 						std::cout << "        adding filter " << id << " to the option list" << std::endl;
 						availabilty[id] = -1;
 						options.push_back(id);
+						stuck = false;
 					}
 					else
-						std::cout << "        discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
+					{
+						if(availabilty[id]>0)
+						{
+							std::cout << "        discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
+							remaingFilter = true;
+						}
+					}
 				}
+
+				if(stuck && remaingFilter)
+					throw Exception("Pipeline::build - Error : Building routine is stuck probably because of missing connection", __FILE__, __LINE__);
 
 				std::cout << "    Best Filter" << std::endl;
 				// Search the best next filter in 'options'
@@ -675,7 +691,8 @@
 						for(TableBuffer::iterator it2=buffers.begin(); it2!=buffers.end() && !alreadyExist; it2++)
 						{
 							if((*it2)!=NULL)
-								if((*(*it2))==(*filters[*it])) // Same texture format between the FBO and the target filter
+								// If same texture format between the FBO and the target filter :
+								if((*(*it2))==(*filters[*it]) && (*it2)->getAttachmentCount()==filters[*it]->getNumOutputPort())
 									alreadyExist = true;
 						}
 
@@ -703,7 +720,7 @@
 				options.erase(bestIt);
 
 				// Create the FBO :
-				buffers[best] = new HdlFBO(*filters[best]);
+				buffers[best] = new HdlFBO(*filters[best], filters[best]->getNumOutputPort());
 				std::cout << "Creating : " << (*buffers[best])[0] << std::endl;
 
 				// Save the corresponding action in the action list :
@@ -740,8 +757,8 @@
 						it--;
 					}
 				}
-
-			} while(!options.empty());
+			}
+			while( remaingFilter );
 
 			std::cout << "End decision loop" << std::endl;
 
@@ -751,11 +768,15 @@
 					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 			// Add the coordinates of the output buffers :
-			output.assign(getNumOutputPort(), 0);
+			outputBuffer.assign(getNumOutputPort(), 0);
+			outputBufferPort.assign(getNumOutputPort(), 0);
 			for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 			{
 				if((*it).idIn==THIS_PIPELINE)
-					output[(*it).portOut] = (*it).idOut;
+				{
+					outputBuffer[(*it).portIn] 	= (*it).idOut;
+					outputBufferPort[(*it).portIn] 	= (*it).portOut;
+				}
 			}
 
 			// Print the final layout :
@@ -831,13 +852,15 @@
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-		return *((*buffers[output[i]])[i]);
+		int bufferID 		= outputBuffer[i];
+		int bufferPortID 	= outputBufferPort[i];
+		return *((*buffers[bufferID])[bufferPortID]);
 	}
 
 	HdlTexture& Pipeline::out(const std::string& portName)
 	{
 		int index = getInputPortID(portName);
-		return *((*buffers[output[index]])[index]);
+		return out(index);
 	}
 
 	Filter& Pipeline::operator[](const std::string& name)

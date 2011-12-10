@@ -57,7 +57,7 @@ namespace Glip
                     void removeFromList(GLenum attach);*/
             public :
                 // Tools
-                    HdlFBO(const __ReadOnly_HdlTextureFormat& f);
+                    HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget = 1);
                     ~HdlFBO(void);
 
                     int         addTarget(void);

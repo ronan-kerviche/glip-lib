@@ -34,13 +34,14 @@ using namespace Glip::CoreGL;
 
      \param format           Format of the textures attached to the rendering point.
     **/
-    HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f) : __ReadOnly_HdlTextureFormat(f)
+    HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget) : __ReadOnly_HdlTextureFormat(f)
     {
         HandleOpenGL::init();
 
         glGenFramebuffersEXT(1, &fboID);
 
-        addTarget(); // At least one!
+	for(int i=0; i<numTarget; i++) // At least one!
+		addTarget();
 
         // check FBO status
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind

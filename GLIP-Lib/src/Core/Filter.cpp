@@ -136,7 +136,7 @@
 			for(int i=0; i<getNumInputPort(); i++)
 				program->modifyVar(getInputPortName(i), HdlProgram::SHADER_VAR, i);
 
-			for(int i=0; i<getNumInputPort(); i++)
+			for(int i=0; i<getNumOutputPort(); i++)
 				program->setFragmentLocation(getOutputPortName(i), i);
 
 			program->stopProgram();
@@ -160,9 +160,6 @@
 		// Set up the data on the program :
 		for(int i=0; i<getNumInputPort(); i++)
 			program->setFragmentLocation(getInputPortName(i), i);
-
-		if(getNumOutputPort()>1) // more than 1 target (non-classic)
-			std::cerr << __HERE__ <<  "Filter::Filter - INTERNAL ERROR, the multi-target rendering is not effective yet" << std::endl;
 	}
 
 	Filter::~Filter(void)
