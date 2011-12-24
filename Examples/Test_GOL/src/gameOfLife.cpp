@@ -8,14 +8,13 @@
 	{
 		try
 		{
-			window = new WindowRenderer(500,w, h);
+			window = new WindowRenderer(w, h);
 
 			// Create the pipeline :
 				HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 				ShaderSource src("./Filters/game.glsl");
 
 				FilterLayout fl("GameOfLife_Layout", fmt, src);
-				std::cout << ">>>>>>> Num output : " << fl.getNumOutputPort() << std::endl;
 
 				PipelineLayout pl("MainPipeline_2Steps");
 				pl.addInput("Input");
@@ -37,8 +36,8 @@
 				fmt.setTWrapping(GL_REPEAT);
 				t = new HdlTexture(fmt);
 
-				randomTexture(0.6);
-				window->giveTexture(t);
+				randomTexture(0.3);
+				(*window) << (*t);
 
 			// Do the first pass :
 				(*p1) << (*t) << Process;
@@ -67,7 +66,7 @@
 		for(int i=0; i<3*w*h; i++)
 		{
 			float a = static_cast<float>(rand())/static_cast<float>(RAND_MAX);
-			tmp[i] = 255*(a>alpha);
+			tmp[i] = 255*(a<alpha);
 		}
 
 		t->write(tmp);
@@ -82,7 +81,7 @@
 		{
 			std::cout << "> Reset" << std::endl;
 			//reset :
-			randomTexture(0.6);
+			randomTexture(0.3);
 			(*p1) << (*t) << Process;
 			(*p2) << (*t) << Process;
 			i = 0;
@@ -92,13 +91,13 @@
 			if(i%2==0)
 			{
 				(*p2) << p1->out(0) << Process;
-				//window->giveTexture(&p2->out(0));
-				window->giveTexture(&p2->out(1));
+				if(i%4!=0) 	(*window) << p2->out(0);
+				else		(*window) << p2->out(1);
 			}
 			else
 			{
 				(*p1) << p2->out(0) << Process;
-				window->giveTexture(&p1->out(0));
+				(*window) <<  p1->out(0);
 			}
 		}
 

@@ -81,6 +81,7 @@
 		<Unit filename="../GLIP-Lib/include/Core/wglew.h" />
 		<Unit filename="../GLIP-Lib/include/GLIPLib.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/HdlCamera.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/LayoutLoader.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/Modules.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/TextureReader.hpp" />
 		<Unit filename="../GLIP-Lib/include/devDebugTools.hpp" />
@@ -102,6 +103,7 @@
 		<Unit filename="../GLIP-Lib/src/Core/glew.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../GLIP-Lib/src/Modules/LayoutLoader.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.cpp" />
 		<Extensions>
 			<code_completion />

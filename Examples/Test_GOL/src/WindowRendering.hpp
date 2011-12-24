@@ -17,17 +17,14 @@
 
 		private :
 			double vp_x, vp_y, vp_w, vp_h, fmtImg;
-			QTimer *timer;
 			HdlVBO *vbo;
 
 		public :
-			WindowRenderer(int intervalMs, int w, int h, double _fmtImg=-1);
+			WindowRenderer(int w, int h, double _fmtImg=-1);
 			~WindowRenderer(void);
 
 			void resizeGL(int width, int height);
-
-		private slots :
-			void draw(void);
+			void process(HdlTexture& t);
 	};
 
 #endif

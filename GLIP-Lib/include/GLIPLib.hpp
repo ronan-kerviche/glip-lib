@@ -56,8 +56,6 @@
 			#include "Core/Devices.hpp"
 
 			// Modules
-			//#define GLIP_LOAD_ALL_MODULES
-			#define GLIP_DONT_LOAD_ANY_MODULE
 			#include "Modules/Modules.hpp"
 	#endif
 

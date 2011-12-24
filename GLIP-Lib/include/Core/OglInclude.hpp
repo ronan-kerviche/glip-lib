@@ -64,6 +64,7 @@ namespace Glip
             bool glErrors(bool verbose = true, bool quietSituations = true);
             void glDebug(void);
             std::string glParamName(GLenum param);
+            GLenum gl_from_string(const std::string& name);
     }
 }
 

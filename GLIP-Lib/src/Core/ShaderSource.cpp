@@ -77,7 +77,7 @@
 
 		// Did it fail?
 		if(!file.is_open())
-			throw Exception("ShaderSource::ShaderSource - File isn't open for reading!", __FILE__, __LINE__);
+			throw Exception("ShaderSource::ShaderSource - Failed to open file : " + src, __FILE__, __LINE__);
 
 		source.clear();
 		sourceName = src;

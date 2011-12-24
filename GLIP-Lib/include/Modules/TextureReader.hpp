@@ -23,7 +23,7 @@
 	*/
 
 	// Include :
-	#include "OglInclude.hpp"
+/*	#include "OglInclude.hpp"
 	#include "HdlTexture.hpp"
 	#include "Devices.hpp"
 
@@ -56,6 +56,7 @@
 			__HdlTextureFormat_OnlyData& getFormat(void);
 			bool read(int i, GLint level, GLenum format, GLenum type, GLvoid* img);
 	};
+*/
 
 #endif
 

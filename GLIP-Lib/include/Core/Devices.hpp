@@ -6,59 +6,54 @@
 
 namespace Glip
 {
-    namespace CoreGL
-    {
-        class HdlTexture;
-    }
+	namespace CoreGL
+	{
+		class HdlTexture;
+	}
 
-    using namespace CoreGL;
+	using namespace CoreGL;
 
-    namespace CorePipeline
-    {
-        /** TODO :
-            Add multiple frame cyclic buffer
-        **/
-        // Objects
-            class InputDevice : public ObjectName
-            {
-                private :
-                    // Data
-                        HdlTexture* 	texture;
-                        bool        	newImage;
-                        int         	imagesMissed;
-                protected :
-                    // Tools
-                        InputDevice(const std::string& name);
+	namespace CorePipeline
+	{
+		/** TODO :
+		Add multiple frame cyclic buffer
+		**/
 
-                        void        	declareNewImage(void);
-                        HdlTexture* 	ownerTexturePtr(void);
-                public :
-                    // Tools
-                        ~InputDevice(void);
-                        bool        	isNewImage(void);
-                        int         	getMissedImagesCount(void);
-                        HdlTexture* 	texturePtr(void);
-            };
+		// Objects
+		class InputDevice : public ObjectName
+		{
+			private :
+				// Data
+				HdlTexture* 	t;
+				bool        	newImage;
+				int         	imagesMissed;
+			protected :
+				// Tools
+				InputDevice(const std::string& name);
 
-            class OutputDevice : public ObjectName
-            {
-                private :
-                    // Data
-                        HdlTexture* 	texture;
-                        bool       	newImage;
-                        int         	imagesMissed;
-                protected :
-                    // Tools
-                        OutputDevice(const std::string& name);
-                        bool        	isNewImage(void);
-                        HdlTexture* 	readTexture(void);
-                public :
-                    // Tools
-                        void        	giveTexture(HdlTexture*);
-                        void		forgetLastTexture(void);
-                        int         	getMissedImagesCount(void);
-            };
-    }
+				void        	declareNewImage(void);
+			public :
+				// Tools
+				~InputDevice(void);
+				bool        	isNewImage(void);
+				int         	getMissedImagesCount(void);
+				HdlTexture& 	texture(void);
+		};
+
+		class OutputDevice : public ObjectName
+		{
+			private :
+
+			protected :
+				// Tools
+				OutputDevice(const std::string& name);
+
+				virtual void process(HdlTexture& t) = 0;
+			public :
+				// Tools
+				OutputDevice& operator<<(HdlTexture& t);
+		};
+	}
 }
 
 #endif // DEVICES_HPP_INCLUDED

@@ -17,10 +17,10 @@
 #include "TextureReader.hpp"
 #include "Exception.hpp"
 
-	TextureReader::TextureReader(const std::string& name) : OutputDevice(name)
-	{}
+	/*TextureReader::TextureReader(const std::string& name) : OutputDevice(name)
+	{}*/
 
-	__HdlTextureFormat_OnlyData& TextureReader::getFormat(void)
+	/*__HdlTextureFormat_OnlyData& TextureReader::getFormat(void)
 	{
 		if(readTexture()!=NULL)
 			return reinterpret_cast<__HdlTextureFormat_OnlyData&>(*readTexture());
@@ -39,4 +39,4 @@
 		}
 		else
 			throw Exception("TextureReader::read - no texture bound to " + getNameExtended(), __FILE__, __LINE__);
-	}
+	}*/

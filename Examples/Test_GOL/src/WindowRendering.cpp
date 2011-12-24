@@ -3,7 +3,7 @@
 	#include "WindowRendering.hpp"
 
 // Class
-	WindowRenderer::WindowRenderer(int intervalMs, int w, int h, double _fmtImg) : QGLWidget(), OutputDevice("Display")
+	WindowRenderer::WindowRenderer(int w, int h, double _fmtImg) : QGLWidget(), OutputDevice("Display")
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -28,11 +28,6 @@
 		}
 
 		show();
-
-		timer = new QTimer;
-		timer->setInterval(intervalMs);
-			connect(timer, SIGNAL(timeout()),this, SLOT(draw()));
-		timer->start();
 	}
 
 	WindowRenderer::~WindowRenderer(void)
@@ -44,23 +39,16 @@
 	void WindowRenderer::resizeGL(int width, int height)
 	{
 		glViewport(0, 0, width, height);
-		giveTexture(readTexture()); // Dirty!!!
-		draw();
 	}
 
-	void WindowRenderer::draw(void)
+	void WindowRenderer::process(HdlTexture& t)
 	{
-		if(isNewImage())
-		{
-			std::cout << "Rendering..." << std::endl;
-
-			glLoadIdentity();
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glScalef(2.0,2.0,1.0);
-			HdlTexture* img = readTexture();
-			img->bind();
-			vbo->draw();
-			swapBuffers();
-		}
+		std::cout << "Rendering..." << std::endl;
+		glLoadIdentity();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glScalef(2.0,2.0,1.0);
+		t.bind();
+		vbo->draw();
+		swapBuffers();
 	}
 
