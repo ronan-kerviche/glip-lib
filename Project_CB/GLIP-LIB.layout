@@ -2,13 +2,13 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../GLIP-Lib/include/Core/Component.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="0" topLine="4" />
+		<Cursor position="0" topLine="19" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="370" topLine="7" />
+		<Cursor position="276" topLine="7" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Filter.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="417" topLine="36" />
+		<Cursor position="1960" topLine="42" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlFBO.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="2982" topLine="30" />
@@ -20,7 +20,7 @@
 		<Cursor position="0" topLine="34" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlTexture.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="7021" topLine="91" />
+		<Cursor position="4465" topLine="65" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlVBO.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="2340" topLine="18" />
@@ -29,22 +29,28 @@
 		<Cursor position="0" topLine="8" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/OglInclude.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2875" topLine="26" />
+		<Cursor position="3037" topLine="12" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="2">
-		<Cursor position="6228" topLine="97" />
+		<Cursor position="5378" topLine="88" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/ShaderSource.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="7536" topLine="179" />
+		<Cursor position="7536" topLine="200" />
 	</File>
 	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2465" topLine="0" />
+		<Cursor position="2727" topLine="12" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/HdlCamera.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="2275" topLine="0" />
 	</File>
+	<File name="../GLIP-Lib/include/Modules/LayoutLoader.hpp" open="1" top="0" tabpos="4">
+		<Cursor position="2755" topLine="34" />
+	</File>
+	<File name="../GLIP-Lib/include/Modules/Modules.hpp" open="0" top="0" tabpos="0">
+		<Cursor position="1925" topLine="0" />
+	</File>
 	<File name="../GLIP-Lib/include/Modules/TextureReader.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2241" topLine="8" />
+		<Cursor position="2311" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/devDebugTools.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="349" topLine="0" />
@@ -53,7 +59,7 @@
 		<Cursor position="626" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Filter.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="6137" topLine="135" />
+		<Cursor position="6137" topLine="3" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlFBO.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="2435" topLine="123" />
@@ -76,19 +82,19 @@
 	<File name="../GLIP-Lib/src/Core/HdlVBO.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="6895" topLine="131" />
 	</File>
-	<File name="../GLIP-Lib/src/Core/NamingLayout.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="0" topLine="89" />
-	</File>
 	<File name="../GLIP-Lib/src/Core/OglTools.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2312" topLine="4" />
+		<Cursor position="8378" topLine="217" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Pipeline.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="29285" topLine="853" />
+		<Cursor position="1189" topLine="12" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/ShaderSource.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2615" topLine="310" />
+		<Cursor position="2186" topLine="45" />
+	</File>
+	<File name="../GLIP-Lib/src/Modules/LayoutLoader.cpp" open="1" top="0" tabpos="5">
+		<Cursor position="2526" topLine="30" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/TextureReader.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2532" topLine="0" />
+		<Cursor position="1879" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

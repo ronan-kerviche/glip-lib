@@ -1,0 +1,18 @@
+TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+SHADER_SOURCE:shader(./Filters/game.glsl);
+FILTER_LAYOUT:layoutGOL(format,shader);
+
+PIPELINE_MAIN:GameOfLife()
+{
+	INPUT_PORTS(Input);
+	OUTPUT_PORTS(Output,Test);
+
+	FILTER_INSTANCE:inst_GOL1(layoutGOL);
+	FILTER_INSTANCE:inst_GOL2(layoutGOL);
+
+	CONNECTION(THIS,Input,inst_GOL1,inText);
+	CONNECTION(inst_GOL1,outText,inst_GOL2,inText);
+	CONNECTION(inst_GOL2,outText,THIS,Output);
+	CONNECTION(inst_GOL2,test,THIS,Test);
+}
