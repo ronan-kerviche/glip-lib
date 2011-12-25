@@ -13,6 +13,7 @@
 		using namespace Glip;
 		using namespace Glip::CoreGL;
 		using namespace Glip::CorePipeline;
+		using namespace Glip::Modules;
 
 	// Object
 		class GameOfLife : public QApplication

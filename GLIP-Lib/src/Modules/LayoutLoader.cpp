@@ -43,7 +43,13 @@
 	// Functions :
 	LayoutLoader::LayoutLoader(void)
 	{
-		clean();
+		entryType.clear();
+		entryName.clear();
+		entryCode.clear();
+		formatList.clear();
+		sourceList.clear();
+		filterList.clear();
+		pipelineList.clear();
 	}
 
 	LayoutLoader::~LayoutLoader(void)
@@ -56,6 +62,22 @@
 		entryType.clear();
 		entryName.clear();
 		entryCode.clear();
+
+		for(std::map<std::string,HdlTextureFormat*>::iterator it = formatList.begin(); it!=formatList.end(); it++)
+			delete (*it).second;
+		formatList.clear();
+
+		for(std::map<std::string,ShaderSource*>::iterator it = sourceList.begin(); it!=sourceList.end(); it++)
+			delete (*it).second;
+		sourceList.clear();
+
+		for(std::map<std::string,FilterLayout*>::iterator it = filterList.begin(); it!=filterList.end(); it++)
+			delete (*it).second;
+		filterList.clear();
+
+		for(std::map<std::string,PipelineLayout*>::iterator it = pipelineList.begin(); it!=pipelineList.end(); it++)
+			delete (*it).second;
+		pipelineList.clear();
 	}
 
 	LoaderKeyword LayoutLoader::getKeyword(const std::string& str)
@@ -442,6 +464,7 @@
 	{
 		// Doesn't check for cylclic inclusion!
 
+		// doesn't include previously loaded items :
 		clean();
 		updateEntriesLists(source);
 

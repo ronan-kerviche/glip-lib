@@ -9,27 +9,37 @@
 		try
 		{
 			window = new WindowRenderer(w, h);
+			HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 
 			// Create the pipeline :
-				HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-				ShaderSource src("./Filters/game.glsl");
+				#define __LOAD_FROM_FILE__
+				#ifndef __LOAD_FROM_FILE__
+					ShaderSource src("./Filters/game.glsl");
 
-				FilterLayout fl("GameOfLife_Layout", fmt, src);
+					FilterLayout fl("GameOfLife_Layout", fmt, src);
 
-				PipelineLayout pl("MainPipeline_2Steps");
-				pl.addInput("Input");
-				pl.addOutput("Output");
-				pl.addOutput("Test");
-				pl.add(fl, "GameOfLife_1");
-				pl.add(fl, "GameOfLife_2");
+					PipelineLayout pl("MainPipeline_2Steps");
+					pl.addInput("Input");
+					pl.addOutput("Output");
+					pl.addOutput("Test");
+					pl.add(fl, "GameOfLife_1");
+					pl.add(fl, "GameOfLife_2");
 
-				pl.connectToInput("Input", "GameOfLife_1", "inText");
-				pl.connect("GameOfLife_1", "outText", "GameOfLife_2", "inText");
-				pl.connectToOutput("GameOfLife_2", "outText", "Output");
-				pl.connectToOutput("GameOfLife_2", "test", "Test");
+					pl.connectToInput("Input", "GameOfLife_1", "inText");
+					pl.connect("GameOfLife_1", "outText", "GameOfLife_2", "inText");
+					pl.connectToOutput("GameOfLife_2", "outText", "Output");
+					pl.connectToOutput("GameOfLife_2", "test", "Test");
 
-				p1 = new Pipeline(pl, "Ping");
-				p2 = new Pipeline(pl, "Pong");
+					p1 = new Pipeline(pl, "Ping");
+					p2 = new Pipeline(pl, "Pong");
+				#else
+					// Load the sme settings but from a file :
+					LayoutLoader loader;
+					PipelineLayout* model = loader("./Filters/pipelineGOL.ppl");
+					p1 = new Pipeline(*model, "Ping");
+					p2 = new Pipeline(*model, "Pong");
+					delete model;
+				#endif
 
 			// Create a random starting point :
 				fmt.setSWrapping(GL_REPEAT); // pac-man repetition
