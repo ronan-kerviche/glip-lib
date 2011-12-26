@@ -1,3 +1,8 @@
+/*
+Sample for the PipelineLayout description file. The effect itself might be built with a single shader,
+but I am more into testing for the moment.
+*/
+
 TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
 
 SHADER_SOURCE:ghost()
