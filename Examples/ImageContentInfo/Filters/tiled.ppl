@@ -1,0 +1,63 @@
+/*
+Sample for the PipelineLayout description file. The effect itself might be built with a single shader,
+but I am more into testing for the moment.
+*/
+
+TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
+TEXTURE_FORMAT:tiled(19,12,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+INCLUDE_FILE(./Filters/ghost.ppl);
+
+SHADER_SOURCE:natural()
+{
+	#version 130
+
+	uniform sampler2D 	inText;
+	out     vec4 		outText;
+
+	void main()
+	{
+		// Compute new coordinates :
+		vec4 col = textureLod(inText,gl_TexCoord[0].st,0);
+
+		outText = col;
+	}
+}
+
+SHADER_SOURCE:diff()
+{
+	#version 130
+
+	const float		alpha = 0.2;
+	uniform sampler2D 	regular;
+	uniform sampler2D 	tiled;
+	out     vec4 		outText;
+
+	void main()
+	{
+		// Compute new coordinates :
+		vec4 colA = textureLod(regular,gl_TexCoord[0].st, 0);
+		vec4 colB = textureLod(tiled,gl_TexCoord[0].st, 0);
+
+		outText = colA*(1-alpha) - colB*alpha;
+		outText.a = 1.0;
+	}
+}
+
+FILTER_LAYOUT:fNatural(tiled,natural);
+FILTER_LAYOUT:fDiff(format,diff);
+
+PIPELINE_MAIN:pMainTiled()
+{
+	INPUT_PORTS(i0);
+	OUTPUT_PORTS(o0);
+	FILTER_INSTANCE:iNatural(fNatural);
+	FILTER_INSTANCE:iDiff(fDiff);
+	PIPELINE_INSTANCE:iGhost(pMainGhost);
+	CONNECTION(THIS,i0,iGhost,i0);
+	CONNECTION(THIS,i0,iNatural,inText);
+	CONNECTION(iNatural,outText,iDiff,tiled);
+	CONNECTION(iGhost,o0,iDiff,regular);
+	CONNECTION(iDiff,outText,THIS,o0);
+	// See the tiled version : CONNECTION(iNatural,outText,THIS,o0);
+}

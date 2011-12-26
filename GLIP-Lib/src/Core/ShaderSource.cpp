@@ -287,7 +287,7 @@
             bool in  = false,
                  out = false;
             // Find all descriptors :
-            if(removeKeyword(*it, GLSL_KW_in)>0 || (removeKeyword(*it, GLSL_KW_uniform)>0 && removeAnyOfSampler(*it)))
+            if(removeKeyword(*it, GLSL_KW_in)>0 || (removeKeyword(*it, GLSL_KW_uniform)>0 && removeAnyOfSampler(*it)>0))
                 in = true;
             if(removeKeyword(*it, GLSL_KW_out)>0)
                 out = true;
@@ -312,12 +312,12 @@
     }
 
     /**
-     \fn    void ShaderSource::ErrorLogFile(std::string log)
+     \fn    void ShaderSource::rrrorLogFile(std::string log)
      \brief Add some source code information to the output shader compilation log
 
      \param log Input log to be mixed with source code.
     **/
-    std::string ShaderSource::ErrorLog(std::string log)
+    std::string ShaderSource::errorLog(std::string log)
     {
         std::stringstream str("");
         std::istringstream iss(log);

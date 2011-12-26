@@ -227,7 +227,7 @@ namespace Glip
                         const std::string& getSource(void)     const;
                         const std::string& getSourceName(void) const;
                         const char*        getSourceCstr(void) const;
-                        std::string        ErrorLog(std::string log);
+                        std::string        errorLog(std::string log);
 
                         const std::vector<std::string>& getInputVars(void);
                         const std::vector<std::string>& getOutputVars(void);

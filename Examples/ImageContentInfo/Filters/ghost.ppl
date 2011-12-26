@@ -22,6 +22,7 @@ SHADER_SOURCE:ghost()
 
 		outText = col/1.3;
 		outText.a = 1.0;
+		outText.g = outText.g/2.0;
 	}
 }
 
@@ -29,6 +30,7 @@ SHADER_SOURCE:sum()
 {
 	#version 130
 
+	const float		alpha = 0.3;
 	uniform sampler2D 	regular;
 	uniform sampler2D 	ghost;
 	out     vec4 		outText;
@@ -39,7 +41,7 @@ SHADER_SOURCE:sum()
 		vec4 colA = textureLod(regular,gl_TexCoord[0].st, 0);
 		vec4 colB = textureLod(ghost,gl_TexCoord[0].st, 0);
 
-		outText = colA/2 + colB/2;
+		outText = colA*(1-alpha) + colB*alpha;
 		outText.a = 1.0;
 	}
 }
@@ -47,7 +49,7 @@ SHADER_SOURCE:sum()
 FILTER_LAYOUT:fGhost(format,ghost);
 FILTER_LAYOUT:fSum(format,sum);
 
-PIPELINE_MAIN:pMain()
+PIPELINE_MAIN:pMainGhost()
 {
 	INPUT_PORTS(i0);
 	OUTPUT_PORTS(o0);

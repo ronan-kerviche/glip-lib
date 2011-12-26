@@ -49,7 +49,7 @@ namespace Glip
             {
                 public :
                     // Constants
-                        struct Connection
+                        struct Connection // Connection goes from idOut::portOut to idIn::portIn
                         {
                             int idIn;
                             int portIn;

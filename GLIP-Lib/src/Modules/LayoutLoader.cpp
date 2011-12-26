@@ -576,7 +576,7 @@
 
 					// Creqte new loader :
 					LayoutLoader l;
-					l.updateEntriesLists(arg[0]);
+					l.updateEntriesLists(arg[0], true);
 
 					// append its lists to the EntryList :
 					entryType.insert(entryType.end(), l.entryType.begin(), l.entryType.end());

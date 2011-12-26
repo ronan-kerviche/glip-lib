@@ -25,89 +25,88 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include "Exception.hpp"
 #include "HdlShader.hpp"
 #include "../include/GLIPLib.hpp"
 
 using namespace Glip::CoreGL;
 
 // HdlShader - Functions
-    /**
-     \fn    HdlShader::HdlShader(GLenum _type, ShaderSource& src)
-     \brief HdlShader constructor.
+	/**
+	\fn    HdlShader::HdlShader(GLenum _type, ShaderSource& src)
+	\brief HdlShader constructor.
 
-     \param _type The kind of shader it will be : either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
-     \param src   The source code used.
-    **/
-    HdlShader::HdlShader(GLenum _type, ShaderSource& src)
-    {
-        HandleOpenGL::init();
+	\param _type The kind of shader it will be : either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
+	\param src   The source code used.
+	**/
+	HdlShader::HdlShader(GLenum _type, ShaderSource& src) : ShaderSource(src)
+	{
+		HandleOpenGL::init();
 
-        type = _type; //either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
+		type = _type; //either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
 
-        // create the shader
-        shader = glCreateShader(type);
+		// create the shader
+		shader = glCreateShader(type);
 
-        if(shader==0)
-        {
-            std::cerr << "HdlShader::HdlShader - Unable to create the shader" << std::endl;
-            glDeleteShader(shader);
-            return ;
-        }
+		if(shader==0)
+		{
+			throw Exception("HdlShader::HdlShader - Unable to create the shader", __FILE__, __LINE__);
+		}
 
-        // send the source code
-        const char* data = src.getSourceCstr();
-        glShaderSource(shader, 1, (const GLchar**)&data, NULL);
-         // compile the shader source code
-        glCompileShader(shader);
+		// send the source code
+		const char* data = getSourceCstr();
+		glShaderSource(shader, 1, (const GLchar**)&data, NULL);
+		// compile the shader source code
+		glCompileShader(shader);
 
-        // check the compilation
-        GLint compile_status = GL_TRUE;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
+		// check the compilation
+		GLint compile_status = GL_TRUE;
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
 
-        if(compile_status != GL_TRUE)
-        {
-            std::cerr << "ERROR - compiling shader : " << src.getSourceName() << std::endl;
+		if(compile_status != GL_TRUE)
+		{
+			GLint logSize;
 
-            GLint logSize;
+			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
 
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
+			char *log = new char[logSize]; // +1 <=> '/0'
 
-            char *log = new char[logSize]; // +1 <=> '/0'
+			glGetShaderInfoLog(shader, logSize, &logSize, log);
 
-            glGetShaderInfoLog(shader, logSize, &logSize, log);
+			std::string err = src.errorLog(std::string(log));
 
-            //TODO : src.ErrorLogFile(std::string(log));
+			delete[] log;
 
-            delete[] log;
-        }
-    }
+			throw Exception("HdlShader::HdlShader - error while compiling the shader : \n" + err, __FILE__, __LINE__);
+		}
+	}
 
-    /**
-     \fn    GLuint HdlShader::getShaderID(void)
-     \brief Returns the ID of the shader for OpenGL.
+	/**
+	\fn    GLuint HdlShader::getShaderID(void)
+	\brief Returns the ID of the shader for OpenGL.
 
-     \return The ID.
-    **/
-    GLuint HdlShader::getShaderID(void) const
-    {
-        return shader;
-    }
+	\return The ID.
+	**/
+	GLuint HdlShader::getShaderID(void) const
+	{
+		return shader;
+	}
 
-    /**
-     \fn    GLenum HdlShader::getType(void)
-     \brief Returns the kind of the shader for OpenGL (either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER).
+	/**
+	\fn    GLenum HdlShader::getType(void)
+	\brief Returns the kind of the shader for OpenGL (either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER).
 
-     \return The Kind.
-    **/
-    GLenum HdlShader::getType(void) const
-    {
-        return type;
-    }
+	\return The Kind.
+	**/
+	GLenum HdlShader::getType(void) const
+	{
+		return type;
+	}
 
-    HdlShader::~HdlShader(void)
-    {
-        glDeleteShader(shader);
-    }
+	HdlShader::~HdlShader(void)
+	{
+		glDeleteShader(shader);
+	}
 
 
 // HdlProgram - Functions
@@ -382,11 +381,11 @@ using namespace Glip::CoreGL;
     }
 
 // Static tools :
-    /**
-     \fn    void stopProgram(void)
-     \brief Stop using a program
-    **/
-    void HdlProgram::stopProgram(void)
-    {
-        glUseProgram(0);
-    }
+	/**
+	\fn    void stopProgram(void)
+	\brief Stop using a program
+	**/
+	void HdlProgram::stopProgram(void)
+	{
+		glUseProgram(0);
+	}

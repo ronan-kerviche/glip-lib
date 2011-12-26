@@ -22,7 +22,7 @@
 		layout->addWidget(chImg);
 		layout->addWidget(chPpl);
 		layout->addWidget(window);
-		setGeometry(100, 100, 640, 600);
+		setGeometry(1000, 100, 640, 600);
 		show();
 
 		QObject::connect(chImg, 	SIGNAL(released()), this, SLOT(loadImage()));
@@ -98,7 +98,6 @@
 			{
 				success = false;
 
-				// Open error window with the message :
 				QMessageBox::information(this, tr("Error while loading the pipeline : "), e.what());
 				std::cout << "Error while building the pipeline : " << e.what() << std::endl;
 			}
@@ -111,8 +110,25 @@
 					pipeline = NULL;
 				}
 
-				pipeline = new Pipeline(*model, "LoadedPipeline");
-				requestUpdate();
+				try
+				{
+					pipeline = new Pipeline(*model, "LoadedPipeline");
+				}
+				catch(std::exception& e)
+				{
+					success = false;
+
+					QMessageBox::information(this, tr("Error while creating the pipeline : "), e.what());
+					std::cout << "Error while creating the pipeline : " << e.what() << std::endl;
+
+					delete pipeline;
+					pipeline = NULL;
+				}
+
+				if(success)
+					requestUpdate();
+
+				delete model;
 			}
 		}
 	}
@@ -131,7 +147,6 @@
 			{
 				success = false;
 
-				// Open error window with the message :
 				QMessageBox::information(this, tr("Error while computing : "), e.what());
 				std::cout << "Error while computing : " << e.what() << std::endl;
 			}
