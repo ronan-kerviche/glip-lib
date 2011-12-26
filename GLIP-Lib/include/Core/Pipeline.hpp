@@ -146,8 +146,7 @@ namespace Glip
                 public :
                     // Tools
                         Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
-                        //Pipeline(const std::string& filename); TODO
-                        //~Pipeline(void);
+                        ~Pipeline(void);
 
                         Pipeline& operator<<(HdlTexture&);
                         Pipeline& operator<<(ActionType);

@@ -445,6 +445,31 @@
 		build();
 	}
 
+	Pipeline::~Pipeline(void)
+	{
+		cleanInput();
+
+		for(std::vector<TableIndex*>::iterator it = listOfArgBuffersOutput.begin(); it!=listOfArgBuffersOutput.end(); it++)
+			delete (*it);
+		listOfArgBuffersOutput.clear();
+
+		for(std::vector<TableIndex*>::iterator it = listOfArgBuffers.begin(); it!=listOfArgBuffers.end(); it++)
+			delete (*it);
+		listOfArgBuffers.clear();
+
+		actionFilter.clear();
+		outputBuffer.clear();
+		outputBufferPort.clear();
+
+		for(TableBuffer::iterator it = buffers.begin(); it!=buffers.end(); it++)
+			delete (*it);
+		buffers.clear();
+
+		for(TableFilter::iterator it = filters.begin(); it!=filters.end(); it++)
+			delete (*it);
+		filters.clear();
+	}
+
 	void Pipeline::cleanInput(void)
 	{
 		input.clear();
