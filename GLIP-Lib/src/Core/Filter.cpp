@@ -24,11 +24,11 @@
 
 // __ReadOnly_FilterLayout
     __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-     : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL)
+     : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), blending(false), clearing(true)
     { }
 
     __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-     : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c)
+     : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), blending(c.blending), clearing(c.clearing)
     {
         if(c.vertexSource!=NULL)
             vertexSource   = new ShaderSource(*c.vertexSource);
@@ -68,7 +68,7 @@
     void __ReadOnly_FilterLayout::disableBlending(void)  	{ blending = false; }
     bool __ReadOnly_FilterLayout::isClearingEnabled(void) 	{ return clearing;  }
     void __ReadOnly_FilterLayout::enableClearing(void)   	{ clearing = true;  }
-    void __ReadOnly_FilterLayout::disableClearing(void)  	{ clearing = false;  }
+    void __ReadOnly_FilterLayout::disableClearing(void)  	{ clearing = false; }
 
 // FilterLayout
     FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
@@ -188,8 +188,6 @@
 
 	void Filter::process(HdlFBO& renderer)
 	{
-		//std::cout << "Processing " << getNameExtended() << std::endl;
-
 		// Prepare the renderer
 			renderer.beginRendering();
 			//std::cout << "Begin rendering 		: "; glErrors(true, false);
@@ -200,6 +198,8 @@
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_ONE, GL_ONE);
 			}
+			else
+				glDisable(GL_BLEND);
 
 			if(isClearingEnabled())
 			{
@@ -237,10 +237,6 @@
 			if(isBlendingEnabled())
 			    glDisable(GL_BLEND);
 
-		// End rendering
-			renderer.endRendering();
-			//std::cout << "End rendering 		: "; glErrors(true, false);
-
 		// Unload
 			for(int i=0; i<getNumInputPort(); i++)
 			{
@@ -248,6 +244,12 @@
 				HdlTexture::unbind(i);
 			}
 			//std::cout << "Unbinding 		: "; glErrors(true, false);
+
+		// End rendering
+			renderer.endRendering();
+			//std::cout << "End rendering 		: "; glErrors(true, false);
+
+
 	}
 
 	HdlProgram& Filter::operator->(void)

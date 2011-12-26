@@ -61,6 +61,7 @@ namespace Glip
 				std::map<std::string,PipelineLayout*> 		pipelineList;
 
 				LoaderKeyword 			getKeyword(const std::string& str);
+				void				removeCommentary(std::string& source, std::string start, std::string end);
 				std::string 			getSource(const std::string& sourceName);
 				std::vector<std::string> 	getArguments(const std::string& code);
 				std::string 			getBody(const std::string& code);

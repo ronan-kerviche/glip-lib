@@ -1,0 +1,57 @@
+TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
+
+SHADER_SOURCE:ghost()
+{
+	#version 130
+
+	uniform sampler2D 	inText;
+	out     vec4 		outText;
+
+	void main()
+	{
+		// Compute new coordinates :
+		vec2 pos = gl_TexCoord[0].st-vec2(0.5,0.5);
+		vec2 new_pos = length(pos)*0.95*normalize(pos);
+		new_pos = new_pos+vec2(0.5,0.5);
+		vec4 col = textureLod(inText,new_pos, 0);
+
+		outText = col/1.3;
+		outText.a = 1.0;
+	}
+}
+
+SHADER_SOURCE:sum()
+{
+	#version 130
+
+	uniform sampler2D 	regular;
+	uniform sampler2D 	ghost;
+	out     vec4 		outText;
+
+	void main()
+	{
+		// Compute new coordinates :
+		vec4 colA = textureLod(regular,gl_TexCoord[0].st, 0);
+		vec4 colB = textureLod(ghost,gl_TexCoord[0].st, 0);
+
+		outText = colA/2 + colB/2;
+		outText.a = 1.0;
+	}
+}
+
+FILTER_LAYOUT:fGhost(format,ghost);
+FILTER_LAYOUT:fSum(format,sum);
+
+PIPELINE_MAIN:pMain()
+{
+	INPUT_PORTS(i0);
+	OUTPUT_PORTS(o0);
+	FILTER_INSTANCE:iGhost(fGhost);
+	FILTER_INSTANCE:iSum(fSum);
+	CONNECTION(THIS,i0,iGhost,inText);
+	CONNECTION(iGhost,outText,iSum,ghost);
+	CONNECTION(THIS,i0,iSum,regular);
+	CONNECTION(iSum,outText,THIS,o0);
+}
+
+

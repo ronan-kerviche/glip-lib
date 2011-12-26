@@ -51,7 +51,7 @@ namespace Glip
                         int    getChannelSize(GLenum _depth);
                         GLenum getAliasMode(GLenum _mode);
                 public :
-                    __ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
+                    __ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter); // in protected?
                     __ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
                     ~__ReadOnly_HdlTextureFormat(void);
 
