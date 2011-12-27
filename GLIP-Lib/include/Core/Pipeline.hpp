@@ -69,7 +69,6 @@ namespace Glip
                         __ReadOnly_PipelineLayout(const std::string& type);
                         int                    	getElementID(int i);
                         void                   	setElementID(int i, int ID);
-                        Connection              getConnection(int i);
                         std::vector<Connection> getConnectionDestinations(int id, int p);
                         Connection              getConnectionSource(int id, int p);
                     // Friends
@@ -80,8 +79,8 @@ namespace Glip
                         //~__ReadOnly_PipelineLayout(void);
 
                         void 				checkElement(int i) const;
-                        int  				getNumElements(void);
-                        int  				getNumConnections(void);
+                        int  				getNumElements(void) const;
+                        int  				getNumConnections(void) const;
                         void				getInfoElements(int& numFilters, int& numPipelines);
                         int  				getElementIndex(const std::string& name) const;
                         ComponentKind 			getElementKind(int i) const;
@@ -94,6 +93,7 @@ namespace Glip
                         __ReadOnly_PipelineLayout& 	pipelineLayout(int i) const;
                         __ReadOnly_PipelineLayout& 	pipelineLayout(const std::string& name) const;
 
+			Connection              	getConnection(int i) const;
                         std::string 			getConnectionDestinationsName(int filterSource, int port);
                         std::string 			getConnectionDestinationsName(const std::string& filterSource, const std::string& port);
                         std::string 			getConnectionSourceName(int filterDestination, int port);

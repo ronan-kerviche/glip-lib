@@ -78,6 +78,11 @@
 		for(std::map<std::string,PipelineLayout*>::iterator it = pipelineList.begin(); it!=pipelineList.end(); it++)
 			delete (*it).second;
 		pipelineList.clear();
+
+		formatCode.clear();
+		sourceCode.clear();
+		filterCode.clear();
+		pipelineCode.clear();
 	}
 
 	LoaderKeyword LayoutLoader::getKeyword(const std::string& str)
@@ -131,6 +136,8 @@
 				source += line;
 				source += "\n";
 			}
+
+			file.close();
 		}
 		else // This is the source :
 			source = sourceName;
@@ -367,8 +374,11 @@
 	{
 		std::vector<std::string> arg = getArguments(code);
 
-		if(arg.size()!=2)
-			throw Exception("LayoutLoader::buildFilter - Wrong number of arguments for " + name, __FILE__, __LINE__);
+		if(arg.size()<2)
+			throw Exception("LayoutLoader::buildFilter - Too few arguments for filter " + name, __FILE__, __LINE__);
+
+		if(arg.size()>3)
+			throw Exception("LayoutLoader::buildFilter - Too much arguments for filter " + name, __FILE__, __LINE__);
 
 		std::map<std::string, HdlTextureFormat*>::iterator it0 = formatList.find(arg[0]);
 		if(it0==formatList.end())
@@ -378,7 +388,17 @@
 		if(it1==sourceList.end())
 			throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[1] + " for " + name, __FILE__, __LINE__);
 
-		return new FilterLayout(name, *it0->second, *it1->second);
+		if(arg.size()<3)
+			return new FilterLayout(name, *it0->second, *it1->second);
+		else
+		{
+			std::map<std::string, ShaderSource*>::iterator it2 = sourceList.find(arg[2]);
+
+			if(it2==sourceList.end())
+				throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[2] + " for " + name, __FILE__, __LINE__);
+
+			return new FilterLayout(name, *it0->second, *it1->second, it2->second);
+		}
 	}
 
 	PipelineLayout* LayoutLoader::buildPipeline(std::string code, const std::string& name)
@@ -663,6 +683,158 @@
 			clean();
 			Exception m("LayoutLoader::operator() - Caught an exception while building pipeline layout.", __FILE__, __LINE__);
 			throw m+e;
+		}
+	}
+
+	void LayoutLoader::writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name)
+	{
+		std::stringstream ss;
+
+		ss << "TEXTURE_FORMAT:" << name << '(' << hLayout.getWidth() << ',' << hLayout.getHeight() << ',';
+		ss << glParamName(hLayout.getGLMode()) << ',' << glParamName(hLayout.getGLDepth()) << ',';
+		ss << glParamName(hLayout.getMinFilter()) << ',' << glParamName(hLayout.getMagFilter()) << ',';
+		ss << glParamName(hLayout.getSWrapping()) << ',' << glParamName(hLayout.getTWrapping()) << ',' << hLayout.getMaxLevel();
+		ss << ");\n";
+
+		formatCode += ss.str();
+	}
+
+	void LayoutLoader::writeSourceCode(const ShaderSource& source, std::string name)
+	{
+		std::stringstream ss;
+
+		ss << "SHADER_SOURCE:" << name << "()\n{\n";
+		ss << source.getSource() << "\n}\n\n";
+
+		sourceCode += ss.str();
+	}
+
+	void LayoutLoader::writeFilterCode(const __ReadOnly_FilterLayout& fLayout)
+	{
+		writeFormatCode(fLayout, "format_" + fLayout.getName());
+		writeSourceCode(fLayout.getFragmentSource(), "fragment_" + fLayout.getName());
+		writeSourceCode(fLayout.getVertexSource(), "vertex_" + fLayout.getName());
+
+		std::stringstream ss;
+
+		ss << "FILTER_LAYOUT:" << fLayout.getName() << '(';
+		ss << "format_" + fLayout.getName() << ',';
+		ss << "fragment_" + fLayout.getName() << ',';
+		ss << "vertex_" + fLayout.getName();
+		ss << ");\n";
+
+		filterCode += ss.str();
+	}
+
+	void LayoutLoader::writePipelineCode(const __ReadOnly_PipelineLayout& pLayout, bool main)
+	{
+		std::stringstream instances("");
+
+		for(int i=0; i<pLayout.getNumElements(); i++)
+		{
+			switch(pLayout.getElementKind(i))
+			{
+				case FILTER :
+					writeFilterCode(pLayout.filterLayout(i));
+					instances << "    FILTER_INSTANCE:inst_" << pLayout.filterLayout(i).getName() << '(' << pLayout.filterLayout(i).getName() << ");\n";
+					break;
+				case PIPELINE :
+					writePipelineCode(pLayout.pipelineLayout(i));
+					instances << "    PIPELINE_INSTANCE:inst_" << pLayout.pipelineLayout(i).getName() << '(' <<pLayout.pipelineLayout(i).getName() << ");\n";
+					break;
+				default :
+					throw Exception("LayoutLoader::writePipelineCode - Unknown component kind", __FILE__, __LINE__);
+			}
+		}
+
+		// Write pipeline
+		std::stringstream ss;
+
+		if(!main)
+			ss << "PIPELINE_LAYOUT";
+		else
+			ss << "PIPELINE_MAIN";
+
+		ss << ':' << pLayout.getName() << "()\n{\n";
+
+		// Ports :
+		ss << "    INPUT_PORTS(";
+		for(int i=0; i<pLayout.getNumInputPort()-1; i++)
+			ss << pLayout.getInputPortName(i) << ',';
+		ss << pLayout.getInputPortName(pLayout.getNumInputPort()-1) << ");\n";
+
+		ss << "    OUTPUT_PORTS(";
+		for(int i=0; i<pLayout.getNumOutputPort()-1; i++)
+			ss << pLayout.getOutputPortName(i) << ',';
+		ss << pLayout.getOutputPortName(pLayout.getNumOutputPort()-1) << ");\n";
+
+		// Instances :
+		ss << instances.str();
+
+		// Connections :
+		for(unsigned int i=0; i<pLayout.getNumConnections(); i++)
+		{
+			__ReadOnly_PipelineLayout::Connection c = pLayout.getConnection(i);
+			ss << "    CONNECTION(";
+			if(c.idOut!=THIS_PIPELINE)
+			{
+				ss << "inst_" << pLayout.componentLayout(c.idOut).getName() << ',';
+				ss << pLayout.componentLayout(c.idOut).getOutputPortName(c.portOut) << ',';
+			}
+			else
+			{
+				ss << "THIS,";
+				ss << pLayout.getInputPortName(c.portOut) << ',';
+			}
+
+			if(c.idIn!=THIS_PIPELINE)
+			{
+				ss << "inst_" << pLayout.componentLayout(c.idIn).getName() << ',';
+				ss << pLayout.componentLayout(c.idIn).getInputPortName(c.portIn) << ");\n";
+			}
+			else
+			{
+				ss << "THIS,";
+				ss << pLayout.getOutputPortName(c.portIn) << ");\n";
+			}
+		}
+
+		ss << "}\n";
+
+		pipelineCode += ss.str();
+	}
+
+	std::string LayoutLoader::write(const __ReadOnly_PipelineLayout& pLayout, std::string filename)
+	{
+		try
+		{
+			clean();
+
+			writePipelineCode(pLayout, true);
+
+			std::string result = "/* File generated automatically with LayoutLoader::write */\n\n//FORMATS :\n" + formatCode + "\n//SHADERS :\n" + sourceCode + "\n//FILTERS :\n" + filterCode + "\n//PIPELINES :\n" + pipelineCode;
+
+			if(filename!="")
+			{
+				// Open File
+				std::fstream file;
+				file.open(filename.c_str(), std::fstream::out);
+
+				// Did it fail?
+				if(!file.is_open())
+					throw Exception("LayoutLoader::write - Can't open file for writing : " + filename, __FILE__, __LINE__);
+
+				file << result << std::endl;
+
+				file.close();
+			}
+
+			return result;
+		}
+		catch(std::exception& e)
+		{
+			Exception m("LayoutLoader::write - caught an exception while writing layout to file", __FILE__, __LINE__);
+			throw m + e;
 		}
 	}
 

@@ -32,7 +32,7 @@
 
 	void Interface::loadImage(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Open File"), QDir::currentPath());
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load an image"), QDir::currentPath());
 
 		if (!filename.isEmpty())
 		{
@@ -82,7 +82,7 @@
 
 	void Interface::loadPipeline(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Open File"), QDir::currentPath());
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load a Pipeline"), QDir::currentPath());
 
 		if (!filename.isEmpty())
 		{
@@ -126,7 +126,10 @@
 				}
 
 				if(success)
+				{
+					loader.write(*pipeline, "./Filters/writingTest.ppl");
 					requestUpdate();
+				}
 
 				delete model;
 			}

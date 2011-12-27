@@ -47,7 +47,7 @@
 		elementsID[i] = ID;
 	}
 
-	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i)
+	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i) const
 	{
 		if(i<0 || i>=connections.size())
 			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
@@ -60,12 +60,12 @@
 			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
 	}
 
-	int __ReadOnly_PipelineLayout::getNumElements(void)
+	int __ReadOnly_PipelineLayout::getNumElements(void) const
 	{
 		return elementsLayout.size();
 	}
 
-	int __ReadOnly_PipelineLayout::getNumConnections(void)
+	int __ReadOnly_PipelineLayout::getNumConnections(void) const
 	{
 		return connections.size();
 	}

@@ -16,30 +16,30 @@
         std::cout << "Size : " << inputPortDescription.size() << std::endl;
     }
 
-    void __ReadOnly_ComponentLayout::checkInputPort(int i)
+    void __ReadOnly_ComponentLayout::checkInputPort(int i) const
     {
         if((i)<0 || (i)>=getNumInputPort())
             throw Exception("ComponentLayout - Bad input port ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
     }
 
-    void __ReadOnly_ComponentLayout::checkOutputPort(int i)
+    void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
     {
         if((i)<0 || (i)>=getNumOutputPort())
             throw Exception("ComponentLayout - Bad output port ID for " + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
     }
 
-    int __ReadOnly_ComponentLayout::getNumInputPort(void)
+    int __ReadOnly_ComponentLayout::getNumInputPort(void) const
     {
         return inputPortDescription.size();
     }
 
-    const std::string& __ReadOnly_ComponentLayout::getInputPortName(int id)
+    const std::string& __ReadOnly_ComponentLayout::getInputPortName(int id) const
     {
         checkInputPort(id);
         return inputPortDescription[id].getName();
     }
 
-    std::string __ReadOnly_ComponentLayout::getInputPortNameExtended(int id)
+    std::string __ReadOnly_ComponentLayout::getInputPortNameExtended(int id) const
     {
         checkInputPort(id);
         return inputPortDescription[id].getNameExtended();
@@ -58,18 +58,18 @@
         }
     }
 
-    int __ReadOnly_ComponentLayout::getNumOutputPort(void)
+    int __ReadOnly_ComponentLayout::getNumOutputPort(void) const
     {
         return outputPortDescription.size();
     }
 
-    const std::string& __ReadOnly_ComponentLayout::getOutputPortName(int id)
+    const std::string& __ReadOnly_ComponentLayout::getOutputPortName(int id) const
     {
         checkOutputPort(id);
         return outputPortDescription[id].getName();
     }
 
-    std::string __ReadOnly_ComponentLayout::getOutputPortNameExtended(int id)
+    std::string __ReadOnly_ComponentLayout::getOutputPortNameExtended(int id) const
     {
         checkOutputPort(id);
         return outputPortDescription[id].getNameExtended();

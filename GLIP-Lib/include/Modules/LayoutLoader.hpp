@@ -52,6 +52,7 @@ namespace Glip
 		{
 			private :
 				static const char* 				keywords[NumKeywords];
+				// Reading :
 				std::vector<LoaderKeyword> 			entryType;
 				std::vector<std::string> 			entryName;
 				std::vector<std::string>			entryCode;
@@ -59,6 +60,11 @@ namespace Glip
 				std::map<std::string,ShaderSource*> 		sourceList;
 				std::map<std::string,FilterLayout*> 		filterList;
 				std::map<std::string,PipelineLayout*> 		pipelineList;
+				// Writing :
+				std::string formatCode;
+				std::string sourceCode;
+				std::string filterCode;
+				std::string pipelineCode;
 
 				LoaderKeyword 			getKeyword(const std::string& str);
 				void				removeCommentary(std::string& source, std::string start, std::string end);
@@ -71,10 +77,15 @@ namespace Glip
 				FilterLayout* 			buildFilter(const std::string& code, const std::string& name);
 				PipelineLayout*			buildPipeline(std::string code, const std::string& name);
 				void 				clean(void);
+				void 				writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name);
+				void 				writeSourceCode(const ShaderSource& source, std::string name);
+				void 				writeFilterCode(const __ReadOnly_FilterLayout& fLayout);
+				void 				writePipelineCode(const __ReadOnly_PipelineLayout& pLayout, bool main=false);
 			public :
 				LayoutLoader(void);
 				~LayoutLoader(void);
 				PipelineLayout* operator()(const std::string& source); //can be a file or directly the source
+				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
 		};
 	}
 }
