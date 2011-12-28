@@ -29,21 +29,21 @@
 using namespace Glip::CoreGL;
 
 // Structure
-    // Data
-        bool HandleOpenGL::initDone = false;
+	// Data
+		bool HandleOpenGL::initDone = false;
 
-    // Functions
-        void HandleOpenGL::init(void)
-        {
-            if(!initDone)
-            {
-                glewInit();
-                initDone = true;
+	// Functions
+		void HandleOpenGL::init(void)
+		{
+			if(!initDone)
+			{
+				glewInit();
+				initDone = true;
 
-		// Init Multitexturing if not done yet...
-		//HdlMultiTexturing::init();
-            }
-        }
+				// Init Multitexturing if not done yet...
+				//HdlMultiTexturing::init();
+			}
+		}
 
 // Errors Monitoring
 	bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)

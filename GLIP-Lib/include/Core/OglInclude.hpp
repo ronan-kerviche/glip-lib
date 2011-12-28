@@ -25,48 +25,48 @@
 #ifndef __OGLINCLUDE_INCLUDE__
 #define __OGLINCLUDE_INCLUDE__
 
-    #include <iostream>
-    #include "devDebugTools.hpp"
+	#include <iostream>
+	#include "devDebugTools.hpp"
 
-    #ifdef _WIN32
-        #define WINDOWS_LEAN_AND_MEAN
-        #include <windows.h>
-        #define GLEW_STATIC                //this is an application
-        #include "glew.h"
-        #include <GL/gl.h>
-    #endif
+	#ifdef _WIN32
+		#define WINDOWS_LEAN_AND_MEAN
+		#include <windows.h>
+		#define GLEW_STATIC                //this is an application
+		#include "glew.h"
+		#include <GL/gl.h>
+	#endif
 
-    #if defined(linux) || defined(__linux) || defined(__linux__)
-        #define GLEW_STATIC
-        #include "glew.h"
-        #include <GL/gl.h>
-    #endif
+	#if defined(linux) || defined(__linux) || defined(__linux__)
+		#define GLEW_STATIC
+		#include "glew.h"
+		#include <GL/gl.h>
+	#endif
 
-namespace Glip
-{
-    namespace CoreGL
-    {
-        // Prototype
-            class HdlMultiTexturing;
+	namespace Glip
+	{
+		namespace CoreGL
+		{
+			// Prototype
+			class HdlMultiTexturing;
 
-        // Struct
-            class HandleOpenGL
-            {
-                private :
-                    static bool initDone;
-                    HandleOpenGL(void); //no Instance
-                public :
-                    static void init(void);
-            };
+			// Struct
+			class HandleOpenGL
+			{
+				private :
+					static bool initDone;
+					HandleOpenGL(void); //no Instance
+				public :
+					static void init(void);
+			};
 
-        // Tools
-            bool checkDeviceAbilities(void);
-            bool glErrors(bool verbose = true, bool quietSituations = true);
-            void glDebug(void);
-            std::string glParamName(GLenum param);
-            GLenum gl_from_string(const std::string& name);
-    }
-}
+			// Tools
+			bool checkDeviceAbilities(void);
+			bool glErrors(bool verbose = true, bool quietSituations = true);
+			void glDebug(void);
+			std::string glParamName(GLenum param);
+			GLenum gl_from_string(const std::string& name);
+		}
+	}
 
 #endif
 
