@@ -49,6 +49,10 @@
 			class FilterLayout;
 
 			// Objects
+			/**
+			\class __ReadOnly_FilterLayout
+			\brief Filter layout (Read Only)
+			**/
 			class __ReadOnly_FilterLayout : virtual public __ReadOnly_ComponentLayout, virtual public __ReadOnly_HdlTextureFormat
 			{
 				private :
@@ -79,6 +83,10 @@
 					void disableClearing(void);
 			};
 
+			/**
+			\class FilterLayout
+			\brief Filter layout
+			**/
 			class FilterLayout : virtual public ComponentLayout, virtual public __ReadOnly_FilterLayout
 			{
 				public :
@@ -86,6 +94,10 @@
 					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL);
 			};
 
+			/**
+			\class Filter
+			\brief Filter object
+			**/
 			class Filter : virtual public Component, virtual public __ReadOnly_FilterLayout
 			{
 				private :

@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : Pipeline.cpp                                                                              */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Pipeline object                                                                           */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    Pipeline.cpp
+ * \brief   Pipeline object
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #include <limits>
 #include "Pipeline.hpp"
 #include "Component.hpp"
@@ -8,10 +32,22 @@
 	using namespace Glip::CorePipeline;
 
 // __ReadOnly_PipelineLayout
-	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const std::string& type) : __ReadOnly_ComponentLayout(type)
+	/**
+	\fn __ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const std::string& type)
+	\brief __ReadOnly_PipelineLayout constructor.
+	\param type Typename of the pipeline.
+	**/
+	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const std::string& type)
+	 : __ReadOnly_ComponentLayout(type)
 	{ }
 
-	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c) : __ReadOnly_ComponentLayout(c)
+	/**
+	\fn __ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c)
+	\brief __ReadOnly_PipelineLayout constructor.
+	\param c Copy.
+	**/
+	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c)
+	 : __ReadOnly_ComponentLayout(c)
 	{
 		//std::cout << "Starting copy of pipeline layout for " << getNameExtended() << std::endl;
 		// Copy of the whole vector
@@ -36,18 +72,36 @@
 		//std::cout << "end copy of pipeline layout for " << getNameExtended() << std::endl;
 	}
 
+	/**
+	\fn int __ReadOnly_PipelineLayout::getElementID(int i)
+	\brief Get element ID in global structure.
+	\param i The ID of the element in the local pipeline layout.
+	\return The ID of the element in the global structure or raise an exception if any errors occur.
+	**/
 	int __ReadOnly_PipelineLayout::getElementID(int i)
 	{
 		checkElement(i);
 		return elementsID[i];
 	}
 
+	/**
+	\fn void __ReadOnly_PipelineLayout::setElementID(int i, int ID)
+	\brief Set element ID in global structure or raise an exception if any errors occur.
+	\param i The ID of the element in the local pipeline layout.
+	\param ID The ID of the element in the global structure.
+	**/
 	void __ReadOnly_PipelineLayout::setElementID(int i, int ID)
 	{
 		checkElement(i);
 		elementsID[i] = ID;
 	}
 
+	/**
+	\fn __ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i) const
+	\brief Get the connection by its ID.
+	\param i The ID of the connection.
+	\return A copy of the corresponding Connection object or raise an exception if any errors occur.
+	**/
 	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i) const
 	{
 		if(i<0 || i>=connections.size())
@@ -55,22 +109,43 @@
 		return connections[i];
 	}
 
+	/**
+	\fn void __ReadOnly_PipelineLayout::checkElement(int i) const
+	\brief Check if element exists and raise an exception if any errors occur.
+	\param i The ID of the element.
+	**/
 	void __ReadOnly_PipelineLayout::checkElement(int i) const
 	{
 		if(i<0 || i>=elementsLayout.size())
 			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
 	}
 
+	/**
+	\fn int __ReadOnly_PipelineLayout::getNumElements(void) const
+	\brief Get the number of elements.
+	\return Number of elements.
+	**/
 	int __ReadOnly_PipelineLayout::getNumElements(void) const
 	{
 		return elementsLayout.size();
 	}
 
+	/**
+	\fn int __ReadOnly_PipelineLayout::getNumConnections(void) const
+	\brief Get the number of connections.
+	\return Number of connections.
+	**/
 	int __ReadOnly_PipelineLayout::getNumConnections(void) const
 	{
 		return connections.size();
 	}
 
+	/**
+	\fn void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines)
+	\brief Get the total number of Filters and Pipelines contained by this pipeline.
+	\param numFilters The total number of filters.
+	\param numPipelines The total number of pipelines (including this one).
+	**/
 	void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines)
 	{
 		int a, b;
@@ -99,345 +174,537 @@
 		numPipelines++; // include this
 	}
 
-    int __ReadOnly_PipelineLayout::getElementIndex(const std::string& name) const
-    {
-        int index;
+	/**
+	\fn int __ReadOnly_PipelineLayout::getElementIndex(const std::string& name) const
+	\brief Get the ID of an element knowing its name.
+	\param name The name of the element.
+	\return The ID of the element or raise an exception if any errors occur.
+	**/
+	int __ReadOnly_PipelineLayout::getElementIndex(const std::string& name) const
+	{
+		int index;
 
-        try
-        {
-            index = getIndexByNameFct(name, elementsLayout.size(), __ReadOnly_PipelineLayout::componentName, reinterpret_cast<const void*>(this));
-        }
-        catch(std::exception& e)
-        {
-            Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
+		try
+		{
+			index = getIndexByNameFct(name, elementsLayout.size(), __ReadOnly_PipelineLayout::componentName, reinterpret_cast<const void*>(this));
+		}
+		catch(std::exception& e)
+		{
+			Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 
-        return index;
-    }
+		return index;
+	}
 
-    ComponentKind __ReadOnly_PipelineLayout::getElementKind(int i) const
-    {
-        checkElement(i);
-        return elementsKind[i];
-    }
+	/**
+	\fn ComponentKind __ReadOnly_PipelineLayout::getElementKind(int i) const
+	\brief Get the kind of an element.
+	\param i The ID of the element.
+	\return The kind of the element or raise an exception if any errors occur.
+	**/
+	ComponentKind __ReadOnly_PipelineLayout::getElementKind(int i) const
+	{
+		checkElement(i);
+		return elementsKind[i];
+	}
 
-    ObjectName& __ReadOnly_PipelineLayout::componentName(int i, const void* obj)
-    {
-        return reinterpret_cast<const __ReadOnly_PipelineLayout*>(obj)->componentLayout(i);
-    }
+	/**
+	\fn ObjectName& __ReadOnly_PipelineLayout::componentName(int i, const void* obj)
+	\brief Get the name of an element (selection function).
+	\param i The ID of the element.
+	\param obj The source object.
+	\return The name of the element or raise an exception if any errors occur.
+	**/
+	ObjectName& __ReadOnly_PipelineLayout::componentName(int i, const void* obj)
+	{
+		return reinterpret_cast<const __ReadOnly_PipelineLayout*>(obj)->componentLayout(i);
+	}
 
-    __ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(int i) const
-    {
-        checkElement(i);
+	/**
+	\fn __ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(int i) const
+	\brief Get the component layout by its index.
+	\param i The ID of the component.
+	\return A reference to the component or raise an exception if any errors occur.
+	**/
+	__ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(int i) const
+	{
+		checkElement(i);
 
-        //std::cout << "ACCESSING COMPONENT (int)" << std::endl;
-        //return *elementsLayout[i];
-        switch(elementsKind[i])
-        {
-            case FILTER:
-                return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
-            case PIPELINE:
-                return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
-            default :
-                throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized",__FILE__, __LINE__);
-        }
-    }
+		//std::cout << "ACCESSING COMPONENT (int)" << std::endl;
+		//return *elementsLayout[i];
+		switch(elementsKind[i])
+		{
+			case FILTER:
+				return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
+			case PIPELINE:
+				return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
+			default :
+				throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized",__FILE__, __LINE__);
+		}
+	}
 
-    __ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(const std::string& name) const
-    {
-        int index = getElementIndex(name);
-        //std::cout << "ACCESSING COMPONENT (int)" << std::endl;
-        return componentLayout(index);
-    }
+	/**
+	\fn __ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(const std::string& name) const
+	\brief Get the component layout by its name.
+	\param name The name of the element.
+	\return A reference to the component or raise an exception if any errors occur.
+	**/
+	__ReadOnly_ComponentLayout& __ReadOnly_PipelineLayout::componentLayout(const std::string& name) const
+	{
+		int index = getElementIndex(name);
+		//std::cout << "ACCESSING COMPONENT (int)" << std::endl;
+		return componentLayout(index);
+	}
 
-    __ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(int i) const
-    {
-        //std::cout << "ACCESSING FILTER (int)" << std::endl;
-        checkElement(i);
-        if(getElementKind(i)!=FILTER)
-            throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
-         return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
-    }
+	/**
+	\fn __ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(int i) const
+	\brief Get the filter layout by its index.
+	\param i The ID of the filter layout.
+	\return A reference to the filter layout or raise an exception if any errors occur.
+	**/
+	__ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(int i) const
+	{
+		//std::cout << "ACCESSING FILTER (int)" << std::endl;
+		checkElement(i);
+		if(getElementKind(i)!=FILTER)
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
+		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
+	}
 
-    __ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(const std::string& name) const
-    {
-        //std::cout << "ACCESSING FILTER (name)" << std::endl;
-        int index = getElementIndex(name);
-        if(getElementKind(index)!=FILTER)
-            throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
-        return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[index]);
-    }
+	/**
+	\fn __ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(const std::string& name) const
+	\brief Get the filter layout by its name.
+	\param name The name of the filter layout.
+	\return A reference to the filter layout or raise an exception if any errors occur.
+	**/
+	__ReadOnly_FilterLayout& __ReadOnly_PipelineLayout::filterLayout(const std::string& name) const
+	{
+		//std::cout << "ACCESSING FILTER (name)" << std::endl;
+		int index = getElementIndex(name);
+		if(getElementKind(index)!=FILTER)
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
+		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[index]);
+	}
 
-    __ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(int i) const
-    {
-        //std::cout << "ACCESSING PIPELINE (int)" << std::endl;
-        checkElement(i);
-        if(getElementKind(i)!=PIPELINE)
-            throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
-        return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
-    }
+	/**
+	\fn __ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(int i) const
+	\brief Get the pipeline layout by its index.
+	\param i The ID of the pipeline layout.
+	\return A reference to the pipeline layout or raise an exception if any errors occur.
+	**/
+	__ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(int i) const
+	{
+		//std::cout << "ACCESSING PIPELINE (int)" << std::endl;
+		checkElement(i);
+		if(getElementKind(i)!=PIPELINE)
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
+		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
+	}
 
-    __ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(const std::string& name) const
-    {
-        //std::cout << "ACCESSING PIPELINE (name)" << std::endl;
-        int index = getElementIndex(name);
-        if(getElementKind(index)!=PIPELINE)
-            throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
-        return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
-    }
+	/**
+	\fn __ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(const std::string& name) const
+	\brief Get the pipeline layout by its name.
+	\param name The name of the pipeline layout.
+	\return A reference to the pipeline layout or raise an exception if any errors occur.
+	**/
+	__ReadOnly_PipelineLayout& __ReadOnly_PipelineLayout::pipelineLayout(const std::string& name) const
+	{
+		//std::cout << "ACCESSING PIPELINE (name)" << std::endl;
+		int index = getElementIndex(name);
+		if(getElementKind(index)!=PIPELINE)
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
+		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
+	}
 
-    std::vector<__ReadOnly_PipelineLayout::Connection> __ReadOnly_PipelineLayout::getConnectionDestinations(int id, int p)
-    {
-        if(id!=THIS_PIPELINE)
-        {
-            __ReadOnly_ComponentLayout& src = componentLayout(id);
-            src.checkOutputPort(p);
-        }
-        else
-            checkInputPort(p);
+	/**
+	\fn std::vector<__ReadOnly_PipelineLayout::Connection> __ReadOnly_PipelineLayout::getConnectionDestinations(int id, int p)
+	\brief Get all destinations of an output port.
+	\param id The ID of the output element.
+	\param p The port of the output element.
+	\return A vector of Conection object, all having output as (id,p) or raise an exception if any errors occur.
+	**/
+	std::vector<__ReadOnly_PipelineLayout::Connection> __ReadOnly_PipelineLayout::getConnectionDestinations(int id, int p)
+	{
+		if(id!=THIS_PIPELINE)
+		{
+			__ReadOnly_ComponentLayout& src = componentLayout(id);
+			src.checkOutputPort(p);
+		}
+		else
+			checkInputPort(p);
 
-        // The Element and its port exist, now find their connexions
-        std::vector<Connection> result;
-        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
-            if( (*it).idOut==id && (*it).portOut==p) result.push_back(*it);
+		// The Element and its port exist, now find their connexions
+		std::vector<Connection> result;
+		for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
+			if( (*it).idOut==id && (*it).portOut==p) result.push_back(*it);
 
-        return result;
-    }
+		return result;
+	}
 
-    __ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnectionSource(int id, int p)
-    {
-        std::string str;
+	/**
+	\fn __ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnectionSource(int id, int p)
+	\brief Get the source of an input port.
+	\param id The ID of the input element.
+	\param p The port of the input element.
+	\return A Conection object, having input as (id,p) or raise an exception if any errors occur.
+	**/
+	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnectionSource(int id, int p)
+	{
+		std::string str;
 
-        if(id!=THIS_PIPELINE)
-        {
-            __ReadOnly_ComponentLayout& src = componentLayout(id);
-            src.checkInputPort(p);
-        }
-        else
-            checkOutputPort(p);
+		if(id!=THIS_PIPELINE)
+		{
+			__ReadOnly_ComponentLayout& src = componentLayout(id);
+			src.checkInputPort(p);
+		}
+		else
+			checkOutputPort(p);
 
-        // The Element and its port exist, now find the connexion
-        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
-            if( (*it).idIn==id && (*it).portIn==p) return (*it);
+		// The Element and its port exist, now find the connexion
+		for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
+			if( (*it).idIn==id && (*it).portIn==p) return (*it);
 
-        if(id!=THIS_PIPELINE)
-        {
-            __ReadOnly_ComponentLayout& src = componentLayout(id);
-            throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p), __FILE__, __LINE__);
-        }
-        else
-            throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p), __FILE__, __LINE__);
-    }
+		if(id!=THIS_PIPELINE)
+		{
+			__ReadOnly_ComponentLayout& src = componentLayout(id);
+			throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p), __FILE__, __LINE__);
+		}
+		else
+			throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p), __FILE__, __LINE__);
+	}
 
-    std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(int source, int port)
-    {
-        std::vector<Connection> res = getConnectionDestinations(source, port);
-        std::string result;
+	/**
+	\fn std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(int source, int port)
+	\brief Get the name of the elements linked to the output.
+	\param source The ID of the output element.
+	\param port The port of the output element.
+	\return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
+	**/
+	std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(int source, int port)
+	{
+		std::vector<Connection> res = getConnectionDestinations(source, port);
+		std::string result;
 
-        for(std::vector<Connection>::iterator it=res.begin(); it!=res.end(); it++)
-        {
-            __ReadOnly_ComponentLayout& tmp = componentLayout((*it).idIn);
-            result += tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended((*it).portIn) + "\n";
-        }
+		for(std::vector<Connection>::iterator it=res.begin(); it!=res.end(); it++)
+		{
+			__ReadOnly_ComponentLayout& tmp = componentLayout((*it).idIn);
+			result += tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended((*it).portIn) + "\n";
+		}
 
-        return result;
-    }
+		return result;
+	}
 
-    std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
-    {
-        int id = getElementIndex(source);
-        int p  = componentLayout(id).getOutputPortID(port);
-        return getConnectionDestinationsName(id, p);
-    }
+	/**
+	\fn std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
+	\brief Get the name of the elements linked to the output.
+	\param source The name of the output element.
+	\param port The name of the port of the output element.
+	\return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
+	**/
+	std::string __ReadOnly_PipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
+	{
+		int id = getElementIndex(source);
+		int p  = componentLayout(id).getOutputPortID(port);
+		return getConnectionDestinationsName(id, p);
+	}
 
-    std::string __ReadOnly_PipelineLayout::getConnectionSourceName(int dest, int port)
-    {
-        Connection c = getConnectionSource(dest, port);
-        __ReadOnly_ComponentLayout& tmp = componentLayout(c.idOut);
-        return tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended(c.portOut) + "\n";
-    }
+	/**
+	\fn std::string __ReadOnly_PipelineLayout::getConnectionSourceName(int dest, int port)
+	\brief Get the name of the element linked to the input.
+	\param dest The ID of the input element.
+	\param port The port of the input element.
+	\return A standard string containing the element name linked to the input or raise an exception if any errors occur.
+	**/
+	std::string __ReadOnly_PipelineLayout::getConnectionSourceName(int dest, int port)
+	{
+		Connection c = getConnectionSource(dest, port);
+		__ReadOnly_ComponentLayout& tmp = componentLayout(c.idOut);
+		return tmp.getNameExtended() + SEPARATOR + tmp.getInputPortNameExtended(c.portOut) + "\n";
+	}
 
-    std::string __ReadOnly_PipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
-    {
-        int id = getElementIndex(dest);
-        int p  = componentLayout(id).getOutputPortID(port);
-        return getConnectionSourceName(id, p);
-    }
+	/**
+	\fn std::string __ReadOnly_PipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
+	\brief Get the name of the element linked to the input.
+	\param dest The name of the input element.
+	\param port The name of the port of the input element.
+	\return A standard string containing the element name linked to the input or raise an exception if any errors occur.
+	**/
+	std::string __ReadOnly_PipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
+	{
+		int id = getElementIndex(dest);
+		int p  = componentLayout(id).getOutputPortID(port);
+		return getConnectionSourceName(id, p);
+	}
 
-    bool __ReadOnly_PipelineLayout::check(bool exception)
-    {
-        std::string res;
+	/**
+	\fn bool __ReadOnly_PipelineLayout::check(bool exception)
+	\brief Check the validity of the pipeline layout.
+	\param exception If set to true, an exception would be raised if any error is found.
+	\return true if valid, false otherwise.
+	**/
+	bool __ReadOnly_PipelineLayout::check(bool exception)
+	{
+		std::string res;
 
-        for(int i=0; i<elementsLayout.size(); i++)
-        {
-            __ReadOnly_ComponentLayout& tmp = componentLayout(i);
-            for(int j=0; j<tmp.getNumInputPort(); j++)
-            {
-                try
-                {
-                    getConnectionSource(i, j);
-                }
-                catch(std::exception& e)
-                {
-                    res += e.what();
-                    res += '\n';
-                }
-            }
-        }
+		for(int i=0; i<elementsLayout.size(); i++)
+		{
+			__ReadOnly_ComponentLayout& tmp = componentLayout(i);
+			for(int j=0; j<tmp.getNumInputPort(); j++)
+			{
+				try
+				{
+					getConnectionSource(i, j);
+				}
+				catch(std::exception& e)
+				{
+					res += e.what();
+					res += '\n';
+				}
+			}
+		}
 
-        for(int i=0; i<getNumOutputPort(); i++)
-        {
-            try
-            {
-                getConnectionSource(THIS_PIPELINE, i);
-            }
-            catch(std::exception& e)
-            {
-                res += e.what();
-                res += '\n';
-            }
-        }
+		for(int i=0; i<getNumOutputPort(); i++)
+		{
+			try
+			{
+				getConnectionSource(THIS_PIPELINE, i);
+			}
+			catch(std::exception& e)
+			{
+				res += e.what();
+				res += '\n';
+			}
+		}
 
-        if(exception && !res.empty())
-            throw Exception("check - The following errors has been found in the PipelineLayout " + getNameExtended() + " : \n" + res, __FILE__, __LINE__);
-        else
-            return false;
+		if(exception && !res.empty())
+			throw Exception("check - The following errors has been found in the PipelineLayout " + getNameExtended() + " : \n" + res, __FILE__, __LINE__);
+		else
+			return false;
 
-        return true;
-    }
+		return true;
+	}
 
 // PipelineLayout
-    PipelineLayout::PipelineLayout(const std::string& type) : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_PipelineLayout(type)
-    { }
+	/**
+	\fn PipelineLayout::PipelineLayout(const std::string& type)
+	\brief PipelineLayout constructor.
+	\param type The typename.
+	**/
+	PipelineLayout::PipelineLayout(const std::string& type)
+	 : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_PipelineLayout(type)
+	{ }
 
-    PipelineLayout::PipelineLayout(__ReadOnly_PipelineLayout& c) : __ReadOnly_PipelineLayout(c), __ReadOnly_ComponentLayout(c), ComponentLayout(c)
-    { }
+	/**
+	\fn PipelineLayout::PipelineLayout(__ReadOnly_PipelineLayout& c)
+	\brief PipelineLayout constructor.
+	\param c Copy.
+	**/
+	PipelineLayout::PipelineLayout(__ReadOnly_PipelineLayout& c)
+	 : __ReadOnly_PipelineLayout(c), __ReadOnly_ComponentLayout(c), ComponentLayout(c)
+	{ }
 
-    int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
-    {
-        __ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
-        tmp->setName(name);
-        elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
-        elementsKind.push_back(FILTER);
-        elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
-        return elementsLayout.size()-1;
-    }
+	/**
+	\fn int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
+	\brief Ad a filter to the pipeline layout.
+	\param filterLayout The filter layout.
+	\param name The name of the element.
+	\return The ID of the element added.
+	**/
+	int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
+	{
+		__ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
+		tmp->setName(name);
+		elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
+		elementsKind.push_back(FILTER);
+		elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
+		return elementsLayout.size()-1;
+	}
 
-    int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
-    {
-        __ReadOnly_PipelineLayout* tmp = new __ReadOnly_PipelineLayout(pipelineLayout);
-        tmp->setName(name);
-        elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
-        elementsKind.push_back(PIPELINE);
-        elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
-        return elementsLayout.size()-1;
-    }
+	/**
+	\fn int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
+	\brief Ad a subpipeline to the pipeline layout.
+	\param pipelineLayout The pipeline layout.
+	\param name The name of the element.
+	\return The ID of the element added.
+	**/
+	int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
+	{
+		__ReadOnly_PipelineLayout* tmp = new __ReadOnly_PipelineLayout(pipelineLayout);
+		tmp->setName(name);
+		elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
+		elementsKind.push_back(PIPELINE);
+		elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
+		return elementsLayout.size()-1;
+	}
 
-    int PipelineLayout::addInput(const std::string& name)
-    {
-        return addInputPort(name);
-    }
+	/**
+	\fn int PipelineLayout::addInput(const std::string& name)
+	\brief Add an input port to the pipeline layout.
+	\param name The name of the new input port.
+	\return The ID of the new input port.
+	**/
+	int PipelineLayout::addInput(const std::string& name)
+	{
+		return addInputPort(name);
+	}
 
-    int PipelineLayout::addOutput(const std::string& name)
-    {
-        return addOutputPort(name);
-    }
+	/**
+	\fn int PipelineLayout::addOutput(const std::string& name)
+	\brief Add an output port to the pipeline layout.
+	\param name The name of the new output port.
+	\return The ID of the new output port.
+	**/
+	int PipelineLayout::addOutput(const std::string& name)
+	{
+		return addOutputPort(name);
+	}
 
-    void PipelineLayout::connect(int filterOut, int portOut, int filterIn, int portIn)
-    {
-        if(filterOut==THIS_PIPELINE && filterIn==THIS_PIPELINE)
-            throw Exception("PipelineLayout::connect - can't connect directly an input to an output, you don't need that!", __FILE__, __LINE__);
+	/**
+	\fn void PipelineLayout::connect(int filterOut, int portOut, int filterIn, int portIn)
+	\brief Create a connection between two elements or an element and this pipeline and raise an exception if any errors occur.
+	\param filterOut The ID of the output element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portOut The ID of the output port.
+	\param filterIn The ID of the input element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portIn The ID of the input port.
+	**/
+	void PipelineLayout::connect(int filterOut, int portOut, int filterIn, int portIn)
+	{
+		if(filterOut==THIS_PIPELINE && filterIn==THIS_PIPELINE)
+			throw Exception("PipelineLayout::connect - can't connect directly an input to an output, you don't need that!", __FILE__, __LINE__);
 
-        if(filterOut!=THIS_PIPELINE)
-        {
-            __ReadOnly_ComponentLayout& fo = componentLayout(filterOut); // Source
-            fo.checkOutputPort(portOut);
-        }
-        else
-            checkInputPort(portOut);
+		if(filterOut!=THIS_PIPELINE)
+		{
+			__ReadOnly_ComponentLayout& fo = componentLayout(filterOut); // Source
+			fo.checkOutputPort(portOut);
+		}
+		else
+			checkInputPort(portOut);
 
-        if(filterIn!=THIS_PIPELINE)
-        {
-            __ReadOnly_ComponentLayout& fi = componentLayout(filterIn);  // Destination
-            fi.checkInputPort(portIn);
-        }
-        else
-            checkOutputPort(portIn);
+		if(filterIn!=THIS_PIPELINE)
+		{
+			__ReadOnly_ComponentLayout& fi = componentLayout(filterIn);  // Destination
+			fi.checkInputPort(portIn);
+		}
+		else
+			checkOutputPort(portIn);
 
-        // Check if a connexion already exist to the destination :
-        for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
-            if( (*it).idIn==filterIn && (*it).portIn==portIn)
-                if(filterIn!=THIS_PIPELINE)
-                    throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn), __FILE__, __LINE__);
-                else
-                    throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn), __FILE__, __LINE__);
+		// Check if a connexion already exist to the destination :
+		for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
+			if( (*it).idIn==filterIn && (*it).portIn==portIn)
+				if(filterIn!=THIS_PIPELINE)
+					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn), __FILE__, __LINE__);
+				else
+					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn), __FILE__, __LINE__);
 
-        Connection c;
-        c.idOut   = filterOut;
-        c.portOut = portOut;
-        c.idIn    = filterIn;
-        c.portIn  = portIn;
+		Connection c;
+		c.idOut   = filterOut;
+		c.portOut = portOut;
+		c.idIn    = filterIn;
+		c.portIn  = portIn;
 
-        //std::cout << "Connexion de " << filterOut << ':' << portOut << " à " << filterIn << ':' << portIn << std::endl;
+		//std::cout << "Connexion de " << filterOut << ':' << portOut << " à " << filterIn << ':' << portIn << std::endl;
 
-        connections.push_back(c);
-    }
+		connections.push_back(c);
+	}
 
-    void PipelineLayout::connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn)
-    {
-        int fi = getElementIndex(filterIn),
-            fo = getElementIndex(filterOut),
-            pi = componentLayout(filterIn).getInputPortID(portIn),
-            po = componentLayout(filterOut).getOutputPortID(portOut);
+	/**
+	\fn void PipelineLayout::connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn)
+	\brief Create a connection between two elements or an element and this pipeline and raise an exception if any errors occur.
+	\param filterOut The name of the output element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portOut The name of the output port.
+	\param filterIn The name of the input element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portIn The name of the input port.
+	**/
+	void PipelineLayout::connect(const std::string& filterOut, const std::string& portOut, const std::string& filterIn, const std::string& portIn)
+	{
+		int fi = getElementIndex(filterIn),
+		fo = getElementIndex(filterOut),
+		pi = componentLayout(filterIn).getInputPortID(portIn),
+		po = componentLayout(filterOut).getOutputPortID(portOut);
 
-        connect(fo, po, fi, pi); // Check-in done twice but...
-    }
+		connect(fo, po, fi, pi); // Check-in done twice but...
+	}
 
-    void PipelineLayout::connectToInput(int port, int filterIn,  int portIn)
-    {
-        connect(THIS_PIPELINE, port, filterIn, portIn);
-    }
+	/**
+	\fn void PipelineLayout::connectToInput(int port, int filterIn,  int portIn)
+	\brief Create a connection between an input port of this pipeline and one of its element and raise an exception if any errors occur.
+	\param port The ID of the port for this pipeline.
+	\param filterIn The ID of the input element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portIn The ID of the input port.
+	**/
+	void PipelineLayout::connectToInput(int port, int filterIn,  int portIn)
+	{
+		connect(THIS_PIPELINE, port, filterIn, portIn);
+	}
 
-    void PipelineLayout::connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn)
-    {
-        try
-        {
-            int p  = getInputPortID(port),
-                fi = getElementIndex(filterIn),
-                pi = componentLayout(filterIn).getInputPortID(portIn);
-            connect(THIS_PIPELINE, p, fi, pi);
-        }
-        catch(std::exception& e)
-        {
-            Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
-    }
+	/**
+	void PipelineLayout::connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn)
+	\brief Create a connection between an input port of this pipeline and one of its element and raise an exception if any errors occur.
+	\param port The name of the port for this pipeline.
+	\param filterIn The name of the input element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portIn The name of the input port.
+	**/
+	void PipelineLayout::connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn)
+	{
+		try
+		{
+			int p  = getInputPortID(port),
+			fi = getElementIndex(filterIn),
+			pi = componentLayout(filterIn).getInputPortID(portIn);
+			connect(THIS_PIPELINE, p, fi, pi);
+		}
+		catch(std::exception& e)
+		{
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
 
-    void PipelineLayout::connectToOutput(int filterOut, int portOut, int port)
-    {
-        connect(filterOut, portOut, THIS_PIPELINE, port);
-    }
+	/**
+	\fn void PipelineLayout::connectToOutput(int filterOut, int portOut, int port)
+	\brief Create a connection between an output port of this pipeline and one of its element and raise an exception if any errors occur.
+	\param filterOut The ID of the output element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portOut The ID of the output port.
+	\param port The ID of the port for this pipeline.
+	**/
+	void PipelineLayout::connectToOutput(int filterOut, int portOut, int port)
+	{
+		connect(filterOut, portOut, THIS_PIPELINE, port);
+	}
 
-    void PipelineLayout::connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port)
-    {
-        try
-        {
-            int p  = getOutputPortID(port),
-                fo = getElementIndex(filterOut),
-                po = componentLayout(filterOut).getOutputPortID(portOut);
-            connect(fo, po, THIS_PIPELINE, p);
-        }
-        catch(std::exception& e)
-        {
-            Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
-            throw m+e;
-        }
-    }
+	/**
+	\fn void PipelineLayout::connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port)
+	\brief Create a connection between an output port of this pipeline and one of its element and raise an exception if any errors occur.
+	\param filterOut The name of the output element (a FilterLayout, a PipelineLayout or THIS_PIPELINE).
+	\param portOut The name of the output port.
+	\param port The name of the port for this pipeline.
+	**/
+	void PipelineLayout::connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port)
+	{
+		try
+		{
+			int p  = getOutputPortID(port),
+			fo = getElementIndex(filterOut),
+			po = componentLayout(filterOut).getOutputPortID(portOut);
+			connect(fo, po, THIS_PIPELINE, p);
+		}
+		catch(std::exception& e)
+		{
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
 
 // Pipeline
-	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name) : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
+	/**
+	\fn Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
+	\brief Pipeline constructor.
+	\param p Pipeline layout.
+	\param name Name of the pipeline.
+	**/
+	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
 	{
 		cleanInput();
 		outputBuffer.assign(getNumOutputPort(), 0);
@@ -471,11 +738,19 @@
 		filters.clear();
 	}
 
+	/**
+	\fn void Pipeline::cleanInput(void)
+	\brief Clean all inputs from previously acquired texture pointers.
+	**/
 	void Pipeline::cleanInput(void)
 	{
 		input.clear();
 	}
 
+	/**
+	\fn void Pipeline::build(void)
+	\brief Build pipeline process from layout information, choosing the best path.
+	**/
 	void Pipeline::build(void)
 	{
 		int dummy;
@@ -957,6 +1232,10 @@
 		}
 	}
 
+	/**
+	\fn void Pipeline::process(void)
+	\brief Apply the pipeline.
+	**/
 	void Pipeline::process(void)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
@@ -993,6 +1272,12 @@
 		}
 	}
 
+	/**
+	\fn Pipeline& Pipeline::operator<<(HdlTexture& t)
+	\brief Add a data as input to the pipeline.
+	\param t The data to use.
+	\return This pipeline or raise an exception if any errors occur.
+	**/
 	Pipeline& Pipeline::operator<<(HdlTexture& t)
 	{
 		if(input.size()>=getNumInputPort())
@@ -1003,6 +1288,12 @@
 		return *this;
 	}
 
+	/**
+	\fn Pipeline& Pipeline::operator<<(ActionType a)
+	\brief Apply operation on previously input data.
+	\param a The ActionType (Process or Reset arguments).
+	\return This pipeline or raise an exception if any errors occur.
+	**/
 	Pipeline& Pipeline::operator<<(ActionType a)
 	{
 		// Check the number of arguments given :
@@ -1023,6 +1314,12 @@
 		return *this;
 	}
 
+	/**
+	\fn HdlTexture& Pipeline::out(int i)
+	\brief Return the output of the pipeline.
+	\param i The ID of the output port.
+	\return A reference to the corresponding output texture or raise an exception if any errors occur.
+	**/
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
@@ -1031,12 +1328,24 @@
 		return *((*buffers[bufferID])[bufferPortID]);
 	}
 
+	/**
+	\fn HdlTexture& Pipeline::out(const std::string& portName)
+	\brief Return the output of the pipeline.
+	\param portName The name of the output port.
+	\return A reference to the corresponding output texture or raise an exception if any errors occur.
+	**/
 	HdlTexture& Pipeline::out(const std::string& portName)
 	{
 		int index = getInputPortID(portName);
 		return out(index);
 	}
 
+	/**
+	\fn Filter& Pipeline::operator[](const std::string& name)
+	\brief Access to the filter described by the path.
+	\param name The path.
+	\return A reference to the corresponding filter instance or raise an exception if any errors occur.
+	**/
 	Filter& Pipeline::operator[](const std::string& name)
 	{
 		try

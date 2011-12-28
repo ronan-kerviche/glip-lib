@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : Pipeline.hpp                                                                              */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Pipeline object                                                                           */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    Pipeline.hpp
+ * \brief   Pipeline object
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #ifndef __GLIPLIB_PIPELINE__
 #define __GLIPLIB_PIPELINE__
 
@@ -45,15 +69,27 @@
 			typedef std::vector<__ReadOnly_ComponentLayout*> ComponentList;
 
 			// Objects
+			/**
+			\class __ReadOnly_PipelineLayout
+			\brief Pipeline layout (Read Only)
+			**/
 			class __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				public :
 					// Constants
+					/**
+					\struct Connection
+					\brief Object describing connetion betwen elements in a pipeline
+					**/
 					struct Connection // Connection goes from idOut::portOut to idIn::portIn
 					{
+						/// The ID of the element receiving the conection
 						int idIn;
+						/// The ID of the port of the element receiving the conection
 						int portIn;
+						/// The ID of the element emitting the conection
 						int idOut;
+						/// The ID of the port of the element emitting the conection
 						int portOut;
 					};
 
@@ -105,6 +141,10 @@
 					bool 				check(bool exception = true);
 			};
 
+			/**
+			\class PipelineLayout
+			\brief Pipeline layout
+			**/
 			class PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
 			{
 				public :
@@ -124,6 +164,10 @@
 					void 	connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port);
 			};
 
+			/**
+			\class Pipeline
+			\brief Pipeline object
+			**/
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
 				private :

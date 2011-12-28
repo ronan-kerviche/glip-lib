@@ -80,7 +80,6 @@
 		<Unit filename="../GLIP-Lib/include/Core/glxew.h" />
 		<Unit filename="../GLIP-Lib/include/Core/wglew.h" />
 		<Unit filename="../GLIP-Lib/include/GLIPLib.hpp" />
-		<Unit filename="../GLIP-Lib/include/Modules/HdlCamera.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/LayoutLoader.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/Modules.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/TextureReader.hpp" />

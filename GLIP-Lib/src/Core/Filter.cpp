@@ -33,6 +33,12 @@
     using namespace Glip::CorePipeline;
 
 // Tools
+	/**
+	\fn std::string getStandardVertexSource(int nUnits)
+	\brief Build the standard vertex shader.
+	\param nUnits Number of texturing units to be used.
+	\return Standard string containing the GLSL code.
+	**/
 	std::string getStandardVertexSource(int nUnits)
 	{
 		std::stringstream str;
@@ -48,10 +54,21 @@
 	}
 
 	// __ReadOnly_FilterLayout
+	/**
+	\fn __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
+	\brief __ReadOnly_FilterLayout constructor.
+	\param type The typename of the filter layout.
+	\param f The texture format associated to all outputs of the filter.
+	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
 	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), blending(false), clearing(true)
 	{ }
 
+	/**
+	\fn __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
+	\brief __ReadOnly_FilterLayout constructor.
+	\param c Copy.
+	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
 	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), blending(c.blending), clearing(c.clearing)
 	{
@@ -72,6 +89,11 @@
 		delete fragmentSource;
 	}
 
+	/**
+	\fn ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
+	\brief Get the ShaderSource object of the vertex shader used by the filter.
+	\return ShaderSource object reference.
+	**/
 	ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
 	{
 		if(vertexSource==NULL)
@@ -80,6 +102,11 @@
 		return *vertexSource;
 	}
 
+	/**
+	\fn ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
+	\brief Get the ShaderSource object of the fragment shader used by the filter.
+	\return ShaderSource object reference.
+	**/
 	ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
 	{
 		if(fragmentSource==NULL)
@@ -88,6 +115,20 @@
 		return *fragmentSource;
 	}
 
+	/**
+	\fn bool __ReadOnly_FilterLayout::isBlendingEnabled(void) const
+	\return true if blending is enabled.
+	\fn void __ReadOnly_FilterLayout::enableBlending(void)
+	\brief Enables blending operation (the alpha channel is used).
+	\fn void __ReadOnly_FilterLayout::disableBlending(void)
+	\brief Disables blending operation.
+	\fn bool __ReadOnly_FilterLayout::isClearingEnabled(void) const
+	\return true if clearing is enabled.
+	\fn void __ReadOnly_FilterLayout::enableClearing(void)
+	\brief Enables clearing operation (the destination buffer is cleared before each operation).
+	\fn void __ReadOnly_FilterLayout::disableClearing(void)
+	\brief Disables clearing operation.
+	**/
 	bool __ReadOnly_FilterLayout::isBlendingEnabled(void) const	{ return blending;  }
 	void __ReadOnly_FilterLayout::enableBlending(void)   		{ blending = true;  }
 	void __ReadOnly_FilterLayout::disableBlending(void)  		{ blending = false; }
@@ -96,6 +137,14 @@
 	void __ReadOnly_FilterLayout::disableClearing(void)  		{ clearing = false; }
 
 	// FilterLayout
+	/**
+	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
+	\brief FilterLayout constructor.
+	\param type The typename of the filter layout.
+	\param fout The texture format of all the outputs.
+	\param fragment The ShaderSource of the fragement shader.
+	\param vertex [Optional] The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
+	**/
 	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
 	 : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout), __ReadOnly_HdlTextureFormat(fout)
 	{
@@ -138,6 +187,11 @@
 	}
 
 // Filter
+	/**
+	\fn Filter::Filter(const __ReadOnly_FilterLayout& c)
+	\brief Filter constructor.
+	\param c Filter layout.
+	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c)
 	: __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
 	{
@@ -205,6 +259,12 @@
 		delete vbo;
 	}
 
+	/**
+	\fn void Filter::setInputForNextRendering(int id, HdlTexture* ptr)
+	\brief Sets input texture for next rendering.
+	\param id Index of the input.
+	\param ptr Pointer to a valid texture object.
+	**/
 	void Filter::setInputForNextRendering(int id, HdlTexture* ptr)
 	{
 		if(id<0 || id>getNumInputPort())
@@ -213,6 +273,11 @@
 		//std::cout << "Adding : " << arguments[id] << " at " << id << std::endl;
 	}
 
+	/**
+	\fn void Filter::process(HdlFBO& renderer)
+	\brief Start the rendering process.
+	\param renderer The FBO to use as target.
+	**/
 	void Filter::process(HdlFBO& renderer)
 	{
 		// Prepare the renderer
