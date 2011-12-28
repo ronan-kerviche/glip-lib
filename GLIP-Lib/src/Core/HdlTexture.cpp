@@ -55,7 +55,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
+	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy)
 	\brief __ReadOnly_HdlTextureFormat Construtor.
 
 	\param copy Copy this format.
@@ -227,6 +227,11 @@ using namespace Glip::CoreGL;
 	GLint  __ReadOnly_HdlTextureFormat::getSWrapping(void) const { return wraps; }
 	GLint  __ReadOnly_HdlTextureFormat::getTWrapping(void) const { return wrapt; }
 
+	/**
+	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
+	\brief Returns true if the two format have the same parameters.
+	\param f Format to be compared with this.
+	**/
 	bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
 	{
 		return  (imgW      == f.imgW)      &&
@@ -244,6 +249,11 @@ using namespace Glip::CoreGL;
 			(wrapt     == f.wrapt);
 	}
 
+	/**
+	\fn    bool __ReadOnly_HdlTextureFormat::operator!=(const __ReadOnly_HdlTextureFormat& f) const
+	\brief Returns true if the two format have at least one different parameter.
+	\param f Format to be compared with this.
+	**/
 	bool __ReadOnly_HdlTextureFormat::operator!=(const __ReadOnly_HdlTextureFormat& f) const
 	{
 		return !(*this==f);
@@ -264,11 +274,46 @@ using namespace Glip::CoreGL;
 	: __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter)
 	{ }
 
-
+	/**
+	\fn    void HdlTextureFormat::setWidth(int w)
+	\brief Sets the texture's width.
+	\param w The new width.
+	\fn    void HdlTextureFormat::setHeight(int h)
+	\brief Sets the texture's height.
+	\param h The new height.
+	\fn    void HdlTextureFormat::setSize(int w, int h)
+	\brief Sets the format size.
+	\param w The new width.
+	\param h The new height.
+	\fn    void HdlTextureFormat::setGLMode(GLenum md)
+	\brief Sets the texture's mode.
+	\param md The new mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
+	\fn    void HdlTextureFormat::setGLDepth(GLenum dp)
+	\brief Sets the texture's pixel depth.
+	\param dp The new depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
+	\fn    void HdlTextureFormat::setMinFilter(GLenum mf)
+	\brief Sets the texture's minification parameter.
+	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\fn    void HdlTextureFormat::setMagFilter(GLenum mf)
+	\brief Sets the texture's magnification parameter.
+	\param mf The new magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\fn    void HdlTextureFormat::setBaseLevel(int l)
+	\brief Sets the texture's base level for mipmaps.
+	\param l The new base level (must be greater than 0).
+	\fn    void HdlTextureFormat::setMaxLevel (int l)
+	\brief Sets the texture's highest level for mipmaps.
+	\param l The new highest level (must be greater than 0).
+	\fn    void HdlTextureFormat::setSWrapping(GLint m)
+	\brief Sets the texture's S wrapping parameter.
+	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT)
+	\fn    void HdlTextureFormat::setTWrapping(GLint m)
+	\brief Sets the texture's T wrapping parameter.
+	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT)
+	**/
 	void HdlTextureFormat::setWidth    (int w)                   { imgW      = w;  }
 	void HdlTextureFormat::setHeight   (int h)                   { imgH      = h;  }
-	void HdlTextureFormat::setSize     (int w, int h)            { imgW      = w;
-								   imgH      = h;  }
+	void HdlTextureFormat::setSize     (int w, int h)            { 	imgW      = w;
+									imgH      = h;  }
 	void HdlTextureFormat::setGLMode   (GLenum md)               { mode      = md; }
 	void HdlTextureFormat::setGLDepth  (GLenum dp)               { depth     = dp; }
 	void HdlTextureFormat::setMinFilter(GLenum mf)               { minFilter = mf; }
@@ -278,6 +323,12 @@ using namespace Glip::CoreGL;
 	void HdlTextureFormat::setSWrapping(GLint m)                 { wraps     = m;  }
 	void HdlTextureFormat::setTWrapping(GLint m)                 { wrapt     = m;  }
 
+	/**
+	\fn const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
+	\brief Copy operator.
+	\param copy The format to copy.
+	\return This.
+	**/
 	const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
 	{
 		imgW      = copy.getWidth();
@@ -299,6 +350,11 @@ using namespace Glip::CoreGL;
 	}
 
 // HdlTexture - Functions
+	/**
+	\fn HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
+	\brief HdlTexture constructor.
+	\param fmt The format to use.
+	**/
 	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt) : __ReadOnly_HdlTextureFormat(fmt)
 	{
 		glEnable(GL_TEXTURE_2D);
@@ -332,11 +388,21 @@ using namespace Glip::CoreGL;
 	}
 
 // Public tools
+	/**
+	\fn GLuint HdlTexture::getID(void) const
+	\brief Get the ID of the texture.
+	\return The ID of the OpenGL texture handled by the driver.
+	**/
 	GLuint HdlTexture::getID(void) const
 	{
 		return texID;
 	}
 
+	/**
+	\fn void HdlTexture::bind(GLenum unit)
+	\brief Bind the texture to a unit.
+	\param unit The target unit.
+	**/
 	void HdlTexture::bind(GLenum unit)
 	{
 		glActiveTextureARB(unit);
@@ -346,11 +412,23 @@ using namespace Glip::CoreGL;
 		glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_REPLACE);
 	}
 
+	/**
+	\fn void HdlTexture::bind(int unit)
+	\brief Bind the texture to a unit.
+	\param unit The target unit.
+	**/
 	void HdlTexture::bind(int unit)
 	{
 		bind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
 	}
 
+	/**
+	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
+	\brief Write data to a texture using classical glTexImage method.
+	\param texData The pointer to the data.
+	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
+	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
+	**/
 	void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
 	{
 		if(pixelFormat==GL_ZERO)
@@ -373,6 +451,11 @@ using namespace Glip::CoreGL;
 			glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
+	/**
+	\fn void HdlTexture::fill(char dataByte)
+	\brief Fill a texture will a gray level.
+	\param dataByte The gray level to apply.
+	**/
 	void HdlTexture::fill(char dataByte)
 	{
 		bind();
@@ -386,12 +469,22 @@ using namespace Glip::CoreGL;
 	}
 
 // Static tools
+	/**
+	\fn void HdlTexture::unbind(GLenum unit)
+	\brief Unbind a unit from any texture.
+	\param unit The target unit.
+	**/
 	void HdlTexture::unbind(GLenum unit)
 	{
 		glActiveTextureARB(unit);
 		glBindTexture(GL_TEXTURE_2D, 0); //unBind
 	}
 
+	/**
+	\fn void HdlTexture::unbind(int unit)
+	\brief Unbind a unit from any texture.
+	\param unit The target unit.
+	**/
 	void HdlTexture::unbind(int unit)
 	{
 		unbind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));

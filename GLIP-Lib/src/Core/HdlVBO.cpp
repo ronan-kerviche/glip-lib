@@ -30,6 +30,21 @@
 using namespace Glip::CoreGL;
 
 // Tools
+	/**
+	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
+	\brief HdlVBO constructor.
+
+	\param _nVert Number of vertices.
+	\param _dim Dimension of the space containing the vertices (2 or 3).
+	\param freq Frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	\param _vertices Pointer to vertices data.
+	\param _nElements Number of elements.
+	\param _nIndPerElement Number of index per elements (2, 3, 4...).
+	\param _elements Pointer to elements data.
+	\param _type Type of the elements (GL_POINTS, GL_LINE, GL_LINE_STRIP, GL_LINE_LOOP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS, GL_QUAD_STRIP, GL_POLYGON).
+	\param _dimTexCoords Dimension per texel (2 or 3).
+	\param _texcoords Pointer to the texel coordiantes data.
+	**/
 	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
 	 : nVert(_nVert), dim(_dim), nElements(_nElements), type(_type), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL)
 	{
@@ -84,11 +99,25 @@ using namespace Glip::CoreGL;
 		delete elements;
 	}
 
+	/**
+	\fn int HdlVBO::getVerticesCount(void)
+	\return The number of vertices.
+	\fn int HdlVBO::getShapeDimension(void)
+	\return The dimension of the space.
+	\fn int HdlVBO::getElementsCount(void)
+	\return The number of elements.
+	\fn GLenum HdlVBO::getType(void)
+	\return The type of the elements.
+	**/
 	int HdlVBO::getVerticesCount(void)  { return nVert; }
 	int HdlVBO::getShapeDimension(void) { return dim; }
 	int HdlVBO::getElementsCount(void)  { return nElements; }
 	GLenum HdlVBO::getType(void)        { return type; }
 
+	/**
+	\fn void HdlVBO::draw(void)
+	\brief Draw the VBO according to its data.
+	**/
 	void HdlVBO::draw(void)
 	{
 		//std::cout << "    Rendering start : "; glErrors(true, false);
@@ -128,6 +157,11 @@ using namespace Glip::CoreGL;
 	}
 
 // Static tools
+	/**
+	\fn HdlVBO* HdlVBO::generate2DStandardQuad(void)
+	\brief Build a VBO containing a single quad between (-1.0,  1.0); (-1.0, -1.0); (1.0,  1.0); (1.0, -1.0) and adequate texcoords.
+	\return A pointer to a VBO, you must call delete on it at the end.
+	**/
 	HdlVBO* HdlVBO::generate2DStandardQuad(void)
 	{
 		GLfloat vertices[]  = {	-1.0,  1.0,
@@ -142,6 +176,17 @@ using namespace Glip::CoreGL;
 		return new HdlVBO(4, 2, GL_STATIC_DRAW_ARB, vertices, 1, 4, elements, GL_QUADS, 2, texcoords);
 	}
 
+	/**
+	\fn HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
+	\brief Build a VBO containing a grid of points.
+	\param w The number of dots in the X direction.
+	\param h The number of dots in the Y direction.
+	\param appW The size of the grid in the X direction.
+	\param appH The size of the grid in the Y direction.
+	\param cX The center of the grid in the X direction.
+	\param cY The center of the grid in the Y direction.
+	\return A pointer to a VBO, you must call delete on it at the end.
+	**/
 	HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
 	{
 		if(w<=0 || h<=0)
@@ -179,12 +224,20 @@ using namespace Glip::CoreGL;
 
 
 	// Static tools
+	/**
+	\fn void HdlVBO::unbind(void)
+	\brief Unbind all VBO targets (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB);
+	**/
 	void HdlVBO::unbind(void)
 	{
 		HdlGeBO::unbind(GL_ARRAY_BUFFER_ARB);
 		HdlGeBO::unbind(GL_ELEMENT_ARRAY_BUFFER_ARB);
 	}
 
+	/**
+	\fn void HdlVBO::unmap(void)
+	\brief Unmap all VBO targets (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB);
+	**/
 	void HdlVBO::unmap(void)
 	{
 		HdlGeBO::unmap(GL_ARRAY_BUFFER_ARB);

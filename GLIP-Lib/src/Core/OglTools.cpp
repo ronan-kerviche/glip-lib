@@ -7,7 +7,7 @@
 /*     LICENSE       : GPLv3                                                                                     */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : OglTools.hpp                                                                              */
+/*     File          : OglTools.cpp                                                                              */
 /*     Original Date : October 17th 2010                                                                         */
 /*                                                                                                               */
 /*     Description   : OpenGL includes and tools                                                                 */
@@ -15,7 +15,7 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    OglTools.hpp
+ * \file    OglTools.cpp
  * \brief   OpenGL includes and tools
  * \author  R. KERVICHE
  * \version 0.6
@@ -33,19 +33,27 @@ using namespace Glip::CoreGL;
 		bool HandleOpenGL::initDone = false;
 
 	// Functions
+		/**
+		\fn void HandleOpenGL::init(void)
+		\brief Initialize Glew and other tools for the OpenGL state machine. You have to call it before functions using OpenGL.
+		**/
 		void HandleOpenGL::init(void)
 		{
 			if(!initDone)
 			{
 				glewInit();
 				initDone = true;
-
-				// Init Multitexturing if not done yet...
-				//HdlMultiTexturing::init();
 			}
 		}
 
 // Errors Monitoring
+	/**
+	\fn bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
+	\brief Check for errors returned by OpenGL.
+	\param verbose If set to true, the error will be output on std::cout.
+	\param quietSituations If set to true, no print will be sent on std::cout in case there is no error.
+	\return true if an error occured.
+	**/
 	bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
 	{
 		GLenum err = glGetError();
@@ -72,6 +80,10 @@ using namespace Glip::CoreGL;
 		return err!=GL_NO_ERROR;
 	}
 
+	/**
+	\fn void Glip::CoreGL::glDebug(void)
+	\brief Print the current binding points state on std::cout (GL_TEXTURE_BINDING_1D, GL_TEXTURE_BINDING_2D, GL_TEXTURE_BINDING_3D, GL_ARRAY_BUFFER_BINDING, GL_ELEMENT_ARRAY_BUFFER_BINDING, GL_PIXEL_PACK_BUFFER_BINDING, GL_PIXEL_UNPACK_BUFFER_BINDING, GL_FRAMEBUFFER_BINDING, GL_TEXTURE_BUFFER_EXT, GL_CURRENT_PROGRAM).
+	**/
 	void Glip::CoreGL::glDebug(void)
 	{
 		GLint param;
@@ -115,6 +127,12 @@ using namespace Glip::CoreGL;
 	}
 
 	// OpenGL - Parameters Naming :
+	/**
+	\fn std::string Glip::CoreGL::glParamName(GLenum param)
+	\brief Get the parameter name as a string.
+	\param param The GLenum parameter.
+	\return A standard string.
+	**/
 	std::string Glip::CoreGL::glParamName(GLenum param)
 	{
 		#define NMTOOL(X) case X: return #X;
@@ -258,6 +276,12 @@ using namespace Glip::CoreGL;
 		#undef NMTOOL
 	}
 
+	/**
+	\fn GLenum Glip::CoreGL::gl_from_string(const std::string& name)
+	\brief Get the parameter from its name in a string.
+	\param param The GLenum parameter name.
+	\return The corresponding enum.
+	**/
 	GLenum Glip::CoreGL::gl_from_string(const std::string& name)
 	{
 		#define NMTOOL(X) if(name==#X) return X;

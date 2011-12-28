@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : devDebugTools.hpp                                                                         */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Development and debugging tools                                                           */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    devDebugTools.hpp
+ * \brief   Development and debugging tools
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #ifndef __DEV_DEBUG_TOOLS__
 #define __DEV_DEBUG_TOOLS__
 

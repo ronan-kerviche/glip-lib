@@ -1,18 +1,26 @@
-/*****************************************************************************************************************/
-/**                                                                                                             **/
-/**    GLIP-LIB                                                                                                 **/
-/**    OpenGL Image Processing LIBrary                                                                          **/
-/**                                                                                                             **/
-/**    Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                     **/
-/**    LICENSE       : GPLv3                                                                                    **/
-/**    Website       : http://sourceforge.net/projects/glip-lib/                                                **/
-/**                                                                                                             **/
-/**    File          : LayoutLoader.cpp                                                                         **/
-/**    Original Date : October 17th 2010                                                                        **/
-/**                                                                                                             **/
-/**    Description   : Layout Loader from files or strings                                                      **/
-/**                                                                                                             **/
-/*****************************************************************************************************************/
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : LayoutLoader.cpp                                                                          */
+/*     Original Date : December 22th 2011                                                                        */
+/*                                                                                                               */
+/*     Description   : Layout Loader from files or strings.                                                      */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    LayoutLoader.cpp
+ * \brief   Layout Loader from files or strings.
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    December 22th 2011
+**/
 
 	// Includes :
 	#include <sstream>

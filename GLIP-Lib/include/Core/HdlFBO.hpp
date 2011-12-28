@@ -25,57 +25,61 @@
 #ifndef __HDLFBO_INCLUDE__
 #define __HDLFBO_INCLUDE__
 
-    // Includes
+	// Includes
         #include <vector>
         #include "./HdlTexture.hpp"
         #include "OglInclude.hpp"
 
-namespace Glip
-{
-    namespace CoreGL
-    {
+	namespace Glip
+	{
+		namespace CoreGL
+		{
 
-        // Constants
-            #define NO_ATTACHMENT (-1)
+			// Constants
+			#define NO_ATTACHMENT (-1)
 
-        // FBO Handle
-            /**
-             \class HdlFBO
-             \brief Object handle for OpenGL Frame Buffer Objects
-            **/
-        class HdlFBO : public __ReadOnly_HdlTextureFormat
-        {
-            private :
-                // Data
-                    std::vector<HdlTexture*> targets;
-                    GLuint                   fboID;
-                // Tools
-                    void bindTextureToFBO(int i);
-                    void unbindTextureFromFBO(int i);
-                    /*void clearList(void);
-                    void addTolist(GLenum attach);
-                    void removeFromList(GLenum attach);*/
-            public :
-                // Tools
-                    HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget = 1);
-                    ~HdlFBO(void);
+			// FBO Handle
+			/**
+			\class HdlFBO
+			\brief Object handle for OpenGL Frame Buffer Objects
 
-                    int         addTarget(void);
-                    int         getAttachmentCount(void) const;
+			This class can manage a Frame Buffer Object and multiple rendering target, each one of these rendering target have the same format.
+			**/
+			class HdlFBO : public __ReadOnly_HdlTextureFormat
+			{
+				private :
+					// Data
+					std::vector<HdlTexture*> targets;
+					GLuint                   fboID;
 
-                    void        beginRendering(void);
-                    void        endRendering(void);
-                    void        bind(void);
-                    HdlTexture* operator[](int i);
+					// Tools
+					void bindTextureToFBO(int i);
+					void unbindTextureFromFBO(int i);
+					/*void clearList(void);
+					void addTolist(GLenum attach);
+					void removeFromList(GLenum attach);*/
 
-                // Static tools :
-                    static int    getMaximumColorAttachment(void);
-                    static GLenum getAttachment(int i);
-                    static int    getIndexFromAttachment(GLenum attachment);
-                    static void   unbind(void);
-        };
-    }
-}
+				public :
+					// Tools
+					HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget = 1);
+					~HdlFBO(void);
+
+					int         addTarget(void);
+					int         getAttachmentCount(void) const;
+
+					void        beginRendering(void);
+					void        endRendering(void);
+					void        bind(void);
+					HdlTexture* operator[](int i);
+
+					// Static tools :
+					static int    getMaximumColorAttachment(void);
+					static GLenum getAttachment(int i);
+					static int    getIndexFromAttachment(GLenum attachment);
+					static void   unbind(void);
+			};
+		}
+	}
 
 #endif
 

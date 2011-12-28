@@ -83,10 +83,10 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    GLuint HdlShader::getShaderID(void)
+	\fn    GLuint HdlShader::getShaderID(void) const
 	\brief Returns the ID of the shader for OpenGL.
 
-	\return The ID.
+	\return The ID handled by the driver.
 	**/
 	GLuint HdlShader::getShaderID(void) const
 	{
@@ -94,7 +94,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    GLenum HdlShader::getType(void)
+	\fn    GLenum HdlShader::getType(void) const
 	\brief Returns the kind of the shader for OpenGL (either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER).
 
 	\return The Kind.
@@ -112,10 +112,11 @@ using namespace Glip::CoreGL;
 
 // HdlProgram - Functions
 	/**
-	\fn    HdlProgram::HdlProgram(void)
+	\fn HdlProgram::HdlProgram(void)
 	\brief HdlProgram constructor.
 	**/
-	HdlProgram::HdlProgram(void) : valid(false)
+	HdlProgram::HdlProgram(void)
+	 : valid(false)
 	{
 		// create the program
 		program = glCreateProgram();
@@ -124,13 +125,14 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    HdlProgram::HdlProgram(HdlShader& shd1, HdlShader& shd2)
+	\fn    HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)
 	\brief HdlProgram constructor. Note that the shaders must be of different kinds.
 
 	\param shd1 The first shader to link.
 	\param shd2 The second shader to link.
 	**/
-	HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2) : valid(false)
+	HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)
+	 : valid(false)
 	{
 		// create the program
 		program = glCreateProgram();
@@ -147,11 +149,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    bool HdlProgram::isValid(void)
-	\brief Returns true if the Program is valid.
-
-	\param shd1 The first shader to link.
-	\param shd2 The second shader to link.
-
+	\brief Check if the program is valid.
 	\return True if the Program is valid, false otherwise.
 	**/
 	bool HdlProgram::isValid(void)
@@ -206,11 +204,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlProgram::update(HdlShader& shader, bool lnk)
+	\fn    void HdlProgram::update(const HdlShader& shader, bool lnk)
 	\brief Change a shader in the program.
 
 	\param shader The shader to add.
-	\param link   Set to true if you want the program to be linked again.
+	\param lnk Set to true if you want the program to be linked again.
 	**/
 	void HdlProgram::update(const HdlShader& shader, bool lnk)
 	{
@@ -241,7 +239,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::setFragmentLocation(const char* fragName, int frag)
+	\fn    bool HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	\brief Link the name of a fragment output variable to a fragment unit.
 
 	\param fragName Name of the fragment output variable.
@@ -260,7 +258,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const char* varName, SHADER_DATA_TYPE type, int val1, int val2, int val3, int val4)
+	\fn    bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, int val1, int val2, int val3, int val4)
 	\brief Change a uniform variable in a shader (Integer version).
 
 	\param varName Name of the fragment output variable.
@@ -303,7 +301,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const char* varName, SHADER_DATA_TYPE type, float val1, float val2, float val3, float val4)
+	\fn    bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, float val1, float val2, float val3, float val4)
 	\brief Change a uniform variable in a shader (Floating point version).
 
 	\param varName Name of the fragment output variable.
@@ -370,7 +368,7 @@ using namespace Glip::CoreGL;
 
 // Static tools :
 	/**
-	\fn    void stopProgram(void)
+	\fn    void HdlProgram::stopProgram(void)
 	\brief Stop using a program
 	**/
 	void HdlProgram::stopProgram(void)

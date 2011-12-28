@@ -33,14 +33,15 @@ using namespace Glip::CoreGL;
 
 // Functions
 	/**
-	\fn    HdlGeBO::HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	\fn    HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage)
 	\brief HdlGeBO Construtor.
 
 	\param _size      Size of the buffer, in bytes.
 	\param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
 	\param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
 	**/
-	HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage)
+	 : size(_size)
 	{
 		// Generate the buffer
 		glGenBuffers(1, &bufferId);
@@ -64,7 +65,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    HdlGeBO::HdlGeBO(GLuint id, unsigned int _size) : size(_size)
+	\fn    HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage)
 	\brief HdlGeBO Construtor.
 
 	\param id    GLuint id of the Buffer Object to be mapped in.
@@ -72,7 +73,8 @@ using namespace Glip::CoreGL;
 	\param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
 	\param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
 	**/
-	HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage)
+	 : size(_size)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
 		std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
@@ -128,7 +130,7 @@ using namespace Glip::CoreGL;
 	\fn    GLenum HdlGeBO::getUsage(void)
 	\brief Get the usage of the Buffer Object.
 
-	\return ID of the Buffer Object, among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
+	\return ID of the usage, among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
 	**/
 	GLenum HdlGeBO::getUsage(void)
 	{
@@ -137,7 +139,8 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    void HdlGeBO::bind(GLenum target)
-	\brief Bind the Buffer Object.
+	\brief Bind the Buffer Object to target.
+	\param target The target (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
 	**/
 	void HdlGeBO::bind(GLenum target)
 	{
@@ -170,6 +173,11 @@ using namespace Glip::CoreGL;
 		return glMapBufferARB(target, access);
 	}
 
+	/**
+	\fn    void HdlGeBO::write(void* data)
+	\brief Write data to a Buffer Object with classical glBufferData method.
+	\param data The data to write (must be the same size than the GeBO).
+	**/
 	void HdlGeBO::write(void* data)
 	{
 		bind();
@@ -177,6 +185,13 @@ using namespace Glip::CoreGL;
 		glBufferData(getTarget(), static_cast<GLsizeiptr>(size), reinterpret_cast<const GLvoid *>(data), getUsage());
 	}
 
+	/**
+	\fn    void HdlGeBO::subWrite(void* data, int size, int offset)
+	\brief Write data to a Buffer Object with classical glBufferSubData method.
+	\param data The data to write.
+	\param size Size, in bytes, of the subset.
+	\param offset Offset to apply, in bytes, before writting.
+	**/
 	void HdlGeBO::subWrite(void* data, int size, int offset)
 	{
 		bind();
@@ -226,11 +241,23 @@ using namespace Glip::CoreGL;
 		}
 	}
 
+	/**
+	\fn bool HdlGeBO::isBound(GLenum target)
+	\brief Test if the target is bound.
+	\param target The target (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\return true if the target is bound.
+	**/
 	bool HdlGeBO::isBound(GLenum target)
 	{
 		return binding[getIDTarget(target)];
 	}
 
+	/**
+	\fn bool HdlGeBO::isMapped(GLenum target)
+	\brief Test if the target is mapped.
+	\param target The target (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\return true if the target is mapped.
+	**/
 	bool HdlGeBO::isMapped(GLenum target)
 	{
 		return mapping[getIDTarget(target)];

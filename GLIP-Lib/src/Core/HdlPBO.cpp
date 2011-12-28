@@ -28,6 +28,16 @@
 using namespace Glip::CoreGL;
 
 // Tools
+	/**
+	\fn HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq)
+	\brief HdlPBO constructor.
+	\param _w The width of the buffer.
+	\param _h The height of the buffer.
+	\param _c The number of channels.
+	\param _cs The size of each channel (in bytes).
+	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	**/
 	HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq)
 	 : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO(_w*_h*_c*_cs, aim, freq)
 	{ }
@@ -35,11 +45,31 @@ using namespace Glip::CoreGL;
 	HdlPBO::~HdlPBO(void)
 	{ }
 
+	/**
+	\fn int HdlPBO::getWidth(void)
+	\return The width of the buffer.
+	\fn int HdlPBO::getHeight(void)
+	\return The height of the buffer.
+	\fn int HdlPBO::getChannelCount(void)
+	\return The number of channels of the buffer.
+	\fn int HdlPBO::getChannelSize(void)
+	\return The channel size (in bytes) of the buffer.
+	**/
 	int HdlPBO::getWidth(void)        { return w;  }
 	int HdlPBO::getHeight(void)       { return h;  }
 	int HdlPBO::getChannelCount(void) { return c;  }
 	int HdlPBO::getChannelSize(void)  { return cs; }
 
+	/**
+	\fn void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
+	\param texture The target texture.
+	\param mode The channel layout of the input data.
+	\param depth The depth of the input data.
+	\param oX The offset in X direction for the destination target.
+	\param oY The offset in Y direction for the destination target.
+	\param w The width to be copied.
+	\param h The height to be copied.
+	**/
 	void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
 	{
 		if(w<=0) w = texture.getWidth();
@@ -52,6 +82,11 @@ using namespace Glip::CoreGL;
 	}
 
 //Other tools
+	/**
+	\fn void HdlPBO::unbind(GLenum target)
+	\brief Unbind the PBO bound to target.
+	\param target The target binding point.
+	**/
 	void HdlPBO::unbind(GLenum target)
 	{
 		if(target==0)
@@ -63,6 +98,11 @@ using namespace Glip::CoreGL;
 			HdlGeBO::unbind(target);
 	}
 
+	/**
+	\fn void HdlPBO::unmap(GLenum target)
+	\brief Unmap the PBO mapped from/to target.
+	\param target The target binding point.
+	**/
 	void HdlPBO::unmap(GLenum target)
 	{
 		if(target==0)

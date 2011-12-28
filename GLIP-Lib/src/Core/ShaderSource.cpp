@@ -1,10 +1,34 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : ShaderSource.cpp                                                                          */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Shader source and tools                                                                   */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    ShaderSource.cpp
+ * \brief   Shader source and tools
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #include "ShaderSource.hpp"
 #include "Exception.hpp"
 
     using namespace Glip::CoreGL;
 
 	/**
-	\fn    ShaderSource::ShaderSource(void)
+	\fn    ShaderSource::ShaderSource(const ShaderSource& ss)
 	\brief ShaderSource Construtor.
 
 	\param ss Source code of the shader, as a copy.
@@ -18,14 +42,12 @@
 	}
 
 	/**
-	\fn    bool ShaderSource::loadSource(const char** src, bool eol, int lines)
-	\brief Load a source code from a standard char string.
+	\fn    ShaderSource::ShaderSource(const char** src, bool eol, int lines)
+	\brief ShaderSource Construtor.
 
 	\param src Pointer to table of lines.
 	\param eol Set to true if the code contains End Of Line delimiters.
 	\param lines Number of lines to consider.
-
-	\return False if it failed, true otherwise.
 	**/
 	ShaderSource::ShaderSource(const char** src, bool eol, int lines)
 	{
@@ -58,12 +80,10 @@
 	}
 
 	/**
-	\fn    bool ShaderSource::loadSource(const std::string& src)
-	\brief Load a source code from a standard char string.
+	\fn    ShaderSource::ShaderSource(const std::string& src)
+	\brief Constructor of ShaderSource, load from a standard string or a file.
 
 	\param src Source data (must have at least one '\n') or filename (without '\n')
-
-	\param False if it failed, true otherwise.
 	**/
 	ShaderSource::ShaderSource(const std::string& src)
 	{
@@ -312,10 +332,12 @@
 	}
 
 	/**
-	\fn    void ShaderSource::rrrorLogFile(std::string log)
+	\fn    std::string ShaderSource::errorLog(std::string log)
 	\brief Add some source code information to the output shader compilation log
 
 	\param log Input log to be mixed with source code.
+
+	\return Enhanced log.
 	**/
 	std::string ShaderSource::errorLog(std::string log)
 	{
@@ -339,7 +361,7 @@
 	}
 
 	/**
-	\fn    std::string ShaderSource::getSource(void)
+	\fn    const std::string& ShaderSource::getSource(void) const
 	\brief Returns the source as a standard string.
 
 	\return A standard string.
@@ -350,7 +372,7 @@
 	}
 
 	/**
-	\fn    std::string ShaderSource::getSourceName(void)
+	\fn    const std::string& ShaderSource::getSourceName(void) const
 	\brief Return the name of the source : the filename if it was loaded from a file or <Inner String> otherwise.
 
 	\return A standard string.
@@ -361,21 +383,33 @@
 	}
 
 	/**
-	\fn    std::string ShaderSource::getSource(void)
+	\fn    const char* ShaderSource::getSourceCstr(void) const
 	\brief Returns the source as a characters table.
 
-	\return A const char*.
+	\return A const char* string (including \0).
 	**/
 	const char* ShaderSource::getSourceCstr(void) const
 	{
 		return source.c_str();
 	}
 
+	/**
+	\fn const std::vector<std::string>& ShaderSource::getInputVars(void)
+	\brief Return a vector containing the name of all the input textures (uniform sampler*).
+
+	\return A vector of standard string.
+	**/
 	const std::vector<std::string>& ShaderSource::getInputVars(void)
 	{
 		return inVars;
 	}
 
+	/**
+	\fn const std::vector<std::string>& ShaderSource::getOutputVars(void)
+	\brief Return a vector containing the name of all the output textures (uniform sampler*).
+
+	\return A vector of standard string.
+	**/
 	const std::vector<std::string>& ShaderSource::getOutputVars(void)
 	{
 		return outVars;

@@ -29,12 +29,14 @@ using namespace Glip::CoreGL;
 
 // Functions
 	/**
-	\fn    HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& format)
+	\fn    HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
 	\brief HdlFBO Construtor.
 
-	\param format           Format of the textures attached to the rendering point.
+	\param f Format of the textures attached to the rendering point.
+	\param numTarget Number of targets to be built by the constructor.
 	**/
-	HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget) : __ReadOnly_HdlTextureFormat(f)
+	HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
+	 : __ReadOnly_HdlTextureFormat(f)
 	{
 		HandleOpenGL::init();
 
@@ -74,8 +76,6 @@ using namespace Glip::CoreGL;
 
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, 0, 0);
 	}
-
-
 
 	/**
 	\fn    int HdlFBO::addTarget(void)
@@ -151,6 +151,12 @@ using namespace Glip::CoreGL;
 		glPopAttrib();
 	}
 
+	/**
+	\fn    HdlTexture* HdlFBO::operator[](int i)
+	\brief Get a target of the FBO
+	\param i Index of the target.
+	\return Pointer to the corresponding target.
+	**/
 	HdlTexture* HdlFBO::operator[](int i)
 	{
 		if(i<0 || i>targets.size())
@@ -171,7 +177,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    int HdlFBO::getMaximumColorAttachment(void)
 	\brief Get the maximum number of attachment points.
-
 	\return The maximum number of attachment points.
 	**/
 	int HdlFBO::getMaximumColorAttachment(void)
@@ -186,9 +191,7 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    GLenum HdlFBO::getAttachment(int i)
 	\brief Convert an attachment ID to the corresponding OpenGL constant.
-
 	\param i The ID of the attachment point.
-
 	\return The corresponding OpenGL constant.
 	**/
 	GLenum HdlFBO::getAttachment(int i)
@@ -199,9 +202,7 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    int HdlFBO::getIndexFromAttachment(GLenum attachment)
 	\brief Convert an OpenGL constant to the corresponding attachment ID.
-
 	\param attachment The OpenGL constant representing the attachment point.
-
 	\return The corresponding ID.
 	**/
 	int HdlFBO::getIndexFromAttachment(GLenum attachment)
@@ -210,7 +211,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void unbindFBO(void)
+	\fn    void HdlFBO::unbind(void)
 	\brief Unbind the FBO which is currently bound to the OpenGL context.
 	**/
 	void HdlFBO::unbind(void)

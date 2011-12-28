@@ -31,7 +31,7 @@
 	#ifdef _WIN32
 		#define WINDOWS_LEAN_AND_MEAN
 		#include <windows.h>
-		#define GLEW_STATIC                //this is an application
+		#define GLEW_STATIC
 		#include "glew.h"
 		#include <GL/gl.h>
 	#endif
@@ -49,7 +49,11 @@
 			// Prototype
 			class HdlMultiTexturing;
 
-			// Struct
+			// Object
+			/**
+			\class HandleOpenGL
+			\brief Main OpenGL Handle
+			**/
 			class HandleOpenGL
 			{
 				private :

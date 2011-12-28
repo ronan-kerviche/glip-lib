@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : ShaderSource.hpp                                                                          */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Shader source and tools                                                                   */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    ShaderSource.hpp
+ * \brief   Shader source and tools
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #ifndef __GLIP_SHADERSOURCE__
 #define __GLIP_SHADERSOURCE__
 
@@ -205,6 +229,10 @@
 			extern const char* GLSLKeyword[];
 
 			// Objects
+			/**
+			\class ShaderSource
+			\brief Shader source code and infos
+			**/
 			class ShaderSource
 			{
 				private :

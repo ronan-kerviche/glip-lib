@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : NamingLayout.cpp                                                                          */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Filter object                                                                             */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    NamingLayout.cpp
+ * \brief   Object name tools
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #include "NamingLayout.hpp"
 #include "Exception.hpp"
 
@@ -5,17 +29,39 @@ using namespace Glip::CorePipeline;
 using namespace Glip;
 
 // ObjectName
+	/**
+	\fn ObjectName::ObjectName(const std::string& nm, const std::string& tp)
+	\brief ObjectName Constructor for a pipeline element.
+	\param nm Name of the element.
+	\param tp Typename of the element.
+	**/
 	ObjectName::ObjectName(const std::string& nm, const std::string& tp)
 	 : portID(NO_PORT), name(nm), type(tp)
 	{ }
+
+	/**
+	\fn ObjectName::ObjectName(const std::string& name, int port)
+	\brief ObjectName Constructor for a port.
+	\param name Name of the element.
+	\param port Index of the port.
+	**/
 	ObjectName::ObjectName(const std::string& name, int port)
 	 : portID(port), name(name), type("")
 	{ }
 
+	/**
+	\fn ObjectName::ObjectName(const ObjectName& c)
+	\brief ObjectName Constructor.
+	\param c Copy.
+	**/
 	ObjectName::ObjectName(const ObjectName& c)
 	 : portID(c.portID), name(c.name), type(c.type)
 	{ }
 
+	/**
+	\fn void ObjectName::checkName(void)
+	\brief Check the validity of the name. Raise an exception if any errors occur.
+	**/
 	void ObjectName::checkName(void)
 	{
 		#define EXCEPTION(s) throw Exception("ObjectName - Name " + name + " contains illegal symbol : " + s, __FILE__, __LINE__);
@@ -56,6 +102,10 @@ using namespace Glip;
 		#undef EXCEPTION
 	}
 
+	/**
+	\fn void ObjectName::checkType(void)
+	\brief Check the validity of the typename. Raise an exception if any errors occur.
+	**/
 	void ObjectName::checkType(void)
 	{
 		#define EXCEPTION(s) throw Exception("ObjectName - Type " + type + " contains illegal symbol : " + s, __FILE__, __LINE__);
@@ -96,16 +146,31 @@ using namespace Glip;
 		#undef EXCEPTION
 	}
 
+	/**
+	\fn void ObjectName::setName(const std::string& s)
+	\brief Change the name of the object.
+	\param s The new name.
+	**/
 	void ObjectName::setName(const std::string& s)
 	{
 		name = s;
 	}
 
+	/**
+	\fn const std::string& ObjectName::getName(void) const
+	\brief Get the name of the object.
+	\return The name of the object.
+	**/
 	const std::string& ObjectName::getName(void) const
 	{
 		return name;
 	}
 
+	/**
+	\fn std::string ObjectName::getNameExtended(void) const
+	\brief Get the name and the typename of the object in the same string.
+	\return The name and typename of the object.
+	**/
 	std::string ObjectName::getNameExtended(void) const
 	{
 		if(portID==NO_PORT)
@@ -114,6 +179,11 @@ using namespace Glip;
 			return name + BEGIN_PORT + to_string(portID) + END_PORT;
 	}
 
+	/**
+	\fn const std::string& ObjectName::getType(void) const
+	\brief Get the typename of the object.
+	\return The typename of the object.
+	**/
 	const std::string& ObjectName::getType(void) const
 	{
 		return type;
@@ -137,6 +207,12 @@ using namespace Glip;
 			throw Exception("ObjectName::parse - Unbalanced " + endQual + " in " + str, __FILE__, __LINE__);
 	}
 
+	/**
+	\fn std::vector<std::string> ObjectName::parse(const std::string& field)
+	\brief Parse the input string in order to navigate into a pipeline architecture as a tree.
+	\param field The input sequence.
+	\return A vector of string representing the consecutive elements (from trunk to leaves).
+	**/
 	std::vector<std::string> ObjectName::parse(const std::string& field)
 	{
 		if(field.empty())
@@ -171,6 +247,15 @@ using namespace Glip;
 	}
 
 // Tools
+	/**
+	\fn int Glip::CorePipeline::getIndexByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj)
+	\brief Get the Index of an object return by a selection function.
+	\param str The name of the object.
+	\param ln The number of selected items.
+	\param f The selection function.
+	\param obj The object handling the data.
+	\return The index of the desired object or raise an exception if any errors occur.
+	**/
 	int Glip::CorePipeline::getIndexByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj)
 	{
 		if(ln==0)

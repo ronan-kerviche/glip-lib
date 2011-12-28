@@ -1,3 +1,27 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : Filter.cpp                                                                                */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Filter object                                                                             */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    Filter.cpp
+ * \brief   Filter object
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #include "Filter.hpp"
 #include "HdlTexture.hpp"
 #include "HdlShader.hpp"

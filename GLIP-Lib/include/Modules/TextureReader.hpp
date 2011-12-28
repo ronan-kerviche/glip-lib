@@ -1,18 +1,26 @@
-/*****************************************************************************************************************/
-/**                                                                                                             **/
-/**    GLIP-LIB                                                                                                 **/
-/**    OpenGL Image Processing LIBrary                                                                          **/
-/**                                                                                                             **/
-/**    Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                     **/
-/**    LICENSE       : GPLv3                                                                                    **/
-/**    Website       : http://sourceforge.net/projects/glip-lib/                                                **/
-/**                                                                                                             **/
-/**    File          : TextureReader.hpp                                                                        **/
-/**    Original Date : October 17th 2010                                                                        **/
-/**                                                                                                             **/
-/**    Description   : Texture Reader                                                                           **/
-/**                                                                                                             **/
-/*****************************************************************************************************************/
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : TextureReader.hpp                                                                         */
+/*     Original Date : October 17th 2010                                                                         */
+/*                                                                                                               */
+/*     Description   : Module : Texture Reader                                                                   */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    TextureReader.hpp
+ * \brief   Module : Texture Reader
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    October 17th 2010
+**/
 
 #ifndef __TEXTURE_READER_INCLUDE__
 #define __TEXTURE_READER_INCLUDE__

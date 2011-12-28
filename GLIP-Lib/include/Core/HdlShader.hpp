@@ -35,10 +35,6 @@ namespace Glip
 {
 	namespace CoreGL
 	{
-
-		// Prototype
-		//class HdlShader;
-
 		// Shader Handle
 		/**
 		\class HdlShader

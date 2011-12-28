@@ -1,13 +1,41 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : Exception.hpp                                                                             */
+/*     Original Date : August 15th 2011                                                                          */
+/*                                                                                                               */
+/*     Description   : Exception class                                                                           */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+/**
+ * \file    Exception.hpp
+ * \brief   Exception class
+ * \author  R. KERVICHE
+ * \version 0.6
+ * \date    August 15th 2011
+**/
+
 #ifndef __GLIP_EXCEPTION__
 #define __GLIP_EXCEPTION__
 
 	// Includes
-		#include <iostream>
-		#include <sstream>
+	#include <iostream>
+	#include <sstream>
 
 	namespace Glip
 	{
 		// Object
+		/**
+		\class Exception
+		\brief Exception class, derived from std::exception
+		**/
 		class Exception : public std::exception
 		{
 			private :
@@ -30,6 +58,13 @@
 		};
 
 		// Tools
+		/**
+		\fn template<typename TYPE> bool from_string(const std::string & Str, TYPE& Dest)
+		\brief Conversion, from string to data.
+		\param Str Input string.
+		\param Dest Output.
+		\return true if conversion was successful.
+		**/
 		template<typename TYPE>
 		bool from_string(const std::string & Str, TYPE& Dest)
 		{
@@ -37,6 +72,12 @@
 			return iss >> Dest != 0;
 		}
 
+		/**
+		\fn template<typename TYPE> std::string to_string(const TYPE& Value )
+		\brief Conversion, from data to string.
+		\param Value Input data.
+		\return Standard string.
+		**/
 		template<typename TYPE>
 		std::string to_string(const TYPE& Value )
 		{
