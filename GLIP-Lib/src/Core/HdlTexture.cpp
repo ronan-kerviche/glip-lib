@@ -18,7 +18,6 @@
  * \file    HdlTexture.cpp
  * \brief   OpenGL Texture Handle
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 7th 2010
 **/
 
@@ -490,93 +489,7 @@ using namespace Glip::CoreGL;
 		unbind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
 	}
 
-// HdlMultiTexturing - Functions & data
-    /*GLenum HdlMultiTexturing::currentUnit = GL_TEXTURE0_ARB;
-    GLint  HdlMultiTexturing::maxUnit     = 0;
-
-    void HdlMultiTexturing::init(void)
-    {
-
-        if( maxUnit==0 )
-        {
-            // glew init
-            HandleOpenGL::init();
-
-            // max texturing units
-            glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB , &maxUnit );
-
-            // 29/12/10 : should I replace GL_MAX_TEXTURE_UNITS_ARB by GL_MAX_TEXTURE_COORDS_ARB?
-            // according to http://developer.nvidia.com/object/General_FAQ.html#t6
-        }
-    }
-
-    void HdlMultiTexturing::setWorkingUnit(GLenum unit)
-    {
-        currentUnit = unit;
-    }
-
-    GLenum HdlMultiTexturing::unitName(int id)
-    {
-        return GL_TEXTURE0_ARB + id; //According OpenGL official SDK
-    }
-
-    int HdlMultiTexturing::unitIndex(GLenum name)
-    {
-        return (int)(name-GL_TEXTURE0_ARB); //According OpenGL official SDK
-    }
-
-    void HdlMultiTexturing::glTexCoord2d(float u, float v, GLenum unit)
-    {
-        glMultiTexCoord2dARB(unit,u,v);
-    }
-
-    void HdlMultiTexturing::bindToUnit(HdlTexture& tex, GLenum unit)
-    {
-        glActiveTextureARB(unit);
-
-        glEnable(GL_TEXTURE_2D);
-
-        tex.bind();
-
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-        glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_REPLACE);
-    }
-
-    void HdlMultiTexturing::unbindUnit(GLenum unit)
-    {
-        glActiveTextureARB(unit);
-
-        glEnable(GL_TEXTURE_2D);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
-    void HdlMultiTexturing::bindToCurrentUnit(HdlTexture& tex)
-    {
-        bindToUnit(tex, currentUnit);
-    }
-
-    void HdlMultiTexturing::releaseUnit(GLenum unit)
-    {
-        glActiveTextureARB(unit);
-
-        glDisable(GL_TEXTURE_2D);
-
-        glActiveTextureARB(GL_TEXTURE0_ARB);
-    }
-
-    void HdlMultiTexturing::releaseCurrentUnit(void)
-    {
-        releaseUnit(currentUnit);
-    }
-
-    GLenum HdlMultiTexturing::getCurrentUnit(void)
-    {
-        return currentUnit;
-    }
-
-    GLint HdlMultiTexturing::getMaxUnit(void)
-    {
-        return maxUnit;
-    }*/
-
+// Max texturing units :
+        //glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB , &maxUnit );
+	// 29/12/10 : should I replace GL_MAX_TEXTURE_UNITS_ARB by GL_MAX_TEXTURE_COORDS_ARB?
+	// according to http://developer.nvidia.com/object/General_FAQ.html#t6

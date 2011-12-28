@@ -18,7 +18,6 @@
  * \file    HdlGeBO.hpp
  * \brief   OpenGL Generic handle for Buffer Objects (VBO, PBO, VAO, ...)
  * \author  R. KERVICHE
- * \version 0.6
  * \date    February 6th 2011
 */
 

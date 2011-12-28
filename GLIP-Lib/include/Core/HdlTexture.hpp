@@ -18,7 +18,6 @@
  * \file    HdlTexture.hpp
  * \brief   OpenGL Texture Handle
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 7th 2010
 **/
 
@@ -116,14 +115,7 @@
 					HdlTexture(const __ReadOnly_HdlTextureFormat& fmt);
 					~HdlTexture(void);
 
-					/*int    getWidth  (void)  const;
-					int    getHeight (void)  const;
-					int    getChannel(void)  const;
-					int    getSize   (void)  const;
-					GLenum getGLMode (void)  const;
-					GLenum getGLDepth(void)  const;*/
 					GLuint getID     (void)  const;
-
 					void   bind(GLenum unit=GL_TEXTURE0_ARB);
 					void   bind(int unit);
 					void   write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);

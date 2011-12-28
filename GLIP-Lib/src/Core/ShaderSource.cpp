@@ -18,7 +18,6 @@
  * \file    ShaderSource.cpp
  * \brief   Shader source and tools
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 15th 2011
 **/
 

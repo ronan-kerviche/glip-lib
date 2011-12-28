@@ -18,7 +18,6 @@
  * \file    Pipeline.cpp
  * \brief   Pipeline object
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 15th 2011
 **/
 

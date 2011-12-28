@@ -18,7 +18,6 @@
  * \file    TextureReader.cpp
  * \brief   Module : Texture Reader
  * \author  R. KERVICHE
- * \version 0.6
  * \date    October 17th 2010
 **/
 

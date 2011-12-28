@@ -18,7 +18,6 @@
  * \file    Devices.cpp
  * \brief   Input and Output devices objects
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 15th 2011
 **/
 

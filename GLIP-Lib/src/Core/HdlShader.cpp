@@ -18,7 +18,6 @@
  * \file    HdlShader.cpp
  * \brief   OpenGL Pixel and Fragment Shader Handle
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 7th 2010
 **/
 
@@ -51,7 +50,7 @@ using namespace Glip::CoreGL;
 
 		if(shader==0)
 		{
-			throw Exception("HdlShader::HdlShader - Unable to create the shader " + getSourceName(), __FILE__, __LINE__);
+			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName(), __FILE__, __LINE__);
 		}
 
 		// send the source code
@@ -78,7 +77,7 @@ using namespace Glip::CoreGL;
 
 			delete[] log;
 
-			throw Exception("HdlShader::HdlShader - error while compiling the shader " + getSourceName() + " : \n" + err, __FILE__, __LINE__);
+			throw Exception("HdlShader::HdlShader - error while compiling the shader from " + getSourceName() + " : \n" + err, __FILE__, __LINE__);
 		}
 	}
 
@@ -139,7 +138,7 @@ using namespace Glip::CoreGL;
 
 		attachedFragmentShader = attachedVertexShader = 0;
 
-		//attach the two Shaders if there aren't NULL
+		//attach the two Shaders
 		update(shd1, false);
 		update(shd2, false);
 
@@ -173,7 +172,7 @@ using namespace Glip::CoreGL;
 		glGetProgramiv(program, GL_LINK_STATUS, &link_status);
 		if(link_status!=GL_TRUE)
 		{
-			std::cout << "Error during Program linking" << std::endl;
+			//std::cout << "Error during Program linking" << std::endl;
 
 			// get the log
 			GLint logSize;
@@ -254,7 +253,13 @@ using namespace Glip::CoreGL;
 			std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
 		#endif
 		glBindFragDataLocation(program, frag, fragName.c_str());
-		return !glErrors(); //return false if any error
+
+		bool test = !glErrors();
+
+		if(!test)
+			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location " + fragName, __FILE__, __LINE__);
+
+		return test; //return false if any error
 	}
 
 	/**
@@ -279,14 +284,6 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
 			return false;
 		}
-
-		/*GLint curPrgm = 0;
-		glGetIntegerv(GL_CURRENT_PROGRAM, &curPrgm);
-		if(curPrgm!=program || curPrgm==0)
-		{
-		std::cout << "You are trying to modify a program you aren't using (call void use(void) for this) - glError > GL_INVALID_OPERATION" << std::endl;
-		return false;
-		}*/
 
 		switch(type)
 		{
@@ -322,14 +319,6 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
 			return false;
 		}
-
-		/*GLint curPrgm = 0;
-		glGetIntegerv(GL_CURRENT_PROGRAM, &curPrgm);
-		if(curPrgm!=program || curPrgm==0)
-		{
-		std::cout << "You are trying to modify a program you aren't using (call void use(void) for this) - glError > GL_INVALID_OPERATION" << std::endl;
-		return false;
-		}*/
 
 		switch(type)
 		{

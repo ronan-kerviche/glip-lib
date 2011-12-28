@@ -18,7 +18,6 @@
  * \file    HdlVBO.cpp
  * \brief   OpenGL Vertex Buffer Object Handle
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 7th 2010
 */
 

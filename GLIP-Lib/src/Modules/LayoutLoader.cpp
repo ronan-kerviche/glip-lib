@@ -18,7 +18,6 @@
  * \file    LayoutLoader.cpp
  * \brief   Layout Loader from files or strings.
  * \author  R. KERVICHE
- * \version 0.6
  * \date    December 22th 2011
 **/
 

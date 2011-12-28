@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     AUTHOR        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     VERSION       : 0.6                                                                                       */
+/*     VERSION       : 0.7                                                                                       */
 /*     LICENSE       : GPLv3                                                                                     */
 /*     DATE          : August   23rd 2011                                                                        */
 /*     Original Date : August    7th 2010                                                                        */
@@ -63,15 +63,26 @@
 
 /* ************************************************************************************************************* */
 /**
-	\mainpage OpenGL Image Process Library (GLIP-Lib)
+	\mainpage OpenGL Image Processing Library (GLIP-Lib)
 
 	\section sec_intro Introduction
 		GLIP-LIB : OpenGL Image Processing LIBrary The library provides some tools to design image processing pipelines based on hardware accelerated computing (GPGPU) via OpenGL and GLSL.
 
 	 \section sec_license License
-	 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+		Copyright (C) <2011>  <Ronan Kerviche>
 
-	 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details at http://www.gnu.org/copyleft/gpl.html
+		This program is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License, or
+		(at your option) any later version.
+
+		This program is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
+
+		You should have received a copy of the GNU General Public License
+		along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	\section sec_install Installation
 		Todo

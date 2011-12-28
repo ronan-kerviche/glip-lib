@@ -18,7 +18,6 @@
  * \file    Component.cpp
  * \brief   Components of pipelines.
  * \author  R. KERVICHE
- * \version 0.6
  * \date    August 15th 2011
 **/
 

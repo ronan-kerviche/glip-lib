@@ -16,7 +16,7 @@ Current Version : 0.6
 	Status : DONE
 
 [0.7]  	End the Doxygen Temporary Documentation
-	Status : TODO
+	Status : DONE
 
 [0.7]  	Change the way FBO target is hold (std algorithm?).
 	Status : CANCELED
@@ -60,11 +60,14 @@ Current Version : 0.6
 [0.7]	Replace the error handling in HdlProgram with Exception.
 	Status : TODO
 
+[0.7]	Rewrite the texture reader module.
+	Status : TODO
+
 [0.8]  	Compilation as a Windows Static Library (MINGW -> libglip.a)
 	Status : TODO
 
 [0.8]	Write documentation for all OpenGL interfacing functions.
-	Status : TODO
+	Status : DONE
 
 [0.8]  	Debugging improvement for shaders : more informations, position of errors...
 	Status : DONE
@@ -82,13 +85,13 @@ Current Version : 0.6
 	Status : CANCELED
 
 [0.9]  	Develop the same module for Windows (and OSX?).
-	Status : TODO
+	Status : CANCELED
 
 [0.9]  	Branch for Windows tests.
 	Status : TODO
 
-[1.0]  	Pipeline Programming Language : PPL and XML parser.
-	Status : TODO
+[1.0]  	Pipeline Programming Language : PPL and script parser.
+	Status : DONE
 
 [1.0]  	VisualGLIP : GUI tool to design pipelines
 	Status : TODO

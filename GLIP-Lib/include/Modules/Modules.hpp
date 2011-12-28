@@ -18,7 +18,6 @@
  * \file    Modules.hpp
  * \brief   Optional modules and tools
  * \author  R. KERVICHE
- * \version 0.6
  * \date    October 17th 2010
 **/
 
