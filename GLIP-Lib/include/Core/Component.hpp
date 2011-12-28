@@ -40,11 +40,11 @@ namespace Glip
                         int                getNumInputPort(void) const;
                         const std::string& getInputPortName(int i) const;
                         std::string        getInputPortNameExtended(int i) const;
-                        int                getInputPortID(const std::string& name);
+                        int                getInputPortID(const std::string& name) const;
                         int                getNumOutputPort(void) const;
                         const std::string& getOutputPortName(int i) const;
                         std::string        getOutputPortNameExtended(int i) const;
-                        int                getOutputPortID(const std::string& name);
+                        int                getOutputPortID(const std::string& name) const;
             };
 
             class ComponentLayout : virtual public __ReadOnly_ComponentLayout

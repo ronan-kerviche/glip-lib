@@ -76,7 +76,6 @@ namespace Glip
                 public :
                     // Tools
                         __ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c);
-                        //~__ReadOnly_PipelineLayout(void);
 
                         void 				checkElement(int i) const;
                         int  				getNumElements(void) const;

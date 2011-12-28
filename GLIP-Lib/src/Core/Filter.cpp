@@ -3,112 +3,115 @@
 #include "HdlShader.hpp"
 #include "HdlVBO.hpp"
 #include "HdlFBO.hpp"
+#include "devDebugTools.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
 
 // Tools
-    std::string getStandardVertexSource(int nUnits)
-    {
-        std::stringstream str;
+	std::string getStandardVertexSource(int nUnits)
+	{
+		std::stringstream str;
 
-        str << "void main() \n { \n    gl_FrontColor  = gl_Color; \n";
+		str << "void main() \n { \n    gl_FrontColor  = gl_Color; \n";
 
-        for(int i=0; i<nUnits; i++)
-            str << "    gl_TexCoord[" << i << "] = gl_TextureMatrix[" << i << "] * gl_MultiTexCoord" << i << "; \n";
+		for(int i=0; i<nUnits; i++)
+			str << "    gl_TexCoord[" << i << "] = gl_TextureMatrix[" << i << "] * gl_MultiTexCoord" << i << "; \n";
 
-        str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
+		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
 
-        return std::string(str.str());
-    }
+		return std::string(str.str());
+	}
 
-// __ReadOnly_FilterLayout
-    __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-     : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), blending(false), clearing(true)
-    { }
+	// __ReadOnly_FilterLayout
+	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
+	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), blending(false), clearing(true)
+	{ }
 
-    __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-     : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), blending(c.blending), clearing(c.clearing)
-    {
-        if(c.vertexSource!=NULL)
-            vertexSource   = new ShaderSource(*c.vertexSource);
-        else
-            throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
+	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
+	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), blending(c.blending), clearing(c.clearing)
+	{
+		if(c.vertexSource!=NULL)
+			vertexSource   = new ShaderSource(*c.vertexSource);
+		else
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
 
-        if(c.fragmentSource!=NULL)
-            fragmentSource = new ShaderSource(*c.fragmentSource);
-        else
-            throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
-    }
+		if(c.fragmentSource!=NULL)
+			fragmentSource = new ShaderSource(*c.fragmentSource);
+		else
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
+	}
 
-    __ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
-    {
-        delete vertexSource;
-        delete fragmentSource;
-    }
+	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
+	{
+		delete vertexSource;
+		delete fragmentSource;
+	}
 
-    ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
-    {
-        if(vertexSource==NULL)
-            throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
+	ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
+	{
+		if(vertexSource==NULL)
+			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
 
-        return *vertexSource;
-    }
+		return *vertexSource;
+	}
 
-    ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
-    {
-        if(fragmentSource==NULL)
-            throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
+	ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
+	{
+		if(fragmentSource==NULL)
+			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
 
-        return *fragmentSource;
-    }
+		return *fragmentSource;
+	}
 
-    bool __ReadOnly_FilterLayout::isBlendingEnabled(void) 	{ return blending;  }
-    void __ReadOnly_FilterLayout::enableBlending(void)   	{ blending = true;  }
-    void __ReadOnly_FilterLayout::disableBlending(void)  	{ blending = false; }
-    bool __ReadOnly_FilterLayout::isClearingEnabled(void) 	{ return clearing;  }
-    void __ReadOnly_FilterLayout::enableClearing(void)   	{ clearing = true;  }
-    void __ReadOnly_FilterLayout::disableClearing(void)  	{ clearing = false; }
+	bool __ReadOnly_FilterLayout::isBlendingEnabled(void) const	{ return blending;  }
+	void __ReadOnly_FilterLayout::enableBlending(void)   		{ blending = true;  }
+	void __ReadOnly_FilterLayout::disableBlending(void)  		{ blending = false; }
+	bool __ReadOnly_FilterLayout::isClearingEnabled(void) const	{ return clearing;  }
+	void __ReadOnly_FilterLayout::enableClearing(void)   		{ clearing = true;  }
+	void __ReadOnly_FilterLayout::disableClearing(void)  		{ clearing = false; }
 
-// FilterLayout
-    FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
-     : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout), __ReadOnly_HdlTextureFormat(fout)
-    {
-        fragmentSource = new ShaderSource(fragment);
+	// FilterLayout
+	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
+	 : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout), __ReadOnly_HdlTextureFormat(fout)
+	{
+		fragmentSource = new ShaderSource(fragment);
 
-        if(vertex!=NULL)
-            vertexSource = new ShaderSource(*vertex);
+		if(vertex!=NULL)
+			vertexSource = new ShaderSource(*vertex);
 
-        // Analyze sources to get the variables and the outputs
-        std::vector<std::string> varsIn  = fragmentSource->getInputVars();
-        if(vertexSource!=NULL)
-        {
-            // Add also vertex inputs if needed
-            std::vector<std::string> varsInVertex = vertexSource->getInputVars();
+		// Analyze sources to get the variables and the outputs
+		std::vector<std::string> varsIn  = fragmentSource->getInputVars();
+		if(vertexSource!=NULL)
+		{
+			// Add also vertex inputs if needed
+			std::vector<std::string> varsInVertex = vertexSource->getInputVars();
 
-            // Push them!
-            for(std::vector<std::string>::iterator it=varsInVertex.begin(); it!=varsInVertex.end(); it++)
-                varsIn.push_back(*it);
+			// Push them!
+			for(std::vector<std::string>::iterator it=varsInVertex.begin(); it!=varsInVertex.end(); it++)
+				varsIn.push_back(*it);
 
-            ///TODO Verify that variables nam in vertex and fragment are different
-        }
-        std::vector<std::string> varsOut = fragmentSource->getOutputVars();
+			///TODO Verify that variables nam in vertex and fragment are different
+		}
+		std::vector<std::string> varsOut = fragmentSource->getOutputVars();
 
-        // Build Ports :
-        for(std::vector<std::string>::iterator it=varsIn.begin(); it!=varsIn.end(); it++)
-            addInputPort(*it);
+		// Build Ports :
+		for(std::vector<std::string>::iterator it=varsIn.begin(); it!=varsIn.end(); it++)
+			addInputPort(*it);
 
-        for(std::vector<std::string>::iterator it=varsOut.begin(); it!=varsOut.end(); it++)
-            addOutputPort(*it);
+		for(std::vector<std::string>::iterator it=varsOut.begin(); it!=varsOut.end(); it++)
+			addOutputPort(*it);
 
-        // If there is no vertexSource
-        if(vertexSource==NULL)
-        {
-            // Build one :
-            std::cout << "Using : " << getStandardVertexSource(varsIn.size()) << std::endl;
-            vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size()));
-        }
-    }
+		// If there is no vertexSource
+		if(vertexSource==NULL)
+		{
+			// Build one :
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Using : " << getStandardVertexSource(varsIn.size()) << std::endl;
+			#endif
+			vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size()));
+		}
+	}
 
 // Filter
 	Filter::Filter(const __ReadOnly_FilterLayout& c)

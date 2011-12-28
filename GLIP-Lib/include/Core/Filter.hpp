@@ -44,10 +44,10 @@ namespace Glip
                         ShaderSource& getVertexSource(void) const;
                         ShaderSource& getFragmentSource(void) const;
 
-                        bool isBlendingEnabled(void);
+                        bool isBlendingEnabled(void) const;
                         void enableBlending(void);
                         void disableBlending(void);
-                        bool isClearingEnabled(void);
+                        bool isClearingEnabled(void) const;
                         void enableClearing(void);
                         void disableClearing(void);
             };

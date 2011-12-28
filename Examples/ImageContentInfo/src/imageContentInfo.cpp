@@ -18,7 +18,6 @@
 		chImg	= new QPushButton("Load an Image", this);
 		chPpl	= new QPushButton("Load a Pipeline", this);
 
-
 		layout->addWidget(chImg);
 		layout->addWidget(chPpl);
 		layout->addWidget(window);

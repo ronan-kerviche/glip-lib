@@ -32,135 +32,143 @@ using namespace Glip::CoreGL;
 	bool HdlGeBO::mapping[4] = {false, false, false, false};
 
 // Functions
-    /**
-     \fn    HdlGeBO::HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
-     \brief HdlGeBO Construtor.
+	/**
+	\fn    HdlGeBO::HdlGeBO(unsigned int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	\brief HdlGeBO Construtor.
 
-     \param _size      Size of the buffer, in bytes.
-     \param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-     \param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
-    **/
-    HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
-    {
-        // Generate the buffer
-        glGenBuffers(1, &bufferId);
+	\param _size      Size of the buffer, in bytes.
+	\param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	\param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
+	**/
+	HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	{
+		// Generate the buffer
+		glGenBuffers(1, &bufferId);
 
-        // Bind it
-        glBindBuffer(infoTarget, bufferId);
+		// Bind it
+		glBindBuffer(infoTarget, bufferId);
 
-        // Allocate some space
-        glBufferData(infoTarget, size, NULL, infoUsage);
+		// Allocate some space
+		glBufferData(infoTarget, size, NULL, infoUsage);
 
-        // Release point
-        HdlGeBO::unbind(infoTarget);
+		// Release point
+		HdlGeBO::unbind(infoTarget);
 
-        buildTarget = infoTarget;
-        buildUsage  = infoUsage;
+		buildTarget = infoTarget;
+		buildUsage  = infoUsage;
 
-        std::cout << "New GeBO : ";
-        glErrors(true, false);
-    }
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "New GeBO, errors : " << std::endl;
+			glErrors(true, false);
+		#endif
+	}
 
-    /**
-     \fn    HdlGeBO::HdlGeBO(GLuint id, unsigned int _size) : size(_size)
-     \brief HdlGeBO Construtor.
+	/**
+	\fn    HdlGeBO::HdlGeBO(GLuint id, unsigned int _size) : size(_size)
+	\brief HdlGeBO Construtor.
 
-     \param id    GLuint id of the Buffer Object to be mapped in.
-     \param _size Size of the buffer, in bytes.
-     \param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-     \param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
-    **/
-    HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
-    {
-    	std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
-        // Just copy the link
-        bufferId = id;
+	\param id    GLuint id of the Buffer Object to be mapped in.
+	\param _size Size of the buffer, in bytes.
+	\param infoTarget Target kind, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	\param infoUsage  Usage kind among GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
+	**/
+	HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage) : size(_size)
+	{
+		#ifdef __DEVELOPMENT_VERBOSE__
+		std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
+		#endif
+		// Just copy the link
+		bufferId = id;
 
-        // And data
-        buildTarget = infoTarget;
-        buildUsage  = infoUsage;
-    }
+		// And data
+		buildTarget = infoTarget;
+		buildUsage  = infoUsage;
+	}
 
-    HdlGeBO::~HdlGeBO(void)
-    {
-        // Delete the object
-        glDeleteBuffers(1, &bufferId);
-    }
+	HdlGeBO::~HdlGeBO(void)
+	{
+		// Delete the object
+		glDeleteBuffers(1, &bufferId);
+	}
 
-    /**
-     \fn    unsigned int HdlGeBO::getSize(void)
-     \brief Get the size of the Buffer Object.
+	/**
+	\fn    unsigned int HdlGeBO::getSize(void)
+	\brief Get the size of the Buffer Object.
 
-     \return Size of the BO in bytes.
-    **/
-    int HdlGeBO::getSize(void)
-    {
-        return size;
-    }
+	\return Size of the BO in bytes.
+	**/
+	int HdlGeBO::getSize(void)
+	{
+		return size;
+	}
 
-    /**
-     \fn    GLuint HdlGeBO::getID(void)
-     \brief Get the ID of the Buffer Object.
+	/**
+	\fn    GLuint HdlGeBO::getID(void)
+	\brief Get the ID of the Buffer Object.
 
-     \return ID of the Buffer Object
-    **/
-    GLuint HdlGeBO::getID(void)
-    {
-        return bufferId;
-    }
+	\return ID of the Buffer Object
+	**/
+	GLuint HdlGeBO::getID(void)
+	{
+		return bufferId;
+	}
 
-    /**
-     \fn    GLenum HdlGeBO::getTarget(void)
-     \brief Get the target of the Buffer Object.
+	/**
+	\fn    GLenum HdlGeBO::getTarget(void)
+	\brief Get the target of the Buffer Object.
 
-     \return Target of the Buffer Object, among : GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-    **/
-    GLenum HdlGeBO::getTarget(void)
-    {
-        return buildTarget;
-    }
+	\return Target of the Buffer Object, among : GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	**/
+	GLenum HdlGeBO::getTarget(void)
+	{
+		return buildTarget;
+	}
 
-    /**
-     \fn    GLenum HdlGeBO::getUsage(void)
-     \brief Get the usage of the Buffer Object.
+	/**
+	\fn    GLenum HdlGeBO::getUsage(void)
+	\brief Get the usage of the Buffer Object.
 
-     \return ID of the Buffer Object, among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
-    **/
-    GLenum HdlGeBO::getUsage(void)
-    {
-        return buildUsage;
-    }
+	\return ID of the Buffer Object, among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB.
+	**/
+	GLenum HdlGeBO::getUsage(void)
+	{
+		return buildUsage;
+	}
 
-    /**
-     \fn    void HdlGeBO::bind(GLenum target)
-     \brief Bind the Buffer Object.
-    **/
-    void HdlGeBO::bind(GLenum target)
-    {
-    	if(target==GL_NONE) target = getTarget();
-        glBindBuffer(target, bufferId);
-        binding[getIDTarget(target)] = true;
-    }
+	/**
+	\fn    void HdlGeBO::bind(GLenum target)
+	\brief Bind the Buffer Object.
+	**/
+	void HdlGeBO::bind(GLenum target)
+	{
+		if(target==GL_NONE) target = getTarget();
+		glBindBuffer(target, bufferId);
+		binding[getIDTarget(target)] = true;
+	}
 
-    /**
-     \fn    void* HdlGeBO::map(GLenum target, GLenum access)
-     \brief Map the Buffer Object into the CPU memory.
+	/**
+	\fn    void* HdlGeBO::map(GLenum target, GLenum access)
+	\brief Map the Buffer Object into the CPU memory.
 
-     \param target Target mapping point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-     \param access Kind of access, among GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, GL_READ_WRITE_ARB.
+	\param target Target mapping point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
+	\param access Kind of access, among GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, GL_READ_WRITE_ARB.
 
-     \return Pointer in CPU memory.
-    **/
-    void* HdlGeBO::map(GLenum target, GLenum access)
-    {
-    	glDebug();
-        HdlGeBO::unmap(target);
-        std::cout << "Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
-        bind(target);
-        std::cout << "Bind : "; glErrors(true, false);
-        mapping[getIDTarget(target)] = true;
-        return glMapBufferARB(target, access);
-    }
+	\return Pointer in CPU memory.
+	**/
+	void* HdlGeBO::map(GLenum target, GLenum access)
+	{
+		glDebug();
+		HdlGeBO::unmap(target);
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
+		#endif
+		bind(target);
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "Bind : "; glErrors(true, false);
+		#endif
+		mapping[getIDTarget(target)] = true;
+		return glMapBufferARB(target, access);
+	}
 
 	void HdlGeBO::write(void* data)
 	{

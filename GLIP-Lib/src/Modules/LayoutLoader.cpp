@@ -18,6 +18,7 @@
 	#include <sstream>
 	#include "Exception.hpp"
 	#include "LayoutLoader.hpp"
+	#include "devDebugTools.hpp"
 
 	// Namespaces :
 	using namespace Glip;
@@ -160,7 +161,9 @@
 			size_t next_pos = code.find(',',current_pos);
 			if(next_pos==std::string::npos) next_pos = max_pos;
 			res.push_back(code.substr(current_pos,next_pos-current_pos));
-			std::cout << "    Arg : " << res.back() << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "    Arg : " << res.back() << std::endl;
+			#endif
 			current_pos = next_pos+1;
 		}
 
@@ -186,7 +189,9 @@
 			pos_sc = 0,
 			pos_ac = 0;
 
-		std::cout << source << std::endl;
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "Source : " << source << std::endl;
+		#endif
 
 		pos_sc = source.find(';', current_pos);
 		pos_ac = source.find('{', current_pos);
@@ -224,7 +229,9 @@
 
 			// Process line
 			int working = 0;
-			std::cout << "Line before : "<< line << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Line before : "<< line << std::endl;
+			#endif
 			for(std::string::iterator it=line.begin() ; it<line.end(); it++)
 			{
 				if( *it=='{' ) working++;
@@ -232,8 +239,9 @@
 				if( (*it==' ' || *it=='\t' || *it=='\n' || *it=='\r') && working==0) it = line.erase(it) - 1;
 			}
 
-			// Show the line :
-			std::cout << "Line after : " << line << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Line after : " << line << std::endl;
+			#endif
 
 			// Find the first element of the line :
 			size_t nameDelim = line.find(':');
@@ -249,10 +257,12 @@
 				std::string code = line.substr(argDelim);
 				LoaderKeyword key = getKeyword(type);
 
-				std::cout << "Type : " << type << std::endl;
-				std::cout << "Name : " << name << std::endl;
-				std::cout << "Code : " << code << std::endl;
-				std::cout << "Key  : " << key << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "Type : " << type << std::endl;
+					std::cout << "Name : " << name << std::endl;
+					std::cout << "Code : " << code << std::endl;
+					std::cout << "Key  : " << key << std::endl;
+				#endif
 
 				if(slave && key==PIPELINE_MAIN)
 					key = PIPELINE_LAYOUT;
@@ -265,10 +275,14 @@
 			{
 				std::string type = line.substr(0,argDelim);
 				std::string code = line.substr(argDelim);
-				std::cout << "Type : " << type << std::endl;
-				std::cout << "NO Name"<< std::endl;
-				std::cout << "Code : " << code << std::endl;
-				std::cout << "Key  : " << getKeyword(type) << std::endl;
+
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "Type : " << type << std::endl;
+					std::cout << "NO Name"<< std::endl;
+					std::cout << "Code : " << code << std::endl;
+					std::cout << "Key  : " << getKeyword(type) << std::endl;
+				#endif
+
 				if(getKeyword(type)!=INCLUDE_FILE)
 					throw Exception("LayoutLoader::updateEntriesLists - Missing name for element of type " + type, __FILE__, __LINE__);
 
@@ -424,7 +438,9 @@
 			if(next_pos==std::string::npos) next_pos = ending_pos;
 			std::string line = code.substr(current_pos, next_pos-current_pos);
 
-			std::cout << "Line : " << line << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Line : " << line << std::endl;
+			#endif
 
 			// Extract info from the line :
 			size_t nameDelim = line.find(':');
@@ -592,7 +608,10 @@
 						throw Exception("LayoutLoader::operator() - Not enough argument for INCLUDE_FILE", __FILE__, __LINE__);
 					if(arg.size()>1)
 						throw Exception("LayoutLoader::operator() - Too much arguments for INCLUDE_FILE", __FILE__, __LINE__);
-					std::cout << "Including file : " << arg[0] << std::endl;
+
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "Including file : " << arg[0] << std::endl;
+					#endif
 
 					// Creqte new loader :
 					LayoutLoader l;
@@ -605,7 +624,9 @@
 				}
 			}
 
-			std::cout << "Num contents : " << entryType.size() << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Num contents : " << entryType.size() << std::endl;
+			#endif
 
 			// Remove any corresponding double (meaning that a file was loaded from two separate locations) :
 			for(int i=0; i<entryType.size(); i++)

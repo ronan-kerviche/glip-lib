@@ -28,50 +28,51 @@
 using namespace Glip::CoreGL;
 
 // Tools
-    HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq) : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO(_w*_h*_c*_cs, aim, freq)
-    { }
+	HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq)
+	 : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO(_w*_h*_c*_cs, aim, freq)
+	{ }
 
-    HdlPBO::~HdlPBO(void)
-    { }
+	HdlPBO::~HdlPBO(void)
+	{ }
 
-    int HdlPBO::getWidth(void)        { return w;  }
-    int HdlPBO::getHeight(void)       { return h;  }
-    int HdlPBO::getChannelCount(void) { return c;  }
-    int HdlPBO::getChannelSize(void)  { return cs; }
+	int HdlPBO::getWidth(void)        { return w;  }
+	int HdlPBO::getHeight(void)       { return h;  }
+	int HdlPBO::getChannelCount(void) { return c;  }
+	int HdlPBO::getChannelSize(void)  { return cs; }
 
-    void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
-    {
-        if(w<=0) w = texture.getWidth();
-        if(h<=0) h = texture.getHeight();
+	void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
+	{
+		if(w<=0) w = texture.getWidth();
+		if(h<=0) h = texture.getHeight();
 
-        texture.bind();
-        bind(GL_PIXEL_UNPACK_BUFFER_ARB);
+		texture.bind();
+		bind(GL_PIXEL_UNPACK_BUFFER_ARB);
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, oX, oY, w, h, mode, depth, 0);
-    }
+		glTexSubImage2D(GL_TEXTURE_2D, 0, oX, oY, w, h, mode, depth, 0);
+	}
 
 //Other tools
-    void HdlPBO::unbind(GLenum target)
-    {
-        if(target==0)
-        {
-            HdlGeBO::unbind(GL_PIXEL_UNPACK_BUFFER_ARB);
-            HdlGeBO::unbind(GL_PIXEL_PACK_BUFFER_ARB  );
-        }
-        else
-            HdlGeBO::unbind(target);
-    }
+	void HdlPBO::unbind(GLenum target)
+	{
+		if(target==0)
+		{
+			HdlGeBO::unbind(GL_PIXEL_UNPACK_BUFFER_ARB);
+			HdlGeBO::unbind(GL_PIXEL_PACK_BUFFER_ARB  );
+		}
+		else
+			HdlGeBO::unbind(target);
+	}
 
-    void HdlPBO::unmap(GLenum target)
-    {
-        if(target==0)
-        {
-            HdlGeBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
-            HdlGeBO::unmap(GL_PIXEL_PACK_BUFFER_ARB  );
-        }
-        else
-            HdlGeBO::unmap(target);
-    }
+	void HdlPBO::unmap(GLenum target)
+	{
+		if(target==0)
+		{
+			HdlGeBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
+			HdlGeBO::unmap(GL_PIXEL_PACK_BUFFER_ARB  );
+		}
+		else
+			HdlGeBO::unmap(target);
+	}
 
 /*
 // Data

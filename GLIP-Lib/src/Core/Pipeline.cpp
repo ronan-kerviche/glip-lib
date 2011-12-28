@@ -2,6 +2,7 @@
 #include "Pipeline.hpp"
 #include "Component.hpp"
 #include "HdlFBO.hpp"
+#include "devDebugTools.hpp"
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -478,7 +479,10 @@
 	void Pipeline::build(void)
 	{
 		int dummy;
-		std::cout << "Building pipeline " << getNameExtended() << std::endl;
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "Building pipeline " << getNameExtended() << std::endl;
+		#endif
 
 		try
 		{
@@ -495,7 +499,9 @@
 			//	Done.
 			// Done.
 
-			std::cout << "First step" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "First step" << std::endl;
+			#endif
 
 			int startPipeline = 0;
 			std::vector<__ReadOnly_PipelineLayout*> pipeList;
@@ -520,19 +526,27 @@
 					switch(tmp->getElementKind(i))
 					{
 					case FILTER :
-						std::cout << "    Adding a new filter" << std::endl;
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    Adding a new filter" << std::endl;
+						#endif
 						filters.push_back(new Filter(tmp->filterLayout(i)));
-						tmp->setElementID(i, filters.size()-1); //?
-						std::cout << "    Adding : " << filters.back()->getNameExtended() << std::endl;
-						std::cout << "    ID     : " << filters.size()-1 << std::endl;
+						tmp->setElementID(i, filters.size()-1);
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    Adding : " << filters.back()->getNameExtended() << std::endl;
+							std::cout << "    ID     : " << filters.size()-1 << std::endl;
+						#endif
 						break;
 					case PIPELINE :
-						std::cout << "    Adding a new Pipeline" << std::endl;
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    Adding a new Pipeline" << std::endl;
+						#endif
 						pipeList.push_back(&tmp->pipelineLayout(i));
 						waitList.push_back(pipeList.size()-1 + startPipeline);
-						tmp->setElementID(i, pipeList.size()-1 + startPipeline); //?
-						std::cout << "    Adding : " << pipeList.back()->getNameExtended() << std::endl;
-						std::cout << "    ID     : " << pipeList.size()-1 + startPipeline << std::endl;
+						tmp->setElementID(i, pipeList.size()-1 + startPipeline);
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    Adding : " << pipeList.back()->getNameExtended() << std::endl;
+							std::cout << "    ID     : " << pipeList.size()-1 + startPipeline << std::endl;
+						#endif
 						break;
 					default :
 						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended(), __FILE__, __LINE__);
@@ -540,16 +554,20 @@
 				}
 
 				// Save all the connections to absolute basis :
-				std::cout << "Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ", offset = " << offsetPipeline << ", offsetFilter = " << offsetFilter << ')' << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ", offset = " << offsetPipeline << ", offsetFilter = " << offsetFilter << ')' << std::endl;
+				#endif
 				for(int i=0; i<tmp->getNumConnections(); i++)
 				{
 					Connection c = tmp->getConnection(i);
 
-					std::cout << "    Connection BEFORE  : " << std::endl;
-					std::cout << "        idIn    : " << c.idIn << std::endl;
-					std::cout << "        portIn  : " << c.portIn << std::endl;
-					std::cout << "        idOut   : " << c.idOut << std::endl;
-					std::cout << "        portOut : " << c.portOut << std::endl;
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "    Connection BEFORE  : " << std::endl;
+						std::cout << "        idIn    : " << c.idIn << std::endl;
+						std::cout << "        portIn  : " << c.portIn << std::endl;
+						std::cout << "        idOut   : " << c.idOut << std::endl;
+						std::cout << "        portOut : " << c.portOut << std::endl;
+					#endif
 
 					// Replace to absolute coordinates :
 					if(c.idIn==THIS_PIPELINE)
@@ -583,11 +601,13 @@
 							c.idOut = tmp->getElementID(c.idOut);
 					}
 
-					std::cout << "    Connection AFTER : " << std::endl;
-					std::cout << "        idIn    : " << c.idIn << std::endl;
-					std::cout << "        portIn  : " << c.portIn << std::endl;
-					std::cout << "        idOut   : " << c.idOut << std::endl;
-					std::cout << "        portOut : " << c.portOut << std::endl;
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "    Connection AFTER : " << std::endl;
+						std::cout << "        idIn    : " << c.idIn << std::endl;
+						std::cout << "        portIn  : " << c.portIn << std::endl;
+						std::cout << "        idOut   : " << c.idOut << std::endl;
+						std::cout << "        portOut : " << c.portOut << std::endl;
+					#endif
 
 					tmpConnections.push_back(c);
 					connectionOwner.push_back(currentPipeline);
@@ -610,7 +630,9 @@
 			//	Update proposition (there is Pipeline links in tmpConnections)
 			// While (there is Pipeline links in tmpConnections)
 
-			std::cout << "Second step (Num connections : " << tmpConnections.size() << ')' << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Second step (Num connections : " << tmpConnections.size() << ')' << std::endl;
+			#endif
 			bool test = true;
 
 			#ifdef __VERBOSE__
@@ -637,34 +659,41 @@
 						{
 							if(tmpConnections[i].idIn==tmpConnections[j].idOut && tmpConnections[i].portIn==tmpConnections[j].portOut && connectionOwner[i]!=connectionOwner[j])
 							{
-								std::cout << "    Merging connection : " << std::endl;
-								std::cout << "        idIn    : " << tmpConnections[i].idIn 	<< "\t idIn    : " << tmpConnections[j].idIn 	<< std::endl;
-								std::cout << "        portIn  : " << tmpConnections[i].portIn 	<< "\t portIn  : " << tmpConnections[j].portIn 	<< std::endl;
-								std::cout << "        idOut   : " << tmpConnections[i].idOut 	<< "\t idOut   : " << tmpConnections[j].idOut 	<< std::endl;
-								std::cout << "        portOut : " << tmpConnections[i].portOut 	<< "\t portOut : " << tmpConnections[j].portOut << std::endl;
+								#ifdef __DEVELOPMENT_VERBOSE__
+									std::cout << "    Merging connection : " << std::endl;
+									std::cout << "        idIn    : " << tmpConnections[i].idIn 	<< "\t idIn    : " << tmpConnections[j].idIn 	<< std::endl;
+									std::cout << "        portIn  : " << tmpConnections[i].portIn 	<< "\t portIn  : " << tmpConnections[j].portIn 	<< std::endl;
+									std::cout << "        idOut   : " << tmpConnections[i].idOut 	<< "\t idOut   : " << tmpConnections[j].idOut 	<< std::endl;
+									std::cout << "        portOut : " << tmpConnections[i].portOut 	<< "\t portOut : " << tmpConnections[j].portOut << std::endl;
+								#endif
 								Connection c;
 								c.idIn 		= tmpConnections[j].idIn;
 								c.portIn 	= tmpConnections[j].portIn;
 								c.idOut 	= tmpConnections[i].idOut;
 								c.portOut 	= tmpConnections[i].portOut;
-								if(j<i)
-								{
-									std::cout << "    Comparison Connection BEFORE : " << std::endl;
-									std::cout << "        idIn    : " << tmpConnections[i].idIn << std::endl;
-									std::cout << "        portIn  : " << tmpConnections[i].portIn << std::endl;
-									std::cout << "        idOut   : " << tmpConnections[i].idOut << std::endl;
-									std::cout << "        portOut : " << tmpConnections[i].portOut << std::endl;
-								}
+
+								#ifdef __DEVELOPMENT_VERBOSE__
+									if(j<i)
+									{
+										std::cout << "    Comparison Connection BEFORE : " << std::endl;
+										std::cout << "        idIn    : " << tmpConnections[i].idIn << std::endl;
+										std::cout << "        portIn  : " << tmpConnections[i].portIn << std::endl;
+										std::cout << "        idOut   : " << tmpConnections[i].idOut << std::endl;
+										std::cout << "        portOut : " << tmpConnections[i].portOut << std::endl;
+									}
+								#endif
 								tmpConnections.erase(tmpConnections.begin() + j);
 								connectionOwner.erase(connectionOwner.begin() + j);
 								if(j<i)
 								{
 									i--;
-									std::cout << "    Comparison Connection AFTER : " << std::endl;
-									std::cout << "        idIn    : " << tmpConnections[i].idIn << std::endl;
-									std::cout << "        portIn  : " << tmpConnections[i].portIn << std::endl;
-									std::cout << "        idOut   : " << tmpConnections[i].idOut << std::endl;
-									std::cout << "        portOut : " << tmpConnections[i].portOut << std::endl;
+									#ifdef __DEVELOPMENT_VERBOSE__
+										std::cout << "    Comparison Connection AFTER : " << std::endl;
+										std::cout << "        idIn    : " << tmpConnections[i].idIn << std::endl;
+										std::cout << "        portIn  : " << tmpConnections[i].portIn << std::endl;
+										std::cout << "        idOut   : " << tmpConnections[i].idOut << std::endl;
+										std::cout << "        portOut : " << tmpConnections[i].portOut << std::endl;
+									#endif
 								}
 								j--;
 								tmpConnections.push_back(c);
@@ -684,11 +713,13 @@
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end() && !test; it++)
 					if((*it).idOut>startPipeline)
 					{
-						std::cout << "Modifications remain" << std::endl;
-						std::cout << "        idIn    : " << (*it).idIn << std::endl;
-						std::cout << "        portIn  : " << (*it).portIn << std::endl;
-						std::cout << "        idOut   : " << (*it).idOut << std::endl;
-						std::cout << "        portOut : " << (*it).portOut << std::endl;
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "Modifications remain" << std::endl;
+							std::cout << "        idIn    : " << (*it).idIn << std::endl;
+							std::cout << "        portIn  : " << (*it).portIn << std::endl;
+							std::cout << "        idOut   : " << (*it).idOut << std::endl;
+							std::cout << "        portOut : " << (*it).portOut << std::endl;
+						#endif
 						test = true;
 						throw Exception("Stop");
 					}
@@ -710,7 +741,9 @@
 			// 3nd Step
 
 			// Manage memory
-			std::cout << "Third step" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Third step" << std::endl;
+			#endif
 
 			std::vector<int> 	availabilty;
 			TableConnection		remainingConnections = tmpConnections;
@@ -723,12 +756,17 @@
 
 			//buffers[10] = NULL; // ?????????????????????
 
-			std::cout << "Updating availability" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Updating availability" << std::endl;
+			#endif
+
 			// Update availability :
 			for(TableFilter::iterator it=filters.begin(); it!=filters.end(); it++)
 				availabilty.push_back((*it)->getNumInputPort());
 
-			std::cout << "Updating first links" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Updating first links" << std::endl;
+			#endif
 			// Update the first links :
 			for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
 			{
@@ -740,7 +778,9 @@
 				}
 			}
 
-			std::cout << "Starting decision loop" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "Starting decision loop" << std::endl;
+			#endif
 			bool remaingFilter 	= false;
 			bool stuck 		= true;
 			do
@@ -749,12 +789,16 @@
 				stuck 		= (options.size()==0);
 
 				// Put the available filters in options
-				std::cout << "    Options list contains " << options.size() << " elements" << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "    Options list contains " << options.size() << " elements" << std::endl;
+				#endif
 				for(int id=0; id<availabilty.size(); id++)
 				{
 					if(availabilty[id]==0)
 					{
-						std::cout << "        adding filter " << id << " to the option list" << std::endl;
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "        adding filter " << id << " to the option list" << std::endl;
+						#endif
 						availabilty[id] = -1;
 						options.push_back(id);
 						stuck = false;
@@ -763,7 +807,9 @@
 					{
 						if(availabilty[id]>0)
 						{
-							std::cout << "        discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
+							#ifdef __DEVELOPMENT_VERBOSE__
+								std::cout << "        discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
+							#endif
 							remaingFilter = true;
 						}
 					}
@@ -772,7 +818,9 @@
 				if(stuck && remaingFilter)
 					throw Exception("Pipeline::build - Error : Building routine is stuck probably because of missing connection", __FILE__, __LINE__);
 
-				std::cout << "    Best Filter" << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "    Best Filter" << std::endl;
+				#endif
 				// Search the best next filter in 'options'
 				TableIndex::iterator bestIt = options.begin();
 				bool notFoundMandatory = true;
@@ -780,8 +828,10 @@
 
 				for(TableIndex::iterator it=options.begin(); it!=options.end() && notFoundMandatory; it++)
 				{
-					std::cout << "        Monitoring : " << *it << '/' << filters.size() << std::endl;
-					std::cout << "        Name       : " << filters[(*it)]->getName() << std::endl; //SEGFAULT if extended
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "        Monitoring : " << *it << '/' << filters.size() << std::endl;
+						std::cout << "        Name       : " << filters[(*it)]->getName() << std::endl; //SEGFAULT if extended
+					#endif
 					// Is it a mandatory step?
 						// Look for the format in the FBO list
 						bool alreadyExist = false;
@@ -810,7 +860,9 @@
 					}
 				}
 
-				std::cout << "    Saving Best Filter" << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "    Saving Best Filter" << std::endl;
+				#endif
 
 				// Remove it from the options :
 				int best = *bestIt;
@@ -818,7 +870,9 @@
 
 				// Create the FBO :
 				buffers[best] = new HdlFBO(*filters[best], filters[best]->getNumOutputPort());
-				std::cout << "Creating : " << (*buffers[best])[0] << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "Creating : " << (*buffers[best])[0] << std::endl;
+				#endif
 
 				// Save the corresponding action in the action list :
 				actionFilter.push_back(best);
@@ -837,7 +891,9 @@
 						test++;
 						(*bufferArg)[(*it).portIn] = (*it).idOut;
 						(*outputArg)[(*it).portIn] = (*it).portOut;
-						std::cout << "    Connecting port " << (*it).portIn << " to buffer " << (*it).idOut << "::" << (*it).portOut << std::endl;
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    Connecting port " << (*it).portIn << " to buffer " << (*it).idOut << "::" << (*it).portOut << std::endl;
+						#endif
 					}
 
 				}
@@ -845,7 +901,9 @@
 				listOfArgBuffers[best] 		= bufferArg;
 				listOfArgBuffersOutput[best] 	= outputArg;
 
-				std::cout << "    Removing connection outgoing from best filter" << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "    Removing connection outgoing from best filter" << std::endl;
+				#endif
 				// Find in the connections, the filters that depends on this step
 				for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
 				{
@@ -859,7 +917,9 @@
 			}
 			while( remaingFilter );
 
-			std::cout << "End decision loop" << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "End decision loop" << std::endl;
+			#endif
 
 			// Check if all filters are in :
 			for(std::vector<int>::iterator it=availabilty.begin(); it!=availabilty.end(); it++)
@@ -899,27 +959,37 @@
 
 	void Pipeline::process(void)
 	{
-		std::cout << "Processing : " << getNameExtended() << std::endl;
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "Processing : " << getNameExtended() << std::endl;
+		#endif
 
 		for(int i = 0; i<actionFilter.size(); i++)
 		{
 			int action = actionFilter[i];
-			std::cout << "    applying filter : " << filters[action]->getNameExtended() << "..." << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "    applying filter : " << filters[action]->getNameExtended() << "..." << std::endl;
+			#endif
 			// Apply filter *filter[actionFilter]
 			Filter* f = filters[action];
 			for(int j=0; j<f->getNumInputPort(); j++)
 			{
 				int bufferID 	= (*listOfArgBuffers[action])[j];
 				int portID 	= (*listOfArgBuffersOutput[action])[j];
-				std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;
+				#ifdef __DEVELOPMENT_VERBOSE__
+					std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;
+				#endif
 				if(bufferID==THIS_PIPELINE)
 					f->setInputForNextRendering(j, input[portID]);
 				else
 					f->setInputForNextRendering(j, (*buffers[bufferID])[portID]);
 			}
-			std::cout << "        Processing..." << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "        Processing..." << std::endl;
+			#endif
 			f->process(*buffers[action]);
-			std::cout << "        Done." << std::endl;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "        Done." << std::endl;
+			#endif
 		}
 	}
 
