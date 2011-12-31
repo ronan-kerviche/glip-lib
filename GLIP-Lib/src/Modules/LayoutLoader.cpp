@@ -49,6 +49,10 @@
 							};
 
 	// Functions :
+	/**
+	\fn LayoutLoader::LayoutLoader(void)
+	\brief LayoutLoader constructor.
+	**/
 	LayoutLoader::LayoutLoader(void)
 	{
 		entryType.clear();
@@ -594,6 +598,12 @@
 		return result;
 	}
 
+	/**
+	\fn PipelineLayout* LayoutLoader::operator()(const std::string& source)
+	\brief Loads a pipeline layout from a file (see the script language description for more information).
+	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
+	\return A pointer to the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
+	**/
 	PipelineLayout* LayoutLoader::operator()(const std::string& source)
 	{
 		// Doesn't check for cylclic inclusion!
@@ -832,6 +842,13 @@
 		pipelineCode += ss.str();
 	}
 
+	/**
+	\fn std::string LayoutLoader::write(const __ReadOnly_PipelineLayout& pLayout, std::string filename)
+	\brief Saves a pipeline layout to a standard string (or a file).
+	\param pLayout The pipeline layout to be saved.
+	\param filename Optional, the name of the file to write the code to.
+	\return A standard string containing the description of the layout or raise an exception if any errors occur.
+	**/
 	std::string LayoutLoader::write(const __ReadOnly_PipelineLayout& pLayout, std::string filename)
 	{
 		try

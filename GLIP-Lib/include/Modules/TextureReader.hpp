@@ -30,40 +30,57 @@
 	*/
 
 	// Include :
-/*	#include "OglInclude.hpp"
-	#include "HdlTexture.hpp"
-	#include "Devices.hpp"
+	#include "../Core/OglInclude.hpp"
+	#include "../Core/HdlTexture.hpp"
+	#include "../Core/Devices.hpp"
 
+
+namespace Glip
+{
 	// Prototypes
-	namespace Glip
+	namespace CoreGL
 	{
-		namespace CoreGL
-		{
-			class __HdlTextureFormat_OnlyData;
-		}
-
-		namespace CorePipeline
-		{
-			class OutputDevice;
-		}
+		class __HdlTextureFormat_OnlyData;
 	}
 
-	using namespace Glip;
+	namespace CorePipeline
+	{
+		class OutputDevice;
+	}
+
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-	// Structure
-	class TextureReader : public OutputDevice
+	namespace Modules
 	{
-		private :
-		public :
-			// Functions
-			TextureReader(const std::string& name);
+		// Structure
+		/**
+		\class TextureReader
+		\brief Copy data back from GPU memory to CPU memory
+		**/
+		class TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		{
+			private :
+				void* data;
 
-			__HdlTextureFormat_OnlyData& getFormat(void);
-			bool read(int i, GLint level, GLenum format, GLenum type, GLvoid* img);
-	};
-*/
+			protected :
+				void process(HdlTexture& t);
+
+			public :
+				// data
+					/// Set to true if you want to flip X axis while reading.
+					bool 	xFlip,
+					/// Set to true if you want to flip Y axis while reading.
+						yFlip;
+				// Functions
+				TextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
+				~TextureReader(void);
+
+				double operator()(int x, int y, int c);
+		};
+	}
+}
+
 
 #endif
 

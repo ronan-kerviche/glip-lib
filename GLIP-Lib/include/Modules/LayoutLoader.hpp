@@ -54,6 +54,10 @@ namespace Glip
 			NumKeywords
 		};
 
+		/**
+		\class LayoutLoader
+		\brief Load and save pipelines layouts to file
+		**/
 		class LayoutLoader
 		{
 			private :

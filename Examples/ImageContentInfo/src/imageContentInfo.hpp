@@ -26,7 +26,7 @@
 			private :
 				HdlTexture*	text;
 				QVBoxLayout* 	layout;
-				QPushButton	*chImg, *chPpl;
+				QPushButton	*chImg, *chPpl, *sav;
 				WindowRenderer	*window;
 				Pipeline	*pipeline;
 
@@ -36,6 +36,7 @@
 			private slots :
 				void loadImage(void);
 				void loadPipeline(void);
+				void save(void);
 				void requestUpdate(void);
 		};
 

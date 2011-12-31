@@ -81,7 +81,7 @@ using namespace Glip::CoreGL;
 	{ }
 
 	// Private tools
-	int __ReadOnly_HdlTextureFormat::getChannelCount(GLenum _mode)
+	int __ReadOnly_HdlTextureFormat::getChannelCount(GLenum _mode) const
 	{
 		// implicit : get channel count
 		switch(_mode)
@@ -124,7 +124,7 @@ using namespace Glip::CoreGL;
 		}
 	}
 
-	int __ReadOnly_HdlTextureFormat::getChannelSize(GLenum _depth)
+	int __ReadOnly_HdlTextureFormat::getChannelSize(GLenum _depth) const
 	{
 		switch(_depth)
 		{
@@ -139,12 +139,12 @@ using namespace Glip::CoreGL;
 				TMP_SIZE(GL_DOUBLE,         GLdouble )
 			#undef TMP_SIZE
 			default :
-				colSize = 0;
+				//colSize = 0;
 				throw Exception("HdlTextureFormat - cannot recognize color channel type " + glParamName(_depth), __FILE__, __LINE__);
 		}
 	}
 
-	GLenum __ReadOnly_HdlTextureFormat::getAliasMode(GLenum _mode)
+	GLenum __ReadOnly_HdlTextureFormat::getAliasMode(GLenum _mode) const
 	{
 		switch(_mode)
 		{
@@ -196,6 +196,8 @@ using namespace Glip::CoreGL;
 	\brief Returns the texture's channel count.
 	\fn    int __ReadOnly_HdlTextureFormat::getSize(void) const
 	\brief Returns the texture's size in BYTE.
+	\fn    int __ReadOnly_HdlTextureFormat::getChannelDepth(void) const
+	\brief Returns the channel size in BYTE.
 	\fn    GLenum __ReadOnly_HdlTextureFormat::getGLMode(void) const
 	\brief Returns the texture's mode.
 	\fn    GLenum __ReadOnly_HdlTextureFormat::getGLDepth(void) const
@@ -213,18 +215,19 @@ using namespace Glip::CoreGL;
 	\fn    GLint __ReadOnly_HdlTextureFormat::getTWrapping(void) const
 	\brief Returns the texture's T wrapping parameter.
 	**/
-	int    __ReadOnly_HdlTextureFormat::getWidth    (void) const { return imgW; }
-	int    __ReadOnly_HdlTextureFormat::getHeight   (void) const { return imgH; }
-	int    __ReadOnly_HdlTextureFormat::getChannel  (void) const { return imgC; }
-	int    __ReadOnly_HdlTextureFormat::getSize     (void) const { return imgSize; }
-	GLenum __ReadOnly_HdlTextureFormat::getGLMode   (void) const { return mode; }
-	GLenum __ReadOnly_HdlTextureFormat::getGLDepth  (void) const { return depth; }
-	GLenum __ReadOnly_HdlTextureFormat::getMinFilter(void) const { return minFilter; }
-	GLenum __ReadOnly_HdlTextureFormat::getMagFilter(void) const { return magFilter; }
-	int    __ReadOnly_HdlTextureFormat::getBaseLevel(void) const { return baseLevel; }
-	int    __ReadOnly_HdlTextureFormat::getMaxLevel (void) const { return maxLevel; }
-	GLint  __ReadOnly_HdlTextureFormat::getSWrapping(void) const { return wraps; }
-	GLint  __ReadOnly_HdlTextureFormat::getTWrapping(void) const { return wrapt; }
+	int    __ReadOnly_HdlTextureFormat::getWidth   		(void) const { return imgW; }
+	int    __ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
+	int    __ReadOnly_HdlTextureFormat::getChannel  	(void) const { return imgC; }
+	int    __ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
+	int    __ReadOnly_HdlTextureFormat::getSize     	(void) const { return imgSize; }
+	GLenum __ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
+	GLenum __ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
+	GLenum __ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
+	GLenum __ReadOnly_HdlTextureFormat::getMagFilter	(void) const { return magFilter; }
+	int    __ReadOnly_HdlTextureFormat::getBaseLevel	(void) const { return baseLevel; }
+	int    __ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
+	GLint  __ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
+	GLint  __ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
 
 	/**
 	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const

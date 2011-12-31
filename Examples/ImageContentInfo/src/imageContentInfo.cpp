@@ -17,15 +17,18 @@
 		layout 	= new QVBoxLayout(this);
 		chImg	= new QPushButton("Load an Image", this);
 		chPpl	= new QPushButton("Load a Pipeline", this);
+		sav	= new QPushButton("Save result (RGB888)", this);
 
 		layout->addWidget(chImg);
 		layout->addWidget(chPpl);
 		layout->addWidget(window);
-		setGeometry(1000, 100, 640, 600);
+		layout->addWidget(sav);
+		setGeometry(1000, 100, 800, 700);
 		show();
 
 		QObject::connect(chImg, 	SIGNAL(released()), this, SLOT(loadImage()));
 		QObject::connect(chPpl,		SIGNAL(released()), this, SLOT(loadPipeline()));
+		QObject::connect(sav,		SIGNAL(released()), this, SLOT(save()));
 		QObject::connect(window,	SIGNAL(resized()),  this, SLOT(requestUpdate()));
 	}
 
@@ -73,6 +76,7 @@
 				text->write(temp);
 
 				delete[] temp;
+				delete image;
 
 				requestUpdate();
 			}
@@ -131,6 +135,53 @@
 				}
 
 				delete model;
+			}
+		}
+	}
+
+	void Interface::save(void)
+	{
+		QString filename = QFileDialog::getSaveFileName( this);
+
+		if (!filename.isEmpty())
+		{
+			if(pipeline!=NULL && text!=NULL)
+			{
+				try
+				{
+					std::cout << "Exporting image..." << std::endl;
+					TextureReader reader("reader",pipeline->out(0));
+					reader.yFlip = true;
+					reader << pipeline->out(0);
+
+					// Create an image with Qt
+					QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+
+					QRgb value;
+					double r, g, b;
+					for(int y=0; y<reader.getHeight(); y++)
+					{
+						for(int x=0; x<reader.getWidth(); x++)
+						{
+							r = static_cast<unsigned char>(reader(x,y,0)*255.0);
+							g = static_cast<unsigned char>(reader(x,y,1)*255.0);
+							b = static_cast<unsigned char>(reader(x,y,2)*255.0);
+							value = qRgb(r, g, b);
+							image.setPixel(x, y, value);
+						}
+					}
+
+					if(!image.save(filename))
+					{
+						QMessageBox::information(this, tr("Error while writing : "), filename);
+						std::cout << "Error while writing : " << filename.toUtf8().constData() << std::endl;
+					}
+				}
+				catch(std::exception& e)
+				{
+					QMessageBox::information(this, tr("Error while saving : "), e.what());
+					std::cout << "Error while saving : " << e.what() << std::endl;
+				}
 			}
 		}
 	}

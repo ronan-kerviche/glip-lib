@@ -47,27 +47,28 @@
 					GLint  wraps, wrapt;                       // Wrapping modes
 
 					// Private tools :
-					int    getChannelCount(GLenum _mode);
-					int    getChannelSize(GLenum _depth);
-					GLenum getAliasMode(GLenum _mode);
+					int    getChannelCount(GLenum _mode)	const;
+					int    getChannelSize(GLenum _depth)	const;
+					GLenum getAliasMode(GLenum _mode)	const;
 
 				public :
 					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter); // in protected?
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 					~__ReadOnly_HdlTextureFormat(void);
 
-					int    getWidth    (void) const;
-					int    getHeight   (void) const;
-					int    getChannel  (void) const;
-					int    getSize     (void) const;
-					GLenum getGLMode   (void) const;
-					GLenum getGLDepth  (void) const;
-					GLenum getMinFilter(void) const;
-					GLenum getMagFilter(void) const;
-					int    getBaseLevel(void) const;
-					int    getMaxLevel (void) const;
-					GLint  getSWrapping(void) const;
-					GLint  getTWrapping(void) const;
+					int    getWidth    	(void) const;
+					int    getHeight   	(void) const;
+					int    getChannel  	(void) const;
+					int    getSize     	(void) const;
+					int    getChannelDepth  (void) const;
+					GLenum getGLMode   	(void) const;
+					GLenum getGLDepth  	(void) const;
+					GLenum getMinFilter	(void) const;
+					GLenum getMagFilter	(void) const;
+					int    getBaseLevel	(void) const;
+					int    getMaxLevel	(void) const;
+					GLint  getSWrapping	(void) const;
+					GLint  getTWrapping	(void) const;
 
 					bool   operator==(const __ReadOnly_HdlTextureFormat&) const;
 					bool   operator!=(const __ReadOnly_HdlTextureFormat&) const;
