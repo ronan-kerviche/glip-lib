@@ -52,18 +52,18 @@ Current Version : 0.6
 	Status : CANCELED
 
 [0.7]	Cleaning the code (commented parts to remove).
-	Status : TODO
-
-[0.7]	Test the PBOs
-	Status : TODO
+	Status : DONE
 
 [0.7]	Replace the error handling in HdlProgram with Exception.
-	Status : TODO
+	Status : DONE
 
 [0.7]	Rewrite the texture reader module.
-	Status : TODO
+	Status : DONE
 
 [0.7]	Check that LayoutLoader for FILTER_LAYOUT can get the vertex shader
+	Status : DONE
+
+[0.8]	Test the PBOs
 	Status : TODO
 
 [0.8]  	Compilation as a Windows Static Library (MINGW -> libglip.a)
