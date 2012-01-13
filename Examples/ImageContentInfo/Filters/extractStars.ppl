@@ -1,0 +1,72 @@
+TEXTURE_FORMAT:imageFormat(4272,2848,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+SHADER_SOURCE:threshold()
+{
+	#version 130
+
+	uniform sampler2D 	inText;
+	out     vec4 		outText;
+	const 	float		level = 1.385; //sqrt(3)/2
+
+	void main()
+	{
+		vec4 col = textureLod(inText, gl_TexCoord[0].st, 0);
+		col.a = 0.0;
+
+		if(length(col)>level)
+			outText = vec4(1.0,1.0,1.0,1.0);
+		else
+			outText = vec4(0.0,0.0,0.0,1.0);
+	}
+}
+
+SHADER_SOURCE:extract()
+{
+	#version 130
+
+	uniform sampler2D	inText;
+	out	vec4		outText;
+	const	int 		hwindow = 1;
+
+	void main()
+	{
+		int test = 0;
+		vec4 col;
+		vec2 center = gl_TexCoord[0].st;
+		ivec2 sz = textureSize(inText, 0);
+		float sx = 1.0/(float(sz.s));
+		float sy = 1.0/(float(sz.t));
+
+		for(int i=-hwindow-1; i<=hwindow+1; i++)
+			for(int j=-hwindow-1; j<=hwindow+1; j++)
+			{
+				col = textureLod(inText, center+vec2(j*sx,i*sy), 0);
+				if(length(col)>1.0 && (abs(i)>hwindow || abs(j)>hwindow))
+				{
+					test = 0;
+					break;
+				}
+				else if(length(col)>1.0)
+					test = 1;
+			}
+
+		if(test==1)
+			outText = vec4(1.0,1.0,1.0,1.0);
+		else
+			outText = vec4(0.0,0.0,0.0,1.0);
+	}
+}
+
+FILTER_LAYOUT:threshold_filter(imageFormat,threshold);
+FILTER_LAYOUT:extract_filter(imageFormat,extract);
+
+PIPELINE_MAIN:pExtract()
+{
+	INPUT_PORTS(i0);
+	OUTPUT_PORTS(o0);
+	FILTER_INSTANCE:inst_thresh(threshold_filter);
+	FILTER_INSTANCE:inst_extrac(extract_filter);
+	CONNECTION(THIS,i0,inst_thresh,inText);
+	CONNECTION(inst_thresh,outText,inst_extrac,inText);
+	CONNECTION(inst_extrac,outText,THIS,o0);
+}

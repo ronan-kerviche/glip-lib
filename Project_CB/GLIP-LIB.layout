@@ -59,7 +59,7 @@
 		<Cursor position="2471" topLine="35" />
 	</File>
 	<File name="../GLIP-Lib/include/devDebugTools.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="1990" topLine="0" />
+		<Cursor position="2016" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Component.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="2335" topLine="0" />
@@ -71,7 +71,7 @@
 		<Cursor position="1841" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Filter.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="1836" topLine="0" />
+		<Cursor position="1836" topLine="310" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlFBO.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="1855" topLine="0" />

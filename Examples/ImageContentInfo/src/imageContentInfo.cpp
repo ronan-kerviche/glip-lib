@@ -79,6 +79,8 @@
 				delete[] temp;
 				delete image;
 
+				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
+
 				requestUpdate();
 			}
 		}
@@ -198,7 +200,9 @@
 
 			try
 			{
+				std::cout << "Rendering..." << std::endl;
 				(*pipeline) << (*text) << Process;
+				std::cout << "...end rendering" << std::endl;
 			}
 			catch(std::exception& e)
 			{

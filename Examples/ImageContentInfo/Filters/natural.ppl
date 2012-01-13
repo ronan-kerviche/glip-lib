@@ -1,4 +1,4 @@
-TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
+TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
 
 SHADER_SOURCE:shader()
 {
@@ -11,9 +11,9 @@ SHADER_SOURCE:shader()
 	{
 		vec4 col = textureLod(inText, gl_TexCoord[0].st, 0);
 
-		outText.r = col.b;
-		outText.g = col.r;
-		outText.b = col.g;
+		outText.r = col.r;
+		outText.g = col.g;
+		outText.b = col.b;
 		outText.a = 1.0;
 	}
 }
