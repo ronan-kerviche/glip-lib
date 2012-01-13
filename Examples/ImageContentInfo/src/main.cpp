@@ -1,5 +1,6 @@
 // Include
 	#include "imageContentInfo.hpp"
+	#include <cstring>
 
 // Namespaces
 

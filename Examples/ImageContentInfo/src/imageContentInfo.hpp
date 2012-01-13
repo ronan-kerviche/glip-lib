@@ -33,7 +33,7 @@
 			public :
 				Interface(void);
 
-			private slots :
+			public slots :
 				void loadImage(void);
 				void loadPipeline(void);
 				void save(void);
@@ -49,7 +49,7 @@
 				Interface	*interface;
 
 			public :
-				ImageContentInformation(int _w, int _h, int argc, char** argv);
+				ImageContentInformation(int _w, int _h, int& argc, char** argv);
 		};
 
 #endif

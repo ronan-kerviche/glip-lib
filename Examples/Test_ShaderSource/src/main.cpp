@@ -16,9 +16,9 @@ int main(int argc, char** argv)
     try
     {
         std::string filename = "./Filters/local_max_horiz.glsl";
-        std::fstream file;
-        file.open(filename.c_str());
-        Glip::CoreGL::ShaderSource shader(file, filename);
+        //std::fstream file;
+        //file.open(filename.c_str());
+        Glip::CoreGL::ShaderSource shader(filename);
         //Glip::CoreGL::ShaderSource shader(testKey);
         std::cout << "There are : " << shader.getInputVars().size() <<  " Input variables" << std::endl;
         for(unsigned int i=0; i<shader.getInputVars().size(); i++)

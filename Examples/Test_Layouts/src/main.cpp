@@ -19,10 +19,10 @@ int main(int argc, char** argv)
     try
     {
         // Create a filter layout :
-        std::fstream file;
-        file.open("./Filters/gradient2.glsl");
+        //std::fstream file;
+        //file.open("./Filters/gradient2.glsl");
         HdlTextureFormat fmt(640, 480, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-        ShaderSource src(file, "./Filters/gradient2.glsl");
+        ShaderSource src("./Filters/gradient2.glsl");
         FilterLayout fl("TestFilterLayout", fmt, src);
 
         std::cout << "Type : " << fl.getType() << std::endl;

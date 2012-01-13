@@ -35,7 +35,7 @@
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const std::string& name)
-	 : t(NULL), newImage(false), imagesMissed(0), ObjectName(name, "Input Device")
+	 : t(NULL), newImage(false), imagesMissed(0), ObjectName(name, "InputDevice")
 	{ }
 
 	InputDevice::~InputDevice(void)
@@ -117,7 +117,7 @@
 	\param name The name of the component.
 	**/
 	OutputDevice::OutputDevice(const std::string& name)
-	 : ObjectName(name, "Output Device")
+	 : ObjectName(name, "OutputDevice")
 	{ }
 
 	/**

@@ -610,7 +610,6 @@
 
 		try
 		{
-
 			// doesn't include previously loaded items :
 			clean();
 			updateEntriesLists(source);

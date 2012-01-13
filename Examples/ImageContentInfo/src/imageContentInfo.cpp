@@ -2,6 +2,7 @@
 #include "WindowRendering.hpp"
 #include <cstdlib>
 #include <ctime>
+#include <QPointer>
 
 // Namespace
 	using namespace Glip::CoreGL;
@@ -26,15 +27,15 @@
 		setGeometry(1000, 100, 800, 700);
 		show();
 
-		QObject::connect(chImg, 	SIGNAL(released()), this, SLOT(loadImage()));
-		QObject::connect(chPpl,		SIGNAL(released()), this, SLOT(loadPipeline()));
-		QObject::connect(sav,		SIGNAL(released()), this, SLOT(save()));
-		QObject::connect(window,	SIGNAL(resized()),  this, SLOT(requestUpdate()));
+		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
+		QObject::connect(chPpl,		SIGNAL(released(void)), this, SLOT(loadPipeline(void)));
+		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
+		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(requestUpdate(void)));
 	}
 
 	void Interface::loadImage(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Load an image"), QDir::currentPath());
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Image"), ".", "*.jpg *.JPG *.png");
 
 		if (!filename.isEmpty())
 		{
@@ -85,10 +86,11 @@
 
 	void Interface::loadPipeline(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Load a Pipeline"), QDir::currentPath());
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Pipeline"), ".", "*.ppl");
 
 		if (!filename.isEmpty())
 		{
+			std::cout << "Building : " << filename.toUtf8().constData() << std::endl;
 			bool 		success = true;
 			PipelineLayout* model 	= NULL;
 			LayoutLoader	loader;
@@ -101,7 +103,7 @@
 			{
 				success = false;
 
-				QMessageBox::information(this, tr("Error while loading the pipeline : "), e.what());
+				QMessageBox::information(NULL, tr("Error while loading the pipeline : "), e.what());
 				std::cout << "Error while building the pipeline : " << e.what() << std::endl;
 			}
 
@@ -130,7 +132,7 @@
 
 				if(success)
 				{
-					loader.write(*pipeline, "./Filters/writingTest.ppl");
+					//Test writing : loader.write(*pipeline, "./Filters/writingTest.ppl");
 					requestUpdate();
 				}
 
@@ -141,10 +143,12 @@
 
 	void Interface::save(void)
 	{
-		QString filename = QFileDialog::getSaveFileName( this);
+		QString filename = QFileDialog::getSaveFileName(this);
 
 		if (!filename.isEmpty())
 		{
+			std::cout << "Pipeline : " << pipeline << std::endl;
+			std::cout << "Texture  : " << text << std::endl;
 			if(pipeline!=NULL && text!=NULL)
 			{
 				try
@@ -212,7 +216,7 @@
 	}
 
 
-	ImageContentInformation::ImageContentInformation(int _w, int _h, int argc, char** argv)
+	ImageContentInformation::ImageContentInformation(int _w, int _h, int& argc, char** argv)
 	 : QApplication(argc,argv), w(_w), h(_h)
 	{
 		try
@@ -220,7 +224,7 @@
 			// Interface :
 			interface = new Interface;
 		}
-		catch(Exception& e)
+		catch(std::exception& e)
 		{
 			std::cout << "Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
