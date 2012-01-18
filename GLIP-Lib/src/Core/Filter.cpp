@@ -346,11 +346,21 @@
 
 	}
 
-	HdlProgram& Filter::operator->(void)
+	/**
+	\fn HdlProgram& Filter::prgm(void)
+	\brief Access the program carried.
+	\return Reference to the program.
+	**/
+	HdlProgram& Filter::prgm(void)
 	{
 		return *program;
 	}
 
+	/**
+	\fn void Filter::setGeometry(HdlVBO* v)
+	\brief Push different geometry rendering, the Filter object will take care of deleting the data when needed.
+	\param v Pointer to the new geometry to use.
+	**/
 	void Filter::setGeometry(HdlVBO* v)
 	{
 		if(v==NULL)

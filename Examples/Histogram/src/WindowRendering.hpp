@@ -1,34 +1,34 @@
+#ifndef __GLIPLIB_WINDOW_RENDERER__
+#define __GLIPLIB_WINDOW_RENDERER__
 
-#ifndef __WINDOW_RENDERER__
-#define __WINDOW_RENDERER__
-	
-	#include "../../GLIP-Lib/include/GLIPLib.hpp"
-	#include <QtOpenGL/QGLWidget>
-	#include <QtCore/QTimer>
+	#include "GLIPLib.hpp"
+	#include <QGLWidget>
+	#include <QTimer>
 
-	#define DISP_MIROR // miror the display
-	
+	// Namespaces
+	using namespace Glip;
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
+
 	// Class
-	class WindowRenderer : public QGLWidget, public InputModule
+	class WindowRenderer : public QGLWidget, public OutputDevice
 	{
 		Q_OBJECT
 
 		private :
-			double vp_x, vp_y, vp_w, vp_h, fmtImg;		
-			QTimer *timer;
+			double vp_x, vp_y, vp_w, vp_h, fmtImg;
+			HdlVBO *vbo;
 
-			void quad(float aX, float aY, float bX, float bY);
 		public :
-			WindowRenderer(int w, int h, double _fmtImg=-1);  
+			WindowRenderer(QWidget* parent, int w, int h, double _fmtImg=-1);
 			~WindowRenderer(void);
 
-			void resizeGL(int width, int height); 
+			void resizeGL(int width, int height);
+			void process(HdlTexture& t);
 
-			bool process(void);
-
-		private slots : 
-			void draw(void);
+		signals :
+			void resized(void);
 	};
 
-#endif 
+#endif
 

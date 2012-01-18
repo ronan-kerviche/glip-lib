@@ -3,7 +3,7 @@
 	#include "WindowRendering.hpp"
 
 // Class
-	WindowRenderer::WindowRenderer(int w, int h, double _fmtImg) : QGLWidget(), InputModule(1, "QTWidgetRenderer")
+	WindowRenderer::WindowRenderer(QWidget* parent, int w, int h, double _fmtImg) : QGLWidget(parent), OutputDevice("Display")
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -13,53 +13,44 @@
 			fmtImg = _fmtImg;
 
 		makeCurrent();
-        glViewport(0, 0, w, h);
+		HandleOpenGL::init();
+
+		glViewport(0, 0, w, h);
+
+		try
+		{
+			vbo = HdlVBO::generate2DStandardQuad();
+		}
+		catch(std::exception& e)
+		{
+			Exception m("WindowRenderer::WindowRenderer - Error while creating geometry", __FILE__, __LINE__);
+			throw m+e;
+		}
 
 		show();
-
-		timer = new QTimer;
-        timer->setInterval(50);
-		connect(timer, SIGNAL(timeout()),this, SLOT(draw()));
-        timer->start();
 	}
 
 	WindowRenderer::~WindowRenderer(void)
 	{
 		this->hide();
+		delete vbo;
 	}
 
 	void WindowRenderer::resizeGL(int width, int height)
 	{
 		glViewport(0, 0, width, height);
+		emit resized();
 	}
 
-	bool WindowRenderer::process(void)
-	{	
-		return true; 
-	}
-
-	void WindowRenderer::draw(void)
-	{	 
-		if(!allConnected()) 
-		{
-			std::cout << "WindowRenderer::draw - Not connected!" << std::endl; 
-			return ; 
-		}
-  
-		glLoadIdentity(); 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
-
-		bindAll();
-
-		#ifdef DISP_MIROR
-			drawGeometry(1.0, 1.0, -1.0, -1.0);
-		#else
-			drawGeometry(-1.0, 1.0, 1.0, -1.0);
-		#endif
-
-		unbindAll();
-
-        swapBuffers();
+	void WindowRenderer::process(HdlTexture& t)
+	{
+		std::cout << "Rendering..." << std::endl;
+		glClearColor(0.0,0.0,0.0,1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glLoadIdentity();
+		//glScalef(2.0,2.0,1.0);
+		t.bind();
+		vbo->draw();
+		swapBuffers();
 	}
 

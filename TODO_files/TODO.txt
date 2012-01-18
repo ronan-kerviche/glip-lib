@@ -63,17 +63,23 @@ Current Version : 0.6
 [0.7]	Check that LayoutLoader for FILTER_LAYOUT can get the vertex shader
 	Status : DONE
 
+[0.8]	BUG : if a uniform exists in the vertex and the fragment shaders it leads to two inputs instead of one.
+	Status : TODO
+
+[0.8]	BUG : On a Hardware plateform not compliant with required OpenGL Extensions, the program using the library will crash
+	Status : TODO
+
 [0.8]	Test the PBOs
 	Status : TODO
 
 [0.8]	Check errors on the webpage.
-	Status : TODO
+	Status : DONE
 
-[0.8]	Add a size computation pipeline for pipelines.
-	Status : TODO
+[0.8]	Add a size computation for pipelines.
+	Status : DONE
 
 [0.8]  	Compilation as a Windows Static Library (MINGW -> libglip.a)
-	Status : TODO
+	Status : DONE
 
 [0.8]	Write documentation for all OpenGL interfacing functions.
 	Status : DONE

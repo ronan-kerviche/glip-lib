@@ -1,74 +1,193 @@
 #include "header.hpp"
-#include <cmath>	
-    
-	// Code
-	ApplicationWebcam::ApplicationWebcam(int id, FOURCC code) : OutputModule(2, "MainApplication"), enabled(false)
-	{   	
-		// Create the Camera
-		std::cout << "Creating the camera..." << std::endl;
-		const int camW = 640,
-				  camH = 480;
-		cam = new UnicapCamera(id,code,camW,camH);
+#include "WindowRendering.hpp"
 
-		// Set the geometry :
-		geo = HdlVBO::generate2DGrid(640, 480); 
-		HdlTextureFormat fmt(256, 1, GL_RGB32F_ARB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-		ShaderSource srcPixel, srcVertex;
-		srcPixel.loadSourceFile("./Filters/srcPixel.glsl");
-		srcVertex.loadSourceFile("./Filters/srcVertex.glsl");
+// Namespace
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
+	using namespace Glip::Modules;
 
-		histogram = new HdlPipeline("HistogramPipeline", 1, 1);
-		histogram->addFilter(new HdlFilter("HistogramFilter", srcPixel, fmt, 1, 1, HdlFilter::MODE_HISTORY, &srcVertex));
-		histogram->filter("HistogramFilter").setGeometry(geo);
-		histogram->filter("HistogramFilter").program().modifyVar("tex0",HdlProgram::SHADER_VAR,0);
-		histogram->filter("HistogramFilter").setBlendingStack(true);
+// Code
+	HistogramInterface::HistogramInterface(void)
+	 : text(NULL), pipeline(NULL)
+	{
+		// Main interface :
+		window  = new WindowRenderer(this, 640, 480);
+		layout 	= new QVBoxLayout(this);
+		chImg	= new QPushButton("Load an Image", this);
+		sav	= new QPushButton("Save result (RGB888)", this);
 
-		StreamManager::connect(histogram->in(0),  cam->out(0)); 
-		StreamManager::connect(histogram->filter("HistogramFilter").in(0), histogram->in(0));
-		StreamManager::connect(histogram->out(0), histogram->filter("HistogramFilter").out(0)); 
-		
-		// OverAll connections
-		StreamManager::connect(out(0), cam->out(0)); 
-		StreamManager::connect(out(1), histogram->out(0)); 
+		layout->addWidget(chImg);
+		layout->addWidget(window);
+		layout->addWidget(sav);
+		setGeometry(1000, 100, 800, 700);
+		show();
 
-		// Start camera
-		if(cam->isEnabled())
-			cam->run();
-		else
+		// Make the pipeline
+		PipelineLayout* model = NULL;
+		LayoutLoader	loader;
+
+		try
 		{
-			std::cout << "Can't use the camera" << std::endl;
-			return ;
+			model = loader("./Filters/histogramPipeline.ppl");
 		}
- 
-		// Start QT loop
-		std::cout << "Initializing QT loop" << std::endl;
-		timer = new QTimer;   
-        timer->setInterval(50);    
-		connect(timer, SIGNAL(timeout()),this, SLOT(loop()));  
-        timer->start();
-
-		// Done!
-		std::cout << "==================== Appli started ======================" << std::endl;
-		enabled = true; 
-	}
-
-	ApplicationWebcam::~ApplicationWebcam(void)
-	{
-		timer->stop();
-		delete cam;
-		delete timer;
-	}
-
-	bool ApplicationWebcam::isEnabled(void)
-	{
-		return enabled;
-	}
-
-	void ApplicationWebcam::loop(void)
-	{
-		if(cam->isNewFrame())
+		catch(std::exception& e)
 		{
-			histogram->process();
+			QMessageBox::information(NULL, tr("Error while loading the pipeline : "), e.what());
+			std::cout << "Error while building the pipeline : " << e.what() << std::endl;
+			std::cout << "Will be rethrown!" << std::endl;
+			throw e;
 		}
+
+		pipeline = new Pipeline(*model, "instHistogramPipeline");
+		delete model;
+
+		// Set variables :
+		((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,0);
+		((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,1);
+		((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,2);
+		((*pipeline)["instHistRed"]).enableBlending();
+		((*pipeline)["instHistGreen"]).enableBlending();
+		((*pipeline)["instHistBlue"]).enableBlending();
+
+		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
+		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
+		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(requestUpdate(void)));
+	}
+
+	void HistogramInterface::loadImage(void)
+	{
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Image"), ".", "*.jpg *.JPG *.png");
+
+		if (!filename.isEmpty())
+		{
+			QImage* image = new QImage(filename);
+
+			if (image->isNull())
+			{
+				QMessageBox::information(this, tr("Image Content Info"), tr("Cannot load %1.").arg(filename));
+				std::cout << "Cannot load : " << filename.toUtf8().constData() << std::endl;
+				delete image;
+			}
+			else
+			{
+				if(text!=NULL)
+				{
+					delete text;
+					text = NULL;
+				}
+
+				// Build new header :
+				HdlTextureFormat fmt(image->width(),image->height(),GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+				text = new HdlTexture(fmt);
+
+				unsigned char* temp = new unsigned char[image->width()*image->height()*3];
+				int t=0;
+
+				for(int i=image->height()-1; i>=0; i--)
+				{
+					for(int j=0; j<image->width(); j++)
+					{
+						QRgb col 	= image->pixel(j,i);
+						temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
+						temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+						temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+						t += 3;
+					}
+				}
+
+				text->write(temp);
+
+				delete[] temp;
+				delete image;
+
+				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
+
+				// Update the grid of the pipeline :
+				(*pipeline)["instHistRed"].setGeometry(HdlVBO::generate2DGrid(text->getWidth(), text->getHeight()));
+				(*pipeline)["instHistGreen"].setGeometry(HdlVBO::generate2DGrid(text->getWidth(), text->getHeight()));
+				(*pipeline)["instHistBlue"].setGeometry(HdlVBO::generate2DGrid(text->getWidth(), text->getHeight()));
+
+				float a = 1.0/static_cast<float>(text->getWidth()*text->getHeight());
+				((*pipeline)["instHistRed"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
+				((*pipeline)["instHistGreen"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
+				((*pipeline)["instHistBlue"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
+
+				try
+				{
+					std::cout << "Rendering..." << std::endl;
+					(*pipeline) << (*text) << Process;
+					std::cout << "...end rendering" << std::endl;
+				}
+				catch(std::exception& e)
+				{
+					QMessageBox::information(this, tr("Error while computing : "), e.what());
+					std::cout << "Error while computing : " << e.what() << std::endl;
+					throw e;
+				}
+
+				requestUpdate();
+			}
+		}
+	}
+
+	void HistogramInterface::save(void)
+	{
+		QString filename = QFileDialog::getSaveFileName(this);
+
+		if (!filename.isEmpty())
+		{
+			std::cout << "Pipeline : " << pipeline << std::endl;
+			std::cout << "Texture  : " << text << std::endl;
+			if(pipeline!=NULL && text!=NULL)
+			{
+				try
+				{
+					std::cout << "Exporting image..." << std::endl;
+					TextureReader reader("reader",pipeline->out(0));
+					reader.yFlip = true;
+					reader << pipeline->out(0);
+
+					// Create an image with Qt
+					QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+
+					QRgb value;
+					double r, g, b;
+					for(int y=0; y<reader.getHeight(); y++)
+					{
+						for(int x=0; x<reader.getWidth(); x++)
+						{
+							r = static_cast<unsigned char>(reader(x,y,0)*255.0);
+							g = static_cast<unsigned char>(reader(x,y,1)*255.0);
+							b = static_cast<unsigned char>(reader(x,y,2)*255.0);
+							value = qRgb(r, g, b);
+							image.setPixel(x, y, value);
+						}
+					}
+
+					if(!image.save(filename))
+					{
+						QMessageBox::information(this, tr("Error while writing : "), filename);
+						std::cout << "Error while writing : " << filename.toUtf8().constData() << std::endl;
+					}
+				}
+				catch(std::exception& e)
+				{
+					QMessageBox::information(this, tr("Error while saving : "), e.what());
+					std::cout << "Error while saving : " << e.what() << std::endl;
+				}
+			}
+		}
+	}
+
+	void HistogramInterface::requestUpdate(void)
+	{
+		if(pipeline!=NULL)
+			(*window) << pipeline->out(0);
+	}
+
+	HistogramApplication::HistogramApplication(int& argc, char** argv)
+	 : QApplication(argc, argv)
+	{
+		interface = new HistogramInterface;
 	}
 

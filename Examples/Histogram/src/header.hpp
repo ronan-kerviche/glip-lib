@@ -1,54 +1,53 @@
 #ifndef __HEADER_LIFE__
 #define __HEADER_LIFE__
 
-	/* Notes : 
-		This is based on corellation calculus : 
-
-		c = Sum( (a-Ma)*(b-Mb) )/SQRT( Sum(a-Ma)*Sum(b-Mb) )
-		
-		Where Mx is the arithmetic mean of x
-	*/
-
 	// Includes
 	#include <iostream>
-	#include "../../GLIP-Lib/include/GLIPLib.hpp"
+	#include "GLIPLib.hpp"
 	#include <QApplication>
-	#include <QDesktopWidget>
-	#include <QtCore/QTimer>
+	#include <QWidget>
+	#include <QPushButton>
+	#include <QVBoxLayout>
+	#include <QFileDialog>
+	#include <QMessageBox>
 
-	// Ressource define : 
-	#define RESSOURCES_NUM 13
+	// Prototypes :
+		class WindowRenderer;
 
-	// Modes
-	enum
+	// Namespace :
+		using namespace Glip;
+		using namespace Glip::CoreGL;
+		using namespace Glip::CorePipeline;
+
+	class HistogramInterface : public QWidget
 	{
-		MODE_WAITING,
-		MODE_DRAWING
+		Q_OBJECT
+
+		private :
+			HdlTexture*	text;
+			QVBoxLayout* 	layout;
+			QPushButton	*chImg, *sav;
+			WindowRenderer	*window;
+			Pipeline	*pipeline;
+
+		public :
+			HistogramInterface(void);
+
+		public slots :
+			void loadImage(void);
+			void save(void);
+			void requestUpdate(void);
 	};
 
-	// POV define : 
-	//#define POV_OPERATOR
-
-	class ApplicationWebcam : QObject, public OutputModule
+	class HistogramApplication : public QApplication
 	{
-		Q_OBJECT 
-	
+		Q_OBJECT
+
 		private :
-			QTimer        *timer;
-			HdlVBO        *geo;
-			HdlPipeline   *histogram;
-			UnicapCamera  *cam; 
-			TextureReader *reader;
-			bool enabled;
-			
+			HistogramInterface* interface;
+
 		public :
-			ApplicationWebcam(int id, FOURCC code);
-			~ApplicationWebcam(void); 
+			HistogramApplication(int& argc, char** argv);
+	};
 
-			bool isEnabled(void); 
-		 
-		private slots :
-			void loop(void);
-	};	
-
-#endif  
+#endif

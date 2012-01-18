@@ -1090,7 +1090,7 @@
 				}
 
 				if(stuck && remaingFilter)
-					throw Exception("Pipeline::build - Error : Building routine is stuck probably because of missing connection", __FILE__, __LINE__);
+					throw Exception("Pipeline::build - Error : Building routine is stuck probably because of missing connection.", __FILE__, __LINE__);
 
 				#ifdef __DEVELOPMENT_VERBOSE__
 					std::cout << "    Best Filter" << std::endl;

@@ -120,7 +120,7 @@
 				public :
 					// Tools
 					~Filter(void);
-					HdlProgram& operator->(void);
+					HdlProgram& prgm(void);
 					void setGeometry(HdlVBO* v);
 			};
 		}
