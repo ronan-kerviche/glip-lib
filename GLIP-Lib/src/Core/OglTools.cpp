@@ -23,6 +23,7 @@
 
 #include "OglInclude.hpp"
 #include "HdlTexture.hpp"
+#include "Exception.hpp"
 #include <string>
 
 using namespace Glip::CoreGL;
@@ -40,7 +41,13 @@ using namespace Glip::CoreGL;
 		{
 			if(!initDone)
 			{
-				glewInit();
+				GLenum err = glewInit();
+				if(err != GLEW_OK)
+				{
+					std::string error = reinterpret_cast<const char*>(glewGetErrorString(err));
+					throw Exception("HandleOpenGL::init - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__);
+				}
+
 				initDone = true;
 			}
 		}
