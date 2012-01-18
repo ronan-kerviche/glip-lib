@@ -37,29 +37,35 @@ namespace Glip
 
 	namespace Modules
 	{
-		enum LoaderKeyword
-		{
-			FORMAT_LAYOUT,
-			SHADER_SOURCE,
-			FILTER_LAYOUT,
-			PIPELINE_LAYOUT,
-			PIPELINE_MAIN,
-			INCLUDE_FILE,
-			FILTER_INSTANCE,
-			PIPELINE_INSTANCE,
-			CONNECTION,
-			INPUT_PORTS,
-			OUTPUT_PORTS,
-			THIS,
-			NumKeywords
-		};
-
 		/**
 		\class LayoutLoader
 		\brief Load and save pipelines layouts to file
 		**/
 		class LayoutLoader
 		{
+			public :
+				enum LoaderKeyword
+				{
+					FORMAT_LAYOUT,
+					SHADER_SOURCE,
+					FILTER_LAYOUT,
+					PIPELINE_LAYOUT,
+					PIPELINE_MAIN,
+					INCLUDE_FILE,
+					FILTER_INSTANCE,
+					PIPELINE_INSTANCE,
+					CONNECTION,
+					INPUT_PORTS,
+					OUTPUT_PORTS,
+					THIS,
+					DEFAULT_VERTEX_SHADER,
+					CLEARING_ON,
+					CLEARING_OFF,
+					BLENDING_ON,
+					BLENDING_OFF,
+					NumKeywords
+				};
+
 			private :
 				static const char* 				keywords[NumKeywords];
 				// Reading :

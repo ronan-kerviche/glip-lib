@@ -50,8 +50,8 @@
 				(*window) << (*t);
 
 			// Do the first pass :
-				(*p1) << (*t) << Process;
-				(*p2) << (*t) << Process;
+				(*p1) << (*t) << Pipeline::Process;
+				(*p2) << (*t) << Pipeline::Process;
 
 			timer = new QTimer;
 			timer->setInterval(500);
@@ -92,21 +92,21 @@
 			std::cout << "> Reset" << std::endl;
 			//reset :
 			randomTexture(0.3);
-			(*p1) << (*t) << Process;
-			(*p2) << (*t) << Process;
+			(*p1) << (*t) << Pipeline::Process;
+			(*p2) << (*t) << Pipeline::Process;
 			i = 0;
 		}
 		else
 		{
 			if(i%2==0)
 			{
-				(*p2) << p1->out(0) << Process;
+				(*p2) << p1->out(0) << Pipeline::Process;
 				if(i%4!=0) 	(*window) << p2->out(0);
 				else		(*window) << p2->out(1);
 			}
 			else
 			{
-				(*p1) << p2->out(0) << Process;
+				(*p1) << p2->out(0) << Pipeline::Process;
 				(*window) <<  p1->out(0);
 			}
 		}

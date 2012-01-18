@@ -1,4 +1,4 @@
-TEXTURE_FORMAT:colorDistribution(256,1,GL_RGB32F_ARB,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:colorDistribution(255,1,GL_RGB32F_ARB,GL_FLOAT,GL_NEAREST,GL_NEAREST);
 TEXTURE_FORMAT:histogramWindow(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
 
 SHADER_SOURCE:vertexHistogram()
@@ -36,13 +36,14 @@ SHADER_SOURCE:fragHistogram()
 {
 	#version 130
 
-	uniform float nrm;
+	uniform float nrm, scale;
+
 	out vec4 outText;
 
 	void main()
 	{
 		if(gl_Color.b>0.5)
-			outText = vec4(nrm,nrm,nrm,1.0)*10.0;
+			outText = vec4(nrm,nrm,nrm,1.0)*scale;
 		else
 			outText = vec4(0.0,0.0,0.0,0.0);
 	}
@@ -51,8 +52,7 @@ SHADER_SOURCE:fragHistogram()
 SHADER_SOURCE:fragWinHist()
 {
 	#version 130
-
-	uniform sampler2D fRed, fGreen, fBlue;
+	uniform sampler2D fRed, fGreen, fBlue, tex0;
 	out vec4 outText;
 
 	void main()
@@ -61,18 +61,25 @@ SHADER_SOURCE:fragWinHist()
 		vec4 pRed 	= textureLod(fRed, 	pos, 0);
 		vec4 pGreen	= textureLod(fGreen, 	pos, 0);
 		vec4 pBlue	= textureLod(fBlue,	pos, 0);
+		vec4 col	= textureLod(tex0, 	pos, 0);
 
 		if(pos.t<pRed.r )
 			outText.r = 1.0;
+		else
+			outText.r = col.r;
 		if(pos.t<pGreen.r )
 			outText.g = 1.0;
+		else
+			outText.g = col.g;
 		if(pos.t<pBlue.r )
 			outText.b = 1.0;
+		else
+			outText.b = col.b;
 	}
 }
 
 
-FILTER_LAYOUT:filterHistogram(colorDistribution, fragHistogram, vertexHistogram);
+FILTER_LAYOUT:filterHistogram(colorDistribution, fragHistogram, vertexHistogram, CLEARING_ON, BLENDING_ON);
 FILTER_LAYOUT:windowHistogram(histogramWindow, fragWinHist);
 
 PIPELINE_MAIN:pipelineHistogram()
@@ -91,5 +98,6 @@ PIPELINE_MAIN:pipelineHistogram()
 	CONNECTION(instHistRed, outText, instWin, fRed);
 	CONNECTION(instHistGreen, outText, instWin, fGreen);
 	CONNECTION(instHistBlue, outText, instWin, fBlue);
+	CONNECTION(THIS, i0, instWin, tex0);
 	CONNECTION(instWin, outText, THIS, o0);
 }

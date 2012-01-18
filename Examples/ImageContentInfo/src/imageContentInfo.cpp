@@ -202,7 +202,7 @@
 			try
 			{
 				std::cout << "Rendering..." << std::endl;
-				(*pipeline) << (*text) << Process;
+				(*pipeline) << (*text) << Pipeline::Process;
 				std::cout << "...end rendering" << std::endl;
 			}
 			catch(std::exception& e)

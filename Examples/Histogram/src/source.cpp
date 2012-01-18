@@ -42,12 +42,23 @@
 		delete model;
 
 		// Set variables :
-		((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,0);
-		((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,1);
-		((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,2);
-		((*pipeline)["instHistRed"]).enableBlending();
-		((*pipeline)["instHistGreen"]).enableBlending();
-		((*pipeline)["instHistBlue"]).enableBlending();
+		try
+		{
+			((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,0);
+			((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,1);
+			((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,2);
+			const float scale = 10.0f;
+			((*pipeline)["instHistRed"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
+			((*pipeline)["instHistGreen"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
+			((*pipeline)["instHistBlue"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
+		}
+		catch(std::exception& e)
+		{
+			QMessageBox::information(NULL, tr("Error while setting variables : "), e.what());
+			std::cout << "Error while setting variables : " << e.what() << std::endl;
+			std::cout << "Will be rethrown!" << std::endl;
+			throw e;
+		}
 
 		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
 		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
@@ -115,7 +126,7 @@
 				try
 				{
 					std::cout << "Rendering..." << std::endl;
-					(*pipeline) << (*text) << Process;
+					(*pipeline) << (*text) << Pipeline::Process;
 					std::cout << "...end rendering" << std::endl;
 				}
 				catch(std::exception& e)

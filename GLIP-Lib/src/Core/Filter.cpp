@@ -21,6 +21,7 @@
  * \date    August 15th 2011
 **/
 
+#include <algorithm>
 #include "Filter.hpp"
 #include "HdlTexture.hpp"
 #include "HdlShader.hpp"
@@ -161,9 +162,18 @@
 
 			// Push them!
 			for(std::vector<std::string>::iterator it=varsInVertex.begin(); it!=varsInVertex.end(); it++)
-				varsIn.push_back(*it);
+			{
+				if(std::find(varsIn.begin(), varsIn.end(), *it)==varsIn.end())
+					varsIn.push_back(*it);
+				else
+				{
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "FilterLayout::FilterLayout - omitting variable name : " << *it << " in " << type << " because it already exits in the Fragment Shader." << std::endl;
+					#endif
+				}
+			}
 
-			///TODO Verify that variables nam in vertex and fragment are different
+			///TODO Verify that variables names in vertex and fragment are different
 		}
 		std::vector<std::string> varsOut = fragmentSource->getOutputVars();
 

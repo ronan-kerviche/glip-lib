@@ -1,7 +1,13 @@
+#When using QT, make sure it includes the library before OpenGL!
+
 cmake_minimum_required(VERSION 2.6)
 
 #Project name
 project(GLIP)
+
+set(CMAKE_BUILD_TYPE Release)
+# To track the compilation process
+#set(CMAKE_VERBOSE_MAKEFILE on )
 
 if(WIN32) # Windows specifics
 	# MAKE SURE THAT YOUR PATH CONTAINS THE DIRECTORY TO ALL MINGW BINARIES
@@ -20,10 +26,13 @@ if(WIN32) # Windows specifics
 	set(CMAKE_LINKER       ld)
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
+
+	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
+
 else() # Linux psecifics
 endif()
 
-set(LIBRARY_OUTPUT_PATH lib/${CMAKE_BUILD_TYPE})
+set(LIBRARY_OUTPUT_PATH lib/)
 
 include_directories(
 		./include/

@@ -45,7 +45,12 @@
 								"CONNECTION",
 								"INPUT_PORTS",
 								"OUTPUT_PORTS",
-								"THIS"
+								"THIS",
+								"DEFAULT_VERTEX_SHADER",
+								"CLEARING_ON",
+								"CLEARING_OFF",
+								"BLENDING_ON",
+								"BLENDING_OFF",
 							};
 
 	// Functions :
@@ -97,7 +102,7 @@
 		pipelineCode.clear();
 	}
 
-	LoaderKeyword LayoutLoader::getKeyword(const std::string& str)
+	LayoutLoader::LoaderKeyword LayoutLoader::getKeyword(const std::string& str)
 	{
 		for(int i=0; i<NumKeywords; i++)
 			if(keywords[i]==str) return static_cast<LoaderKeyword>(i);
@@ -397,12 +402,13 @@
 
 	FilterLayout* LayoutLoader::buildFilter(const std::string& code, const std::string& name)
 	{
+		FilterLayout* ptr = NULL;
 		std::vector<std::string> arg = getArguments(code);
 
 		if(arg.size()<2)
 			throw Exception("LayoutLoader::buildFilter - Too few arguments for filter " + name, __FILE__, __LINE__);
 
-		if(arg.size()>3)
+		if(arg.size()>5)
 			throw Exception("LayoutLoader::buildFilter - Too much arguments for filter " + name, __FILE__, __LINE__);
 
 		std::map<std::string, HdlTextureFormat*>::iterator it0 = formatList.find(arg[0]);
@@ -413,17 +419,52 @@
 		if(it1==sourceList.end())
 			throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[1] + " for " + name, __FILE__, __LINE__);
 
-		if(arg.size()<3)
-			return new FilterLayout(name, *it0->second, *it1->second);
-		else
+		if(arg.size()>=3)
 		{
-			std::map<std::string, ShaderSource*>::iterator it2 = sourceList.find(arg[2]);
+			if(arg[2]!=keywords[DEFAULT_VERTEX_SHADER])
+			{
+				std::map<std::string, ShaderSource*>::iterator it2 = sourceList.find(arg[2]);
 
-			if(it2==sourceList.end())
-				throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[2] + " for " + name, __FILE__, __LINE__);
-
-			return new FilterLayout(name, *it0->second, *it1->second, it2->second);
+				if(it2==sourceList.end())
+					throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[2] + " for " + name, __FILE__, __LINE__);
+				else
+					ptr = new FilterLayout(name, *it0->second, *it1->second, it2->second);
+			}
+			else
+				ptr = new FilterLayout(name, *it0->second, *it1->second);
 		}
+		else
+			ptr = new FilterLayout(name, *it0->second, *it1->second);
+
+		if(arg.size()>=4)
+		{
+			LoaderKeyword kw = getKeyword(arg[3]);
+			if(kw==CLEARING_ON)
+				ptr->enableClearing();
+			else if(kw==CLEARING_OFF)
+				ptr->disableClearing();
+			else
+			{
+				delete ptr;
+				throw Exception("LayoutLoader::buildFilter - Unknow keyword for CLEARING parameter : " + arg[3], __FILE__, __LINE__);
+			}
+		}
+
+		if(arg.size()>=5)
+		{
+			LoaderKeyword kw = getKeyword(arg[4]);
+			if(kw==BLENDING_ON)
+				ptr->enableBlending();
+			else if(kw==BLENDING_OFF)
+				ptr->disableBlending();
+			else
+			{
+				delete ptr;
+				throw Exception("LayoutLoader::buildFilter - Unknow keyword for BLENDING parameter : " + arg[4], __FILE__, __LINE__);
+			}
+		}
+
+		return ptr;
 	}
 
 	PipelineLayout* LayoutLoader::buildPipeline(std::string code, const std::string& name)
@@ -771,11 +812,11 @@
 		{
 			switch(pLayout.getElementKind(i))
 			{
-				case FILTER :
+				case Pipeline::FILTER :
 					writeFilterCode(pLayout.filterLayout(i));
 					instances << "    FILTER_INSTANCE:inst_" << pLayout.filterLayout(i).getName() << '(' << pLayout.filterLayout(i).getName() << ");\n";
 					break;
-				case PIPELINE :
+				case Pipeline::PIPELINE :
 					writePipelineCode(pLayout.pipelineLayout(i));
 					instances << "    PIPELINE_INSTANCE:inst_" << pLayout.pipelineLayout(i).getName() << '(' <<pLayout.pipelineLayout(i).getName() << ");\n";
 					break;
@@ -813,7 +854,7 @@
 		{
 			__ReadOnly_PipelineLayout::Connection c = pLayout.getConnection(i);
 			ss << "    CONNECTION(";
-			if(c.idOut!=THIS_PIPELINE)
+			if(c.idOut!=Pipeline::THIS_PIPELINE)
 			{
 				ss << "inst_" << pLayout.componentLayout(c.idOut).getName() << ',';
 				ss << pLayout.componentLayout(c.idOut).getOutputPortName(c.portOut) << ',';
@@ -824,7 +865,7 @@
 				ss << pLayout.getInputPortName(c.portOut) << ',';
 			}
 
-			if(c.idIn!=THIS_PIPELINE)
+			if(c.idIn!=Pipeline::THIS_PIPELINE)
 			{
 				ss << "inst_" << pLayout.componentLayout(c.idIn).getName() << ',';
 				ss << pLayout.componentLayout(c.idIn).getInputPortName(c.portIn) << ");\n";

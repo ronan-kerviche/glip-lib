@@ -32,13 +32,13 @@
 	{
 		namespace CoreGL
 		{
-		// Prototypes
-		class HdlTexture;
-		class __HdlTextureFormat_OnlyData;
-		class HdlFBO;
-		class ShaderSource;
-		class HdlShader;
-		class HdlProgram;
+			// Prototypes
+			class HdlTexture;
+			class __HdlTextureFormat_OnlyData;
+			class HdlFBO;
+			class ShaderSource;
+			class HdlShader;
+			class HdlProgram;
 		}
 
 		namespace CorePipeline
@@ -50,23 +50,6 @@
 			// Constants
 			#define ELEMENT_NOT_ASSOCIATED (-2)
 
-			enum ComponentKind
-			{
-				THIS_PIPELINE = -1,
-				FILTER        =  0,
-				PIPELINE      =  1
-			};
-
-			// Enums
-			enum ActionType
-			{
-				Process,
-				Reset
-			};
-
-			// Types
-			typedef std::vector<__ReadOnly_ComponentLayout*> ComponentList;
-
 			// Objects
 			/**
 			\class __ReadOnly_PipelineLayout
@@ -76,6 +59,13 @@
 			{
 				public :
 					// Constants
+					enum ComponentKind
+					{
+						THIS_PIPELINE = -1,
+						FILTER        =  0,
+						PIPELINE      =  1
+					};
+
 					/**
 					\struct Connection
 					\brief Object describing connetion betwen elements in a pipeline
@@ -94,6 +84,7 @@
 
 				private :
 					// Data
+					typedef std::vector<__ReadOnly_ComponentLayout*> ComponentList;
 					std::vector<Connection>    connections;
 					ComponentList              elementsLayout;
 					std::vector<ComponentKind> elementsKind;
@@ -140,6 +131,8 @@
 					bool 				check(bool exception = true);
 			};
 
+			typedef __ReadOnly_PipelineLayout::ComponentKind ComponentKind;
+
 			/**
 			\class PipelineLayout
 			\brief Pipeline layout
@@ -169,6 +162,13 @@
 			**/
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
+				public :
+					enum ActionType
+					{
+						Process,
+						Reset
+					};
+
 				private :
 					// Data
 					typedef std::vector<HdlTexture*> 	TablePtr;
