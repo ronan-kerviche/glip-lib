@@ -59,7 +59,7 @@
 					int    getWidth    	(void) const;
 					int    getHeight   	(void) const;
 					int    getChannel  	(void) const;
-					int    getSize     	(void) const;
+				virtual int    getSize     	(void) const;
 					int    getChannelDepth  (void) const;
 					GLenum getGLMode   	(void) const;
 					GLenum getGLDepth  	(void) const;

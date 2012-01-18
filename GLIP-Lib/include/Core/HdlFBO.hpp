@@ -63,13 +63,14 @@
 					HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget = 1);
 					~HdlFBO(void);
 
-					int         addTarget(void);
-					int         getAttachmentCount(void) const;
+					int		addTarget(void);
+					int		getAttachmentCount(void) const;
 
-					void        beginRendering(void);
-					void        endRendering(void);
-					void        bind(void);
-					HdlTexture* operator[](int i);
+					void		beginRendering(void);
+					void		endRendering(void);
+					void		bind(void);
+					HdlTexture* 	operator[](int i);
+					int		getSize(void);
 
 					// Static tools :
 					static int    getMaximumColorAttachment(void);

@@ -6,15 +6,16 @@ SHADER_SOURCE:threshold()
 
 	uniform sampler2D 	inText;
 	out     vec4 		outText;
-	const 	float		level = 1.385; //sqrt(3)/2
+	const 	float		level = 0.5;
 
 	void main()
 	{
 		vec4 col = textureLod(inText, gl_TexCoord[0].st, 0);
 		col.a = 0.0;
+		float i = length(col)/1.732;
 
-		if(length(col)>level)
-			outText = vec4(1.0,1.0,1.0,1.0);
+		if(i>level)
+			outText = vec4(1.0,1.0,i,1.0);
 		else
 			outText = vec4(0.0,0.0,0.0,1.0);
 	}
@@ -27,10 +28,12 @@ SHADER_SOURCE:extract()
 	uniform sampler2D	inText;
 	out	vec4		outText;
 	const	int 		hwindow = 1;
+	const 	int 		level = 3;
 
 	void main()
 	{
-		int test = 0;
+		int count = 0;
+		float intensity = 0.0;
 		vec4 col;
 		vec2 center = gl_TexCoord[0].st;
 		ivec2 sz = textureSize(inText, 0);
@@ -41,17 +44,25 @@ SHADER_SOURCE:extract()
 			for(int j=-hwindow-1; j<=hwindow+1; j++)
 			{
 				col = textureLod(inText, center+vec2(j*sx,i*sy), 0);
-				if(length(col)>1.0 && (abs(i)>hwindow || abs(j)>hwindow))
+				if(col.r>0.0)
 				{
-					test = 0;
-					break;
+					if(abs(i)>hwindow || abs(j)>hwindow)
+					{
+						count = 0;
+						break;
+					}
+					else
+					{
+						intensity += col.b/float((2*hwindow+1)*(2*hwindow+1));
+						count ++;
+					}
 				}
-				else if(length(col)>1.0)
-					test = 1;
 			}
 
-		if(test==1)
-			outText = vec4(1.0,1.0,1.0,1.0);
+		if(count>0 && intensity>0.7)
+		{
+			outText = vec4(intensity,intensity,1.0,1.0);
+		}
 		else
 			outText = vec4(0.0,0.0,0.0,1.0);
 	}

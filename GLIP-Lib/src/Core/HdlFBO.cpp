@@ -174,6 +174,16 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
+	\fn    int HdlFBO::getSize(void)
+	\brief Gets the size of the FBO in bytes.
+	\return The size in byte of the multiple targets.
+	**/
+	int HdlFBO::getSize(void)
+	{
+		return getAttachmentCount() * __ReadOnly_HdlTextureFormat::getSize();
+	}
+
+	/**
 	\fn    int HdlFBO::getMaximumColorAttachment(void)
 	\brief Get the maximum number of attachment points.
 	\return The maximum number of attachment points.

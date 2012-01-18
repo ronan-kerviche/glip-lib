@@ -279,6 +279,9 @@
 	**/
 	void Filter::process(HdlFBO& renderer)
 	{
+		if(renderer.getAttachmentCount()!=getNumOutputPort())
+			throw Exception("Filter::process - Renderer as a different number of target than the Filter " + getNameExtended() + " has outputs.", __FILE__, __LINE__);
+
 		// Prepare the renderer
 			renderer.beginRendering();
 			//std::cout << "Begin rendering 		: "; glErrors(true, false);

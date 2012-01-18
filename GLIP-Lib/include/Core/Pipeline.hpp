@@ -198,6 +198,7 @@
 					Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
+					int getSize(void);
 					Pipeline& operator<<(HdlTexture&);
 					Pipeline& operator<<(ActionType);
 					HdlTexture& out(int);

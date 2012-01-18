@@ -1232,6 +1232,21 @@
 	}
 
 	/**
+	\fn int Pipeline::getSize(void)
+	\brief Get the size in bytes of the elements on the GPU for this pipeline.
+	\return Size in bytes.
+	**/
+	int Pipeline::getSize(void)
+	{
+		int size = 0;
+
+		for(TableBuffer::iterator it = buffers.begin(); it!=buffers.end(); it++)
+			size += (*it)->getSize();
+
+		return size;
+	}
+
+	/**
 	\fn void Pipeline::process(void)
 	\brief Apply the pipeline.
 	**/

@@ -135,6 +135,7 @@
 				if(success)
 				{
 					//Test writing : loader.write(*pipeline, "./Filters/writingTest.ppl");
+					std::cout << "Pipeline size on the GPU : " << static_cast<int>(static_cast<float>(pipeline->getSize())/(1024.0*1024.0)) << " MB" << std::endl;
 					requestUpdate();
 				}
 
