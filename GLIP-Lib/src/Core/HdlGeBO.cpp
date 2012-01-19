@@ -42,6 +42,9 @@ using namespace Glip::CoreGL;
 	HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage)
 	 : size(_size)
 	{
+		NEED_EXTENSION(GLEW_ARB_pixel_buffer_object)
+		NEED_EXTENSION(GLEW_ARB_vertex_buffer_object)
+
 		// Generate the buffer
 		glGenBuffers(1, &bufferId);
 

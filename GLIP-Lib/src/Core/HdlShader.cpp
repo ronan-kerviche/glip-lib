@@ -41,7 +41,10 @@ using namespace Glip::CoreGL;
 	**/
 	HdlShader::HdlShader(GLenum _type, ShaderSource& src) : ShaderSource(src)
 	{
-		HandleOpenGL::init();
+		NEED_EXTENSION(GLEW_ARB_vertex_shader)
+		NEED_EXTENSION(GLEW_ARB_fragment_shader)
+		NEED_EXTENSION(GLEW_ARB_shader_objects)
+		NEED_EXTENSION(GLEW_ARB_shading_language_100)
 
 		type = _type; //either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
 
@@ -133,6 +136,9 @@ using namespace Glip::CoreGL;
 	HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)
 	 : valid(false)
 	{
+		NEED_EXTENSION(GLEW_ARB_vertex_program)
+		NEED_EXTENSION(GLEW_ARB_fragment_program)
+
 		// create the program
 		program = glCreateProgram();
 

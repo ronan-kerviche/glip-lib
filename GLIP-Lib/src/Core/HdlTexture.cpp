@@ -359,9 +359,16 @@ using namespace Glip::CoreGL;
 	**/
 	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt) : __ReadOnly_HdlTextureFormat(fmt)
 	{
+		// Testing hardware :
+		NEED_EXTENSION(GLEW_ARB_multitexture)
+		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
+		NEED_EXTENSION(GLEW_ARB_texture_non_power_of_two)
+		NEED_EXTENSION(GLEW_ARB_texture_rectangle)
+		NEED_EXTENSION(GLEW_ARB_texture_float)
+
 		glEnable(GL_TEXTURE_2D);
 
-		// create the texture
+		// Create the texture
 		glGenTextures(1, &texID);
 
 		// COMMON ERROR : USE OF MIPMAP : LINEAR_MIPMAP_NEAREST... when max level = 0 (leads to Invalid Enum)

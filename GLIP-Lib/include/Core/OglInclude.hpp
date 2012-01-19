@@ -45,8 +45,8 @@
 	{
 		namespace CoreGL
 		{
-			// Prototype
-			class HdlMultiTexturing;
+			// Macros
+			#define NEED_EXTENSION(ext) if(!ext) throw Exception("Extension " #ext " is required but not available on Hardware or Driver.",__FILE__,__LINE__);
 
 			// Object
 			/**

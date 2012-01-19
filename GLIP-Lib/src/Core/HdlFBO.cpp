@@ -37,7 +37,7 @@ using namespace Glip::CoreGL;
 	HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
 	 : __ReadOnly_HdlTextureFormat(f)
 	{
-		HandleOpenGL::init();
+		NEED_EXTENSION(GL_ARB_framebuffer_object)
 
 		glGenFramebuffersEXT(1, &fboID);
 

@@ -78,6 +78,9 @@ Current Version : 0.6
 [0.8]	Test the PBOs
 	Status : TODO
 
+[0.8]	Multi-sampling and GL_TEXTURE_2D_MULTISAMPLE for the images.
+	Status : TODO
+
 [0.8]	Check errors on the webpage.
 	Status : DONE
 
