@@ -44,6 +44,7 @@ using namespace Glip::CoreGL;
 	{
 		NEED_EXTENSION(GLEW_ARB_pixel_buffer_object)
 		NEED_EXTENSION(GLEW_ARB_vertex_buffer_object)
+		NEED_EXTENSION(GLEW_VERSION_1_5)
 
 		// Generate the buffer
 		glGenBuffers(1, &bufferId);
