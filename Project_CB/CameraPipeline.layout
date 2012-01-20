@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Release" />
+	<File name="../Examples/CameraPipeline/src/CameraPipeline.cpp" open="0" top="0" tabpos="2">
+		<Cursor position="1637" topLine="18" />
+	</File>
+	<File name="../Examples/CameraPipeline/src/CameraPipeline.hpp" open="0" top="0" tabpos="1">
+		<Cursor position="1299" topLine="12" />
+	</File>
+	<File name="../Examples/CameraPipeline/src/WindowRendering.hpp" open="0" top="0" tabpos="2">
+		<Cursor position="78" topLine="0" />
+	</File>
+	<File name="../Examples/CameraPipeline/src/main.cpp" open="0" top="0" tabpos="3">
+		<Cursor position="199" topLine="0" />
+	</File>
+</CodeBlocks_layout_file>

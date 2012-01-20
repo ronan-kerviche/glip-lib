@@ -38,7 +38,7 @@
 		<Cursor position="1846" topLine="36" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/OglInclude.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="1852" topLine="0" />
+		<Cursor position="2485" topLine="30" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="3">
 		<Cursor position="6726" topLine="158" />
@@ -47,7 +47,7 @@
 		<Cursor position="1852" topLine="225" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/glew.h" open="0" top="0" tabpos="0">
-		<Cursor position="143504" topLine="3039" />
+		<Cursor position="296245" topLine="6019" />
 	</File>
 	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="1">
 		<Cursor position="2781" topLine="22" />
@@ -77,31 +77,31 @@
 		<Cursor position="7668" topLine="138" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlFBO.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="6383" topLine="140" />
+		<Cursor position="5484" topLine="115" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlGeBO.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="1885" topLine="16" />
+		<Cursor position="2824" topLine="22" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlInfo.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="1496" topLine="21" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlPBO.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="1856" topLine="36" />
+		<Cursor position="2703" topLine="12" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlShader.cpp" open="0" top="0" tabpos="5">
-		<Cursor position="10748" topLine="175" />
+		<Cursor position="2514" topLine="22" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlTexture.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="5574" topLine="177" />
+		<Cursor position="15442" topLine="429" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlVBO.cpp" open="0" top="0" tabpos="2">
-		<Cursor position="1857" topLine="143" />
+		<Cursor position="3376" topLine="26" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/NamingLayout.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="1846" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/OglTools.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2623" topLine="396" />
+		<Cursor position="2629" topLine="32" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Pipeline.cpp" open="0" top="0" tabpos="3">
 		<Cursor position="40672" topLine="1082" />

@@ -32,7 +32,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
 	\brief HdlVBO constructor.
-
 	\param _nVert Number of vertices.
 	\param _dim Dimension of the space containing the vertices (2 or 3).
 	\param freq Frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
