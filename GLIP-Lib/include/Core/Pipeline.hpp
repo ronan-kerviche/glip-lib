@@ -113,6 +113,7 @@
 					int  				getNumConnections(void) const;
 					void				getInfoElements(int& numFilters, int& numPipelines);
 					int  				getElementIndex(const std::string& name) const;
+					bool				doesElementExist(const std::string& name) const;
 					ComponentKind 			getElementKind(int i) const;
 					static ObjectName&      	componentName(int i, const void* obj);
 					__ReadOnly_ComponentLayout& 	componentLayout(int i) const;
@@ -184,6 +185,9 @@
 					TableIndex				actionFilter;
 					std::vector<TableIndex*>		listOfArgBuffers;
 					std::vector<TableIndex*>		listOfArgBuffersOutput;
+					bool 					perfsMonitoring;
+					std::vector<float>			perfs;
+					float					totalPerf;
 
 					// Tools
 					void cleanInput(void);
@@ -198,12 +202,17 @@
 					Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
-					int getSize(void);
-					Pipeline& operator<<(HdlTexture&);
-					Pipeline& operator<<(ActionType);
-					HdlTexture& out(int);
-					HdlTexture& out(const std::string&);
-					Filter& operator[](const std::string& name);
+					int 		getSize(void);
+					Pipeline& 	operator<<(HdlTexture&);
+					Pipeline& 	operator<<(ActionType);
+					HdlTexture& 	out(int);
+					HdlTexture& 	out(const std::string&);
+					int 		getFilterID(const std::string& path);
+					Filter& 	operator[](const std::string& path);
+					void 		enablePerfsMonitoring(void);
+					void 		disablePerfsMonitoring(void);
+					float		getTiming(const std::string& path);
+					float 		getTotalTiming(void);
 			};
 		}
 	}

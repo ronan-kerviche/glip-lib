@@ -72,8 +72,8 @@ Current Version : 0.6
 [0.8]	BUG : if a uniform exists in the vertex and the fragment shaders it leads to two inputs instead of one.
 	Status : DONE
 
-[0.8]	BUG : On a Hardware plateform not compliant with required OpenGL Extensions, the program using the library will crash
-	Status : TODO
+[0.8]	BUG : On a Hardware plateform not compliant with required OpenGL Extensions, the program using the library will crash.
+	Status : DONE
 
 [0.8]	Test the PBOs
 	Status : TODO
@@ -82,6 +82,12 @@ Current Version : 0.6
 	Status : TODO
 
 [0.8]	Tool to monitor performances.
+	Status : TODO
+
+[0.8]   Augment the path of files for keyword INCLUDE in Loader.
+	Status : TODO
+
+[0.8]	Cleaning filenames in the messages.
 	Status : TODO
 
 [0.8]	Check errors on the webpage.

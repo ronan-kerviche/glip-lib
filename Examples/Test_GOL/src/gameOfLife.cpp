@@ -12,7 +12,7 @@
 			HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 
 			// Create the pipeline :
-				#define __LOAD_FROM_FILE__
+				//#define __LOAD_FROM_FILE__
 				#ifndef __LOAD_FROM_FILE__
 					ShaderSource src("./Filters/game.glsl");
 

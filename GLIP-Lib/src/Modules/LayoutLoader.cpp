@@ -23,6 +23,7 @@
 
 	// Includes :
 	#include <sstream>
+	#include <algorithm>
 	#include "Exception.hpp"
 	#include "LayoutLoader.hpp"
 	#include "devDebugTools.hpp"
@@ -509,7 +510,10 @@
 				LoaderKeyword key = getKeyword(type);
 
 				if(key!=FILTER_INSTANCE && key!=PIPELINE_INSTANCE)
-					throw Exception("LayoutLoader::buildPipeline - Error while using type " + type + " in a pipeline description", __FILE__, __LINE__);
+					throw Exception("LayoutLoader::buildPipeline - Error while using type " + type + " in a pipeline description.", __FILE__, __LINE__);
+
+				if(std::find(nameList.begin(), nameList.end(), name)!=nameList.end())
+					throw Exception("LayoutLoader::buildPipeline - An instance already use the name " + name, __FILE__, __LINE__);
 
 				commandList.push_back(key);
 				nameList.push_back(name);
@@ -670,7 +674,7 @@
 						std::cout << "Including file : " << arg[0] << std::endl;
 					#endif
 
-					// Creqte new loader :
+					// Create new loader :
 					LayoutLoader l;
 					l.updateEntriesLists(arg[0], true);
 

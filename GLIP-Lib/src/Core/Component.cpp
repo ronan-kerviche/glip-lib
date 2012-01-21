@@ -133,6 +133,17 @@
 	}
 
 	/**
+	\fn bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
+	\brief Check if an input port exists, knowing its name
+	\param name The name of the input port.
+	\return True if an input port named correctly exists, False otherwise.
+	**/
+	bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
+	{
+		return doesInstanceExistByName(name, inputPortDescription);
+	}
+
+	/**
 	\fn int __ReadOnly_ComponentLayout::getNumOutputPort(void) const
 	\brief Get the number of output ports.
 	\return Number of output ports.
@@ -185,6 +196,17 @@
 		}
 	}
 
+	/**
+	\fn bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
+	\brief Check if an input port exists, knowing its name
+	\param name The name of the input port.
+	\return True if an input port named correctly exists, False otherwise.
+	**/
+	bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
+	{
+		return doesInstanceExistByName(name, outputPortDescription);
+	}
+
 // ComponentLayout
 	/**
 	\fn ComponentLayout::ComponentLayout(const std::string& type)
@@ -224,9 +246,14 @@
 	**/
 	int ComponentLayout::addInputPort(const std::string& name)
 	{
-		int id = inputPortDescription.size();
-		inputPortDescription.push_back(ObjectName(name, id));
-		return id;
+		if(doesInputPortExist(name))
+			throw Exception("ComponentLayout::addInputPort - Input port " + name + " already exists.", __FILE__, __LINE__);
+		else
+		{
+			int id = inputPortDescription.size();
+			inputPortDescription.push_back(ObjectName(name, id));
+			return id;
+		}
 	}
 
 	/**
@@ -249,9 +276,14 @@
 	**/
 	int ComponentLayout::addOutputPort(const std::string& name)
 	{
-		int id = outputPortDescription.size();
-		outputPortDescription.push_back(ObjectName(name, id));
-		return id;
+		if(doesOutputPortExist(name))
+			throw Exception("ComponentLayout::addOutputPort - Output port " + name + " already exists.", __FILE__, __LINE__);
+		else
+		{
+			int id = outputPortDescription.size();
+			outputPortDescription.push_back(ObjectName(name, id));
+			return id;
+		}
 	}
 
 // Component :

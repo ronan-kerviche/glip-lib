@@ -201,9 +201,27 @@
 
 			try
 			{
-				std::cout << "Rendering..." << std::endl;
-				(*pipeline) << (*text) << Pipeline::Process;
-				std::cout << "...end rendering" << std::endl;
+				#define __BENCH_MARK__
+				#ifdef __BENCH_MARK__
+					pipeline->enablePerfsMonitoring();
+					float tmp = 0.0;
+
+					std::cout << "Rendering..." << std::endl;
+
+					for(int i = 0; i<100; i++)
+					{
+						(*pipeline) << (*text) << Pipeline::Process;
+						tmp += pipeline->getTotalTiming();
+					}
+					std::cout << "...end rendering" << std::endl;
+					sleep(1);
+
+					std::cout << "Time : " << tmp/100.0f << "ms " << std::endl;
+				#else
+					std::cout << "Rendering..." << std::endl;
+					(*pipeline) << (*text) << Pipeline::Process;
+					std::cout << "...end rendering" << std::endl;
+				#endif
 			}
 			catch(std::exception& e)
 			{

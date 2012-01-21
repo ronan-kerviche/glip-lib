@@ -36,7 +36,10 @@ using namespace Glip;
 	**/
 	ObjectName::ObjectName(const std::string& nm, const std::string& tp)
 	 : portID(NO_PORT), name(nm), type(tp)
-	{ }
+	{
+		checkName();
+		checkType();
+	}
 
 	/**
 	\fn ObjectName::ObjectName(const std::string& name, int port)
@@ -46,7 +49,9 @@ using namespace Glip;
 	**/
 	ObjectName::ObjectName(const std::string& name, int port)
 	 : portID(port), name(name), type("")
-	{ }
+	{
+		checkName();
+	}
 
 	/**
 	\fn ObjectName::ObjectName(const ObjectName& c)
@@ -63,7 +68,8 @@ using namespace Glip;
 	**/
 	void ObjectName::checkName(void)
 	{
-		#define EXCEPTION(s) throw Exception("ObjectName - Name " + name + " contains illegal symbol : " + s, __FILE__, __LINE__);
+		std::cout << "Checking name : \"" << name << '\"' << std::endl;
+		#define EXCEPTION(s) throw Exception("ObjectName - Name \"" + name + "\" contains illegal symbol : " + s, __FILE__, __LINE__);
 		if( name.find(SEPARATOR)!=std::string::npos )
 			EXCEPTION(SEPARATOR)
 		if( name.find(BEGIN_TYPE)!=std::string::npos )
@@ -82,10 +88,6 @@ using namespace Glip;
 			EXCEPTION("<newline>")
 		if( name.find(';')!=std::string::npos )
 			EXCEPTION(";")
-		if( name.find('(')!=std::string::npos )
-			EXCEPTION("(")
-		if( name.find(')')!=std::string::npos )
-			EXCEPTION(")")
 		if( name.find('*')!=std::string::npos )
 			EXCEPTION("*")
 		if( name.find('?')!=std::string::npos )
@@ -107,6 +109,7 @@ using namespace Glip;
 	**/
 	void ObjectName::checkType(void)
 	{
+		std::cout << "Checking type : \"" << name << '\"' << std::endl;
 		#define EXCEPTION(s) throw Exception("ObjectName - Type " + type + " contains illegal symbol : " + s, __FILE__, __LINE__);
 		if( type.find(SEPARATOR)!=std::string::npos )
 			EXCEPTION(SEPARATOR)
@@ -126,10 +129,6 @@ using namespace Glip;
 			EXCEPTION("<newline>")
 		if( name.find(';')!=std::string::npos )
 			EXCEPTION(";")
-		if( name.find('(')!=std::string::npos )
-			EXCEPTION("(")
-		if( name.find(')')!=std::string::npos )
-			EXCEPTION(")")
 		if( name.find('*')!=std::string::npos )
 			EXCEPTION("*")
 		if( name.find('?')!=std::string::npos )
@@ -153,6 +152,7 @@ using namespace Glip;
 	void ObjectName::setName(const std::string& s)
 	{
 		name = s;
+		checkName();
 	}
 
 	/**
@@ -247,6 +247,29 @@ using namespace Glip;
 
 // Tools
 	/**
+	\fn bool Glip::CorePipeline::doesElementExistByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj)
+	\brief Get the Index of an object return by a selection function.
+	\param str The name of the object.
+	\param ln The number of selected items.
+	\param f The selection function.
+	\param obj The object handling the data.
+	\return The index of the desired object or raise an exception if any errors occur.
+	**/
+	bool Glip::CorePipeline::doesElementExistByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj)
+	{
+		if(ln==0)
+			return false;
+
+		for(int i=0; i<ln; i++)
+		{
+			if(f(i, obj).getName()==str)
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
 	\fn int Glip::CorePipeline::getIndexByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj)
 	\brief Get the Index of an object return by a selection function.
 	\param str The name of the object.
@@ -263,7 +286,7 @@ using namespace Glip;
 		for(int i=0; i<ln; i++)
 		{
 			if(f(i, obj).getName()==str)
-			return i;
+				return i;
 		}
 
 		throw Exception("getIndexByNameFct (Vector) - No Object named : " + str, __FILE__, __LINE__);

@@ -39,6 +39,7 @@
 		}
 
 		pipeline = new Pipeline(*model, "instHistogramPipeline");
+		std::cout << "Name of the pipeline : " << pipeline->getNameExtended() << std::endl;
 		delete model;
 
 		// Set variables :
@@ -125,9 +126,27 @@
 
 				try
 				{
-					std::cout << "Rendering..." << std::endl;
-					(*pipeline) << (*text) << Pipeline::Process;
-					std::cout << "...end rendering" << std::endl;
+					#ifdef __BURN_TEST__
+						pipeline->enablePerfsMonitoring();
+						float tmp = 0.0;
+
+						std::cout << "Rendering..." << std::endl;
+
+						for(int i = 0; i<100; i++)
+						{
+							(*pipeline) << (*text) << Pipeline::Process;
+							tmp += pipeline->getTotalTiming();
+						}
+						std::cout << "...end rendering" << std::endl;
+
+						std::cout << "Time : " << tmp/100.0f << "ms " << std::endl;
+					#else
+						pipeline->enablePerfsMonitoring();
+						std::cout << "Rendering..." << std::endl;
+						(*pipeline) << (*text) << Pipeline::Process;
+						std::cout << "...end rendering" << std::endl;
+						std::cout << "Time : " << pipeline->getTotalTiming() << "ms " << std::endl;
+					#endif
 				}
 				catch(std::exception& e)
 				{

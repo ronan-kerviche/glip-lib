@@ -7,6 +7,7 @@ int main(int argc, char** argv)
 	try
 	{
 		HistogramApplication app(argc, argv);
+		std::cout << "-- Start --" << std::endl;
 		return app.exec();
 	}
 	catch(std::exception& e)

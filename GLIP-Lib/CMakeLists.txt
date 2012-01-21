@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 2.6)
 project(GLIP)
 
 set(CMAKE_BUILD_TYPE Release)
+
 # To track the compilation process
 #set(CMAKE_VERBOSE_MAKEFILE on )
 

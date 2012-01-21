@@ -36,8 +36,8 @@
         #define SEPARATOR    "::\0"
         #define BEGIN_TYPE   '<'
         #define END_TYPE     '>'
-        #define BEGIN_PORT   '|'
-        #define END_PORT     '|'
+        #define BEGIN_PORT   '['
+        #define END_PORT     ']'
 
 	namespace Glip
 	{
@@ -85,6 +85,52 @@
 			};
 
 			// Tools
+			/**
+			\fn template<typename T> bool doesInstanceExistByName(const std::string& str, const std::vector<T>& lst)
+			\brief Check if the object corresponding to a name really exists.
+			\param str The name of the object.
+			\param lst The object list, containing references to objects.
+			\return True if an object correctly named is found in the list, False otherwise.
+			**/
+			template<typename T>
+			bool doesInstanceExistByName(const std::string& str, const std::vector<T>& lst)
+			{
+				if(lst.empty())
+					return false;
+
+				for(typename std::vector<T>::const_iterator it=lst.begin(); it!=lst.end(); it++)
+					if((*it).getName()==str)
+						return true;
+
+				return false;
+			}
+
+			/**
+			\fn template<typename T> bool doesInstanceExistByPtr(const std::string& str, const std::vector<T*>& lst)
+			\brief Get the object corresponding to a name.
+			\param str The name of the object.
+			\param lst The object list, containing pointers to objects.
+			\return True if an object correctly named is found in the list, False otherwise.
+			**/
+			template<typename T>
+			bool doesInstanceExistByPtr(const std::string& str, const std::vector<T*>& lst)
+			{
+				if(lst.empty())
+					return false;
+
+				std::cout << "TESTING : " << str << std::endl;
+				for(typename std::vector<T*>::const_iterator it=lst.begin(); it!=lst.end(); it++)
+				{
+					std::cout << "    VS : " << (*it)->getName() << std::endl;
+					if((*it)->getName()==str)
+						return true;
+				}
+
+				return false;
+			}
+
+			bool doesElementExistByNameFct(const std::string& str, const int ln, ObjectName& (*f)(int, const void*), const void* obj);
+
 			/**
 			\fn template<typename T> T& getInstanceByName(const std::string& str, const std::vector<T>& lst)
 			\brief Get the object corresponding to a name.

@@ -197,6 +197,17 @@
 	}
 
 	/**
+	\fn bool __ReadOnly_PipelineLayout::doesElementExist(const std::string& name) const
+	\brief Check if an element exists knowing its name.
+	\param name The name of the element.
+	\return True if such an element exists, False otherwise.
+	**/
+	bool __ReadOnly_PipelineLayout::doesElementExist(const std::string& name) const
+	{
+		return doesElementExistByNameFct(name, elementsLayout.size(), __ReadOnly_PipelineLayout::componentName, reinterpret_cast<const void*>(this));
+	}
+
+	/**
 	\fn ComponentKind __ReadOnly_PipelineLayout::getElementKind(int i) const
 	\brief Get the kind of an element.
 	\param i The ID of the element.
@@ -512,8 +523,12 @@
 	**/
 	int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
 	{
+		if(doesElementExist(name))
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists.", __FILE__, __LINE__);
+
 		__ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
 		tmp->setName(name);
+		std::cout << "Test : <" << tmp->getName() << '>' << std::endl;
 		elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
 		elementsKind.push_back(FILTER);
 		elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
@@ -529,6 +544,9 @@
 	**/
 	int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
 	{
+		if(doesElementExist(name))
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists.", __FILE__, __LINE__);
+
 		__ReadOnly_PipelineLayout* tmp = new __ReadOnly_PipelineLayout(pipelineLayout);
 		tmp->setName(name);
 		elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
@@ -703,7 +721,7 @@
 	\param name Name of the pipeline.
 	**/
 	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
-	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false)
 	{
 		cleanInput();
 		outputBuffer.assign(getNumOutputPort(), 0);
@@ -1252,6 +1270,9 @@
 	**/
 	void Pipeline::process(void)
 	{
+		clock_t 	timing,
+				totalTiming = clock();
+
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Processing : " << getNameExtended() << std::endl;
 		#endif
@@ -1259,30 +1280,56 @@
 		for(int i = 0; i<actionFilter.size(); i++)
 		{
 			int action = actionFilter[i];
+
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "    applying filter : " << filters[action]->getNameExtended() << "..." << std::endl;
 			#endif
+
 			// Apply filter *filter[actionFilter]
 			Filter* f = filters[action];
 			for(int j=0; j<f->getNumInputPort(); j++)
 			{
 				int bufferID 	= (*listOfArgBuffers[action])[j];
 				int portID 	= (*listOfArgBuffersOutput[action])[j];
+
 				#ifdef __DEVELOPMENT_VERBOSE__
 					std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;
 				#endif
+
 				if(bufferID==THIS_PIPELINE)
 					f->setInputForNextRendering(j, input[portID]);
 				else
 					f->setInputForNextRendering(j, (*buffers[bufferID])[portID]);
 			}
+
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "        Processing..." << std::endl;
 			#endif
+
+			if(perfsMonitoring)
+			{
+				timing = clock();
+				glFlush();
+			}
+
 			f->process(*buffers[action]);
+
+			if(perfsMonitoring)
+			{
+				glFlush();
+				timing = clock() - timing;
+				perfs[action] = static_cast<float>(timing)/static_cast<float>(CLOCKS_PER_SEC)*1000.0f;
+			}
+
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "        Done." << std::endl;
 			#endif
+		}
+
+		if(perfsMonitoring)
+		{
+			totalTiming = clock() - totalTiming;
+			totalPerf   = static_cast<float>(totalTiming)/static_cast<float>(CLOCKS_PER_SEC)*1000.0f;
 		}
 	}
 
@@ -1360,46 +1407,111 @@
 	\param name The path.
 	\return A reference to the corresponding filter instance or raise an exception if any errors occur.
 	**/
-	Filter& Pipeline::operator[](const std::string& name)
+	int Pipeline::getFilterID(const std::string& path)
 	{
 		try
 		{
 			__ReadOnly_PipelineLayout* p = this;
-			// Parse the identification name and return a filter if so
-			std::vector<std::string> tree = ObjectName::parse(name);
-			//std::cout << tree[0] << std::endl;
-			//std::cout << tree[1] << std::endl;
+
+			// Parse the identification path and return a filter if so
+			std::vector<std::string> tree = ObjectName::parse(path);
+
 			std::string filter = tree.back();
 			tree.pop_back();
 
 			for(std::vector<std::string>::iterator it=tree.begin(); it!=tree.end(); it++)
 			{
-				//std::cout << "->" << *it << std::endl;
 				__ReadOnly_PipelineLayout& tmp = p->pipelineLayout(*it);
-				//std::cout << "Test name : " << tmp.getName() << std::endl;
 				p = &tmp;
 			}
 
-			//std::cout << "Filter : " << filter << std::endl;
-			//std::cout << "Num elem : " << p->getNumElements() << std::endl;
 			int id = p->getElementIndex(filter);
-			//std::cout << "ID1 " << id << std::endl;
-			//std::cout << "INDEX : " << p->getElementID(id) << std::endl;
 
 			if(p->getElementKind(id)!=FILTER)
-				throw Exception("Pipeline::operator[] - The element " + name + " isn't a filter", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator[] - The element " + path + " isn't a filter", __FILE__, __LINE__);
 
 			if(p->getElementID(id)==ELEMENT_NOT_ASSOCIATED)
-				throw Exception("Pipeline::operator[] - The element " + name + " exists but wasn't associated (internal error)", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator[] - The element " + path + " exists but wasn't associated (internal error)", __FILE__, __LINE__);
 
-			//std::cout << "Test : " << std::endl;
-			//std::cout << "NameTest : " << filters[p->getElementID(id)].getNameExtended() << std::endl;
-
-			return *filters[p->getElementID(id)];
+			return p->getElementID(id);
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::operator[] - Error while processing request on " + name, __FILE__, __LINE__);
+			Exception m("Pipeline::getFilterID - Error while processing request on " + path, __FILE__, __LINE__);
 			throw m+e;
 		}
+	}
+
+	/**
+	\fn Filter& Pipeline::operator[](const std::string& name)
+	\brief Access to the filter described by the path.
+	\param name The path.
+	\return A reference to the corresponding filter instance or raise an exception if any errors occur.
+	**/
+	Filter& Pipeline::operator[](const std::string& path)
+	{
+		try
+		{
+			return *filters[getFilterID(path)];
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Pipeline::operator[] - Error while processing request on " + path, __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
+
+	/**
+	\fn void Pipeline::enablePerfsMonitoring(void)
+	\brief Enable performances monitoring.
+	**/
+	void Pipeline::enablePerfsMonitoring(void)
+	{
+		if(!perfsMonitoring)
+		{
+			perfsMonitoring = true;
+			perfs.assign(filters.size(),0.0f);
+			totalPerf = 0.0f;
+		}
+	}
+
+	/**
+	\fn void Pipeline::disablePerfsMonitoring(void)
+	\brief Disable performances monitoring.
+	**/
+	void Pipeline::disablePerfsMonitoring(void)
+	{
+		if(perfsMonitoring)
+		{
+			perfsMonitoring = false;
+			perfs.clear();
+			totalPerf = 0.0;
+		}
+	}
+
+	/**
+	\fn float Pipeline::getTiming(const std::string& path)
+	\brief Get last result of performance monitoring IF it is still enabled.
+	\param path The path to the filter.
+	\return Time in milliseconds needed to apply the filter (not counting bonding operation).
+	**/
+	float Pipeline::getTiming(const std::string& path)
+	{
+		if(perfsMonitoring)
+			return perfs[getFilterID(path)];
+		else
+			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn float Pipeline::getTotalTiming(void)
+	\brief Get total time ellapsed for last run.
+	\return Time in milliseconds needed to apply the whole pipeline (counting everything and flushing after each filter).
+	**/
+	float Pipeline::getTotalTiming(void)
+	{
+		if(perfsMonitoring)
+			return totalPerf;
+		else
+			throw Exception("Pipeline::getTotalTiming - Monitoring is disabled.", __FILE__, __LINE__);
 	}

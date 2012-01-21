@@ -64,14 +64,16 @@
 
 					void checkInputPort(int i) const;
 					void checkOutputPort(int i) const;
-					int                getNumInputPort(void) const;
-					const std::string& getInputPortName(int i) const;
-					std::string        getInputPortNameExtended(int i) const;
-					int                getInputPortID(const std::string& name) const;
-					int                getNumOutputPort(void) const;
-					const std::string& getOutputPortName(int i) const;
-					std::string        getOutputPortNameExtended(int i) const;
-					int                getOutputPortID(const std::string& name) const;
+					int                	getNumInputPort(void) const;
+					const std::string& 	getInputPortName(int i) const;
+					std::string        	getInputPortNameExtended(int i) const;
+					int                	getInputPortID(const std::string& name) const;
+					bool			doesInputPortExist(const std::string& name) const;
+					int                	getNumOutputPort(void) const;
+					const std::string& 	getOutputPortName(int i) const;
+					std::string        	getOutputPortNameExtended(int i) const;
+					int                	getOutputPortID(const std::string& name) const;
+					bool 			doesOutputPortExist(const std::string& name) const;
 			};
 
 			/**
