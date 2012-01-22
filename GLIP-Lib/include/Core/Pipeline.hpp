@@ -202,6 +202,7 @@
 					Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
+					int 		getNumActions(void);
 					int 		getSize(void);
 					Pipeline& 	operator<<(HdlTexture&);
 					Pipeline& 	operator<<(ActionType);
@@ -212,6 +213,7 @@
 					void 		enablePerfsMonitoring(void);
 					void 		disablePerfsMonitoring(void);
 					float		getTiming(const std::string& path);
+					float 		getTiming(int action, std::string& filterName);
 					float 		getTotalTiming(void);
 			};
 		}

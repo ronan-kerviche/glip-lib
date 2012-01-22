@@ -217,6 +217,12 @@
 					sleep(1);
 
 					std::cout << "Time : " << tmp/100.0f << "ms " << std::endl;
+					for(int i=0; i<pipeline->getNumActions(); i++)
+					{
+						std::string name;
+						float t = pipeline->getTiming(i, name);
+						std::cout << "    Filter " << name << " \t : " << t << "ms" << std::endl;
+					}
 				#else
 					std::cout << "Rendering..." << std::endl;
 					(*pipeline) << (*text) << Pipeline::Process;

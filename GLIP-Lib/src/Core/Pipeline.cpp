@@ -1250,6 +1250,16 @@
 	}
 
 	/**
+	\fn int Pipeline::getNumActions(void)
+	\brief Get the number of filters in processing.
+	\return Number of filters in processing.
+	**/
+	int Pipeline::getNumActions(void)
+	{
+		return actionFilter.size();
+	}
+
+	/**
 	\fn int Pipeline::getSize(void)
 	\brief Get the size in bytes of the elements on the GPU for this pipeline.
 	\return Size in bytes.
@@ -1502,6 +1512,29 @@
 		else
 			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__);
 	}
+
+	/**
+	\fn float Pipeline::getTiming(int action, std::string& filterName)
+	\brief Get last result of performance monitoring IF it is still enabled.
+	\param path The path to the filter.
+	\return Time in milliseconds needed to apply the filter (not counting bonding operation).
+	**/
+	float Pipeline::getTiming(int action, std::string& filterName)
+	{
+		if(perfsMonitoring)
+		{
+			if(action<0 || action>=actionFilter.size())
+				throw Exception("Pipeline::getTiming - Action index is outside of range.", __FILE__, __LINE__);
+			else
+			{
+				filterName = filters[actionFilter[action]]->getNameExtended();
+				return perfs[action];
+			}
+		}
+		else
+			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__);
+	}
+
 
 	/**
 	\fn float Pipeline::getTotalTiming(void)

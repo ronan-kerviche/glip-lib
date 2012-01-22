@@ -78,17 +78,14 @@ Current Version : 0.6
 [0.8]	Test the PBOs
 	Status : TODO
 
-[0.8]	Multi-sampling and GL_TEXTURE_2D_MULTISAMPLE for the images.
-	Status : TODO
-
 [0.8]	Tool to monitor performances.
 	Status : TODO
 
 [0.8]   Augment the path of files for keyword INCLUDE in Loader.
-	Status : TODO
+	Status : DONE
 
 [0.8]	Cleaning filenames in the messages.
-	Status : TODO
+	Status : DONE
 
 [0.8]	Check errors on the webpage.
 	Status : DONE

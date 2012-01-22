@@ -39,6 +39,8 @@
 
 		if(filename!="")
 		{
+			size_t p = filename.rfind('/');
+			filename = filename.substr(p+1);
 			completeMsg += filename;
 			completeMsg += ", ";
 		}
@@ -49,7 +51,7 @@
 			completeMsg += to_string(line);
 		}
 
-		completeMsg += "]\t";
+		completeMsg += "] ";
 		completeMsg += msg;
 	}
 
@@ -123,10 +125,10 @@
 			str.insert(beg, 1, '\t'); // insert one TAB after the END-OF-LINE
 		}
 
-		msg += "\n\t";
+		msg += "\n";
 		msg += str;
 
-		completeMsg += "\n\t";
+		completeMsg += "\n";
 		completeMsg += str;
 
 		return *this;

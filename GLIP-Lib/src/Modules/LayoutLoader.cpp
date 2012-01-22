@@ -128,8 +128,9 @@
 		}
 	}
 
-	std::string LayoutLoader::getSource(const std::string& sourceName)
+	std::string LayoutLoader::getSource(const std::string& sourceName, std::string& path)
 	{
+		path = "";
 		std::string source;
 
 		// Find newline :
@@ -137,6 +138,12 @@
 
 		if(newline==std::string::npos)
 		{
+			// Find last '/' ot extract the path
+			size_t lastSlash = sourceName.rfind('/');
+
+			if(lastSlash!=std::string::npos)
+				path = sourceName.substr(0,lastSlash+1);
+
 			// Open File
 			std::fstream file;
 			file.open(sourceName.c_str());
@@ -200,7 +207,8 @@
 
 	void LayoutLoader::updateEntriesLists(const std::string& sourceName, bool slave)
 	{
-		std::string source = getSource(sourceName);
+		std::string path;
+		std::string source = getSource(sourceName, path);
 		std::string line;
 		size_t 	current_pos = 0,
 			pos_sc = 0,
@@ -208,6 +216,7 @@
 
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Source : " << source << std::endl;
+			std::cout << "Path   : " << path << std::endl;
 		#endif
 
 		pos_sc = source.find(';', current_pos);
@@ -292,20 +301,31 @@
 			{
 				std::string type = line.substr(0,argDelim);
 				std::string code = line.substr(argDelim);
+				LoaderKeyword key = getKeyword(type);
 
 				#ifdef __DEVELOPMENT_VERBOSE__
 					std::cout << "Type : " << type << std::endl;
 					std::cout << "NO Name"<< std::endl;
 					std::cout << "Code : " << code << std::endl;
-					std::cout << "Key  : " << getKeyword(type) << std::endl;
+					std::cout << "Key  : " << key << std::endl;
 				#endif
 
-				if(getKeyword(type)!=INCLUDE_FILE)
+				if(key!=INCLUDE_FILE)
 					throw Exception("LayoutLoader::updateEntriesLists - Missing name for element of type " + type, __FILE__, __LINE__);
 
 				entryType.push_back(getKeyword(type));
 				entryName.push_back("NONAME");
-				entryCode.push_back(code);
+
+				if(key==INCLUDE_FILE) // Change the include file
+				{
+					std::vector<std::string> arg = getArguments(code);
+					#ifdef __VERBOSE__
+						std::cout << "Changing filepath to : " << path << arg[0] << std::endl;
+					#endif
+					entryCode.push_back("("+path+arg[0]+")");
+				}
+				else
+					entryCode.push_back(code);
 			}
 
 			// Find the next line :
