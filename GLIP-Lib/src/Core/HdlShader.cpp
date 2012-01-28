@@ -45,6 +45,20 @@ using namespace Glip::CoreGL;
 		NEED_EXTENSION(GLEW_ARB_fragment_shader)
 		NEED_EXTENSION(GLEW_ARB_shader_objects)
 		NEED_EXTENSION(GLEW_ARB_shading_language_100)
+		NEED_EXTENSION(GLEW_ARB_vertex_program)
+		NEED_EXTENSION(GLEW_ARB_fragment_program)
+		FIX_MISSING_GLEW_CALL(glBindFragDataLocation, glBindFragDataLocationEXT)
+		FIX_MISSING_GLEW_CALL(glCompileShader, glCompileShaderARB)
+		FIX_MISSING_GLEW_CALL(glLinkProgram, glLinkProgramARB)
+		FIX_MISSING_GLEW_CALL(glGetUniformLocation, glGetUniformLocationARB)
+		FIX_MISSING_GLEW_CALL(glUniform1i, glUniform1iARB)
+		FIX_MISSING_GLEW_CALL(glUniform2i, glUniform2iARB)
+		FIX_MISSING_GLEW_CALL(glUniform3i, glUniform3iARB)
+		FIX_MISSING_GLEW_CALL(glUniform4i, glUniform4iARB)
+		FIX_MISSING_GLEW_CALL(glUniform1f, glUniform1fARB)
+		FIX_MISSING_GLEW_CALL(glUniform2f, glUniform2fARB)
+		FIX_MISSING_GLEW_CALL(glUniform3f, glUniform3fARB)
+		FIX_MISSING_GLEW_CALL(glUniform4f, glUniform4fARB)
 
 		type = _type; //either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
 
@@ -136,9 +150,6 @@ using namespace Glip::CoreGL;
 	HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)
 	 : valid(false)
 	{
-		NEED_EXTENSION(GLEW_ARB_vertex_program)
-		NEED_EXTENSION(GLEW_ARB_fragment_program)
-
 		// create the program
 		program = glCreateProgram();
 
@@ -284,7 +295,7 @@ using namespace Glip::CoreGL;
 	bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, int val1, int val2, int val3, int val4)
 	{
 		use();
-		GLint loc = glGetUniformLocationARB(program, varName.c_str());
+		GLint loc = glGetUniformLocation(program, varName.c_str());
 		if (loc==-1)
 		{
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
@@ -293,10 +304,10 @@ using namespace Glip::CoreGL;
 
 		switch(type)
 		{
-			case SHADER_VAR  : 	glUniform1iARB(loc, val1);                   break;
-			case SHADER_VEC2 : 	glUniform2iARB(loc, val1, val2);             break;
-			case SHADER_VEC3 : 	glUniform3iARB(loc, val1, val2, val3);       break;
-			case SHADER_VEC4 : 	glUniform4iARB(loc, val1, val2, val3, val4); break;
+			case SHADER_VAR  : 	glUniform1i(loc, val1);                   break;
+			case SHADER_VEC2 : 	glUniform2i(loc, val1, val2);             break;
+			case SHADER_VEC3 : 	glUniform3i(loc, val1, val2, val3);       break;
+			case SHADER_VEC4 : 	glUniform4i(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
 
@@ -319,7 +330,7 @@ using namespace Glip::CoreGL;
 	bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, float val1, float val2, float val3, float val4)
 	{
 		use();
-		GLint loc = glGetUniformLocationARB(program, varName.c_str());
+		GLint loc = glGetUniformLocation(program, varName.c_str());
 		if (loc==-1)
 		{
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
@@ -328,10 +339,10 @@ using namespace Glip::CoreGL;
 
 		switch(type)
 		{
-			case SHADER_VAR  : 	glUniform1fARB(loc, val1);                   break;
-			case SHADER_VEC2 : 	glUniform2fARB(loc, val1, val2);             break;
-			case SHADER_VEC3 : 	glUniform3fARB(loc, val1, val2, val3);       break;
-			case SHADER_VEC4 : 	glUniform4fARB(loc, val1, val2, val3, val4); break;
+			case SHADER_VAR  : 	glUniform1f(loc, val1);                   break;
+			case SHADER_VEC2 : 	glUniform2f(loc, val1, val2);             break;
+			case SHADER_VEC3 : 	glUniform3f(loc, val1, val2, val3);       break;
+			case SHADER_VEC4 : 	glUniform4f(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
 

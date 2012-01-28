@@ -45,6 +45,13 @@ using namespace Glip::CoreGL;
 		NEED_EXTENSION(GLEW_ARB_pixel_buffer_object)
 		NEED_EXTENSION(GLEW_ARB_vertex_buffer_object)
 		NEED_EXTENSION(GLEW_VERSION_1_5)
+		FIX_MISSING_GLEW_CALL(glGenBuffers, glGenBuffersARB)
+		FIX_MISSING_GLEW_CALL(glBindBuffer, glBindBufferARB)
+		FIX_MISSING_GLEW_CALL(glBufferData, glBufferDataARB)
+		FIX_MISSING_GLEW_CALL(glBufferSubData, glBufferSubDataARB)
+		FIX_MISSING_GLEW_CALL(glDeleteBuffers, glDeleteBuffersARB)
+		FIX_MISSING_GLEW_CALL(glMapBuffer, glMapBufferARB)
+		FIX_MISSING_GLEW_CALL(glUnmapBuffer, glUnmapBufferARB)
 
 		// Generate the buffer
 		glGenBuffers(1, &bufferId);
@@ -173,7 +180,7 @@ using namespace Glip::CoreGL;
 			std::cout << "Bind : "; glErrors(true, false);
 		#endif
 		mapping[getIDTarget(target)] = true;
-		return glMapBufferARB(target, access);
+		return glMapBuffer(target, access);
 	}
 
 	/**
@@ -239,7 +246,7 @@ using namespace Glip::CoreGL;
 	{
 		if(isMapped(target))
 		{
-			glUnmapBufferARB(target);
+			glUnmapBuffer(target);
 			mapping[getIDTarget(target)] = false;
 		}
 	}

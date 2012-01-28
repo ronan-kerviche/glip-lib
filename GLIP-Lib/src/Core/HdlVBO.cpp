@@ -46,6 +46,10 @@ using namespace Glip::CoreGL;
 	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
 	 : nVert(_nVert), dim(_dim), nElements(_nElements), type(_type), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL)
 	{
+		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glVertexPointer, glVertexPointerEXT)
+		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glTexCoordPointer, glTexCoordPointerEXT)
+		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glDrawArrays, glDrawArraysEXT)
+
 		void* ptr = NULL;
 
 		if(dimTexCoords!=0 && _texcoords==NULL)

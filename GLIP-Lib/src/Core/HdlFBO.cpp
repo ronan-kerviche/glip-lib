@@ -38,14 +38,20 @@ using namespace Glip::CoreGL;
 	 : __ReadOnly_HdlTextureFormat(f)
 	{
 		NEED_EXTENSION(GL_ARB_framebuffer_object)
+		FIX_MISSING_GLEW_CALL(glGenFramebuffers, glGenFramebuffersEXT)
+		FIX_MISSING_GLEW_CALL(glBindFramebuffer, glBindFramebufferEXT)
+		FIX_MISSING_GLEW_CALL(glDeleteFramebuffers, glDeleteFramebuffersEXT)
+		FIX_MISSING_GLEW_CALL(glFramebufferTexture2D, glFramebufferTexture2DEXT)
+		FIX_MISSING_GLEW_CALL(glDrawBuffers, glDrawBuffersARB)
+		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
 
-		glGenFramebuffersEXT(1, &fboID);
+		glGenFramebuffers(1, &fboID);
 
 		for(int i=0; i<numTarget; i++) // At least one!
 			addTarget();
 
 		// check FBO status
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); //unbind
 	}
 
 	HdlFBO::~HdlFBO(void)
@@ -55,7 +61,7 @@ using namespace Glip::CoreGL;
 			unbindTextureFromFBO(i);
 
 		glFlush();
-		glDeleteFramebuffersEXT( 1, &fboID);
+		glDeleteFramebuffers( 1, &fboID);
 
 		// Delete all textures :
 		for(std::vector<HdlTexture*>::iterator it=targets.begin(); it!=targets.end(); it++)
@@ -64,16 +70,16 @@ using namespace Glip::CoreGL;
 
 	void HdlFBO::bindTextureToFBO(int i)
 	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
 	}
 
 	void HdlFBO::unbindTextureFromFBO(int i)
 	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, 0, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, 0, 0);
 	}
 
 	/**
@@ -113,7 +119,7 @@ using namespace Glip::CoreGL;
 	{
 		const GLenum attachmentsList[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT,
 						  GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT};
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
 		/*/ Set up color_tex and depth_rb for render-to-texture
 		Useless : glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, assTex.getID(), 0);
@@ -134,13 +140,13 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::endRendering(void)
 	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); // unbind
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); // unbind
 
 		// trigger mipmaps generation explicitly
 		for(std::vector<HdlTexture*>::iterator it=targets.begin(); it!=targets.end(); it++)
 		{
 			glBindTexture(GL_TEXTURE_2D, (*it)->getID());
-			glGenerateMipmapEXT(GL_TEXTURE_2D);
+			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -170,7 +176,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::bind(void)
 	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 	}
 
 	/**
@@ -225,6 +231,6 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::unbind(void)
 	{
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); //unbind
 	}
 
