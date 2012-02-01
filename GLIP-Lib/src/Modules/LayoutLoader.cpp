@@ -641,6 +641,9 @@
 					if(arg.size()!=4)
 						throw Exception("LayoutLoader::buildPipeline - Wrong number of arguments for a connection in " + name, __FILE__, __LINE__);
 
+					if(arg[0]==keywords[THIS] && arg[2]==keywords[THIS])
+						throw Exception("LayoutLoader::buildPipeline - Connection from input port to output port (without processing) is forbidden.", __FILE__, __LINE__);
+
 					if(arg[0]==keywords[THIS]) // connection to input
 					{
 						result->connectToInput(arg[1], arg[2], arg[3]);
@@ -650,7 +653,9 @@
 						result->connectToOutput(arg[0], arg[1], arg[3]);
 					}
 					else
+					{
 						result->connect(arg[0], arg[1], arg[2], arg[3]);
+					}
 				}
 			}
 		}

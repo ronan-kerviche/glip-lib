@@ -11,7 +11,7 @@
 
 // Src :
 	Interface::Interface(void)
-	 : text(NULL), pipeline(NULL)
+	 : text(NULL), pipeline(NULL), computingSuccess(false)
 	{
 		// Main interface :
 		window  = new WindowRenderer(this, 640, 480);
@@ -19,18 +19,23 @@
 		chImg	= new QPushButton("Load an Image", this);
 		chPpl	= new QPushButton("Load a Pipeline", this);
 		sav	= new QPushButton("Save result (RGB888)", this);
+		box	= new QComboBox(this);
 
 		layout->addWidget(chImg);
 		layout->addWidget(chPpl);
+		layout->addWidget(box);
 		layout->addWidget(window);
 		layout->addWidget(sav);
 		setGeometry(1000, 100, 800, 700);
 		show();
 
+		box->addItem("<Input Image>");
+
 		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
 		QObject::connect(chPpl,		SIGNAL(released(void)), this, SLOT(loadPipeline(void)));
 		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
-		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(requestUpdate(void)));
+		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(updateOutput(void)));
+		QObject::connect(box, 		SIGNAL(currentIndexChanged(int)),	this, SLOT(updateOutput(void)));
 	}
 
 	void Interface::loadImage(void)
@@ -81,7 +86,10 @@
 
 				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
 
-				requestUpdate();
+				if(pipeline==NULL)
+					updateOutput();
+				else
+					requestComputingUpdate();
 			}
 		}
 	}
@@ -115,6 +123,10 @@
 				{
 					delete pipeline;
 					pipeline = NULL;
+
+					// clean the box too...
+					while(box->count()>1)
+						box->removeItem(1);
 				}
 
 				try
@@ -136,7 +148,12 @@
 				{
 					//Test writing : loader.write(*pipeline, "./Filters/writingTest.ppl");
 					std::cout << "Pipeline size on the GPU : " << static_cast<int>(static_cast<float>(pipeline->getSize())/(1024.0*1024.0)) << " MB" << std::endl;
-					requestUpdate();
+
+					// Update the box :
+					for(int i=0; i<pipeline->getNumOutputPort(); i++)
+						box->addItem(pipeline->getOutputPortName(i).c_str());
+
+					requestComputingUpdate();
 				}
 
 				delete model;
@@ -193,15 +210,15 @@
 		}
 	}
 
-	void Interface::requestUpdate(void)
+	void Interface::requestComputingUpdate(void)
 	{
 		if(pipeline!=NULL && text!=NULL)
 		{
-			bool success = true;
+			computingSuccess = true;
 
 			try
 			{
-				#define __BENCH_MARK__
+				//#define __BENCH_MARK__
 				#ifdef __BENCH_MARK__
 					pipeline->enablePerfsMonitoring();
 					float tmp = 0.0;
@@ -231,16 +248,24 @@
 			}
 			catch(std::exception& e)
 			{
-				success = false;
+				computingSuccess = false;
 
 				QMessageBox::information(this, tr("Error while computing : "), e.what());
 				std::cout << "Error while computing : " << e.what() << std::endl;
 			}
+		}
+	}
 
-			if(success)
-			{
-				(*window) << pipeline->out(0);
-			}
+	void Interface::updateOutput(void)
+	{
+		int port = box->currentIndex();
+
+		if( (computingSuccess && pipeline!=NULL) || (port==0 && text!=NULL) )
+		{
+			if(port==0)
+				(*window) << (*text);
+			else
+				(*window) << pipeline->out(port-1);
 		}
 	}
 

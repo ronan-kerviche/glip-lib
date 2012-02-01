@@ -79,7 +79,7 @@ Current Version : 0.6
 	Status : TODO
 
 [0.8]	Tool to monitor performances.
-	Status : TODO
+	Status : DONE
 
 [0.8]   Augment the path of files for keyword INCLUDE in Loader.
 	Status : DONE
@@ -108,17 +108,20 @@ Current Version : 0.6
 [0.8]  	Item naming : pipelines, sockets, etc. for debugging.
 	Status : DONE
 
+[0.8]	Preparing Windows version for mingw
+	Status : TODO
+
 [0.8]  	Namespace addition.
 	Status : CANCELED
 
 [0.8]  	Rights and lock management for sockets.
 	Status : CANCELED
 
+[0.8]	An output port can be unused (BUG)
+	Status : TODO
+
 [0.9]  	Develop the same module for Windows (and OSX?).
 	Status : CANCELED
-
-[0.9]  	Branch for Windows tests.
-	Status : TODO
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.
 	Status : DONE

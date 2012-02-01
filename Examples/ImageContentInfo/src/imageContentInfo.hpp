@@ -9,6 +9,7 @@
 	#include <QVBoxLayout>
 	#include <QFileDialog>
 	#include <QMessageBox>
+	#include <QComboBox>
 
 	// Prototypes :
 		class WindowRenderer;
@@ -24,11 +25,13 @@
 			Q_OBJECT
 
 			private :
-				HdlTexture*	text;
-				QVBoxLayout* 	layout;
+				bool 		computingSuccess;
+				HdlTexture	*text;
+				QVBoxLayout	*layout;
 				QPushButton	*chImg, *chPpl, *sav;
 				WindowRenderer	*window;
 				Pipeline	*pipeline;
+				QComboBox	*box;
 
 			public :
 				Interface(void);
@@ -37,7 +40,8 @@
 				void loadImage(void);
 				void loadPipeline(void);
 				void save(void);
-				void requestUpdate(void);
+				void requestComputingUpdate(void);
+				void updateOutput(void);
 		};
 
 		class ImageContentInformation : public QApplication

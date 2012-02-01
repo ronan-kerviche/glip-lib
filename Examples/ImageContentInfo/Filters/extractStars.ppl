@@ -6,7 +6,7 @@ SHADER_SOURCE:threshold()
 
 	uniform sampler2D 	inText;
 	out     vec4 		outText;
-	const 	float		level = 0.5;
+	const 	float		level = 0.7;
 
 	void main()
 	{
@@ -27,8 +27,8 @@ SHADER_SOURCE:extract()
 
 	uniform sampler2D	inText;
 	out	vec4		outText;
-	const	int 		hwindow = 1;
-	const 	int 		level = 3;
+	const	int 		hwindow = 2;
+	//const 	int 		level = 3;
 
 	void main()
 	{
@@ -59,10 +59,8 @@ SHADER_SOURCE:extract()
 				}
 			}
 
-		if(count>0 && intensity>0.7)
-		{
+		if(count>0 && intensity>0.2)
 			outText = vec4(intensity,intensity,1.0,1.0);
-		}
 		else
 			outText = vec4(0.0,0.0,0.0,1.0);
 	}
