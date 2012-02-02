@@ -57,7 +57,7 @@ namespace Glip
 					CONNECTION,
 					INPUT_PORTS,
 					OUTPUT_PORTS,
-					THIS,
+					THIS_PIPELINE,
 					DEFAULT_VERTEX_SHADER,
 					CLEARING_ON,
 					CLEARING_OFF,

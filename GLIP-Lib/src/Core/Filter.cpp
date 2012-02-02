@@ -205,7 +205,7 @@
 	: __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
 	{
 		// Build arguments table :
-		arguments.assign(getNumInputPort(), NULL);
+		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));
 
 		try
 		{

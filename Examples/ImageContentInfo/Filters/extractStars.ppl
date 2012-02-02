@@ -72,7 +72,7 @@ FILTER_LAYOUT:extract_filter(imageFormat,extract);
 PIPELINE_MAIN:pExtract()
 {
 	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0);
+	OUTPUT_PORTS(o0, o1);
 	FILTER_INSTANCE:inst_thresh(threshold_filter);
 	FILTER_INSTANCE:inst_extrac(extract_filter);
 	CONNECTION(THIS,i0,inst_thresh,inText);

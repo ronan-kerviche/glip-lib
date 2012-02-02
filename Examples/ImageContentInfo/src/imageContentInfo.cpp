@@ -10,7 +10,7 @@
 	using namespace Glip::Modules;
 
 // Src :
-	Interface::Interface(void)
+	IHM::IHM(void)
 	 : text(NULL), pipeline(NULL), computingSuccess(false)
 	{
 		// Main interface :
@@ -38,7 +38,7 @@
 		QObject::connect(box, 		SIGNAL(currentIndexChanged(int)),	this, SLOT(updateOutput(void)));
 	}
 
-	void Interface::loadImage(void)
+	void IHM::loadImage(void)
 	{
 		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Image"), ".", "*.jpg *.JPG *.png");
 
@@ -86,15 +86,15 @@
 
 				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
 
-				if(pipeline==NULL)
-					updateOutput();
-				else
+				if(pipeline!=NULL)
 					requestComputingUpdate();
+
+				updateOutput();
 			}
 		}
 	}
 
-	void Interface::loadPipeline(void)
+	void IHM::loadPipeline(void)
 	{
 		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Pipeline"), ".", "*.ppl");
 
@@ -154,6 +154,7 @@
 						box->addItem(pipeline->getOutputPortName(i).c_str());
 
 					requestComputingUpdate();
+					updateOutput();
 				}
 
 				delete model;
@@ -161,7 +162,7 @@
 		}
 	}
 
-	void Interface::save(void)
+	void IHM::save(void)
 	{
 		QString filename = QFileDialog::getSaveFileName(this);
 
@@ -210,7 +211,7 @@
 		}
 	}
 
-	void Interface::requestComputingUpdate(void)
+	void IHM::requestComputingUpdate(void)
 	{
 		if(pipeline!=NULL && text!=NULL)
 		{
@@ -256,7 +257,7 @@
 		}
 	}
 
-	void Interface::updateOutput(void)
+	void IHM::updateOutput(void)
 	{
 		int port = box->currentIndex();
 
@@ -276,7 +277,7 @@
 		try
 		{
 			// Interface :
-			interface = new Interface;
+			ihm = new IHM;
 		}
 		catch(std::exception& e)
 		{

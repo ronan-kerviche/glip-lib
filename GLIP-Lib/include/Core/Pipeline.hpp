@@ -25,6 +25,7 @@
 #define __GLIPLIB_PIPELINE__
 
 	// Includes
+	#include <ctime>
         #include "Component.hpp"
         #include "Filter.hpp"
 

@@ -20,7 +20,7 @@
 		using namespace Glip::CorePipeline;
 
 	// Object
-		class Interface : public QWidget
+		class IHM : public QWidget
 		{
 			Q_OBJECT
 
@@ -34,7 +34,7 @@
 				QComboBox	*box;
 
 			public :
-				Interface(void);
+				IHM(void);
 
 			public slots :
 				void loadImage(void);
@@ -50,7 +50,7 @@
 
 			private :
 				int w, h;
-				Interface	*interface;
+				IHM	*ihm;
 
 			public :
 				ImageContentInformation(int _w, int _h, int& argc, char** argv);

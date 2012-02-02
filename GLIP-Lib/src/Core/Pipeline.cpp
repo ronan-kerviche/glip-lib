@@ -65,7 +65,7 @@
 					elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_PipelineLayout(c.pipelineLayout(i))));
 					break;
 				default:
-				throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy", __FILE__, __LINE__);
+				throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy for element in Z" + getNameExtended(), __FILE__, __LINE__);
 			}
 		}
 		//std::cout << "end copy of pipeline layout for " << getNameExtended() << std::endl;
@@ -104,7 +104,7 @@
 	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i) const
 	{
 		if(i<0 || i>=connections.size())
-			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getNameExtended() + ", ID : " + to_string(i), __FILE__, __LINE__);
 		return connections[i];
 	}
 
@@ -116,7 +116,7 @@
 	void __ReadOnly_PipelineLayout::checkElement(int i) const
 	{
 		if(i<0 || i>=elementsLayout.size())
-			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getNameExtended() + " ID : " + to_string(i), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getNameExtended() + ", ID : " + to_string(i), __FILE__, __LINE__);
 	}
 
 	/**
@@ -166,7 +166,7 @@
 					numPipelines += b+1;
 					break;
 				default:
-					throw Exception("__ReadOnly_PipelineLayout::getInfoElements - Unknown type", __FILE__, __LINE__);
+					throw Exception("__ReadOnly_PipelineLayout::getInfoElements - Unknown type for element in " + getNameExtended(), __FILE__, __LINE__);
 			}
 		}
 
@@ -189,7 +189,7 @@
 		}
 		catch(std::exception& e)
 		{
-			Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended() + ". This element may not exist.", __FILE__, __LINE__);
 			throw m+e;
 		}
 
@@ -250,7 +250,7 @@
 			case PIPELINE:
 				return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
 			default :
-				throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized",__FILE__, __LINE__);
+				throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized for element in " + getNameExtended(),__FILE__, __LINE__);
 		}
 	}
 
@@ -278,7 +278,7 @@
 		//std::cout << "ACCESSING FILTER (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element of index " + to_string(i) + " exists but is not a filter in pipeline " + getNameExtended(), __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
 	}
 
@@ -293,7 +293,7 @@
 		//std::cout << "ACCESSING FILTER (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - This element exists but is not a filter!");
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element " + name + " exists but is not a filter in pipeline " + getNameExtended(), __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[index]);
 	}
 
@@ -308,7 +308,7 @@
 		//std::cout << "ACCESSING PIPELINE (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element of index " + to_string(i) + " exists but is not a pipeline in pipeline " + getNameExtended(), __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
 	}
 
@@ -323,7 +323,7 @@
 		//std::cout << "ACCESSING PIPELINE (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - This element exists but is not a pipeline!");
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element " + name + " exists but is not a pipeline in pipeline " + getNameExtended(), __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
 	}
 
@@ -378,7 +378,7 @@
 		if(id!=THIS_PIPELINE)
 		{
 			__ReadOnly_ComponentLayout& src = componentLayout(id);
-			throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p), __FILE__, __LINE__);
+			throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
 		}
 		else
 			throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p), __FILE__, __LINE__);
@@ -524,7 +524,7 @@
 	int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists.", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 		__ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
 		tmp->setName(name);
@@ -545,7 +545,7 @@
 	int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists.", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 		__ReadOnly_PipelineLayout* tmp = new __ReadOnly_PipelineLayout(pipelineLayout);
 		tmp->setName(name);
@@ -588,7 +588,7 @@
 	void PipelineLayout::connect(int filterOut, int portOut, int filterIn, int portIn)
 	{
 		if(filterOut==THIS_PIPELINE && filterIn==THIS_PIPELINE)
-			throw Exception("PipelineLayout::connect - can't connect directly an input to an output, you don't need that!", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::connect - can't connect directly an input to an output in pipeline " + getNameExtended() + ", you don't need that.", __FILE__, __LINE__);
 
 		if(filterOut!=THIS_PIPELINE)
 		{
@@ -610,9 +610,9 @@
 		for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
 			if( (*it).idIn==filterIn && (*it).portIn==portIn)
 				if(filterIn!=THIS_PIPELINE)
-					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn), __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
 				else
-					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn), __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 		Connection c;
 		c.idOut   = filterOut;
@@ -1046,8 +1046,6 @@
 			listOfArgBuffers.assign(filters.size(), NULL);
 			listOfArgBuffersOutput.assign(filters.size(), NULL);
 
-			//buffers[10] = NULL; // ?????????????????????
-
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "Updating availability" << std::endl;
 			#endif
@@ -1219,7 +1217,7 @@
 					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 			// Add the coordinates of the output buffers :
-			outputBuffer.assign(getNumOutputPort(), 0);
+			outputBuffer.assign(getNumOutputPort(), -1);
 			outputBufferPort.assign(getNumOutputPort(), 0);
 			for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 			{
@@ -1229,6 +1227,11 @@
 					outputBufferPort[(*it).portIn] 	= (*it).portOut;
 				}
 			}
+
+			// Check that all output buffer ports have their connection :
+			for(int i=0; i<outputBuffer.size(); i++)
+				if(outputBuffer[i]==-1)
+					throw Exception("Pipeline::build - Error : Output port " + getOutputPortName(i) + " isn't connected in pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 			// Print the final layout :
 			#ifdef __VERBOSE__
