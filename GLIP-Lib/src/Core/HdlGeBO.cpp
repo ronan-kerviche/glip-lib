@@ -150,7 +150,7 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlGeBO::bind(GLenum target)
 	\brief Bind the Buffer Object to target.
-	\param target The target (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\param target The target (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB), default is the target specified for this object.
 	**/
 	void HdlGeBO::bind(GLenum target)
 	{
@@ -163,22 +163,40 @@ using namespace Glip::CoreGL;
 	\fn    void* HdlGeBO::map(GLenum target, GLenum access)
 	\brief Map the Buffer Object into the CPU memory.
 
-	\param target Target mapping point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
-	\param access Kind of access, among GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, GL_READ_WRITE_ARB.
+	\param access Kind of access, among GL_READ_ONLY_ARB, GL_WRITE_ONLY_ARB, GL_READ_WRITE_ARB, default can be used is target is GL_PIXEL_UNPACK_BUFFER_ARB or GL_PIXEL_PACK_BUFFER_ARB (will use respectively GL_WRITE_ONLY_ARB or GL_READ_ONLY_ARB). Will raise an exception otherwise.
+	\param target Target mapping point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB, default is the target specified for this object.
 
 	\return Pointer in CPU memory.
 	**/
-	void* HdlGeBO::map(GLenum target, GLenum access)
+	void* HdlGeBO::map(GLenum access, GLenum target)
 	{
-		glDebug();
+		if(target==GL_NONE) target = getTarget();
+		if(access==GL_NONE)
+		{
+			if(target==GL_PIXEL_UNPACK_BUFFER_ARB)
+				access=GL_WRITE_ONLY_ARB;
+			else if(target==GL_PIXEL_PACK_BUFFER_ARB)
+				access=GL_READ_ONLY_ARB;
+			else
+				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + glParamName(target), __FILE__, __LINE__);
+		}
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			glDebug();
+		#endif
+
 		HdlGeBO::unmap(target);
+
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
 		#endif
+
 		bind(target);
+
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Bind : "; glErrors(true, false);
 		#endif
+
 		mapping[getIDTarget(target)] = true;
 		return glMapBuffer(target, access);
 	}
@@ -227,7 +245,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlGeBO::unbind(GLenum target)
 	\brief Unbind any Buffer Object.
-
 	\param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
 	**/
 	void HdlGeBO::unbind(GLenum target)
@@ -237,9 +254,8 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlGeBO::unbind(GLenum target)
+	\fn    void HdlGeBO::unmap(GLenum target)
 	\brief Unmap any Buffer Object.
-
 	\param target Target binding point, among GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB, GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB.
 	**/
 	void HdlGeBO::unmap(GLenum target)
@@ -248,6 +264,10 @@ using namespace Glip::CoreGL;
 		{
 			glUnmapBuffer(target);
 			mapping[getIDTarget(target)] = false;
+			#ifdef __DEVELOPMENT_VERBOSE__
+				glDebug();
+				glErrors(true, false);
+			#endif
 		}
 	}
 

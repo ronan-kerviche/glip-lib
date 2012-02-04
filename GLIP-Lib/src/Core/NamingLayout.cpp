@@ -68,7 +68,10 @@ using namespace Glip;
 	**/
 	void ObjectName::checkName(void)
 	{
-		std::cout << "Checking name : \"" << name << '\"' << std::endl;
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "ObjectName::checkName - Checking name : \"" << name << '\"' << std::endl;
+		#endif
+
 		#define EXCEPTION(s) throw Exception("ObjectName - Name \"" + name + "\" contains illegal symbol : " + s, __FILE__, __LINE__);
 		if( name.find(SEPARATOR)!=std::string::npos )
 			EXCEPTION(SEPARATOR)
@@ -109,7 +112,10 @@ using namespace Glip;
 	**/
 	void ObjectName::checkType(void)
 	{
-		std::cout << "Checking type : \"" << name << '\"' << std::endl;
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "ObjectName::checkName - Checking type : \"" << name << '\"' << std::endl;
+		#endif
+
 		#define EXCEPTION(s) throw Exception("ObjectName - Type " + type + " contains illegal symbol : " + s, __FILE__, __LINE__);
 		if( type.find(SEPARATOR)!=std::string::npos )
 			EXCEPTION(SEPARATOR)

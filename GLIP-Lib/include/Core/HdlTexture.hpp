@@ -46,14 +46,14 @@
 					int    baseLevel, maxLevel;                // MipMap information
 					GLint  wraps, wrapt;                       // Wrapping modes
 
-					// Private tools :
+					// Protected tools :
 					int    getChannelCount(GLenum _mode)	const;
 					int    getChannelSize(GLenum _depth)	const;
 					GLenum getAliasMode(GLenum _mode)	const;
+					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
+					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
-					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter); // in protected?
-					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 					~__ReadOnly_HdlTextureFormat(void);
 
 					int    getWidth    	(void) const;
@@ -84,6 +84,8 @@
 				public :
 					// reproduce constructor :
 					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
+					HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt);
+
 					// Writing Functions
 					void setWidth    (int w);
 					void setHeight   (int h);

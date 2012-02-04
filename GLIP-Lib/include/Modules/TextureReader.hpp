@@ -33,7 +33,7 @@
 	#include "../Core/OglInclude.hpp"
 	#include "../Core/HdlTexture.hpp"
 	#include "../Core/Devices.hpp"
-
+	#include "../Core/HdlPBO.hpp"
 
 namespace Glip
 {
@@ -67,7 +67,7 @@ namespace Glip
 				void process(HdlTexture& t);
 
 			public :
-				// data
+				// Data
 					/// Set to true if you want to flip X axis while reading.
 					bool 	xFlip,
 					/// Set to true if you want to flip Y axis while reading.
@@ -77,6 +77,28 @@ namespace Glip
 				~TextureReader(void);
 
 				double operator()(int x, int y, int c);
+		};
+
+		/**
+		\class PBOTextureReader
+		\brief Copy data back from GPU memory to CPU memory using a PBO (fast method)
+		**/
+		class PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
+		{
+			protected :
+				void process(HdlTexture& t);
+
+			public :
+				// Functions
+				PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq);
+				~PBOTextureReader(void);
+
+				void* startReadingMemory(void);
+				void endReadingMemory(void);
+
+				using __ReadOnly_HdlTextureFormat::getWidth;
+				using __ReadOnly_HdlTextureFormat::getHeight;
+				using __ReadOnly_HdlTextureFormat::getSize;
 		};
 	}
 }

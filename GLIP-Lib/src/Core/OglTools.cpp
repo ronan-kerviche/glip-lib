@@ -54,6 +54,32 @@ using namespace Glip::CoreGL;
 
 // Errors Monitoring
 	/**
+	\fn std::string Glip::CoreGL::glErrorToString(void)
+	\brief Get a string corresponding to the last error raised by OpenGL.
+	\return A standard string containing human readable information.
+	**/
+	std::string Glip::CoreGL::glErrorToString(void)
+	{
+		GLenum err = glGetError();
+
+		#define Err( errorcode, message) case errorcode: return message ;
+		switch(err)
+		{
+			Err( GL_INVALID_ENUM,				"Invalid Enum")
+			Err( GL_INVALID_VALUE,				"Invalid Value")
+			Err( GL_INVALID_OPERATION, 			"Invalid Operation")
+			Err( GL_STACK_OVERFLOW,				"Stack OverFlow")
+			Err( GL_STACK_UNDERFLOW,			"Stack UnderFlow")
+			Err( GL_OUT_OF_MEMORY,				"Out of Memory")
+			Err( GL_TABLE_TOO_LARGE,			"Table too large")
+			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation - Don't forget to write something once in the attached texture! (in the init)")
+			case GL_NO_ERROR : return "(No error)";
+			default          : return "Unknown error (Code : " + to_string(err) + ")";
+		}
+		#undef Err
+	}
+
+	/**
 	\fn bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
 	\brief Check for errors returned by OpenGL.
 	\param verbose If set to true, the error will be output on std::cout.
@@ -81,6 +107,7 @@ using namespace Glip::CoreGL;
 				case GL_NO_ERROR : if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
 				default          :                       std::cout << "OpenGL error : Error NOT recognized (Code : " << err << ')' << std::endl; break;
 			}
+			#undef Err
 		}
 
 		return err!=GL_NO_ERROR;

@@ -46,14 +46,14 @@
 	 : ObjectName(c)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
-		std::cout << "Copying ReadOnly Component Layout " << getName() << std::endl;
+			std::cout << "Copying ReadOnly Component Layout " << getName() << std::endl;
 		#endif
 
 		inputPortDescription  = c.inputPortDescription;
 		outputPortDescription = c.outputPortDescription;
 
 		#ifdef __DEVELOPMENT_VERBOSE__
-		std::cout << "Size : " << inputPortDescription.size() << std::endl;
+			std::cout << "Size : " << inputPortDescription.size() << std::endl;
 		#endif
 	}
 

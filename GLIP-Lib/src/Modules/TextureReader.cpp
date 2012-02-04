@@ -132,4 +132,53 @@
 		return res;
 	}
 
+// PBOTextureReader
+	/**
+	\fn PBOTextureReader::PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq)
+	\brief PBOTextureReader constructor.
+	\param name Name of the component.
+	\param format Format expected.
+	\param freq The frequency (GL_STATIC_READ_ARB, GL_DYNAMIC_READ_ARB, GL_STREAM_READ_ARB).
+	**/
+	PBOTextureReader::PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq)
+	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(format), HdlPBO(format.getWidth(), format.getHeight(), format.getChannel(), format.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, freq)
+	{ }
+
+	PBOTextureReader::~PBOTextureReader(void)
+	{
+		endReadingMemory();
+	}
+
+	void PBOTextureReader::process(HdlTexture& t)
+	{
+		if(t!=*this)
+			throw Exception("TextureReader::process - Can not read texture having different layout format", __FILE__, __LINE__);
+
+		t.bind();
+
+		// Bind this PBO
+		bind();
+
+		glGetTexImage(GL_TEXTURE_2D, 0, getGLMode(), getGLDepth(), 0);
+	}
+
+	/**
+	\fn void* PBOTextureReader::startReadingMemory(void)
+	\brief Read memory from previouly copied texture.
+	\return A pointer to the CPU memory (Host memory) where the image is stored. You must check that it is not NULL before using.
+	**/
+	void* PBOTextureReader::startReadingMemory(void)
+	{
+		return map();
+	}
+
+	/**
+	\fn void PBOTextureReader::endReadingMemory(void)
+	\brief Stop reading memory from previouly copied texture, it releases the PBO from mapping.
+	**/
+	void PBOTextureReader::endReadingMemory(void)
+	{
+		HdlPBO::unmap(getTarget());
+		HdlPBO::unbind(getTarget());
+	}
 

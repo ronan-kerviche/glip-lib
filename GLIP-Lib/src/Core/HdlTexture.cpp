@@ -273,7 +273,16 @@ using namespace Glip::CoreGL;
 	\param _magFilter  Magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
 	**/
 	HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
-	: __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter)
+	 : __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter)
+	{ }
+
+	/**
+	\fn    HdlTextureFormat::HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt)7
+	\brief HdlTextureFormat Construtor.
+	\param fmt Source format.
+	**/
+	HdlTextureFormat::HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt)
+	 : __ReadOnly_HdlTextureFormat(fmt)
 	{ }
 
 	/**
@@ -357,7 +366,8 @@ using namespace Glip::CoreGL;
 	\brief HdlTexture constructor.
 	\param fmt The format to use.
 	**/
-	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt) : __ReadOnly_HdlTextureFormat(fmt)
+	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
+	 : __ReadOnly_HdlTextureFormat(fmt), texID(0)
 	{
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
@@ -372,6 +382,9 @@ using namespace Glip::CoreGL;
 		glGenTextures(1, &texID);
 
 		// COMMON ERROR : USE OF MIPMAP : LINEAR_MIPMAP_NEAREST... when max level = 0 (leads to Invalid Enum)
+
+		if(texID==0)
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
 
 		// Set it up
 		glBindTexture(GL_TEXTURE_2D,texID);

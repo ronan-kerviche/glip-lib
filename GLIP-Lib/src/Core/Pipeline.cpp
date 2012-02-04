@@ -1519,7 +1519,8 @@
 	/**
 	\fn float Pipeline::getTiming(int action, std::string& filterName)
 	\brief Get last result of performance monitoring IF it is still enabled.
-	\param path The path to the filter.
+	\param action The ID of the filter.
+	\param filterName A reference string that will contain the name of the filter indexed by action at the end of the function.
 	\return Time in milliseconds needed to apply the filter (not counting bonding operation).
 	**/
 	float Pipeline::getTiming(int action, std::string& filterName)

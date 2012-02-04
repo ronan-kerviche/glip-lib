@@ -64,7 +64,7 @@
 					int  getHeight(void);
 					int  getChannelCount(void);
 					int  getChannelSize(void);
-					void copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX=0, int oY=0, int w=-1, int h=-1);
+					void copyToTexture(HdlTexture& texture, int oX=0, int oY=0, int w=-1, int h=-1, GLenum mode=GL_NONE, GLenum depth=GL_NONE);
 
 					//Static tools
 					static void unbind(GLenum target=0);

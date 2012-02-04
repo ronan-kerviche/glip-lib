@@ -4,6 +4,9 @@
 #include <ctime>
 #include <QPointer>
 
+// Flags
+	#define __USE_PBO__
+
 // Namespace
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -64,24 +67,64 @@
 				HdlTextureFormat fmt(image->width(),image->height(),GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
 				text = new HdlTexture(fmt);
 
-				unsigned char* temp = new unsigned char[image->width()*image->height()*3];
-				int t=0;
+				#ifndef __USE_PBO__
+					unsigned char* temp = new unsigned char[image->width()*image->height()*3];
+					int t=0;
 
-				for(int i=image->height()-1; i>=0; i--)
-				{
-					for(int j=0; j<image->width(); j++)
+					for(int i=image->height()-1; i>=0; i--)
 					{
-						QRgb col 	= image->pixel(j,i);
-						temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-						temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-						temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
-						t += 3;
+						for(int j=0; j<image->width(); j++)
+						{
+							QRgb col 	= image->pixel(j,i);
+							temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
+							temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+							temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+							t += 3;
+						}
 					}
-				}
 
-				text->write(temp);
+					text->write(temp);
 
-				delete[] temp;
+					delete[] temp;
+				#else
+					try
+					{
+						//Example for texture streaming to the GPU (live video for example, but in that case, the PBO is only created once)
+						HdlPBO pbo(image->width(),image->height(),3,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
+
+						// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
+						unsigned char* temp = new unsigned char[image->width()*image->height()*3];
+						text->write(temp);
+
+						unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo.map());
+						int t=0;
+
+						for(int i=image->height()-1; i>=0; i--)
+						{
+							for(int j=0; j<image->width(); j++)
+							{
+								QRgb col 	= image->pixel(j,i);
+								ptr[t+0] 	= static_cast<unsigned char>( qRed( col ) );
+								ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+								ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+								t += 3;
+							}
+						}
+
+						HdlPBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
+						pbo.copyToTexture(*text);
+					}
+					catch(std::exception& e)
+					{
+						QMessageBox::information(NULL, tr("Error while build texture from PBO : "), e.what());
+						std::cout << "Error while build texture from PBO : " << filename.toUtf8().constData() << std::endl;
+						delete image;
+						delete text;
+						text = NULL;
+						return ;
+					}
+				#endif
+
 				delete image;
 
 				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
@@ -164,37 +207,88 @@
 
 	void IHM::save(void)
 	{
+		int port = box->currentIndex();
 		QString filename = QFileDialog::getSaveFileName(this);
 
 		if (!filename.isEmpty())
 		{
-			std::cout << "Pipeline : " << pipeline << std::endl;
-			std::cout << "Texture  : " << text << std::endl;
-			if(pipeline!=NULL && text!=NULL)
+			if(text!=NULL && (port==0 || pipeline!=NULL) )
 			{
+				// The image selected
 				try
 				{
-					std::cout << "Exporting image..." << std::endl;
-					TextureReader reader("reader",pipeline->out(0));
-					reader.yFlip = true;
-					reader << pipeline->out(0);
+					std::cout << "Exporting image... (" << port << ')' << std::endl;
 
-					// Create an image with Qt
-					QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+					HdlTextureFormat *fmt = NULL;
 
-					QRgb value;
-					double r, g, b;
-					for(int y=0; y<reader.getHeight(); y++)
-					{
-						for(int x=0; x<reader.getWidth(); x++)
+					// Read the target format :
+					if(port==0)
+						fmt = new HdlTextureFormat(*text);
+					else
+						fmt = new HdlTextureFormat(pipeline->out(port-1));
+
+					#ifndef __USE_PBO__
+						TextureReader reader("reader",*fmt);
+						reader.yFlip = true;
+
+						if(port==0)
+							reader << *text;
+						else
+							reader << pipeline->out(port-1);
+
+						// Create an image with Qt
+						QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+
+						QRgb value;
+						double r, g, b;
+						for(int y=0; y<reader.getHeight(); y++)
 						{
-							r = static_cast<unsigned char>(reader(x,y,0)*255.0);
-							g = static_cast<unsigned char>(reader(x,y,1)*255.0);
-							b = static_cast<unsigned char>(reader(x,y,2)*255.0);
-							value = qRgb(r, g, b);
-							image.setPixel(x, y, value);
+							for(int x=0; x<reader.getWidth(); x++)
+							{
+								r = static_cast<unsigned char>(reader(x,y,0)*255.0);
+								g = static_cast<unsigned char>(reader(x,y,1)*255.0);
+								b = static_cast<unsigned char>(reader(x,y,2)*255.0);
+								value = qRgb(r, g, b);
+								image.setPixel(x, y, value);
+							}
 						}
-					}
+					#else
+						// Create the reader on the right format (inheritance of the texture object)
+						PBOTextureReader reader("reader", *fmt, GL_STREAM_READ_ARB);
+
+						// Start copy to PBO :
+						if(port==0)
+							reader << *text;
+						else
+							reader << pipeline->out(port-1);
+
+						// Get access to memory :
+						unsigned char* ptr = reinterpret_cast<unsigned char*>(reader.startReadingMemory());
+
+						// Create an image with Qt
+						QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+
+						QRgb value;
+						double r, g, b;
+						int p = 0;
+						for(int y=reader.getHeight()-1; y>=0; y--)
+						{
+							for(int x=0; x<reader.getWidth(); x++)
+							{
+								r = ptr[p+0];
+								g = ptr[p+1];
+								b = ptr[p+2];
+								value = qRgb(r, g, b);
+								image.setPixel(x, y, value);
+								p += 3;
+							}
+						}
+
+						// Close access to memory :
+						reader.endReadingMemory();
+					#endif
+
+					delete fmt;
 
 					if(!image.save(filename))
 					{

@@ -60,24 +60,31 @@ using namespace Glip::CoreGL;
 	int HdlPBO::getChannelSize(void)  { return cs; }
 
 	/**
-	\fn void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
+	\fn void HdlPBO::copyToTexture(HdlTexture& texture, int oX, int oY, int w, int h, GLenum mode, GLenum depth)
 	\param texture The target texture.
-	\param mode The channel layout of the input data.
-	\param depth The depth of the input data.
-	\param oX The offset in X direction for the destination target.
-	\param oY The offset in Y direction for the destination target.
-	\param w The width to be copied.
-	\param h The height to be copied.
+	\param oX The offset in X direction for the destination target, default is 0.
+	\param oY The offset in Y direction for the destination target, default is 0.
+	\param w The width to be copied, default is the width of texture.
+	\param h The height to be copied, default is the height of texture.
+	\param mode The channel layout of the input data, default is the mode of texture.
+	\param depth The depth of the input data, default is the depth of texture.
 	**/
-	void HdlPBO::copyToTexture(HdlTexture& texture, GLenum mode, GLenum depth, int oX, int oY, int w, int h)
+	void HdlPBO::copyToTexture(HdlTexture& texture, int oX, int oY, int w, int h, GLenum mode, GLenum depth)
 	{
-		if(w<=0) w = texture.getWidth();
-		if(h<=0) h = texture.getHeight();
+		if(mode==GL_NONE) 	mode = texture.getGLMode();
+		if(depth==GL_NONE) 	depth = texture.getGLDepth();
+		if(w<=0) 		w = texture.getWidth();
+		if(h<=0) 		h = texture.getHeight();
 
 		texture.bind();
 		bind(GL_PIXEL_UNPACK_BUFFER_ARB);
 
 		glTexSubImage2D(GL_TEXTURE_2D, 0, oX, oY, w, h, mode, depth, 0);
+
+		#ifdef __VERBOSE__
+			if(glErrors(true, false))
+				throw Exception("HdlPBO::copyToTexture - You must write at least in the target texture before using this function.", __FILE__, __LINE__);
+		#endif
 	}
 
 //Other tools

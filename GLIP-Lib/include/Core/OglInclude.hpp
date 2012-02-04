@@ -72,7 +72,7 @@
 			};
 
 			// Tools
-			bool checkDeviceAbilities(void);
+			std::string glErrorToString(void);
 			bool glErrors(bool verbose = true, bool quietSituations = true);
 			void glDebug(void);
 			std::string glParamName(GLenum param);

@@ -78,4 +78,5 @@ PIPELINE_MAIN:pExtract()
 	CONNECTION(THIS,i0,inst_thresh,inText);
 	CONNECTION(inst_thresh,outText,inst_extrac,inText);
 	CONNECTION(inst_extrac,outText,THIS,o0);
+	CONNECTION(inst_thresh,outText,THIS,o1);
 }

@@ -1,5 +1,5 @@
 Project GLIP-LIB (OpenGL Image Processing Library)
-Current Version : 0.6
+Current Version : 0.7
 [X.X] represent the target version
 
 [0.6]  	Open FBO to multiple rendering target offered in OpenGL 3.0 (backward compatibility with OpenGL 2.1?).
@@ -75,8 +75,17 @@ Current Version : 0.6
 [0.8]	BUG : On a Hardware plateform not compliant with required OpenGL Extensions, the program using the library will crash.
 	Status : DONE
 
-[0.8]	Test the PBOs
+[0.8] 	Correct documentation for pipeline timing functions.
+	Status : DONE
+
+[0.8]	Create a GLError to string function.
+	Status : DONE
+
+[0.8]	Check GL Objet allocation error.
 	Status : TODO
+
+[0.8]	Test the PBOs.
+	Status : DONE
 
 [0.8]	Tool to monitor performances.
 	Status : DONE
