@@ -47,6 +47,9 @@ using namespace Glip::CoreGL;
 
 		glGenFramebuffers(1, &fboID);
 
+		if(fboID==0)
+			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+
 		for(int i=0; i<numTarget; i++) // At least one!
 			addTarget();
 

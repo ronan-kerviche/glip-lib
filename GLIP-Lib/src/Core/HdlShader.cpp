@@ -67,7 +67,7 @@ using namespace Glip::CoreGL;
 
 		if(shader==0)
 		{
-			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName(), __FILE__, __LINE__);
+			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
 		}
 
 		// send the source code
@@ -136,6 +136,9 @@ using namespace Glip::CoreGL;
 	{
 		// create the program
 		program = glCreateProgram();
+
+		if(program==0)
+			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
 
 		attachedFragmentShader = attachedVertexShader = 0;
 	}

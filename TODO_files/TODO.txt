@@ -82,7 +82,7 @@ Current Version : 0.7
 	Status : DONE
 
 [0.8]	Check GL Objet allocation error.
-	Status : TODO
+	Status : DONE
 
 [0.8]	Test the PBOs.
 	Status : DONE
@@ -127,6 +127,9 @@ Current Version : 0.7
 	Status : CANCELED
 
 [0.8]	An output port can be unused (BUG)
+	Status : TODO
+
+[0.8] 	Test memory use.
 	Status : TODO
 
 [0.9]  	Develop the same module for Windows (and OSX?).

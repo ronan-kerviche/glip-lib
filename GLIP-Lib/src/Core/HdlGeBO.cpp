@@ -56,6 +56,9 @@ using namespace Glip::CoreGL;
 		// Generate the buffer
 		glGenBuffers(1, &bufferId);
 
+		if(bufferId==0)
+			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+
 		// Bind it
 		glBindBuffer(infoTarget, bufferId);
 
