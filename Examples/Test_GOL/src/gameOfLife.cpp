@@ -12,7 +12,7 @@
 			HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 
 			// Create the pipeline :
-				//#define __LOAD_FROM_FILE__
+				#define __LOAD_FROM_FILE__
 				#ifndef __LOAD_FROM_FILE__
 					ShaderSource src("./Filters/game.glsl");
 
@@ -21,14 +21,12 @@
 					PipelineLayout pl("MainPipeline_2Steps");
 					pl.addInput("Input");
 					pl.addOutput("Output");
-					pl.addOutput("Test");
 					pl.add(fl, "GameOfLife_1");
 					pl.add(fl, "GameOfLife_2");
 
 					pl.connectToInput("Input", "GameOfLife_1", "inText");
 					pl.connect("GameOfLife_1", "outText", "GameOfLife_2", "inText");
 					pl.connectToOutput("GameOfLife_2", "outText", "Output");
-					pl.connectToOutput("GameOfLife_2", "test", "Test");
 
 					p1 = new Pipeline(pl, "Ping");
 					p2 = new Pipeline(pl, "Pong");
@@ -54,7 +52,7 @@
 				(*p2) << (*t) << Pipeline::Process;
 
 			timer = new QTimer;
-			timer->setInterval(500);
+			timer->setInterval(50);
 			connect(timer, SIGNAL(timeout()),this, SLOT(compute()));
 			timer->start();
 		}
@@ -87,7 +85,7 @@
 	{
 		static int i = 0;
 
-		if(i==10)
+		if(i==100)
 		{
 			std::cout << "> Reset" << std::endl;
 			//reset :
@@ -101,8 +99,7 @@
 			if(i%2==0)
 			{
 				(*p2) << p1->out(0) << Pipeline::Process;
-				if(i%4!=0) 	(*window) << p2->out(0);
-				else		(*window) << p2->out(1);
+				(*window) << p2->out(0);
 			}
 			else
 			{

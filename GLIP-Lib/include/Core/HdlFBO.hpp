@@ -66,7 +66,7 @@
 					int		addTarget(void);
 					int		getAttachmentCount(void) const;
 
-					void		beginRendering(void);
+					void		beginRendering(int usedTarget=0);
 					void		endRendering(void);
 					void		bind(void);
 					HdlTexture* 	operator[](int i);

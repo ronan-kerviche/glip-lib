@@ -472,6 +472,15 @@
 					res += '\n';
 				}
 			}
+
+			for(int j=0; j<tmp.getNumOutputPort(); j++)
+			{
+				if(getConnectionDestinations(i,j).empty())
+				{
+					res += "__ReadOnly_PipelineLayout::check - Error : Element " + tmp.getNameExtended() + " output port " +  tmp.getOutputPortNameExtended(i) + " is not connected.";
+					res += '\n';
+				}
+			}
 		}
 
 		for(int i=0; i<getNumOutputPort(); i++)
@@ -483,6 +492,15 @@
 			catch(std::exception& e)
 			{
 				res += e.what();
+				res += '\n';
+			}
+		}
+
+		for(int i=0; i<getNumInputPort(); i++)
+		{
+			if(getConnectionDestinations(THIS_PIPELINE,i).empty())
+			{
+				res += "__ReadOnly_PipelineLayout::check - Error : Input port " + getInputPortNameExtended(i) + " is not connected inside the pipeline.";
 				res += '\n';
 			}
 		}
@@ -528,7 +546,9 @@
 
 		__ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
 		tmp->setName(name);
-		std::cout << "Test : <" << tmp->getName() << '>' << std::endl;
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "PipelineLayout::add : <" << tmp->getName() << '>' << std::endl;
+		#endif
 		elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(tmp));
 		elementsKind.push_back(FILTER);
 		elementsID.push_back(ELEMENT_NOT_ASSOCIATED);
@@ -844,6 +864,7 @@
 						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended(), __FILE__, __LINE__);
 					}
 				}
+				pipeList.clear();
 
 				// Save all the connections to absolute basis :
 				#ifdef __DEVELOPMENT_VERBOSE__
@@ -1017,7 +1038,7 @@
 					}
 			} while(test);
 
-			#ifdef __VERBOSE__
+			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "Connection list : " << tmpConnections.size() << std::endl;
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 				{
@@ -1042,7 +1063,10 @@
 			TableIndex		options;
 
 			// Prepare the buffer list :
-			buffers.assign(filters.size(), NULL);
+			//MODIFICATION 04/02/2012 : buffers.assign(filters.size(), NULL);
+			std::vector<int> occupancy;
+			buffers.clear();
+			useBuffer.assign(filters.size(), -1);
 			listOfArgBuffers.assign(filters.size(), NULL);
 			listOfArgBuffersOutput.assign(filters.size(), NULL);
 
@@ -1116,6 +1140,7 @@
 				bool notFoundMandatory = true;
 				int size = std::numeric_limits<int>::max();
 
+				// Loop aim : find the next step by giving priority to filter using a new format
 				for(TableIndex::iterator it=options.begin(); it!=options.end() && notFoundMandatory; it++)
 				{
 					#ifdef __DEVELOPMENT_VERBOSE__
@@ -1143,7 +1168,7 @@
 							bestIt = it;
 						}
 					}
-					else // If not alreadyExist, hen it is mandatory to create it :
+					else // If not alreadyExist, then it is mandatory to create it :
 					{
 						notFoundMandatory = false;
 						bestIt = it;
@@ -1158,11 +1183,94 @@
 				int best = *bestIt;
 				options.erase(bestIt);
 
-				// Create the FBO :
-				buffers[best] = new HdlFBO(*filters[best], filters[best]->getNumOutputPort());
+				// Addendum 04/02/2012
+				// Find if there is a FBO corresponding to format and not use at this moment
+				bool ableToFindMatchingBuffer = false;
+				for(int idBuffer = 0; idBuffer < buffers.size(); idBuffer++)
+				{
+					if( (*buffers[idBuffer]) == (*filters[best]) && occupancy[idBuffer]==0)
+					{
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    [MEM] Found a matching buffer for " << filters[best]->getNameExtended() << ". ID is : " << idBuffer << std::endl;
+						#endif
+
+						// Save the index of the buffer to use :
+						useBuffer[best] = idBuffer;
+
+						// If it has not a sufficient number of targets (less target than needed), count the number to add
+						int neededTarget = filters[best]->getNumOutputPort()-buffers[idBuffer]->getAttachmentCount();
+
+						#ifdef __DEVELOPMENT_VERBOSE__
+							std::cout << "    [MEM] Adding MAX(0," << neededTarget << ") to buffer ID : " << idBuffer << std::endl;
+						#endif
+
+						for(int i=0; i<neededTarget; i++)
+							buffers[idBuffer]->addTarget();
+
+
+
+						ableToFindMatchingBuffer = true;
+					}
+				}
+
+				if(!ableToFindMatchingBuffer)
+				{
+					//We have to create a new buffer
+					int idBuffer = buffers.size();
+
+					#ifdef __DEVELOPMENT_VERBOSE__
+						std::cout << "    [MEM] Building new buffer ID " << idBuffer << std::endl;
+					#endif
+
+
+					HdlFBO* tmp = new HdlFBO(*filters[best], filters[best]->getNumOutputPort());
+					buffers.push_back(tmp);
+					useBuffer[best] = idBuffer;
+
+					// Find new occupancy
+					occupancy.push_back(0);
+				}
+
+				// Reset the occupancy for the buffer by counting the number of time the buffer appears as "in"
+				std::vector<bool> outputPortUsed(filters[best]->getNumOutputPort(), false);
+				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
+				{
+					if((*it).idOut==best)
+					{
+						occupancy[useBuffer[best]]++;
+						outputPortUsed[(*it).portOut] = true;
+					}
+				}
+
+				// Check that all outputs are used or raise an exception otherwise
+				if(std::find(outputPortUsed.begin(), outputPortUsed.end(), false)!=outputPortUsed.end())
+				{
+					std::string listUnused;
+					bool oncePretty = false;
+
+					// Build the list of the unused output port(s) name(s)
+					for(int i=0; i<outputPortUsed.size(); i++)
+					{
+						if(!outputPortUsed[i])
+						{
+							if(!oncePretty)
+								oncePretty = true;
+							else
+								listUnused += ", ";
+
+							listUnused += filters[best]->getOutputPortName(i);
+						}
+					}
+
+					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " has some the following output port(s) unused : " + listUnused, __FILE__, __LINE__);
+				}
+
 				#ifdef __DEVELOPMENT_VERBOSE__
-					std::cout << "Creating : " << (*buffers[best])[0] << std::endl;
+					std::cout << "    [MEM] New occupancy of buffer ID " << useBuffer[best] << " is : " << occupancy[useBuffer[best]] << std::endl;
 				#endif
+
+				/*if(occupancy[useBuffer[best]]==0)
+					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " result(s) is/are not used. You must remove it from the pipeline " + getNameExtended() + " or corresponding sub-structure or fix the connection error.", __FILE__, __LINE__);*/
 
 				// Save the corresponding action in the action list :
 				actionFilter.push_back(best);
@@ -1173,17 +1281,29 @@
 				bufferArg->resize(filters[best]->getNumInputPort());
 				outputArg->resize(filters[best]->getNumInputPort());
 
-				// Find in the connections, the input parts
+				// Find in the connections, the input ports
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 				{
 					if((*it).idIn==best)
 					{
 						test++;
-						(*bufferArg)[(*it).portIn] = (*it).idOut;
+						if((*it).idOut!=THIS_PIPELINE)
+							(*bufferArg)[(*it).portIn] = useBuffer[(*it).idOut]; // buffer used by source Filter
+						else
+							(*bufferArg)[(*it).portIn] = (*it).idOut; // THIS_PIPELINE as source
 						(*outputArg)[(*it).portIn] = (*it).portOut;
 						#ifdef __DEVELOPMENT_VERBOSE__
 							std::cout << "    Connecting port " << (*it).portIn << " to buffer " << (*it).idOut << "::" << (*it).portOut << std::endl;
 						#endif
+
+						//Decrease occupancy of the corresponding buffer (04/02/2012) :
+						if((*it).idOut!=THIS_PIPELINE)
+						{
+							#ifdef __DEVELOPMENT_VERBOSE__
+								std::cout << "    Decreasing occupancy for Buffer " << useBuffer[(*it).idOut] << " to " << occupancy[useBuffer[(*it).idOut]]-1 << std::endl;
+							#endif
+							occupancy[useBuffer[(*it).idOut]]--;
+						}
 					}
 
 				}
@@ -1238,7 +1358,7 @@
 				std::cout << "Actions : " << std::endl;
 				for(int i=0; i<actionFilter.size(); i++)
 				{
-					std::cout << "    Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << std::endl;
+					std::cout << "    Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << " (Buffer : " << useBuffer[i] << ')' << std::endl;
 					for(int j=0; j<listOfArgBuffers[actionFilter[i]]->size(); j++)
 						std::cout << "        Connection " << j << " to : (" << (*listOfArgBuffers[actionFilter[i]])[j] << ';' << (*listOfArgBuffersOutput[actionFilter[i]])[j] << ')' << std::endl;
 				}
@@ -1271,8 +1391,21 @@
 	{
 		int size = 0;
 
-		for(TableBuffer::iterator it = buffers.begin(); it!=buffers.end(); it++)
-			size += (*it)->getSize();
+		#ifdef __VERBOSE__
+			std::cout << "Pipeline::getSize for " << getNameExtended() << " (" << buffers.size() << " buffers)" <<std::endl;
+		#endif
+
+		for(int i=0; i<buffers.size(); i++)
+		{
+			#ifdef __VERBOSE__
+				std::cout << "    - Buffer " << i << " : " << buffers[i]->getSize()/(1024.0*1024.0) << "MB (W:" << buffers[i]->getWidth() << ", H:" << buffers[i]->getHeight() << ",T:" << buffers[i]->getAttachmentCount() << ')' << std::endl;
+			#endif
+			size += buffers[i]->getSize();
+		}
+
+		#ifdef __VERBOSE__
+			std::cout << "Pipeline::getSize END" << std::endl;
+		#endif
 
 		return size;
 	}
@@ -1316,7 +1449,7 @@
 			}
 
 			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "        Processing..." << std::endl;
+				std::cout << "        Processing using buffer " << useBuffer[action] << "..." << std::endl;
 			#endif
 
 			if(perfsMonitoring)
@@ -1325,7 +1458,7 @@
 				glFlush();
 			}
 
-			f->process(*buffers[action]);
+			f->process(*buffers[useBuffer[action]]);
 
 			if(perfsMonitoring)
 			{
@@ -1397,7 +1530,7 @@
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-		int bufferID 		= outputBuffer[i];
+		int bufferID 		= useBuffer[outputBuffer[i]];
 		int bufferPortID 	= outputBufferPort[i];
 		return *((*buffers[bufferID])[bufferPortID]);
 	}

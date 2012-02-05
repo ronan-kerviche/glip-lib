@@ -80,6 +80,7 @@
 		entryType.clear();
 		entryName.clear();
 		entryCode.clear();
+		entryPath.clear();
 
 		for(std::map<std::string,HdlTextureFormat*>::iterator it = formatList.begin(); it!=formatList.end(); it++)
 			delete (*it).second;
@@ -296,6 +297,7 @@
 				entryType.push_back(key);
 				entryName.push_back(name);
 				entryCode.push_back(code);
+				entryPath.push_back(path);
 			}
 			else
 			{
@@ -326,6 +328,8 @@
 				}
 				else
 					entryCode.push_back(code);
+
+				entryPath.push_back(path);
 			}
 
 			// Find the next line :
@@ -411,14 +415,14 @@
 		return result;
 	}
 
-	ShaderSource* LayoutLoader::buildShaderSource(const std::string& code, const std::string& name)
+	ShaderSource* LayoutLoader::buildShaderSource(const std::string& code, const std::string& name, const std::string& path)
 	{
 		std::vector<std::string> arg = getArguments(code);
 
 		if(arg.size()==0)
 			return new ShaderSource(getBody(code));
 		else
-			return new ShaderSource(arg[0]);
+			return new ShaderSource(path+arg[0]);
 	}
 
 	FilterLayout* LayoutLoader::buildFilter(const std::string& code, const std::string& name)
@@ -707,6 +711,7 @@
 					entryType.insert(entryType.end(), l.entryType.begin(), l.entryType.end());
 					entryName.insert(entryName.end(), l.entryName.begin(), l.entryName.end());
 					entryCode.insert(entryCode.end(), l.entryCode.begin(), l.entryCode.end());
+					entryPath.insert(entryPath.end(), l.entryPath.begin(), l.entryPath.end());
 				}
 			}
 
@@ -750,7 +755,7 @@
 			for(int i=0; i<entryType.size(); i++)
 			{
 				if(entryType[i]==SHADER_SOURCE)
-					sourceList[entryName[i]] = buildShaderSource(entryCode[i],entryName[i]);
+					sourceList[entryName[i]] = buildShaderSource(entryCode[i],entryName[i],entryPath[i]);
 			}
 
 			// List all Filters :

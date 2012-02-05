@@ -126,10 +126,16 @@ Current Version : 0.7
 [0.8]  	Rights and lock management for sockets.
 	Status : CANCELED
 
-[0.8]	An output port can be unused (BUG)
-	Status : TODO
+[0.8]	An output port can be unused (BUG).
+	Status : DONE
 
 [0.8] 	Test memory use.
+	Status : TODO
+
+[0.8]	Bring the local path to shader loading stage in LayoutLoader (BUG).
+	Status : DONE
+
+[0.8]	The building is not able no find dead-end.
 	Status : TODO
 
 [0.9]  	Develop the same module for Windows (and OSX?).

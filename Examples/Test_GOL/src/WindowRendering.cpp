@@ -43,7 +43,6 @@
 
 	void WindowRenderer::process(HdlTexture& t)
 	{
-		std::cout << "Rendering..." << std::endl;
 		glLoadIdentity();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glScalef(2.0,2.0,1.0);

@@ -204,6 +204,16 @@
 	Filter::Filter(const __ReadOnly_FilterLayout& c)
 	: __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
 	{
+		const int 	limInput  = HdlTexture::getMaxImageUnits(),
+				limOutput = HdlFBO::getMaximumColorAttachment();
+
+		// Check for the number of input
+		if(getNumInputPort()>limInput)
+			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()), __FILE__, __LINE__);
+
+		if(getNumInputPort()>limOutput)
+			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()), __FILE__, __LINE__);
+
 		// Build arguments table :
 		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));
 
@@ -289,11 +299,11 @@
 	**/
 	void Filter::process(HdlFBO& renderer)
 	{
-		if(renderer.getAttachmentCount()!=getNumOutputPort())
-			throw Exception("Filter::process - Renderer as a different number of target than the Filter " + getNameExtended() + " has outputs.", __FILE__, __LINE__);
+		if(renderer.getAttachmentCount()<getNumOutputPort())
+			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getNameExtended() + " has outputs.", __FILE__, __LINE__);
 
 		// Prepare the renderer
-			renderer.beginRendering();
+			renderer.beginRendering(getNumOutputPort());
 			//std::cout << "Begin rendering 		: "; glErrors(true, false);
 
 		// Enable states

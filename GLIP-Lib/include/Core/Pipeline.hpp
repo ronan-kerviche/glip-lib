@@ -26,6 +26,7 @@
 
 	// Includes
 	#include <ctime>
+	#include <algorithm>
         #include "Component.hpp"
         #include "Filter.hpp"
 
@@ -183,6 +184,7 @@
 					TableIndex       			outputBufferPort;
 					TableFilter    				filters;
 					TableBuffer				buffers;
+					TableIndex				useBuffer;
 					TableIndex				actionFilter;
 					std::vector<TableIndex*>		listOfArgBuffers;
 					std::vector<TableIndex*>		listOfArgBuffersOutput;

@@ -127,6 +127,7 @@
 					// Static Textures tools
 					static void unbind(GLenum unit=GL_TEXTURE0_ARB);
 					static void unbind(int unit);
+					static int  getMaxImageUnits(void);
 			};
 		}
 	}

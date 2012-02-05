@@ -45,6 +45,11 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glDrawBuffers, glDrawBuffersARB)
 		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
 
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << __HERE__ << "Disabling Depth buffer." << std::endl;
+		#endif
+		glDisable(GL_DEPTH_TEST);
+
 		glGenFramebuffers(1, &fboID);
 
 		if(fboID==0)
@@ -115,20 +120,29 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlFBO::beginRendering(void)
+	\fn    void HdlFBO::beginRendering(int usedTarget)
+	\param usedTarget The number of targets to be used. It must be less or equal to getAttachmentCount().
 	\brief Prepare the FBO for rendering in it
 	**/
-	void HdlFBO::beginRendering(void)
+	void HdlFBO::beginRendering(int usedTarget)
 	{
 		const GLenum attachmentsList[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT,
-						  GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT};
+						  GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT,
+						  GL_COLOR_ATTACHMENT10_EXT, GL_COLOR_ATTACHMENT11_EXT, GL_COLOR_ATTACHMENT12_EXT, GL_COLOR_ATTACHMENT13_EXT,GL_COLOR_ATTACHMENT14_EXT, GL_COLOR_ATTACHMENT15_EXT};
+
+		if(usedTarget==0)
+			usedTarget = targets.size();
+
+		if(usedTarget>targets.size())
+			throw Exception("HdlFBO::beginRendering - Can't render to " + to_string(usedTarget) + " textures because the current number of targets is " + to_string(targets.size()), __FILE__, __LINE__);
+
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
 		/*/ Set up color_tex and depth_rb for render-to-texture
 		Useless : glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, assTex.getID(), 0);
 		Useless : glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboID);*/
 
-		glDrawBuffers(targets.size(), attachmentsList);
+		glDrawBuffers(usedTarget, attachmentsList);
 
 		// Save viewport configuration
 		glPushAttrib(GL_VIEWPORT_BIT);

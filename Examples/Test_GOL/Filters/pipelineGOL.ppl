@@ -1,73 +1,13 @@
 TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
 
-SHADER_SOURCE:shader(./Filters/game.glsl);
+SHADER_SOURCE:shader(game.glsl);
 
-SHADER_SOURCE:shade2()
-{
-	/**
-
-		Game
-
-	**/
-
-	#version 130
-
-	uniform sampler2D 	inText;
-	out     vec4 		outText;
-	out     vec4 		test;
-
-	void main()
-	{
-		// Read all the eight previous :
-		ivec2 sz 	= textureSize(inText, 0);
-		float sx 	= 1.0/(float(sz.x));
-		float sy 	= 1.0/(float(sz.y));
-		vec4 a00	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,-sy)	, 0);
-		vec4 a01	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,0.0)	, 0);
-		vec4 a02	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,+sy)	, 0);
-		vec4 a10	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,-sy)	, 0);
-		vec4 a11	= textureLod(inText, gl_TexCoord[0].st			, 0);
-		vec4 a12	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,+sy)	, 0);
-		vec4 a20	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,-sy)	, 0);
-		vec4 a21	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,0.0)	, 0);
-		vec4 a22	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,+sy)	, 0);
-
-		float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
-
-		// Older :
-		outText.g = a11.r;
-		outText.b = a11.g;
-		outText.a = 1.0;
-
-		// New :
-		if(a11.r==1.0)
-		{
-			if((s==2.0) && (s==3.0))
-				outText.r = 1.0;
-			else
-				outText.r = 0.0;
-		}
-		else
-		{
-			if(s==3.0)
-				outText.r = 1.0;
-			else
-				outText.r = 0.0;
-		}
-
-		vec2 pos = gl_TexCoord[0].st;
-		if(pos.s>0.3 && pos.s<0.7 && pos.t>0.3 && pos.t<0.7)
-			test = vec4(pos.s, pos.t, 1.0-pos.s, 1.0);
-	}
-}
-
-
-FILTER_LAYOUT:layoutGOL(format,shade2);
+FILTER_LAYOUT:layoutGOL(format,shader);
 
 PIPELINE_MAIN:GameOfLife()
 {
 	INPUT_PORTS(Input);
-	OUTPUT_PORTS(Output,Test);
+	OUTPUT_PORTS(Output);
 
 	FILTER_INSTANCE:inst_GOL1(layoutGOL);
 	FILTER_INSTANCE:inst_GOL2(layoutGOL);
@@ -75,5 +15,4 @@ PIPELINE_MAIN:GameOfLife()
 	CONNECTION(THIS,Input,inst_GOL1,inText);
 	CONNECTION(inst_GOL1,outText,inst_GOL2,inText);
 	CONNECTION(inst_GOL2,outText,THIS,Output);
-	CONNECTION(inst_GOL2,test,THIS,Test);
 }

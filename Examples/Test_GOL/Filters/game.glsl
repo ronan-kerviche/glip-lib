@@ -8,7 +8,6 @@
 
 uniform sampler2D 	inText;
 out     vec4 		outText;
-out     vec4 		test;
 
 void main()
 {
@@ -36,7 +35,7 @@ void main()
 	// New :
 	if(a11.r==1.0)
 	{
-		if((s==2.0) && (s==3.0))
+		if((s==2.0) || (s==3.0))
 			outText.r = 1.0;
 		else
 			outText.r = 0.0;
@@ -48,8 +47,4 @@ void main()
 		else
 			outText.r = 0.0;
 	}
-
-	vec2 pos = gl_TexCoord[0].st;
-	if(pos.s>0.3 && pos.s<0.7 && pos.t>0.3 && pos.t<0.7)
-		test = vec4(pos.s, pos.t, 1.0-pos.s, 1.0);
 }

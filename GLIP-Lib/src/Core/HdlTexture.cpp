@@ -512,7 +512,15 @@ using namespace Glip::CoreGL;
 		unbind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
 	}
 
-// Max texturing units :
-        //glGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB , &maxUnit );
-	// 29/12/10 : should I replace GL_MAX_TEXTURE_UNITS_ARB by GL_MAX_TEXTURE_COORDS_ARB?
-	// according to http://developer.nvidia.com/object/General_FAQ.html#t6
+	/**
+	\fn int HdlTexture::getMaxImageUnits(void)
+	\brief Get the maximum number of texture that can be bound at the same time (ie. the maximum number of input port of a filter).
+	\return The maximum number of texture that can be bound at the same time.
+	**/
+	int HdlTexture::getMaxImageUnits(void)
+	{
+		int maxTextureImageUnits;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
+
+		return maxTextureImageUnits;
+	}

@@ -72,6 +72,7 @@ namespace Glip
 				std::vector<LoaderKeyword> 			entryType;
 				std::vector<std::string> 			entryName;
 				std::vector<std::string>			entryCode;
+				std::vector<std::string>			entryPath;
 				std::map<std::string,HdlTextureFormat*> 	formatList;
 				std::map<std::string,ShaderSource*> 		sourceList;
 				std::map<std::string,FilterLayout*> 		filterList;
@@ -89,7 +90,7 @@ namespace Glip
 				std::string 			getBody(const std::string& code);
 				void				updateEntriesLists(const std::string& sourceName, bool slave=false);
 				HdlTextureFormat*		buildFormat(const std::string& code, const std::string& name);
-				ShaderSource*			buildShaderSource(const std::string& code, const std::string& name);
+				ShaderSource*			buildShaderSource(const std::string& code, const std::string& name, const std::string& path);
 				FilterLayout* 			buildFilter(const std::string& code, const std::string& name);
 				PipelineLayout*			buildPipeline(std::string code, const std::string& name);
 				void 				clean(void);
