@@ -25,6 +25,7 @@
 				int w, h;
 				WindowRenderer	*window;
 				QTimer 		*timer;
+				ProceduralInput *inp;
 				Pipeline	*p1, *p2;
 				HdlTexture	*t;
 

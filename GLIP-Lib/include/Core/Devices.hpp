@@ -55,7 +55,7 @@
 					// Tools
 					InputDevice(const std::string& name);
 
-					void		allocateNewImage(const __ReadOnly_HdlTextureFormat& fmt);
+					void 		setTextureLink(HdlTexture* tex);
 					void        	declareNewImage(void);
 				public :
 					// Tools

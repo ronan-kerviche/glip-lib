@@ -35,32 +35,20 @@
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const std::string& name)
-	 : t(NULL), newImage(false), imagesMissed(0), ObjectName(name, "InputDevice")
+	 : ObjectName(name, "InputDevice"), newImage(false), imagesMissed(0), t(NULL)
 	{ }
 
 	InputDevice::~InputDevice(void)
-	{
-		if(t!=NULL)
-			delete t;
-	}
+	{ }
 
 	/**
-	\fn void InputDevice::allocateNewImage(const __ReadOnly_HdlTextureFormat& fmt)
-	\brief Create a new image or replace the existing one if format differs.
-	\param fmt The new format of the texture.
+	\fn void InputDevice::setTextureLink(HdlTexture* tex)
+	\brief Give a different texture as target.
+	\param tex Pointer to the texture.
 	**/
-	void InputDevice::allocateNewImage(const __ReadOnly_HdlTextureFormat& fmt)
+	void InputDevice::setTextureLink(HdlTexture* tex)
 	{
-		if(t==NULL)
-			t = new HdlTexture(fmt);
-		else
-		{
-			if(*t!=fmt)
-			{
-				delete t;
-				t = new HdlTexture(fmt);
-			}
-		}
+		t = tex;
 	}
 
 	/**
@@ -88,7 +76,7 @@
 	}
 
 	/**
-	\fn bool InputDevice::isNewImage(void)
+	\fn int InputDevice::getMissedImagesCount(void)
 	\brief Get the number of images missed (texture() wasn't call for new image).
 	\return The number of images missed.
 	**/
@@ -105,7 +93,8 @@
 	HdlTexture& InputDevice::texture(void)
 	{
 		if(t==NULL)
-			throw Exception("InputDevice::texture - No texture was created", __FILE__, __LINE__);
+			throw Exception("InputDevice::texture - No texture was linked in " + getNameExtended() + ".", __FILE__, __LINE__);
+
 		newImage = false;
 		return *t;
 	}

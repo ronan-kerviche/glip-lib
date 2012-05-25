@@ -47,7 +47,7 @@
 				// Tools
 				Exception(const std::string& m, std::string f="", unsigned int l=0);
 				Exception(const Exception& e);
-				~Exception(void) throw();
+				virtual ~Exception(void) throw();
 
 				const char*  what(void) const throw();
 				const char*  message(void) const throw();

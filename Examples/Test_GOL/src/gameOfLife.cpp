@@ -4,7 +4,8 @@
 #include <ctime>
 
 // Src :
-	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv) : QApplication(argc,argv), w(_w), h(_h)
+	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv)
+	 : QApplication(argc,argv), w(_w), h(_h)
 	{
 		try
 		{
@@ -31,7 +32,7 @@
 					p1 = new Pipeline(pl, "Ping");
 					p2 = new Pipeline(pl, "Pong");
 				#else
-					// Load the sme settings but from a file :
+					// Load the same settings but from a file :
 					LayoutLoader loader;
 					PipelineLayout* model = loader("./Filters/pipelineGOL.ppl");
 					p1 = new Pipeline(*model, "Ping");
@@ -46,6 +47,12 @@
 
 				randomTexture(0.3);
 				(*window) << (*t);
+
+			// Create another weird random (mathematical) point :
+			ShaderSource inputSrc("./Filters/gameInput.glsl");
+			inp 	= new ProceduralInput("InputPattern", fmt, inputSrc);
+			inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,2);
+			inp->generateNewFrame();
 
 			// Do the first pass :
 				(*p1) << (*t) << Pipeline::Process;
@@ -84,14 +91,24 @@
 	void GameOfLife::compute(void)
 	{
 		static int i = 0;
+		static int j = 3;
 
 		if(i==100)
 		{
 			std::cout << "> Reset" << std::endl;
 			//reset :
-			randomTexture(0.3);
-			(*p1) << (*t) << Pipeline::Process;
-			(*p2) << (*t) << Pipeline::Process;
+			#define __RADOM_GEN__
+			#ifdef __RADOM_GEN__
+				randomTexture(0.3);
+				(*p1) << (*t) << Pipeline::Process;
+				(*p2) << (*t) << Pipeline::Process;
+			#else
+				inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,j);
+				(*p1) << inp->texture() << Pipeline::Process;
+				(*p2) << inp->texture() << Pipeline::Process;
+				j++;
+			#endif
+
 			i = 0;
 		}
 		else

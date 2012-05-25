@@ -130,16 +130,40 @@ Current Version : 0.7
 	Status : DONE
 
 [0.8] 	Test memory use.
-	Status : TODO
+	Status : DONE
 
 [0.8]	Bring the local path to shader loading stage in LayoutLoader (BUG).
 	Status : DONE
 
-[0.8]	The building is not able no find dead-end.
-	Status : TODO
+[0.8]	The building is not able no find dead-end. (BUG)
+	Status : DONE
+
+[0.8]   The layout loader accept keywords as name.
+	Status : DONE
 
 [0.9]  	Develop the same module for Windows (and OSX?).
 	Status : CANCELED
+
+[0.9]	Develop Input modules for procedural generation.
+	Status : TODO
+
+[0.9]	Multi-output for Input Device.
+	Status : TODO
+
+[0.9]	Filter, fix line 260 to 262.
+	Status : TODO
+
+[0.9] 	Prepare an exemple with a graph for the documentation.
+	Status : TODO
+
+[0.9]	Check security error : ComponentLayout::setInputPortName are public.
+	Status : TODO
+
+[0.9]	Prepare exemple code and instruction inside the help files.
+	Status : TODO
+
+[0.9]	Add variable modifiers in main pipeline description.
+	Status : TODO
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.
 	Status : DONE
@@ -147,4 +171,6 @@ Current Version : 0.7
 [1.0]  	VisualGLIP : GUI tool to design pipelines
 	Status : TODO
 
+[1.0]	Package for Debian
+	Status : TODO
 

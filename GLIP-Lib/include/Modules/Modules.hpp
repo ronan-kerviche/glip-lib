@@ -26,5 +26,6 @@
 
 	#include "./LayoutLoader.hpp"
 	#include "./TextureReader.hpp"
+	#include "./ProceduralInput.hpp"
 
 #endif
