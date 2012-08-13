@@ -9,5 +9,6 @@
 		<Project filename="Project_CB/ImageContentInfo.cbp" active="1" />
 		<Project filename="Project_CB/CameraPipeline.cbp" />
 		<Project filename="Project_CB/Histogram.cbp" />
+		<Project filename="Project_CB/VisualGLIP.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

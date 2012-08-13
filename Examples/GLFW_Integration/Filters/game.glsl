@@ -28,7 +28,7 @@ void main()
 	float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
 
 	// Older :
-	outText.g = a11.r;	
+	outText.g = a11.r;
 	outText.b = a11.g;
 	outText.a = 1.0;
 

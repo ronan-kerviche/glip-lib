@@ -5,7 +5,7 @@
 #include <QPointer>
 
 // Flags
-	#define __USE_PBO__
+	//#define __USE_PBO__
 
 // Namespace
 	using namespace Glip::CoreGL;
@@ -64,7 +64,7 @@
 				}
 
 				// Build new header :
-				HdlTextureFormat fmt(image->width(),image->height(),GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+				HdlTextureFormat fmt(image->width(),image->height(),GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
 				text = new HdlTexture(fmt);
 
 				#ifndef __USE_PBO__
@@ -93,8 +93,7 @@
 						HdlPBO pbo(image->width(),image->height(),3,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
 
 						// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
-						unsigned char* temp = new unsigned char[image->width()*image->height()*3];
-						text->write(temp);
+						text->fill(0);
 
 						unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo.map());
 						int t=0;
@@ -127,7 +126,8 @@
 
 				delete image;
 
-				std::cout << "Texture size : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB " << std::endl;
+				std::cout << "Texture size (for non-compressed texture - getSize()) : " << static_cast<int>(static_cast<float>(text->getSize())/(1024.0*1024.0)) << " MB \t (" << static_cast<int>(static_cast<float>(text->getSize())/1024.0) << "kB)" << std::endl;
+				std::cout << "Texture size (for all texture - getSizeOnGPU()) : " << static_cast<int>(static_cast<float>(text->getSizeOnGPU())/(1024.0*1024.0)) << " MB \t (" << static_cast<int>(static_cast<float>(text->getSizeOnGPU())/1024.0) << "kB)"  << std::endl;
 
 				if(pipeline!=NULL)
 					requestComputingUpdate();

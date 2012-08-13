@@ -86,40 +86,67 @@ using namespace Glip::CoreGL;
 		// implicit : get channel count
 		switch(_mode)
 		{
-			case GL_RED		:
-			case GL_GREEN		:
-			case GL_LUMINANCE	:
-			case GL_LUMINANCE_ALPHA	:
-			case GL_ALPHA		: return 1;
-			case GL_RG		: return 2;
-			case GL_RGB32F		:
-			case GL_RGB32I		:
-			case GL_RGB32UI		:
-			case GL_RGB16_SNORM	:
-			case GL_RGB16F		:
-			case GL_RGB16I		:
-			case GL_RGB16UI		:
-			case GL_RGB16		:
-			case GL_RGB8_SNORM	:
-			case GL_RGB8		:
-			case GL_RGB8I		:
-			case GL_RGB8UI		:
-			case GL_SRGB8		:
-			case GL_RGB9_E5		:
-			case GL_RGB		:
-			case GL_BGR		: return 3;
-			case GL_RGBA32F		:
-			case GL_RGBA32I		:
-			case GL_RGBA32UI	:
-			case GL_RGBA16		:
-			case GL_RGBA16F		:
-			case GL_RGBA16I		:
-			case GL_RGBA16UI	:
-			case GL_RGBA8		:
-			case GL_RGBA8UI		:
-			case GL_RGBA		:
-			case GL_BGRA		: return 4;
-			default :
+			case GL_RED					:
+			case GL_GREEN					:
+			case GL_LUMINANCE				:
+			case GL_LUMINANCE_ALPHA				:
+			case GL_INTENSITY				:
+			case GL_COMPRESSED_ALPHA			:
+			case GL_COMPRESSED_INTENSITY			:
+			case GL_COMPRESSED_LUMINANCE			:
+			case GL_COMPRESSED_RED				:
+			case GL_COMPRESSED_RED_RGTC1			:
+			case GL_ALPHA					: return 1;
+			case GL_COMPRESSED_LUMINANCE_ALPHA		:
+			case GL_COMPRESSED_RG				:
+			case GL_RG					: return 2;
+			case GL_RGB32F					:
+			case GL_RGB32I					:
+			case GL_RGB32UI					:
+			case GL_RGB16_SNORM				:
+			case GL_RGB16F					:
+			case GL_RGB16I					:
+			case GL_RGB16UI					:
+			case GL_RGB16					:
+			case GL_RGB8_SNORM				:
+			case GL_RGB8					:
+			case GL_RGB8I					:
+			case GL_RGB8UI					:
+			case GL_SRGB8					:
+			case GL_RGB9_E5					:
+			case GL_RGB					:
+			case GL_COMPRESSED_RGB				:
+			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_FXT1_3DFX		:
+			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RG_RGTC2			:
+			case GL_COMPRESSED_SRGB				:
+			case GL_COMPRESSED_SRGB_ALPHA			:
+			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
+			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
+			case GL_BGR					: return 3;
+			case GL_RGBA32F					:
+			case GL_RGBA32I					:
+			case GL_RGBA32UI				:
+			case GL_RGBA16					:
+			case GL_RGBA16F					:
+			case GL_RGBA16I					:
+			case GL_RGBA16UI				:
+			case GL_RGBA8					:
+			case GL_RGBA8UI					:
+			case GL_RGBA					:
+			case GL_COMPRESSED_RGBA				:
+			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
+			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
+			case GL_BGRA					: return 4;
+			default 					:
 				throw Exception("HdlTextureFormat - cannot recognize channel count for " + glParamName(_mode), __FILE__, __LINE__);
 		}
 	}
@@ -148,41 +175,189 @@ using namespace Glip::CoreGL;
 	{
 		switch(_mode)
 		{
-			case GL_RED		:
-			case GL_GREEN		:
-			case GL_LUMINANCE	:
-			case GL_LUMINANCE_ALPHA	:
-			case GL_ALPHA		: return GL_RED;
-			case GL_RG		: return GL_RG;
-			case GL_RGB32F		:
-			case GL_RGB32I		:
-			case GL_RGB32UI		:
-			case GL_RGB16_SNORM	:
-			case GL_RGB16F		:
-			case GL_RGB16I		:
-			case GL_RGB16UI		:
-			case GL_RGB16		:
-			case GL_RGB8_SNORM	:
-			case GL_RGB8		:
-			case GL_RGB8I		:
-			case GL_RGB8UI		:
-			case GL_SRGB8		:
-			case GL_RGB9_E5		:
-			case GL_RGB		: return GL_RGB;
-			case GL_BGR		: return GL_BGR;
-			case GL_RGBA32F		:
-			case GL_RGBA32I		:
-			case GL_RGBA32UI	:
-			case GL_RGBA16		:
-			case GL_RGBA16F		:
-			case GL_RGBA16I		:
-			case GL_RGBA16UI	:
-			case GL_RGBA8		:
-			case GL_RGBA8UI		:
-			case GL_RGBA		: return GL_RGBA;
-			case GL_BGRA		: return GL_BGRA;
+			case GL_RED					:
+			case GL_GREEN					:
+			case GL_LUMINANCE				:
+			case GL_LUMINANCE_ALPHA				:
+			case GL_COMPRESSED_ALPHA			:
+			case GL_COMPRESSED_INTENSITY			:
+			case GL_COMPRESSED_LUMINANCE			:
+			case GL_COMPRESSED_RED				:
+			case GL_COMPRESSED_RED_RGTC1			:
+			case GL_INTENSITY				:
+			case GL_ALPHA					: return GL_RED;
+			case GL_COMPRESSED_LUMINANCE_ALPHA		:
+			case GL_COMPRESSED_RG				:
+			case GL_RG					: return GL_RG;
+			case GL_RGB32F					:
+			case GL_RGB32I					:
+			case GL_RGB32UI					:
+			case GL_RGB16_SNORM				:
+			case GL_RGB16F					:
+			case GL_RGB16I					:
+			case GL_RGB16UI					:
+			case GL_RGB16					:
+			case GL_RGB8_SNORM				:
+			case GL_RGB8					:
+			case GL_RGB8I					:
+			case GL_RGB8UI					:
+			case GL_SRGB8					:
+			case GL_RGB9_E5					:
+			case GL_COMPRESSED_RGB				:
+			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_FXT1_3DFX		:
+			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RG_RGTC2			:
+			case GL_COMPRESSED_SRGB				:
+			case GL_COMPRESSED_SRGB_ALPHA			:
+			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
+			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
+			case GL_RGB					: return GL_RGB;
+			case GL_BGR					: return GL_BGR;
+			case GL_RGBA32F					:
+			case GL_RGBA32I					:
+			case GL_RGBA32UI				:
+			case GL_RGBA16					:
+			case GL_RGBA16F					:
+			case GL_RGBA16I					:
+			case GL_RGBA16UI				:
+			case GL_RGBA8					:
+			case GL_RGBA8UI					:
+			case GL_COMPRESSED_RGBA				:
+			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
+			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
+			case GL_RGBA					: return GL_RGBA;
+			case GL_BGRA					: return GL_BGRA;
 			default :
-				throw Exception("HdlTextureFormat - cannot mode alias for " + glParamName(_mode), __FILE__, __LINE__);
+				throw Exception("HdlTextureFormat - cannot find mode alias for " + glParamName(_mode), __FILE__, __LINE__);
+		}
+	}
+
+	bool __ReadOnly_HdlTextureFormat::isCompressedMode(GLenum _mode) const
+	{
+		switch(_mode)
+		{
+			case GL_COMPRESSED_INTENSITY			:
+			case GL_COMPRESSED_LUMINANCE			:
+			case GL_COMPRESSED_RED				:
+			case GL_COMPRESSED_RED_RGTC1			:
+			case GL_COMPRESSED_LUMINANCE_ALPHA		:
+			case GL_COMPRESSED_RG				:
+			case GL_COMPRESSED_RGB				:
+			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
+			case GL_COMPRESSED_RGB_FXT1_3DFX		:
+			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RG_RGTC2			:
+			case GL_COMPRESSED_SRGB				:
+			case GL_COMPRESSED_SRGB_ALPHA			:
+			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
+			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
+			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RGBA				:
+			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
+			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
+			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
+										return true;
+			default :
+										return false;
+		}
+	}
+
+	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingCompressedMode(GLenum _mode) const
+	{
+		if(isCompressedMode(_mode))
+			return _mode;
+		else
+		{
+			switch(_mode)
+			{
+				case GL_RED					:
+				case GL_GREEN					:	return GL_COMPRESSED_RED;
+				case GL_INTENSITY				:	return GL_COMPRESSED_INTENSITY;
+				case GL_LUMINANCE				:	return GL_COMPRESSED_LUMINANCE;
+				case GL_LUMINANCE_ALPHA				:	return GL_COMPRESSED_LUMINANCE_ALPHA;
+				case GL_ALPHA					:	return GL_COMPRESSED_ALPHA;
+				case GL_RG					:	return GL_COMPRESSED_RG;
+				case GL_RGB32F					:
+				case GL_RGB32I					:
+				case GL_RGB32UI					:
+				case GL_RGB16_SNORM				:
+				case GL_RGB16F					:
+				case GL_RGB16I					:
+				case GL_RGB16UI					:
+				case GL_RGB16					:
+				case GL_RGB8_SNORM				:
+				case GL_RGB8					:
+				case GL_RGB8I					:
+				case GL_RGB8UI					:
+				case GL_RGB9_E5					:
+				case GL_RGB					:	return GL_COMPRESSED_RGB;
+				case GL_SRGB8					:	return GL_COMPRESSED_SRGB;
+				case GL_RGBA32F					:
+				case GL_RGBA32I					:
+				case GL_RGBA32UI				:
+				case GL_RGBA16					:
+				case GL_RGBA16F					:
+				case GL_RGBA16I					:
+				case GL_RGBA16UI				:
+				case GL_RGBA8					:
+				case GL_RGBA8UI					:
+				case GL_BGRA					:
+				case GL_RGBA					:	return GL_COMPRESSED_RGBA;
+				default :
+					throw Exception("HdlTextureFormat - cannot find compressed mode corresponding to " + glParamName(_mode), __FILE__, __LINE__);
+			}
+		}
+	}
+
+	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingUncompressedMode(GLenum _mode) const
+	{
+		if(!isCompressedMode(_mode))
+			return _mode;
+		else
+		{
+			switch(_mode)
+			{
+				case GL_COMPRESSED_INTENSITY			:	return GL_INTENSITY;
+				case GL_COMPRESSED_LUMINANCE			:	return GL_LUMINANCE;
+				case GL_COMPRESSED_RED				:
+				case GL_COMPRESSED_RED_RGTC1			:	return GL_RED;
+				case GL_COMPRESSED_LUMINANCE_ALPHA		:	return GL_COMPRESSED_LUMINANCE_ALPHA;
+				case GL_COMPRESSED_RG_RGTC2			:
+				case GL_COMPRESSED_RG				:	return GL_RG;
+				case GL_COMPRESSED_RGB				:
+				case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
+				case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
+				case GL_COMPRESSED_RGB_FXT1_3DFX		:
+				case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:	return GL_RGB;
+				case GL_COMPRESSED_SRGB				:
+				case GL_COMPRESSED_SRGB_ALPHA			:
+				case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
+				case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:	return GL_SRGB8;
+				case GL_COMPRESSED_RGBA				:
+				case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
+				case GL_COMPRESSED_RGBA_FXT1_3DFX		:
+				case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
+				case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
+				case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:	return GL_RGBA;
+				default :
+					throw Exception("HdlTextureFormat - cannot find uncompressed mode corresponding to " + glParamName(_mode), __FILE__, __LINE__);
+			}
 		}
 	}
 
@@ -214,20 +389,23 @@ using namespace Glip::CoreGL;
 	\brief Returns the texture's S wrapping parameter.
 	\fn    GLint __ReadOnly_HdlTextureFormat::getTWrapping(void) const
 	\brief Returns the texture's T wrapping parameter.
+	\fn    bool __ReadOnly_HdlTextureFormat::isCompressed(void) const
+	\brief Returns true if the texture is compressed.
 	**/
-	int    __ReadOnly_HdlTextureFormat::getWidth   		(void) const { return imgW; }
-	int    __ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
-	int    __ReadOnly_HdlTextureFormat::getChannel  	(void) const { return imgC; }
-	int    __ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
-	int    __ReadOnly_HdlTextureFormat::getSize     	(void) const { return imgSize; }
-	GLenum __ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
-	GLenum __ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
-	GLenum __ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
-	GLenum __ReadOnly_HdlTextureFormat::getMagFilter	(void) const { return magFilter; }
-	int    __ReadOnly_HdlTextureFormat::getBaseLevel	(void) const { return baseLevel; }
-	int    __ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
-	GLint  __ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
-	GLint  __ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
+	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
+	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
+	int	__ReadOnly_HdlTextureFormat::getChannel  	(void) const { return imgC; }
+	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
+	int	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return imgSize; }
+	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
+	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
+	GLenum	__ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
+	GLenum	__ReadOnly_HdlTextureFormat::getMagFilter	(void) const { return magFilter; }
+	int	__ReadOnly_HdlTextureFormat::getBaseLevel	(void) const { return baseLevel; }
+	int	__ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
+	GLint	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
+	GLint	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
+	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return isCompressedMode(mode); }
 
 	/**
 	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
@@ -236,19 +414,19 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		return  (imgW      == f.imgW)      &&
-			(imgH      == f.imgH)      &&
-			(imgC      == f.imgC)      &&
-			(colSize   == f.colSize)   &&
-			(imgSize   == f.imgSize)   &&
-			(mode      == f.mode)      &&
-			(depth     == f.depth)     &&
-			(minFilter == f.minFilter) &&
-			(magFilter == f.magFilter) &&
-			(baseLevel == f.baseLevel) &&
-			(maxLevel  == f.maxLevel)  &&
-			(wraps     == f.wraps)     &&
-			(wrapt     == f.wrapt);
+		return  (imgW		== f.imgW)      &&
+			(imgH		== f.imgH)      &&
+			(imgC		== f.imgC)      &&
+			(colSize	== f.colSize)   &&
+			(imgSize	== f.imgSize)   &&
+			(mode		== f.mode)      &&
+			(depth		== f.depth)     &&
+			(minFilter	== f.minFilter) &&
+			(magFilter	== f.magFilter) &&
+			(baseLevel	== f.baseLevel) &&
+			(maxLevel	== f.maxLevel)  &&
+			(wraps		== f.wraps)     &&
+			(wrapt		== f.wrapt);
 	}
 
 	/**
@@ -259,6 +437,72 @@ using namespace Glip::CoreGL;
 	bool __ReadOnly_HdlTextureFormat::operator!=(const __ReadOnly_HdlTextureFormat& f) const
 	{
 		return !(*this==f);
+	}
+
+	/**
+	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
+	\brief Returns the __ReadOnly_HdlTextureFormat object identical to this, but mode is set to the corresponding compressed format.
+	**/
+	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
+	{
+		if(isCompressed())
+			return *this;
+		else
+		{
+			__ReadOnly_HdlTextureFormat res(*this);
+			res.mode = getCorrespondingCompressedMode(mode);
+			return res;
+		}
+	}
+
+	/**
+	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const
+	\brief Returns the __ReadOnly_HdlTextureFormat object identical to this, but mode is set to the corresponding uncompressed format.
+	**/
+	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const
+	{
+		if(!isCompressed())
+			return *this;
+		else
+		{
+			__ReadOnly_HdlTextureFormat res(*this);
+			res.mode = getCorrespondingUncompressedMode(mode);
+			return res;
+		}
+	}
+
+	/**
+	\fn    bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
+	\brief Returns true if this and f share the same parameter except that the mode for f is the corresponding compressed mode of this.
+	\param f Format to be compared with this.
+	**/
+	bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
+	{
+		bool test = 	(imgW		== f.imgW)      &&
+				(imgH		== f.imgH)      &&
+				(imgC		== f.imgC)      &&
+				(colSize	== f.colSize)   &&
+				(imgSize	== f.imgSize)   &&
+				(depth		== f.depth)     &&
+				(minFilter	== f.minFilter) &&
+				(magFilter	== f.magFilter) &&
+				(baseLevel	== f.baseLevel) &&
+				(maxLevel	== f.maxLevel)  &&
+				(wraps		== f.wraps)     &&
+				(wrapt		== f.wrapt);
+
+		return test && (f.mode==getCorrespondingCompressedMode(mode));
+	}
+
+	/**
+	\fn    static int __ReadOnly_HdlTextureFormat::getMaxSize(void) const
+	\brief Returns the maximum size for a texture.
+	**/
+	int __ReadOnly_HdlTextureFormat::getMaxSize(void)
+	{
+		GLint s;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &s);
+		return static_cast<int>(s);
 	}
 
 	/**
@@ -316,15 +560,15 @@ using namespace Glip::CoreGL;
 	\param l The new highest level (must be greater than 0).
 	\fn    void HdlTextureFormat::setSWrapping(GLint m)
 	\brief Sets the texture's S wrapping parameter.
-	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT)
+	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	\fn    void HdlTextureFormat::setTWrapping(GLint m)
 	\brief Sets the texture's T wrapping parameter.
-	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT)
+	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	**/
 	void HdlTextureFormat::setWidth    (int w)                   { imgW      = w;  }
 	void HdlTextureFormat::setHeight   (int h)                   { imgH      = h;  }
-	void HdlTextureFormat::setSize     (int w, int h)            { 	imgW      = w;
-									imgH      = h;  }
+	void HdlTextureFormat::setSize     (int w, int h)            { 	imgW     = w;
+									imgH     = h;  }
 	void HdlTextureFormat::setGLMode   (GLenum md)               { mode      = md; }
 	void HdlTextureFormat::setGLDepth  (GLenum dp)               { depth     = dp; }
 	void HdlTextureFormat::setMinFilter(GLenum mf)               { minFilter = mf; }
@@ -375,6 +619,7 @@ using namespace Glip::CoreGL;
 		NEED_EXTENSION(GLEW_ARB_texture_non_power_of_two)
 		NEED_EXTENSION(GLEW_ARB_texture_rectangle)
 		NEED_EXTENSION(GLEW_ARB_texture_float)
+		NEED_EXTENSION(GLEW_ARB_texture_compression);
 
 		glEnable(GL_TEXTURE_2D);
 
@@ -418,6 +663,40 @@ using namespace Glip::CoreGL;
 	GLuint HdlTexture::getID(void) const
 	{
 		return texID;
+	}
+
+	/**
+	\fn void HdlTexture::getSizeOnGPU(void) const
+	\brief Returns the size of the texture in bytes for mipmap m, this function returns the same value as __ReadOnly_HdlTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
+	\param m The target mipmap level.
+	\return Returns the size of the texture in bytes.
+	**/
+	int HdlTexture::getSizeOnGPU(int m)
+	{
+		GLint s;
+
+		bind();
+
+		if(isCompressed())
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &s);
+		else
+		{
+			GLint rs, gs, bs, as, ls, is, ds, _w, _h, bytesPerPixel;
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_WIDTH,		&_w );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_HEIGHT,		&_h );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_RED_SIZE,		&rs );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_GREEN_SIZE,	&gs );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_BLUE_SIZE,	&bs );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_ALPHA_SIZE,	&as );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_LUMINANCE_SIZE,	&ls );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_INTENSITY_SIZE,	&is );
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_DEPTH_SIZE,	&ds );
+
+			bytesPerPixel = (rs+gs+bs+as+ls+is+ds)/8;
+			s = _w*_h*bytesPerPixel;
+		}
+
+		return static_cast<int>(s);
 	}
 
 	/**
@@ -474,12 +753,44 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
+	\fn void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth)
+	\brief Write compressed data to a texture using glCompressedTexImage2D method.
+	\param texData The pointer to the data.
+	\param size The size in bytes of the data.
+	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
+	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
+	**/
+	void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth)
+	{
+		if(pixelFormat==GL_ZERO)
+			pixelFormat = mode;
+
+		if(pixelDepth==GL_ZERO)
+			pixelDepth = depth;
+
+		// Bind it
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+		//write
+		//glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
+		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0,  static_cast<GLsizei>(size), texData);
+
+		if( getMaxLevel()>0 )
+			glGenerateMipmap(GL_TEXTURE_2D);
+	}
+
+	/**
 	\fn void HdlTexture::fill(char dataByte)
 	\brief Fill a texture will a gray level.
 	\param dataByte The gray level to apply.
 	**/
 	void HdlTexture::fill(char dataByte)
 	{
+		/*if(isCompressed())
+			throw Exception("HdlTexture::fill - Cannot be called on a compressed texture.", __FILE__, __LINE__);*/
+
 		bind();
 
 		char* tmp = new char[imgSize];
@@ -488,6 +799,123 @@ using namespace Glip::CoreGL;
 		write(tmp);
 
 		delete[] tmp;
+	}
+
+	/**
+	\fn GLenum HdlTexture::getInternalMode(void)
+	\brief Get the internal format of the texture. For an uncompressed texture the result is the same as getGLMode() but for a compressed texture it returns the real compression mode used.
+	\return The internal format of the texture.
+	**/
+	GLenum HdlTexture::getInternalMode(void)
+	{
+		bind();
+
+		GLint param;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &param);
+
+		return param;
+	}
+
+	bool HdlTexture::checkForConsistency(bool verbose)
+	{
+		GLint	glId;
+		GLint 	vMagFilter, vMinFilter, vBaseLevel, vMaxLevel, vSWrap, vTWrap, vMipmapGen, vWidth, vHeight, vMode, vBorder, vCompressed;
+		bool 	tMagFilter, tMinFilter, tBaseLevel, tMaxLevel, tSWrap, tTWrap, tMipmapGen, tWidth, tHeight, tMode, tBorder, tCompressed;
+
+		bind();
+
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &glId);
+
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	tMagFilter	= vMagFilter==getMagFilter();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	tMinFilter	= vMinFilter==getMinFilter();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);	tBaseLevel	= vBaseLevel==getBaseLevel();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);	tMaxLevel	= vMaxLevel==getMaxLevel();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);	tSWrap		= vSWrap==getSWrapping();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);	tTWrap		= vTWrap==getTWrapping();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, 			&vMipmapGen);	tMipmapGen	= (vMipmapGen>0 && getBaseLevel()>0) || (vMipmapGen==0 && getBaseLevel()==0);
+
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);	tWidth		= vWidth==getWidth();
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);	tHeight		= vHeight==getHeight();
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);	tMode		= vMode==getGLMode();
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);	tBorder		= vBorder==0;
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, 	&vCompressed);	tCompressed	= (vCompressed>0 && isCompressed()) || (vCompressed==0 && !isCompressed());
+
+                if(verbose)
+		{
+			std::cout << __HERE__ << "HdlTexture::checkForConsistency - Checking texture : " << getID() << " == " << glId << std::endl;
+
+			std::cout << "    - Width       : ";
+			if(tWidth)		std::cout << "OK (" << getWidth() << ')';
+			else			std::cout << "FAILED (API : " << getWidth() << "; GL : " << vWidth << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - Height      : ";
+			if(tHeight)		std::cout << "OK (" << getHeight() << ')';
+			else			std::cout << "FAILED (API : " << getHeight() << "; GL : " << vHeight << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - Mode        : ";
+			if(tMode)		std::cout << "OK (" << glParamName(getGLMode()) << ')';
+			else			std::cout << "FAILED (API : " << glParamName(getGLMode()) << "; GL : " << glParamName(vMode) << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - Compression : ";
+			if(tCompressed)		std::cout << "OK (" << isCompressed() << ')';
+			else			std::cout << "FAILED (API : " << isCompressed() << "; GL : " << vCompressed << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - MagFilter   : ";
+			if(tMagFilter)		std::cout << "OK (" << glParamName(getMagFilter()) << ')';
+			else			std::cout << "FAILED (API : " << glParamName(getMagFilter()) << "; GL : " << glParamName(vMagFilter) << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - MinFilter   : ";
+			if(tMinFilter)		std::cout << "OK (" << glParamName(getMinFilter()) << ')';
+			else			std::cout << "FAILED (API : " << glParamName(getMinFilter()) << "; GL : " << glParamName(vMinFilter) << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - BaseLevel   : ";
+			if(tBaseLevel)		std::cout << "OK (" << getBaseLevel() << ')';
+			else			std::cout << "FAILED (API : " << getBaseLevel() << "; GL : " << vBaseLevel << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - MaxLevel    : ";
+			if(tMaxLevel)		std::cout << "OK (" << getMaxLevel() << ')';
+			else			std::cout << "FAILED (API : " << getMaxLevel() << "; GL : " << vMaxLevel << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - SWrap       : ";
+			if(tSWrap)		std::cout << "OK (" << glParamName(getSWrapping()) << ')';
+			else			std::cout << "FAILED (API : " << glParamName(getSWrapping()) << "; GL : " << glParamName(vSWrap) << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - TWrap       : ";
+			if(tTWrap)		std::cout << "OK (" << glParamName(getTWrapping()) << ')';
+			else			std::cout << "FAILED (API : " << glParamName(getTWrapping()) << "; GL : " << glParamName(vTWrap) << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - MipMapGen   : ";
+			if(tMipmapGen)		std::cout << "OK (" << (getBaseLevel()>0) << ')';
+			else			std::cout << "FAILED (API : " << (getBaseLevel()>0) << "; GL : " << vMipmapGen << ')';
+			std::cout << std::endl;
+
+			std::cout << "    - Borders     : ";
+			if(tBorder)		std::cout << "OK (0)";
+			else			std::cout << "FAILED (API : 0; GL : " << vBorder << ')';
+			std::cout << std::endl;
+		}
+
+		return tMagFilter && tMinFilter && tBaseLevel && tMaxLevel && tSWrap && tTWrap && tMipmapGen && tWidth && tHeight && tMode && tBorder && tCompressed;
+	}
+
+	/**
+	\fn const __ReadOnly_HdlTextureFormat& HdlTexture::format(void) const
+	\brief Explicitly return a constant reference to a __ReadOnly_HdlTextureFormat object describing the format of this texture.
+	\return A constant reference to a __ReadOnly_HdlTextureFormat object.
+	**/
+	const __ReadOnly_HdlTextureFormat& HdlTexture::format(void) const
+	{
+		return *this;
 	}
 
 // Static tools

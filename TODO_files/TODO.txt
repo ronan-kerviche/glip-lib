@@ -1,5 +1,5 @@
 Project GLIP-LIB (OpenGL Image Processing Library)
-Current Version : 0.7
+Current Version : 0.8
 [X.X] represent the target version
 
 [0.6]  	Open FBO to multiple rendering target offered in OpenGL 3.0 (backward compatibility with OpenGL 2.1?).
@@ -118,7 +118,7 @@ Current Version : 0.7
 	Status : DONE
 
 [0.8]	Preparing Windows version for mingw
-	Status : TODO
+	Status : DONE
 
 [0.8]  	Namespace addition.
 	Status : CANCELED
@@ -145,24 +145,36 @@ Current Version : 0.7
 	Status : CANCELED
 
 [0.9]	Develop Input modules for procedural generation.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Multi-output for Input Device.
-	Status : TODO
+	Status : CANCELED
 
-[0.9]	Filter, fix line 260 to 262.
-	Status : TODO
+[0.9]	Filter.cpp, fix line 260 to 262.
+	Status : CHECKED
 
 [0.9] 	Prepare an exemple with a graph for the documentation.
 	Status : TODO
 
 [0.9]	Check security error : ComponentLayout::setInputPortName are public.
-	Status : TODO
+	Status : CHECKED
 
 [0.9]	Prepare exemple code and instruction inside the help files.
 	Status : TODO
 
 [0.9]	Add variable modifiers in main pipeline description.
+	Status : TODO
+
+[0.9]	Check functions __ReadOnly_hdlTextureFormat::getSWrapping and getTWrapping (returning a GLint?).
+	Status : CHECKED
+
+[0.9]	ShaderSource bug : first line and last line might be omitted when checking input and output.
+	Status : TODO
+
+[0.9]	Update pipeline size calculation with real texture size.
+	Status : TODO
+
+[0.9]	Add binding signals under __DEVELOPMENT_VERBOSE__ to protect against illegal re-binding.
 	Status : TODO
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.

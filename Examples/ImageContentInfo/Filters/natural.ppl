@@ -21,7 +21,7 @@ SHADER_SOURCE:shader()
 FILTER_LAYOUT:filter(format,shader);
 
 PIPELINE_MAIN:pMain()
-{
+{    
 	INPUT_PORTS(i0);
 	OUTPUT_PORTS(o0);
 	FILTER_INSTANCE:inst_filter(filter);

@@ -41,37 +41,48 @@
 			{
 				protected :
 					// Data
-					int    imgW, imgH, imgC, colSize, imgSize; // Image parameters
-					GLenum mode, depth, minFilter, magFilter;  // Image format and texture filtering
-					int    baseLevel, maxLevel;                // MipMap information
-					GLint  wraps, wrapt;                       // Wrapping modes
+					int	imgW, imgH, imgC, colSize, imgSize; // Image parameters
+					GLenum	mode, depth, minFilter, magFilter;  // Image format and texture filtering
+					int	baseLevel, maxLevel;                // MipMap information
+					GLint	wraps, wrapt;                       // Wrapping modes
 
 					// Protected tools :
-					int    getChannelCount(GLenum _mode)	const;
-					int    getChannelSize(GLenum _depth)	const;
-					GLenum getAliasMode(GLenum _mode)	const;
+					int	getChannelCount(GLenum _mode)			const;
+					int	getChannelSize(GLenum _depth)			const;
+					GLenum	getAliasMode(GLenum _mode)			const;
+					bool	isCompressedMode(GLenum _mode)			const;
+					GLenum	getCorrespondingCompressedMode(GLenum _mode)	const;
+					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 	const;
 					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
 					~__ReadOnly_HdlTextureFormat(void);
 
-					int    getWidth    	(void) const;
-					int    getHeight   	(void) const;
-					int    getChannel  	(void) const;
-				virtual int    getSize     	(void) const;
-					int    getChannelDepth  (void) const;
-					GLenum getGLMode   	(void) const;
-					GLenum getGLDepth  	(void) const;
-					GLenum getMinFilter	(void) const;
-					GLenum getMagFilter	(void) const;
-					int    getBaseLevel	(void) const;
-					int    getMaxLevel	(void) const;
-					GLint  getSWrapping	(void) const;
-					GLint  getTWrapping	(void) const;
+					int	getWidth    	(void) const;
+					int	getHeight   	(void) const;
+					int	getChannel  	(void) const;
+				virtual int	getSize     	(void) const;
+					int	getChannelDepth (void) const;
+					GLenum	getGLMode   	(void) const;
+					GLenum	getGLDepth  	(void) const;
+					GLenum	getMinFilter	(void) const;
+					GLenum	getMagFilter	(void) const;
+					int	getBaseLevel	(void) const;
+					int	getMaxLevel	(void) const;
+					GLint	getSWrapping	(void) const;
+					GLint	getTWrapping	(void) const;
+					bool	isCompressed	(void) const;
 
-					bool   operator==(const __ReadOnly_HdlTextureFormat&) const;
-					bool   operator!=(const __ReadOnly_HdlTextureFormat&) const;
+					bool	operator==(const __ReadOnly_HdlTextureFormat&) const;
+					bool	operator!=(const __ReadOnly_HdlTextureFormat&) const;
+
+					__ReadOnly_HdlTextureFormat getCompressedFormat(void) const;
+					__ReadOnly_HdlTextureFormat getUncompressedFormat(void) const;
+					bool	isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat&) const;
+
+					// Static Tools :
+					static 	int	getMaxSize(void);
 			};
 
 			// Texture Format Handle
@@ -113,16 +124,25 @@
 					// Data
 					GLuint texID;
 
+					// Functions
+					HdlTexture(const HdlTexture&);
+
 				public :
 					// Functions
 					HdlTexture(const __ReadOnly_HdlTextureFormat& fmt);
 					~HdlTexture(void);
 
-					GLuint getID     (void)  const;
-					void   bind(GLenum unit=GL_TEXTURE0_ARB);
-					void   bind(int unit);
-					void   write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);
-					void   fill(char dataByte);
+					GLuint	getID     (void)  const;
+					int	getSizeOnGPU(int m=0);
+					void	bind(GLenum unit=GL_TEXTURE0_ARB);
+					void	bind(int unit);
+					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);
+					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);
+					void	fill(char dataByte);
+					GLenum	getInternalMode(void);
+					bool	checkForConsistency(bool verbose = false);
+
+					const __ReadOnly_HdlTextureFormat& format(void) const;
 
 					// Static Textures tools
 					static void unbind(GLenum unit=GL_TEXTURE0_ARB);

@@ -158,6 +158,12 @@ using namespace Glip::CoreGL;
 	void HdlGeBO::bind(GLenum target)
 	{
 		if(target==GL_NONE) target = getTarget();
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			if(binding[getIDTarget(target)])
+				std::cout << __HERE__ << "HdlGeBO::bind - Rebinding over : " << glParamName(target) << std::endl;
+		#endif
+
 		glBindBuffer(target, bufferId);
 		binding[getIDTarget(target)] = true;
 	}

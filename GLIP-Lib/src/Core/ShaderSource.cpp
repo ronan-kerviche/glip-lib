@@ -246,6 +246,9 @@
 				global1 += source[i];
 		}
 
+		if(global1.empty())
+			return ;
+
 		// Remove all parenthesis
 		for(int i=0; i<global1.length(); i++)
 		{
@@ -264,6 +267,9 @@
 				global2 += global1[i];
 		}
 
+		if(global2.empty())
+			return ;
+
 		// Remove all commentaries
 		for(int i=0; i<global2.length()-1; i++)
 		{
@@ -278,21 +284,27 @@
 				i++;
 			}
 			else if(global2[i]=='/' && global2[i+1]=='/')
-				while(global2[i]!='\n') i++;
+				while(global2[i]!='\n' && i<global2.length()-1) i++;
 			else
 				global3 += global2[i];
 		}
+
+		if(global3.empty())
+			return ;
 
 		// Remove all macros
 		for(int i=0; i<global3.length()-1; i++)
 		{
 			if(global3[i]=='#')
-				while(global3[i]!='\n') i++;
+				while(global3[i]!='\n' && i<global3.length()-1) i++;
 			else
 				global4 += global3[i];
 		}
 
-		// cut in phrases along the ;
+		if(global4.empty())
+			return ;
+
+		// cut in parts along the ;
 		std::vector<std::string> cutting;
 		one = two = 0;
 		while((two=global4.find_first_of(';', one))!=std::string::npos)

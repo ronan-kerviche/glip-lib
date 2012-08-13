@@ -81,6 +81,11 @@ using namespace Glip::CoreGL;
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << __HERE__ << "Attaching texture to FBO : " << std::endl;
+			glErrors(true, false);
+		#endif
 	}
 
 	void HdlFBO::unbindTextureFromFBO(int i)

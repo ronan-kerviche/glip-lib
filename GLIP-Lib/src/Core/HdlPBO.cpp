@@ -28,7 +28,7 @@ using namespace Glip::CoreGL;
 
 // Tools
 	/**
-	\fn HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq)
+	\fn HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size)
 	\brief HdlPBO constructor.
 	\param _w The width of the buffer.
 	\param _h The height of the buffer.
@@ -36,10 +36,25 @@ using namespace Glip::CoreGL;
 	\param _cs The size of each channel (in bytes).
 	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	\param size The size of the buffer, computed by default with previous parameters.
 	**/
-	HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq)
-	 : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO(_w*_h*_c*_cs, aim, freq)
+	HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size)
+	 : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO((size<0)?(_w*_h*_c*_cs):size, aim, freq)
 	{ }
+
+	/**
+	\fn HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
+	\brief HdlPBO constructor.
+	\param fmt The format to copy, this must an uncompressed format.
+	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	**/
+	HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
+	 : h(fmt.getHeight()), w(fmt.getWidth()), c(fmt.getChannel()), cs(fmt.getChannelDepth()), HdlGeBO(fmt.getSize(), aim, freq)
+	{
+		if(fmt.isCompressed())
+			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on __ReadOnly_HdlTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
+	}
 
 	HdlPBO::~HdlPBO(void)
 	{ }
@@ -83,8 +98,29 @@ using namespace Glip::CoreGL;
 
 		#ifdef __VERBOSE__
 			if(glErrors(true, false))
-				throw Exception("HdlPBO::copyToTexture - You must write at least in the target texture before using this function.", __FILE__, __LINE__);
+				if(texture.isCompressed())
+					throw Exception("HdlPBO::copyToTexture - Writing into a compressed texture from a PBO : make sure that the data in the PBO is compressed too.", __FILE__, __LINE__);
+				else
+					throw Exception("HdlPBO::copyToTexture - You must write at least in the target texture before using this function.", __FILE__, __LINE__);
 		#endif
+	}
+
+	/**
+	\fn void HdlPBO::bindAsPack(void)
+	\brief Bind PBO to GL_PIXEL_PACK_BUFFER, to gather data from a buffer or a texture.
+	**/
+	void HdlPBO::bindAsPack(void)
+	{
+		bind(GL_PIXEL_PACK_BUFFER_ARB);
+	}
+
+	/**
+	\fn void HdlPBO::bindAsUnpack(void)
+	\brief Bind PBO to GL_PIXEL_UNPACK_BUFFER, to send data to a buffer or a texture.
+	**/
+	void HdlPBO::bindAsUnpack(void)
+	{
+		bind(GL_PIXEL_UNPACK_BUFFER_ARB);
 	}
 
 //Other tools

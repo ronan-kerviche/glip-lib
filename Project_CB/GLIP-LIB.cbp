@@ -82,6 +82,7 @@
 		<Unit filename="../GLIP-Lib/include/GLIPLib.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/LayoutLoader.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/Modules.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/ProceduralInput.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/TextureReader.hpp" />
 		<Unit filename="../GLIP-Lib/include/devDebugTools.hpp" />
 		<Unit filename="../GLIP-Lib/src/Core/Component.cpp" />
@@ -103,6 +104,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../GLIP-Lib/src/Modules/LayoutLoader.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/ProceduralInput.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.cpp" />
 		<Extensions>
 			<code_completion />

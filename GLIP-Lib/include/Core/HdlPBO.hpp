@@ -41,6 +41,7 @@
 		{
 
 			// prototypes :
+			class __ReadOnly_HdlTextureFormat;
 			class HdlTexture;
 			class HdlFBO;
 
@@ -57,7 +58,8 @@
 
 				public :
 					// Tools
-					HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq);
+					HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size=-1);
+					HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq);
 					~HdlPBO(void);
 
 					int  getWidth(void);
@@ -65,6 +67,8 @@
 					int  getChannelCount(void);
 					int  getChannelSize(void);
 					void copyToTexture(HdlTexture& texture, int oX=0, int oY=0, int w=-1, int h=-1, GLenum mode=GL_NONE, GLenum depth=GL_NONE);
+					void bindAsPack(void);
+					void bindAsUnpack(void);
 
 					//Static tools
 					static void unbind(GLenum target=0);

@@ -56,7 +56,7 @@ namespace Glip
 		// Structure
 		/**
 		\class TextureReader
-		\brief Copy data back from GPU memory to CPU memory
+		\brief Copy data back from GPU memory to CPU memory (textures must not be compressed on GPU side)
 		**/
 		class TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
@@ -81,7 +81,7 @@ namespace Glip
 
 		/**
 		\class PBOTextureReader
-		\brief Copy data back from GPU memory to CPU memory using a PBO (fast method)
+		\brief Copy data back from GPU memory to CPU memory using a PBO (textures must not be compressed on GPU side)
 		**/
 		class PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
 		{
@@ -99,6 +99,48 @@ namespace Glip
 				using __ReadOnly_HdlTextureFormat::getWidth;
 				using __ReadOnly_HdlTextureFormat::getHeight;
 				using __ReadOnly_HdlTextureFormat::getSize;
+		};
+
+		/**
+		\class CompressedTextureReader
+		\brief Raw copy of data, back from GPU memory to CPU memory for compressed textures.
+		**/
+		class CompressedTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		{
+			private :
+				char* data;
+				int size;
+
+			protected :
+				void process(HdlTexture& t);
+
+			public :
+				CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
+				~CompressedTextureReader(void);
+
+				int	getSize(void) const;
+				char*	getData(void) const;
+				char&	operator[](int i);
+		};
+
+		/**
+		\class TextureCopier
+		\brief Copy data from texture to texture. Will also perform compression/decompression on the fly according to the input and output formats.
+		**/
+		class TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		{
+			private :
+				HdlTexture	*tex;
+				HdlPBO		*pbo;
+
+			protected :
+				void process(HdlTexture& t);
+
+			public :
+				TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut);
+				~TextureCopier(void);
+
+				HdlTexture& texture(void);
 		};
 	}
 }
