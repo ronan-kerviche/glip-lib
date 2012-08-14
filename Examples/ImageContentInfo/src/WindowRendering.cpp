@@ -1,3 +1,18 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE 			                                                         */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : WindowRendering.cpp                                                                       */
+/*     Original Date : September 1st 2011                                                                        */
+/*                                                                                                               */
+/*     Description   : Qt Widget for rendering textures                                                          */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
 
 // Includes
 	#include "WindowRendering.hpp"
@@ -47,7 +62,7 @@
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
-		//glScalef(2.0,2.0,1.0);
+
 		t.bind();
 		vbo->draw();
 		swapBuffers();

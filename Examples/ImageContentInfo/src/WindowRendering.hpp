@@ -1,3 +1,19 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE 			                                                         */
+/*     LICENSE       : GPLv3                                                                                     */
+/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*                                                                                                               */
+/*     File          : WindowRendering.hpp                                                                       */
+/*     Original Date : September 1st 2011                                                                        */
+/*                                                                                                               */
+/*     Description   : Qt Widget for rendering textures                                                          */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
 #ifndef __GLIPLIB_WINDOW_RENDERER__
 #define __GLIPLIB_WINDOW_RENDERER__
 

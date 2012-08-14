@@ -276,7 +276,7 @@
 	TextureCopier::TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut)
 	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(formatOut), tex(NULL), pbo(NULL)
 	{
-		if(!( formatIn.isCorrespondingCompressedFormat(formatOut) || formatOut.isCorrespondingCompressedFormat(formatIn) || formatIn==formatOut))
+		if(!( formatIn.isCorrespondingCompressedFormat(formatOut) || formatOut.isCorrespondingCompressedFormat(formatIn) || formatIn.isCompatibleWith(formatOut)))
 			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though).", __FILE__, __LINE__);
 
 		if(!formatIn.isCompressed())
@@ -293,7 +293,7 @@
 
 	void TextureCopier::process(HdlTexture& t)
 	{
-		if(!( t.isCorrespondingCompressedFormat(*this) || isCorrespondingCompressedFormat(t) || *this==t ))
+		if(!( t.isCorrespondingCompressedFormat(*this) || isCorrespondingCompressedFormat(t) || isCompatibleWith(t) ))
 			throw Exception("TextureCopier::process - Can not read texture having different layout format.", __FILE__, __LINE__);
 
 		int tsize = t.getSizeOnGPU();

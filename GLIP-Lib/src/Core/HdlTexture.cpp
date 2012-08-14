@@ -31,7 +31,7 @@ using namespace Glip::CoreGL;
 
 // HdlTextureFormat - Functions
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
+	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	\brief __ReadOnly_HdlTextureFormat Construtor.
 
 	\param w           Width of the texture.
@@ -40,17 +40,17 @@ using namespace Glip::CoreGL;
 	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
 	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
 	\param _magFilter  Magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _baseLevel  Base for the mipmaps (default is 0).
+	\param _maxLevel   Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
-	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
-	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter)
+	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), wraps(_wraps), wrapt(_wrapt), baseLevel(_baseLevel), maxLevel(_maxLevel)
 	{
 		imgC      = getChannelCount(mode);
 		colSize   = getChannelSize(depth);
 		imgSize   = imgW*imgH*imgC*colSize;
-		baseLevel = 0;
-		maxLevel  = 0;
-		wraps     = GL_CLAMP;
-		wrapt     = GL_CLAMP;
 	}
 
 	/**
@@ -440,6 +440,24 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
+	\fn    __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const
+	\brief Returns true if the two formats share the same memory characteristics (sizes, number of channels, byte per pixel, internal GL mode, same mipmap levels).
+	\param f Format to be compared with this.
+	**/
+	bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat& f) const
+	{
+		return  (imgW		== f.imgW)      &&
+			(imgH		== f.imgH)      &&
+			(imgC		== f.imgC)      &&
+			(colSize	== f.colSize)   &&
+			(imgSize	== f.imgSize)   &&
+			(mode		== f.mode)      &&
+			(depth		== f.depth)     &&
+			(baseLevel	== f.baseLevel) &&
+			(maxLevel	== f.maxLevel);
+	}
+
+	/**
 	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
 	\brief Returns the __ReadOnly_HdlTextureFormat object identical to this, but mode is set to the corresponding compressed format.
 	**/
@@ -473,7 +491,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
-	\brief Returns true if this and f share the same parameter except that the mode for f is the corresponding compressed mode of this.
+	\brief Returns true if this and f share the same memory parameters except that the mode for f is the corresponding compressed mode of this.
 	\param f Format to be compared with this.
 	**/
 	bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
@@ -484,12 +502,8 @@ using namespace Glip::CoreGL;
 				(colSize	== f.colSize)   &&
 				(imgSize	== f.imgSize)   &&
 				(depth		== f.depth)     &&
-				(minFilter	== f.minFilter) &&
-				(magFilter	== f.magFilter) &&
 				(baseLevel	== f.baseLevel) &&
-				(maxLevel	== f.maxLevel)  &&
-				(wraps		== f.wraps)     &&
-				(wrapt		== f.wrapt);
+				(maxLevel	== f.maxLevel);
 
 		return test && (f.mode==getCorrespondingCompressedMode(mode));
 	}
@@ -506,7 +520,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
+	\fn    HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	\brief HdlTextureFormat Construtor.
 
 	\param w           Width of the texture.
@@ -515,9 +529,13 @@ using namespace Glip::CoreGL;
 	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
 	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
 	\param _magFilter  Magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _baseLevel  Base for the mipmaps (default is 0).
+	\param _maxLevel   Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
-	HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter)
-	 : __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter)
+	HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	 : __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter, _wraps, _wrapt, _baseLevel, _maxLevel)
 	{ }
 
 	/**
@@ -722,6 +740,25 @@ using namespace Glip::CoreGL;
 	{
 		bind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
 	}
+
+	/**
+	\fn    void HdlTexture::setMinFilter(GLenum mf)
+	\brief Sets the texture's minification parameter.
+	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\fn    void HdlTexture::setMagFilter(GLenum mf)
+	\brief Sets the texture's magnification parameter.
+	\param mf The new magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\fn    void HdlTexture::setSWrapping(GLint m)
+	\brief Sets the texture's S wrapping parameter.
+	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
+	\fn    void HdlTexture::setTWrapping(GLint m)
+	\brief Sets the texture's T wrapping parameter.
+	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
+	**/
+	void HdlTexture::setMinFilter(GLenum mf)	{ minFilter = mf; bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );}
+	void HdlTexture::setMagFilter(GLenum mf)	{ magFilter = mf; bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getMagFilter() );}
+	void HdlTexture::setSWrapping(GLint m)		{ wraps     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     getSWrapping() );}
+	void HdlTexture::setTWrapping(GLint m)		{ wrapt     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     getTWrapping() );}
 
 	/**
 	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)

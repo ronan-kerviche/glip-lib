@@ -92,9 +92,11 @@
 	{
 		static int i = 0;
 		static int j = 3;
+		//static TextureReader reader("Reader", p2->out(0).format());
 
 		if(i==100)
 		{
+			throw Exception("Stop");
 			std::cout << "> Reset" << std::endl;
 			//reset :
 			#define __RADOM_GEN__
@@ -123,6 +125,30 @@
 				(*p1) << p2->out(0) << Pipeline::Process;
 				(*window) <<  p1->out(0);
 			}
+
+			/*reader.yFlip = true;
+			if(i%2==0)
+				reader << p2->out(0);
+			else
+				reader << p1->out(0);
+
+			// Create an image with Qt
+			QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
+
+			QRgb value;
+			double r, g, b;
+			for(int y=0; y<reader.getHeight(); y++)
+			{
+				for(int x=0; x<reader.getWidth(); x++)
+				{
+					r = static_cast<unsigned char>(reader(x,y,0)*255.0);
+					g = static_cast<unsigned char>(reader(x,y,1)*255.0);
+					b = static_cast<unsigned char>(reader(x,y,2)*255.0);
+					value = qRgb(r, g, b);
+					image.setPixel(x, y, value);
+				}
+			}
+			image.save(QString("img_%1.png").arg(i));*/
 		}
 
 		i++;

@@ -53,7 +53,7 @@
 					bool	isCompressedMode(GLenum _mode)			const;
 					GLenum	getCorrespondingCompressedMode(GLenum _mode)	const;
 					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 	const;
-					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
+					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
@@ -77,6 +77,8 @@
 					bool	operator==(const __ReadOnly_HdlTextureFormat&) const;
 					bool	operator!=(const __ReadOnly_HdlTextureFormat&) const;
 
+					bool	isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const;
+
 					__ReadOnly_HdlTextureFormat getCompressedFormat(void) const;
 					__ReadOnly_HdlTextureFormat getUncompressedFormat(void) const;
 					bool	isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat&) const;
@@ -94,7 +96,7 @@
 			{
 				public :
 					// reproduce constructor :
-					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter);
+					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt);
 
 					// Writing Functions
@@ -141,6 +143,10 @@
 					void	fill(char dataByte);
 					GLenum	getInternalMode(void);
 					bool	checkForConsistency(bool verbose = false);
+					void	setMinFilter(GLenum mf);
+					void	setMagFilter(GLenum mf);
+					void	setSWrapping(GLint m);
+					void	setTWrapping(GLint m);
 
 					const __ReadOnly_HdlTextureFormat& format(void) const;
 

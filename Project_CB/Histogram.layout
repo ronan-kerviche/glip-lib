@@ -2,7 +2,7 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../Examples/Histogram/src/WindowRendering.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="657" topLine="0" />
+		<Cursor position="687" topLine="0" />
 	</File>
 	<File name="../Examples/Histogram/src/header.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="734" topLine="9" />
