@@ -25,8 +25,8 @@
 #define __DEV_DEBUG_TOOLS__
 
 	// Development flags
-		//#define __VERBOSE__
-		//#define __DEVELOPMENT_VERBOSE__
+		#define __VERBOSE__
+		#define __DEVELOPMENT_VERBOSE__
 
 	// Tools
 		#define STR_EXPAND(tok) 	#tok

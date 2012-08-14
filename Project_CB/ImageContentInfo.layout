@@ -2,16 +2,16 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../Examples/ImageContentInfo/src/WindowRendering.cpp" open="0" top="0" tabpos="5">
-		<Cursor position="853" topLine="7" />
+		<Cursor position="391" topLine="1" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/WindowRendering.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="244" topLine="0" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/imageContentInfo.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="4364" topLine="128" />
+		<Cursor position="1794" topLine="54" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/imageContentInfo.hpp" open="0" top="0" tabpos="2">
-		<Cursor position="689" topLine="11" />
+		<Cursor position="701" topLine="0" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/main.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="65" topLine="0" />

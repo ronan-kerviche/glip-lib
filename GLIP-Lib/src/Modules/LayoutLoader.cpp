@@ -187,7 +187,7 @@
 			if(next_pos==std::string::npos) next_pos = max_pos;
 			res.push_back(code.substr(current_pos,next_pos-current_pos));
 			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "    Arg : " << res.back() << std::endl;
+				std::cout << "        Arg : " << res.back() << std::endl;
 			#endif
 			current_pos = next_pos+1;
 		}
@@ -216,8 +216,8 @@
 			pos_ac = 0;
 
 		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Source : " << source << std::endl;
-			std::cout << "Path   : " << path << std::endl;
+			//std::cout << "    Source : " << source << std::endl;
+			std::cout << "    Path   : " << path << std::endl;
 		#endif
 
 		pos_sc = source.find(';', current_pos);
@@ -256,9 +256,11 @@
 
 			// Process line
 			int working = 0;
-			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Line before : "<< line << std::endl;
-			#endif
+
+			//#ifdef __DEVELOPMENT_VERBOSE__
+				//std::cout << "Line before : "<< line << std::endl;
+			//#endif
+
 			for(std::string::iterator it=line.begin() ; it<line.end(); it++)
 			{
 				if( *it=='{' ) working++;
@@ -266,9 +268,9 @@
 				if( (*it==' ' || *it=='\t' || *it=='\n' || *it=='\r') && working==0) it = line.erase(it) - 1;
 			}
 
-			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Line after : " << line << std::endl;
-			#endif
+			//#ifdef __DEVELOPMENT_VERBOSE__
+				//std::cout << "Line after : " << line << std::endl;
+			//#endif
 
 			// Find the first element of the line :
 			size_t nameDelim = line.find(':');
@@ -285,10 +287,10 @@
 				LoaderKeyword key = getKeyword(type);
 
 				#ifdef __DEVELOPMENT_VERBOSE__
-					std::cout << "Type : " << type << std::endl;
-					std::cout << "Name : " << name << std::endl;
-					std::cout << "Code : " << code << std::endl;
-					std::cout << "Key  : " << key << std::endl;
+					std::cout << "    Type : " << type << std::endl;
+					std::cout << "    Name : " << name << std::endl;
+					//std::cout << "    Code : " << code << std::endl;
+					std::cout << "    Key  : " << key << std::endl;
 				#endif
 
 				if(slave && key==PIPELINE_MAIN)
@@ -306,10 +308,10 @@
 				LoaderKeyword key = getKeyword(type);
 
 				#ifdef __DEVELOPMENT_VERBOSE__
-					std::cout << "Type : " << type << std::endl;
-					std::cout << "NO Name"<< std::endl;
-					std::cout << "Code : " << code << std::endl;
-					std::cout << "Key  : " << key << std::endl;
+					std::cout << "    Type : " << type << std::endl;
+					std::cout << "    NO Name"<< std::endl;
+					//std::cout << "    Code : " << code << std::endl;
+					std::cout << "    Key  : " << key << std::endl;
 				#endif
 
 				if(key!=INCLUDE_FILE)
@@ -322,7 +324,7 @@
 				{
 					std::vector<std::string> arg = getArguments(code);
 					#ifdef __VERBOSE__
-						std::cout << "Changing filepath to : " << path << arg[0] << std::endl;
+						std::cout << "    Changing filepath to : " << path << arg[0] << std::endl;
 					#endif
 					entryCode.push_back("("+path+arg[0]+")");
 				}
@@ -516,7 +518,7 @@
 			std::string line = code.substr(current_pos, next_pos-current_pos);
 
 			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Line : " << line << std::endl;
+				std::cout << "    Line : " << line << std::endl;
 			#endif
 
 			// Extract info from the line :
@@ -682,6 +684,10 @@
 	{
 		// Doesn't check for cylclic inclusion!
 
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "LayoutLoader::operator() - Loading source." << std::endl;
+		#endif
+
 		try
 		{
 			// doesn't include previously loaded items :
@@ -700,7 +706,7 @@
 						throw Exception("LayoutLoader::operator() - Too much arguments for INCLUDE_FILE", __FILE__, __LINE__);
 
 					#ifdef __DEVELOPMENT_VERBOSE__
-						std::cout << "Including file : " << arg[0] << std::endl;
+						std::cout << "    Including file : " << arg[0] << std::endl;
 					#endif
 
 					// Create new loader :
@@ -716,7 +722,7 @@
 			}
 
 			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Num contents : " << entryType.size() << std::endl;
+				std::cout << "    Num contents : " << entryType.size() << std::endl;
 			#endif
 
 			// Remove any corresponding double (meaning that a file was loaded from two separate locations) :
@@ -796,6 +802,10 @@
 			Exception m("LayoutLoader::operator() - Caught an exception while building pipeline layout.", __FILE__, __LINE__);
 			throw m+e;
 		}
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "LayoutLoader::operator() - Done." << std::endl;
+		#endif
 	}
 
 	void LayoutLoader::writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name)

@@ -72,8 +72,7 @@ using namespace Glip::CoreGL;
 		buildUsage  = infoUsage;
 
 		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "New GeBO, errors : " << std::endl;
-			glErrors(true, false);
+			std::cout << "HdlGeBO::HdlGeBO - New GeBO, errors : "; glErrors(true, false);
 		#endif
 	}
 
@@ -90,8 +89,9 @@ using namespace Glip::CoreGL;
 	 : size(_size)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
-		std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
+			std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
 		#endif
+
 		// Just copy the link
 		bufferId = id;
 
@@ -191,19 +191,22 @@ using namespace Glip::CoreGL;
 		}
 
 		#ifdef __DEVELOPMENT_VERBOSE__
+			std::cout << "HdlGeBO::map - Infos : " << std::endl;
+			std::cout << "    glDebug : " << std::endl;
 			glDebug();
 		#endif
 
 		HdlGeBO::unmap(target);
 
 		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
+			std::cout << "    Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
 		#endif
 
 		bind(target);
 
 		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Bind : "; glErrors(true, false);
+			std::cout << "    Bind : "; glErrors(true, false);
+			std::cout << "HdlGeBO::map - Done." << std::endl;
 		#endif
 
 		mapping[getIDTarget(target)] = true;
@@ -274,8 +277,9 @@ using namespace Glip::CoreGL;
 			glUnmapBuffer(target);
 			mapping[getIDTarget(target)] = false;
 			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "HdlGeBO::unmap - Infos" << std::endl;
 				glDebug();
-				glErrors(true, false);
+				std::cout << "    "; glErrors(true, false);
 			#endif
 		}
 	}

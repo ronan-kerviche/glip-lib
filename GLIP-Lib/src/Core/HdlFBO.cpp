@@ -45,9 +45,13 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glDrawBuffers, glDrawBuffersARB)
 		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
 
+		if(isCompressed())
+			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + glParamName(getGLMode()) + ".", __FILE__, __LINE__);
+
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << __HERE__ << "Disabling Depth buffer." << std::endl;
 		#endif
+
 		glDisable(GL_DEPTH_TEST);
 
 		glGenFramebuffers(1, &fboID);
