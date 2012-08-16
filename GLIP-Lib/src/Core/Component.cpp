@@ -125,6 +125,11 @@
 		{
 			return getIndexByName(name, inputPortDescription);
 		}
+		catch(Exception& e)
+		{
+			Exception m("__ReadOnly_ComponentLayout::getInputPortID - caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("__ReadOnly_ComponentLayout::getInputPortID - caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
@@ -188,6 +193,11 @@
 		try
 		{
 			return getIndexByName(name, outputPortDescription);
+		}
+		catch(Exception& e)
+		{
+			Exception m("__ReadOnly_ComponentLayout::getOutputPortID - caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{

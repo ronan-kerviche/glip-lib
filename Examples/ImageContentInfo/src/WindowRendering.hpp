@@ -36,6 +36,8 @@
 			HdlVBO *vbo;
 
 		public :
+			bool xFlip, yFlip;
+
 			WindowRenderer(QWidget* parent, int w, int h, double _fmtImg=-1);
 			~WindowRenderer(void);
 

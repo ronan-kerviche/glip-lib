@@ -18,7 +18,8 @@
 	#include "WindowRendering.hpp"
 
 // Class
-	WindowRenderer::WindowRenderer(QWidget* parent, int w, int h, double _fmtImg) : QGLWidget(parent), OutputDevice("Display")
+	WindowRenderer::WindowRenderer(QWidget* parent, int w, int h, double _fmtImg)
+	 : QGLWidget(parent), OutputDevice("Display"), xFlip(false), yFlip(false)
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -35,6 +36,11 @@
 		try
 		{
 			vbo = HdlVBO::generate2DStandardQuad();
+		}
+		catch(Exception& e)
+		{
+			Exception m("WindowRenderer::WindowRenderer - Error while creating geometry", __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{
@@ -62,6 +68,9 @@
 		glClearColor(0.0,0.0,0.0,1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
+
+		if(xFlip)	glScalef(-1.0f,  1.0f, 1.0f);
+		if(yFlip)	glScalef( 1.0f, -1.0f, 1.0f);
 
 		t.bind();
 		vbo->draw();

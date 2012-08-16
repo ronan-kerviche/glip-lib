@@ -224,6 +224,11 @@
 			fragmentShader = new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
 			program        = new HdlProgram(*vertexShader, *fragmentShader);
 		}
+		catch(Exception& e)
+		{
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
@@ -236,10 +241,18 @@
 			for(int i=0; i<getNumInputPort(); i++)
 				program->modifyVar(getInputPortName(i), HdlProgram::SHADER_VAR, i);
 
-			for(int i=0; i<getNumOutputPort(); i++)
-				program->setFragmentLocation(getOutputPortName(i), i);
+			if(!fragmentShader->requiresCompatibility())
+			{
+				for(int i=0; i<getNumOutputPort(); i++)
+					program->setFragmentLocation(getOutputPortName(i), i);
+			}
 
 			program->stopProgram();
+		}
+		catch(Exception& e)
+		{
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{
@@ -252,14 +265,21 @@
 			// Create a basic geometry :
 			vbo = HdlVBO::generate2DStandardQuad();
 		}
+		catch(Exception& e)
+		{
+			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
+		}
 		catch(std::exception& e)
 		{
 			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
 		}
 
 		// Set up the data on the program :
-		for(int i=0; i<getNumInputPort(); i++)
-			program->setFragmentLocation(getInputPortName(i), i);
+		if(!fragmentShader->requiresCompatibility())
+		{
+			for(int i=0; i<getNumInputPort(); i++)
+				program->setFragmentLocation(getInputPortName(i), i);
+		}
 	}
 
 	Filter::~Filter(void)

@@ -113,7 +113,7 @@
 						HdlPBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
 						pbo.copyToTexture(*text);
 					}
-					catch(std::exception& e)
+					catch(Exception& e)
 					{
 						QMessageBox::information(NULL, tr("Error while build texture from PBO : "), e.what());
 						std::cout << "Error while build texture from PBO : " << filename.toUtf8().constData() << std::endl;
@@ -122,6 +122,7 @@
 						text = NULL;
 						return ;
 					}
+
 				#endif
 
 				delete image;

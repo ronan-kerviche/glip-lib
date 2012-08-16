@@ -35,24 +35,11 @@
 	Exception::Exception(const std::string& m, std::string f, unsigned int l)
 	 : msg(m), filename(f), line(l)
 	{
-		completeMsg = '[';
-
 		if(filename!="")
 		{
 			size_t p = filename.rfind('/');
 			filename = filename.substr(p+1);
-			completeMsg += filename;
-			completeMsg += ", ";
 		}
-
-
-		if(line!=0)
-		{
-			completeMsg += to_string(line);
-		}
-
-		completeMsg += "] ";
-		completeMsg += msg;
 	}
 
 	/**
@@ -61,7 +48,7 @@
 	\param e Copy.
 	**/
 	Exception::Exception(const Exception& e)
-	 : msg(e.msg), filename(e.filename), line(e.line), completeMsg(e.completeMsg)
+	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors)
 	{ }
 
 	Exception::~Exception(void) throw()
@@ -74,6 +61,36 @@
 	**/
 	const char* Exception::what(void) const throw()
 	{
+		std::string completeMsg;
+
+		int nMessages = subErrors.size() + 1;
+
+		std::string h = header();
+
+		if(nMessages==1)
+		{
+			if(h!="")
+				completeMsg += "[ " + h + " ] " + msg;
+			else
+				completeMsg += msg;
+		}
+		else
+		{
+			if(h!="")
+				completeMsg += "[ 1 | " + h + " ] " + msg + "\n";
+			else
+				completeMsg += "[ 1 ] " + msg + "\n";
+
+			for(int i=subErrors.size()-1; i>=0; i--)
+			{
+				std::string he = subErrors[i].header();
+				if(he!="")
+					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " | " + he + " ] " + subErrors[i].msg + "\n";
+				else
+					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " ] " + subErrors[i].msg + "\n";
+			}
+		}
+
 		return completeMsg.c_str();
 	}
 
@@ -107,6 +124,19 @@
 		return line;
 	}
 
+	std::string Exception::header(void) const throw()
+	{
+		if(filename=="")
+			return "";
+		else
+		{
+			if(line!=0)
+				return filename + "; " + to_string(line);
+			else
+				return filename;
+		}
+	}
+
 	/**
 	\fn const Exception& Exception::operator+(const std::exception& e)
 	\brief Add the mesages of two exceptions.
@@ -115,21 +145,51 @@
 	**/
 	const Exception& Exception::operator+(const std::exception& e)
 	{
-		std::string str(e.what());
-
-		size_t beg = 0;
-
-		while((beg = str.find('\n', beg))!=std::string::npos)
-		{
-			beg++;
-			str.insert(beg, 1, '\t'); // insert one TAB after the END-OF-LINE
-		}
-
-		msg += "\n";
-		msg += str;
-
-		completeMsg += "\n";
-		completeMsg += str;
+		subErrors.push_back(Exception(e.what()));
+		std::cout << "std::exception!" << std::endl;
+		subErrors.push_back(Exception("<std::exception>"));
 
 		return *this;
+	}
+
+	/**
+	\fn const Exception& Exception::operator+(const Exception& e)
+	\brief Add the mesages of two exceptions.
+	\param e The original Exception.
+	\return This exception message followed by the original exception message.
+	**/
+	const Exception& Exception::operator+(const Exception& e)
+	{
+		if(!e.subErrors.empty());
+			subErrors.insert( subErrors.begin(), e.subErrors.begin(), e.subErrors.end() );
+
+		subErrors.push_back(e);
+		subErrors.back().subErrors.clear();
+
+		return *this;
+	}
+
+	/**
+	\fn int Exception::numSubError(void) const throw();
+	\brief Get the number of sub-error embedded.
+	\return The number of sub-error embedded.
+	**/
+	int Exception::numSubError(void) const throw()
+	{
+		return subErrors.size();
+	}
+
+	/**
+	\fn const Exception& Exception::subError(int i)
+	\brief Return the sub-error at index i.
+	\param i The index of the sub-error.
+	\return Return the sub-error corresponding at index i or raise an error if the index is invalid.
+	**/
+	const Exception& Exception::subError(int i)
+	{
+		if(i<0 || i>numSubError())
+			throw Exception("Exception::subError - Index out of bounds (" + to_string(i) + " out of [0;" + to_string(numSubError()) + "].", __FILE__, __LINE__);
+
+		else
+			return subErrors[i];
 	}

@@ -240,6 +240,7 @@
 					std::string sourceName;
 					std::vector<std::string> inVars;
 					std::vector<std::string> outVars;
+					bool compatibilityRequest;
 
 					// Tools
 					std::string getLine(int l);
@@ -257,6 +258,7 @@
 					const std::string& getSourceName(void) const;
 					const char*        getSourceCstr(void) const;
 					std::string        errorLog(std::string log);
+					bool		   requiresCompatibility(void) const;
 
 					const std::vector<std::string>& getInputVars(void);
 					const std::vector<std::string>& getOutputVars(void);

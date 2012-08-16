@@ -275,6 +275,22 @@ using namespace Glip::CoreGL;
 		}
 	}
 
+	bool __ReadOnly_HdlTextureFormat::isFloatingPointMode(GLenum _mode, GLenum _depth) const
+	{
+		if(_depth==GL_FLOAT)
+										return true;
+		switch(_mode)
+		{
+			case GL_RGB32F					:
+			case GL_RGB16F					:
+			case GL_RGBA32F					:
+			case GL_RGBA16F					:
+										return true;
+			default :
+										return false;
+		}
+	}
+
 	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingCompressedMode(GLenum _mode) const
 	{
 		if(isCompressedMode(_mode))
@@ -391,6 +407,8 @@ using namespace Glip::CoreGL;
 	\brief Returns the texture's T wrapping parameter.
 	\fn    bool __ReadOnly_HdlTextureFormat::isCompressed(void) const
 	\brief Returns true if the texture is compressed.
+	\fn    bool __ReadOnly_HdlTextureFormat::isFloatingPointMode(void) const
+	\brief Returns true if the texture is of floatting point type.
 	**/
 	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
 	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
@@ -406,6 +424,7 @@ using namespace Glip::CoreGL;
 	GLint	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
 	GLint	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
 	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return isCompressedMode(mode); }
+	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return isFloatingPointMode(mode, depth); }
 
 	/**
 	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
@@ -636,8 +655,12 @@ using namespace Glip::CoreGL;
 		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
 		NEED_EXTENSION(GLEW_ARB_texture_non_power_of_two)
 		NEED_EXTENSION(GLEW_ARB_texture_rectangle)
-		NEED_EXTENSION(GLEW_ARB_texture_float)
-		NEED_EXTENSION(GLEW_ARB_texture_compression);
+
+		if(isFloatingPoint())
+			NEED_EXTENSION(GLEW_ARB_texture_float)
+
+		if(isCompressed())
+			NEED_EXTENSION(GLEW_ARB_texture_compression);
 
 		glEnable(GL_TEXTURE_2D);
 

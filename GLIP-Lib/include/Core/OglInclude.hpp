@@ -51,7 +51,7 @@
 
 			#define FIX_MISSING_GLEW_CALL(call, replacement) 	if(call==NULL) \
 										{ \
-											std::cerr << "OpenGL Function " #call " is required but GLEW failed to load it, the library will use " #replacement "instead." << std::endl; \
+											std::cerr << "OpenGL Function " #call " is required but GLEW failed to load it, the library will (try to) use " #replacement " instead." << std::endl; \
 											if(replacement==NULL) \
 												throw Exception("OpenGL Functions " #call " and " #replacement " aren't available according to GLEW.", __FILE__, __LINE__); \
 											call = replacement; \

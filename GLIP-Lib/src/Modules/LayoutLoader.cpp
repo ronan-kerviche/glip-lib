@@ -665,6 +665,11 @@
 				}
 			}
 		}
+		catch(Exception& e)
+		{
+			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name, __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name, __FILE__, __LINE__);
@@ -795,6 +800,12 @@
 			clean();
 
 			return result;
+		}
+		catch(Exception& e)
+		{
+			clean();
+			Exception m("LayoutLoader::operator() - Caught an exception while building pipeline layout.", __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{
@@ -959,6 +970,11 @@
 			}
 
 			return result;
+		}
+		catch(Exception& e)
+		{
+			Exception m("LayoutLoader::write - caught an exception while writing layout to file", __FILE__, __LINE__);
+			throw m + e;
 		}
 		catch(std::exception& e)
 		{

@@ -4,9 +4,9 @@ cmake . -G"Unix Makefiles"
 make
 if [ $? = 0 ]
 then
-  echo "Compilation : \033[32m[OK]"; tput sgr0
+  echo -e "Compilation : \e[1;32m[OK]\e[0m"; tput sgr0
 else
-  echo "Compilation : \033[31m[FAILED]"; tput sgr0
+  echo -e "Compilation : \e[0;31m[FAILED]\e[0m"; tput sgr0
 fi
 rm ./CMakeCache.txt ./cmake_install.cmake
 rm ./CMakeFiles -r

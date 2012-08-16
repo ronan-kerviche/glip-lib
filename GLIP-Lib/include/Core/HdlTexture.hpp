@@ -47,12 +47,13 @@
 					GLint	wraps, wrapt;                       // Wrapping modes
 
 					// Protected tools :
-					int	getChannelCount(GLenum _mode)			const;
-					int	getChannelSize(GLenum _depth)			const;
-					GLenum	getAliasMode(GLenum _mode)			const;
-					bool	isCompressedMode(GLenum _mode)			const;
-					GLenum	getCorrespondingCompressedMode(GLenum _mode)	const;
-					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 	const;
+					int	getChannelCount(GLenum _mode)				const;
+					int	getChannelSize(GLenum _depth)				const;
+					GLenum	getAliasMode(GLenum _mode)				const;
+					bool	isCompressedMode(GLenum _mode)				const;
+					bool	isFloatingPointMode(GLenum _mode, GLenum _depth)	const;
+					GLenum	getCorrespondingCompressedMode(GLenum _mode)		const;
+					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 		const;
 					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
@@ -73,6 +74,7 @@
 					GLint	getSWrapping	(void) const;
 					GLint	getTWrapping	(void) const;
 					bool	isCompressed	(void) const;
+					bool	isFloatingPoint	(void) const;
 
 					bool	operator==(const __ReadOnly_HdlTextureFormat&) const;
 					bool	operator!=(const __ReadOnly_HdlTextureFormat&) const;

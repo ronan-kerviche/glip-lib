@@ -65,7 +65,8 @@
 			program        	= new HdlProgram(*vertexShader, *fragmentShader);
 			delete vertex;
 
-			program->setFragmentLocation(varsOut[0], 0);
+			if(!fragmentShader->requiresCompatibility())
+				program->setFragmentLocation(varsOut[0], 0);
 
 			// Create a basic geometry :
 			vbo = HdlVBO::generate2DStandardQuad();
@@ -75,6 +76,11 @@
 
 			// Link the buffer to the input device :
 			setTextureLink((*renderer)[0]);
+		}
+		catch(Exception& e)
+		{
+			Exception m("ProceduralInput::ProceduralInput - Caught an exception while creating the shaders for " + name + ".", __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{

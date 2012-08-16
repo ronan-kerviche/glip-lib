@@ -27,6 +27,7 @@
 	// Includes
 	#include <iostream>
 	#include <sstream>
+	#include <vector>
 
 	namespace Glip
 	{
@@ -42,18 +43,27 @@
 				std::string  msg;
 				std::string  filename;
 				unsigned int line;
-				std::string  completeMsg;
+				std::vector<Exception>	subErrors;
+
+				// Tools
+				std::string header(void) const throw();
+
 			public :
 				// Tools
 				Exception(const std::string& m, std::string f="", unsigned int l=0);
 				Exception(const Exception& e);
 				virtual ~Exception(void) throw();
 
-				const char*  what(void) const throw();
-				const char*  message(void) const throw();
-				const char*  file(void) const throw();
+				const char* what(void) const throw();
+				const char* message(void) const throw();
+				const char* file(void) const throw();
 				unsigned int lineNumber(void) const throw();
+
 				const Exception& operator+(const std::exception& e);
+				const Exception& operator+(const Exception& e);
+
+				int numSubError(void) const throw();
+				const Exception& subError(int i);
 		};
 
 		// Tools

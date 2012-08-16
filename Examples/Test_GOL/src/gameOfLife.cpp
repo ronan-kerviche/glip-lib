@@ -96,7 +96,7 @@
 
 		if(i==100)
 		{
-			throw Exception("Stop");
+			//throw Exception("Stop");
 			std::cout << "> Reset" << std::endl;
 			//reset :
 			#define __RADOM_GEN__

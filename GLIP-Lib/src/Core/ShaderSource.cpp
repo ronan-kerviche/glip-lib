@@ -23,32 +23,33 @@
 
 #include "ShaderSource.hpp"
 #include "Exception.hpp"
+#include "devDebugTools.hpp"
 
     using namespace Glip::CoreGL;
 
 	/**
 	\fn    ShaderSource::ShaderSource(const ShaderSource& ss)
 	\brief ShaderSource Construtor.
-
 	\param ss Source code of the shader, as a copy.
 	**/
 	ShaderSource::ShaderSource(const ShaderSource& ss)
 	{
-		source     = ss.source;
-		sourceName = ss.sourceName;
-		inVars     = ss.inVars;
-		outVars    = ss.outVars;
+		source     		= ss.source;
+		sourceName 		= ss.sourceName;
+		inVars    		= ss.inVars;
+		outVars    		= ss.outVars;
+		compatibilityRequest	= ss.compatibilityRequest;
 	}
 
 	/**
 	\fn    ShaderSource::ShaderSource(const char** src, bool eol, int lines)
 	\brief ShaderSource Construtor.
-
 	\param src Pointer to table of lines.
 	\param eol Set to true if the code contains End Of Line delimiters.
 	\param lines Number of lines to consider.
 	**/
 	ShaderSource::ShaderSource(const char** src, bool eol, int lines)
+	 : compatibilityRequest(false)
 	{
 		if(src==NULL)
 			throw Exception("ShaderSource::ShaderSource - Can't load from NULL", __FILE__, __LINE__);
@@ -81,10 +82,10 @@
 	/**
 	\fn    ShaderSource::ShaderSource(const std::string& src)
 	\brief Constructor of ShaderSource, load from a standard string or a file.
-
-	\param src Source data (must have at least one '\n') or filename (without '\n')
+	\param src Source data (must have at least one '\n') or filename (without '\n').
 	**/
 	ShaderSource::ShaderSource(const std::string& src)
+	 : compatibilityRequest(false)
 	{
 		size_t newline = src.find('\n');
 
@@ -124,11 +125,9 @@
 
 	/**
 	\fn    std::string ShaderSource::getLine(int l)
-	\brief Get a line from the source code (delemiter : \\n)
-
+	\brief Get a line from the source code (delemiter : \\n).
 	\param l Index of desired line (start at 0).
-
-	\return Standard string or <error> in case of failure
+	\return Standard string or <error> in case of failure.
 	**/
 	std::string ShaderSource::getLine(int l)
 	{
@@ -228,6 +227,8 @@
 		two = 0;
 		inVars.clear();
 		outVars.clear();
+
+		bool hasGl_FragColor = source.find("gl_FragColor");
 
 		// Remove all scopes {}
 		for(int i=0; i<source.length(); i++)
@@ -340,14 +341,21 @@
 				}
 			}
 		}
+
+		if(outVars.empty() && hasGl_FragColor)
+		{
+			#ifdef __DEVELOPMENT_VERBOSE__
+				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
+			#endif
+			outVars.push_back("output");
+			compatibilityRequest = true;
+		}
 	}
 
 	/**
 	\fn    std::string ShaderSource::errorLog(std::string log)
-	\brief Add some source code information to the output shader compilation log
-
+	\brief Add some source code information to the output shader compilation log.
 	\param log Input log to be mixed with source code.
-
 	\return Enhanced log.
 	**/
 	std::string ShaderSource::errorLog(std::string log)
@@ -372,9 +380,18 @@
 	}
 
 	/**
+	\fn    bool ShaderSource::requiresCompatibility(void) const
+	\brief Returns true if this Shader is using gl_FragColor and no out vec4 variables (Mesa <9.0 compatibility for Intel Core I7 with HD Graphics (>2nd Gen); no call to glBindFragDataLocation is needed). If true, the input vars are indexed on their order of appearance in the shader source.
+	\return Returns true if this Shader is using gl_FragColor and no out vec4 variables.
+	**/
+	bool ShaderSource::requiresCompatibility(void) const
+	{
+		return compatibilityRequest;
+	}
+
+	/**
 	\fn    const std::string& ShaderSource::getSource(void) const
 	\brief Returns the source as a standard string.
-
 	\return A standard string.
 	**/
 	const std::string& ShaderSource::getSource(void) const
@@ -385,7 +402,6 @@
 	/**
 	\fn    const std::string& ShaderSource::getSourceName(void) const
 	\brief Return the name of the source : the filename if it was loaded from a file or <Inner String> otherwise.
-
 	\return A standard string.
 	**/
 	const std::string& ShaderSource::getSourceName(void) const
@@ -396,7 +412,6 @@
 	/**
 	\fn    const char* ShaderSource::getSourceCstr(void) const
 	\brief Returns the source as a characters table.
-
 	\return A const char* string (including \0).
 	**/
 	const char* ShaderSource::getSourceCstr(void) const
@@ -407,7 +422,6 @@
 	/**
 	\fn const std::vector<std::string>& ShaderSource::getInputVars(void)
 	\brief Return a vector containing the name of all the input textures (uniform sampler*).
-
 	\return A vector of standard string.
 	**/
 	const std::vector<std::string>& ShaderSource::getInputVars(void)
@@ -418,7 +432,6 @@
 	/**
 	\fn const std::vector<std::string>& ShaderSource::getOutputVars(void)
 	\brief Return a vector containing the name of all the output textures (uniform sampler*).
-
 	\return A vector of standard string.
 	**/
 	const std::vector<std::string>& ShaderSource::getOutputVars(void)

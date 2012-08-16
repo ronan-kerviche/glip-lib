@@ -187,6 +187,11 @@
 		{
 			index = getIndexByNameFct(name, elementsLayout.size(), __ReadOnly_PipelineLayout::componentName, reinterpret_cast<const void*>(this));
 		}
+		catch(Exception& e)
+		{
+			Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended() + ". This element may not exist.", __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("getElementIndex - Caught an exception while looking for " + name + " in " + getNameExtended() + ". This element may not exist.", __FILE__, __LINE__);
@@ -466,6 +471,11 @@
 				{
 					getConnectionSource(i, j);
 				}
+				catch(Exception& e)
+				{
+					res += e.what();
+					res += '\n';
+				}
 				catch(std::exception& e)
 				{
 					res += e.what();
@@ -488,6 +498,11 @@
 			try
 			{
 				getConnectionSource(THIS_PIPELINE, i);
+			}
+			catch(Exception& e)
+			{
+				res += e.what();
+				res += '\n';
 			}
 			catch(std::exception& e)
 			{
@@ -691,6 +706,11 @@
 			pi = componentLayout(filterIn).getInputPortID(portIn);
 			connect(THIS_PIPELINE, p, fi, pi);
 		}
+		catch(Exception& e)
+		{
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
@@ -725,6 +745,11 @@
 			fo = getElementIndex(filterOut),
 			po = componentLayout(filterOut).getOutputPortID(portOut);
 			connect(fo, po, THIS_PIPELINE, p);
+		}
+		catch(Exception& e)
+		{
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{
@@ -1262,7 +1287,7 @@
 						}
 					}
 
-					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " has some the following output port(s) unused : " + listUnused, __FILE__, __LINE__);
+					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " has some of the following output port(s) unused : " + listUnused + ".", __FILE__, __LINE__);
 				}
 
 				#ifdef __DEVELOPMENT_VERBOSE__
@@ -1364,6 +1389,11 @@
 				}
 				std::cout << "    End Actions" << std::endl;
 			#endif
+		}
+		catch(Exception& e)
+		{
+			Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{
@@ -1589,6 +1619,11 @@
 
 			return p->getElementID(id);
 		}
+		catch(Exception& e)
+		{
+			Exception m("Pipeline::getFilterID - Error while processing request on " + path, __FILE__, __LINE__);
+			throw m+e;
+		}
 		catch(std::exception& e)
 		{
 			Exception m("Pipeline::getFilterID - Error while processing request on " + path, __FILE__, __LINE__);
@@ -1607,6 +1642,11 @@
 		try
 		{
 			return *filters[getFilterID(path)];
+		}
+		catch(Exception& e)
+		{
+			Exception m("Pipeline::operator[] - Error while processing request on " + path, __FILE__, __LINE__);
+			throw m+e;
 		}
 		catch(std::exception& e)
 		{

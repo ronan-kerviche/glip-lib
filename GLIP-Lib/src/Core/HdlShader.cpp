@@ -35,11 +35,11 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    HdlShader::HdlShader(GLenum _type, ShaderSource& src)
 	\brief HdlShader constructor.
-
 	\param _type The kind of shader it will be : either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
 	\param src   The source code used.
 	**/
-	HdlShader::HdlShader(GLenum _type, ShaderSource& src) : ShaderSource(src)
+	HdlShader::HdlShader(GLenum _type, ShaderSource& src)
+	 : ShaderSource(src)
 	{
 		NEED_EXTENSION(GLEW_ARB_vertex_shader)
 		NEED_EXTENSION(GLEW_ARB_fragment_shader)
@@ -47,7 +47,10 @@ using namespace Glip::CoreGL;
 		NEED_EXTENSION(GLEW_ARB_shading_language_100)
 		NEED_EXTENSION(GLEW_ARB_vertex_program)
 		NEED_EXTENSION(GLEW_ARB_fragment_program)
-		FIX_MISSING_GLEW_CALL(glBindFragDataLocation, glBindFragDataLocationEXT)
+
+		if(!src.requiresCompatibility())
+			FIX_MISSING_GLEW_CALL(glBindFragDataLocation, glBindFragDataLocationEXT)
+
 		FIX_MISSING_GLEW_CALL(glCompileShader, glCompileShaderARB)
 		FIX_MISSING_GLEW_CALL(glLinkProgram, glLinkProgramARB)
 		FIX_MISSING_GLEW_CALL(glGetUniformLocation, glGetUniformLocationARB)
