@@ -177,6 +177,33 @@ Current Version : 0.8
 [0.9]	Add binding signals under __DEVELOPMENT_VERBOSE__ to protect against illegal re-binding.
 	Status : TODO
 
+[0.9]   Add auto connection on pipelines based on names of the ports
+	Status : TODO
+
+[0.9]	Add Corresponding keyword CONNECTION(AUTO)
+	Status : TODO
+
+[0.9]	Update and optimize all textures size for FFT1D
+	Status : TODO
+
+[0.9]	Update and optimize all textures size for FFT2D
+	Status : TODO
+
+[0.9]	Add test after FBO creation and texture attachment.
+	Status : TODO
+
+[0.9]	Change the license to MIT.
+	Status : TODO
+
+[0.9]	Bug on fftshift with IFFT?
+	Status : TODO
+
+[0.9]	Add an error in FFTxD::process if the input has more than two channels.
+	Status : TODO
+
+[0.9]	Add support for compatibility mode in FFTxD (use of gl_FragColor).
+	Status : TODO
+
 [1.0]  	Pipeline Programming Language : PPL and script parser.
 	Status : DONE
 

@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : WindowRendering.cpp                                                                       */

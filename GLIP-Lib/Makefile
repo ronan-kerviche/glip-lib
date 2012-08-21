@@ -348,6 +348,30 @@ src/Core/HdlTexture.cpp.s:
 	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Core/HdlTexture.cpp.s
 .PHONY : src/Core/HdlTexture.cpp.s
 
+src/Core/HdlTextureTools.o: src/Core/HdlTextureTools.cpp.o
+.PHONY : src/Core/HdlTextureTools.o
+
+# target to build an object file
+src/Core/HdlTextureTools.cpp.o:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Core/HdlTextureTools.cpp.o
+.PHONY : src/Core/HdlTextureTools.cpp.o
+
+src/Core/HdlTextureTools.i: src/Core/HdlTextureTools.cpp.i
+.PHONY : src/Core/HdlTextureTools.i
+
+# target to preprocess a source file
+src/Core/HdlTextureTools.cpp.i:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Core/HdlTextureTools.cpp.i
+.PHONY : src/Core/HdlTextureTools.cpp.i
+
+src/Core/HdlTextureTools.s: src/Core/HdlTextureTools.cpp.s
+.PHONY : src/Core/HdlTextureTools.s
+
+# target to generate assembly for a file
+src/Core/HdlTextureTools.cpp.s:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Core/HdlTextureTools.cpp.s
+.PHONY : src/Core/HdlTextureTools.cpp.s
+
 src/Core/HdlVBO.o: src/Core/HdlVBO.cpp.o
 .PHONY : src/Core/HdlVBO.o
 
@@ -492,6 +516,54 @@ src/Core/glew.c.s:
 	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Core/glew.c.s
 .PHONY : src/Core/glew.c.s
 
+src/Modules/FFT1D.o: src/Modules/FFT1D.cpp.o
+.PHONY : src/Modules/FFT1D.o
+
+# target to build an object file
+src/Modules/FFT1D.cpp.o:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT1D.cpp.o
+.PHONY : src/Modules/FFT1D.cpp.o
+
+src/Modules/FFT1D.i: src/Modules/FFT1D.cpp.i
+.PHONY : src/Modules/FFT1D.i
+
+# target to preprocess a source file
+src/Modules/FFT1D.cpp.i:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT1D.cpp.i
+.PHONY : src/Modules/FFT1D.cpp.i
+
+src/Modules/FFT1D.s: src/Modules/FFT1D.cpp.s
+.PHONY : src/Modules/FFT1D.s
+
+# target to generate assembly for a file
+src/Modules/FFT1D.cpp.s:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT1D.cpp.s
+.PHONY : src/Modules/FFT1D.cpp.s
+
+src/Modules/FFT2D.o: src/Modules/FFT2D.cpp.o
+.PHONY : src/Modules/FFT2D.o
+
+# target to build an object file
+src/Modules/FFT2D.cpp.o:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT2D.cpp.o
+.PHONY : src/Modules/FFT2D.cpp.o
+
+src/Modules/FFT2D.i: src/Modules/FFT2D.cpp.i
+.PHONY : src/Modules/FFT2D.i
+
+# target to preprocess a source file
+src/Modules/FFT2D.cpp.i:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT2D.cpp.i
+.PHONY : src/Modules/FFT2D.cpp.i
+
+src/Modules/FFT2D.s: src/Modules/FFT2D.cpp.s
+.PHONY : src/Modules/FFT2D.s
+
+# target to generate assembly for a file
+src/Modules/FFT2D.cpp.s:
+	$(MAKE) -f CMakeFiles/glip.dir/build.make CMakeFiles/glip.dir/src/Modules/FFT2D.cpp.s
+.PHONY : src/Modules/FFT2D.cpp.s
+
 src/Modules/LayoutLoader.o: src/Modules/LayoutLoader.cpp.o
 .PHONY : src/Modules/LayoutLoader.o
 
@@ -603,6 +675,9 @@ help:
 	@echo "... src/Core/HdlTexture.o"
 	@echo "... src/Core/HdlTexture.i"
 	@echo "... src/Core/HdlTexture.s"
+	@echo "... src/Core/HdlTextureTools.o"
+	@echo "... src/Core/HdlTextureTools.i"
+	@echo "... src/Core/HdlTextureTools.s"
 	@echo "... src/Core/HdlVBO.o"
 	@echo "... src/Core/HdlVBO.i"
 	@echo "... src/Core/HdlVBO.s"
@@ -621,6 +696,12 @@ help:
 	@echo "... src/Core/glew.o"
 	@echo "... src/Core/glew.i"
 	@echo "... src/Core/glew.s"
+	@echo "... src/Modules/FFT1D.o"
+	@echo "... src/Modules/FFT1D.i"
+	@echo "... src/Modules/FFT1D.s"
+	@echo "... src/Modules/FFT2D.o"
+	@echo "... src/Modules/FFT2D.i"
+	@echo "... src/Modules/FFT2D.s"
 	@echo "... src/Modules/LayoutLoader.o"
 	@echo "... src/Modules/LayoutLoader.i"
 	@echo "... src/Modules/LayoutLoader.s"

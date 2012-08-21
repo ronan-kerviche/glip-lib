@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Filter.hpp                                                                                */
@@ -56,8 +56,8 @@
 			{
 				private :
 					// Data
-					ShaderSource *vertexSource,
-					*fragmentSource;
+					ShaderSource 	*vertexSource,
+							*fragmentSource;
 					bool blending, clearing;
 
 					// Friends

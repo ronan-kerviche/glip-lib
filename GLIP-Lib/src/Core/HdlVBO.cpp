@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : HdlVBO.cpp                                                                                */
@@ -44,13 +44,11 @@ using namespace Glip::CoreGL;
 	\param _texcoords Pointer to the texel coordiantes data.
 	**/
 	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
-	 : nVert(_nVert), dim(_dim), nElements(_nElements), type(_type), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL)
+	 : nVert(_nVert), nElements(_nElements), dim(_dim), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL), type(_type)
 	{
 		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glVertexPointer, glVertexPointerEXT)
 		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glTexCoordPointer, glTexCoordPointerEXT)
 		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glDrawArrays, glDrawArraysEXT)
-
-		void* ptr = NULL;
 
 		if(dimTexCoords!=0 && _texcoords==NULL)
 			throw Exception("HdlVBO::HdlVBO - attempt to create texcoords without any data", __FILE__, __LINE__);

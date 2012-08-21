@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Filter.cpp                                                                                */
@@ -70,7 +70,7 @@
 	\param c Copy.
 	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), blending(c.blending), clearing(c.clearing)
+	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), blending(c.blending), clearing(c.clearing)
 	{
 		if(c.vertexSource!=NULL)
 			vertexSource   = new ShaderSource(*c.vertexSource);
@@ -146,7 +146,7 @@
 	\param vertex [Optional] The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
 	**/
 	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
-	 : __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout), __ReadOnly_HdlTextureFormat(fout)
+	 : __ReadOnly_HdlTextureFormat(fout), __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout)
 	{
 		fragmentSource = new ShaderSource(fragment);
 
@@ -202,7 +202,7 @@
 	\param c Filter layout.
 	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c)
-	: __ReadOnly_FilterLayout(c), Component(c, c.getName()), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), program(NULL), vertexShader(NULL), fragmentShader(NULL), vbo(NULL)
+	: Component(c, c.getName()), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), vbo(NULL)
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();

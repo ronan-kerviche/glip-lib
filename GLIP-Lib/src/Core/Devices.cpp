@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Devices.cpp                                                                               */
@@ -35,7 +35,7 @@
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const std::string& name)
-	 : ObjectName(name, "InputDevice"), newImage(false), imagesMissed(0), t(NULL)
+	 : ObjectName(name, "InputDevice"), t(NULL), newImage(false), imagesMissed(0)
 	{ }
 
 	InputDevice::~InputDevice(void)

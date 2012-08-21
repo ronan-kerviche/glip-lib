@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : HdlShader.cpp                                                                             */
@@ -89,9 +89,11 @@ using namespace Glip::CoreGL;
 
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
 
-			char *log = new char[logSize]; // +1 <=> '/0'
+			char *log = new char[logSize+1]; // +1 <=> '/0'
 
 			glGetShaderInfoLog(shader, logSize, &logSize, log);
+
+			log[logSize] = 0;
 
 			std::string err = src.errorLog(std::string(log));
 
@@ -202,9 +204,11 @@ using namespace Glip::CoreGL;
 
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
 
-			char *log = new char[logSize]; // +1 <=> '/0'
+			char *log = new char[logSize+1]; // +1 <=> '/0'
 
 			glGetProgramInfoLog(program, logSize, &logSize, log);
+
+			log[logSize] = 0;
 
 			// Write the log in a file
 			//std::cout << "Information written in programLog.txt" << std::endl;

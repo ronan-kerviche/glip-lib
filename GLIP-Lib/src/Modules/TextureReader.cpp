@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : TextureReader.cpp                                                                         */
@@ -60,7 +60,12 @@
 
 		t.bind();
 
-		glGetTexImage(GL_TEXTURE_2D, 0, getGLMode(), getGLDepth(), reinterpret_cast<GLvoid*>(data));
+		GLenum alias = getGLMode();
+		if(alias==GL_RGB32F) alias = GL_RGB;
+		if(alias==GL_RGBA32F) alias = GL_RGBA;
+
+		glGetTexImage(GL_TEXTURE_2D, 0, alias, getGLDepth(), reinterpret_cast<GLvoid*>(data));
+		//glGetTexImage(GL_TEXTURE_2D, 0, getGLMode(), getGLDepth(), reinterpret_cast<GLvoid*>(data));
 
 		HdlTexture::unbind();
 	}
@@ -75,8 +80,9 @@
 	**/
 	double TextureReader::operator()(int x, int y, int c)
 	{
-		int 	xt = x,
-			yt = y;
+		if(x<0 || x>=getWidth() || y<0 || y>=getHeight() || c<0 || c>=getChannel())
+			throw Exception("TextureReader::operator() - Pixel " + to_string(x) + "x" + to_string(y) + "x" + to_string(c) + " is out of bound (" + to_string(getWidth()) + "x" + to_string(getHeight()) + "x" + to_string(getChannel()) + ").", __FILE__, __LINE__);
+
 		if(xFlip) x = getWidth()-x-1;
 		if(yFlip) y = getHeight()-y-1;
 		int pos = (y*getWidth()+x)*getChannel()+c;

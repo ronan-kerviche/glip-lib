@@ -1,4 +1,4 @@
-TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP,3);
+TEXTURE_FORMAT:format(2,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
 
 SHADER_SOURCE:shader()
 {
@@ -14,14 +14,14 @@ SHADER_SOURCE:shader()
 		outText.r = col.r;
 		outText.g = col.g;
 		outText.b = col.b;
-		outText.a = 1.0;
+		outText.a = col.a;
 	}
 }
 
 FILTER_LAYOUT:filter(format,shader);
 
 PIPELINE_MAIN:pMain()
-{    
+{
 	INPUT_PORTS(i0);
 	OUTPUT_PORTS(o0);
 	FILTER_INSTANCE:inst_filter(filter);

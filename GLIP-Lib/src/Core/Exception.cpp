@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Exception.cpp                                                                             */
@@ -40,6 +40,9 @@
 			size_t p = filename.rfind('/');
 			filename = filename.substr(p+1);
 		}
+
+		//std::cout << "Building exception on : " << std::endl;
+		//std::cout << m << std::endl;
 	}
 
 	/**
@@ -52,7 +55,9 @@
 	{ }
 
 	Exception::~Exception(void) throw()
-	{ }
+	{
+		subErrors.clear();
+	}
 
 	/**
 	\fn const char* Exception::what(void) const throw()
@@ -146,7 +151,7 @@
 	const Exception& Exception::operator+(const std::exception& e)
 	{
 		subErrors.push_back(Exception(e.what()));
-		std::cout << "std::exception!" << std::endl;
+		//std::cout << "std::exception!" << std::endl;
 		subErrors.push_back(Exception("<std::exception>"));
 
 		return *this;
@@ -160,11 +165,20 @@
 	**/
 	const Exception& Exception::operator+(const Exception& e)
 	{
+		//std::cout << "Adding : (has " << e.subErrors.size() << " subs)" << std::endl;
+		//std::cout << e.what() << std::endl;
+
 		if(!e.subErrors.empty());
-			subErrors.insert( subErrors.begin(), e.subErrors.begin(), e.subErrors.end() );
+			subErrors.insert( subErrors.end(), e.subErrors.begin(), e.subErrors.end() );
 
 		subErrors.push_back(e);
 		subErrors.back().subErrors.clear();
+
+		//std::cout << "TEST : " << std::endl;
+		//std::cout << "---------------------------------------------" << std::endl;
+		//std::cout << what();
+		//std::cout << "---------------------------------------------" << std::endl;
+		//std::cout << std::endl << std::endl << std::endl;
 
 		return *this;
 	}

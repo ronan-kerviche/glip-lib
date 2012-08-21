@@ -71,6 +71,7 @@
 		<Unit filename="../GLIP-Lib/include/Core/HdlPBO.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlShader.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlTexture.hpp" />
+		<Unit filename="../GLIP-Lib/include/Core/HdlTextureTools.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlVBO.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/NamingLayout.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/OglInclude.hpp" />
@@ -95,6 +96,7 @@
 		<Unit filename="../GLIP-Lib/src/Core/HdlPBO.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlShader.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlTexture.cpp" />
+		<Unit filename="../GLIP-Lib/src/Core/HdlTextureTools.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlVBO.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/NamingLayout.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/OglTools.cpp" />

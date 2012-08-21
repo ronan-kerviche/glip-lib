@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : ShaderSource.cpp                                                                          */
@@ -131,18 +131,29 @@
 	**/
 	std::string ShaderSource::getLine(int l)
 	{
-		std::istringstream iss(source);
-		std::string res="<error>";
-		int i = 1;
+		size_t 	pre = 1,
+			pos = 0;
 
-		while( std::getline(iss, res) && i<l)
+		int i=0;
+
+		while(i<=l)
+		{
+			pre = pos+1;
+			pos = source.find('\n',pre);
+
+			if(pos==std::string::npos)
+				return "<ShaderSource::getLine - error>";
+
 			i++;
+		}
 
-		size_t pos = res.find_first_not_of(" \t\n");
-		if(pos!=std::string::npos)
-			res = res.substr(pos);
+		std::string res = source.substr(pre, pos-pre);
 
-		return res;
+		size_t p2 = res.find_first_not_of(" \t");
+		if(p2!=std::string::npos)
+			return std::string(res.substr(p2));
+		else
+			return std::string(res);
 	}
 
 	int ShaderSource::removeKeyword(std::string& str, GLSL_KEYWORD kw)
@@ -373,7 +384,7 @@
 			size_t two = line.find(')');
 			int tmp;
 			from_string(line.substr(one, two-one), tmp);
-			str << "        >> " << getLine(tmp) << std::endl;
+			str << "        >> " << getLine(tmp-1) << std::endl;
 		}
 
 		return std::string(str.str());

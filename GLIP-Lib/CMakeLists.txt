@@ -31,6 +31,7 @@ if(WIN32) # Windows specifics
 	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
 
 else() # Linux psecifics
+	#For Cleaning purpose : set(CMAKE_CXX_FLAGS "-pedantic -Wall")
 endif()
 
 set(LIBRARY_OUTPUT_PATH lib/)

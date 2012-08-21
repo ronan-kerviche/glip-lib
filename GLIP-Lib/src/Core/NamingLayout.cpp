@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : NamingLayout.cpp                                                                          */
@@ -35,7 +35,7 @@ using namespace Glip;
 	\param tp Typename of the element.
 	**/
 	ObjectName::ObjectName(const std::string& nm, const std::string& tp)
-	 : portID(NO_PORT), name(nm), type(tp)
+	 : name(nm), type(tp), portID(NO_PORT)
 	{
 		checkName();
 		checkType();
@@ -48,7 +48,7 @@ using namespace Glip;
 	\param port Index of the port.
 	**/
 	ObjectName::ObjectName(const std::string& name, int port)
-	 : portID(port), name(name), type("")
+	 : name(name), type(""), portID(port)
 	{
 		checkName();
 	}
@@ -59,7 +59,7 @@ using namespace Glip;
 	\param c Copy.
 	**/
 	ObjectName::ObjectName(const ObjectName& c)
-	 : portID(c.portID), name(c.name), type(c.type)
+	 : name(c.name), type(c.type), portID(c.portID)
 	{ }
 
 	/**

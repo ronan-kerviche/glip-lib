@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
-	<File name="../Examples/ImageContentInfo/src/WindowRendering.cpp" open="0" top="0" tabpos="5">
-		<Cursor position="1900" topLine="0" />
+	<File name="../Examples/ImageContentInfo/src/WindowRendering.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="2941" topLine="12" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/WindowRendering.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="1860" topLine="0" />
+		<Cursor position="2158" topLine="0" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/imageContentInfo.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="5521" topLine="152" />
+		<Cursor position="3415" topLine="3" />
 	</File>
 	<File name="../Examples/ImageContentInfo/src/imageContentInfo.hpp" open="0" top="0" tabpos="2">
 		<Cursor position="701" topLine="0" />

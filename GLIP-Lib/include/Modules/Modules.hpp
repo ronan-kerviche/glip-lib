@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Modules.hpp                                                                               */
@@ -27,5 +27,7 @@
 	#include "./LayoutLoader.hpp"
 	#include "./TextureReader.hpp"
 	#include "./ProceduralInput.hpp"
+	#include "./FFT1D.hpp"
+	#include "./FFT2D.hpp"
 
 #endif

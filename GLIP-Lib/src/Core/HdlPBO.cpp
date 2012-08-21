@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : HdlPBO.cpp                                                                                */
@@ -39,7 +39,7 @@ using namespace Glip::CoreGL;
 	\param size The size of the buffer, computed by default with previous parameters.
 	**/
 	HdlPBO::HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size)
-	 : h(_h), w(_w), c(_c), cs(_cs), HdlGeBO((size<0)?(_w*_h*_c*_cs):size, aim, freq)
+	 : HdlGeBO((size<0)?(_w*_h*_c*_cs):size, aim, freq), w(_w), h(_h), c(_c), cs(_cs)
 	{ }
 
 	/**
@@ -50,7 +50,7 @@ using namespace Glip::CoreGL;
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
 	HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
-	 : h(fmt.getHeight()), w(fmt.getWidth()), c(fmt.getChannel()), cs(fmt.getChannelDepth()), HdlGeBO(fmt.getSize(), aim, freq)
+	 : HdlGeBO(fmt.getSize(), aim, freq), w(fmt.getWidth()), h(fmt.getHeight()), c(fmt.getChannel()), cs(fmt.getChannelDepth())
 	{
 		if(fmt.isCompressed())
 			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on __ReadOnly_HdlTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
@@ -332,7 +332,7 @@ using namespace Glip::CoreGL;
                     /// The modification will be stored only if unbindPBO() is called after that
     }
 
-    /*void HdlPBO::onlyReadFBO(HdlFBO& fbo, int offsetX, int offsetY, int w, int h, GLenum mode, GLenum depth)
+    void HdlPBO::onlyReadFBO(HdlFBO& fbo, int offsetX, int offsetY, int w, int h, GLenum mode, GLenum depth)
     {
         if(aim==PBO_UPLOAD) std::cout << "You are using the PBO the wrong way" << std::endl;
 

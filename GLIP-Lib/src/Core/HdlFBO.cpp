@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : HdlFBO.cpp                                                                                */
@@ -69,7 +69,7 @@ using namespace Glip::CoreGL;
 	HdlFBO::~HdlFBO(void)
 	{
 		// Remove all textures :
-		for(int i=0; i<targets.size(); i++)
+		for(unsigned int i=0; i<targets.size(); i++)
 			unbindTextureFromFBO(i);
 
 		glFlush();

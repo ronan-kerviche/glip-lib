@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : HdlTexture.cpp                                                                            */
@@ -46,7 +46,7 @@ using namespace Glip::CoreGL;
 	\param _maxLevel   Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
 	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), wraps(_wraps), wrapt(_wrapt), baseLevel(_baseLevel), maxLevel(_maxLevel)
+	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt)
 	{
 		imgC      = getChannelCount(mode);
 		colSize   = getChannelSize(depth);
@@ -99,6 +99,7 @@ using namespace Glip::CoreGL;
 			case GL_ALPHA					: return 1;
 			case GL_COMPRESSED_LUMINANCE_ALPHA		:
 			case GL_COMPRESSED_RG				:
+			case GL_RG32F					:
 			case GL_RG					: return 2;
 			case GL_RGB32F					:
 			case GL_RGB32I					:
@@ -188,6 +189,7 @@ using namespace Glip::CoreGL;
 			case GL_ALPHA					: return GL_RED;
 			case GL_COMPRESSED_LUMINANCE_ALPHA		:
 			case GL_COMPRESSED_RG				:
+			case GL_RG32F					:
 			case GL_RG					: return GL_RG;
 			case GL_RGB32F					:
 			case GL_RGB32I					:
@@ -305,6 +307,7 @@ using namespace Glip::CoreGL;
 				case GL_LUMINANCE				:	return GL_COMPRESSED_LUMINANCE;
 				case GL_LUMINANCE_ALPHA				:	return GL_COMPRESSED_LUMINANCE_ALPHA;
 				case GL_ALPHA					:	return GL_COMPRESSED_ALPHA;
+				case GL_RG32F					:
 				case GL_RG					:	return GL_COMPRESSED_RG;
 				case GL_RGB32F					:
 				case GL_RGB32I					:

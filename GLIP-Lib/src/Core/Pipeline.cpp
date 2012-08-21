@@ -4,7 +4,7 @@
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
 /*     File          : Pipeline.cpp                                                                              */
@@ -644,10 +644,16 @@
 		// Check if a connexion already exist to the destination :
 		for(std::vector<Connection>::iterator it=connections.begin(); it!=connections.end(); it++)
 			if( (*it).idIn==filterIn && (*it).portIn==portIn)
+			{
 				if(filterIn!=THIS_PIPELINE)
+				{
 					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
+				}
 				else
+				{
 					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
+				}
+			}
 
 		Connection c;
 		c.idOut   = filterOut;
@@ -852,9 +858,9 @@
 
 			while(!waitList.empty())
 			{
-				int 	currentPipeline	= waitList.front(),
-				 	offsetPipeline	= pipeList.size()+startPipeline,
-					offsetFilter	= filters.size();
+				int 	currentPipeline	= waitList.front();
+				 	//offsetPipeline	= pipeList.size()+startPipeline, // OLD? -Wall
+					//offsetFilter	= filters.size();  // OLD? -Wall
 				__ReadOnly_PipelineLayout* tmp = pipeList[currentPipeline-startPipeline];
 
 				// Create instance of all elements :
@@ -893,7 +899,9 @@
 
 				// Save all the connections to absolute basis :
 				#ifdef __DEVELOPMENT_VERBOSE__
-					std::cout << "    Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ", offset = " << offsetPipeline << ", offsetFilter = " << offsetFilter << ')' << std::endl;
+					// OLD ?
+					//std::cout << "    Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ", offset = " << offsetPipeline << ", offsetFilter = " << offsetFilter << ')' << std::endl;
+					std::cout << "    Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ')' << std::endl;
 				#endif
 				for(int i=0; i<tmp->getNumConnections(); i++)
 				{
@@ -1450,7 +1458,7 @@
 	**/
 	void Pipeline::process(void)
 	{
-		clock_t 	timing,
+		clock_t 	timing = clock(),
 				totalTiming = clock();
 
 		#ifdef __DEVELOPMENT_VERBOSE__

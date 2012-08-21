@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     AUTHOR        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
 /*     VERSION       : 0.7                                                                                       */
-/*     LICENSE       : GPLv3                                                                                     */
+/*     LICENSE       : MIT License                                                                               */
 /*     DATE          : August   23rd 2011                                                                        */
 /*     Original Date : August    7th 2010                                                                        */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */

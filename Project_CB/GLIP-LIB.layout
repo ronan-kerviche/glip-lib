@@ -5,13 +5,13 @@
 		<Cursor position="3371" topLine="57" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2468" topLine="16" />
+		<Cursor position="2366" topLine="43" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Exception.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2422" topLine="33" />
+		<Cursor position="2194" topLine="20" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Filter.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="3896" topLine="27" />
+		<Cursor position="3805" topLine="96" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlFBO.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="3008" topLine="37" />
@@ -23,31 +23,40 @@
 		<Cursor position="753" topLine="21" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlPBO.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="3148" topLine="24" />
+		<Cursor position="3020" topLine="47" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlShader.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="3321" topLine="55" />
+		<Cursor position="3317" topLine="49" />
 	</File>
-	<File name="../GLIP-Lib/include/Core/HdlTexture.hpp" open="1" top="0" tabpos="2">
-		<Cursor position="3925" topLine="57" />
+	<File name="../GLIP-Lib/include/Core/HdlTexture.hpp" open="0" top="0" tabpos="2">
+		<Cursor position="2406" topLine="37" />
+	</File>
+	<File name="../GLIP-Lib/include/Core/HdlTextureTools.hpp" open="0" top="0" tabpos="0">
+		<Cursor position="2969" topLine="27" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/HdlVBO.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2999" topLine="13" />
+		<Cursor position="2195" topLine="38" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/NamingLayout.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2579" topLine="52" />
+		<Cursor position="2579" topLine="48" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/OglInclude.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="3407" topLine="33" />
+		<Cursor position="2691" topLine="30" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="2">
 		<Cursor position="3488" topLine="100" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/ShaderSource.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="1852" topLine="225" />
+		<Cursor position="6611" topLine="216" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/glew.h" open="0" top="0" tabpos="0">
-		<Cursor position="95995" topLine="1973" />
+		<Cursor position="95995" topLine="1868" />
+	</File>
+	<File name="../GLIP-Lib/include/Core/glxew.h" open="0" top="0" tabpos="0">
+		<Cursor position="4394" topLine="51" />
+	</File>
+	<File name="../GLIP-Lib/include/Core/wglew.h" open="0" top="0" tabpos="0">
+		<Cursor position="0" topLine="45" />
 	</File>
 	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="1">
 		<Cursor position="2781" topLine="8" />
@@ -65,63 +74,66 @@
 		<Cursor position="4567" topLine="96" />
 	</File>
 	<File name="../GLIP-Lib/include/devDebugTools.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2015" topLine="0" />
+		<Cursor position="1960" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Component.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2851" topLine="37" />
+		<Cursor position="7933" topLine="177" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="0" topLine="0" />
+		<Cursor position="2306" topLine="24" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Exception.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="4077" topLine="49" />
+		<Cursor position="5487" topLine="153" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Filter.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="2695" topLine="214" />
+		<Cursor position="8999" topLine="197" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlFBO.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2921" topLine="23" />
+		<Cursor position="4335" topLine="98" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlGeBO.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="10227" topLine="255" />
+		<Cursor position="1744" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlInfo.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="1496" topLine="21" />
+		<Cursor position="2497" topLine="66" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlPBO.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2058" topLine="15" />
+		<Cursor position="12707" topLine="335" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlShader.cpp" open="0" top="0" tabpos="5">
-		<Cursor position="5335" topLine="40" />
+		<Cursor position="4457" topLine="81" />
 	</File>
-	<File name="../GLIP-Lib/src/Core/HdlTexture.cpp" open="1" top="0" tabpos="1">
-		<Cursor position="19767" topLine="470" />
+	<File name="../GLIP-Lib/src/Core/HdlTexture.cpp" open="0" top="0" tabpos="1">
+		<Cursor position="35879" topLine="900" />
+	</File>
+	<File name="../GLIP-Lib/src/Core/HdlTextureTools.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="12152" topLine="155" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlVBO.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="6539" topLine="91" />
+		<Cursor position="8951" topLine="202" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/NamingLayout.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="3126" topLine="75" />
+		<Cursor position="2845" topLine="51" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/OglTools.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="10875" topLine="281" />
+		<Cursor position="19811" topLine="590" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Pipeline.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="36091" topLine="873" />
+		<Cursor position="54404" topLine="1484" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/ShaderSource.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="1852" topLine="78" />
+		<Cursor position="3511" topLine="323" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/glew.c" open="0" top="0" tabpos="0">
-		<Cursor position="1821" topLine="48" />
+		<Cursor position="1748" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/LayoutLoader.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="12362" topLine="353" />
+		<Cursor position="15099" topLine="66" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/ProceduralInput.cpp" open="0" top="0" tabpos="2">
-		<Cursor position="4092" topLine="61" />
+		<Cursor position="3629" topLine="48" />
 	</File>
-	<File name="../GLIP-Lib/src/Modules/TextureReader.cpp" open="1" top="1" tabpos="3">
-		<Cursor position="11151" topLine="272" />
+	<File name="../GLIP-Lib/src/Modules/TextureReader.cpp" open="0" top="0" tabpos="3">
+		<Cursor position="4195" topLine="80" />
 	</File>
 </CodeBlocks_layout_file>
