@@ -38,29 +38,26 @@ namespace Glip
 		// Structure
 		/**
 		\class FFT1D
-		\brief Compute the 1D FFT for a gray level image (real or complex). THIS MODULE HASN'T BEEN FULLY TESTED YET.
+		\brief Compute the 1D FFT for a gray level image (real or complex) in single precision.
+
+		This module might return erroneous result given that the driver will perform blind optimization.
+		Thus results might be affected by lower accuracy and being fetched to a close value.
 		**/
 		class FFT1D
 		{
 			public :
+				///Flags describing the computation options.
 				enum Flags
 				{
+					///Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
 					Shifted			= 1,
+					///Perform the reciprocal transform, iFFT : FFT(X*)* / N.
 					Inversed		= 2,
-					ComputeMagnitude	= 4
+					///In the final result, the blue channel will hold the magnitude of the complex number.
+					ComputeMagnitude	= 4,
+					///The computation will use of old gl_FragColor GLSL built-in variable.
+					CompatibilityMode	= 8,
 				};
-
-				/**
-				\enum FFT1D::Flags
-				Flags describing the computation options.
-
-				\var FFT1D::Flags FFT1D::Shifted
-				Shift the final result.
-				\var FFT1D::Flags FFT1D::Inversed
-				Perform iFFT : FFT(X*)* / N.
-				\var FFT1D::Flags FFT1D::ComputeMagnitude
-				In the final result, the blue channel will hold the magnitude of the complex number.
-				**/
 
 			private :
 				// Data :
@@ -84,7 +81,9 @@ namespace Glip
 						///Set to true if the final result is shifted in case of a FFT, or the input is assumed to be shifted for an iFFT.
 						shift,
 						///Set to true if the magnitude is computed.
-						compMagnitude;
+						compMagnitude,
+						///Set to true if The computation will use gl_FragColor.
+						compatibilityMode;
 
 				// Tools :
 				FFT1D(int _size, int flags = 0);

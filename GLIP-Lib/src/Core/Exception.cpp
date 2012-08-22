@@ -41,8 +41,7 @@
 			filename = filename.substr(p+1);
 		}
 
-		//std::cout << "Building exception on : " << std::endl;
-		//std::cout << m << std::endl;
+		updateCompleteMessage();
 	}
 
 	/**
@@ -51,7 +50,7 @@
 	\param e Copy.
 	**/
 	Exception::Exception(const Exception& e)
-	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors)
+	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors), completeMsg(e.completeMsg)
 	{ }
 
 	Exception::~Exception(void) throw()
@@ -59,14 +58,9 @@
 		subErrors.clear();
 	}
 
-	/**
-	\fn const char* Exception::what(void) const throw()
-	\brief Get the complete exception message.
-	\return C string.
-	**/
-	const char* Exception::what(void) const throw()
+	void Exception::updateCompleteMessage(void)
 	{
-		std::string completeMsg;
+		completeMsg = "";
 
 		int nMessages = subErrors.size() + 1;
 
@@ -95,7 +89,15 @@
 					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " ] " + subErrors[i].msg + "\n";
 			}
 		}
+	}
 
+	/**
+	\fn const char* Exception::what(void) const throw()
+	\brief Get the complete exception message.
+	\return C string.
+	**/
+	const char* Exception::what(void) const throw()
+	{
 		return completeMsg.c_str();
 	}
 
@@ -151,8 +153,9 @@
 	const Exception& Exception::operator+(const std::exception& e)
 	{
 		subErrors.push_back(Exception(e.what()));
-		//std::cout << "std::exception!" << std::endl;
 		subErrors.push_back(Exception("<std::exception>"));
+
+		updateCompleteMessage();
 
 		return *this;
 	}
@@ -165,20 +168,13 @@
 	**/
 	const Exception& Exception::operator+(const Exception& e)
 	{
-		//std::cout << "Adding : (has " << e.subErrors.size() << " subs)" << std::endl;
-		//std::cout << e.what() << std::endl;
-
 		if(!e.subErrors.empty());
 			subErrors.insert( subErrors.end(), e.subErrors.begin(), e.subErrors.end() );
 
 		subErrors.push_back(e);
 		subErrors.back().subErrors.clear();
 
-		//std::cout << "TEST : " << std::endl;
-		//std::cout << "---------------------------------------------" << std::endl;
-		//std::cout << what();
-		//std::cout << "---------------------------------------------" << std::endl;
-		//std::cout << std::endl << std::endl << std::endl;
+		updateCompleteMessage();
 
 		return *this;
 	}

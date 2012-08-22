@@ -51,7 +51,7 @@
 			// Create another weird random (mathematical) point :
 			ShaderSource inputSrc("./Filters/gameInput.glsl");
 			inp 	= new ProceduralInput("InputPattern", fmt, inputSrc);
-			inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,2);
+			inp->prgm().modifyVar("t",HdlProgram::Var,2);
 			inp->generateNewFrame();
 
 			// Do the first pass :

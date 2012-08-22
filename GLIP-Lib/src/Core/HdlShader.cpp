@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstring>
 #include "Exception.hpp"
 #include "HdlShader.hpp"
 #include "../include/GLIPLib.hpp"
@@ -90,6 +91,7 @@ using namespace Glip::CoreGL;
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
 
 			char *log = new char[logSize+1]; // +1 <=> '/0'
+			memset(log, 0, logSize+1);
 
 			glGetShaderInfoLog(shader, logSize, &logSize, log);
 
@@ -205,6 +207,7 @@ using namespace Glip::CoreGL;
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
 
 			char *log = new char[logSize+1]; // +1 <=> '/0'
+			memset(log, 0, logSize+1);
 
 			glGetProgramInfoLog(program, logSize, &logSize, log);
 
@@ -222,7 +225,7 @@ using namespace Glip::CoreGL;
 			std::string logstr(log);
 			delete[] log;
 
-			throw Exception("HdlProgram::link - Error during Program linking : " + logstr, __FILE__, __LINE__);
+			throw Exception("HdlProgram::link - Error during Program linking : \n" + logstr, __FILE__, __LINE__);
 			return false;
 		}
 
@@ -290,11 +293,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, int val1, int val2, int val3, int val4)
+	\fn    bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2, int val3, int val4)
 	\brief Change a uniform variable in a shader (Integer version).
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in : SHADER_VAR, SHADER_VEC2, SHADER_VEC3, SHADER_VEC4.
+	\param type    Kind of variable in, see ShaderDataType.
 	\param val1    Corresponding value to assign.
 	\param val2    Corresponding value to assign.
 	\param val3    Corresponding value to assign.
@@ -302,7 +305,7 @@ using namespace Glip::CoreGL;
 
 	\return False in case of failure, true otherwise.
 	**/
-	bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, int val1, int val2, int val3, int val4)
+	bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2, int val3, int val4)
 	{
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
@@ -314,10 +317,10 @@ using namespace Glip::CoreGL;
 
 		switch(type)
 		{
-			case SHADER_VAR  : 	glUniform1i(loc, val1);                   break;
-			case SHADER_VEC2 : 	glUniform2i(loc, val1, val2);             break;
-			case SHADER_VEC3 : 	glUniform3i(loc, val1, val2, val3);       break;
-			case SHADER_VEC4 : 	glUniform4i(loc, val1, val2, val3, val4); break;
+			case Var  : 	glUniform1i(loc, val1);                   break;
+			case Vec2 : 	glUniform2i(loc, val1, val2);             break;
+			case Vec3 : 	glUniform3i(loc, val1, val2, val3);       break;
+			case Vec4 : 	glUniform4i(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
 
@@ -325,11 +328,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, float val1, float val2, float val3, float val4)
+	\fn    bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2, float val3, float val4)
 	\brief Change a uniform variable in a shader (Floating point version).
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in : SHADER_VAR, SHADER_VEC2, SHADER_VEC3, SHADER_VEC4.
+	\param type    Kind of variable, see ShaderDataType.
 	\param val1    Corresponding value to assign.
 	\param val2    Corresponding value to assign.
 	\param val3    Corresponding value to assign.
@@ -337,7 +340,7 @@ using namespace Glip::CoreGL;
 
 	\return False in case of failure, true otherwise.
 	**/
-	bool HdlProgram::modifyVar(const std::string& varName, SHADER_DATA_TYPE type, float val1, float val2, float val3, float val4)
+	bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2, float val3, float val4)
 	{
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
@@ -349,10 +352,10 @@ using namespace Glip::CoreGL;
 
 		switch(type)
 		{
-			case SHADER_VAR  : 	glUniform1f(loc, val1);                   break;
-			case SHADER_VEC2 : 	glUniform2f(loc, val1, val2);             break;
-			case SHADER_VEC3 : 	glUniform3f(loc, val1, val2, val3);       break;
-			case SHADER_VEC4 : 	glUniform4f(loc, val1, val2, val3, val4); break;
+			case Var  : 	glUniform1f(loc, val1);                   break;
+			case Vec2 : 	glUniform2f(loc, val1, val2);             break;
+			case Vec3 : 	glUniform3f(loc, val1, val2, val3);       break;
+			case Vec4 : 	glUniform4f(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
 

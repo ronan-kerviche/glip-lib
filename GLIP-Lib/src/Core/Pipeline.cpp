@@ -981,7 +981,7 @@
 			#endif
 			bool test = true;
 
-			#ifdef __VERBOSE__
+			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "    Connection list : " << tmpConnections.size() << std::endl;
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
 				{
@@ -1409,7 +1409,7 @@
 			throw m+e;
 		}
 
-		#ifdef __VERBOSE__
+		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Pipeline::build - Done." << std::endl;
 		#endif
 	}
@@ -1695,7 +1695,7 @@
 	\fn float Pipeline::getTiming(const std::string& path)
 	\brief Get last result of performance monitoring IF it is still enabled.
 	\param path The path to the filter.
-	\return Time in milliseconds needed to apply the filter (not counting bonding operation).
+	\return Time in milliseconds needed to apply the filter (not counting binding operation).
 	**/
 	float Pipeline::getTiming(const std::string& path)
 	{
@@ -1710,7 +1710,7 @@
 	\brief Get last result of performance monitoring IF it is still enabled.
 	\param action The ID of the filter.
 	\param filterName A reference string that will contain the name of the filter indexed by action at the end of the function.
-	\return Time in milliseconds needed to apply the filter (not counting bonding operation).
+	\return Time in milliseconds needed to apply the filter (not counting binding operation).
 	**/
 	float Pipeline::getTiming(int action, std::string& filterName)
 	{

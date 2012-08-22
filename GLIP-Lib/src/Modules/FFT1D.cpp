@@ -40,7 +40,7 @@
 	\param flags The flags associated for this computation (combined with | operator), see FFT1D::Flags.
 	**/
 	FFT1D::FFT1D(int _size, int flags)
-	 : bitReversal(NULL), wpTexture(NULL), pipeline(NULL), size(_size), shift((flags & Shifted)>0), inversed((flags & Inversed)>0), compMagnitude((flags & ComputeMagnitude)>0)
+	 : bitReversal(NULL), wpTexture(NULL), pipeline(NULL), size(_size), shift((flags & Shifted)>0), inversed((flags & Inversed)>0), compMagnitude((flags & ComputeMagnitude)>0), compatibilityMode((flags & CompatibilityMode)>0)
 	{
 		double 	test1 = log(size)/log(2),
 			test2 = floor(test1);
@@ -110,7 +110,7 @@
 				}
 				else
 				{
-					playout.connect(previousName, "outputTexture", name, "inputTexture");
+					playout.connect(previousName, "output", name, "inputTexture");
 					playout.connectToInput("wpTexture", name, "wpTexture");
 				}
 
@@ -124,10 +124,10 @@
 			ShaderSource shader(generateFinalCode());
 			FilterLayout fl("ReOrder", fmtout, shader);
 			playout.add(fl,"fReOrder");
-			playout.connect(previousName, "outputTexture", "fReOrder", "inputTexture");
+			playout.connect(previousName, "output", "fReOrder", "inputTexture");
 
 			// Connect to output :
-			playout.connectToOutput("fReOrder", "outputTexture", "output");
+			playout.connectToOutput("fReOrder", "output", "output");
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT");
@@ -186,10 +186,15 @@
 		else
 			str << "uniform sampler2D wpTexture; \n";
 
-		str << "out vec4 outputTexture; \n";
+		if(!compatibilityMode)
+			str << "out vec4 output; \n";
+
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
+
+		if(compatibilityMode)
+			str << "    vec4 output = vec4(0.0,0.0,0.0,0.0); \n";
 
 		if(delta==1)
 		{
@@ -203,19 +208,19 @@
 			str << "    int ipB          = int(pB.s*sz); \n";
 			str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA,0), 0); \n";
 			str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB,0), 0); \n";
-			str << "    outputTexture.r  = A.r + B.r;           //real part of Xp \n";
+			str << "    output.r  = A.r + B.r;           //real part of Xp \n";
 
 			if(!inversed)
-				str << "    outputTexture.g  = A.g + B.g;   //imag part of Xp \n";
+				str << "    output.g  = A.g + B.g;   //imag part of Xp \n";
 			else
-				str << "    outputTexture.g  = - A.g - B.g; //imag part of Xp \n";
+				str << "    output.g  = - A.g - B.g; //imag part of Xp \n";
 
-			str << "    outputTexture.b  = A.r - B.r;           //real part of Xp+n/2 \n";
+			str << "    output.b  = A.r - B.r;           //real part of Xp+n/2 \n";
 
 			if(!inversed)
-				str << "    outputTexture.a  = A.g - B.g;   //imag part of Xp+n/2 \n";
+				str << "    output.a  = A.g - B.g;   //imag part of Xp+n/2 \n";
 			else
-				str << "    outputTexture.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
+				str << "    output.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
 		}
 		else
 		{
@@ -252,11 +257,14 @@
 			str << "    vec4 wp          = texelFetch(wpTexture, ivec2(ipWp,0), 0); \n";
 
 			// Compute :
-			str << "    outputTexture.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
-			str << "    outputTexture.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
-			str << "    outputTexture.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
-			str << "    outputTexture.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
+			str << "    output.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
+			str << "    output.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
+			str << "    output.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
+			str << "    output.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
 		}
+
+		if(compatibilityMode)
+			str << "    gl_FragColor = output; \n";
 
 		str << "} \n";
 
@@ -270,10 +278,17 @@
 		str << "#version 130\n";
 		str << "\n";
 		str << "uniform sampler2D inputTexture; \n";
-		str << "out vec4 outputTexture; \n";
+
+		if(!compatibilityMode)
+			str << "out vec4 output; \n";
+
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
+
+		if(compatibilityMode)
+			str << "    vec4 output = vec4(0.0,0.0,0.0,0.0); \n";
+
 		str << "    const int sz             = " << size << "; \n";
 		str << "    const int hsz            = " << size/2 << "; \n";
 		str << "    int globid               = int(gl_TexCoord[0].s*sz); \n";
@@ -286,35 +301,38 @@
 
 		if(!shift)
 		{
-			str << "        outputTexture.r      = X.r; \n";
-			str << "        outputTexture.g      = X.g; \n";
+			str << "        output.r      = X.r; \n";
+			str << "        output.g      = X.g; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        outputTexture.r      = X.b; \n";
-			str << "        outputTexture.g      = X.a; \n";
+			str << "        output.r      = X.b; \n";
+			str << "        output.g      = X.a; \n";
 		}
 		else
 		{
-
-			str << "        outputTexture.r      = X.b; \n";
-			str << "        outputTexture.g      = X.a; \n";
+			str << "        output.r      = X.b; \n";
+			str << "        output.g      = X.a; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        outputTexture.r      = X.r; \n";
-			str << "        outputTexture.g      = X.g; \n";
+			str << "        output.r      = X.r; \n";
+			str << "        output.g      = X.g; \n";
 		}
 		str << "    } \n";
 
 		if(inversed)
 		{
-			str << "    outputTexture.r =  outputTexture.r/sz; \n";
-			str << "    outputTexture.g = -outputTexture.g/sz; \n";
+			str << "    output.r =  output.r/sz; \n";
+			str << "    output.g = -output.g/sz; \n";
 		}
 
 		if(compMagnitude)
-			str << "    outputTexture.b      = sqrt(outputTexture.r*outputTexture.r+outputTexture.g*outputTexture.g); \n";
+			str << "    output.b      = sqrt(output.r*output.r+output.g*output.g); \n";
+
+		if(compatibilityMode)
+			str << "    gl_FragColor = output; \n";
+
 		str << "} \n";
 
 		return str.str();

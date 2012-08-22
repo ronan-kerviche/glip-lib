@@ -43,10 +43,12 @@
 				std::string  msg;
 				std::string  filename;
 				unsigned int line;
+				std::string completeMsg;
 				std::vector<Exception>	subErrors;
 
 				// Tools
 				std::string header(void) const throw();
+				void updateCompleteMessage(void);
 
 			public :
 				// Tools

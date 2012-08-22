@@ -131,14 +131,19 @@
 	**/
 	std::string ShaderSource::getLine(int l)
 	{
-		size_t 	pre = 1,
+		bool	firstTime = true;
+		size_t 	pre = 0,
 			pos = 0;
 
 		int i=0;
 
 		while(i<=l)
 		{
-			pre = pos+1;
+			if(firstTime)
+				firstTime = false;
+			else
+				pre = pos+1;
+
 			pos = source.find('\n',pre);
 
 			if(pos==std::string::npos)

@@ -27,6 +27,7 @@
 	#include "FFT2D.hpp"
 	#include "devDebugTools.hpp"
 	#include "ShaderSource.hpp"
+	#include "HdlShader.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -41,7 +42,7 @@
 	\param flags The flags associated for this computation (combined with | operator), see FFT2D::Flags.
 	**/
 	FFT2D::FFT2D(int _w, int _h, int flags)
-	 : width_bitReversal(NULL), width_wpTexture(NULL), height_bitReversal(NULL), height_wpTexture(NULL), pipeline(NULL),  w(_w), h(_h), inversed((flags & Inversed)>0), shift((flags & Shifted)>0), compMagnitude((flags & ComputeMagnitude)>0)
+	 : width_bitReversal(NULL), width_wpTexture(NULL), height_bitReversal(NULL), height_wpTexture(NULL), pipeline(NULL), lnkFirstWidthFilter(NULL), w(_w), h(_h), inverse((flags & Inversed)>0), shift((flags & Shifted)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0)
 	{
 		double 	test1 = log(w)/log(2),
 			test2 = floor(test1),
@@ -56,16 +57,14 @@
 
 		// Fill bit reversal :
 			// Width :
-				float* data1w = new float[w*3];
-
+				float* data1w = new float[w*2];
 				for(unsigned short i=0; i<w; i++)
 				{
 					unsigned short r = reverse(i, true);
-					data1w[3*i+0] = static_cast<float>(r)/static_cast<float>(w);
-					data1w[3*i+1] = 0.0;
-					data1w[3*i+2] = 0.0;
+					data1w[2*i+0] = static_cast<float>(r)/static_cast<float>(w);
+					data1w[2*i+1] = 0.0;
 				}
-				HdlTextureFormat widthBitReversalFormat(w, 1, GL_RGB32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+				HdlTextureFormat widthBitReversalFormat(w, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 				width_bitReversal = new HdlTexture(widthBitReversalFormat);
 				width_bitReversal->write(data1w);
 				delete[] data1w;
@@ -74,16 +73,14 @@
 					height_bitReversal = width_bitReversal;
 				else
 				{
-					float* data1h = new float[h*3];
-
+					float* data1h = new float[h*2];
 					for(unsigned short i=0; i<h; i++)
 					{
 						unsigned short r = reverse(i, false);
-						data1h[3*i+0] = static_cast<float>(r)/static_cast<float>(h);
-						data1h[3*i+1] = 0.0;
-						data1h[3*i+2] = 0.0;
+						data1h[2*i+0] = static_cast<float>(r)/static_cast<float>(h);
+						data1h[2*i+1] = 0.0;
 					}
-					HdlTextureFormat heightBitReversalFormat(h, 1, GL_RGB32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+					HdlTextureFormat heightBitReversalFormat(h, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 					height_bitReversal = new HdlTexture(heightBitReversalFormat);
 					height_bitReversal->write(data1h);
 					delete[] data1h;
@@ -91,17 +88,15 @@
 
 		// Fill wpTexture :
 			// Width :
-				float* data2w = new float[w/2*3];
+				float* data2w = new float[w/2*2];
 				for(int i=0; i<w/2; i++)
 				{
 					float a,b;
 					getWp(i,a,b,true);
-					//std::cout << i << " : " << a << " - " << b << std::endl;
-					data2w[3*i+0] = a;
-					data2w[3*i+1] = b;
-					data2w[3*i+2] = 0.0f;
+					data2w[2*i+0] = a;
+					data2w[2*i+1] = b;
 				}
-				HdlTextureFormat widthWpTextureFormat(w/2, 1, GL_RGB32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+				HdlTextureFormat widthWpTextureFormat(w/2, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 				width_wpTexture = new HdlTexture(widthWpTextureFormat);
 				width_wpTexture->write(data2w);
 				delete[] data2w;
@@ -110,17 +105,15 @@
 					height_wpTexture = width_wpTexture;
 				else
 				{
-					float* data2h = new float[h/2*3];
+					float* data2h = new float[h/2*2];
 					for(int i=0; i<h/2; i++)
 					{
 						float a,b;
 						getWp(i,a,b,false);
-						//std::cout << i << " : " << a << " - " << b << std::endl;
-						data2h[3*i+0] = a;
-						data2h[3*i+1] = b;
-						data2h[3*i+2] = 0.0f;
+						data2h[2*i+0] = a;
+						data2h[2*i+1] = b;
 					}
-					HdlTextureFormat heightWpTextureFormat(h/2, 1, GL_RGB32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+					HdlTextureFormat heightWpTextureFormat(h/2, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 					height_wpTexture = new HdlTexture(heightWpTextureFormat);
 					height_wpTexture->write(data2h);
 					delete[] data2h;
@@ -135,7 +128,14 @@
 		{
 			HdlTextureFormat widthfmt(w/2,h,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 			HdlTextureFormat heightfmt(w,h/2,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-			HdlTextureFormat fmtout(w,h,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+
+			HdlTextureFormat *fmtout;
+
+			if(compMagnitude)
+				fmtout = new HdlTextureFormat(w,h,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+			else
+				fmtout = new HdlTextureFormat(w,h,GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+
 			PipelineLayout playout("FFTPipeline");
 			playout.addInput("input");
 			playout.addInput("widthReversalTexture");
@@ -146,7 +146,8 @@
 
 			// First : width
 			int coeffp = w/2;
-			std::string previousName = "";
+			std::string 	previousName = "",
+					firstWidthFilterName = "";
 
 			for(int i=1; i<=w/2; i*=2)
 			{
@@ -159,10 +160,11 @@
 				{
 					playout.connectToInput("input", name, "inputTexture");
 					playout.connectToInput("widthReversalTexture", name, "reversalTexture");
+					firstWidthFilterName = name;
 				}
 				else
 				{
-					playout.connect(previousName, "outputTexture", name, "inputTexture");
+					playout.connect(previousName, "output", name, "inputTexture");
 					playout.connectToInput("widthWpTexture", name, "wpTexture");
 				}
 
@@ -173,9 +175,9 @@
 
 			// Unpack :
 			ShaderSource wshader(generateFinalCode(true));
-			FilterLayout flw("WReOrder", fmtout, wshader);
+			FilterLayout flw("WReOrder", *fmtout, wshader);
 			playout.add(flw,"fWReOrder");
-			playout.connect(previousName, "outputTexture", "fWReOrder", "inputTexture");
+			playout.connect(previousName, "output", "fWReOrder", "inputTexture");
 
 			// Second : height
 			previousName = "";
@@ -190,12 +192,12 @@
 
 				if(previousName=="")
 				{
-					playout.connect("fWReOrder", "outputTexture", name, "inputTexture");
+					playout.connect("fWReOrder", "output", name, "inputTexture");
 					playout.connectToInput("heightReversalTexture", name, "reversalTexture");
 				}
 				else
 				{
-					playout.connect(previousName, "outputTexture", name, "inputTexture");
+					playout.connect(previousName, "output", name, "inputTexture");
 					playout.connectToInput("heightWpTexture", name, "wpTexture");
 				}
 
@@ -206,15 +208,18 @@
 
 			// Add last filter :
 			ShaderSource hshader(generateFinalCode(false));
-			FilterLayout flh("HReOrder", fmtout, hshader);
+			FilterLayout flh("HReOrder", *fmtout, hshader);
 			playout.add(flh,"fHReOrder");
-			playout.connect(previousName, "outputTexture", "fHReOrder", "inputTexture");
+			playout.connect(previousName, "output", "fHReOrder", "inputTexture");
 
 			// Connect to output :
-			playout.connectToOutput("fHReOrder", "outputTexture", "output");
+			playout.connectToOutput("fHReOrder", "output", "output");
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT2D");
+			lnkFirstWidthFilter = &((*pipeline)[firstWidthFilterName]);
+
+			delete fmtout;
 		}
 		catch(Exception& e)
 		{
@@ -282,14 +287,26 @@
 		str << "uniform sampler2D inputTexture; \n";
 
 		if(delta==1)
+		{
 			str << "uniform sampler2D reversalTexture; \n";
+
+			if(useZeroPadding && forWidth)
+				str << "uniform int xOffset, yOffset; \n";
+			else
+				str << "const int xOffset=0, yOffset=0; \n";
+		}
 		else
 			str << "uniform sampler2D wpTexture; \n";
 
-		str << "out vec4 outputTexture; \n";
+		if(!compatibilityMode)
+			str << "out vec4 output; \n";
+
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
+
+		if(compatibilityMode)
+			str << "    vec4 output = vec4(0.0,0.0,0.0,0.0); \n";
 
 		if(delta==1)
 		{
@@ -298,7 +315,6 @@
 				str << "    const int sz     = " << w << "; \n";
 				str << "    const int hsz    = " << w/2 << "; \n";
 				str << "    const int tsz    = " << h << "; \n";
-				//str << "    const float pRev = " << 1.0f/static_cast<float>(size) << "; \n";
 				str << "    int globid       = int(gl_TexCoord[0].s*hsz); \n";
 				str << "    int transverseId = int(gl_TexCoord[0].t*tsz); \n";
 			}
@@ -315,10 +331,21 @@
 			str << "    vec4 pB          = texelFetch(reversalTexture, ivec2(globid*2+1, 0), 0); \n";
 			str << "    int ipA          = int(pA.s*sz); \n";
 			str << "    int ipB          = int(pB.s*sz); \n";
+
+			if(shift && inverse && forWidth) // only on the first process
+			{
+				str << "    if(ipA<sz/2)           ipA = ipA+sz/2; \n";
+				str << "    else                   ipA = ipA-sz/2; \n";
+				str << "    if(ipB<sz/2)           ipB = ipB+sz/2; \n";
+				str << "    else                   ipB = ipB-sz/2; \n";
+				str << "    if(transverseId<tsz/2) transverseId = transverseId+tsz/2; \n";
+				str << "    else                   transverseId = transverseId-tsz/2; \n";
+			}
+
 			if(forWidth)
 			{
-				str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA,transverseId), 0); \n";
-				str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB,transverseId), 0); \n";
+				str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA-xOffset,transverseId-yOffset), 0); \n";
+				str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB-xOffset,transverseId-yOffset), 0); \n";
 			}
 			else
 			{
@@ -326,19 +353,19 @@
 				str << "    vec4 B           = texelFetch(inputTexture, ivec2(transverseId,ipB), 0); \n";
 			}
 
-			str << "    outputTexture.r  = A.r + B.r;           //real part of Xp \n";
+			str << "    output.r  = A.r + B.r;           //real part of Xp \n";
 
-			if(!inversed)
-				str << "    outputTexture.g  = A.g + B.g;   //imag part of Xp \n";
+			if(!inverse)
+				str << "    output.g  = A.g + B.g;   //imag part of Xp \n";
 			else
-				str << "    outputTexture.g  = - A.g - B.g; //imag part of Xp \n";
+				str << "    output.g  = - A.g - B.g; //imag part of Xp \n";
 
-			str << "    outputTexture.b  = A.r - B.r; //real part of Xp+n/2 \n";
+			str << "    output.b  = A.r - B.r; //real part of Xp+n/2 \n";
 
-			if(!inversed)
-				str << "    outputTexture.a  = A.g - B.g; //imag part of Xp+n/2 \n";
+			if(!inverse)
+				str << "    output.a  = A.g - B.g; //imag part of Xp+n/2 \n";
 			else
-				str << "    outputTexture.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
+				str << "    output.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
 		}
 		else
 		{
@@ -402,11 +429,14 @@
 			str << "    vec4 wp          = texelFetch(wpTexture, ivec2(ipWp,0), 0); \n";
 
 			// Compute :
-			str << "    outputTexture.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
-			str << "    outputTexture.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
-			str << "    outputTexture.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
-			str << "    outputTexture.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
+			str << "    output.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
+			str << "    output.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
+			str << "    output.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
+			str << "    output.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
 		}
+
+		if(compatibilityMode)
+			str << "    gl_FragColor = output; \n";
 
 		str << "} \n";
 
@@ -420,10 +450,16 @@
 		str << "#version 130\n";
 		str << "\n";
 		str << "uniform sampler2D inputTexture; \n";
-		str << "out vec4 outputTexture; \n";
+
+		if(!compatibilityMode)
+			str << "out vec4 output; \n";
+
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
+
+		if(compatibilityMode)
+			str << "    vec4 output; \n";
 
 		if(forWidth)
 		{
@@ -438,19 +474,19 @@
 			str << "    vec4 X                   = texelFetch(inputTexture, ivec2(mglobid, transversId), 0); \n";
 			str << "    if(globid<hsz) \n";
 			str << "    { \n";
-			str << "        outputTexture.r      = X.r; \n";
-			str << "        outputTexture.g      = X.g; \n";
+			str << "        output.r      = X.r; \n";
+			str << "        output.g      = X.g; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        outputTexture.r      = X.b; \n";
-			str << "        outputTexture.g      = X.a; \n";
+			str << "        output.r      = X.b; \n";
+			str << "        output.g      = X.a; \n";
 			str << "    } \n";
 
-			if(inversed)
+			if(inverse)
 			{
-				str << "    outputTexture.r          =  outputTexture.r/sz; \n";
-				str << "    outputTexture.g          = -outputTexture.g/sz; \n";
+				str << "    output.r          =  output.r/sz; \n";
+				str << "    output.g          = -output.g/sz; \n";
 			}
 		}
 		else
@@ -462,7 +498,7 @@
 			str << "    int wglobid              = int(gl_TexCoord[0].s*w); \n";
 			str << "    int hglobid              = int(gl_TexCoord[0].t*h); \n";
 
-			if(shift)
+			if(shift && !inverse)
 			{
 				str << "    if(wglobid<hw)    wglobid += hw; \n";
 				str << "    else              wglobid -= hw; \n";
@@ -473,42 +509,45 @@
 			str << "        mhglobid             = hglobid - hh; \n";
 			str << "    vec4 X                   = texelFetch(inputTexture, ivec2(wglobid, mhglobid), 0); \n";
 
-			if(!shift)
+			if(!shift || inverse)
 			{
 				str << "    if(hglobid<hh) \n";
 				str << "    { \n";
-				str << "        outputTexture.r      = X.r; \n";
-				str << "        outputTexture.g      = X.g; \n";
+				str << "        output.r      = X.r; \n";
+				str << "        output.g      = X.g; \n";
 				str << "    } \n";
 				str << "    else \n";
 				str << "    { \n";
-				str << "        outputTexture.r      = X.b; \n";
-				str << "        outputTexture.g      = X.a; \n";
+				str << "        output.r      = X.b; \n";
+				str << "        output.g      = X.a; \n";
 				str << "    } \n";
 			}
 			else
 			{
 				str << "    if(hglobid<hh) \n";
 				str << "    { \n";
-				str << "        outputTexture.r      = X.b; \n";
-				str << "        outputTexture.g      = X.a; \n";
+				str << "        output.r      = X.b; \n";
+				str << "        output.g      = X.a; \n";
 				str << "    } \n";
 				str << "    else \n";
 				str << "    { \n";
-				str << "        outputTexture.r      = X.r; \n";
-				str << "        outputTexture.g      = X.g; \n";
+				str << "        output.r      = X.r; \n";
+				str << "        output.g      = X.g; \n";
 				str << "    } \n";
 			}
 
-			if(inversed)
+			if(inverse)
 			{
-				str << "        outputTexture.r      =  outputTexture.r/h; \n";
-				str << "        outputTexture.g      = -outputTexture.g/h; \n";
+				str << "        output.r      =  output.r/h; \n";
+				str << "        output.g      = -output.g/h; \n";
 			}
 
 			if(compMagnitude)
-				str << "        outputTexture.b      = sqrt(outputTexture.r*outputTexture.r+outputTexture.g*outputTexture.g); \n";
+				str << "        output.b      = sqrt(output.r*output.r+output.g*output.g); \n";
 		}
+
+		if(compatibilityMode)
+			str << "    gl_FragColor = output; \n";
 
 		str << "} \n";
 
@@ -522,8 +561,22 @@
 	**/
 	void FFT2D::process(HdlTexture& input)
 	{
-		if(input.getWidth()!=w || input.getHeight()!=h)
-			throw Exception("FFT2D::process - Wrong texture format.", __FILE__, __LINE__);
+		if(!useZeroPadding && (input.getWidth()!=w || input.getHeight()!=h))
+			throw Exception("FFT2D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__);
+
+		if(useZeroPadding && (input.getWidth()>w || input.getHeight()>h))
+			throw Exception("FFT2D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__);
+
+		if(useZeroPadding)
+		{
+			// Update the offsets :
+			int 	xOffset = (w-input.getWidth())/2,
+				yOffset = (h-input.getHeight())/2;
+
+			lnkFirstWidthFilter->prgm().modifyVar("xOffset", HdlProgram::Var, xOffset);
+			lnkFirstWidthFilter->prgm().modifyVar("yOffset", HdlProgram::Var, yOffset);
+
+		}
 
 		(*pipeline) << input << (*width_bitReversal) << (*height_bitReversal) << (*width_wpTexture) << (*height_wpTexture) << Pipeline::Process;
 	}

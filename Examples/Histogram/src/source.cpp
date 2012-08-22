@@ -45,13 +45,13 @@
 		// Set variables :
 		try
 		{
-			((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,0);
-			((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,1);
-			((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::SHADER_VAR,2);
+			((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::Var,0);
+			((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::Var,1);
+			((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::Var,2);
 			const float scale = 10.0f;
-			((*pipeline)["instHistRed"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
-			((*pipeline)["instHistGreen"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
-			((*pipeline)["instHistBlue"]).prgm().modifyVar("scale",HdlProgram::SHADER_VAR,scale);
+			((*pipeline)["instHistRed"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
+			((*pipeline)["instHistGreen"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
+			((*pipeline)["instHistBlue"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
 		}
 		catch(std::exception& e)
 		{
@@ -120,9 +120,9 @@
 				(*pipeline)["instHistBlue"].setGeometry(HdlVBO::generate2DGrid(text->getWidth(), text->getHeight()));
 
 				float a = 1.0/static_cast<float>(text->getWidth()*text->getHeight());
-				((*pipeline)["instHistRed"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
-				((*pipeline)["instHistGreen"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
-				((*pipeline)["instHistBlue"]).prgm().modifyVar("nrm",HdlProgram::SHADER_VAR,a);
+				((*pipeline)["instHistRed"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
+				((*pipeline)["instHistGreen"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
+				((*pipeline)["instHistBlue"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
 
 				try
 				{

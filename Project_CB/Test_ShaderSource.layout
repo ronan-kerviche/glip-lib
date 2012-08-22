@@ -2,7 +2,7 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../Examples/Test_ShaderSource/Test_ShaderSource.pro" open="0" top="0" tabpos="0">
-		<Cursor position="30" topLine="0" />
+		<Cursor position="116" topLine="0" />
 	</File>
 	<File name="../Examples/Test_ShaderSource/src/main.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="2094" topLine="9" />

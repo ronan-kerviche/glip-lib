@@ -38,29 +38,42 @@ namespace Glip
 		// Structure
 		/**
 		\class FFT2D
-		\brief Compute the 2D FFT for a gray level image (real or complex). THIS MODULE HASN'T BEEN FULLY TESTED YET.
+		\brief Compute the 2D FFT for a gray level image (real or complex) in single precision.
+
+		This module might return erroneous result given that the driver will perform blind optimization.
+		Thus results might be affected by lower accuracy and being fetched to a close value.
+
+		How to use this module for a simple convolution task :
+\code
+FFT2D fft2D(inputTexture.getWidth(), inputTexture.getHeight(), FFT2D::Shifted);
+FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
+
+//...
+
+fft2D.process(inputTexture);
+convolutionPipeline << fft2D.output() << Pipeline::Process;
+ifft2D.process(convolutionPipeline.out(0));
+
+display << ifft2D.output();
+\endcode
 		**/
 		class FFT2D
 		{
 			public :
+				///Flags describing the computation options.
 				enum Flags
 				{
+					///Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
 					Shifted			= 1,
+					///Perform the reciprocal transform, iFFT : FFT(X*)* / N.
 					Inversed		= 2,
-					ComputeMagnitude	= 4
+					///In the final result, the blue channel will hold the magnitude of the complex number.
+					ComputeMagnitude	= 4,
+					///Use zero padding for input texture which are smaller than the transform size.
+					UseZeroPadding		= 8,
+					///The computation will use of old gl_FragColor GLSL built-in variable.
+					CompatibilityMode	= 16
 				};
-
-				/**
-				\enum FFT1D::Flags
-				Flags describing the computation options.
-
-				\var FFT1D::Flags FFT1D::Shifted
-				Shift the final result.
-				\var FFT1D::Flags FFT1D::Inversed
-				Perform iFFT : FFT(X*)* / N.
-				\var FFT1D::Flags FFT1D::ComputeMagnitude
-				In the final result, the blue channel will hold the magnitude of the complex number.
-				**/
 
 			private :
 				// Data :
@@ -69,6 +82,7 @@ namespace Glip
 						*height_bitReversal,
 						*height_wpTexture;
 				Pipeline 	*pipeline;
+				Filter		*lnkFirstWidthFilter;
 
 				// Tools :
 				unsigned short reverse(unsigned short n, bool forWidth);
@@ -84,11 +98,15 @@ namespace Glip
 						h;
 
 						///Set to true if the operation performed is the inverse FFT.
-				const bool 	inversed,
+				const bool 	inverse,
 						///Set to true if the final result is shifted in case of a FFT, or the input is assumed to be shifted for an iFFT.
 						shift,
 						///Set to true if the magnitude is computed.
-						compMagnitude;
+						compMagnitude,
+						///Set to true if the transform accept lower textures in size and zero-pad them before computing the transform.
+						useZeroPadding,
+						///Set to true if The computation will use gl_FragColor.
+						compatibilityMode;
 
 				// Tools :
 				FFT2D(int _w, int _h, int flags = 0);

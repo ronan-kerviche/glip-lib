@@ -64,13 +64,17 @@ namespace Glip
 		{
 			public :
 				// Data
-				// Enum / data
-				enum SHADER_DATA_TYPE
+				/// Flags describing the dimension of an uniform variable.
+				enum ShaderDataType
 				{
-					SHADER_VAR,
-					SHADER_VEC2,
-					SHADER_VEC3,
-					SHADER_VEC4
+					///Variable.
+					Var,
+					///2D Vector (vec2).
+					Vec2,
+					///3D Vector (vec3).
+					Vec3,
+					///4D Vector (vec4).
+					Vec4
 				};
 			private :
 				// Data
@@ -92,8 +96,8 @@ namespace Glip
 				void use(void);
 
 				bool setFragmentLocation(const std::string& fragName, int frag);
-				bool modifyVar(const std::string& varName, SHADER_DATA_TYPE type, int val1, int val2=0, int val3=0, int val4=0);
-				bool modifyVar(const std::string& varName, SHADER_DATA_TYPE type, float val1, float val2=0, float val3=0, float val4=0);
+				bool modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2=0, int val3=0, int val4=0);
+				bool modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2=0, float val3=0, float val4=0);
 
 				// Static tools :
 				static int maxVaryingVar(void);

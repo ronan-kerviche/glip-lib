@@ -81,6 +81,8 @@
 		<Unit filename="../GLIP-Lib/include/Core/glxew.h" />
 		<Unit filename="../GLIP-Lib/include/Core/wglew.h" />
 		<Unit filename="../GLIP-Lib/include/GLIPLib.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/FFT1D.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/FFT2D.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/LayoutLoader.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/Modules.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/ProceduralInput.hpp" />
@@ -105,6 +107,8 @@
 		<Unit filename="../GLIP-Lib/src/Core/glew.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../GLIP-Lib/src/Modules/FFT1D.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/FFT2D.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/LayoutLoader.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/ProceduralInput.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.cpp" />
