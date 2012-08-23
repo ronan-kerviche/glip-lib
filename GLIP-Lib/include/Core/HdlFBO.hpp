@@ -70,7 +70,7 @@
 					void		endRendering(void);
 					void		bind(void);
 					HdlTexture* 	operator[](int i);
-					int		getSize(void);
+					int		getSize(bool askDriver = false);
 
 					// Static tools :
 					static int    getMaximumColorAttachment(void);

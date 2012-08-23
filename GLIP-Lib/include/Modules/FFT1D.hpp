@@ -91,6 +91,7 @@ namespace Glip
 
 				void process(HdlTexture& input);
 				HdlTexture& output(void);
+				int getSize(bool askDriver = false);
 		};
 	}
 }

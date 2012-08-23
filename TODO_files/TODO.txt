@@ -163,46 +163,58 @@ Current Version : 0.8
 	Status : TODO
 
 [0.9]	Add variable modifiers in main pipeline description.
-	Status : TODO
+	Status : CANCELED
 
 [0.9]	Check functions __ReadOnly_hdlTextureFormat::getSWrapping and getTWrapping (returning a GLint?).
 	Status : CHECKED
 
 [0.9]	ShaderSource bug : first line and last line might be omitted when checking input and output.
-	Status : TODO
+	Status : CHECKED
 
 [0.9]	Update pipeline size calculation with real texture size.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Add binding signals under __DEVELOPMENT_VERBOSE__ to protect against illegal re-binding.
-	Status : TODO
+	Status : DONE
 
 [0.9]   Add auto connection on pipelines based on names of the ports
-	Status : TODO
+	Status : DONE
 
 [0.9]	Add Corresponding keyword CONNECTION(AUTO)
-	Status : TODO
+	Status : REPLACED
 
 [0.9]	Update and optimize all textures size for FFT1D
 	Status : TODO
 
 [0.9]	Update and optimize all textures size for FFT2D
-	Status : TODO
+	Status : DONE
 
 [0.9]	Add test after FBO creation and texture attachment.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Change the license to MIT.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Bug on fftshift with IFFT?
+	Status : DONE
+
+[0.9]	Bug on zero padding for IFFT2D?
+	Status : DONE
+
+[0.9]	Fix bug on ifft1D.
 	Status : TODO
 
 [0.9]	Add an error in FFTxD::process if the input has more than two channels.
 	Status : TODO
 
-[0.9]	Add support for compatibility mode in FFTxD (use of gl_FragColor).
+[0.9]	Add texture tools in the HdlTexture management.
 	Status : TODO
+
+[0.9]	Add reduction module.
+	Status : TODO
+
+[0.9]	Add support for compatibility mode in FFTxD (use of gl_FragColor).
+	Status : DONE
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.
 	Status : DONE

@@ -73,6 +73,8 @@ using namespace Glip::CoreGL;
 			Err( GL_OUT_OF_MEMORY,				"Out of Memory")
 			Err( GL_TABLE_TOO_LARGE,			"Table too large")
 			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation - Don't forget to write something once in the attached texture! (in the init)")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer - Most likely incompatibility with texture format")
+			Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer - Likely incompatibility with texture format")
 			case GL_NO_ERROR : return "(No error)";
 			default          : return "Unknown error (Code : " + to_string(err) + ")";
 		}
@@ -103,6 +105,8 @@ using namespace Glip::CoreGL;
 				Err( GL_OUT_OF_MEMORY,				"Out of Memory")
 				Err( GL_TABLE_TOO_LARGE,			"Table too large")
 				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation - Don't forget to write something once in the attached texture! (in the init)")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer - Most likely incompatibility with texture format")
+				Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer - Likely incompatibility with texture format")
 
 				case GL_NO_ERROR : if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
 				default          :                       std::cout << "OpenGL error : Error NOT recognized (Code : " << err << ')' << std::endl; break;
@@ -476,7 +480,7 @@ using namespace Glip::CoreGL;
 			NMTOOL( GL_INTENSITY16F_ARB )
 			NMTOOL( GL_INTENSITY16_SNORM )
 			NMTOOL( GL_INTENSITY32F_ARB )
-			NMTOOL( GL_RGB32F_ARB )
+			NMTOOL( GL_RGB32F )
 			NMTOOL( GL_RG )
 			NMTOOL( GL_RG8 )
 			NMTOOL( GL_RG8I )

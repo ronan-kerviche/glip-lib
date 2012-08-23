@@ -1,0 +1,30 @@
+TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+
+SHADER_SOURCE:mixShader()
+{
+	#version 130
+
+	uniform sampler2D 	original, convolved;
+	out     vec4 		outText;
+
+	void main()
+	{
+		vec4 	col1 = textureLod(original, gl_TexCoord[0].st, 0);
+		vec4 	col2 = textureLod(convolved, gl_TexCoord[0].st, 0);
+
+		if(gl_TexCoord[0].s + gl_TexCoord[0].t >= 1.0)
+			outText = col2;
+		else
+			outText = col1;
+	}
+}
+
+FILTER_LAYOUT:fMix(format,mixShader);
+
+PIPELINE_MAIN:pMix()
+{
+	INPUT_PORTS(convolved, original);
+	OUTPUT_PORTS(outText);
+	FILTER_INSTANCE:instMix(fMix);
+}
+

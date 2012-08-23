@@ -1,29 +1,35 @@
-							GLIP-Lib 
-				OpenGL Image Processing Library
-					 Copyright (C) 2010-2011 
+	GLIP-Lib
+	OpenGL Image Processing Library
+	Copyright (C) 2010-2011-2012
 
 ===============================================================================
 
 Web
+	http://glip-lib.sourceforge.net/index.html
 	http://sourceforge.net/projects/glip-lib/
 
 Authors
 	Ronan    KERVICHE - ronan.kerviche@free.fr
-	Corentin DERBOIS  - 
+	Corentin DERBOIS  -
 
 License and disclaimers
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+	MIT License
+	Permission is hereby granted, free of charge, to any person obtaining a copy of
+	this software and associated documentation files (the "Software"), to deal in the
+	Software without restriction, including without limitation the rights to use, copy,
+	modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+	and to permit persons to whom the Software is furnished to do so, subject to the
+	following conditions:
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	The above copyright notice and this permission notice shall be included in all copies
+	or substantial portions of the Software.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+	PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+	LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+	TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+	THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Aim
 	The aim of this library is to provide a framework of video processing
@@ -31,35 +37,17 @@ Aim
 	(Khronos Group, Copyright 2010) and the shading language GLSL.
 
 Plateforms
-	The core library, except its modules, tends to be cross-plateform. 
-	Please, refer to future documentation for further informations.
+	Developped on Linux Debian, tested on Fedora 17 and on Windows 7 (MingW).
 
 Documentation
-	Not for the moment. (Doxygen)
+	See : http://glip-lib.sourceforge.net/index.html
 
 How to compile
+	Linux :
 	In GLIP-Lib : sh ./compile
 
-===============================================================================
-	WHAT'S NEW?
+	Windows :
+	Use CMake to compile the library.
 
-0.51 - Base version, it inludes low level processing and pipelines management
-
-0.55 - 
-		* ADDED    : Technology presentation slides (in PDF - see SourceForge)
-					 Support for Unicap2 library instead of V4L2, it includes
-						new routines for 1394 cameras support
-					 Multi-target rendering from a single shader (#version 130)
-                     Starting documentation
-		* UPGRADED : Hardware checking and support for both NVidia and AMD/ATI
-		* REMOVED  : V4L2 support
-		
-0.60 - 
-        * ADDED    : Support for histogram-like algorithms
-					 Debugging tools and naming for filters and pipelines
-                     New formats decoding for cameras
-		* BUGFIX   : Some bugs in memory management for cameras
-					 Floating point texture is now fully available.
-
-
-
+Support
+	Email the authors for any question, bug fixes or improvement you may want to discuss.

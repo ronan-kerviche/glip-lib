@@ -120,9 +120,14 @@
 			}
 
 			// Add last filter :
-			HdlTextureFormat fmtout(size,1,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+			HdlTextureFormat *fmtout = NULL;
+			if(compMagnitude)
+				fmtout = new HdlTextureFormat(size,1,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+			else
+				fmtout = new HdlTextureFormat(size,1,GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+
 			ShaderSource shader(generateFinalCode());
-			FilterLayout fl("ReOrder", fmtout, shader);
+			FilterLayout fl("ReOrder", *fmtout, shader);
 			playout.add(fl,"fReOrder");
 			playout.connect(previousName, "output", "fReOrder", "inputTexture");
 
@@ -131,6 +136,7 @@
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT");
+			delete fmtout;
 		}
 		catch(Exception& e)
 		{
@@ -365,4 +371,30 @@
 			return pipeline->out(0);
 		else
 			throw Exception("FFT1D::output - pipeline is NULL.", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn int FFT1D::getSize(bool askDriver)
+	\brief Get the size in bytes of the elements on the GPU for this module.
+	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
+	\return Size in bytes.
+	**/
+	int FFT1D::getSize(bool askDriver)
+	{
+		int size = 0;
+
+		size += pipeline->getSize(askDriver);
+
+		if(askDriver)
+		{
+			size += bitReversal->getSizeOnGPU();
+			size += wpTexture->getSizeOnGPU();
+		}
+		else
+		{
+			size += bitReversal->getSize();
+			size += wpTexture->getSize();
+		}
+
+		return size;
 	}

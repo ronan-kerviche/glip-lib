@@ -593,3 +593,37 @@
 		else
 			throw Exception("FFT2D::output - pipeline is NULL.", __FILE__, __LINE__);
 	}
+
+	/**
+	\fn int FFT2D::getSize(bool askDriver)
+	\brief Get the size in bytes of the elements on the GPU for this module.
+	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
+	\return Size in bytes.
+	**/
+	int FFT2D::getSize(bool askDriver)
+	{
+		int size = 0;
+
+		size += pipeline->getSize(askDriver);
+
+		if(askDriver)
+		{
+			size += width_bitReversal->getSizeOnGPU();
+			if(height_bitReversal!=width_bitReversal)
+				size += height_bitReversal->getSizeOnGPU();
+			size += width_wpTexture->getSizeOnGPU();
+			if(height_wpTexture!=width_wpTexture)
+				size += height_wpTexture->getSizeOnGPU();
+		}
+		else
+		{
+			size += width_bitReversal->getSize();
+			if(height_bitReversal!=width_bitReversal)
+				size += height_bitReversal->getSize();
+			size += width_wpTexture->getSize();
+			if(height_wpTexture!=width_wpTexture)
+				size += height_wpTexture->getSize();
+		}
+
+		return size;
+	}

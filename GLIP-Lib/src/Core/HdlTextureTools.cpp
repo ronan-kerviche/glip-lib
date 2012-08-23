@@ -101,7 +101,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	{GL_RGB16F,			3,	true,	true,	true,	false,	false,	false,	GL_RGB,			GL_COMPRESSED_RGB, 		GL_FLOAT,		6, 	48, 	16, 	16, 	16, 	0, 	0},
 	{GL_RGB32I,			3,	true,	true,	true,	false,	false,	false,	GL_RGB,			GL_COMPRESSED_RGB, 		GL_INT,			12, 	96, 	32, 	32, 	32, 	0, 	0},
 	{GL_RGB32UI,			3,	true,	true,	true,	false,	false,	false,	GL_RGB,			GL_COMPRESSED_RGB, 		GL_UNSIGNED_INT,	12, 	96, 	32, 	32, 	32, 	0, 	0},
-	{GL_RGB32F_ARB,			3,	true,	true,	true,	false,	false,	false,	GL_RGB,			GL_COMPRESSED_RGB, 		GL_FLOAT,		12, 	96, 	32, 	32, 	32, 	0, 	0},
+	{GL_RGB32F,			3,	true,	true,	true,	false,	false,	false,	GL_RGB,			GL_COMPRESSED_RGB, 		GL_FLOAT,		12, 	96, 	32, 	32, 	32, 	0, 	0},
 	{GL_RGBA,			4,	true,	true,	true,	true,	false,	false,	GL_RGBA,		GL_COMPRESSED_RGBA, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0},
 	{GL_BGRA,			4,	true,	true,	true,	true,	false,	false,	GL_RGBA,		GL_COMPRESSED_RGBA, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0},
 	{GL_RGBA_SNORM,			4,	true,	true,	true,	true,	false,	false,	GL_RGBA,		GL_COMPRESSED_RGBA, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0},

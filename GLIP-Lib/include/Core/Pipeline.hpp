@@ -157,6 +157,7 @@
 					void	connectToInput(const std::string& port, const std::string& filterIn, const std::string& portIn);
 					void 	connectToOutput(int filterOut, int portOut, int port);
 					void 	connectToOutput(const std::string& filterOut, const std::string& portOut, const std::string& port);
+					void 	autoConnect(void);
 			};
 
 			/**
@@ -206,7 +207,7 @@
 					~Pipeline(void);
 
 					int 		getNumActions(void);
-					int 		getSize(void);
+					int 		getSize(bool askDriver = false);
 					Pipeline& 	operator<<(HdlTexture&);
 					Pipeline& 	operator<<(ActionType);
 					HdlTexture& 	out(int);

@@ -22,6 +22,7 @@
 **/
 
 #include <limits>
+#include <map>
 #include "Pipeline.hpp"
 #include "Component.hpp"
 #include "HdlFBO.hpp"
@@ -549,7 +550,7 @@
 
 	/**
 	\fn int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
-	\brief Ad a filter to the pipeline layout.
+	\brief Add a filter to the pipeline layout.
 	\param filterLayout The filter layout.
 	\param name The name of the element.
 	\return The ID of the element added.
@@ -572,7 +573,7 @@
 
 	/**
 	\fn int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
-	\brief Ad a subpipeline to the pipeline layout.
+	\brief Add a subpipeline to the pipeline layout.
 	\param pipelineLayout The pipeline layout.
 	\param name The name of the element.
 	\return The ID of the element added.
@@ -760,6 +761,86 @@
 		catch(std::exception& e)
 		{
 			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
+
+	/**
+	\fn void PipelineLayout::autoConnect(void)
+	\brief Create automatically all connections based on the name of the input and output ports and the name of the input and output textures of all Filters.
+
+	This function will automatically make the connection based on the name of the input and output ports and the name of the different textures in the shaders used.
+
+	All of the names of the output textures (defined with <i>out vec4</i> in the fragment shaders) and the input ports of this pipeline <b>must be unique</b>, it will raise an exception otherwise.
+	**/
+	void PipelineLayout::autoConnect(void)
+	{
+		try
+		{
+			// Check for previous existing connections
+			if(getNumConnections()!=0)
+				throw Exception("PipelineLayout::autoConnect - Layout for " + getNameExtended() + " has already connections and thus is not eligible to auto-connect.", __FILE__, __LINE__);
+
+			// Check for double names in outputs :
+			std::map<std::string,int> outputNames;
+
+			// Push the inputs of this :
+			for(int i=0; i<getNumInputPort(); i++)
+				outputNames[getInputPortName(i)] = THIS_PIPELINE;
+
+			// Add all of the outputs of all sub components :
+			for(int i=0; i<getNumElements(); i++)
+			{
+				__ReadOnly_ComponentLayout& cp = componentLayout(i);
+
+				for(int j=0; j<cp.getNumOutputPort(); j++)
+				{
+					std::string name = cp.getOutputPortName(j);
+
+					// Check for doubles :
+					std::map<std::string,int>::iterator it = outputNames.find(name);
+					if(it!=outputNames.end())
+						throw Exception("PipelineLayout::autoConnect - Found another output having the same name (" + name + " for PipelineLayout " + getNameExtended() + ".", __FILE__, __LINE__);
+					else
+						outputNames[name] = i;
+				}
+			}
+
+			// Layout is clean : start auto-connect
+			for(int i=0; i<getNumElements(); i++)
+			{
+				__ReadOnly_ComponentLayout& cp = componentLayout(i);
+				for(int j=0; j<cp.getNumInputPort(); j++)
+				{
+					std::map<std::string,int>::iterator it = outputNames.find(cp.getInputPortName(j));
+
+					if(it==outputNames.end())
+						throw Exception("PipelineLayout::autoConnect - No elements were found having an output named " + cp.getInputPortName(j) + " for PipelineLayout " + getNameExtended() + ".", __FILE__, __LINE__);
+
+					if(it->second!=THIS_PIPELINE)
+						connect(componentLayout(it->second).getName(), it->first, cp.getName(), cp.getInputPortName(j));
+					else
+						connectToInput(it->first, cp.getName(), cp.getInputPortName(j));
+				}
+			}
+
+			// Connect output ports :
+			for(int i=0; i<getNumOutputPort(); i++)
+			{
+				std::map<std::string,int>::iterator it = outputNames.find(getOutputPortName(i));
+
+				if(it==outputNames.end())
+					throw Exception("PipelineLayout::autoConnect - No elements were found having an output named " +getOutputPortName(i) + " for PipelineLayout " + getNameExtended() + ".", __FILE__, __LINE__);
+
+				if(it->second!=THIS_PIPELINE)
+					connectToOutput(componentLayout(it->second).getName(), it->first, getOutputPortName(i));
+				else
+					throw Exception("PipelineLayout::autoConnect - can't connect directly an input to an output in pipeline " + getNameExtended() + ", you don't need that.", __FILE__, __LINE__);
+			}
+		}
+		catch(Exception& e)
+		{
+			Exception m("PipelineLayout::autoConnect - An error occured while building connection for " + getNameExtended() + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -1427,9 +1508,10 @@
 	/**
 	\fn int Pipeline::getSize(void)
 	\brief Get the size in bytes of the elements on the GPU for this pipeline.
+	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return Size in bytes.
 	**/
-	int Pipeline::getSize(void)
+	int Pipeline::getSize(bool askDriver)
 	{
 		int size = 0;
 
@@ -1439,10 +1521,12 @@
 
 		for(int i=0; i<buffers.size(); i++)
 		{
+			int fsize = buffers[i]->getSize(askDriver);
+
 			#ifdef __VERBOSE__
-				std::cout << "    - Buffer " << i << " : " << buffers[i]->getSize()/(1024.0*1024.0) << "MB (W:" << buffers[i]->getWidth() << ", H:" << buffers[i]->getHeight() << ",T:" << buffers[i]->getAttachmentCount() << ')' << std::endl;
+				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << buffers[i]->getWidth() << ", H:" << buffers[i]->getHeight() << ",T:" << buffers[i]->getAttachmentCount() << ')' << std::endl;
 			#endif
-			size += buffers[i]->getSize();
+			size += fsize;
 		}
 
 		#ifdef __VERBOSE__

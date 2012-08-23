@@ -86,10 +86,9 @@ using namespace Glip::CoreGL;
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
 
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << __HERE__ << "Attaching texture to FBO : " << std::endl;
-			glErrors(true, false);
-		#endif
+		GLenum err = glGetError();
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlFBO::bindTextureToFBO - Texture can't be bound to the FBO, its format might be incompatible. (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
 	}
 
 	void HdlFBO::unbindTextureFromFBO(int i)
@@ -206,18 +205,25 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    int HdlFBO::getSize(void)
-	\brief Gets the size of the FBO in bytes.
+	\fn     int HdlFBO::getSize(void)
+	\brief  Gets the size of the FBO in bytes.
+	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return The size in byte of the multiple targets.
 	**/
-	int HdlFBO::getSize(void)
+	int HdlFBO::getSize(bool askDriver)
 	{
-		return getAttachmentCount() * __ReadOnly_HdlTextureFormat::getSize();
+		if(!askDriver)
+			return getAttachmentCount() * __ReadOnly_HdlTextureFormat::getSize();
+		else
+			if(getAttachmentCount()>0)
+				return getAttachmentCount() * targets.front()->getSizeOnGPU();
+			else
+				return 0;
 	}
 
 	/**
-	\fn    int HdlFBO::getMaximumColorAttachment(void)
-	\brief Get the maximum number of attachment points.
+	\fn     int HdlFBO::getMaximumColorAttachment(void)
+	\brief  Get the maximum number of attachment points.
 	\return The maximum number of attachment points.
 	**/
 	int HdlFBO::getMaximumColorAttachment(void)

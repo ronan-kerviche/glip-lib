@@ -67,7 +67,7 @@
 		HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
 
 		// Create a format for the filters
-		HdlTextureFormat fmt(500, 500, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat fmt(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 		fmt.setSWrapping(GL_REPEAT);
 		fmt.setTWrapping(GL_REPEAT);
 
@@ -118,16 +118,22 @@
 		(*p2) << start << Pipeline::Process;
 
 		// FFT :
-		FFT2D fft2D(512, 512, FFT2D::Shifted | FFT2D::UseZeroPadding); //FFT2D::Shifted
+		FFT2D fft2D(512, 512, FFT2D::Shifted);
 		FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
 
-		std::cout << " FFT2D : nchannel : " << fft2D.output().getChannel() << std::endl;
-		std::cout << "iFFT2D : nchannel : " << ifft2D.output().getChannel() << std::endl;
+		std::cout << " FFT2D - nchannel : " << fft2D.output().getChannel() << std::endl;
+		std::cout << "iFFT2D - nchannel : " << ifft2D.output().getChannel() << std::endl;
+		std::cout << " FFT2D - size     : " << fft2D.getSize(true)/(1024) << " Ko" << std::endl;
+		std::cout << "iFFT2D - size     : " << fft2D.getSize(true)/(1024) << " Ko" << std::endl;
 
 		// Convolution :
 		LayoutLoader loader;
 		PipelineLayout* ppl = loader("./Filters/convolution.ppl");
 		Pipeline conv(*ppl,"Convolution");
+		delete ppl;
+
+		ppl = loader("./Filters/mix.ppl");
+		Pipeline mix(*ppl,"fftshift");
 		delete ppl;
 
 		/*ppl = loader("./Filters/fftshift.ppl");
@@ -169,8 +175,13 @@
 			//ifft2D.process(fft2D.output());
 			//ifft2D.process(shift.out(0));
 
+			if(i%2==0)
+				mix << p1->out(0) << ifft2D.output() << Pipeline::Process;
+			else
+				mix << p2->out(0) << ifft2D.output() << Pipeline::Process;
+
 			if(showConvolved)
-				ifft2D.output().bind();
+				mix.out(0).bind();
 			else
 				if(i%2==0)
 					p1->out(0).bind();

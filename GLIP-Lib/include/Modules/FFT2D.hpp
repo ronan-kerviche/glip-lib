@@ -36,14 +36,14 @@ namespace Glip
 	namespace Modules
 	{
 		// Structure
-		/**
-		\class FFT2D
-		\brief Compute the 2D FFT for a gray level image (real or complex) in single precision.
+/**
+\class FFT2D
+\brief Compute the 2D FFT for a gray level image (real or complex) in single precision.
 
-		This module might return erroneous result given that the driver will perform blind optimization.
-		Thus results might be affected by lower accuracy and being fetched to a close value.
+This module might return erroneous result given that the driver will perform blind optimization.
+Thus results might be affected by lower accuracy and being fetched to a close value.
 
-		How to use this module for a simple convolution task :
+How to use this module for a simple convolution task :
 \code
 FFT2D fft2D(inputTexture.getWidth(), inputTexture.getHeight(), FFT2D::Shifted);
 FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
@@ -114,6 +114,7 @@ display << ifft2D.output();
 
 				void process(HdlTexture& input);
 				HdlTexture& output(void);
+				int getSize(bool askDriver = false);
 		};
 	}
 }

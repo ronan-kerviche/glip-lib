@@ -228,10 +228,18 @@
 			extern const char* GLSLKeyword[];
 
 			// Objects
-			/**
-			\class ShaderSource
-			\brief Shader source code and infos
-			**/
+/**
+\class ShaderSource
+\brief Shader source code and infos
+
+Loading a shader from a standard string or a file :
+\code
+// From a file :
+ShaderSource src("./Filters/game.glsl");
+// From a string, which must contain at least one new line character '\n' :
+ShaderSource src(myShader);
+\endcode
+**/
 			class ShaderSource
 			{
 				private :
@@ -241,6 +249,7 @@
 					std::vector<std::string> inVars;
 					std::vector<std::string> outVars;
 					bool compatibilityRequest;
+					int versionNumber;
 
 					// Tools
 					std::string getLine(int l);
@@ -259,6 +268,7 @@
 					const char*        getSourceCstr(void) const;
 					std::string        errorLog(std::string log);
 					bool		   requiresCompatibility(void) const;
+					int		   getVersion(void) const;
 
 					const std::vector<std::string>& getInputVars(void);
 					const std::vector<std::string>& getOutputVars(void);

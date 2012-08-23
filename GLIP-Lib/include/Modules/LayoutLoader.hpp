@@ -37,10 +37,62 @@ namespace Glip
 
 	namespace Modules
 	{
-		/**
-		\class LayoutLoader
-		\brief Load and save pipelines layouts to file
-		**/
+
+/**
+\class LayoutLoader
+\brief Load and save pipelines layouts to file
+
+The LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will load a PipelineLayout that you can use directly or combined with other pipeline structures.
+
+The script must be structured with the following commands (but no special order is needed except standard declaration order) :
+
+- Format for the texture : <BR>
+<b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i> [, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ]);
+
+- Shader source code, from the same file : <BR>
+<b>SHADER_SOURCE</b>:<i>source_name</i>()
+{
+	<i>source code</i>
+}
+
+- Shader source code, from the another file : <BR>
+<b>SHADER_SOURCE</b>:<i>source_name</i>(<i>string filename</i>);
+
+- Filter layout :
+<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>]);
+
+- Pipeline layout : <BR>
+<b>PIPELINE_LAYOUT</b>:<i>pipeline_layout_name</i>() <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>INPUT_PORTS</b>(<i>input_port_name_1</i> [,<i>input_port_name_2</i>, ..., <i>input_port_name_n</i>] ); <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>OUTPUT_PORTS</b>(<i>output_port_name_1</i> [,<i>output_port_name_2</i>, ..., <i>output_port_name_n</i>] ); <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>FILTER_INSTANCE</b>:<i>filter_instance_name</i>(<i>filter_layout_name</i>); <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>PIPELINE_INSTANCE</b>:<i>pipeline_instance_name</i>(<i>pipeline_layout_name</i>); <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(THIS,<i>this_port_name</i>,<i>element_name</i>,<i>e_port_name</i>); // Connection to input. <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(<i>element_1_name</i>, <i>e1_port_name</i>, <i>element_2_name</i>, <i>e2_port_name</i>); // Connection between two elements (filter, pipeline), the connection goes from <i>element_1_name</i>::<i>e1_port_name</i> to <i>element_2_name</i>::<i>e2_port_name</i>. <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(<i>element_name</i>,<i>e_port_name</i>,THIS,<i>this_port_name</i>); // Connection to output. <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements by himself using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
+}
+
+- Main pipeline layout (the layout at the end of the loading stage) : <BR>
+<i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b>.
+
+- Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
+<b>INCLUDE_FILE</b>(<i>string filename</i>);
+
+- Comments : C++ style.
+
+**/
 		class LayoutLoader
 		{
 			public :

@@ -34,14 +34,18 @@
 
 // Tools
 	/**
-	\fn std::string getStandardVertexSource(int nUnits)
+	\fn std::string getStandardVertexSource(int nUnits, int versionNumber=0)
 	\brief Build the standard vertex shader.
 	\param nUnits Number of texturing units to be used.
+	\param versionNumber The targeted version as an integer. It won't be included by default (0).
 	\return Standard string containing the GLSL code.
 	**/
-	std::string getStandardVertexSource(int nUnits)
+	std::string getStandardVertexSource(int nUnits, int versionNumber=0)
 	{
 		std::stringstream str;
+
+		if(versionNumber>0)
+			str << "#version " << versionNumber << std::endl;
 
 		str << "void main() \n { \n    gl_FrontColor  = gl_Color; \n";
 
@@ -189,9 +193,10 @@
 		{
 			// Build one :
 			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Using : " << getStandardVertexSource(varsIn.size()) << std::endl;
+				std::cout << "Using for vertex shader : " << std::endl;
+				std::cout << getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()) << std::endl;
 			#endif
-			vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size()));
+			vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()));
 		}
 	}
 

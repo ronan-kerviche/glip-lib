@@ -639,10 +639,13 @@
 		// Make the connections :
 		try
 		{
+			int numConnections = 0;
+
 			for(int i=0; i<commandList.size(); i++)
 			{
 				if(commandList[i]==CONNECTION)
 				{
+					numConnections++;
 					std::vector<std::string> arg = getArguments(argumentList[i]);
 					if(arg.size()!=4)
 						throw Exception("LayoutLoader::buildPipeline - Wrong number of arguments for a connection in " + name, __FILE__, __LINE__);
@@ -664,6 +667,10 @@
 					}
 				}
 			}
+
+			// If no connection were declared, try the auto-connection :
+			if(numConnections==0)
+				result->autoConnect();
 		}
 		catch(Exception& e)
 		{

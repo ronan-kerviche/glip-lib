@@ -39,6 +39,7 @@
 		inVars    		= ss.inVars;
 		outVars    		= ss.outVars;
 		compatibilityRequest	= ss.compatibilityRequest;
+		versionNumber		= ss.versionNumber;
 	}
 
 	/**
@@ -49,7 +50,7 @@
 	\param lines Number of lines to consider.
 	**/
 	ShaderSource::ShaderSource(const char** src, bool eol, int lines)
-	 : compatibilityRequest(false)
+	 : compatibilityRequest(false), versionNumber(0)
 	{
 		if(src==NULL)
 			throw Exception("ShaderSource::ShaderSource - Can't load from NULL", __FILE__, __LINE__);
@@ -85,7 +86,7 @@
 	\param src Source data (must have at least one '\n') or filename (without '\n').
 	**/
 	ShaderSource::ShaderSource(const std::string& src)
-	 : compatibilityRequest(false)
+	 : compatibilityRequest(false), versionNumber(0)
 	{
 		size_t newline = src.find('\n');
 
@@ -309,6 +310,16 @@
 		if(global3.empty())
 			return ;
 
+		// Test : find the version of the source :
+		const std::string versionKeyword = "#version";
+		size_t pVersion = global3.find(versionKeyword);
+
+		if(pVersion!=std::string::npos)
+		{
+			size_t pVersionLine = global3.find('\n',pVersion+versionKeyword.size()-1);
+			from_string(global3.substr(pVersion+versionKeyword.size(),pVersionLine-pVersion-versionKeyword.size()), versionNumber);
+		}
+
 		// Remove all macros
 		for(int i=0; i<global3.length()-1; i++)
 		{
@@ -397,12 +408,22 @@
 
 	/**
 	\fn    bool ShaderSource::requiresCompatibility(void) const
-	\brief Returns true if this Shader is using gl_FragColor and no out vec4 variables (Mesa <9.0 compatibility for Intel Core I7 with HD Graphics (>2nd Gen); no call to glBindFragDataLocation is needed). If true, the input vars are indexed on their order of appearance in the shader source.
+	\brief Returns true if this Shader is using gl_FragColor and no out vec4 variables (e.g. Mesa <9.0 compatibility for Intel Core I7 with HD Graphics (>2nd Generation)); no call to glBindFragDataLocation is needed). If true, the input vars are indexed on their order of appearance in the shader source.
 	\return Returns true if this Shader is using gl_FragColor and no out vec4 variables.
 	**/
 	bool ShaderSource::requiresCompatibility(void) const
 	{
 		return compatibilityRequest;
+	}
+
+	/**
+	\fn    int ShaderSource::getVersion(void) const
+	\brief Returns the shader version defined in the source (with #version) as an integer.
+	\return Returns the version as an integer (e.g. 130 for 1.30) or 0 if no version was defined.
+	**/
+	int ShaderSource::getVersion(void) const
+	{
+		return versionNumber;
 	}
 
 	/**
