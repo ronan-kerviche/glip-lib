@@ -213,7 +213,22 @@ Current Version : 0.8
 [0.9]	Add reduction module.
 	Status : TODO
 
+[0.9]	Test PBO in ImageContentInfo.
+	Status : TODO
+
 [0.9]	Add support for compatibility mode in FFTxD (use of gl_FragColor).
+	Status : DONE
+
+[0.9]	Add REQUIRES Keyword.
+	Status : DONE
+
+[0.9]	Add doc for DEFAULT_VERTEX_SHADER.
+	Status : DONE
+
+[0.9]	Add tools for Hardware information.
+	Status : DONE
+
+[0.9]	Add default argument for Pipeline::out(int id=0).
 	Status : DONE
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.

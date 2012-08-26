@@ -49,7 +49,7 @@
 		}
 
 		// Open an OpenGL window
-		if( !glfwOpenWindow( 512,512, 0,0,0,0,0,0, GLFW_WINDOW ) )
+		if( !glfwOpenWindow(512,512,0,0,0,0,0,0, GLFW_WINDOW ) )
 		{
 			glfwTerminate();
 			exit( EXIT_FAILURE );
@@ -63,11 +63,17 @@
 		// Initialize GLIP-LIB
 		HandleOpenGL::init();
 
+		// Print info :
+		std::cout << "Vendor name    : " << HandleOpenGL::getVendorName() << std::endl;
+		std::cout << "Renderer name  : " << HandleOpenGL::getRendererName() << std::endl;
+		std::cout << "OpenGL version : " << HandleOpenGL::getVersion() << std::endl;
+		std::cout << "GLSL version   : " << HandleOpenGL::getGLSLVersion() << std::endl;
+
 		// Create a Quad inside a VBO for display
 		HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
 
 		// Create a format for the filters
-		HdlTextureFormat fmt(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat fmt(1024, 1024, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 		fmt.setSWrapping(GL_REPEAT);
 		fmt.setTWrapping(GL_REPEAT);
 
@@ -118,7 +124,7 @@
 		(*p2) << start << Pipeline::Process;
 
 		// FFT :
-		FFT2D fft2D(512, 512, FFT2D::Shifted);
+		FFT2D fft2D(fmt.getWidth(), fmt.getHeight(), FFT2D::Shifted);
 		FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
 
 		std::cout << " FFT2D - nchannel : " << fft2D.output().getChannel() << std::endl;
@@ -128,17 +134,16 @@
 
 		// Convolution :
 		LayoutLoader loader;
+		loader.addRequiredElement("format", fft2D.output().format());
 		PipelineLayout* ppl = loader("./Filters/convolution.ppl");
 		Pipeline conv(*ppl,"Convolution");
 		delete ppl;
 
+		loader.clearRequiredElements("format");
+		loader.addRequiredElement("format", fmt);
 		ppl = loader("./Filters/mix.ppl");
-		Pipeline mix(*ppl,"fftshift");
+		Pipeline mix(*ppl,"mix");
 		delete ppl;
-
-		/*ppl = loader("./Filters/fftshift.ppl");
-		Pipeline shift(*ppl,"fftshift");
-		delete ppl;*/
 
 		// Main loop
 		while( running )
@@ -159,21 +164,16 @@
 			{
 				// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
 				(*p1) << p2->out(0) << Pipeline::Process;
-				//p1->out(0).bind();
 				fft2D.process(p1->out(0));
 			}
 			else
 			{
 				(*p2) << p1->out(0) << Pipeline::Process;
-				//p2->out(0).bind();
 				fft2D.process(p2->out(0));
 			}
 
 			conv << fft2D.output() << Pipeline::Process;
-			//shift << fft2D.output() << Pipeline::Process;
 			ifft2D.process(conv.out(0));
-			//ifft2D.process(fft2D.output());
-			//ifft2D.process(shift.out(0));
 
 			if(i%2==0)
 				mix << p1->out(0) << ifft2D.output() << Pipeline::Process;
@@ -188,9 +188,6 @@
 				else
 					p2->out(0).bind();
 
-			//conv.out(0).bind();
-			//shift.out(0).bind();
-			//fft2D.output().bind();
 			vbo->draw();
 
 			i++;
@@ -202,7 +199,6 @@
 			running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 
 			glfwSleep(0.1);
-			//std::cout << "Frame : " << i << std::endl;
 		}
 
 		delete p1;

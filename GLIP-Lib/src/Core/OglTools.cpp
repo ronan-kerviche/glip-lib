@@ -52,6 +52,51 @@ using namespace Glip::CoreGL;
 			}
 		}
 
+		/**
+		\fn std::string HandleOpenGL::getVendorName(void)
+		\return A std::string object containing the vendor name.
+		**/
+		std::string HandleOpenGL::getVendorName(void)
+		{
+			const GLubyte* str = glGetString(GL_VENDOR);
+			return std::string(reinterpret_cast<const char*>(str));
+		}
+
+		/**
+		\fn std::string HandleOpenGL::getRendererName(void)
+		\return A std::string object containing the renderer name.
+		**/
+		std::string HandleOpenGL::getRendererName(void)
+		{
+			const GLubyte* str = glGetString(GL_RENDERER);
+			return std::string(reinterpret_cast<const char*>(str));
+		}
+
+		/**
+		\fn std::string HandleOpenGL::getVersion(void)
+		\return A std::string object containing the OpenGL version.
+		**/
+		std::string HandleOpenGL::getVersion(void)
+		{
+			const GLubyte* str = glGetString(GL_VERSION);
+			return std::string(reinterpret_cast<const char*>(str));
+		}
+
+		/**
+		\fn std::string HandleOpenGL::getGLSLVersion(void)
+		\return A std::string object containing the GLSL version.
+		**/
+		std::string HandleOpenGL::getGLSLVersion(void)
+		{
+			if(GL_VERSION_2_0)
+			{
+				const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
+				return std::string(reinterpret_cast<const char*>(str));
+			}
+			else
+				return std::string("<Error : OpenGL version is less than 2.0>");
+		}
+
 // Errors Monitoring
 	/**
 	\fn std::string Glip::CoreGL::glErrorToString(void)

@@ -1,0 +1,143 @@
+/*
+	This filter performs the computation of the Optical Flow.
+	Original algorithm : Bruce D. Lucas and Takeo Kanade
+*/
+
+TEXTURE_FORMAT:computationFormat(640,640,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+SHADER_SOURCE:sh_Derivatives()
+{
+	#version 130
+
+	uniform sampler2D 	latest, oldest;
+	out     vec4 		derivatives, grayScale;
+
+	void main()
+	{
+		const float step = 1.0/640.0;
+
+		vec4 col11 = textureLod(latest, gl_TexCoord[0].st, 0);
+		vec4 col01 = textureLod(latest, gl_TexCoord[0].st + vec2(-step, 0.0), 0);
+		vec4 col21 = textureLod(latest, gl_TexCoord[0].st + vec2( step, 0.0), 0);
+		vec4 col10 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0, -step), 0);
+		vec4 col12 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0, step), 0);
+		vec4 colB  = textureLod(oldest, gl_TexCoord[0].st, 0);
+
+		float 	v11 = (col11.r+col11.g+col11.b)/3.0,
+			v01 = (col01.r+col01.g+col01.b)/3.0,
+			v21 = (col21.r+col21.g+col21.b)/3.0,
+			v10 = (col10.r+col10.g+col10.b)/3.0,
+			v12 = (col12.r+col12.g+col12.b)/3.0,
+			vB  = (colB.r+colB.g+colB.b)/3.0;
+
+		derivatives.r = (v21-v01)/2.0+0.5;
+		derivatives.g = (v12-v10)/2.0+0.5;
+		derivatives.b = (v11-vB)/2.0+0.5;
+
+		grayScale.rgb = vec3(v11,v11,v11);
+	}
+}
+
+SHADER_SOURCE:sh_opticalFlow()
+{
+	#version 130
+
+	uniform sampler2D derivatives;
+	out vec4 opticalFlow;
+
+	void main()
+	{
+		const float step = 1.0/640.0;
+		const int wSize = 3;
+		int i, j;
+
+		vec2 	pos;
+		vec4 	col;
+		float 	x = 0.0,
+			y = 0.0,
+			A = 0.0,
+			B = 0.0,
+			C = 0.0,
+			idet = 0.0;
+
+		for( i=-wSize; i<=wSize; i++)
+		{
+			for( j=-wSize; j<=wSize; j++)
+			{
+				pos   = gl_TexCoord[0].st + vec2( i*step, j*step);
+				col   = (textureLod(derivatives, pos, 0.0) - vec4(0.5,0.5,0.5,0.0))*2.0;
+				A = A + col.r*col.r;
+				B = B + col.g*col.g;
+				C = C + col.r*col.g;
+				x = x + col.r*col.b;
+				y = y + col.g*col.b;
+			}
+		}
+
+		// Solve 2x2 matrix inverse :
+		idet = 1.0/(A*B-C*C);
+
+		if(idet>10.0)
+			idet = 0.0;
+
+		opticalFlow.r = idet*(-B*x+C*y)/2.0+0.5;
+		opticalFlow.g = idet*( C*x-A*y)/2.0+0.5;
+	}
+}
+
+SHADER_SOURCE:sh_Mix()
+{
+	#version 130
+
+	uniform sampler2D latest, opticalFlow;
+	out vec4 outMix, outVisu;
+
+	void main()
+	{
+		vec4 cor  = textureLod(latest, gl_TexCoord[0].st, 0);
+		vec4 cop  = textureLod(opticalFlow, gl_TexCoord[0].st, 0);
+
+		// Make the visualization easier by using HSL color space and associate directions with color, via Hue
+		// and amplitude via Saturation.
+		cop = (cop - vec4(0.5, 0.5, 0.0, 0.0))*2.0;
+
+		float   e	= (cop.r*cop.r + cop.g*cop.g);
+		float 	h	= (atan(cop.g, cop.r) + 3.1416)/1.047;
+		int 	prt 	= int(h/2.0);
+		float 	hp 	= h-float(prt)*2.0;
+		float 	v 	= 1.0-abs(hp-1.0);
+
+		if(h<1.0)
+			outVisu.rgb = vec3(1.0,v,0.0)*e;
+		else if(h<2.0)
+			outVisu.rgb = vec3(v,1.0,0.0)*e;
+		else if(h<3.0)
+			outVisu.rgb = vec3(0.0,1.0,v)*e;
+		else if(h<4.0)
+			outVisu.rgb = vec3(0.0,v,1.0)*e;
+		else if(h<5.0)
+			outVisu.rgb = vec3(v,0.0,1.0)*e;
+		else //if(h<6.0)
+			outVisu.rgb = vec3(1.0,0.0,v)*e;
+
+		// Mix with original image
+		outMix.rgb = cor.rgb*0.8 + outVisu.rgb;
+	}
+}
+
+FILTER_LAYOUT:cDerivatives(computationFormat,sh_Derivatives);
+FILTER_LAYOUT:cOpticalFlow(computationFormat,sh_opticalFlow);
+FILTER_LAYOUT:cMix(computationFormat,sh_Mix);
+
+PIPELINE_MAIN:pMain()
+{
+	INPUT_PORTS(latest, oldest);
+	OUTPUT_PORTS(grayScale,derivatives, opticalFlow, outMix, outVisu);
+
+	FILTER_INSTANCE:instDerivatives(cDerivatives);
+	FILTER_INSTANCE:instOpticalFlow(cOpticalFlow);
+	FILTER_INSTANCE:instMix(cMix);
+
+	// Automatic connection will be performed.
+}
+

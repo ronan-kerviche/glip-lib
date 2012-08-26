@@ -853,7 +853,7 @@
 	\param name Name of the pipeline.
 	**/
 	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
-	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0)
 	{
 		cleanInput();
 		outputBuffer.assign(getNumOutputPort(), 0);
@@ -885,6 +885,9 @@
 		for(TableFilter::iterator it = filters.begin(); it!=filters.end(); it++)
 			delete (*it);
 		filters.clear();
+
+		if(queryObject>0)
+			glDeleteQueries(1, &queryObject);
 	}
 
 	/**
@@ -1542,8 +1545,14 @@
 	**/
 	void Pipeline::process(void)
 	{
-		clock_t 	timing = clock(),
-				totalTiming = clock();
+		clock_t 	timing 		= 0,
+				totalTiming 	= 0;
+
+		if(!GLEW_VERSION_3_3)
+		{
+			totalTiming = clock();
+			timing = clock();
+		}
 
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Pipeline::process - Processing : " << getNameExtended() << std::endl;
@@ -1580,17 +1589,32 @@
 
 			if(perfsMonitoring)
 			{
-				timing = clock();
-				glFlush();
+				if(GLEW_VERSION_3_3)
+					glBeginQuery(GL_TIME_ELAPSED, queryObject);
+				else
+					timing = clock();
+
+				//glFlush();
 			}
 
 			f->process(*buffers[useBuffer[action]]);
 
 			if(perfsMonitoring)
 			{
-				glFlush();
-				timing = clock() - timing;
-				perfs[action] = static_cast<float>(timing)/static_cast<float>(CLOCKS_PER_SEC)*1000.0f;
+				//glFlush();
+
+				if(GLEW_VERSION_3_3)
+				{
+					GLuint64 querytime;
+					glEndQuery(GL_TIME_ELAPSED);
+					glGetQueryObjectui64v(queryObject, GL_QUERY_RESULT, &querytime);
+					perfs[action] = static_cast<double>(querytime)/1e6;
+				}
+				else
+				{
+					timing = clock() - timing;
+					perfs[action] = static_cast<double>(timing)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
+				}
 			}
 
 			#ifdef __DEVELOPMENT_VERBOSE__
@@ -1600,8 +1624,17 @@
 
 		if(perfsMonitoring)
 		{
-			totalTiming = clock() - totalTiming;
-			totalPerf   = static_cast<float>(totalTiming)/static_cast<float>(CLOCKS_PER_SEC)*1000.0f;
+			if(GLEW_VERSION_3_3)
+			{
+				totalPerf = 0;
+				for(int i=0; i<perfs.size(); i++)
+					totalPerf += perfs[i];
+			}
+			else
+			{
+				totalTiming = clock() - totalTiming;
+				totalPerf   = static_cast<double>(totalTiming)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
+			}
 		}
 
 		#ifdef __DEVELOPMENT_VERBOSE__
@@ -1635,7 +1668,7 @@
 	{
 		// Check the number of arguments given :
 		if(input.size()!=getNumInputPort())
-			throw Exception("Pipeline::operator<<(HdlTexture&) - Too few arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
 
 		switch(a)
 		{
@@ -1758,6 +1791,13 @@
 			perfsMonitoring = true;
 			perfs.assign(filters.size(),0.0f);
 			totalPerf = 0.0f;
+
+			if(GLEW_VERSION_3_3)
+			{
+				if(queryObject==0)
+					glGenQueries(1, &queryObject);
+			}
+
 		}
 	}
 
@@ -1776,12 +1816,12 @@
 	}
 
 	/**
-	\fn float Pipeline::getTiming(const std::string& path)
+	\fn double Pipeline::getTiming(const std::string& path)
 	\brief Get last result of performance monitoring IF it is still enabled.
 	\param path The path to the filter.
 	\return Time in milliseconds needed to apply the filter (not counting binding operation).
 	**/
-	float Pipeline::getTiming(const std::string& path)
+	double Pipeline::getTiming(const std::string& path)
 	{
 		if(perfsMonitoring)
 			return perfs[getFilterID(path)];
@@ -1790,13 +1830,13 @@
 	}
 
 	/**
-	\fn float Pipeline::getTiming(int action, std::string& filterName)
+	\fn double Pipeline::getTiming(int action, std::string& filterName)
 	\brief Get last result of performance monitoring IF it is still enabled.
 	\param action The ID of the filter.
 	\param filterName A reference string that will contain the name of the filter indexed by action at the end of the function.
 	\return Time in milliseconds needed to apply the filter (not counting binding operation).
 	**/
-	float Pipeline::getTiming(int action, std::string& filterName)
+	double Pipeline::getTiming(int action, std::string& filterName)
 	{
 		if(perfsMonitoring)
 		{
@@ -1814,11 +1854,11 @@
 
 
 	/**
-	\fn float Pipeline::getTotalTiming(void)
+	\fn double Pipeline::getTotalTiming(void)
 	\brief Get total time ellapsed for last run.
 	\return Time in milliseconds needed to apply the whole pipeline (counting everything and flushing after each filter).
 	**/
-	float Pipeline::getTotalTiming(void)
+	double Pipeline::getTotalTiming(void)
 	{
 		if(perfsMonitoring)
 			return totalPerf;

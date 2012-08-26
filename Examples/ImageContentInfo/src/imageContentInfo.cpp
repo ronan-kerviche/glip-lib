@@ -140,7 +140,7 @@
 
 	void IHM::loadPipeline(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(this, tr("Load an Pipeline"), ".", "*.ppl");
+		QString filename = QFileDialog::getOpenFileName(this, tr("Load a Pipeline"), ".", "*.ppl");
 
 		if (!filename.isEmpty())
 		{

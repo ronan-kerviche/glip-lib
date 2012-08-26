@@ -44,7 +44,7 @@ SHADER_SOURCE:diff()
 	}
 }
 
-SHADER_SOURCE:contour(./Filters/gradient2.glsl);
+SHADER_SOURCE:contour(gradient2.glsl);
 
 FILTER_LAYOUT:fNatural(tiled,natural);
 FILTER_LAYOUT:fDiff(format,diff);
@@ -53,7 +53,7 @@ FILTER_LAYOUT:fCont(format,contour);
 PIPELINE_MAIN:pMainTiled()
 {
 	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0);
+	OUTPUT_PORTS(o0,o1,o2);
 	FILTER_INSTANCE:iNatural(fNatural);
 	FILTER_INSTANCE:iDiff(fDiff);
 	FILTER_INSTANCE:iCont(fCont);
@@ -63,6 +63,8 @@ PIPELINE_MAIN:pMainTiled()
 	CONNECTION(iNatural,outText,iDiff,tiled);
 	CONNECTION(iGhost,o0,iDiff,regular);
 	CONNECTION(iDiff,outText,iCont,tex0);
-	CONNECTION(iCont,blue,THIS,o0);
+	CONNECTION(iCont,red,THIS,o0);
+	CONNECTION(iCont,green,THIS,o1);
+	CONNECTION(iCont,blue,THIS,o2);
 	// See the tiled version : CONNECTION(iNatural,outText,THIS,o0);
 }

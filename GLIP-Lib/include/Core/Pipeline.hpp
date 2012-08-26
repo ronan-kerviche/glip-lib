@@ -190,8 +190,9 @@
 					std::vector<TableIndex*>		listOfArgBuffers;
 					std::vector<TableIndex*>		listOfArgBuffersOutput;
 					bool 					perfsMonitoring;
-					std::vector<float>			perfs;
-					float					totalPerf;
+					GLuint					queryObject;
+					std::vector<double>			perfs;
+					double					totalPerf;
 
 					// Tools
 					void cleanInput(void);
@@ -210,15 +211,15 @@
 					int 		getSize(bool askDriver = false);
 					Pipeline& 	operator<<(HdlTexture&);
 					Pipeline& 	operator<<(ActionType);
-					HdlTexture& 	out(int);
+					HdlTexture& 	out(int id = 0);
 					HdlTexture& 	out(const std::string&);
 					int 		getFilterID(const std::string& path);
 					Filter& 	operator[](const std::string& path);
 					void 		enablePerfsMonitoring(void);
 					void 		disablePerfsMonitoring(void);
-					float		getTiming(const std::string& path);
-					float 		getTiming(int action, std::string& filterName);
-					float 		getTotalTiming(void);
+					double		getTiming(const std::string& path);
+					double 		getTiming(int action, std::string& filterName);
+					double 		getTotalTiming(void);
 			};
 		}
 	}

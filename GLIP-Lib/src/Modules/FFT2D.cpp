@@ -578,7 +578,30 @@
 
 		}
 
+		//#ifdef __DEVELOPMENT_VERBOSE__
+			//static bool once = true;
+			//if(once)
+				pipeline->enablePerfsMonitoring();
+		//#endif
+
 		(*pipeline) << input << (*width_bitReversal) << (*height_bitReversal) << (*width_wpTexture) << (*height_wpTexture) << Pipeline::Process;
+
+		//#ifdef __DEVELOPMENT_VERBOSE__
+			//if(once)
+			//{
+				std::cout << "Total : " << pipeline->getTotalTiming() << " ms." << std::endl;
+
+				for(int i=0; i<pipeline->getNumActions(); i++)
+				{
+					std::string name;
+					float t = pipeline->getTiming(i, name);
+					std::cout << "    " << name << "\t: " << t << " ms" << std::endl;
+				}
+
+				pipeline->disablePerfsMonitoring();
+			//	once = false;
+			//}
+		//#endif
 	}
 
 	/**

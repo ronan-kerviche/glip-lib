@@ -52,6 +52,8 @@
 								"CLEARING_OFF",
 								"BLENDING_ON",
 								"BLENDING_OFF",
+								"REQUIRED_FORMAT",
+								"REQUIRED_PIPELINE"
 							};
 
 	// Functions :
@@ -73,6 +75,7 @@
 	LayoutLoader::~LayoutLoader(void)
 	{
 		clean();
+		clearRequiredElements();
 	}
 
 	void LayoutLoader::clean(void)
@@ -762,11 +765,22 @@
 				}
 			}
 
-			// List all the formats :
+			// List all the formats and the required formats :
 			for(int i=0; i<entryType.size(); i++)
 			{
 				if(entryType[i]==FORMAT_LAYOUT)
 					formatList[entryName[i]] = buildFormat(entryCode[i],entryName[i]);
+
+				if(entryType[i]==REQUIRED_FORMAT)
+				{
+					// Find the format in the list :
+					std::map<std::string,HdlTextureFormat*>::iterator it = requiredFormatList.find(entryName[i]);
+
+					if(it==requiredFormatList.end())
+						throw Exception("LayoutLoader::operator() - The required format " + entryName[i] + " is not present in the database, please use LayoutLoader::addRequiredElement with the correct name.", __FILE__, __LINE__);
+					else
+						formatList[entryName[i]] = new HdlTextureFormat(*it->second);
+				}
 			}
 
 			// List all shaders :
@@ -788,6 +802,17 @@
 			{
 				if(entryType[i]==PIPELINE_LAYOUT)
 					pipelineList[entryName[i]] = buildPipeline(entryCode[i],entryName[i]);
+
+				if(entryType[i]==REQUIRED_PIPELINE)
+				{
+					// Find the format in the list :
+					std::map<std::string,PipelineLayout*>::iterator it = requiredPipelineList.find(entryName[i]);
+
+					if(it==requiredPipelineList.end())
+						throw Exception("LayoutLoader::operator() - The required pipeline layout " + entryName[i] + " is not present in the database, please use LayoutLoader::addRequiredElement with the correct name.", __FILE__, __LINE__);
+					else
+						pipelineList[entryName[i]] = new PipelineLayout(*it->second);
+				}
 			}
 
 			// Find Main Pipeline :
@@ -988,5 +1013,90 @@
 			Exception m("LayoutLoader::write - caught an exception while writing layout to file", __FILE__, __LINE__);
 			throw m + e;
 		}
+	}
+
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
+	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded with REQUIRED_FORMAT:name(); will use this format.
+	\param name The name of the element.
+	\param fmt The element to be associated.
+	**/
+	void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
+	{
+		std::map<std::string,HdlTextureFormat*>::iterator it = requiredFormatList.find(name);
+
+		if(it!=requiredFormatList.end())
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__);
+		else
+		{
+			HdlTextureFormat* el = new HdlTextureFormat(fmt);
+			requiredFormatList[name] = el;
+		}
+
+	}
+
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
+	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded with REQUIRED_PIPELINE:name(); will use this pipeline layout.
+	\param name The name of the element.
+	\param layout The element to be associated.
+	**/
+	void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
+	{
+		std::map<std::string,PipelineLayout*>::iterator it = requiredPipelineList.find(name);
+
+		if(it!=requiredPipelineList.end())
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the pipeline layouts database.", __FILE__, __LINE__);
+		else
+		{
+			PipelineLayout* el = new PipelineLayout(layout);
+			requiredPipelineList[name] = el;
+		}
+	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredElements(const std::string& name)
+	\brief Remove all the elements by default, or all the elements having the given name.
+	\param name The name of the targeted element, all elements by default.
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredElements(const std::string& name)
+	{
+		std::map<std::string,HdlTextureFormat*>::iterator it1;
+		std::map<std::string,PipelineLayout*>::iterator it2;
+		int numElemErased = 0;
+
+		if(name!="")
+		{
+			it1 = requiredFormatList.find(name);
+			it2 = requiredPipelineList.find(name);
+
+			if(it1!=requiredFormatList.end())
+			{
+				requiredFormatList.erase(it1);
+				numElemErased++;
+			}
+
+			if(it2!=requiredPipelineList.end())
+			{
+				requiredPipelineList.erase(it2);
+				numElemErased++;
+			}
+		}
+		else
+		{
+			for(it1 = requiredFormatList.begin(); it1!=requiredFormatList.end(); it1++)
+				delete it1->second;
+			for(it2 = requiredPipelineList.begin(); it2!=requiredPipelineList.end(); it2++)
+				delete it2->second;
+
+			numElemErased += requiredFormatList.size();
+			numElemErased += requiredPipelineList.size();
+
+			requiredFormatList.clear();
+			requiredPipelineList.clear();
+		}
+
+		return numElemErased;
 	}
 

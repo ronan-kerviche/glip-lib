@@ -49,6 +49,9 @@ The script must be structured with the following commands (but no special order 
 - Format for the texture : <BR>
 <b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i> [, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ]);
 
+- Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement().
+<b>REQUIRED_FORMAT</b>:<i>format_name</i>();
+
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>()
 {
@@ -59,7 +62,7 @@ The script must be structured with the following commands (but no special order 
 <b>SHADER_SOURCE</b>:<i>source_name</i>(<i>string filename</i>);
 
 - Filter layout :
-<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>]);
+<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>]);
 
 - Pipeline layout : <BR>
 <b>PIPELINE_LAYOUT</b>:<i>pipeline_layout_name</i>() <BR>
@@ -83,6 +86,9 @@ The script must be structured with the following commands (but no special order 
 &nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements by himself using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
 }
+
+- Required pipeline layout to be provided by the application (for decorators). See LayoutLoader::addRequiredElement().
+<b>REQUIRED_PIPELINE</b>:<i>pipeline_layout_name</i>();
 
 - Main pipeline layout (the layout at the end of the loading stage) : <BR>
 <i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b>.
@@ -115,6 +121,8 @@ The script must be structured with the following commands (but no special order 
 					CLEARING_OFF,
 					BLENDING_ON,
 					BLENDING_OFF,
+					REQUIRED_FORMAT,
+					REQUIRED_PIPELINE,
 					NumKeywords
 				};
 
@@ -129,6 +137,9 @@ The script must be structured with the following commands (but no special order 
 				std::map<std::string,ShaderSource*> 		sourceList;
 				std::map<std::string,FilterLayout*> 		filterList;
 				std::map<std::string,PipelineLayout*> 		pipelineList;
+				std::map<std::string,HdlTextureFormat*>		requiredFormatList;
+				std::map<std::string,PipelineLayout*>		requiredPipelineList;
+
 				// Writing :
 				std::string formatCode;
 				std::string sourceCode;
@@ -153,8 +164,13 @@ The script must be structured with the following commands (but no special order 
 			public :
 				LayoutLoader(void);
 				~LayoutLoader(void);
+
 				PipelineLayout* operator()(const std::string& source); //can be a file or directly the source
 				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
+
+				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
+				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
+				int  clearRequiredElements(const std::string& name = "");
 		};
 	}
 }

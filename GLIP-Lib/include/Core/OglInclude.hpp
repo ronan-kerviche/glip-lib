@@ -69,6 +69,11 @@
 					HandleOpenGL(void); //no Instance
 				public :
 					static void init(void);
+
+					static std::string getVendorName(void);
+					static std::string getRendererName(void);
+					static std::string getVersion(void);
+					static std::string getGLSLVersion(void);
 			};
 
 			// Tools
