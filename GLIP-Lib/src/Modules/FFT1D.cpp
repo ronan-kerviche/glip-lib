@@ -27,6 +27,7 @@
 	#include "FFT1D.hpp"
 	#include "devDebugTools.hpp"
 	#include "ShaderSource.hpp"
+	#include "HdlShader.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -40,7 +41,7 @@
 	\param flags The flags associated for this computation (combined with | operator), see FFT1D::Flags.
 	**/
 	FFT1D::FFT1D(int _size, int flags)
-	 : bitReversal(NULL), wpTexture(NULL), pipeline(NULL), size(_size), shift((flags & Shifted)>0), inversed((flags & Inversed)>0), compMagnitude((flags & ComputeMagnitude)>0), compatibilityMode((flags & CompatibilityMode)>0)
+	 : bitReversal(NULL), wpTexture(NULL), pipeline(NULL), size(_size), shift((flags & Shifted)>0), inversed((flags & Inversed)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0)
 	{
 		double 	test1 = log(size)/log(2),
 			test2 = floor(test1);
@@ -94,7 +95,8 @@
 			playout.addOutput("output");
 
 			int coeffp = size/2;
-			std::string previousName = "";
+			std::string 	previousName = "",
+					firstFilterName = "";
 
 			for(int i=1; i<=size/2; i*=2)
 			{
@@ -107,6 +109,7 @@
 				{
 					playout.connectToInput("input", name, "inputTexture");
 					playout.connectToInput("reversalTexture", name, "reversalTexture");
+					firstFilterName = name;
 				}
 				else
 				{
@@ -136,6 +139,9 @@
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT");
+
+			lnkFirstFilter = &((*pipeline)[firstFilterName]);
+
 			delete fmtout;
 		}
 		catch(Exception& e)
@@ -188,7 +194,14 @@
 		str << "uniform sampler2D inputTexture; \n";
 
 		if(delta==1)
+		{
 			str << "uniform sampler2D reversalTexture; \n";
+
+			if(useZeroPadding)
+				str << "uniform int offset; \n";
+			else
+				str << "const int offset=0; \n";
+		}
 		else
 			str << "uniform sampler2D wpTexture; \n";
 
@@ -212,8 +225,19 @@
 			str << "    vec4 pB          = texelFetch(reversalTexture, ivec2(globid*2+1, 0), 0); \n";
 			str << "    int ipA          = int(pA.s*sz); \n";
 			str << "    int ipB          = int(pB.s*sz); \n";
-			str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA,0), 0); \n";
-			str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB,0), 0); \n";
+
+			// ADD
+			if(shift && inversed)
+			{
+				str << "    if(ipA<hsz) ipA = ipA+hsz; \n";
+				str << "    else        ipA = ipA-hsz; \n";
+				str << "    if(ipB<hsz) ipB = ipB+hsz; \n";
+				str << "    else        ipB = ipB-hsz; \n";
+			}
+			// END ADD
+
+			str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA-offset,0), 0); \n";
+			str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB-offset,0), 0); \n";
 			str << "    output.r  = A.r + B.r;           //real part of Xp \n";
 
 			if(!inversed)
@@ -305,25 +329,26 @@
 		str << "    if(globid<hsz) \n";
 		str << "    { \n";
 
-		if(!shift)
+
+		if(shift && !inversed)
 		{
-			str << "        output.r      = X.r; \n";
-			str << "        output.g      = X.g; \n";
+			str << "        output.r      = X.b; \n";
+			str << "        output.g      = X.a; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        output.r      = X.b; \n";
-			str << "        output.g      = X.a; \n";
+			str << "        output.r      = X.r; \n";
+			str << "        output.g      = X.g; \n";
 		}
 		else
 		{
-			str << "        output.r      = X.b; \n";
-			str << "        output.g      = X.a; \n";
+			str << "        output.r      = X.r; \n";
+			str << "        output.g      = X.g; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        output.r      = X.r; \n";
-			str << "        output.g      = X.g; \n";
+			str << "        output.r      = X.b; \n";
+			str << "        output.g      = X.a; \n";
 		}
 		str << "    } \n";
 
@@ -352,12 +377,46 @@
 	void FFT1D::process(HdlTexture& input)
 	{
 		if(pipeline==NULL)
-			throw Exception("FFT1D::process - pipeline is NULL.", __FILE__, __LINE__);
+			throw Exception("FFT1D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__);
 
-		if(input.getWidth()!=size || input.getHeight()!=1)
-			throw Exception("FFT1D::process - Wrong texture format.", __FILE__, __LINE__);
+		if(!useZeroPadding && (input.getWidth()!=size || input.getHeight()!=1))
+			throw Exception("FFT1D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__);
+
+		if(useZeroPadding && (input.getWidth()>size || input.getHeight()!=1))
+			throw Exception("FFT1D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__);
+
+		if(useZeroPadding)
+		{
+			// Update the offsets :
+			int 	offset = (size-input.getWidth())/2;
+
+			lnkFirstFilter->prgm().modifyVar("offset", HdlProgram::Var, offset);
+		}
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			static bool once = true;
+			if(once)
+				pipeline->enablePerfsMonitoring();
+		#endif
 
 		(*pipeline) << input << (*bitReversal) << (*wpTexture) << Pipeline::Process;
+
+		#ifdef __DEVELOPMENT_VERBOSE__
+			if(once)
+			{
+				std::cout << "Total : " << pipeline->getTotalTiming() << " ms." << std::endl;
+
+				for(int i=0; i<pipeline->getNumActions(); i++)
+				{
+					std::string name;
+					float t = pipeline->getTiming(i, name);
+					std::cout << "    " << name << "\t: " << t << " ms" << std::endl;
+				}
+
+				pipeline->disablePerfsMonitoring();
+				once = false;
+			}
+		#endif
 	}
 
 	/**

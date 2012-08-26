@@ -279,28 +279,36 @@
 	\param formatIn Format expected as input (can be uncompressed or compressed format).
 	\param formatOut Output format (can be uncompressed or compressed format).
 	**/
-	TextureCopier::TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut)
-	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(formatOut), tex(NULL), pbo(NULL)
+	TextureCopier::TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture)
+	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(formatOut), tex(NULL), pbo(NULL), customTexture(_customTexture)
 	{
 		if(!( formatIn.isCorrespondingCompressedFormat(formatOut) || formatOut.isCorrespondingCompressedFormat(formatIn) || formatIn.isCompatibleWith(formatOut)))
-			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though).", __FILE__, __LINE__);
+			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though) in " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		if(!formatIn.isCompressed())
 			pbo = new HdlPBO(formatIn, GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_COPY_ARB);
 
-		tex = new HdlTexture(formatOut);
+		if(!customTexture)
+			tex = new HdlTexture(formatOut);
 	}
 
 	TextureCopier::~TextureCopier(void)
 	{
-		delete tex;
+		if(!customTexture)
+			delete tex;
 		delete pbo;
 	}
 
 	void TextureCopier::process(HdlTexture& t)
 	{
 		if(!( t.isCorrespondingCompressedFormat(*this) || isCorrespondingCompressedFormat(t) || isCompatibleWith(t) ))
-			throw Exception("TextureCopier::process - Can not read texture having different layout format.", __FILE__, __LINE__);
+			throw Exception("TextureCopier::process - Can not read texture having different layout format (for copier " + getNameExtended() + ").", __FILE__, __LINE__);
+
+		if(tex==NULL)
+			if(!customTexture)
+				throw Exception("TextureCopier::process - Internal error : texture wasn't properly created for " + getNameExtended() + ".", __FILE__, __LINE__);
+			else
+				throw Exception("TextureCopier::process - A custom texture was declared bu not given for " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		int tsize = t.getSizeOnGPU();
 		GLint inputMode = t.getInternalMode();
@@ -331,6 +339,34 @@
 		HdlTexture::unbind();
 
 		HdlPBO::unbind(GL_PIXEL_UNPACK_BUFFER);
+	}
+
+	/**
+	\fn bool TextureCopier::isUsingCustomTargetTexture(void) const
+	\brief Text if the mode is custom mode or not. In custom mode, the user provide the target and thus can swap targets easily for this copier.
+	\return True if the mode is custom mode.
+	**/
+	bool TextureCopier::isUsingCustomTargetTexture(void) const
+	{
+		return customTexture;
+	}
+
+	/**
+	\fn void TextureCopier::provideTexture(HdlTexture* tex)
+	\brief Give the target texture to be used. Will change the mode to custom texture mode. If the texture is not of the required format it will raise an exception.
+	\param tex A pointer to a valid HdlTexture object (passing NULL will raise an exception).
+	**/
+	void TextureCopier::provideTexture(HdlTexture* texture)
+	{
+		if(!tex->isCompatibleWith(*this))
+			throw Exception("TextureCopier::process - The texture given to " + getNameExtended() + " as an incompatible format.", __FILE__, __LINE__);
+
+		if(!customTexture)
+			delete tex;
+
+		customTexture = true;
+
+		tex = texture;
 	}
 
 	/**

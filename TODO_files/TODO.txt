@@ -153,14 +153,8 @@ Current Version : 0.8
 [0.9]	Filter.cpp, fix line 260 to 262.
 	Status : CHECKED
 
-[0.9] 	Prepare an exemple with a graph for the documentation.
-	Status : TODO
-
 [0.9]	Check security error : ComponentLayout::setInputPortName are public.
 	Status : CHECKED
-
-[0.9]	Prepare exemple code and instruction inside the help files.
-	Status : TODO
 
 [0.9]	Add variable modifiers in main pipeline description.
 	Status : CANCELED
@@ -183,9 +177,6 @@ Current Version : 0.8
 [0.9]	Add Corresponding keyword CONNECTION(AUTO)
 	Status : REPLACED
 
-[0.9]	Update and optimize all textures size for FFT1D
-	Status : TODO
-
 [0.9]	Update and optimize all textures size for FFT2D
 	Status : DONE
 
@@ -201,20 +192,11 @@ Current Version : 0.8
 [0.9]	Bug on zero padding for IFFT2D?
 	Status : DONE
 
-[0.9]	Fix bug on ifft1D.
-	Status : TODO
-
-[0.9]	Add an error in FFTxD::process if the input has more than two channels.
-	Status : TODO
-
 [0.9]	Add texture tools in the HdlTexture management.
-	Status : TODO
-
-[0.9]	Add reduction module.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Test PBO in ImageContentInfo.
-	Status : TODO
+	Status : CHECKED
 
 [0.9]	Add support for compatibility mode in FFTxD (use of gl_FragColor).
 	Status : DONE
@@ -230,6 +212,27 @@ Current Version : 0.8
 
 [0.9]	Add default argument for Pipeline::out(int id=0).
 	Status : DONE
+
+[0.9]	Update and optimize all textures size for FFT1D
+	Status : DONE
+
+[0.9]	Fix bug on ifft1D.
+	Status : DONE
+
+[0.9]	Add custom target to texture copier.
+	Status : DONE
+
+[0.9]	Port main example programs to Windows.
+	Status : TODO
+
+[1.0]	Create missing projects.
+	Status : TODO
+
+[1.0] 	Prepare an exemple with a graph for the documentation.
+	Status : TODO
+
+[1.0]	Prepare exemple code and instruction inside the help files.
+	Status : TODO
 
 [1.0]  	Pipeline Programming Language : PPL and script parser.
 	Status : DONE

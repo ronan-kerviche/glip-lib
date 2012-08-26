@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Test_Video" />
+		<Option makefile_is_custom="1" />
+		<Option execution_dir="../Examples/Test_Video" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<MakeCommands>
+			<Build command="$make -f $makefile" />
+			<CompileFile command="$make -f $makefile $file" />
+			<Clean command="$make -f $makefile clean" />
+			<DistClean command="$make -f $makefile distclean$target" />
+			<AskRebuildNeeded command="$make -q -f $makefile" />
+			<SilentBuild command="$make -s -f $makefile" />
+		</MakeCommands>
+		<Build>
+			<Target title="Debug">
+				<Option output="../Examples/Test_Video/TestVideo" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../Examples/Test_Video" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<ExtraCommands>
+					<Add before="qmake" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile" />
+					<SilentBuild command="$make -s -f $makefile" />
+				</MakeCommands>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Test_Video" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<ExtraCommands>
+					<Add before="qmake" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile" />
+					<SilentBuild command="$make -s -f $makefile" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<ExtraCommands>
+			<Add before="qmake" />
+		</ExtraCommands>
+		<Unit filename="../Examples/Test_Video/src/VideoPlayer.cpp" />
+		<Unit filename="../Examples/Test_Video/src/VideoPlayer.hpp" />
+		<Unit filename="../Examples/Test_Video/src/WindowRendering.cpp" />
+		<Unit filename="../Examples/Test_Video/src/WindowRendering.hpp" />
+		<Unit filename="../Examples/Test_Video/src/main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

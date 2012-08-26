@@ -228,6 +228,7 @@
 					else
 						fmt = new HdlTextureFormat(pipeline->out(port-1));
 
+					#define __USE_PBO__
 					#ifndef __USE_PBO__
 						TextureReader reader("reader",*fmt);
 						reader.yFlip = true;

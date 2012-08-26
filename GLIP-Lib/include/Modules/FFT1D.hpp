@@ -55,8 +55,10 @@ namespace Glip
 					Inversed		= 2,
 					///In the final result, the blue channel will hold the magnitude of the complex number.
 					ComputeMagnitude	= 4,
+					///Use zero padding for input texture which are smaller than the transform size.
+					UseZeroPadding		= 8,
 					///The computation will use of old gl_FragColor GLSL built-in variable.
-					CompatibilityMode	= 8,
+					CompatibilityMode	= 16,
 				};
 
 			private :
@@ -64,6 +66,7 @@ namespace Glip
 				HdlTexture 	*bitReversal,
 						*wpTexture;
 				Pipeline 	*pipeline;
+				Filter		*lnkFirstFilter;
 
 				// Tools :
 				unsigned short reverse(unsigned short n);
@@ -82,6 +85,8 @@ namespace Glip
 						shift,
 						///Set to true if the magnitude is computed.
 						compMagnitude,
+						///Set to true if the transform accept lower textures in size and zero-pad them before computing the transform.
+						useZeroPadding,
 						///Set to true if The computation will use gl_FragColor.
 						compatibilityMode;
 

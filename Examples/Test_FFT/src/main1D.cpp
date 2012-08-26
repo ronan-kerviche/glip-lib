@@ -73,68 +73,30 @@
 		HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
 
 		// Create a format for the filters
-		HdlTextureFormat fmt(1024, 1024, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-		fmt.setSWrapping(GL_REPEAT);
-		fmt.setTWrapping(GL_REPEAT);
-
-		// Load a shader source code from a file :
-		ShaderSource src("./Filters/game.glsl");
-
-		// Create a filter layout using the format and the shader source :
-		FilterLayout fl("GameOfLife_Layout", fmt, src);
-		// The filter layout will automatically create the corresponding input and output ports by analyzing the uniform samplers (input) and out vectors (output) of the shader source.
-
-		// Create a pipeline :
-		PipelineLayout pl("Main_GameOfLife");
-
-		// Add one input and one output :
-		pl.addInput("Input");
-		pl.addOutput("Output");
-
-		// Add an instance of the filter fl :
-		pl.add(fl, "GameOfLife");
-
-		// Connect the elements :
-		pl.connectToInput("Input", "GameOfLife", "inText");
-		pl.connectToOutput("GameOfLife", "outText", "Output");
-		// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
-
-		// Create two pipeline on this layout, they won't share any further information :
-		Pipeline* p1 = new Pipeline(pl, "Ping");
-		Pipeline* p2 = new Pipeline(pl, "Pong");
-
-		// Init the first texture to random :
-		HdlTexture start(fmt);
-		unsigned char* tmp = new unsigned char[start.getSize()];
-
-		srand(time(NULL));
-		for(int j=0; j<start.getSize(); j++)
-		{
-			if(rand()>0.8*RAND_MAX)
-				tmp[j] = 255;
-			else
-				tmp[j] = 0;
-		}
-		start.write(tmp);
-
-		delete[] tmp;
-
-		// First run :
-		(*p1) << start << Pipeline::Process;
-		(*p2) << start << Pipeline::Process;
+		HdlTextureFormat fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+		ShaderSource src("./Filters/gen1D.glsl");
+		ProceduralInput input("ProceduralInput", fmt, src);
 
 		// FFT :
-		FFT2D fft2D(fmt.getWidth(), fmt.getHeight(), FFT2D::Shifted);
-		FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
+		FFT1D fft1D(fmt.getWidth(), FFT1D::Shifted | FFT1D::ComputeMagnitude);
+		FFT1D ifft1D(fft1D.size, FFT1D::Inversed | FFT1D::Shifted | FFT1D::ComputeMagnitude);
 
-		std::cout << " FFT2D - nchannel : " << fft2D.output().getChannel() << std::endl;
-		std::cout << "iFFT2D - nchannel : " << ifft2D.output().getChannel() << std::endl;
-		std::cout << " FFT2D - size     : " << fft2D.getSize(true)/(1024) << " Ko" << std::endl;
-		std::cout << "iFFT2D - size     : " << fft2D.getSize(true)/(1024) << " Ko" << std::endl;
+		std::cout << " FFT1D - nchannel : " << fft1D.output().getChannel() << std::endl;
+		std::cout << "iFFT1D - nchannel : " << ifft1D.output().getChannel() << std::endl;
+		std::cout << " FFT1D - size     : " << fft1D.getSize(true)/(1024) << " Ko" << std::endl;
+		std::cout << "iFFT1D - size     : " << fft1D.getSize(true)/(1024) << " Ko" << std::endl;
+
+		LayoutLoader loader;
+
+		PipelineLayout* ppl = NULL;
+
+		ppl = loader("./Filters/visu1D.ppl");
+		Pipeline visualization(*ppl,"Visualization");
+		delete ppl;
 
 		// Convolution :
-		LayoutLoader loader;
-		loader.addRequiredElement("format", fft2D.output().format());
+		/*
+		loader.addRequiredElement("format", fft1D.output().format());
 		PipelineLayout* ppl = loader("./Filters/convolution.ppl");
 		Pipeline conv(*ppl,"Convolution");
 		delete ppl;
@@ -143,7 +105,7 @@
 		loader.addRequiredElement("format", fmt);
 		ppl = loader("./Filters/mix.ppl");
 		Pipeline mix(*ppl,"mix");
-		delete ppl;
+		delete ppl;*/
 
 		// Main loop
 		while( running )
@@ -160,33 +122,25 @@
 			glClear( GL_COLOR_BUFFER_BIT );
 			glLoadIdentity();
 
-			if(i%2==0)
-			{
-				// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
-				(*p1) << p2->out(0) << Pipeline::Process;
-				fft2D.process(p1->out(0));
-			}
-			else
-			{
-				(*p2) << p1->out(0) << Pipeline::Process;
-				fft2D.process(p2->out(0));
-			}
+			input.generateNewFrame();
 
-			conv << fft2D.output() << Pipeline::Process;
-			ifft2D.process(conv.out(0));
+			fft1D.process(input.texture());
+			ifft1D.process(fft1D.output());
 
-			if(i%2==0)
-				mix << p1->out(0) << ifft2D.output() << Pipeline::Process;
-			else
-				mix << p2->out(0) << ifft2D.output() << Pipeline::Process;
+			/*conv << fft2D.output() << Pipeline::Process;
+			ifft2D.process(conv.out(0));*/
 
-			if(showConvolved)
-				mix.out(0).bind();
+
+			/*if(showConvolved)
+				fft1D.output().bind();
 			else
-				if(i%2==0)
-					p1->out(0).bind();
-				else
-					p2->out(0).bind();
+				input.texture().bind();*/
+
+			//visualization << input.texture() << fft1D.output() << Pipeline::Process;
+			//visualization << ifft1D.output() << fft1D.output() << Pipeline::Process;
+			//visualization << input.texture() << ifft1D.output() << Pipeline::Process;
+			visualization << input.texture() << fft1D.output() << ifft1D.output() << Pipeline::Process;
+			visualization.out().bind();
 
 			vbo->draw();
 
@@ -198,11 +152,9 @@
 			// Check if ESC key was pressed or window was closed
 			running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 
-			glfwSleep(0.1);
+			glfwSleep(0.05);
 		}
 
-		delete p1;
-		delete p2;
 		delete vbo;
 
 		// Close window and terminate GLFW

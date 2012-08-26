@@ -23,6 +23,8 @@
 	#include <QTimer>
 	#include <QPixmap>
 	#include <QImage>
+	#include <QDialog>
+	#include <QScrollArea>
 
 	// Prototypes :
 		class WindowRenderer;
@@ -65,6 +67,7 @@
 
 			QSlider			*timeSlider;
 			QLabel			*timeLabel;
+			QComboBox		*timeBox;
 
 			QComboBox		*box;
 			QPixmap			*pixmap;
@@ -83,6 +86,7 @@
 			void save(void);
 			void updateTime(void);
 			void seekPosition(void);
+			void changeFPS(void);
 
 		signals :
 			//void close(void);

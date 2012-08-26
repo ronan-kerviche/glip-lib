@@ -30,9 +30,9 @@ SHADER_SOURCE:sh_Derivatives()
 			v12 = (col12.r+col12.g+col12.b)/3.0,
 			vB  = (colB.r+colB.g+colB.b)/3.0;
 
-		derivatives.r = (v21-v01)/2.0+0.5;
-		derivatives.g = (v12-v10)/2.0+0.5;
-		derivatives.b = (v11-vB)/2.0+0.5;
+		derivatives.r = (v21-v01)/1.0+0.5;
+		derivatives.g = (v12-v10)/1.0+0.5;
+		derivatives.b = (v11-vB)/1.0+0.5;
 
 		grayScale.rgb = vec3(v11,v11,v11);
 	}
@@ -101,7 +101,7 @@ SHADER_SOURCE:sh_Mix()
 		// and amplitude via Saturation.
 		cop = (cop - vec4(0.5, 0.5, 0.0, 0.0))*2.0;
 
-		float   e	= (cop.r*cop.r + cop.g*cop.g);
+		float   e	= (cop.r*cop.r + cop.g*cop.g)/4.0;
 		float 	h	= (atan(cop.g, cop.r) + 3.1416)/1.047;
 		int 	prt 	= int(h/2.0);
 		float 	hp 	= h-float(prt)*2.0;
@@ -129,7 +129,7 @@ FILTER_LAYOUT:cDerivatives(computationFormat,sh_Derivatives);
 FILTER_LAYOUT:cOpticalFlow(computationFormat,sh_opticalFlow);
 FILTER_LAYOUT:cMix(computationFormat,sh_Mix);
 
-PIPELINE_MAIN:pMain()
+PIPELINE_MAIN:opticalFlow()
 {
 	INPUT_PORTS(latest, oldest);
 	OUTPUT_PORTS(grayScale,derivatives, opticalFlow, outMix, outVisu);

@@ -83,214 +83,27 @@ using namespace Glip::CoreGL;
 	// Private tools
 	int __ReadOnly_HdlTextureFormat::getChannelCount(GLenum _mode) const
 	{
-		// implicit : get channel count
-		switch(_mode)
-		{
-			case GL_RED					:
-			case GL_GREEN					:
-			case GL_LUMINANCE				:
-			case GL_LUMINANCE_ALPHA				:
-			case GL_INTENSITY				:
-			case GL_COMPRESSED_ALPHA			:
-			case GL_COMPRESSED_INTENSITY			:
-			case GL_COMPRESSED_LUMINANCE			:
-			case GL_COMPRESSED_RED				:
-			case GL_COMPRESSED_RED_RGTC1			:
-			case GL_ALPHA					: return 1;
-			case GL_COMPRESSED_LUMINANCE_ALPHA		:
-			case GL_COMPRESSED_RG				:
-			case GL_RG32F					:
-			case GL_RG					: return 2;
-			case GL_RGB32F					:
-			case GL_RGB32I					:
-			case GL_RGB32UI					:
-			case GL_RGB16_SNORM				:
-			case GL_RGB16F					:
-			case GL_RGB16I					:
-			case GL_RGB16UI					:
-			case GL_RGB16					:
-			case GL_RGB8_SNORM				:
-			case GL_RGB8					:
-			case GL_RGB8I					:
-			case GL_RGB8UI					:
-			case GL_SRGB8					:
-			case GL_RGB9_E5					:
-			case GL_RGB					:
-			case GL_COMPRESSED_RGB				:
-			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_FXT1_3DFX		:
-			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RG_RGTC2			:
-			case GL_COMPRESSED_SRGB				:
-			case GL_COMPRESSED_SRGB_ALPHA			:
-			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
-			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
-			case GL_BGR					: return 3;
-			case GL_RGBA32F					:
-			case GL_RGBA32I					:
-			case GL_RGBA32UI				:
-			case GL_RGBA16					:
-			case GL_RGBA16F					:
-			case GL_RGBA16I					:
-			case GL_RGBA16UI				:
-			case GL_RGBA8					:
-			case GL_RGBA8UI					:
-			case GL_RGBA					:
-			case GL_COMPRESSED_RGBA				:
-			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
-			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
-			case GL_BGRA					: return 4;
-			default 					:
-				throw Exception("HdlTextureFormat - cannot recognize channel count for " + glParamName(_mode), __FILE__, __LINE__);
-		}
+		return static_cast<int>(HdlTextureFormatDescriptorsList::get(_mode).numComponents);
 	}
 
 	int __ReadOnly_HdlTextureFormat::getChannelSize(GLenum _depth) const
 	{
-		switch(_depth)
-		{
-			#define TMP_SIZE(X, Type)    case X : return sizeof(Type);
-				TMP_SIZE(GL_BYTE,           GLbyte )
-				TMP_SIZE(GL_UNSIGNED_BYTE,  GLubyte )
-				TMP_SIZE(GL_SHORT,          GLshort )
-				TMP_SIZE(GL_UNSIGNED_SHORT, GLushort )
-				TMP_SIZE(GL_INT,            GLint )
-				TMP_SIZE(GL_UNSIGNED_INT,   GLuint )
-				TMP_SIZE(GL_FLOAT,          GLfloat )
-				TMP_SIZE(GL_DOUBLE,         GLdouble )
-			#undef TMP_SIZE
-			default :
-				//colSize = 0;
-				throw Exception("HdlTextureFormat - cannot recognize color channel type " + glParamName(_depth), __FILE__, __LINE__);
-		}
+		return HdlTextureFormatDescriptorsList::getTypeDepth(_depth);
 	}
 
 	GLenum __ReadOnly_HdlTextureFormat::getAliasMode(GLenum _mode) const
 	{
-		switch(_mode)
-		{
-			case GL_RED					:
-			case GL_GREEN					:
-			case GL_LUMINANCE				:
-			case GL_LUMINANCE_ALPHA				:
-			case GL_COMPRESSED_ALPHA			:
-			case GL_COMPRESSED_INTENSITY			:
-			case GL_COMPRESSED_LUMINANCE			:
-			case GL_COMPRESSED_RED				:
-			case GL_COMPRESSED_RED_RGTC1			:
-			case GL_INTENSITY				:
-			case GL_ALPHA					: return GL_RED;
-			case GL_COMPRESSED_LUMINANCE_ALPHA		:
-			case GL_COMPRESSED_RG				:
-			case GL_RG32F					:
-			case GL_RG					: return GL_RG;
-			case GL_RGB32F					:
-			case GL_RGB32I					:
-			case GL_RGB32UI					:
-			case GL_RGB16_SNORM				:
-			case GL_RGB16F					:
-			case GL_RGB16I					:
-			case GL_RGB16UI					:
-			case GL_RGB16					:
-			case GL_RGB8_SNORM				:
-			case GL_RGB8					:
-			case GL_RGB8I					:
-			case GL_RGB8UI					:
-			case GL_SRGB8					:
-			case GL_RGB9_E5					:
-			case GL_COMPRESSED_RGB				:
-			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_FXT1_3DFX		:
-			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RG_RGTC2			:
-			case GL_COMPRESSED_SRGB				:
-			case GL_COMPRESSED_SRGB_ALPHA			:
-			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
-			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
-			case GL_RGB					: return GL_RGB;
-			case GL_BGR					: return GL_BGR;
-			case GL_RGBA32F					:
-			case GL_RGBA32I					:
-			case GL_RGBA32UI				:
-			case GL_RGBA16					:
-			case GL_RGBA16F					:
-			case GL_RGBA16I					:
-			case GL_RGBA16UI				:
-			case GL_RGBA8					:
-			case GL_RGBA8UI					:
-			case GL_COMPRESSED_RGBA				:
-			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
-			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
-			case GL_RGBA					: return GL_RGBA;
-			case GL_BGRA					: return GL_BGRA;
-			default :
-				throw Exception("HdlTextureFormat - cannot find mode alias for " + glParamName(_mode), __FILE__, __LINE__);
-		}
+		return HdlTextureFormatDescriptorsList::get(_mode).aliasMode;
 	}
 
 	bool __ReadOnly_HdlTextureFormat::isCompressedMode(GLenum _mode) const
 	{
-		switch(_mode)
-		{
-			case GL_COMPRESSED_INTENSITY			:
-			case GL_COMPRESSED_LUMINANCE			:
-			case GL_COMPRESSED_RED				:
-			case GL_COMPRESSED_RED_RGTC1			:
-			case GL_COMPRESSED_LUMINANCE_ALPHA		:
-			case GL_COMPRESSED_RG				:
-			case GL_COMPRESSED_RGB				:
-			case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
-			case GL_COMPRESSED_RGB_FXT1_3DFX		:
-			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RG_RGTC2			:
-			case GL_COMPRESSED_SRGB				:
-			case GL_COMPRESSED_SRGB_ALPHA			:
-			case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
-			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
-			case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RGBA				:
-			case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
-			case GL_COMPRESSED_RGBA_FXT1_3DFX		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
-			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:
-										return true;
-			default :
-										return false;
-		}
+		return HdlTextureFormatDescriptorsList::get(_mode).isCompressed;
 	}
 
 	bool __ReadOnly_HdlTextureFormat::isFloatingPointMode(GLenum _mode, GLenum _depth) const
 	{
-		if(_depth==GL_FLOAT)
-										return true;
-		switch(_mode)
-		{
-			case GL_RGB32F					:
-			case GL_RGB16F					:
-			case GL_RGBA32F					:
-			case GL_RGBA16F					:
-										return true;
-			default :
-										return false;
-		}
+		return HdlTextureFormatDescriptorsList::get(_mode).isFloatting;
 	}
 
 	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingCompressedMode(GLenum _mode) const
@@ -298,47 +111,7 @@ using namespace Glip::CoreGL;
 		if(isCompressedMode(_mode))
 			return _mode;
 		else
-		{
-			switch(_mode)
-			{
-				case GL_RED					:
-				case GL_GREEN					:	return GL_COMPRESSED_RED;
-				case GL_INTENSITY				:	return GL_COMPRESSED_INTENSITY;
-				case GL_LUMINANCE				:	return GL_COMPRESSED_LUMINANCE;
-				case GL_LUMINANCE_ALPHA				:	return GL_COMPRESSED_LUMINANCE_ALPHA;
-				case GL_ALPHA					:	return GL_COMPRESSED_ALPHA;
-				case GL_RG32F					:
-				case GL_RG					:	return GL_COMPRESSED_RG;
-				case GL_RGB32F					:
-				case GL_RGB32I					:
-				case GL_RGB32UI					:
-				case GL_RGB16_SNORM				:
-				case GL_RGB16F					:
-				case GL_RGB16I					:
-				case GL_RGB16UI					:
-				case GL_RGB16					:
-				case GL_RGB8_SNORM				:
-				case GL_RGB8					:
-				case GL_RGB8I					:
-				case GL_RGB8UI					:
-				case GL_RGB9_E5					:
-				case GL_RGB					:	return GL_COMPRESSED_RGB;
-				case GL_SRGB8					:	return GL_COMPRESSED_SRGB;
-				case GL_RGBA32F					:
-				case GL_RGBA32I					:
-				case GL_RGBA32UI				:
-				case GL_RGBA16					:
-				case GL_RGBA16F					:
-				case GL_RGBA16I					:
-				case GL_RGBA16UI				:
-				case GL_RGBA8					:
-				case GL_RGBA8UI					:
-				case GL_BGRA					:
-				case GL_RGBA					:	return GL_COMPRESSED_RGBA;
-				default :
-					throw Exception("HdlTextureFormat - cannot find compressed mode corresponding to " + glParamName(_mode), __FILE__, __LINE__);
-			}
-		}
+			return HdlTextureFormatDescriptorsList::get(_mode).correspondingModeForCompressing;
 	}
 
 	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingUncompressedMode(GLenum _mode) const
@@ -346,38 +119,7 @@ using namespace Glip::CoreGL;
 		if(!isCompressedMode(_mode))
 			return _mode;
 		else
-		{
-			switch(_mode)
-			{
-				case GL_COMPRESSED_INTENSITY			:	return GL_INTENSITY;
-				case GL_COMPRESSED_LUMINANCE			:	return GL_LUMINANCE;
-				case GL_COMPRESSED_RED				:
-				case GL_COMPRESSED_RED_RGTC1			:	return GL_RED;
-				case GL_COMPRESSED_LUMINANCE_ALPHA		:	return GL_COMPRESSED_LUMINANCE_ALPHA;
-				case GL_COMPRESSED_RG_RGTC2			:
-				case GL_COMPRESSED_RG				:	return GL_RG;
-				case GL_COMPRESSED_RGB				:
-				case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB	:
-				case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB	:
-				case GL_COMPRESSED_RGB_FXT1_3DFX		:
-				case GL_COMPRESSED_RGB_S3TC_DXT1_EXT		:	return GL_RGB;
-				case GL_COMPRESSED_SRGB				:
-				case GL_COMPRESSED_SRGB_ALPHA			:
-				case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB	:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT	:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT	:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT	:
-				case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT		:	return GL_SRGB8;
-				case GL_COMPRESSED_RGBA				:
-				case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB		:
-				case GL_COMPRESSED_RGBA_FXT1_3DFX		:
-				case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT		:
-				case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT		:
-				case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT		:	return GL_RGBA;
-				default :
-					throw Exception("HdlTextureFormat - cannot find uncompressed mode corresponding to " + glParamName(_mode), __FILE__, __LINE__);
-			}
-		}
+			return HdlTextureFormatDescriptorsList::get(_mode).correspondingModeForCompressing;
 	}
 
 // Public Tools

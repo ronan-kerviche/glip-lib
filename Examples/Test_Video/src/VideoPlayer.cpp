@@ -8,7 +8,7 @@
 
 // Objects
 	VideoModIHM::VideoModIHM(void)
-	 : QWidget(), player(NULL), src(NULL), output(NULL), pbo(NULL), textureA(NULL), textureB(NULL), textureLatest(NULL), textureOldest(NULL), pipeline(NULL), videosLayout(NULL), streamControlsLayout(NULL), generalLayout(NULL), loadVideo(NULL), play(NULL), pause(NULL), loadPipeline(NULL), saveFrame(NULL), pipelineControl(NULL), box(NULL), timer(NULL), pixmap(NULL), image(NULL), fmt(NULL), buffer(NULL), timeLayout(NULL), timeSlider(NULL), timeLabel(NULL)
+	 : QWidget(), player(NULL), src(NULL), output(NULL), pbo(NULL), textureA(NULL), textureB(NULL), textureLatest(NULL), textureOldest(NULL), pipeline(NULL), videosLayout(NULL), streamControlsLayout(NULL), generalLayout(NULL), loadVideo(NULL), play(NULL), pause(NULL), loadPipeline(NULL), saveFrame(NULL), pipelineControl(NULL), box(NULL), timer(NULL), pixmap(NULL), image(NULL), fmt(NULL), buffer(NULL), timeLayout(NULL), timeSlider(NULL), timeLabel(NULL), timeBox(NULL)
 	{
 		videosLayout		= new QHBoxLayout();
 		timeLayout		= new QHBoxLayout();
@@ -25,6 +25,14 @@
 		timeLabel		= new QLabel("00:00", this);
 		timeLabel->setFixedWidth(100);
 		timeLabel->setAlignment(Qt::AlignHCenter);
+		timeBox			= new QComboBox(this);
+		timeBox->addItem("1 FPS");
+		timeBox->addItem("5 FPS");
+		timeBox->addItem("10 FPS");
+		timeBox->addItem("20 FPS");
+		timeBox->addItem("30 FPS");
+		timeBox->addItem("60 FPS");
+		timeBox->setCurrentIndex(3);
 
 		loadVideo		= new QPushButton("Open a Video", this);
 		play			= new QPushButton("Play", this);
@@ -47,6 +55,7 @@
 		streamControlsLayout->addWidget(loadVideo);
 		streamControlsLayout->addWidget(play);
 		streamControlsLayout->addWidget(pause);
+		streamControlsLayout->addWidget(timeBox);
 		pipelineControl->addWidget(loadPipeline);
 		pipelineControl->addWidget(box);
 		pipelineControl->addWidget(saveFrame);
@@ -64,14 +73,15 @@
 		timer->setInterval(50);
 
 		// Connections :
-		QObject::connect(loadVideo, 	SIGNAL(released(void)), 	this, 	SLOT(openVideo(void)));
-		QObject::connect(play, 		SIGNAL(released(void)), 	player,	SLOT(play(void)));
-		QObject::connect(pause, 	SIGNAL(released(void)), 	player,	SLOT(pause(void)));
-		QObject::connect(loadPipeline,	SIGNAL(released(void)), 	this,	SLOT(openPipeline(void)));
-		QObject::connect(saveFrame,	SIGNAL(released(void)), 	this,	SLOT(save(void)));
-		QObject::connect(timer, 	SIGNAL(timeout(void)),		this, 	SLOT(grabFrame(void)));
-		QObject::connect(timer, 	SIGNAL(timeout(void)),		this, 	SLOT(updateTime(void)));
-		QObject::connect(timeSlider,	SIGNAL(sliderReleased()),	this, 	SLOT(seekPosition(void)));
+		QObject::connect(loadVideo, 	SIGNAL(released(void)), 		this, 	SLOT(openVideo(void)));
+		QObject::connect(play, 		SIGNAL(released(void)), 		player,	SLOT(play(void)));
+		QObject::connect(pause, 	SIGNAL(released(void)), 		player,	SLOT(pause(void)));
+		QObject::connect(loadPipeline,	SIGNAL(released(void)), 		this,	SLOT(openPipeline(void)));
+		QObject::connect(saveFrame,	SIGNAL(released(void)), 		this,	SLOT(save(void)));
+		QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(grabFrame(void)));
+		QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(updateTime(void)));
+		QObject::connect(timeSlider,	SIGNAL(sliderReleased()),		this, 	SLOT(seekPosition(void)));
+		QObject::connect(timeBox, 	SIGNAL(currentIndexChanged(int)),	this,	SLOT(changeFPS(void)));
 
 		timer->start();
 	}
@@ -98,6 +108,7 @@
 		delete pause;
 		delete loadPipeline;
 		delete saveFrame;
+		delete timeBox;
 		delete box;
 		delete pixmap;
 		delete image;
@@ -107,9 +118,24 @@
 
 	void VideoModIHM::openVideo(void)
 	{
-		QStringList types = Phonon::BackendCapabilities::availableMimeTypes();
-		for(int i = 0; i<types.size(); i++)
-			std::cout << types[i].toStdString() << std::endl;
+		static bool showMIMETypesOnce = false;
+
+		if(!showMIMETypesOnce)
+		{
+			QString mimeTypesMessage = "MIME Types of the formats than can be decoded on your system : \n";
+			QStringList types = Phonon::BackendCapabilities::availableMimeTypes();
+			for(int i = 0; i<(types.size()-1); i++)
+				if(types[i].contains("video/"))
+					mimeTypesMessage += types[i] + ", ";
+			if(types.back().contains("video/"))
+				mimeTypesMessage += types.back();
+
+			QMessageBox::information(NULL, "MIME Types", mimeTypesMessage);
+
+			std::cout << mimeTypesMessage.toStdString() << std::endl;
+
+			showMIMETypesOnce = true;
+		}
 
 		// Get a filename :
 		QString filename = QFileDialog::getOpenFileName(this, tr("Open a Video"), ".", "*");
@@ -199,7 +225,6 @@
 		{
 			try
 			{
-				std::cout << "Grabing image..." << std::endl;
 				const QPixmap& snapshot = QPixmap::grabWindow(player->videoWidget()->winId());
 				(*image) = snapshot.toImage();
 				QImage& img = (*image);
@@ -394,6 +419,18 @@
 			qint64 p = static_cast<qint64>(val*player->totalTime());
 			player->seek(p);
 		}
+	}
+
+	void VideoModIHM::changeFPS(void)
+	{
+		QString str = timeBox->currentText();
+		str.remove(QString("FPS"));
+
+		double fps = str.toDouble();
+
+		timer->stop();
+		timer->setInterval(static_cast<int>(1000.0/fps));
+		timer->start();
 	}
 
 	VideoModApplication::VideoModApplication(int& argc, char** argv)

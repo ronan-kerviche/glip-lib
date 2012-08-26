@@ -10,5 +10,6 @@
 		<Project filename="Project_CB/CameraPipeline.cbp" />
 		<Project filename="Project_CB/Histogram.cbp" />
 		<Project filename="Project_CB/VisualGLIP.cbp" />
+		<Project filename="Project_CB/Test_Video.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

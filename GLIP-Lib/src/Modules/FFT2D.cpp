@@ -561,6 +561,9 @@
 	**/
 	void FFT2D::process(HdlTexture& input)
 	{
+		if(pipeline==NULL)
+			throw Exception("FFT2D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__);
+
 		if(!useZeroPadding && (input.getWidth()!=w || input.getHeight()!=h))
 			throw Exception("FFT2D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__);
 
@@ -575,20 +578,19 @@
 
 			lnkFirstWidthFilter->prgm().modifyVar("xOffset", HdlProgram::Var, xOffset);
 			lnkFirstWidthFilter->prgm().modifyVar("yOffset", HdlProgram::Var, yOffset);
-
 		}
 
-		//#ifdef __DEVELOPMENT_VERBOSE__
-			//static bool once = true;
-			//if(once)
+		#ifdef __DEVELOPMENT_VERBOSE__
+			static bool once = true;
+			if(once)
 				pipeline->enablePerfsMonitoring();
-		//#endif
+		#endif
 
 		(*pipeline) << input << (*width_bitReversal) << (*height_bitReversal) << (*width_wpTexture) << (*height_wpTexture) << Pipeline::Process;
 
-		//#ifdef __DEVELOPMENT_VERBOSE__
-			//if(once)
-			//{
+		#ifdef __DEVELOPMENT_VERBOSE__
+			if(once)
+			{
 				std::cout << "Total : " << pipeline->getTotalTiming() << " ms." << std::endl;
 
 				for(int i=0; i<pipeline->getNumActions(); i++)
@@ -599,9 +601,9 @@
 				}
 
 				pipeline->disablePerfsMonitoring();
-			//	once = false;
-			//}
-		//#endif
+				once = false;
+			}
+		#endif
 	}
 
 	/**

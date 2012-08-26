@@ -130,6 +130,7 @@ namespace Glip
 		class TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
+				bool 		customTexture;
 				HdlTexture	*tex;
 				HdlPBO		*pbo;
 
@@ -137,9 +138,11 @@ namespace Glip
 				void process(HdlTexture& t);
 
 			public :
-				TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut);
+				TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture=false);
 				~TextureCopier(void);
 
+				bool isUsingCustomTargetTexture(void) const;
+				void provideTexture(HdlTexture* texture);
 				HdlTexture& texture(void);
 		};
 	}

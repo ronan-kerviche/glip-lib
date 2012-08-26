@@ -1,0 +1,62 @@
+TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+
+SHADER_SOURCE:mix()
+{
+	#version 130
+
+	uniform sampler2D 	original, fft, ifft;
+	out     vec4 		outTexture;
+	const	float		thickness = 1.0/64.0;
+	const	float		fScale = 0.09;
+
+	void main()
+	{
+		float v;
+
+		vec4	or = texture(original, vec2(gl_TexCoord[0].s,0.5)),
+			ft = texture(fft, vec2(gl_TexCoord[0].s,0.5)),
+			it = texture(ifft, vec2(gl_TexCoord[0].s,0.5));
+
+		outTexture = vec4(0.4,0.4,0.4,1.0);
+
+		// First
+			v = 1.0;
+			if( abs((gl_TexCoord[0].t-0.00)-0.33*or.r)<thickness )
+				outTexture.r = v;
+
+			if( abs((gl_TexCoord[0].t-0.00)-0.33*or.g)<thickness )
+				outTexture.g = v;
+
+		// Second
+			v = 1.0;
+			if( abs((gl_TexCoord[0].t-0.33)-0.33*ft.r*fScale)<thickness )
+				outTexture.r = v;
+
+			if( abs((gl_TexCoord[0].t-0.33)-0.33*ft.g*fScale)<thickness )
+				outTexture.g = v;
+
+			if( abs((gl_TexCoord[0].t-0.33)-0.33*ft.b*fScale)<thickness )
+				outTexture.b = v;
+
+			v = 1.0;
+		// Third
+			if( abs((gl_TexCoord[0].t-0.66)-0.33*it.r)<thickness )
+				outTexture.r = v;
+
+			if( abs((gl_TexCoord[0].t-0.66)-0.33*it.g)<thickness )
+				outTexture.g = v;
+
+			if( abs((gl_TexCoord[0].t-0.66)-0.33*it.b)<thickness )
+				outTexture.b = v;
+	}
+}
+
+FILTER_LAYOUT:filter(format,mix);
+
+PIPELINE_MAIN:pMain()
+{
+	INPUT_PORTS(original, fft, ifft);
+	OUTPUT_PORTS(outTexture);
+	FILTER_INSTANCE:inst_filter(filter);
+}
+
