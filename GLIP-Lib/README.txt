@@ -46,8 +46,41 @@ How to compile
 	Linux :
 	In GLIP-Lib : sh ./compile
 
-	Windows :
-	Use CMake to compile the library.
+	Windows : (description is for MingW compiler but it should work with cl)
+		Download and install CMake from : http://www.cmake.org/
+		In CMake-GUI :
+			Where is the source code    : <your path>/glip-lib/GLIP-Lib
+			Where to build the binaries : <your path>/glip-lib/GLIP-Lib
+		Add the following entries :
+			CMAKE_BUILD_TYPE <leave blank>
+			CMAKE_GNUtoMS <leave unticked>
+			CMAKE_INSTALL_PREFIX C:/Program Files (x86)/GLIP
+
+		Then configure and choose your compiler (tested with MingW via Makefiles) and "use default native compiler".
+		Then generate.
+
+		Once generation is done, the Makefile has been updated and you can compile with command : mingw32-make.
+
+		Compiling the Qt examples :
+
+		qmake
+
+		Then edit the Makefile and make sure that ../../GLIP-Lib/lib/libglip.a appears first in LIBS.
+
+		mingw32-make
+
+		The application might require to have some DLL in the same folder as the executable file. For a release target, you might want to copy :
+			liggcc_s_dw2-1.dll
+			mingwm10.dll
+			qgif4.dll
+			qico4.dll
+			qjpeg4.dll
+			qmng4.dll
+			qsvg4.dll
+			QtCore4.dll
+			QtGui4.dll
+			qtiff4.dll
+			QtOpenGL4.dll
 
 Support
 	Email the authors for any question, bug fixes or improvement you may want to discuss.

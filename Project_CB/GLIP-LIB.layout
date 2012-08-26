@@ -38,7 +38,7 @@
 		<Cursor position="809" topLine="6" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/NamingLayout.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="809" topLine="6" />
+		<Cursor position="2555" topLine="29" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/OglInclude.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="3365" topLine="34" />
@@ -61,11 +61,11 @@
 	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="1">
 		<Cursor position="925" topLine="0" />
 	</File>
-	<File name="../GLIP-Lib/include/Modules/FFT1D.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="3969" topLine="45" />
+	<File name="../GLIP-Lib/include/Modules/FFT1D.hpp" open="1" top="0" tabpos="2">
+		<Cursor position="3244" topLine="46" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/FFT2D.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="2835" topLine="36" />
+		<Cursor position="3722" topLine="65" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/LayoutLoader.hpp" open="0" top="0" tabpos="4">
 		<Cursor position="3021" topLine="46" />
@@ -77,7 +77,7 @@
 		<Cursor position="809" topLine="6" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/TextureReader.hpp" open="0" top="0" tabpos="3">
-		<Cursor position="809" topLine="6" />
+		<Cursor position="5043" topLine="95" />
 	</File>
 	<File name="../GLIP-Lib/include/devDebugTools.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="1984" topLine="0" />
@@ -86,7 +86,7 @@
 		<Cursor position="809" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="0" top="0" tabpos="4">
-		<Cursor position="809" topLine="6" />
+		<Cursor position="2788" topLine="45" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Exception.cpp" open="0" top="0" tabpos="6">
 		<Cursor position="2338" topLine="17" />
@@ -133,11 +133,11 @@
 	<File name="../GLIP-Lib/src/Core/glew.c" open="0" top="0" tabpos="0">
 		<Cursor position="1748" topLine="0" />
 	</File>
-	<File name="../GLIP-Lib/src/Modules/FFT1D.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="5270" topLine="105" />
+	<File name="../GLIP-Lib/src/Modules/FFT1D.cpp" open="1" top="0" tabpos="3">
+		<Cursor position="12872" topLine="368" />
 	</File>
-	<File name="../GLIP-Lib/src/Modules/FFT2D.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="19509" topLine="556" />
+	<File name="../GLIP-Lib/src/Modules/FFT2D.cpp" open="1" top="0" tabpos="4">
+		<Cursor position="19057" topLine="551" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/LayoutLoader.cpp" open="0" top="0" tabpos="3">
 		<Cursor position="3089" topLine="0" />
@@ -146,6 +146,6 @@
 		<Cursor position="809" topLine="6" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/TextureReader.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="809" topLine="6" />
+		<Cursor position="11956" topLine="159" />
 	</File>
 </CodeBlocks_layout_file>

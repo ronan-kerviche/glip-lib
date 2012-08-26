@@ -225,9 +225,17 @@
 		{
 			try
 			{
-				const QPixmap& snapshot = QPixmap::grabWindow(player->videoWidget()->winId());
-				(*image) = snapshot.toImage();
-				QImage& img = (*image);
+				#if defined(__linux__)
+					const QPixmap& snapshot = QPixmap::grabWindow(player->videoWidget()->winId());
+					(*image) = snapshot.toImage();
+					QImage& img = (*image);
+				#elif (defined(_WIN32) && defined(__GNUC__)) || defined(_MSC_VER)
+					const QPixmap& snapshot = QPixmap::grabWidget(player->videoWidget());
+					(*image) = snapshot.toImage();
+					QImage& img = (*image);
+				#else
+					#error "Undefined platform"
+				#endif
 
 				if(img.isNull())
 					throw Exception("VideoModIHM::grabFrame - NULL Image.", __FILE__, __LINE__);
@@ -236,6 +244,7 @@
 				// Check size :
 				const int 	w = img.width(),
 						h = img.height();
+
 
 				// Check ressources :
 				if(fmt->getWidth()!=w || fmt->getHeight()!=h)
@@ -274,6 +283,7 @@
 					for(int j=0; j<w; j++)
 					{
 						QRgb col 	= img.pixel(j,i);
+
 						buffer[t+0] 	= static_cast<unsigned char>( qRed( col ) );
 						buffer[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
 						buffer[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
@@ -299,6 +309,7 @@
 			}
 			catch(Exception& e)
 			{
+				player->pause();
 				QMessageBox::information(NULL, tr("Error while build texture from PBO : \n"), e.what());
 				std::cout << "Error while build texture from PBO : \n" << e.what() << std::endl;
 				delete pbo;
