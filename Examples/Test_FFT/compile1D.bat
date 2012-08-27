@@ -1,0 +1,1 @@
+mingw32-c++ -o TestFFT1D src/main1D.cpp -I../../GLIP-Lib/include/ -I../../glfw-2.7.6.bin.WIN32/glfw-2.7.6.bin.WIN32/include/ -I../../ -L../../GLIP-Lib/lib/ -L../../glfw-2.7.6.bin.WIN32/glfw-2.7.6.bin.WIN32/lib-mingw/x86/ -lglfw -lglip -lglu32 -lopengl32 -lm  

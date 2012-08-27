@@ -44,7 +44,7 @@
 		Q_OBJECT
 
 		private :
-			HistogramInterface* interface;
+			HistogramInterface* ihm;
 
 		public :
 			HistogramApplication(int& argc, char** argv);

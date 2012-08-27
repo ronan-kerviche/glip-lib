@@ -65,7 +65,7 @@
 		generalLayout->addLayout(streamControlsLayout);
 		generalLayout->addLayout(pipelineControl);
 
-		setGeometry(0, 0, 1280, 720);
+		setGeometry(100, 100, 1280, 720);
 		show();
 
 		// Timer :
@@ -330,11 +330,11 @@
 	{
 		int port = box->currentIndex();
 
-		if( (pipeline!=NULL) || (port==0 && textureLatest!=NULL) )
+		if(textureLatest!=NULL && src!=NULL)
 		{
 			if(port==0)
 				(*output) << (*textureLatest);
-			else
+			else if( pipeline!=NULL )
 				(*output) << pipeline->out(port-1);
 		}
 	}

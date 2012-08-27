@@ -218,6 +218,6 @@
 	HistogramApplication::HistogramApplication(int& argc, char** argv)
 	 : QApplication(argc, argv)
 	{
-		interface = new HistogramInterface;
+		ihm = new HistogramInterface;
 	}
 
