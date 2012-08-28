@@ -18,6 +18,7 @@
 // g++ -o mainGLFW src/*.cpp -I<your path>/GLIP-Lib/include/ -L<your path>/GLIP-Lib/lib/ -lXext -lX11 -lGL -lGLU -lm -lglfw -lglip
 
 // Includes
+	#include <fstream>
 	#include <cmath>
 	#include "GLIPLib.hpp"
 	#include <GL/glfw.h>
@@ -42,9 +43,20 @@
 			showConvolved 		= false,
 			waitingForRelease 	= false;
 
+		std::fstream log;
+
+		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
+		if(!log.is_open())
+			throw Exception("TestFFT1D - Cannot open log file.", __FILE__, __LINE__);
+
+		log << "> TestFFT1D" << std::endl;
+
 		// Initialize GLFW
 		if( !glfwInit() )
 		{
+			log << "Failed to start GLFW." << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
 			exit( EXIT_FAILURE );
 		}
 
@@ -52,114 +64,115 @@
 		if( !glfwOpenWindow(512,512,0,0,0,0,0,0, GLFW_WINDOW ) )
 		{
 			glfwTerminate();
+			log << "Failed to open GLFW window." << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
 			exit( EXIT_FAILURE );
 		}
 
 		// Set resizing callback :
 		glfwSetWindowSizeCallback( WindowResize );
 
-		int i=0;
-
-		// Initialize GLIP-LIB
-		HandleOpenGL::init();
-
-		// Print info :
-		std::cout << "Vendor name    : " << HandleOpenGL::getVendorName() << std::endl;
-		std::cout << "Renderer name  : " << HandleOpenGL::getRendererName() << std::endl;
-		std::cout << "OpenGL version : " << HandleOpenGL::getVersion() << std::endl;
-		std::cout << "GLSL version   : " << HandleOpenGL::getGLSLVersion() << std::endl;
-
-		// Create a Quad inside a VBO for display
-		HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
-
-		// Create a format for the filters
-		HdlTextureFormat fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-		ShaderSource src("./Filters/gen1D.glsl");
-		ProceduralInput input("ProceduralInput", fmt, src);
-
-		// FFT :
-		FFT1D fft1D(fmt.getWidth(), FFT1D::Shifted | FFT1D::ComputeMagnitude);
-		FFT1D ifft1D(fft1D.size, FFT1D::Inversed | FFT1D::Shifted | FFT1D::ComputeMagnitude);
-
-		std::cout << " FFT1D - nchannel : " << fft1D.output().getChannel() << std::endl;
-		std::cout << "iFFT1D - nchannel : " << ifft1D.output().getChannel() << std::endl;
-		std::cout << " FFT1D - size     : " << fft1D.getSize(true)/(1024) << " Ko" << std::endl;
-		std::cout << "iFFT1D - size     : " << fft1D.getSize(true)/(1024) << " Ko" << std::endl;
-
-		LayoutLoader loader;
-
-		PipelineLayout* ppl = NULL;
-
-		ppl = loader("./Filters/visu1D.ppl");
-		Pipeline visualization(*ppl,"Visualization");
-		delete ppl;
-
-		// Convolution :
-		/*
-		loader.addRequiredElement("format", fft1D.output().format());
-		PipelineLayout* ppl = loader("./Filters/convolution.ppl");
-		Pipeline conv(*ppl,"Convolution");
-		delete ppl;
-
-		loader.clearRequiredElements("format");
-		loader.addRequiredElement("format", fmt);
-		ppl = loader("./Filters/mix.ppl");
-		Pipeline mix(*ppl,"mix");
-		delete ppl;*/
-
-		// Main loop
-		while( running )
+		try
 		{
-			if(glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS && !waitingForRelease)
+			int i=0;
+
+			// Initialize GLIP-LIB
+			HandleOpenGL::init();
+
+			// Print info :
+			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
+			log << "Renderer name : " << HandleOpenGL::getRendererName() << std::endl;
+			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
+			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
+
+			// Create a Quad inside a VBO for display
+			HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
+
+			// Create a format for the filters
+			HdlTextureFormat fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+			ShaderSource src("./Filters/gen1D.glsl");
+			ProceduralInput input("ProceduralInput", fmt, src);
+
+			// FFT :
+			FFT1D fft1D(fmt.getWidth(), FFT1D::Shifted | FFT1D::ComputeMagnitude);
+			FFT1D ifft1D(fft1D.size, FFT1D::Inversed | FFT1D::Shifted | FFT1D::ComputeMagnitude);
+
+			LayoutLoader loader;
+
+			PipelineLayout* ppl = NULL;
+
+			ppl = loader("./Filters/visu1D.ppl");
+			Pipeline visualization(*ppl,"Visualization");
+			delete ppl;
+
+			fft1D.enablePerfsMonitoring();
+			ifft1D.enablePerfsMonitoring();
+
+			// Main loop
+			while( running )
 			{
-				showConvolved = !showConvolved;
-				waitingForRelease = true;
+				if(glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT)==GLFW_PRESS && !waitingForRelease)
+				{
+					showConvolved = !showConvolved;
+					waitingForRelease = true;
+				}
+
+				if(glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT)==GLFW_RELEASE && waitingForRelease)
+					waitingForRelease = false;
+
+				glClear( GL_COLOR_BUFFER_BIT );
+				glLoadIdentity();
+
+				input.generateNewFrame();
+
+				fft1D.process(input.texture());
+				ifft1D.process(fft1D.output());
+
+				visualization << input.texture() << fft1D.output() << ifft1D.output() << Pipeline::Process;
+				visualization.out().bind();
+
+				vbo->draw();
+
+				i++;
+
+				// Swap front and back rendering buffers
+				glfwSwapBuffers();
+
+				// Check if ESC key was pressed or window was closed
+				running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
+
+				glfwSleep(0.05);
 			}
 
-			if(glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT)==GLFW_RELEASE && waitingForRelease)
-				waitingForRelease = false;
+			log << "FFT1D" << std::endl;
+			log << "    Number of processes : " << fft1D.getNumProcesses() << std::endl;
+			log << "    Mean time           : " << fft1D.getMeanTime() << " ms" << std::endl;
+			log << "    Std Dev on time     : " << fft1D.getStdDevTime() << " ms" << std::endl;
+			log << "iFFT1D" << std::endl;
+			log << "    Number of processes : " << ifft1D.getNumProcesses() << std::endl;
+			log << "    Mean time           : " << ifft1D.getMeanTime() << " ms" << std::endl;
+			log << "    Std Dev on time     : " << ifft1D.getStdDevTime() << " ms" << std::endl;
 
-			glClear( GL_COLOR_BUFFER_BIT );
-			glLoadIdentity();
+			fft1D.disablePerfsMonitoring();
+			ifft1D.disablePerfsMonitoring();
 
-			input.generateNewFrame();
+			log << "> End" << std::endl;
+			log.close();
 
-			fft1D.process(input.texture());
-			ifft1D.process(fft1D.output());
+			delete vbo;
 
-			/*conv << fft2D.output() << Pipeline::Process;
-			ifft2D.process(conv.out(0));*/
+			// Close window and terminate GLFW
+			glfwTerminate();
 
-
-			/*if(showConvolved)
-				fft1D.output().bind();
-			else
-				input.texture().bind();*/
-
-			//visualization << input.texture() << fft1D.output() << Pipeline::Process;
-			//visualization << ifft1D.output() << fft1D.output() << Pipeline::Process;
-			//visualization << input.texture() << ifft1D.output() << Pipeline::Process;
-			visualization << input.texture() << fft1D.output() << ifft1D.output() << Pipeline::Process;
-			visualization.out().bind();
-
-			vbo->draw();
-
-			i++;
-
-			// Swap front and back rendering buffers
-			glfwSwapBuffers();
-
-			// Check if ESC key was pressed or window was closed
-			running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
-
-			glfwSleep(0.05);
+			// Exit program
+			exit( EXIT_SUCCESS );
 		}
-
-		delete vbo;
-
-		// Close window and terminate GLFW
-		glfwTerminate();
-
-		// Exit program
-		exit( EXIT_SUCCESS );
+		catch(Exception& e)
+		{
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+		}
 	}

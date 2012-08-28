@@ -3,6 +3,7 @@ TEXTURE_FORMAT:format(512,256,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
 SHADER_SOURCE:shader()
 {
 	#version 130
+	precision mediump float;
 
 	uniform sampler2D 	inText;
 	out     vec4 		outText;

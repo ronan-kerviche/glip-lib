@@ -2,14 +2,31 @@
 #include "WindowRendering.hpp"
 #include <cstdlib>
 #include <ctime>
+#include <QMessageBox>
 
 // Src :
 	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv)
-	 : QApplication(argc,argv), w(_w), h(_h)
+	 : QApplication(argc,argv), w(_w), h(_h), window(NULL), timer(NULL), inp(NULL), p1(NULL), p2(NULL), t(NULL)
 	{
+		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
+
+		if(!log.is_open())
+		{
+			QMessageBox::warning(NULL, tr("TestGOL"), tr("Unable to write to the log file log.txt.\n"));
+			throw Exception("GameOfLife::GameOfLife - Cannot open log file.", __FILE__, __LINE__);
+		}
+
 		try
 		{
 			window = new WindowRenderer(w, h);
+
+			// Info :
+			log << "> Test_GOL" << std::endl;
+			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
+			log << "Renderer name : " << HandleOpenGL::getRendererName() << std::endl;
+			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
+			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
+
 			HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 
 			// Create the pipeline :
@@ -65,13 +82,31 @@
 		}
 		catch(Exception& e)
 		{
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+			QMessageBox::warning(NULL, tr("TestGOL"), e.what());
 			std::cout << "Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
 			std::cout << "(Will be rethrown)" << std::endl;
 			throw e;
 		}
+	}
 
-		std::cout << "--- STARTING ---" << std::endl;
+	GameOfLife::~GameOfLife(void)
+	{
+		timer->stop();
+
+		log << "> End" << std::endl;
+		log.close();
+
+		delete timer;
+		delete inp;
+		delete p1;
+		delete p2;
+		delete t;
+		delete window;
 	}
 
 	void GameOfLife::randomTexture(float alpha)
@@ -92,64 +127,53 @@
 	{
 		static int i = 0;
 		static int j = 3;
-		//static TextureReader reader("Reader", p2->out(0).format());
 
-		if(i==100)
+		try
 		{
-			//throw Exception("Stop");
-			std::cout << "> Reset" << std::endl;
-			//reset :
-			#define __RADOM_GEN__
-			#ifdef __RADOM_GEN__
-				randomTexture(0.3);
-				(*p1) << (*t) << Pipeline::Process;
-				(*p2) << (*t) << Pipeline::Process;
-			#else
-				inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,j);
-				(*p1) << inp->texture() << Pipeline::Process;
-				(*p2) << inp->texture() << Pipeline::Process;
-				j++;
-			#endif
-
-			i = 0;
-		}
-		else
-		{
-			if(i%2==0)
+			if(i==100)
 			{
-				(*p2) << p1->out(0) << Pipeline::Process;
-				(*window) << p2->out(0);
+				//throw Exception("Stop");
+				std::cout << "> Reset" << std::endl;
+				//reset :
+				#define __RADOM_GEN__
+				#ifdef __RADOM_GEN__
+					randomTexture(0.3);
+					(*p1) << (*t) << Pipeline::Process;
+					(*p2) << (*t) << Pipeline::Process;
+				#else
+					inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,j);
+					(*p1) << inp->texture() << Pipeline::Process;
+					(*p2) << inp->texture() << Pipeline::Process;
+					j++;
+				#endif
+
+				i = 0;
 			}
 			else
 			{
-				(*p1) << p2->out(0) << Pipeline::Process;
-				(*window) <<  p1->out(0);
-			}
-
-			/*reader.yFlip = true;
-			if(i%2==0)
-				reader << p2->out(0);
-			else
-				reader << p1->out(0);
-
-			// Create an image with Qt
-			QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
-
-			QRgb value;
-			double r, g, b;
-			for(int y=0; y<reader.getHeight(); y++)
-			{
-				for(int x=0; x<reader.getWidth(); x++)
+				if(i%2==0)
 				{
-					r = static_cast<unsigned char>(reader(x,y,0)*255.0);
-					g = static_cast<unsigned char>(reader(x,y,1)*255.0);
-					b = static_cast<unsigned char>(reader(x,y,2)*255.0);
-					value = qRgb(r, g, b);
-					image.setPixel(x, y, value);
+					(*p2) << p1->out(0) << Pipeline::Process;
+					(*window) << p2->out(0);
+				}
+				else
+				{
+					(*p1) << p2->out(0) << Pipeline::Process;
+					(*window) <<  p1->out(0);
 				}
 			}
-			image.save(QString("img_%1.png").arg(i));*/
-		}
 
-		i++;
+			i++;
+		}
+		catch(Exception& e)
+		{
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+			std::cout << "Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
+			std::cout << "(Will be rethrown)" << std::endl;
+			throw e;
+		}
 	}

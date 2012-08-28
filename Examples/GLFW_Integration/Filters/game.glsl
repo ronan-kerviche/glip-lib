@@ -3,6 +3,7 @@
 */
 
 #version 130
+precision mediump float;
 
 uniform sampler2D 	inText;		// input sampler
 out     vec4 		outText;	// output sampler

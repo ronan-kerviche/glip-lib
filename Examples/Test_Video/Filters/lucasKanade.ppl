@@ -101,7 +101,7 @@ SHADER_SOURCE:sh_Mix()
 		// and amplitude via Saturation.
 		cop = (cop - vec4(0.5, 0.5, 0.0, 0.0))*2.0;
 
-		float   e	= (cop.r*cop.r + cop.g*cop.g)/4.0;
+		float   e	= (cop.r*cop.r + cop.g*cop.g)/2.0;
 		float 	h	= (atan(cop.g, cop.r) + 3.1416)/1.047;
 		int 	prt 	= int(h/2.0);
 		float 	hp 	= h-float(prt)*2.0;

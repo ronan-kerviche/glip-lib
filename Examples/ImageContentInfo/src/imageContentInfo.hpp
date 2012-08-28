@@ -2,6 +2,7 @@
 #define __GAME_OF_LIFE__
 
 	#include <iostream>
+	#include <fstream>
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -26,6 +27,7 @@
 			Q_OBJECT
 
 			private :
+				std::fstream	log;
 				bool 		computingSuccess;
 				HdlTexture	*text;
 				QVBoxLayout	*layout;
@@ -36,6 +38,7 @@
 
 			public :
 				IHM(void);
+				~IHM(void);
 
 			public slots :
 				void loadImage(void);
@@ -55,6 +58,7 @@
 
 			public :
 				ImageContentInformation(int _w, int _h, int& argc, char** argv);
+				~ImageContentInformation(void);
 		};
 
 #endif

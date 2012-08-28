@@ -8,43 +8,49 @@
 
 // Code
 	HistogramInterface::HistogramInterface(void)
-	 : text(NULL), pipeline(NULL)
+	 : text(NULL), pipeline(NULL), layout(NULL), chImg(NULL), sav(NULL), window(NULL)
 	{
-		// Main interface :
-		window  = new WindowRenderer(this, 640, 480);
-		layout 	= new QVBoxLayout(this);
-		chImg	= new QPushButton("Load an Image", this);
-		sav	= new QPushButton("Save result (RGB888)", this);
+		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
-		layout->addWidget(chImg);
-		layout->addWidget(window);
-		layout->addWidget(sav);
-		setGeometry(1000, 100, 800, 700);
-		show();
-
-		// Make the pipeline
-		PipelineLayout* model = NULL;
-		LayoutLoader	loader;
+		if(!log.is_open())
+		{
+			QMessageBox::warning(NULL, tr("My Application"), tr("Unable to write to the log file log.txt.\n"));
+			throw Exception("HistogramInterface::HistogramInterface - Cannot open log file.", __FILE__, __LINE__);
+		}
 
 		try
 		{
+			// Main interface :
+			window  = new WindowRenderer(this, 640, 480);
+
+			// Info :
+			log << "> Histogram" << std::endl;
+			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
+			log << "Renderer name : " << HandleOpenGL::getRendererName() << std::endl;
+			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
+			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
+
+			layout 	= new QVBoxLayout(this);
+			chImg	= new QPushButton("Load an Image", this);
+			sav	= new QPushButton("Save result (RGB888)", this);
+
+			layout->addWidget(chImg);
+			layout->addWidget(window);
+			layout->addWidget(sav);
+			setGeometry(1000, 100, 800, 700);
+			show();
+
+			// Make the pipeline
+			PipelineLayout* model = NULL;
+			LayoutLoader	loader;
+
 			model = loader("./Filters/histogramPipeline.ppl");
-		}
-		catch(std::exception& e)
-		{
-			QMessageBox::information(NULL, tr("Error while loading the pipeline : "), e.what());
-			std::cout << "Error while building the pipeline : " << e.what() << std::endl;
-			std::cout << "Will be rethrown!" << std::endl;
-			throw e;
-		}
 
-		pipeline = new Pipeline(*model, "instHistogramPipeline");
-		std::cout << "Name of the pipeline : " << pipeline->getNameExtended() << std::endl;
-		delete model;
+			pipeline = new Pipeline(*model, "instHistogramPipeline");
+			std::cout << "Name of the pipeline : " << pipeline->getNameExtended() << std::endl;
+			delete model;
 
-		// Set variables :
-		try
-		{
+			// Set variables :
 			((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::Var,0);
 			((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::Var,1);
 			((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::Var,2);
@@ -52,18 +58,37 @@
 			((*pipeline)["instHistRed"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
 			((*pipeline)["instHistGreen"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
 			((*pipeline)["instHistBlue"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
+
+
+			QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
+			QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
+			QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(requestUpdate(void)));
+
 		}
-		catch(std::exception& e)
+		catch(Exception& e)
 		{
-			QMessageBox::information(NULL, tr("Error while setting variables : "), e.what());
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+			QMessageBox::information(NULL, tr("Error while building program"), e.what());
 			std::cout << "Error while setting variables : " << e.what() << std::endl;
 			std::cout << "Will be rethrown!" << std::endl;
 			throw e;
 		}
+	}
 
-		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
-		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
-		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(requestUpdate(void)));
+	HistogramInterface::~HistogramInterface(void)
+	{
+		log << "> End" << std::endl;
+		log.close();
+
+		delete text;
+		delete layout;
+		delete chImg;
+		delete sav;
+		delete window;
+		delete pipeline;
 	}
 
 	void HistogramInterface::loadImage(void)
@@ -72,16 +97,21 @@
 
 		if (!filename.isEmpty())
 		{
+			log << "Loading : " << filename.toStdString() << std::endl;
+
 			QImage* image = new QImage(filename);
 
 			if (image->isNull())
 			{
+				log << "Failed to load file!" << std::endl;
 				QMessageBox::information(this, tr("Image Content Info"), tr("Cannot load %1.").arg(filename));
 				std::cout << "Cannot load : " << filename.toUtf8().constData() << std::endl;
 				delete image;
 			}
 			else
 			{
+				log << "Image format : "<< image->width() << 'X' << image->height() << std::endl;
+
 				if(text!=NULL)
 				{
 					delete text;
@@ -146,11 +176,16 @@
 						(*pipeline) << (*text) << Pipeline::Process;
 						std::cout << "...end rendering" << std::endl;
 						std::cout << "Time : " << pipeline->getTotalTiming() << "ms " << std::endl;
+						log << "Rendering time : " << pipeline->getTotalTiming() << "ms " << std::endl;
 					#endif
 				}
-				catch(std::exception& e)
+				catch(Exception& e)
 				{
 					QMessageBox::information(this, tr("Error while computing : "), e.what());
+					log << "Exception while computing : " << std::endl;
+					log << e.what() << std::endl;
+					log << "> Abort" << std::endl;
+					log.close();
 					std::cout << "Error while computing : " << e.what() << std::endl;
 					throw e;
 				}
@@ -200,9 +235,13 @@
 						std::cout << "Error while writing : " << filename.toUtf8().constData() << std::endl;
 					}
 				}
-				catch(std::exception& e)
+				catch(Exception& e)
 				{
 					QMessageBox::information(this, tr("Error while saving : "), e.what());
+					log << "Exception while computing : " << std::endl;
+					log << e.what() << std::endl;
+					log << "> Abort" << std::endl;
+					log.close();
 					std::cout << "Error while saving : " << e.what() << std::endl;
 				}
 			}
@@ -221,3 +260,7 @@
 		ihm = new HistogramInterface;
 	}
 
+	HistogramApplication::~HistogramApplication(void)
+	{
+		delete ihm;
+	}

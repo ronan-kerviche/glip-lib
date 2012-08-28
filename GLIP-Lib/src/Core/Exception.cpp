@@ -37,7 +37,7 @@
 	{
 		if(filename!="")
 		{
-			size_t p = filename.rfind('/');
+			size_t p = filename.find_last_of("/\\");
 			filename = filename.substr(p+1);
 		}
 
@@ -84,9 +84,12 @@
 			{
 				std::string he = subErrors[i].header();
 				if(he!="")
-					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " | " + he + " ] " + subErrors[i].msg + "\n";
+					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " | " + he + " ] " + subErrors[i].msg;
 				else
-					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " ] " + subErrors[i].msg + "\n";
+					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " ] " + subErrors[i].msg;
+
+				if(i>0)
+					completeMsg += "\n";
 			}
 		}
 	}

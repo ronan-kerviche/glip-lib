@@ -24,6 +24,7 @@
 #include "ShaderSource.hpp"
 #include "Exception.hpp"
 #include "devDebugTools.hpp"
+#include "OglInclude.hpp"
 
     using namespace Glip::CoreGL;
 
@@ -374,7 +375,7 @@
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
 			#endif
-			outVars.push_back("output");
+			outVars.push_back("outputTexture");
 			compatibilityRequest = true;
 		}
 	}
@@ -387,6 +388,9 @@
 	**/
 	std::string ShaderSource::errorLog(std::string log)
 	{
+		bool firstLine = true;
+		const std::string delimAMDATI = "ERROR: 0:";
+		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
 		std::stringstream str("");
 		std::istringstream iss(log);
 		std::string line;
@@ -395,12 +399,39 @@
 
 		while( std::getline( iss, line) )
 		{
+			size_t	one = 0,
+				two = 0;
+
+			if(firstLine)
+				firstLine = false;
+			else
+				str << std::endl;
+
 			str << "    " << line << std::endl;
-			size_t one = line.find('(') + 1;
-			size_t two = line.find(')');
-			int tmp;
-			from_string(line.substr(one, two-one), tmp);
-			str << "        >> " << getLine(tmp-1) << std::endl;
+
+			switch(v)
+			{
+				case HandleOpenGL::vd_NVIDIA :
+					one = line.find('(') + 1;
+					two = line.find(')');
+					int tmp;
+					if(from_string(line.substr(one, two-one), tmp))
+					str << "        >> " << getLine(tmp-1);// << std::endl;
+					break;
+				case HandleOpenGL::vd_AMDATI :
+				one = line.find(delimAMDATI);
+					if(one!=std::string::npos)
+					{
+					two = line.find(':',one+delimAMDATI.size()+1);
+					if(two!=std::string::npos)
+					if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), tmp))
+					str << "        >> " << getLine(tmp-1);// << std::endl;
+					}
+					break;
+				case HandleOpenGL::vd_INTEL :
+				case HandleOpenGL::vd_UNKNOWN :
+					break;
+			}
 		}
 
 		return std::string(str.str());

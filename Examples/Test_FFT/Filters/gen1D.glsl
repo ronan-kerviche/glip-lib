@@ -1,4 +1,5 @@
 #version 130
+precision mediump float;
 
 out vec4 outTexture;
 

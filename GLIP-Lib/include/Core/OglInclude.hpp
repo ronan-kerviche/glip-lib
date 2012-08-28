@@ -64,12 +64,29 @@
 			**/
 			class HandleOpenGL
 			{
+				public :
+					/// ID of the supported hardware vendors
+					enum SupportedVendor
+					{
+						/// For NVIDIA
+						vd_NVIDIA,
+						/// For AMD/ATI
+						vd_AMDATI,
+						/// For INTEL
+						vd_INTEL,
+						/// When unknown
+						vd_UNKNOWN
+					};
+
 				private :
 					static bool initDone;
+					static SupportedVendor vendor;
 					HandleOpenGL(void); //no Instance
+
 				public :
 					static void init(void);
 
+					static SupportedVendor getVendorID(void);
 					static std::string getVendorName(void);
 					static std::string getRendererName(void);
 					static std::string getVersion(void);

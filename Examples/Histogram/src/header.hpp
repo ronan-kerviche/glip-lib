@@ -3,6 +3,7 @@
 
 	// Includes
 	#include <iostream>
+	#include <fstream>
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -24,14 +25,17 @@
 		Q_OBJECT
 
 		private :
-			HdlTexture*	text;
-			QVBoxLayout* 	layout;
-			QPushButton	*chImg, *sav;
+			std::fstream	log;
+			HdlTexture	*text;
+			QVBoxLayout	*layout;
+			QPushButton	*chImg,
+					*sav;
 			WindowRenderer	*window;
 			Pipeline	*pipeline;
 
 		public :
 			HistogramInterface(void);
+			~HistogramInterface(void);
 
 		public slots :
 			void loadImage(void);
@@ -48,6 +52,7 @@
 
 		public :
 			HistogramApplication(int& argc, char** argv);
+			~HistogramApplication(void);
 	};
 
 #endif

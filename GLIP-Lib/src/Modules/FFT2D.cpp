@@ -42,7 +42,7 @@
 	\param flags The flags associated for this computation (combined with | operator), see FFT2D::Flags.
 	**/
 	FFT2D::FFT2D(int _w, int _h, int flags)
-	 : width_bitReversal(NULL), width_wpTexture(NULL), height_bitReversal(NULL), height_wpTexture(NULL), pipeline(NULL), lnkFirstWidthFilter(NULL), w(_w), h(_h), inverse((flags & Inversed)>0), shift((flags & Shifted)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0)
+	 : width_bitReversal(NULL), width_wpTexture(NULL), height_bitReversal(NULL), height_wpTexture(NULL), pipeline(NULL), lnkFirstWidthFilter(NULL), w(_w), h(_h), inverse((flags & Inversed)>0), shift((flags & Shifted)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0), performanceMonitoring(false), sumTime(0.0), sumSqTime(0.0), numProcesses(0)
 	{
 		double 	test1 = log(w)/log(2),
 			test2 = floor(test1),
@@ -164,7 +164,7 @@
 				}
 				else
 				{
-					playout.connect(previousName, "output", name, "inputTexture");
+					playout.connect(previousName, "outputTexture", name, "inputTexture");
 					playout.connectToInput("widthWpTexture", name, "wpTexture");
 				}
 
@@ -177,7 +177,7 @@
 			ShaderSource wshader(generateFinalCode(true));
 			FilterLayout flw("WReOrder", *fmtout, wshader);
 			playout.add(flw,"fWReOrder");
-			playout.connect(previousName, "output", "fWReOrder", "inputTexture");
+			playout.connect(previousName, "outputTexture", "fWReOrder", "inputTexture");
 
 			// Second : height
 			previousName = "";
@@ -192,12 +192,12 @@
 
 				if(previousName=="")
 				{
-					playout.connect("fWReOrder", "output", name, "inputTexture");
+					playout.connect("fWReOrder", "outputTexture", name, "inputTexture");
 					playout.connectToInput("heightReversalTexture", name, "reversalTexture");
 				}
 				else
 				{
-					playout.connect(previousName, "output", name, "inputTexture");
+					playout.connect(previousName, "outputTexture", name, "inputTexture");
 					playout.connectToInput("heightWpTexture", name, "wpTexture");
 				}
 
@@ -210,10 +210,10 @@
 			ShaderSource hshader(generateFinalCode(false));
 			FilterLayout flh("HReOrder", *fmtout, hshader);
 			playout.add(flh,"fHReOrder");
-			playout.connect(previousName, "output", "fHReOrder", "inputTexture");
+			playout.connect(previousName, "outputTexture", "fHReOrder", "inputTexture");
 
 			// Connect to output :
-			playout.connectToOutput("fHReOrder", "output", "output");
+			playout.connectToOutput("fHReOrder", "outputTexture", "output");
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT2D");
@@ -283,6 +283,7 @@
 		std::stringstream str;
 
 		str << "#version 130\n";
+		str << "precision mediump float;\n";
 		str << "\n";
 		str << "uniform sampler2D inputTexture; \n";
 
@@ -299,14 +300,14 @@
 			str << "uniform sampler2D wpTexture; \n";
 
 		if(!compatibilityMode)
-			str << "out vec4 output; \n";
+			str << "out vec4 outputTexture; \n";
 
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
 
 		if(compatibilityMode)
-			str << "    vec4 output = vec4(0.0,0.0,0.0,0.0); \n";
+			str << "    vec4 outputTexture = vec4(0.0,0.0,0.0,0.0); \n";
 
 		if(delta==1)
 		{
@@ -353,19 +354,19 @@
 				str << "    vec4 B           = texelFetch(inputTexture, ivec2(transverseId,ipB), 0); \n";
 			}
 
-			str << "    output.r  = A.r + B.r;           //real part of Xp \n";
+			str << "    outputTexture.r  = A.r + B.r;           //real part of Xp \n";
 
 			if(!inverse)
-				str << "    output.g  = A.g + B.g;   //imag part of Xp \n";
+				str << "    outputTexture.g  = A.g + B.g;   //imag part of Xp \n";
 			else
-				str << "    output.g  = - A.g - B.g; //imag part of Xp \n";
+				str << "    outputTexture.g  = - A.g - B.g; //imag part of Xp \n";
 
-			str << "    output.b  = A.r - B.r; //real part of Xp+n/2 \n";
+			str << "    outputTexture.b  = A.r - B.r; //real part of Xp+n/2 \n";
 
 			if(!inverse)
-				str << "    output.a  = A.g - B.g; //imag part of Xp+n/2 \n";
+				str << "    outputTexture.a  = A.g - B.g; //imag part of Xp+n/2 \n";
 			else
-				str << "    output.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
+				str << "    outputTexture.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
 		}
 		else
 		{
@@ -429,14 +430,14 @@
 			str << "    vec4 wp          = texelFetch(wpTexture, ivec2(ipWp,0), 0); \n";
 
 			// Compute :
-			str << "    output.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
-			str << "    output.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
-			str << "    output.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
-			str << "    output.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
+			str << "    outputTexture.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
+			str << "    outputTexture.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
+			str << "    outputTexture.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
+			str << "    outputTexture.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
 		}
 
 		if(compatibilityMode)
-			str << "    gl_FragColor = output; \n";
+			str << "    gl_FragColor = outputTexture; \n";
 
 		str << "} \n";
 
@@ -448,18 +449,19 @@
 		std::stringstream str;
 
 		str << "#version 130\n";
+		str << "precision mediump float;\n";
 		str << "\n";
 		str << "uniform sampler2D inputTexture; \n";
 
 		if(!compatibilityMode)
-			str << "out vec4 output; \n";
+			str << "out vec4 outputTexture; \n";
 
 		str << "\n";
 		str << "void main() \n";
 		str << "{ \n";
 
 		if(compatibilityMode)
-			str << "    vec4 output; \n";
+			str << "    vec4 outputTexture; \n";
 
 		if(forWidth)
 		{
@@ -474,19 +476,19 @@
 			str << "    vec4 X                   = texelFetch(inputTexture, ivec2(mglobid, transversId), 0); \n";
 			str << "    if(globid<hsz) \n";
 			str << "    { \n";
-			str << "        output.r      = X.r; \n";
-			str << "        output.g      = X.g; \n";
+			str << "        outputTexture.r      = X.r; \n";
+			str << "        outputTexture.g      = X.g; \n";
 			str << "    } \n";
 			str << "    else \n";
 			str << "    { \n";
-			str << "        output.r      = X.b; \n";
-			str << "        output.g      = X.a; \n";
+			str << "        outputTexture.r      = X.b; \n";
+			str << "        outputTexture.g      = X.a; \n";
 			str << "    } \n";
 
 			if(inverse)
 			{
-				str << "    output.r          =  output.r/sz; \n";
-				str << "    output.g          = -output.g/sz; \n";
+				str << "    outputTexture.r          =  outputTexture.r/sz; \n";
+				str << "    outputTexture.g          = -outputTexture.g/sz; \n";
 			}
 		}
 		else
@@ -513,41 +515,41 @@
 			{
 				str << "    if(hglobid<hh) \n";
 				str << "    { \n";
-				str << "        output.r      = X.r; \n";
-				str << "        output.g      = X.g; \n";
+				str << "        outputTexture.r      = X.r; \n";
+				str << "        outputTexture.g      = X.g; \n";
 				str << "    } \n";
 				str << "    else \n";
 				str << "    { \n";
-				str << "        output.r      = X.b; \n";
-				str << "        output.g      = X.a; \n";
+				str << "        outputTexture.r      = X.b; \n";
+				str << "        outputTexture.g      = X.a; \n";
 				str << "    } \n";
 			}
 			else
 			{
 				str << "    if(hglobid<hh) \n";
 				str << "    { \n";
-				str << "        output.r      = X.b; \n";
-				str << "        output.g      = X.a; \n";
+				str << "        outputTexture.r      = X.b; \n";
+				str << "        outputTexture.g      = X.a; \n";
 				str << "    } \n";
 				str << "    else \n";
 				str << "    { \n";
-				str << "        output.r      = X.r; \n";
-				str << "        output.g      = X.g; \n";
+				str << "        outputTexture.r      = X.r; \n";
+				str << "        outputTexture.g      = X.g; \n";
 				str << "    } \n";
 			}
 
 			if(inverse)
 			{
-				str << "        output.r      =  output.r/h; \n";
-				str << "        output.g      = -output.g/h; \n";
+				str << "        outputTexture.r      =  outputTexture.r/h; \n";
+				str << "        outputTexture.g      = -outputTexture.g/h; \n";
 			}
 
 			if(compMagnitude)
-				str << "        output.b      = sqrt(output.r*output.r+output.g*output.g); \n";
+				str << "        outputTexture.b      = sqrt(outputTexture.r*outputTexture.r+outputTexture.g*outputTexture.g); \n";
 		}
 
 		if(compatibilityMode)
-			str << "    gl_FragColor = output; \n";
+			str << "    gl_FragColor = outputTexture; \n";
 
 		str << "} \n";
 
@@ -580,30 +582,15 @@
 			lnkFirstWidthFilter->prgm().modifyVar("yOffset", HdlProgram::Var, yOffset);
 		}
 
-		#ifdef __DEVELOPMENT_VERBOSE__
-			static bool once = true;
-			if(once)
-				pipeline->enablePerfsMonitoring();
-		#endif
-
 		(*pipeline) << input << (*width_bitReversal) << (*height_bitReversal) << (*width_wpTexture) << (*height_wpTexture) << Pipeline::Process;
 
-		#ifdef __DEVELOPMENT_VERBOSE__
-			if(once)
-			{
-				std::cout << "Total : " << pipeline->getTotalTiming() << " ms." << std::endl;
-
-				for(int i=0; i<pipeline->getNumActions(); i++)
-				{
-					std::string name;
-					float t = pipeline->getTiming(i, name);
-					std::cout << "    " << name << "\t: " << t << " ms" << std::endl;
-				}
-
-				pipeline->disablePerfsMonitoring();
-				once = false;
-			}
-		#endif
+		if(performanceMonitoring)
+		{
+			double ts 	= pipeline->getTotalTiming();
+			sumTime 	+= ts;
+			sumSqTime	+= ts*ts;
+			numProcesses++;
+		}
 	}
 
 	/**
@@ -651,4 +638,88 @@
 		}
 
 		return size;
+	}
+
+	/**
+	\fn void FFT2D::enablePerfsMonitoring(void)
+	\brief Start performance monitoring for this instance.
+
+	If a monitoring session is already running, it will reset to zero.
+	**/
+	void	FFT2D::enablePerfsMonitoring(void)
+	{
+		if(!performanceMonitoring)
+		{
+			pipeline->enablePerfsMonitoring();
+			performanceMonitoring = true;
+		}
+
+		// Reset :
+		sumTime	= 0.0;
+		sumSqTime = 0.0;
+		numProcesses = 0;
+	}
+
+	/**
+	\fn void FFT2D::disablePerfsMonitoring(void)
+	\brief Stop performance monitoring for this instance.
+
+	This function will not erase performance monitoring results of the previous session.
+	**/
+	void	FFT2D::disablePerfsMonitoring(void)
+	{
+		if(performanceMonitoring)
+		{
+			pipeline->disablePerfsMonitoring();
+			performanceMonitoring = false;
+		}
+	}
+
+	/**
+	\fn bool FFT2D::isMonitoringPerfs(void)
+	\brief Test if this instance is currently in a performance monitoring session.
+	\return True if in such session.
+	**/
+	bool	FFT2D::isMonitoringPerfs(void)
+	{
+		return performanceMonitoring;
+	}
+
+	/**
+	\fn int	FFT2D::getNumProcesses(void)
+	\brief Get the number of process stages done in current monitoring session.
+	\return The number of process stages done.
+	**/
+	int	FFT2D::getNumProcesses(void)
+	{
+		return numProcesses;
+	}
+
+	/**
+	\fn double FFT2D::getMeanTime(void)
+	\brief Get the mean time for one process given the statistics on all processes done during this monitoring session.
+	\return Time in milliseconds.
+	**/
+	double	FFT2D::getMeanTime(void)
+	{
+		if(numProcesses==0)
+			return 0.0;
+		else
+			return sumTime/numProcesses;
+	}
+
+	/**
+	\fn double FFT2D::getStdDevTime(void)
+	\brief Get the standard deviation on time for one process given the statistics on all processes done during this monitoring session.
+	\return Time in milliseconds.
+	**/
+	double	FFT2D::getStdDevTime(void)
+	{
+		if(numProcesses==0)
+			return 0.0;
+		else
+		{
+			double m = getMeanTime();
+			return sqrt(sumSqTime/numProcesses - m*m);
+		}
 	}

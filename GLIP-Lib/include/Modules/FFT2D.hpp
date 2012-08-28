@@ -83,6 +83,10 @@ display << ifft2D.output();
 						*height_wpTexture;
 				Pipeline 	*pipeline;
 				Filter		*lnkFirstWidthFilter;
+				bool		performanceMonitoring;
+				double		sumTime,
+						sumSqTime;
+				int		numProcesses;
 
 				// Tools :
 				unsigned short reverse(unsigned short n, bool forWidth);
@@ -115,6 +119,13 @@ display << ifft2D.output();
 				void process(HdlTexture& input);
 				HdlTexture& output(void);
 				int getSize(bool askDriver = false);
+
+				void	enablePerfsMonitoring(void);
+				void	disablePerfsMonitoring(void);
+				bool	isMonitoringPerfs(void);
+				int	getNumProcesses(void);
+				double	getMeanTime(void);
+				double	getStdDevTime(void);
 		};
 	}
 }

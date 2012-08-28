@@ -3,6 +3,7 @@ REQUIRED_FORMAT:format();
 SHADER_SOURCE:shader()
 {
 	#version 130
+	precision mediump float;
 
 	uniform sampler2D 	inText;
 	out     vec4 		outText;

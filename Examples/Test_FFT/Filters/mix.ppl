@@ -3,6 +3,7 @@ REQUIRED_FORMAT:format();
 SHADER_SOURCE:mixShader()
 {
 	#version 130
+	precision mediump float;
 
 	uniform sampler2D 	original, convolved;
 	out     vec4 		outText;

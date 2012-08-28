@@ -1783,6 +1783,8 @@
 	/**
 	\fn void Pipeline::enablePerfsMonitoring(void)
 	\brief Enable performances monitoring.
+
+	Any following process on this instance will record time to perform the pipeline (time per element and total time). Calling this function twice will not reset previous results.
 	**/
 	void Pipeline::enablePerfsMonitoring(void)
 	{
@@ -1797,13 +1799,14 @@
 				if(queryObject==0)
 					glGenQueries(1, &queryObject);
 			}
-
 		}
 	}
 
 	/**
 	\fn void Pipeline::disablePerfsMonitoring(void)
 	\brief Disable performances monitoring.
+
+	Stops a monitoring session on this instance. Do nothing if no session was started.
 	**/
 	void Pipeline::disablePerfsMonitoring(void)
 	{

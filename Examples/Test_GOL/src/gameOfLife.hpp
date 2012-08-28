@@ -2,6 +2,7 @@
 #define __GAME_OF_LIFE__
 
 	#include <iostream>
+	#include <fstream>
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QTimer>
@@ -23,6 +24,7 @@
 			private :
 				// Data :
 				int w, h;
+				std::fstream	log;
 				WindowRenderer	*window;
 				QTimer 		*timer;
 				ProceduralInput *inp;
@@ -35,6 +37,7 @@
 			public :
 				// Functions :
 				GameOfLife(int _w, int _h, int argc, char** argv);
+				~GameOfLife(void);
 
 			private slots :
 				void compute(void);

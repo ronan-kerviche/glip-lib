@@ -3,6 +3,7 @@
 
 	// gstreamer + ffmpeg!!!
 	#include <iostream>
+	#include <fstream>
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -40,6 +41,7 @@
 		Q_OBJECT
 
 		private :
+			std::fstream		log;
 			QTimer 			*timer;
 			Phonon::VideoPlayer 	*player;
 			Phonon::MediaSource 	*src;

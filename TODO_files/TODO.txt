@@ -222,8 +222,11 @@ Current Version : 0.8
 [0.9]	Add custom target to texture copier.
 	Status : DONE
 
-[0.9]	Port main example programs to Windows.
+[0.9]	Move pipeline description from home page.
 	Status : TODO
+
+[0.9]	Port main example programs to Windows.
+	Status : DONE
 
 [1.0]	Create missing projects.
 	Status : TODO

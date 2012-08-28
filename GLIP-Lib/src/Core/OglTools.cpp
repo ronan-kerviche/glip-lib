@@ -30,7 +30,8 @@ using namespace Glip::CoreGL;
 
 // Structure
 	// Data
-		bool HandleOpenGL::initDone = false;
+		bool 				HandleOpenGL::initDone 	= false;
+		HandleOpenGL::SupportedVendor 	HandleOpenGL::vendor 	= vd_UNKNOWN;
 
 	// Functions
 		/**
@@ -48,8 +49,29 @@ using namespace Glip::CoreGL;
 					throw Exception("HandleOpenGL::init - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__);
 				}
 
+				// Update vendor :
+				std::string name = HandleOpenGL::getVendorName();
+
+				if(name.find("NVIDIA")!=std::string::npos)
+				    vendor = vd_NVIDIA;
+				else if(name.find("ATI")!=std::string::npos || name.find("AMD")!=std::string::npos)
+				    vendor = vd_AMDATI;
+				else if(name.find("INTEL")!=std::string::npos)
+				    vendor = vd_INTEL;
+				else
+				    vendor = vd_UNKNOWN;
+
 				initDone = true;
 			}
+		}
+
+		/**
+		\fn HandleOpenGL::SupportedVendor HandleOpenGL::getVendorID(void)
+		\return The ID (HandleOpenGL::SupportedVendor) of the Hardware vendor for this platform.
+		**/
+		HandleOpenGL::SupportedVendor HandleOpenGL::getVendorID(void)
+		{
+		    return vendor;
 		}
 
 		/**

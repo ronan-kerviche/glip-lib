@@ -10,85 +10,119 @@
 	VideoModIHM::VideoModIHM(void)
 	 : QWidget(), player(NULL), src(NULL), output(NULL), pbo(NULL), textureA(NULL), textureB(NULL), textureLatest(NULL), textureOldest(NULL), pipeline(NULL), videosLayout(NULL), streamControlsLayout(NULL), generalLayout(NULL), loadVideo(NULL), play(NULL), pause(NULL), loadPipeline(NULL), saveFrame(NULL), pipelineControl(NULL), box(NULL), timer(NULL), pixmap(NULL), image(NULL), fmt(NULL), buffer(NULL), timeLayout(NULL), timeSlider(NULL), timeLabel(NULL), timeBox(NULL)
 	{
-		videosLayout		= new QHBoxLayout();
-		timeLayout		= new QHBoxLayout();
-		streamControlsLayout	= new QHBoxLayout();
-		pipelineControl		= new QHBoxLayout();
-		generalLayout		= new QVBoxLayout(this);
+		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
-		player 			= new Phonon::VideoPlayer(Phonon::VideoCategory);
-		output  		= new WindowRenderer(this, 640, 480);
+		if(!log.is_open())
+		{
+			QMessageBox::warning(NULL, tr("TestVideo"), tr("Unable to write to the log file log.txt.\n"));
+			throw Exception("VideoModIHM::VideoModIHM - Cannot open log file.", __FILE__, __LINE__);
+		}
 
-		timeSlider		= new QSlider(this);
-		timeSlider->setOrientation(Qt::Horizontal);
-		timeSlider->setRange(0,1000);
-		timeLabel		= new QLabel("00:00", this);
-		timeLabel->setFixedWidth(100);
-		timeLabel->setAlignment(Qt::AlignHCenter);
-		timeBox			= new QComboBox(this);
-		timeBox->addItem("1 FPS");
-		timeBox->addItem("5 FPS");
-		timeBox->addItem("10 FPS");
-		timeBox->addItem("20 FPS");
-		timeBox->addItem("30 FPS");
-		timeBox->addItem("60 FPS");
-		timeBox->setCurrentIndex(3);
+		try
+		{
+			videosLayout		= new QHBoxLayout();
+			timeLayout		= new QHBoxLayout();
+			streamControlsLayout	= new QHBoxLayout();
+			pipelineControl		= new QHBoxLayout();
+			generalLayout		= new QVBoxLayout(this);
 
-		loadVideo		= new QPushButton("Open a Video", this);
-		play			= new QPushButton("Play", this);
-		pause			= new QPushButton("Pause", this);
-		loadPipeline		= new QPushButton("Open a Pipeline", this);
-		saveFrame		= new QPushButton("Save Frame", this);
+			player 			= new Phonon::VideoPlayer(Phonon::VideoCategory);
+			output  		= new WindowRenderer(this, 640, 480);
 
-		box			= new QComboBox(this);
-		box->addItem("<Input Stream>");
+			// Info :
+			log << "> TestVideo" << std::endl;
+			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
+			log << "Renderer name : " << HandleOpenGL::getRendererName() << std::endl;
+			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
+			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
 
-		pixmap			= new QPixmap();
-		image			= new QImage();
+			timeSlider		= new QSlider(this);
+			timeSlider->setOrientation(Qt::Horizontal);
+			timeSlider->setRange(0,1000);
+			timeLabel		= new QLabel("00:00", this);
+			timeLabel->setFixedWidth(100);
+			timeLabel->setAlignment(Qt::AlignHCenter);
+			timeBox			= new QComboBox(this);
+			timeBox->addItem("1 FPS");
+			timeBox->addItem("5 FPS");
+			timeBox->addItem("10 FPS");
+			timeBox->addItem("20 FPS");
+			timeBox->addItem("30 FPS");
+			timeBox->addItem("60 FPS");
+			timeBox->setCurrentIndex(3);
 
-		fmt			= new HdlTextureFormat(1,1,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+			loadVideo		= new QPushButton("Open a Video", this);
+			play			= new QPushButton("Play", this);
+			pause			= new QPushButton("Pause", this);
+			loadPipeline		= new QPushButton("Open a Pipeline", this);
+			saveFrame		= new QPushButton("Save Frame", this);
 
-		videosLayout->addWidget(player);
-		videosLayout->addWidget(output);
-		timeLayout->addWidget(timeLabel);
-		timeLayout->addWidget(timeSlider);
-		streamControlsLayout->addWidget(loadVideo);
-		streamControlsLayout->addWidget(play);
-		streamControlsLayout->addWidget(pause);
-		streamControlsLayout->addWidget(timeBox);
-		pipelineControl->addWidget(loadPipeline);
-		pipelineControl->addWidget(box);
-		pipelineControl->addWidget(saveFrame);
+			box			= new QComboBox(this);
+			box->addItem("<Input Stream>");
 
-		generalLayout->addLayout(videosLayout);
-		generalLayout->addLayout(timeLayout);
-		generalLayout->addLayout(streamControlsLayout);
-		generalLayout->addLayout(pipelineControl);
+			pixmap			= new QPixmap();
+			image			= new QImage();
 
-		setGeometry(100, 100, 1280, 720);
-		show();
+			fmt			= new HdlTextureFormat(1,1,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
 
-		// Timer :
-		timer = new QTimer;
-		timer->setInterval(50);
+			videosLayout->addWidget(player);
+			videosLayout->addWidget(output);
+			timeLayout->addWidget(timeLabel);
+			timeLayout->addWidget(timeSlider);
+			streamControlsLayout->addWidget(loadVideo);
+			streamControlsLayout->addWidget(play);
+			streamControlsLayout->addWidget(pause);
+			streamControlsLayout->addWidget(timeBox);
+			pipelineControl->addWidget(loadPipeline);
+			pipelineControl->addWidget(box);
+			pipelineControl->addWidget(saveFrame);
 
-		// Connections :
-		QObject::connect(loadVideo, 	SIGNAL(released(void)), 		this, 	SLOT(openVideo(void)));
-		QObject::connect(play, 		SIGNAL(released(void)), 		player,	SLOT(play(void)));
-		QObject::connect(pause, 	SIGNAL(released(void)), 		player,	SLOT(pause(void)));
-		QObject::connect(loadPipeline,	SIGNAL(released(void)), 		this,	SLOT(openPipeline(void)));
-		QObject::connect(saveFrame,	SIGNAL(released(void)), 		this,	SLOT(save(void)));
-		QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(grabFrame(void)));
-		QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(updateTime(void)));
-		QObject::connect(timeSlider,	SIGNAL(sliderReleased()),		this, 	SLOT(seekPosition(void)));
-		QObject::connect(timeBox, 	SIGNAL(currentIndexChanged(int)),	this,	SLOT(changeFPS(void)));
+			generalLayout->addLayout(videosLayout);
+			generalLayout->addLayout(timeLayout);
+			generalLayout->addLayout(streamControlsLayout);
+			generalLayout->addLayout(pipelineControl);
 
-		timer->start();
+			setGeometry(100, 100, 1280, 720);
+			show();
+
+			// Timer :
+			timer = new QTimer;
+			timer->setInterval(50);
+
+			// Connections :
+			QObject::connect(loadVideo, 	SIGNAL(released(void)), 		this, 	SLOT(openVideo(void)));
+			QObject::connect(play, 		SIGNAL(released(void)), 		player,	SLOT(play(void)));
+			QObject::connect(pause, 	SIGNAL(released(void)), 		player,	SLOT(pause(void)));
+			QObject::connect(loadPipeline,	SIGNAL(released(void)), 		this,	SLOT(openPipeline(void)));
+			QObject::connect(saveFrame,	SIGNAL(released(void)), 		this,	SLOT(save(void)));
+			QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(grabFrame(void)));
+			QObject::connect(timer, 	SIGNAL(timeout(void)),			this, 	SLOT(updateTime(void)));
+			QObject::connect(timeSlider,	SIGNAL(sliderReleased()),		this, 	SLOT(seekPosition(void)));
+			QObject::connect(timeBox, 	SIGNAL(currentIndexChanged(int)),	this,	SLOT(changeFPS(void)));
+
+			timer->start();
+		}
+		catch(Exception& e)
+		{
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+			QMessageBox::warning(NULL, tr("TestVideo"), e.what());
+			std::cout << "Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
+			std::cout << "(Will be rethrown)" << std::endl;
+			throw e;
+		}
 	}
 
 	VideoModIHM::~VideoModIHM(void)
 	{
 		timer->stop();
+
+		log << "> End" << std::endl;
+		log.close();
+
 		delete player;
 		delete src;
 		delete output;
@@ -172,7 +206,9 @@
 			catch(std::exception& e)
 			{
 				success = false;
-
+				log << "Exception caught : " << std::endl;
+				log << e.what() << std::endl;
+				log << "> Abort" << std::endl;
 				QMessageBox::information(NULL, tr("Error while loading the pipeline : "), e.what());
 				std::cout << "Error while building the pipeline : " << e.what() << std::endl;
 			}
@@ -197,6 +233,9 @@
 				{
 					success = false;
 
+					log << "Exception caught : " << std::endl;
+					log << e.what() << std::endl;
+					log << "> Abort" << std::endl;
 					QMessageBox::information(this, tr("Error while creating the pipeline : \n"), e.what());
 					std::cout << "Error while creating the pipeline : " << e.what() << std::endl;
 
@@ -310,6 +349,9 @@
 			catch(Exception& e)
 			{
 				player->pause();
+				log << "Exception caught : " << std::endl;
+				log << e.what() << std::endl;
+				log << "> Abort" << std::endl;
 				QMessageBox::information(NULL, tr("Error while build texture from PBO : \n"), e.what());
 				std::cout << "Error while build texture from PBO : \n" << e.what() << std::endl;
 				delete pbo;
@@ -398,6 +440,9 @@
 				}
 				catch(std::exception& e)
 				{
+					log << "Exception caught : " << std::endl;
+					log << e.what() << std::endl;
+					log << "> Abort" << std::endl;
 					QMessageBox::information(this, tr("Error while saving : "), e.what());
 					std::cout << "Error while saving : " << e.what() << std::endl;
 				}

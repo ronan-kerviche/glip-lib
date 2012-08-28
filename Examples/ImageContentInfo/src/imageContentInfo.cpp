@@ -14,31 +14,73 @@
 
 // Src :
 	IHM::IHM(void)
-	 : text(NULL), pipeline(NULL), computingSuccess(false)
+	 : text(NULL), pipeline(NULL), computingSuccess(false), layout(NULL), chImg(NULL), chPpl(NULL), sav(NULL), window(NULL), box(NULL)
 	{
-		// Main interface :
-		window  = new WindowRenderer(this, 640, 480);
-		layout 	= new QVBoxLayout(this);
-		chImg	= new QPushButton("Load an Image", this);
-		chPpl	= new QPushButton("Load a Pipeline", this);
-		sav	= new QPushButton("Save result (RGB888)", this);
-		box	= new QComboBox(this);
+		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
-		layout->addWidget(chImg);
-		layout->addWidget(chPpl);
-		layout->addWidget(box);
-		layout->addWidget(window);
-		layout->addWidget(sav);
-		setGeometry(1000, 100, 800, 700);
-		show();
+		if(!log.is_open())
+		{
+			QMessageBox::warning(NULL, tr("My Application"), tr("Unable to write to the log file log.txt.\n"));
+			throw Exception("IHM::IHM - Cannot open log file.", __FILE__, __LINE__);
+		}
 
-		box->addItem("<Input Image>");
+		try
+		{
+			// Main interface :
+			window  = new WindowRenderer(this, 640, 480);
 
-		QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
-		QObject::connect(chPpl,		SIGNAL(released(void)), this, SLOT(loadPipeline(void)));
-		QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
-		QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(updateOutput(void)));
-		QObject::connect(box, 		SIGNAL(currentIndexChanged(int)),	this, SLOT(updateOutput(void)));
+			// Info :
+			log << "> ImageTest" << std::endl;
+			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
+			log << "Renderer name : " << HandleOpenGL::getRendererName() << std::endl;
+			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
+			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
+
+			layout 	= new QVBoxLayout(this);
+			chImg	= new QPushButton("Load an Image", this);
+			chPpl	= new QPushButton("Load a Pipeline", this);
+			sav	= new QPushButton("Save result (RGB888)", this);
+			box	= new QComboBox(this);
+
+			layout->addWidget(chImg);
+			layout->addWidget(chPpl);
+			layout->addWidget(box);
+			layout->addWidget(window);
+			layout->addWidget(sav);
+			setGeometry(1000, 100, 800, 700);
+			show();
+
+			box->addItem("<Input Image>");
+
+			QObject::connect(chImg, 	SIGNAL(released(void)), this, SLOT(loadImage(void)));
+			QObject::connect(chPpl,		SIGNAL(released(void)), this, SLOT(loadPipeline(void)));
+			QObject::connect(sav,		SIGNAL(released(void)), this, SLOT(save(void)));
+			QObject::connect(window,	SIGNAL(resized(void)),  this, SLOT(updateOutput(void)));
+			QObject::connect(box, 		SIGNAL(currentIndexChanged(int)),	this, SLOT(updateOutput(void)));
+		}
+		catch(Exception& e)
+		{
+			log << "Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			log << "> Abort" << std::endl;
+			log.close();
+			QMessageBox::warning(NULL, tr("ImageTest"), e.what());
+			throw e;
+		}
+	}
+
+	IHM::~IHM(void)
+	{
+		log << "> End" << std::endl;
+		log.close();
+		delete text;
+		delete layout;
+		delete chImg;
+		delete chPpl;
+		delete sav;
+		delete window;
+		delete pipeline;
+		delete box;
 	}
 
 	void IHM::loadImage(void)
@@ -47,16 +89,21 @@
 
 		if (!filename.isEmpty())
 		{
+			log << "Loading : " << filename.toStdString() << std::endl;
+
 			QImage* image = new QImage(filename);
 
 			if (image->isNull())
 			{
+				log << "Failed to load file!" << std::endl;
 				QMessageBox::information(this, tr("Image Content Info"), tr("Cannot load %1.").arg(filename));
 				std::cout << "Cannot load : " << filename.toUtf8().constData() << std::endl;
 				delete image;
 			}
 			else
 			{
+				log << "Image format : "<< image->width() << 'X' << image->height() << std::endl;
+
 				if(text!=NULL)
 				{
 					delete text;
@@ -115,6 +162,8 @@
 					}
 					catch(Exception& e)
 					{
+						log << "Exception while loading image : " << std::endl;
+						log << e.what() << std::endl;
 						QMessageBox::information(NULL, tr("Error while build texture from PBO : "), e.what());
 						std::cout << "Error while build texture from PBO : " << filename.toUtf8().constData() << std::endl;
 						delete image;
@@ -144,19 +193,21 @@
 
 		if (!filename.isEmpty())
 		{
-			std::cout << "Building : " << filename.toUtf8().constData() << std::endl;
+			log << "Building pipeline from : " << filename.toStdString() << std::endl;
+			std::cout << "Building : " << filename.toStdString() << std::endl;
 			bool 		success = true;
 			PipelineLayout* model 	= NULL;
 			LayoutLoader	loader;
 
 			try
 			{
-				model = loader(filename.toUtf8().constData());
+				model = loader(filename.toStdString());
 			}
-			catch(std::exception& e)
+			catch(Exception& e)
 			{
 				success = false;
-
+				log << "Exception while loading the pipeline : " << std::endl;
+				log << e.what() << std::endl;
 				QMessageBox::information(NULL, tr("Error while loading the pipeline : "), e.what());
 				std::cout << "Error while building the pipeline : " << e.what() << std::endl;
 			}
@@ -177,10 +228,11 @@
 				{
 					pipeline = new Pipeline(*model, "LoadedPipeline");
 				}
-				catch(std::exception& e)
+				catch(Exception& e)
 				{
 					success = false;
-
+					log << "Exception while creating the pipeline : " << std::endl;
+					log << e.what() << std::endl;
 					QMessageBox::information(this, tr("Error while creating the pipeline : "), e.what());
 					std::cout << "Error while creating the pipeline : " << e.what() << std::endl;
 
@@ -191,6 +243,7 @@
 				if(success)
 				{
 					//Test writing : loader.write(*pipeline, "./Filters/writingTest.ppl");
+					log << "Pipeline size on the GPU : " << static_cast<int>(static_cast<float>(pipeline->getSize())/1024.0) << " kB" << std::endl;
 					std::cout << "Pipeline size on the GPU : " << static_cast<int>(static_cast<float>(pipeline->getSize())/(1024.0*1024.0)) << " MB" << std::endl;
 
 					// Update the box :
@@ -218,6 +271,7 @@
 				// The image selected
 				try
 				{
+					log << "Exporting image... (" << port << ") to " << filename.toStdString() << std::endl;
 					std::cout << "Exporting image... (" << port << ')' << std::endl;
 
 					HdlTextureFormat *fmt = NULL;
@@ -339,7 +393,14 @@
 					}
 				#else
 					std::cout << "Rendering..." << std::endl;
+
+					pipeline->enablePerfsMonitoring();
 					(*pipeline) << (*text) << Pipeline::Process;
+
+					log << "Rendering time : " << pipeline->getTotalTiming() << " ms" << std::endl;
+
+					pipeline->disablePerfsMonitoring();
+
 					std::cout << "...end rendering" << std::endl;
 				#endif
 			}
@@ -347,6 +408,8 @@
 			{
 				computingSuccess = false;
 
+				log << "Exception while computing : " << std::endl;
+				log << e.what() << std::endl;
 				QMessageBox::information(this, tr("Error while computing : "), e.what());
 				std::cout << "Error while computing : " << e.what() << std::endl;
 			}
@@ -355,20 +418,28 @@
 
 	void IHM::updateOutput(void)
 	{
-		int port = box->currentIndex();
-
-		if( (computingSuccess && pipeline!=NULL) || (port==0 && text!=NULL) )
+		try
 		{
-			if(port==0)
-				(*window) << (*text);
-			else
-				(*window) << pipeline->out(port-1);
+			int port = box->currentIndex();
+
+			if( (computingSuccess && pipeline!=NULL) || (port==0 && text!=NULL) )
+			{
+				if(port==0)
+					(*window) << (*text);
+				else
+					(*window) << pipeline->out(port-1);
+			}
+		}
+		catch(std::exception& e)
+		{
+			log << "Exception while updating : " << std::endl;
+			log << e.what() << std::endl;
 		}
 	}
 
 
 	ImageContentInformation::ImageContentInformation(int _w, int _h, int& argc, char** argv)
-	 : QApplication(argc,argv), w(_w), h(_h)
+	 : QApplication(argc,argv), w(_w), h(_h), ihm(NULL)
 	{
 		try
 		{
@@ -380,8 +451,14 @@
 			std::cout << "Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
 			std::cout << "(Will be rethrown)" << std::endl;
+			QMessageBox::information(NULL, tr("Exception caught : "), e.what());
 			throw e;
 		}
 
 		std::cout << "--- STARTING ---" << std::endl;
+	}
+
+	ImageContentInformation::~ImageContentInformation(void)
+	{
+		delete ihm;
 	}

@@ -172,8 +172,8 @@
 			source = sourceName;
 
 		// Remove all commentaries
-		removeCommentary(source,"/*","*/");
 		removeCommentary(source,"//","\n");
+		removeCommentary(source,"/*","*/");
 
 		return source;
 	}
