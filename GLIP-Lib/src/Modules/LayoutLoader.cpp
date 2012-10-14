@@ -851,6 +851,22 @@
 		#endif
 	}
 
+	/**
+	\fn Pipeline* LayoutLoader::operator()(const std::string& source, const std::string& pipelineName)
+	\brief Loads a pipeline from a file (see the script language description for more information).
+	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
+	\param pipelineName The name of the unique instance created
+	\return A pointer to the unique instance built on the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
+	**/
+	Pipeline* LayoutLoader::operator()(const std::string& source, const std::string& pipelineName)
+	{
+		PipelineLayout* layout = (*this)(source);
+		Pipeline* pipeline = new Pipeline(*layout, pipelineName);
+		delete layout;
+
+		return pipeline;
+	}
+
 	void LayoutLoader::writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name)
 	{
 		std::stringstream ss;

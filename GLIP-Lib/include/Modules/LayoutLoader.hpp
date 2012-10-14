@@ -166,6 +166,7 @@ The script must be structured with the following commands (but no special order 
 				~LayoutLoader(void);
 
 				PipelineLayout* operator()(const std::string& source); //can be a file or directly the source
+				Pipeline* operator()(const std::string& source, const std::string& pipelineName);
 				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
 
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);

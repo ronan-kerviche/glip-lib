@@ -138,6 +138,7 @@ using namespace Glip::CoreGL;
 							GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT,
 							GL_COLOR_ATTACHMENT10_EXT, GL_COLOR_ATTACHMENT11_EXT, GL_COLOR_ATTACHMENT12_EXT, GL_COLOR_ATTACHMENT13_EXT,GL_COLOR_ATTACHMENT14_EXT, GL_COLOR_ATTACHMENT15_EXT};
 
+
 		if(usedTarget==0)
 			usedTarget = targets.size();
 
@@ -177,8 +178,6 @@ using namespace Glip::CoreGL;
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
-
-		//useless : glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); //unbind Framebuffer -> render in the window
 
 		// restore viewport setting
 		glPopAttrib();

@@ -4,6 +4,7 @@
 */
 
 TEXTURE_FORMAT:computationFormat(640,640,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+TEXTURE_FORMAT:computationFormatFloat(640,640,GL_RG32F,GL_FLOAT,GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
 SHADER_SOURCE:sh_Derivatives()
 {
@@ -48,10 +49,13 @@ SHADER_SOURCE:sh_opticalFlow()
 	void main()
 	{
 		const float step = 1.0/640.0;
-		const int wSize = 3;
+		const int wSize = 7;
+		const float mWindow = pow((2*wSize+1)*step/(3.14159265),2.0);
+		float w = 0.0;
 		int i, j;
 
-		vec2 	pos;
+		vec2 	pos,
+			delta;
 		vec4 	col;
 		float 	x = 0.0,
 			y = 0.0,
@@ -64,13 +68,15 @@ SHADER_SOURCE:sh_opticalFlow()
 		{
 			for( j=-wSize; j<=wSize; j++)
 			{
-				pos   = gl_TexCoord[0].st + vec2( i*step, j*step);
+				vec2 delta = vec2( i*step, j*step);
+				w = sin(dot(delta,delta)/mWindow);
+				pos   = gl_TexCoord[0].st + delta;
 				col   = (textureLod(derivatives, pos, 0.0) - vec4(0.5,0.5,0.5,0.0))*2.0;
-				A = A + col.r*col.r;
-				B = B + col.g*col.g;
-				C = C + col.r*col.g;
-				x = x + col.r*col.b;
-				y = y + col.g*col.b;
+				A = A + w*col.r*col.r;
+				B = B + w*col.g*col.g;
+				C = C + w*col.r*col.g;
+				x = x + w*col.r*col.b;
+				y = y + w*col.g*col.b;
 			}
 		}
 
@@ -80,8 +86,8 @@ SHADER_SOURCE:sh_opticalFlow()
 		if(idet>10.0)
 			idet = 0.0;
 
-		opticalFlow.r = idet*(-B*x+C*y)/2.0+0.5;
-		opticalFlow.g = idet*( C*x-A*y)/2.0+0.5;
+		opticalFlow.r = idet*(-B*x+C*y);
+		opticalFlow.g = idet*( C*x-A*y);
 	}
 }
 
@@ -90,7 +96,7 @@ SHADER_SOURCE:sh_Mix()
 	#version 130
 
 	uniform sampler2D latest, opticalFlow;
-	out vec4 outMix, outVisu;
+	out vec4 outVisu, outMix;
 
 	void main()
 	{
@@ -99,10 +105,9 @@ SHADER_SOURCE:sh_Mix()
 
 		// Make the visualization easier by using HSL color space and associate directions with color, via Hue
 		// and amplitude via Saturation.
-		cop = (cop - vec4(0.5, 0.5, 0.0, 0.0))*2.0;
 
-		float   e	= (cop.r*cop.r + cop.g*cop.g)/2.0;
-		float 	h	= (atan(cop.g, cop.r) + 3.1416)/1.047;
+		float   e	= (cop.r*cop.r + cop.g*cop.g)/10.0;
+		float 	h	= (atan(cop.g, cop.r) + 3.14159)/1.047;
 		int 	prt 	= int(h/2.0);
 		float 	hp 	= h-float(prt)*2.0;
 		float 	v 	= 1.0-abs(hp-1.0);
@@ -119,6 +124,7 @@ SHADER_SOURCE:sh_Mix()
 			outVisu.rgb = vec3(v,0.0,1.0)*e;
 		else //if(h<6.0)
 			outVisu.rgb = vec3(1.0,0.0,v)*e;
+		outVisu.a = 1.0;
 
 		// Mix with original image
 		outMix.rgb = cor.rgb*0.8 + outVisu.rgb;

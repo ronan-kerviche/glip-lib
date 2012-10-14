@@ -56,7 +56,7 @@ ifft2D.process(convolutionPipeline.out(0));
 
 display << ifft2D.output();
 \endcode
-		**/
+**/
 		class FFT2D
 		{
 			public :

@@ -44,16 +44,14 @@
 	FFT2D::FFT2D(int _w, int _h, int flags)
 	 : width_bitReversal(NULL), width_wpTexture(NULL), height_bitReversal(NULL), height_wpTexture(NULL), pipeline(NULL), lnkFirstWidthFilter(NULL), w(_w), h(_h), inverse((flags & Inversed)>0), shift((flags & Shifted)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0), performanceMonitoring(false), sumTime(0.0), sumSqTime(0.0), numProcesses(0)
 	{
-		double 	test1 = log(w)/log(2),
-			test2 = floor(test1),
-			test3 = log(h)/log(2),
-			test4 = floor(test3);
+		bool 	test1 = w & (w - 1),
+			test2 = h & (h - 1);
 
-		if(test1!=test2 || test3!=test4)
-			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2.", __FILE__, __LINE__);
+		if( test1 || test2)
+			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2 (" + to_string(w) + "x" + to_string(h) + ").", __FILE__, __LINE__);
 
 		if(w<4 || h<4)
-			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4.", __FILE__, __LINE__);
+			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4 (" + to_string(w) + "x" + to_string(h) + ").", __FILE__, __LINE__);
 
 		// Fill bit reversal :
 			// Width :
@@ -175,7 +173,9 @@
 
 			// Unpack :
 			ShaderSource wshader(generateFinalCode(true));
-			FilterLayout flw("WReOrder", *fmtout, wshader);
+			//OLD : FilterLayout flw("WReOrder", *fmtout, wshader);
+			HdlTextureFormat reorder(w,h,GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+			FilterLayout flw("WReOrder", reorder, wshader);
 			playout.add(flw,"fWReOrder");
 			playout.connect(previousName, "outputTexture", "fWReOrder", "inputTexture");
 
@@ -428,6 +428,8 @@
 			// Get Wp
 			str << "    int ipWp         = compid*coeffp; \n";
 			str << "    vec4 wp          = texelFetch(wpTexture, ivec2(ipWp,0), 0); \n";
+			//Non-look-up (same perfs) str << "    float ipWp       = float(compid*coeffp); \n";
+			//Non-look-up (same perfs) str << "    vec4 wp          = vec4(cos(-6.283185f*ipWp/sz),sin(-6.283185f*ipWp/sz),0.0,0.0); \n";
 
 			// Compute :
 			str << "    outputTexture.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";

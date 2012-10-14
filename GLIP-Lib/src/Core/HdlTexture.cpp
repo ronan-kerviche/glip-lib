@@ -128,12 +128,16 @@ using namespace Glip::CoreGL;
 	\brief Returns the texture's width.
 	\fn    int __ReadOnly_HdlTextureFormat::getHeight(void) const
 	\brief Returns the texture's height.
+	\fn    int __ReadOnly_HdlTextureFormat::getNumPixels(void) const
+	\brief Returns the texture's number of pixels (width x height).
 	\fn    int __ReadOnly_HdlTextureFormat::getChannel(void) const
 	\brief Returns the texture's channel count.
-	\fn    int __ReadOnly_HdlTextureFormat::getSize(void) const
-	\brief Returns the texture's size in BYTE.
 	\fn    int __ReadOnly_HdlTextureFormat::getChannelDepth(void) const
 	\brief Returns the channel size in BYTE.
+	\fn    int __ReadOnly_HdlTextureFormat::getNumElements(void) const
+	\brief Returns the texture's number of elements (width x height x channels).
+	\fn    int __ReadOnly_HdlTextureFormat::getSize(void) const
+	\brief Returns the texture's size in BYTE.
 	\fn    GLenum __ReadOnly_HdlTextureFormat::getGLMode(void) const
 	\brief Returns the texture's mode.
 	\fn    GLenum __ReadOnly_HdlTextureFormat::getGLDepth(void) const
@@ -157,8 +161,10 @@ using namespace Glip::CoreGL;
 	**/
 	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
 	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
-	int	__ReadOnly_HdlTextureFormat::getChannel  	(void) const { return imgC; }
+	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return imgH*imgW; }
+	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return imgC; }
 	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
+	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*imgC; }
 	int	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return imgSize; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }

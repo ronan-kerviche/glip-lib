@@ -80,12 +80,12 @@
 	**/
 	double TextureReader::operator()(int x, int y, int c)
 	{
-		if(x<0 || x>=getWidth() || y<0 || y>=getHeight() || c<0 || c>=getChannel())
-			throw Exception("TextureReader::operator() - Pixel " + to_string(x) + "x" + to_string(y) + "x" + to_string(c) + " is out of bound (" + to_string(getWidth()) + "x" + to_string(getHeight()) + "x" + to_string(getChannel()) + ").", __FILE__, __LINE__);
+		if(x<0 || x>=getWidth() || y<0 || y>=getHeight() || c<0 || c>=getNumChannels())
+			throw Exception("TextureReader::operator() - Pixel " + to_string(x) + "x" + to_string(y) + "x" + to_string(c) + " is out of bound (" + to_string(getWidth()) + "x" + to_string(getHeight()) + "x" + to_string(getNumChannels()) + ").", __FILE__, __LINE__);
 
 		if(xFlip) x = getWidth()-x-1;
 		if(yFlip) y = getHeight()-y-1;
-		int pos = (y*getWidth()+x)*getChannel()+c;
+		int pos = (y*getWidth()+x)*getNumChannels()+c;
 		double res = 0.0;
 
 		GLenum d = getGLDepth();
@@ -150,7 +150,7 @@
 	\param freq The frequency (GL_STATIC_READ_ARB, GL_DYNAMIC_READ_ARB, GL_STREAM_READ_ARB).
 	**/
 	PBOTextureReader::PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq)
-	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(format), HdlPBO(format.getWidth(), format.getHeight(), format.getChannel(), format.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, freq)
+	 : OutputDevice(name), __ReadOnly_HdlTextureFormat(format), HdlPBO(format.getWidth(), format.getHeight(), format.getNumChannels(), format.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, freq)
 	{
 		if(isCompressed())
 			throw Exception("PBOTextureReader::PBOTextureReader - Can not read directly compressed textures with PBOTextureReader (for " + getNameExtended() + ").", __FILE__, __LINE__);
@@ -315,7 +315,7 @@
 		GLint inputMode = t.getInternalMode();
 
 		if(pbo==NULL)
-			pbo = new HdlPBO(t.getWidth(), t.getHeight(), t.getChannel(), t.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_COPY_ARB, tsize);
+			pbo = new HdlPBO(t.getWidth(), t.getHeight(), t.getNumChannels(), t.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_COPY_ARB, tsize);
 
 		t.bind();
 

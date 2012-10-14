@@ -56,7 +56,7 @@ using namespace Glip::CoreGL;
 				    vendor = vd_NVIDIA;
 				else if(name.find("ATI")!=std::string::npos || name.find("AMD")!=std::string::npos)
 				    vendor = vd_AMDATI;
-				else if(name.find("INTEL")!=std::string::npos)
+				else if(name.find("Intel")!=std::string::npos)
 				    vendor = vd_INTEL;
 				else
 				    vendor = vd_UNKNOWN;

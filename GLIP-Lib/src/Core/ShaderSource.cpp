@@ -28,6 +28,8 @@
 
     using namespace Glip::CoreGL;
 
+	std::string ShaderSource::portNameForFragColor = "outputTexture";
+
 	/**
 	\fn    ShaderSource::ShaderSource(const ShaderSource& ss)
 	\brief ShaderSource Construtor.
@@ -375,7 +377,7 @@
 			#ifdef __DEVELOPMENT_VERBOSE__
 				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
 			#endif
-			outVars.push_back("outputTexture");
+			outVars.push_back(portNameForFragColor);
 			compatibilityRequest = true;
 		}
 	}
@@ -388,7 +390,8 @@
 	**/
 	std::string ShaderSource::errorLog(std::string log)
 	{
-		bool firstLine = true;
+		bool 	firstLine = true,
+			prevLineEnhancement = false;
 		const std::string delimAMDATI = "ERROR: 0:";
 		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
 		std::stringstream str("");
@@ -404,8 +407,11 @@
 
 			if(firstLine)
 				firstLine = false;
-			else
+			else if(v!=HandleOpenGL::vd_UNKNOWN && prevLineEnhancement)
+			{
 				str << std::endl;
+				prevLineEnhancement = true;
+			}
 
 			str << "    " << line << std::endl;
 
@@ -418,17 +424,20 @@
 					if(from_string(line.substr(one, two-one), tmp))
 					str << "        >> " << getLine(tmp-1);// << std::endl;
 					break;
+				case HandleOpenGL::vd_INTEL :
 				case HandleOpenGL::vd_AMDATI :
-				one = line.find(delimAMDATI);
+					one = line.find(delimAMDATI);
 					if(one!=std::string::npos)
 					{
-					two = line.find(':',one+delimAMDATI.size()+1);
-					if(two!=std::string::npos)
-					if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), tmp))
-					str << "        >> " << getLine(tmp-1);// << std::endl;
+						two = line.find(':',one+delimAMDATI.size()+1);
+						if(two!=std::string::npos)
+							if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), tmp))
+							{
+								str << "        >> " << getLine(tmp-1);
+								prevLineEnhancement = true;
+							}
 					}
 					break;
-				case HandleOpenGL::vd_INTEL :
 				case HandleOpenGL::vd_UNKNOWN :
 					break;
 			}

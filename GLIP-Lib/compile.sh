@@ -1,6 +1,6 @@
 clear
 echo Compiling...
-cmake . -G"Unix Makefiles"
+cmake . -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
 make
 if [ $? = 0 ]
 then

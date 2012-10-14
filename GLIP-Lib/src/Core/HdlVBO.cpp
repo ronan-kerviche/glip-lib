@@ -222,7 +222,6 @@ using namespace Glip::CoreGL;
 		return result;
 	}
 
-
 	// Static tools
 	/**
 	\fn void HdlVBO::unbind(void)

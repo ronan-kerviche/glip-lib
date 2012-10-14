@@ -239,6 +239,8 @@ ShaderSource src("./Filters/game.glsl");
 // From a string, which must contain at least one new line character '\n' :
 ShaderSource src(myShader);
 \endcode
+
+The shader source will be parsed to find input and output ports name. In the case that you are using gl_FragColor, the name of the output port will be the one contained by string ShaderSource::portNameForFragColor.
 **/
 			class ShaderSource
 			{
@@ -258,6 +260,9 @@ ShaderSource src(myShader);
 					void parseGlobals(void);
 
 				public :
+					// Static data
+					static std::string portNameForFragColor;
+
 					// Tools
 					ShaderSource(const char** src, bool eol = true, int lines=-1);
 					ShaderSource(const std::string& src);

@@ -50,7 +50,7 @@ using namespace Glip::CoreGL;
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
 	HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
-	 : HdlGeBO(fmt.getSize(), aim, freq), w(fmt.getWidth()), h(fmt.getHeight()), c(fmt.getChannel()), cs(fmt.getChannelDepth())
+	 : HdlGeBO(fmt.getSize(), aim, freq), w(fmt.getWidth()), h(fmt.getHeight()), c(fmt.getNumChannels()), cs(fmt.getChannelDepth())
 	{
 		if(fmt.isCompressed())
 			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on __ReadOnly_HdlTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
