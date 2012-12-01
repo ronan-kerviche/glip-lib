@@ -240,6 +240,9 @@ Current Version : 0.8
 [0.9]	Optimize FFT1D/FFT2D with new loop mode (?).
 	Status : TODO
 
+[0.9]	Check JPEG loading in Qt examples with http://doc.qt.digia.com/4.7/deployment-plugins.html (add release to the CONFIG option of the .pro file)
+	Status : TODO
+
 [1.0]	Create missing projects.
 	Status : TODO
 

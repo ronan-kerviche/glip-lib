@@ -1,4 +1,4 @@
-CONFIG 		+= 	qt
+CONFIG 		+= 	qt release
 QT           	+= 	opengl
 INCLUDEPATH  	+= 	/usr/local/lib \
 			../../GLIP-Lib/include

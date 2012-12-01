@@ -62,6 +62,12 @@ using namespace Glip;
 	 : name(c.name), type(c.type), portID(c.portID)
 	{ }
 
+	ObjectName::~ObjectName(void)
+	{
+		name.clear();
+		type.clear();
+	}
+
 	/**
 	\fn void ObjectName::checkName(void)
 	\brief Check the validity of the name. Raise an exception if any errors occur.

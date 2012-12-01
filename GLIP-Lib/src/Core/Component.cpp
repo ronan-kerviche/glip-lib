@@ -57,6 +57,12 @@
 		#endif
 	}
 
+	__ReadOnly_ComponentLayout::~__ReadOnly_ComponentLayout(void)
+	{
+		inputPortDescription.clear();
+		outputPortDescription.clear();
+	}
+
 	/**
 	\fn void __ReadOnly_ComponentLayout::checkInputPort(int i) const
 	\brief Check the validity of an input port. Raise an exception if any errors occur.
@@ -236,6 +242,9 @@
 	 : __ReadOnly_ComponentLayout(c)
 	{ }
 
+	ComponentLayout::~ComponentLayout(void)
+	{ }
+
 	/**
 	\fn void ComponentLayout::setInputPortName(int id, const std::string& name)
 	\brief Sets the name of an input port. Raise an exception if any errors occur.
@@ -308,4 +317,7 @@
 	{
 		setName(name);
 	}
+
+	Component::~Component(void)
+	{ }
 

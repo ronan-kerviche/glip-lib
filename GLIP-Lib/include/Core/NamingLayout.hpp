@@ -75,6 +75,7 @@
 				public :
 					// Tools
 					ObjectName(const ObjectName&); // As a copy
+					virtual ~ObjectName(void);
 					void               setName(const std::string&);
 					const std::string& getName(void) const;
 					std::string        getNameExtended(void) const;

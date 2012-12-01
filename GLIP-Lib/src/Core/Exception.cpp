@@ -171,7 +171,7 @@
 	**/
 	const Exception& Exception::operator+(const Exception& e)
 	{
-		if(!e.subErrors.empty());
+		if(!e.subErrors.empty())
 			subErrors.insert( subErrors.end(), e.subErrors.begin(), e.subErrors.end() );
 
 		subErrors.push_back(e);
