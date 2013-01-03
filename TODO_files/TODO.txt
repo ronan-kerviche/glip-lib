@@ -234,13 +234,31 @@ Current Version : 0.8
 [0.9]	Create loop mode for pipelines in order to apply the same transformation multiple time without shader rebinding.
 	Status : TODO
 
-[0.9]	Add class for image reader in Qt, add it to the website ressources.
-	Status : TODO
-
 [0.9]	Optimize FFT1D/FFT2D with new loop mode (?).
 	Status : TODO
 
 [0.9]	Check JPEG loading in Qt examples with http://doc.qt.digia.com/4.7/deployment-plugins.html (add release to the CONFIG option of the .pro file)
+	Status : TODO
+
+[0.9]	Finish external Qt tools for displaying texture. Fix scaling problems.
+	Status : TODO
+
+[0.9]	Add Qt tool for loading/saving texture.
+	Status : DONE
+
+[0.9]	Add option management to Qt texture loader.
+	Status : TODO
+x
+[0.9]	Fix previous Git errors and add new directories.
+	Status : TODO
+
+[0.9]	Replace all abreviation 'text' by full word 'texture'
+	Status : TODO
+
+[0.9]	Remove, whenever possible, all pointers in Qt examples.
+	Status : TODO
+
+[0.9]	GLFW_Integration, testHeader.hpp is missing on git and not needed.
 	Status : TODO
 
 [1.0]	Create missing projects.

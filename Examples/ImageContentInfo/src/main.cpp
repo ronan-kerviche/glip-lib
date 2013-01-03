@@ -11,8 +11,8 @@ int main(int argc, char** argv)
 
 	try
 	{
-		ImageContentInformation* d = new ImageContentInformation(800, 600, argc, argv);
-		return d->exec();
+		ImageContentInformation d(argc, argv);
+		return d.exec();
 	}
 	catch(std::exception& e)
 	{

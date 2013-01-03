@@ -4,6 +4,8 @@
 	// Includes
 	#include <iostream>
 	#include <fstream>
+	#include "WindowRendering.hpp"
+	#include "RessourceLoader.hpp"
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -25,22 +27,22 @@
 		Q_OBJECT
 
 		private :
-			std::fstream	log;
-			HdlTexture	*text;
-			QVBoxLayout	*layout;
-			QPushButton	*chImg,
-					*sav;
-			WindowRenderer	*window;
-			Pipeline	*pipeline;
+			std::fstream		log;
+			QVBoxLayout		layout;
+			QPushButton		saveButton;
+			ImageLoaderInterface	imageLoaderInterface;
+			WindowRendererContainer	window;
+			Pipeline		*pipeline;
 
 		public :
 			HistogramInterface(void);
 			~HistogramInterface(void);
 
 		public slots :
-			void loadImage(void);
-			void save(void);
-			void requestUpdate(void);
+			/*void loadImage(void);
+			void save(void);*/
+			void process(void);
+			void updateShow(void);
 	};
 
 	class HistogramApplication : public QApplication

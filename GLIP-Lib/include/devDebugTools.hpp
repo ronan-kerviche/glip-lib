@@ -25,12 +25,24 @@
 #define __DEV_DEBUG_TOOLS__
 
 	// Development flags
-		//#define __VERBOSE__
-		//#define __DEVELOPMENT_VERBOSE__
+		//#define __GLIPLIB_VERBOSE__
+		//#define __GLIPLIB_DEVELOPMENT_VERBOSE__
+		//#define __GLIPLIB_TRACK_GL_ERRORS__
 
 	// Tools
 		#define STR_EXPAND(tok) 	#tok
 		#define STR(tok) 		STR_EXPAND(tok)
 		#define __HERE__		"["STR(__FUNCTION__)" at "STR(__FILE__)" : "STR(__LINE__)"] "
+
+		#define OPENGL_ERROR_TRACKER(functionName, callLine) \
+			{ \
+				bool caughtError; \
+				std::string errDescription = glErrorToString(&caughtError); \
+				if(caughtError) \
+				{ \
+					std::cout << functionName << " / " << callLine << " - Opengl error : " << errDescription << std::endl; \
+					glDebug(); \
+				} \
+			}
 
 #endif

@@ -69,8 +69,6 @@
 		</ExtraCommands>
 		<Unit filename="../Examples/Test_Video/src/VideoPlayer.cpp" />
 		<Unit filename="../Examples/Test_Video/src/VideoPlayer.hpp" />
-		<Unit filename="../Examples/Test_Video/src/WindowRendering.cpp" />
-		<Unit filename="../Examples/Test_Video/src/WindowRendering.hpp" />
 		<Unit filename="../Examples/Test_Video/src/main.cpp" />
 		<Extensions>
 			<code_completion />

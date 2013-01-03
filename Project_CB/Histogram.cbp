@@ -47,8 +47,6 @@
 		<ExtraCommands>
 			<Add before="qmake" />
 		</ExtraCommands>
-		<Unit filename="../Examples/Histogram/src/WindowRendering.cpp" />
-		<Unit filename="../Examples/Histogram/src/WindowRendering.hpp" />
 		<Unit filename="../Examples/Histogram/src/header.hpp" />
 		<Unit filename="../Examples/Histogram/src/main.cpp" />
 		<Unit filename="../Examples/Histogram/src/source.cpp" />

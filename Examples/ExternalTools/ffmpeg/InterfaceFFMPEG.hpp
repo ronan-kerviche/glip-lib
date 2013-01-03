@@ -7,46 +7,44 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : WindowRendering.hpp                                                                       */
-/*     Original Date : September 1st 2011                                                                        */
+/*     File          : InterfqceFFMPEG.hpp                                                                       */
+/*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
-/*     Description   : Qt Widget for rendering textures                                                          */
+/*     Description   : Interfqce to FFMPEG library                                                               */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#ifndef __GLIPLIB_WINDOW_RENDERER__
-#define __GLIPLIB_WINDOW_RENDERER__
+#ifndef __GLIP_INTERFACE_FFMPEG__
+#define __GLIP_INTERFACE_FFMPEG__
 
-	#include "GLIPLib.hpp"
-	#include <QGLWidget>
-	#include <QTimer>
+	#include <string>
 
-	// Namespaces
-	using namespace Glip;
-	using namespace Glip::CoreGL;
-	using namespace Glip::CorePipeline;
-
-	// Class
-	class WindowRenderer : public QGLWidget, public OutputDevice
+	// Include FFMPEG (which is a pure C project, protect with : )
+	extern "C"
 	{
-		Q_OBJECT
+		// Fix lacking definition in common.h
+		#ifndef INT64_C
+			#define INT64_C(c) (c ## LL)
+			#define UINT64_C(c) (c ## ULL)
+		#endif
 
+		#include <libavcodec/avcodec.h>
+		#include <libavformat/avformat.h>
+		#include <libswscale/swscale.h>
+		#include <libavutil/mathematics.h>
+	}
+
+	class InterfaceFFMPEG
+	{
 		private :
-			double vp_x, vp_y, vp_w, vp_h, fmtImg;
-			HdlVBO *vbo;
+			static bool initOnce;
 
 		public :
-			bool xFlip, yFlip;
+			InterfaceFFMPEG(void);
+			~InterfaceFFMPEG(void);
 
-			WindowRenderer(QWidget* parent, int w, int h, double _fmtImg=-1);
-			~WindowRenderer(void);
-
-			void resizeGL(int width, int height);
-			void process(HdlTexture& t);
-
-		signals :
-			void resized(void);
+			// Tools :
+			static std::string getPixFormatName(PixelFormat pixFmt);
 	};
 
 #endif
-

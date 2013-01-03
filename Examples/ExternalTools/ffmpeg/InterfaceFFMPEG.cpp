@@ -7,46 +7,43 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : WindowRendering.hpp                                                                       */
-/*     Original Date : September 1st 2011                                                                        */
+/*     File          : InterfqceFFMPEG.cpp                                                                       */
+/*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
-/*     Description   : Qt Widget for rendering textures                                                          */
+/*     Description   : Interfqce to FFMPEG library                                                               */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#ifndef __GLIPLIB_WINDOW_RENDERER__
-#define __GLIPLIB_WINDOW_RENDERER__
+#include "InterfaceFFMPEG.hpp"
 
-	#include "GLIPLib.hpp"
-	#include <QGLWidget>
-	#include <QTimer>
+	bool InterfaceFFMPEG::initOnce = true;
 
-	// Namespaces
-	using namespace Glip;
-	using namespace Glip::CoreGL;
-	using namespace Glip::CorePipeline;
-
-	// Class
-	class WindowRenderer : public QGLWidget, public OutputDevice
+	InterfaceFFMPEG::InterfaceFFMPEG(void)
 	{
-		Q_OBJECT
+		if(initOnce)
+		{
+			av_register_all();
 
-		private :
-			double vp_x, vp_y, vp_w, vp_h, fmtImg;
-			HdlVBO *vbo;
+			initOnce = false;
+		}
+	}
 
-		public :
-			bool xFlip, yFlip;
+	InterfaceFFMPEG::~InterfaceFFMPEG(void)
+	{ }
 
-			WindowRenderer(QWidget* parent, int w, int h, double _fmtImg=-1);
-			~WindowRenderer(void);
-
-			void resizeGL(int width, int height);
-			void process(HdlTexture& t);
-
-		signals :
-			void resized(void);
-	};
-
-#endif
-
+	std::string InterfaceFFMPEG::getPixFormatName(PixelFormat pixFmt)
+	{
+		// A list of formats can be found at : http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
+		switch(pixFmt)
+		{
+			case PIX_FMT_YUV410P :	return "PIX_FMT_YUV410P";
+			case PIX_FMT_YUV411P :	return "PIX_FMT_YUV411P";
+			case PIX_FMT_YUV420P :	return "PIX_FMT_YUV420P";
+			case PIX_FMT_YUV422P :	return "PIX_FMT_YUV422P";
+			case PIX_FMT_YUV440P :	return "PIX_FMT_YUV440P";
+			case PIX_FMT_YUV444P :	return "PIX_FMT_YUV444P";
+			case PIX_FMT_RGB32 : 	return "PIX_FMT_RGB32";
+			case PIX_FMT_BGR32 : 	return "PIX_FMT_BGR32";
+			default :		return "(Unknown pixel format)";
+		}
+	}

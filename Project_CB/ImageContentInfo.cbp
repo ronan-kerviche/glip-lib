@@ -47,8 +47,6 @@
 		<ExtraCommands>
 			<Add before="qmake" />
 		</ExtraCommands>
-		<Unit filename="../Examples/ImageContentInfo/src/WindowRendering.cpp" />
-		<Unit filename="../Examples/ImageContentInfo/src/WindowRendering.hpp" />
 		<Unit filename="../Examples/ImageContentInfo/src/imageContentInfo.cpp" />
 		<Unit filename="../Examples/ImageContentInfo/src/imageContentInfo.hpp" />
 		<Unit filename="../Examples/ImageContentInfo/src/main.cpp" />

@@ -1,8 +1,10 @@
-#ifndef __GAME_OF_LIFE__
-#define __GAME_OF_LIFE__
+#ifndef __IMAGE_CONTENT_INFO__
+#define __IMAGE_CONTENT_INFO__
 
 	#include <iostream>
 	#include <fstream>
+	#include "WindowRendering.hpp"
+	#include "RessourceLoader.hpp"
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -27,22 +29,18 @@
 			Q_OBJECT
 
 			private :
-				std::fstream	log;
-				bool 		computingSuccess;
-				HdlTexture	*text;
-				QVBoxLayout	*layout;
-				QPushButton	*chImg, *chPpl, *sav;
-				WindowRenderer	*window;
-				Pipeline	*pipeline;
-				QComboBox	*box;
+				std::fstream		log;
+				QVBoxLayout		layout;
+				QPushButton		saveButton;
+				ImageLoaderInterface	imageLoaderInterface;
+				PipelineLoaderInterface pipelineLoaderInterface;
+				WindowRendererContainer	window;
 
 			public :
 				IHM(void);
 				~IHM(void);
 
 			public slots :
-				void loadImage(void);
-				void loadPipeline(void);
 				void save(void);
 				void requestComputingUpdate(void);
 				void updateOutput(void);
@@ -53,11 +51,10 @@
 			Q_OBJECT
 
 			private :
-				int w, h;
 				IHM	*ihm;
 
 			public :
-				ImageContentInformation(int _w, int _h, int& argc, char** argv);
+				ImageContentInformation(int& argc, char** argv);
 				~ImageContentInformation(void);
 		};
 

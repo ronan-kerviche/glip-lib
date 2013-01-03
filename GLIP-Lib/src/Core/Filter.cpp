@@ -171,7 +171,7 @@
 					varsIn.push_back(*it);
 				else
 				{
-					#ifdef __DEVELOPMENT_VERBOSE__
+					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 						std::cout << "FilterLayout::FilterLayout - omitting variable name : " << *it << " in " << type << " because it already exits in the Fragment Shader." << std::endl;
 					#endif
 				}
@@ -192,8 +192,8 @@
 		if(vertexSource==NULL)
 		{
 			// Build one :
-			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "Using for vertex shader : " << std::endl;
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+				std::cout << "FilterLayout::FilterLayout - Using for vertex shader : " << std::endl;
 				std::cout << getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()) << std::endl;
 			#endif
 			vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()));

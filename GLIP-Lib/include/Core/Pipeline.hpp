@@ -60,11 +60,14 @@
 			class __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				public :
-					// Constants
+					///Flags describing the component kind.
 					enum ComponentKind
 					{
+						///For this pipeline (internal use).
 						THIS_PIPELINE = -1,
+						///For filters.
 						FILTER        =  0,
+						///For pipelines.
 						PIPELINE      =  1
 					};
 
@@ -167,9 +170,12 @@
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
 				public :
+					///Actions enumeration.
 					enum ActionType
 					{
+						///To start process.
 						Process,
+						///To reset argument chain.
 						Reset
 					};
 

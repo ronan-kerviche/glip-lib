@@ -3,6 +3,7 @@
 
 	#include <iostream>
 	#include <fstream>
+	#include "WindowRendering.hpp"
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QTimer>
@@ -25,11 +26,13 @@
 				// Data :
 				int w, h;
 				std::fstream	log;
-				WindowRenderer	*window;
-				QTimer 		*timer;
+				WindowRenderer	window;
+				QTimer 		timer;
 				ProceduralInput *inp;
-				Pipeline	*p1, *p2;
-				HdlTexture	*t;
+				Pipeline	*p1,
+						*p2;
+				HdlTexture	*t,
+						*target;
 
 				// Functions :
 				void randomTexture(float alpha);
@@ -41,6 +44,7 @@
 
 			private slots :
 				void compute(void);
+				void show(void);
 		};
 
 #endif

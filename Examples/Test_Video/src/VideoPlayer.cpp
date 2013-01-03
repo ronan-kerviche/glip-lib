@@ -1,5 +1,4 @@
 #include "VideoPlayer.hpp"
-#include "WindowRendering.hpp"
 
 // Namespace
 	using namespace Glip::CoreGL;
@@ -27,7 +26,9 @@
 			generalLayout		= new QVBoxLayout(this);
 
 			player 			= new Phonon::VideoPlayer(Phonon::VideoCategory);
-			output  		= new WindowRenderer(this, 640, 480);
+			output  		= new WindowRendererContainer(this, 640, 480);
+			output->renderer().setMouseActions(true);
+			output->renderer().setPixelAspectRatio(1.0f);
 
 			// Info :
 			log << "> TestVideo" << std::endl;
@@ -375,9 +376,9 @@
 		if(textureLatest!=NULL && src!=NULL)
 		{
 			if(port==0)
-				(*output) << (*textureLatest);
+				output->renderer() << (*textureLatest);
 			else if( pipeline!=NULL )
-				(*output) << pipeline->out(port-1);
+				output->renderer() << pipeline->out(port-1);
 		}
 	}
 

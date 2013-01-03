@@ -1,9 +1,10 @@
 QT           += opengl
 INCLUDEPATH  += /usr/local/lib \
+		../ExternalTools/Qt \
                 ../../GLIP-Lib/include
 LIBS         += ../../GLIP-Lib/lib/libglip.a
-HEADERS      += ./src/WindowRendering.hpp \
+HEADERS      += ../ExternalTools/Qt/WindowRendering.hpp \
 		./src/gameOfLife.hpp
 SOURCES      += ./src/main.cpp \
-                ./src/WindowRendering.cpp \
+                ../ExternalTools/Qt/WindowRendering.cpp \
                 ./src/gameOfLife.cpp

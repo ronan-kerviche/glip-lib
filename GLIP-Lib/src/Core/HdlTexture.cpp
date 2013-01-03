@@ -38,8 +38,8 @@ using namespace Glip::CoreGL;
 	\param h           Height of the texture.
 	\param _mode       Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
 	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
-	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
-	\param _magFilter  Magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
+	\param _magFilter  Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
 	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
 	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
 	\param _baseLevel  Base for the mipmaps (default is 0).
@@ -210,7 +210,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const
+	\fn    bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const
 	\brief Returns true if the two formats share the same memory characteristics (sizes, number of channels, byte per pixel, internal GL mode, same mipmap levels).
 	\param f Format to be compared with this.
 	**/
@@ -297,8 +297,8 @@ using namespace Glip::CoreGL;
 	\param h           Height of the texture.
 	\param _mode       Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
 	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
-	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
-	\param _magFilter  Magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
+	\param _magFilter  Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
 	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
 	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
 	\param _baseLevel  Base for the mipmaps (default is 0).
@@ -336,10 +336,10 @@ using namespace Glip::CoreGL;
 	\param dp The new depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
 	\fn    void HdlTextureFormat::setMinFilter(GLenum mf)
 	\brief Sets the texture's minification parameter.
-	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
 	\fn    void HdlTextureFormat::setMagFilter(GLenum mf)
 	\brief Sets the texture's magnification parameter.
-	\param mf The new magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\param mf The new magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
 	\fn    void HdlTextureFormat::setBaseLevel(int l)
 	\brief Sets the texture's base level for mipmaps.
 	\param l The new base level (must be greater than 0).
@@ -419,12 +419,16 @@ using namespace Glip::CoreGL;
 		glGenTextures(1, &texID);
 
 		// COMMON ERROR : USE OF MIPMAP : LINEAR_MIPMAP_NEAREST... when max level = 0 (leads to Invalid Enum)
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlTexture::HdlTexture", "glGenTextures()")
+		#endif
 
 		if(texID==0)
 			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
 
 		// Set it up
 		glBindTexture(GL_TEXTURE_2D,texID);
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getMagFilter() );
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     getSWrapping() );
@@ -433,7 +437,15 @@ using namespace Glip::CoreGL;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  getMaxLevel()  );
 
 		if( getMaxLevel()>0 )
+		{
 			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		}
+
+		bool testAcceptanceFailed;
+		std::string errString = glErrorToString(&testAcceptanceFailed);
+
+		if(testAcceptanceFailed)
+			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + to_string(getBaseLevel()) + ", MaxLevel = " + to_string(getMaxLevel()) + ". Last OpenGL error : " + errString + ".", __FILE__, __LINE__);
 
 		HdlTexture::unbind();
 	}
@@ -444,6 +456,10 @@ using namespace Glip::CoreGL;
 
 		// delete the texture
 		glDeleteTextures( 1, &texID);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlTexture::~HdlTexture", "glDeleteTextures()")
+		#endif
 	}
 
 // Public tools
@@ -517,16 +533,16 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    void HdlTexture::setMinFilter(GLenum mf)
-	\brief Sets the texture's minification parameter.
-	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\brief Sets the texture's minification parameter. WARNING : no error checking is performed within this function.
+	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
 	\fn    void HdlTexture::setMagFilter(GLenum mf)
-	\brief Sets the texture's magnification parameter.
-	\param mf The new magnification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, etc.).
+	\brief Sets the texture's magnification parameter. WARNING : no error checking is performed within this function.
+	\param mf The new magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
 	\fn    void HdlTexture::setSWrapping(GLint m)
-	\brief Sets the texture's S wrapping parameter.
+	\brief Sets the texture's S wrapping parameter. WARNING : no error checking is performed within this function.
 	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	\fn    void HdlTexture::setTWrapping(GLint m)
-	\brief Sets the texture's T wrapping parameter.
+	\brief Sets the texture's T wrapping parameter. WARNING : no error checking is performed within this function.
 	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	**/
 	void HdlTexture::setMinFilter(GLenum mf)	{ minFilter = mf; bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );}
@@ -536,7 +552,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
-	\brief Write data to a texture using classical glTexImage method.
+	\brief Write data to a texture using classical glTexImage method. In the case that the texture is compressed and the input data is not of the compressed format, you MUST specify pixelFormat and pixelDepth. WARNING : this function does not perform error checking.
 	\param texData The pointer to the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
@@ -559,8 +575,18 @@ using namespace Glip::CoreGL;
 		//write
 		glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlTexture::write", "glTexImage2D()")
+		#endif
+
 		if( getMaxLevel()>0 )
+		{
 			glGenerateMipmap(GL_TEXTURE_2D);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlTexture::write", "glGenerateMipmap()")
+			#endif
+		}
 	}
 
 	/**
@@ -588,8 +614,18 @@ using namespace Glip::CoreGL;
 		//glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0,  static_cast<GLsizei>(size), texData);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlTexture::writeCompressed", "glCompressedTexImage2D()")
+		#endif
+
 		if( getMaxLevel()>0 )
+		{
 			glGenerateMipmap(GL_TEXTURE_2D);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlTexture::writeCompressed", "glGenerateMipmap()")
+			#endif
+		}
 	}
 
 	/**

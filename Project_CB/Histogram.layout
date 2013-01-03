@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
-	<File name="../Examples/Histogram/src/WindowRendering.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="687" topLine="0" />
-	</File>
 	<File name="../Examples/Histogram/src/header.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="1007" topLine="0" />
 	</File>

@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
-	<File name="../Examples/Test_GOL/src/WindowRendering.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="903" topLine="0" />
-	</File>
-	<File name="../Examples/Test_GOL/src/WindowRendering.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="433" topLine="0" />
-	</File>
 	<File name="../Examples/Test_GOL/src/gameOfLife.cpp" open="0" top="0" tabpos="1">
 		<Cursor position="583" topLine="0" />
 	</File>

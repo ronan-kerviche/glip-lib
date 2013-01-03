@@ -69,6 +69,10 @@ using namespace Glip::CoreGL;
 		// create the shader
 		shader = glCreateShader(type);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glCreateShader()")
+		#endif
+
 		if(shader==0)
 		{
 			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
@@ -77,12 +81,25 @@ using namespace Glip::CoreGL;
 		// send the source code
 		const char* data = getSourceCstr();
 		glShaderSource(shader, 1, (const GLchar**)&data, NULL);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glShaderSource()")
+		#endif
+
 		// compile the shader source code
 		glCompileShader(shader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glCompileShader()")
+		#endif
 
 		// check the compilation
 		GLint compile_status = GL_TRUE;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status)")
+		#endif
 
 		if(compile_status != GL_TRUE)
 		{
@@ -90,10 +107,18 @@ using namespace Glip::CoreGL;
 
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
 
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize)")
+			#endif
+
 			char *log = new char[logSize+1]; // +1 <=> '/0'
 			memset(log, 0, logSize+1);
 
 			glGetShaderInfoLog(shader, logSize, &logSize, log);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlShader::HdlShader", "glGetShaderInfoLog()")
+			#endif
 
 			log[logSize] = 0;
 
@@ -130,6 +155,10 @@ using namespace Glip::CoreGL;
 	HdlShader::~HdlShader(void)
 	{
 		glDeleteShader(shader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::~HdlShader", "glDeleteShader()")
+		#endif
 	}
 
 
@@ -143,6 +172,10 @@ using namespace Glip::CoreGL;
 	{
 		// create the program
 		program = glCreateProgram();
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::HdlProgram(void)", "glCreateProgram()")
+		#endif
 
 		if(program==0)
 			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
@@ -162,6 +195,10 @@ using namespace Glip::CoreGL;
 	{
 		// create the program
 		program = glCreateProgram();
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)", "glCreateProgram()")
+		#endif
 
 		attachedFragmentShader = attachedVertexShader = 0;
 
@@ -194,9 +231,18 @@ using namespace Glip::CoreGL;
 		// Link them
 		glLinkProgram(program);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::link", "glLinkProgram()")
+		#endif
+
 		// Look for some error during the linking
 		GLint link_status = GL_TRUE;
 		glGetProgramiv(program, GL_LINK_STATUS, &link_status);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::link", "glGetProgramiv(program, GL_LINK_STATUS, &link_status)")
+		#endif
+
 		if(link_status!=GL_TRUE)
 		{
 			//std::cout << "Error during Program linking" << std::endl;
@@ -206,10 +252,18 @@ using namespace Glip::CoreGL;
 
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
 
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlProgram::link", "glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize)")
+			#endif
+
 			char *log = new char[logSize+1]; // +1 <=> '/0'
 			memset(log, 0, logSize+1);
 
 			glGetProgramInfoLog(program, logSize, &logSize, log);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlProgram::link", "glGetProgramInfoLog()")
+			#endif
 
 			log[logSize] = 0;
 
@@ -243,15 +297,39 @@ using namespace Glip::CoreGL;
 	{
 		if( shader.getType()==GL_VERTEX_SHADER )
 		{
-			if( attachedVertexShader !=0 ) glDetachShader(program, attachedVertexShader);
+			if( attachedVertexShader !=0 )
+			{
+				glDetachShader(program, attachedVertexShader);
+
+				#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+					OPENGL_ERROR_TRACKER("HdlProgram::update", "glDetachShader(program, attachedVertexShader)")
+				#endif
+			}
+
 			attachedVertexShader = shader.getShaderID();
 			glAttachShader(program, attachedVertexShader);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedVertexShader)")
+			#endif
 		}
 		else //shader.getType()==GL_FRAGMENT_SHADER
 		{
-			if( attachedFragmentShader !=0 ) glDetachShader(program, attachedFragmentShader);
+			if( attachedFragmentShader !=0 )
+			{
+				glDetachShader(program, attachedFragmentShader);
+
+				#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+					OPENGL_ERROR_TRACKER("HdlProgram::update", "glDetachShader(program, attachedFragmentShader)")
+				#endif
+			}
+
 			attachedFragmentShader = shader.getShaderID();
 			glAttachShader(program, attachedFragmentShader);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedFragmentShader)")
+			#endif
 		}
 
 		// Link the program
@@ -265,6 +343,10 @@ using namespace Glip::CoreGL;
 	void HdlProgram::use(void)
 	{
 		glUseProgram(program);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::use", "glUseProgram()")
+		#endif
 	}
 
 	/**
@@ -279,14 +361,14 @@ using namespace Glip::CoreGL;
 	bool HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	{
 		glErrors(); // clean error buffer
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
 		#endif
 		glBindFragDataLocation(program, frag, fragName.c_str());
 
-		bool test = !glErrors();
+		bool test = glErrors();
 
-		if(!test)
+		if(test)
 			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location " + fragName, __FILE__, __LINE__);
 
 		return test; //return false if any error
@@ -309,6 +391,11 @@ using namespace Glip::CoreGL;
 	{
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<int>", "glGetUniformLocation()")
+		#endif
+
 		if (loc==-1)
 		{
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
@@ -323,6 +410,10 @@ using namespace Glip::CoreGL;
 			case Vec4 : 	glUniform4i(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<int>", "glUniformXi()")
+		#endif
 
 		return true;
 	}
@@ -344,6 +435,11 @@ using namespace Glip::CoreGL;
 	{
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<float>", "glGetUniformLocation()")
+		#endif
+
 		if (loc==-1)
 		{
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
@@ -358,6 +454,10 @@ using namespace Glip::CoreGL;
 			case Vec4 : 	glUniform4f(loc, val1, val2, val3, val4); break;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
 		}
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<float>", "glUniformXi()")
+		#endif
 
 		return true;
 	}
@@ -375,14 +475,32 @@ using namespace Glip::CoreGL;
 
 		glGetIntegerv(GL_MAX_VARYING_FLOATS, &param);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::maxVaryingVar", "glGetIntegerv()")
+		#endif
+
 		return param;
 	}
 
 	HdlProgram::~HdlProgram(void)
 	{
 		glDetachShader(program, attachedFragmentShader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedFragmentShader)")
+		#endif
+
 		glDetachShader(program, attachedVertexShader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedVertexShader)")
+		#endif
+
 		glDeleteProgram(program);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDeleteProgram(program)")
+		#endif
 	}
 
 // Static tools :

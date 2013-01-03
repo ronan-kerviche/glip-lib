@@ -74,7 +74,7 @@ using namespace Glip;
 	**/
 	void ObjectName::checkName(void)
 	{
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "ObjectName::checkName - Checking name : \"" << name << '\"' << std::endl;
 		#endif
 
@@ -118,7 +118,7 @@ using namespace Glip;
 	**/
 	void ObjectName::checkType(void)
 	{
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "ObjectName::checkName - Checking type : \"" << name << '\"' << std::endl;
 		#endif
 
@@ -185,9 +185,9 @@ using namespace Glip;
 	std::string ObjectName::getNameExtended(void) const
 	{
 		if(portID==NO_PORT)
-			return name + BEGIN_TYPE + to_string(type) + END_TYPE;
+			return std::string(name + BEGIN_TYPE + to_string(type) + END_TYPE);
 		else
-			return name + BEGIN_PORT + to_string(portID) + END_PORT;
+			return std::string(name + BEGIN_PORT + to_string(portID) + END_PORT);
 	}
 
 	/**

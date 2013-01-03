@@ -63,15 +63,15 @@ SHADER_SOURCE:fragWinHist()
 		vec4 pBlue	= textureLod(fBlue,	pos, 0);
 		vec4 col	= textureLod(tex0, 	pos, 0);
 
-		if(pos.t<pRed.r )
+		if(pos.t>1.0-pRed.r )
 			outText.r = 1.0;
 		else
 			outText.r = col.r;
-		if(pos.t<pGreen.r )
+		if(pos.t>1.0-pGreen.r )
 			outText.g = 1.0;
 		else
 			outText.g = col.g;
-		if(pos.t<pBlue.r )
+		if(pos.t>1.0-pBlue.r )
 			outText.b = 1.0;
 		else
 			outText.b = col.b;

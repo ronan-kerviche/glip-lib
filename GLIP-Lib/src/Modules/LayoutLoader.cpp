@@ -189,7 +189,7 @@
 			size_t next_pos = code.find(',',current_pos);
 			if(next_pos==std::string::npos) next_pos = max_pos;
 			res.push_back(code.substr(current_pos,next_pos-current_pos));
-			#ifdef __DEVELOPMENT_VERBOSE__
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "        Arg : " << res.back() << std::endl;
 			#endif
 			current_pos = next_pos+1;
@@ -218,7 +218,7 @@
 			pos_sc = 0,
 			pos_ac = 0;
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			//std::cout << "    Source : " << source << std::endl;
 			std::cout << "    Path   : " << path << std::endl;
 		#endif
@@ -260,7 +260,7 @@
 			// Process line
 			int working = 0;
 
-			//#ifdef __DEVELOPMENT_VERBOSE__
+			//#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				//std::cout << "Line before : "<< line << std::endl;
 			//#endif
 
@@ -271,7 +271,7 @@
 				if( (*it==' ' || *it=='\t' || *it=='\n' || *it=='\r') && working==0) it = line.erase(it) - 1;
 			}
 
-			//#ifdef __DEVELOPMENT_VERBOSE__
+			//#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				//std::cout << "Line after : " << line << std::endl;
 			//#endif
 
@@ -289,7 +289,7 @@
 				std::string code = line.substr(argDelim);
 				LoaderKeyword key = getKeyword(type);
 
-				#ifdef __DEVELOPMENT_VERBOSE__
+				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 					std::cout << "    Type : " << type << std::endl;
 					std::cout << "    Name : " << name << std::endl;
 					//std::cout << "    Code : " << code << std::endl;
@@ -310,7 +310,7 @@
 				std::string code = line.substr(argDelim);
 				LoaderKeyword key = getKeyword(type);
 
-				#ifdef __DEVELOPMENT_VERBOSE__
+				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 					std::cout << "    Type : " << type << std::endl;
 					std::cout << "    NO Name"<< std::endl;
 					//std::cout << "    Code : " << code << std::endl;
@@ -394,7 +394,7 @@
 			if( tw==GL_FALSE )
 				throw Exception("LayoutLoader::buildFormat - Unable to read TWrapping option for format " + name + ", got : " + arg[7], __FILE__, __LINE__);
 
-			result->setSWrapping(tw);
+			result->setTWrapping(tw);
 		}
 
 		if(arg.size()>=9)
@@ -520,7 +520,7 @@
 			if(next_pos==std::string::npos) next_pos = ending_pos;
 			std::string line = code.substr(current_pos, next_pos-current_pos);
 
-			#ifdef __DEVELOPMENT_VERBOSE__
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "    Line : " << line << std::endl;
 			#endif
 
@@ -699,7 +699,7 @@
 	{
 		// Doesn't check for cylclic inclusion!
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "LayoutLoader::operator() - Loading source." << std::endl;
 		#endif
 
@@ -720,7 +720,7 @@
 					if(arg.size()>1)
 						throw Exception("LayoutLoader::operator() - Too much arguments for INCLUDE_FILE", __FILE__, __LINE__);
 
-					#ifdef __DEVELOPMENT_VERBOSE__
+					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 						std::cout << "    Including file : " << arg[0] << std::endl;
 					#endif
 
@@ -736,7 +736,7 @@
 				}
 			}
 
-			#ifdef __DEVELOPMENT_VERBOSE__
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "    Num contents : " << entryType.size() << std::endl;
 			#endif
 
@@ -846,7 +846,7 @@
 			throw m+e;
 		}
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "LayoutLoader::operator() - Done." << std::endl;
 		#endif
 	}

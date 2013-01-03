@@ -48,8 +48,8 @@ using namespace Glip::CoreGL;
 		if(isCompressed())
 			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + glParamName(getGLMode()) + ".", __FILE__, __LINE__);
 
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << __HERE__ << "Disabling Depth buffer." << std::endl;
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "HdlFBO::HdlFBO - Disabling Depth buffer." << std::endl;
 		#endif
 
 		glDisable(GL_DEPTH_TEST);
@@ -58,6 +58,13 @@ using namespace Glip::CoreGL;
 
 		if(fboID==0)
 			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+		else
+		{
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlFBO::HdlFBO", "glGenFramebuffers(1, &fboID)")
+			#endif
+		}
+
 
 		for(int i=0; i<numTarget; i++) // At least one!
 			addTarget();
@@ -73,7 +80,16 @@ using namespace Glip::CoreGL;
 			unbindTextureFromFBO(i);
 
 		glFlush();
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::~HdlFBO", "glFlush()")
+		#endif
+
 		glDeleteFramebuffers( 1, &fboID);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::~HdlFBO", "glDeleteFramebuffers()")
+		#endif
 
 		// Delete all textures :
 		for(std::vector<HdlTexture*>::iterator it=targets.begin(); it!=targets.end(); it++)
@@ -82,6 +98,9 @@ using namespace Glip::CoreGL;
 
 	void HdlFBO::bindTextureToFBO(int i)
 	{
+		// Entering safe zone :
+		glGetError();
+
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
@@ -96,6 +115,10 @@ using namespace Glip::CoreGL;
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, 0, 0);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::unbindTextureFromFBO", "glFramebufferTexture2D()")
+		#endif
 	}
 
 	/**
@@ -153,8 +176,16 @@ using namespace Glip::CoreGL;
 
 		glDrawBuffers(usedTarget, attachmentsList);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::beginRendering", "glDrawBuffers()")
+		#endif
+
 		// Save viewport configuration
 		glPushAttrib(GL_VIEWPORT_BIT);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::beginRendering", "glPushAttrib()")
+		#endif
 
 		// Create a new viewport configuration
 		glViewport(0,0,getWidth(),getHeight());
@@ -174,13 +205,22 @@ using namespace Glip::CoreGL;
 			if((*it)->getMaxLevel()>0)
 			{
 				glBindTexture(GL_TEXTURE_2D, (*it)->getID());
+
 				glGenerateMipmap(GL_TEXTURE_2D);
+
+				#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+					OPENGL_ERROR_TRACKER("HdlFBO::endRendering", "glGenerateMipmap()")
+				#endif
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		// restore viewport setting
 		glPopAttrib();
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::endRendering", "glPopAttrib()")
+		#endif
 	}
 
 	/**
@@ -233,6 +273,10 @@ using namespace Glip::CoreGL;
 		GLint maxAttachments;
 
 		glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments );
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlFBO::getMaximumColorAttachment", "glGetIntegerv()")
+		#endif
 
 		return maxAttachments;
 	}

@@ -39,7 +39,9 @@
 	{ }
 
 	InputDevice::~InputDevice(void)
-	{ }
+	{
+		t = NULL;
+	}
 
 	/**
 	\fn void InputDevice::setTextureLink(HdlTexture* tex)
@@ -113,6 +115,7 @@
 	\fn OutputDevice& OutputDevice::operator<<(HdlTexture& t)
 	\brief Connection to the component, will call process().
 	\param t Input texture.
+	\return Reference to this object.
 	**/
 	OutputDevice& OutputDevice::operator<<(HdlTexture& t)
 	{

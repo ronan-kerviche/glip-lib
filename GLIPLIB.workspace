@@ -6,10 +6,11 @@
 		<Project filename="Project_CB/Test_Layout.cbp" />
 		<Project filename="Project_CB/Test_GLContext.cbp" />
 		<Project filename="Project_CB/Test_GOL.cbp" />
-		<Project filename="Project_CB/ImageContentInfo.cbp" active="1" />
+		<Project filename="Project_CB/ImageContentInfo.cbp" />
 		<Project filename="Project_CB/CameraPipeline.cbp" />
 		<Project filename="Project_CB/Histogram.cbp" />
 		<Project filename="Project_CB/VisualGLIP.cbp" />
 		<Project filename="Project_CB/Test_Video.cbp" />
+		<Project filename="Project_CB/Test_ffmpeg.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>

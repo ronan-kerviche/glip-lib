@@ -121,13 +121,17 @@ using namespace Glip::CoreGL;
 
 // Errors Monitoring
 	/**
-	\fn std::string Glip::CoreGL::glErrorToString(void)
+	\fn std::string Glip::CoreGL::glErrorToString(bool* caughtError = NULL)
 	\brief Get a string corresponding to the last error raised by OpenGL.
+	\param caughtError Pointer to a boolean, will be set to true if an error is caught, or false otherwise.
 	\return A standard string containing human readable information.
 	**/
-	std::string Glip::CoreGL::glErrorToString(void)
+	std::string Glip::CoreGL::glErrorToString(bool* caughtError)
 	{
 		GLenum err = glGetError();
+
+		if(caughtError!=NULL)
+			(*caughtError) = err!=GL_NO_ERROR;
 
 		#define Err( errorcode, message) case errorcode: return message ;
 		switch(err)
@@ -462,7 +466,7 @@ using namespace Glip::CoreGL;
 			NMTOOL( GL_TEXTURE_COORD_ARRAY )
 
 			// Default
-			default : return "(OpenGL constant not recognized)";
+			default : return "(Unknown OpenGL constant)";
 		}
 		#undef NMTOOL
 	}

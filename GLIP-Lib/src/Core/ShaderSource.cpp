@@ -374,7 +374,7 @@
 
 		if(outVars.empty() && hasGl_FragColor)
 		{
-			#ifdef __DEVELOPMENT_VERBOSE__
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
 			#endif
 			outVars.push_back(portNameForFragColor);

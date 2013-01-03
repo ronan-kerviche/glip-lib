@@ -4,6 +4,7 @@
 	// gstreamer + ffmpeg!!!
 	#include <iostream>
 	#include <fstream>
+	#include "WindowRendering.hpp"
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -27,9 +28,6 @@
 	#include <QDialog>
 	#include <QScrollArea>
 
-	// Prototypes :
-		class WindowRenderer;
-
 	// Namespace :
 		using namespace Glip;
 		using namespace Glip::CoreGL;
@@ -45,7 +43,7 @@
 			QTimer 			*timer;
 			Phonon::VideoPlayer 	*player;
 			Phonon::MediaSource 	*src;
-			WindowRenderer		*output;
+			WindowRendererContainer *output;
 
 			HdlTextureFormat 	*fmt;
 			HdlPBO			*pbo;

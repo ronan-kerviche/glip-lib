@@ -1,10 +1,13 @@
 /*
 	This filter performs the computation of the Optical Flow.
 	Original algorithm : Bruce D. Lucas and Takeo Kanade
+
+	GLSL Quick reference : mew.cx/glsl_quickref.pdf
 */
 
-TEXTURE_FORMAT:computationFormat(640,640,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-TEXTURE_FORMAT:computationFormatFloat(640,640,GL_RG32F,GL_FLOAT,GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+TEXTURE_FORMAT:computationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
 
 SHADER_SOURCE:sh_Derivatives()
 {
@@ -15,13 +18,13 @@ SHADER_SOURCE:sh_Derivatives()
 
 	void main()
 	{
-		const float step = 1.0/640.0;
+		const float step = 1.0/512.0;
 
 		vec4 col11 = textureLod(latest, gl_TexCoord[0].st, 0);
 		vec4 col01 = textureLod(latest, gl_TexCoord[0].st + vec2(-step, 0.0), 0);
 		vec4 col21 = textureLod(latest, gl_TexCoord[0].st + vec2( step, 0.0), 0);
 		vec4 col10 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0, -step), 0);
-		vec4 col12 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0, step), 0);
+		vec4 col12 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0,  step), 0);
 		vec4 colB  = textureLod(oldest, gl_TexCoord[0].st, 0);
 
 		float 	v11 = (col11.r+col11.g+col11.b)/3.0,
@@ -31,9 +34,9 @@ SHADER_SOURCE:sh_Derivatives()
 			v12 = (col12.r+col12.g+col12.b)/3.0,
 			vB  = (colB.r+colB.g+colB.b)/3.0;
 
-		derivatives.r = (v21-v01)/1.0+0.5;
-		derivatives.g = (v12-v10)/1.0+0.5;
-		derivatives.b = (v11-vB)/1.0+0.5;
+		derivatives.r = (v21-v01)/2.0;
+		derivatives.g = (v12-v10)/2.0;
+		derivatives.b = (v11-vB)/2.0;
 
 		grayScale.rgb = vec3(v11,v11,v11);
 	}
@@ -48,8 +51,8 @@ SHADER_SOURCE:sh_opticalFlow()
 
 	void main()
 	{
-		const float step = 1.0/640.0;
-		const int wSize = 7;
+		const float step = 1.0/512.0;
+		const int wSize = 5;
 		const float mWindow = pow((2*wSize+1)*step/(3.14159265),2.0);
 		float w = 0.0;
 		int i, j;
@@ -69,21 +72,21 @@ SHADER_SOURCE:sh_opticalFlow()
 			for( j=-wSize; j<=wSize; j++)
 			{
 				vec2 delta = vec2( i*step, j*step);
-				w = sin(dot(delta,delta)/mWindow);
-				pos   = gl_TexCoord[0].st + delta;
-				col   = (textureLod(derivatives, pos, 0.0) - vec4(0.5,0.5,0.5,0.0))*2.0;
-				A = A + w*col.r*col.r;
-				B = B + w*col.g*col.g;
-				C = C + w*col.r*col.g;
-				x = x + w*col.r*col.b;
-				y = y + w*col.g*col.b;
+				w 	= cos(dot(delta,delta)*40.0);
+				pos   	= gl_TexCoord[0].st + delta;
+				col   	= textureLod(derivatives, pos, 0.0);
+				A 	= A + w*col.r*col.r;
+				B 	= B + w*col.g*col.g;
+				C 	= C + w*col.r*col.g;
+				x 	= x + w*col.r*col.b;
+				y 	= y + w*col.g*col.b;
 			}
 		}
 
 		// Solve 2x2 matrix inverse :
 		idet = 1.0/(A*B-C*C);
 
-		if(idet>10.0)
+		if(idet>1000.0)
 			idet = 0.0;
 
 		opticalFlow.r = idet*(-B*x+C*y);
@@ -95,54 +98,96 @@ SHADER_SOURCE:sh_Mix()
 {
 	#version 130
 
-	uniform sampler2D latest, opticalFlow;
-	out vec4 outVisu, outMix;
+	uniform sampler2D opticalFlow;
+	out vec4 outVisu;
 
-	void main()
+	const float eLim = 0.1;
+	const float ctr = 0.1;
+
+	void getHSL(in vec2 d, out vec3 res)
 	{
-		vec4 cor  = textureLod(latest, gl_TexCoord[0].st, 0);
-		vec4 cop  = textureLod(opticalFlow, gl_TexCoord[0].st, 0);
+		float   e	= (d.x*d.x + d.y*d.y)/2.0;
 
-		// Make the visualization easier by using HSL color space and associate directions with color, via Hue
-		// and amplitude via Saturation.
-
-		float   e	= (cop.r*cop.r + cop.g*cop.g)/10.0;
-		float 	h	= (atan(cop.g, cop.r) + 3.14159)/1.047;
+		// Angles :
+		float 	h	= (atan(d.x, d.y) + 3.14159)/1.047;
 		int 	prt 	= int(h/2.0);
 		float 	hp 	= h-float(prt)*2.0;
 		float 	v 	= 1.0-abs(hp-1.0);
 
 		if(h<1.0)
-			outVisu.rgb = vec3(1.0,v,0.0)*e;
+			res = vec3(1.0,v,0.0)*e;
 		else if(h<2.0)
-			outVisu.rgb = vec3(v,1.0,0.0)*e;
+			res = vec3(v,1.0,0.0)*e;
 		else if(h<3.0)
-			outVisu.rgb = vec3(0.0,1.0,v)*e;
+			res = vec3(0.0,1.0,v)*e;
 		else if(h<4.0)
-			outVisu.rgb = vec3(0.0,v,1.0)*e;
+			res = vec3(0.0,v,1.0)*e;
 		else if(h<5.0)
-			outVisu.rgb = vec3(v,0.0,1.0)*e;
+			res = vec3(v,0.0,1.0)*e;
 		else //if(h<6.0)
-			outVisu.rgb = vec3(1.0,0.0,v)*e;
+			res = vec3(1.0,0.0,v)*e;
+	}
+
+	void main()
+	{
 		outVisu.a = 1.0;
 
-		// Mix with original image
-		outMix.rgb = cor.rgb*0.8 + outVisu.rgb;
+		if(gl_TexCoord[0].s<ctr && gl_TexCoord[0].t<ctr)
+		{
+			// Draw indicator :
+			getHSL(gl_TexCoord[0].st-vec2(ctr,ctr)/2.0, outVisu.rgb);
+			outVisu.rgb = outVisu.rgb*400.0;
+		}
+		else
+		{
+			vec4 flow = textureLod(opticalFlow, gl_TexCoord[0].st, 0);
+
+			// Make the visualization easier by using HSL color space and associate directions with color, via Hue
+			// and amplitude via Saturation.
+			getHSL(flow.rg, outVisu.rgb);
+			outVisu.rgb = outVisu.rgb*0.5;
+		}
 	}
 }
 
-FILTER_LAYOUT:cDerivatives(computationFormat,sh_Derivatives);
-FILTER_LAYOUT:cOpticalFlow(computationFormat,sh_opticalFlow);
+SHADER_SOURCE:sh_sideBySide()
+{
+	#version 130
+
+	uniform sampler2D latest, outVisu;
+	out vec4 outSideBySide;
+
+	void main()
+	{
+		vec2 pos = gl_TexCoord[0].st;
+
+		if(pos.s<=0.5)
+		{
+			pos.s = pos.s*2.0;
+			outSideBySide  = textureLod(latest, pos, 0);
+		}
+		else
+		{
+			pos.s = (pos.s-0.5)*2.0;
+			outSideBySide = textureLod(outVisu, pos, 0);
+		}
+	}
+}
+
+FILTER_LAYOUT:cDerivatives(computationFormatFloat,sh_Derivatives);
+FILTER_LAYOUT:cOpticalFlow(computationFormatFloat,sh_opticalFlow);
 FILTER_LAYOUT:cMix(computationFormat,sh_Mix);
+FILTER_LAYOUT:cSBS(sideBySideFormat,sh_sideBySide);
 
 PIPELINE_MAIN:opticalFlow()
 {
 	INPUT_PORTS(latest, oldest);
-	OUTPUT_PORTS(grayScale,derivatives, opticalFlow, outMix, outVisu);
+	OUTPUT_PORTS(grayScale, derivatives, opticalFlow, outVisu, outSideBySide);
 
 	FILTER_INSTANCE:instDerivatives(cDerivatives);
 	FILTER_INSTANCE:instOpticalFlow(cOpticalFlow);
 	FILTER_INSTANCE:instMix(cMix);
+	FILTER_INSTANCE:instSBS(cSBS);
 
 	// Automatic connection will be performed.
 }

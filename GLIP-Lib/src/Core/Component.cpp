@@ -45,15 +45,15 @@
 	__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout& c)
 	 : ObjectName(c)
 	{
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Copying ReadOnly Component Layout " << getName() << std::endl;
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout - Copying ReadOnly Component Layout " << getName() << std::endl;
 		#endif
 
 		inputPortDescription  = c.inputPortDescription;
 		outputPortDescription = c.outputPortDescription;
 
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Size : " << inputPortDescription.size() << std::endl;
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout - Size : " << inputPortDescription.size() << std::endl;
 		#endif
 	}
 

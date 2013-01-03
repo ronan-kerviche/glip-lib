@@ -39,8 +39,6 @@
 		<ExtraCommands>
 			<Add before="qmake" />
 		</ExtraCommands>
-		<Unit filename="../Examples/Test_GOL/src/WindowRendering.cpp" />
-		<Unit filename="../Examples/Test_GOL/src/WindowRendering.hpp" />
 		<Unit filename="../Examples/Test_GOL/src/gameOfLife.cpp" />
 		<Unit filename="../Examples/Test_GOL/src/gameOfLife.hpp" />
 		<Unit filename="../Examples/Test_GOL/src/main.cpp" />

@@ -55,7 +55,7 @@
 
 	void TextureReader::process(HdlTexture& t)
 	{
-		if(t!=*this)
+		if(!isCompatibleWith(t))
 			throw Exception("TextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
 
 		t.bind();
@@ -163,7 +163,7 @@
 
 	void PBOTextureReader::process(HdlTexture& t)
 	{
-		if(t!=*this)
+		if(!isCompatibleWith(t))
 			throw Exception("PBOTextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
 
 		t.bind();
@@ -215,7 +215,7 @@
 
 	void CompressedTextureReader::process(HdlTexture& t)
 	{
-		if(t!=*this)
+		if(!isCompatibleWith(t))
 			throw Exception("CompressedTextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
 
 		// Create buffer if it is the first time this function is called :

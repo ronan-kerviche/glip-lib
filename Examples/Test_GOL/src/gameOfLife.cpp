@@ -1,12 +1,11 @@
 #include "gameOfLife.hpp"
-#include "WindowRendering.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <QMessageBox>
 
 // Src :
 	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv)
-	 : QApplication(argc,argv), w(_w), h(_h), window(NULL), timer(NULL), inp(NULL), p1(NULL), p2(NULL), t(NULL)
+	 : QApplication(argc,argv), w(_w), h(_h), window(NULL, w, h), inp(NULL), p1(NULL), p2(NULL), t(NULL), target(NULL)
 	{
 		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
@@ -18,7 +17,12 @@
 
 		try
 		{
-			window = new WindowRenderer(w, h);
+			window.setKeyboardActions(true);
+			window.setMouseActions(true);
+			window.setPixelAspectRatio(1.0f);
+			window.setImageAspectRatio(1.0f);
+			window.show();
+			window.clearWindow();
 
 			// Info :
 			log << "> Test_GOL" << std::endl;
@@ -63,7 +67,7 @@
 				t = new HdlTexture(fmt);
 
 				randomTexture(0.3);
-				(*window) << (*t);
+				//window << (*t);
 
 			// Create another weird random (mathematical) point :
 			ShaderSource inputSrc("./Filters/gameInput.glsl");
@@ -75,10 +79,15 @@
 				(*p1) << (*t) << Pipeline::Process;
 				(*p2) << (*t) << Pipeline::Process;
 
-			timer = new QTimer;
-			timer->setInterval(50);
-			connect(timer, SIGNAL(timeout()),this, SLOT(compute()));
-			timer->start();
+			// Update image aspect ratio :
+			float outputAspectRatio = static_cast<float>(p1->out(0).getWidth())/static_cast<float>(p1->out(0).getHeight());
+			window.setImageAspectRatio(outputAspectRatio);
+
+			timer.setInterval(300);
+			QObject::connect(&timer, 	SIGNAL(timeout(void)),		this, SLOT(compute()));
+			QObject::connect(&window, 	SIGNAL(actionReceived(void)), 	this, SLOT(show()));
+			QObject::connect(&window, 	SIGNAL(resized(void)), 	this, SLOT(show()));
+			timer.start();
 		}
 		catch(Exception& e)
 		{
@@ -96,17 +105,15 @@
 
 	GameOfLife::~GameOfLife(void)
 	{
-		timer->stop();
+		timer.stop();
 
 		log << "> End" << std::endl;
 		log.close();
 
-		delete timer;
 		delete inp;
 		delete p1;
 		delete p2;
 		delete t;
-		delete window;
 	}
 
 	void GameOfLife::randomTexture(float alpha)
@@ -154,13 +161,15 @@
 				if(i%2==0)
 				{
 					(*p2) << p1->out(0) << Pipeline::Process;
-					(*window) << p2->out(0);
+					target = &p2->out(0);
 				}
 				else
 				{
 					(*p1) << p2->out(0) << Pipeline::Process;
-					(*window) <<  p1->out(0);
+					target = &p1->out(0);
 				}
+
+				show();
 			}
 
 			i++;
@@ -176,4 +185,12 @@
 			std::cout << "(Will be rethrown)" << std::endl;
 			throw e;
 		}
+	}
+
+	void GameOfLife::show(void)
+	{
+		if(target!=NULL)
+			window << (*target);
+		else
+			window.clearWindow();
 	}

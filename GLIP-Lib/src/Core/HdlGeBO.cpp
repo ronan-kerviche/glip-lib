@@ -65,13 +65,17 @@ using namespace Glip::CoreGL;
 		// Allocate some space
 		glBufferData(infoTarget, size, NULL, infoUsage);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::HdlGeBO", "glBufferData()")
+		#endif
+
 		// Release point
 		HdlGeBO::unbind(infoTarget);
 
 		buildTarget = infoTarget;
 		buildUsage  = infoUsage;
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlGeBO::HdlGeBO - New GeBO, errors : "; glErrors(true, false);
 		#endif
 	}
@@ -88,8 +92,8 @@ using namespace Glip::CoreGL;
 	HdlGeBO::HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage)
 	 : size(_size)
 	{
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cerr << "ERROR HdlGeBO::HdlGeBO : a copy was made" << std::endl;
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cerr << "HdlGeBO::HdlGeBO ERROR : a copy was made" << std::endl;
 		#endif
 
 		// Just copy the link
@@ -104,6 +108,10 @@ using namespace Glip::CoreGL;
 	{
 		// Delete the object
 		glDeleteBuffers(1, &bufferId);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::~HdlGeBO", "glDeleteBuffers()")
+		#endif
 	}
 
 	/**
@@ -159,9 +167,9 @@ using namespace Glip::CoreGL;
 	{
 		if(target==GL_NONE) target = getTarget();
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			if(binding[getIDTarget(target)])
-				std::cout << __HERE__ << "HdlGeBO::bind - Rebinding over : " << glParamName(target) << std::endl;
+				std::cout << "HdlGeBO::bind - Rebinding over : " << glParamName(target) << std::endl;
 		#endif
 
 		glBindBuffer(target, bufferId);
@@ -190,7 +198,7 @@ using namespace Glip::CoreGL;
 				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + glParamName(target), __FILE__, __LINE__);
 		}
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlGeBO::map - Infos : " << std::endl;
 			std::cout << "    glDebug : " << std::endl;
 			glDebug();
@@ -198,19 +206,25 @@ using namespace Glip::CoreGL;
 
 		HdlGeBO::unmap(target);
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "    Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
 		#endif
 
 		bind(target);
 
-		#ifdef __DEVELOPMENT_VERBOSE__
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "    Bind : "; glErrors(true, false);
 			std::cout << "HdlGeBO::map - Done." << std::endl;
 		#endif
 
 		mapping[getIDTarget(target)] = true;
-		return glMapBuffer(target, access);
+		void* ptr = glMapBuffer(target, access);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::map", "glMapBuffer()")
+		#endif
+
+		return ptr;
 	}
 
 	/**
@@ -223,6 +237,10 @@ using namespace Glip::CoreGL;
 		bind();
 
 		glBufferData(getTarget(), static_cast<GLsizeiptr>(size), reinterpret_cast<const GLvoid *>(data), getUsage());
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::write", "glBufferData()")
+		#endif
 	}
 
 	/**
@@ -237,6 +255,10 @@ using namespace Glip::CoreGL;
 		bind();
 
 		glBufferSubData(getTarget(),  static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(size),  reinterpret_cast<const GLvoid *>(data));
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::subWrite", "glBufferSubData()")
+		#endif
 	}
 
 
@@ -275,9 +297,16 @@ using namespace Glip::CoreGL;
 		if(isMapped(target))
 		{
 			glUnmapBuffer(target);
+
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlGeBO::unmap", "glUnmapBuffer()")
+			#endif
+
 			mapping[getIDTarget(target)] = false;
-			#ifdef __DEVELOPMENT_VERBOSE__
-				std::cout << "HdlGeBO::unmap - Infos" << std::endl;
+
+
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+				std::cout << "HdlGeBO::unmap - Infos : " << std::endl;
 				glDebug();
 				std::cout << "    "; glErrors(true, false);
 			#endif

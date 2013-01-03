@@ -22,7 +22,6 @@
 	#include "GLIPLib.hpp"
 	#include <GL/glfw.h>
 	#include <stdlib.h>
-	#include "testHeader.hpp"
 
 // Namespace :
 	using namespace Glip;
@@ -40,12 +39,6 @@
 	int main(int argc, char** argv)
 	{
 		bool running = true;
-
-		const int N =HdlTextureFormatDescriptorsList::getNumDescriptors();
-		std::cout << "Supporting " << N << " texture formats." << std::endl;
-
-		for(int i=0; i<N; i++)
-			std::cout << "    " << i << " - " << glParamName(HdlTextureFormatDescriptorsList::get(i).modeID) << std::endl;
 
 		// Initialize GLFW
 		if( !glfwInit() )
