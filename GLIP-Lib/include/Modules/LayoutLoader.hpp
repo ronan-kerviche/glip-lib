@@ -42,14 +42,14 @@ namespace Glip
 \class LayoutLoader
 \brief Load and save pipelines layouts to file
 
-The LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will load a PipelineLayout that you can use directly or combined with other pipeline structures.
+The LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::Core::PipelineLayout or a Glip::Core::Pipeline that you can use directly or combined with other pipeline structures.
 
 The script must be structured with the following commands (but no special order is needed except standard declaration order) :
 
 - Format for the texture : <BR>
 <b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i> [, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ]);
 
-- Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement().
+- Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement() : <BR>
 <b>REQUIRED_FORMAT</b>:<i>format_name</i>();
 
 - Shader source code, from the same file : <BR>
@@ -87,7 +87,7 @@ The script must be structured with the following commands (but no special order 
 &nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements by himself using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
 }
 
-- Required pipeline layout to be provided by the application (for decorators). See LayoutLoader::addRequiredElement().
+- Required pipeline layout to be provided by the application (for decorators). See LayoutLoader::addRequiredElement() : <BR>
 <b>REQUIRED_PIPELINE</b>:<i>pipeline_layout_name</i>();
 
 - Main pipeline layout (the layout at the end of the loading stage) : <BR>
@@ -97,6 +97,30 @@ The script must be structured with the following commands (but no special order 
 <b>INCLUDE_FILE</b>(<i>string filename</i>);
 
 - Comments : C++ style.
+
+Example :
+	\code
+	// Load a PipelineLayout :
+	Loader loader;
+	PipelineLayout* myLayout = loader("./path/pipeline.ppl");
+
+	// use it :
+	Pipeline* myPipeline1 = new Pipeline(*myLayout,"Pipeline1");
+	Pipeline* myPipeline2 = new Pipeline(*myLayout,"Pipeline1");
+
+	// Then clean :
+	delete myLayout;
+
+	// For a single pipeline :
+	Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");
+
+	// use them, see Glip::Core::Pipeline documentation...
+
+	// Clean all :
+	delete myPipeline1;
+	delete myPipeline2;
+	delete myPipelineU;
+	\endcode
 
 **/
 		class LayoutLoader

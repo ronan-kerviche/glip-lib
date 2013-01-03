@@ -53,10 +53,10 @@
 			#define ELEMENT_NOT_ASSOCIATED (-2)
 
 			// Objects
-			/**
-			\class __ReadOnly_PipelineLayout
-			\brief Pipeline layout (Read Only)
-			**/
+/**
+\class __ReadOnly_PipelineLayout
+\brief Pipeline layout (Read Only)
+**/
 			class __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				public :
@@ -139,10 +139,10 @@
 
 			typedef __ReadOnly_PipelineLayout::ComponentKind ComponentKind;
 
-			/**
-			\class PipelineLayout
-			\brief Pipeline layout
-			**/
+/**
+\class PipelineLayout
+\brief Pipeline layout
+**/
 			class PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
 			{
 				public :
@@ -163,10 +163,20 @@
 					void 	autoConnect(void);
 			};
 
-			/**
-			\class Pipeline
-			\brief Pipeline object
-			**/
+/**
+\class Pipeline
+\brief Pipeline object
+
+How to process the inputs :
+\code
+HdlPipeline myPipeline(...);
+HdlTexture input1(...), input2(...), ...;
+
+myPipeline << input1 << input2 << ... << Pipeline::Process;
+
+outputDevice << myPipeline.out(0);
+\endcode
+**/
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
 				public :

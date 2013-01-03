@@ -1033,7 +1033,7 @@
 
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
-	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded with REQUIRED_FORMAT:name(); will use this format.
+	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:name(); will use this format.
 	\param name The name of the element.
 	\param fmt The element to be associated.
 	**/
@@ -1053,7 +1053,7 @@
 
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
-	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded with REQUIRED_PIPELINE:name(); will use this pipeline layout.
+	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:name(); will use this pipeline layout.
 	\param name The name of the element.
 	\param layout The element to be associated.
 	**/
