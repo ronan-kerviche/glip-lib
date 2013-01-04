@@ -142,6 +142,41 @@
 /**
 \class PipelineLayout
 \brief Pipeline layout
+
+How to create a pipeline layout :
+\code
+	// Create the layout with a name (the "type" of the layout) :
+	PipelineLayout sobelLayout("SobelFilter");
+
+	// Add one input and one output with their name :
+	sobelLayout.addInput("intputImage");
+	sobelLayout.addInput("imageDerivatives");
+
+	// Add an instance of a filter previously created (see FilterLayout for more information) :
+	sobelLayout.add(sobelFilter, "instSobelFilter");
+	// It also work with another PipelineLayout object, adding a sub pipeline.
+
+	// If the port names of the FilterLayout don't correspond to those of the PipelineLayout, you have to explicitly declare the connections :
+
+	// Connection going from input "inputImage" of this pipeline to the input port "inputTexture" of the filter "sobelFilter" :
+	sobelLayout.connectToInput("inputImage", "sobelFilter", "inputTexture");
+
+	// In the case of multiple elements (works for filter to sub-pipeline, filter to filter, sub-pipeline to filter
+	// or sub-pipeline to sub-pipeline connections).
+	// you will use the following syntax for a connection from output Element1::outputE1 to input Element2::inputE2 :
+	// someLayout.connect("Element1","outputE1","Element2","inputE2");
+
+	// Connection going from input "inputImage" of this pipeline to the input port "inputTexture" of the filter "sobelFilter" :
+	sobelLayout.connectToOutput("sobelFilter", "outputTexture", "imageDerivatives");
+
+	// In the case where you are using explicit names (same names indicate a connection), then you can use the automatic method :
+	// sobelLayout.autoConnect();
+	// Which is equivalent to :
+	// sobelLayout.connectToInput("inputImage", "sobelFilter", "inputImage");
+	// sobelLayout.connectToOutput("sobelFilter", "imageDerivatives", "imageDerivatives");
+
+	// If you save the id of the elements, you can use the ID connection method but it usually is harder to read in code afterward.
+\endcode
 **/
 			class PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
 			{
@@ -169,12 +204,12 @@
 
 How to process the inputs :
 \code
-HdlPipeline myPipeline(...);
-HdlTexture input1(...), input2(...), ...;
+	HdlPipeline myPipeline(myPipelineLayout, "InstanceName");
+	HdlTexture input1(...), input2(...), ...;
 
-myPipeline << input1 << input2 << ... << Pipeline::Process;
+	myPipeline << input1 << input2 << ... << Pipeline::Process;
 
-outputDevice << myPipeline.out(0);
+	outputDevice << myPipeline.out(0);
 \endcode
 **/
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component

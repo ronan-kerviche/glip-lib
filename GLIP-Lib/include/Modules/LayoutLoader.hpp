@@ -98,28 +98,87 @@ The script must be structured with the following commands (but no special order 
 
 - Comments : C++ style.
 
-Example :
+<i>Hello world pipeline example </i> (no processing, just resizing to <i>format</i>) :
 	\code
-	// Load a PipelineLayout :
-	Loader loader;
-	PipelineLayout* myLayout = loader("./path/pipeline.ppl");
+	// The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
+	TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
 
-	// use it :
-	Pipeline* myPipeline1 = new Pipeline(*myLayout,"Pipeline1");
-	Pipeline* myPipeline2 = new Pipeline(*myLayout,"Pipeline1");
+	// The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
+	SHADER_SOURCE:HelloWorld()
+	{
+		#version 130
 
-	// Then clean :
-	delete myLayout;
+		uniform sampler2D	texInput;
+		out     vec4 		texOutput;
 
-	// For a single pipeline :
-	Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");
+		void main()
+		{
+			// Get the input data :
+			vec4 col  = textureLod(texInput, gl_TexCoord[0].st, 0.0);
 
-	// use them, see Glip::Core::Pipeline documentation...
+			// Write the output data :
+			texOutput = col;
+		}
+	}
 
-	// Clean all :
-	delete myPipeline1;
-	delete myPipeline2;
-	delete myPipelineU;
+	// Declare the filter layout :
+	FILTER_LAYOUT:helloFilter(format,HelloWorld);
+	// The filter layout will have one input port and one output port, which names are respectively texInput and texOutput.
+	// This information is gathered from the shader source HelloWorld, by analyzing the variables declared as uniform sampler2D for inputs and out vec4 for outputs.
+
+	PIPELINE_MAIN:pMainGradient()
+	{
+		// Declare some input and output ports for this pipeline ::
+		INPUT_PORTS(texInput);
+		OUTPUT_PORTS(texOutput);
+
+		FILTER_INSTANCE:instHello(helloFilter);
+
+		// Since the input and output port names we chose for the pipeline are the same than for the filter
+		// (as described in the shader source) then we don't need to do the connections (it will be made automatically).
+		// However one can imagine replacing the previous code by :
+		//
+		//INPUT_PORTS(input);
+		//OUTPUT_PORTS(output);
+		//
+		// In that case, we would have to declare the connections as :
+		//
+		//CONNECTION(THIS,input,instHello,texInput);
+		//CONNECTION(instHello,texOutput,THIS,texOutput);
+		//
+	}
+	\endcode
+
+Loading Example :
+	\code
+	try
+	{
+		// Load a PipelineLayout :
+		Loader loader;
+		PipelineLayout* myLayout = loader("./path/pipeline.ppl");
+
+		// use it :
+		Pipeline* myPipeline1 = new Pipeline(*myLayout,"Pipeline1");
+		Pipeline* myPipeline2 = new Pipeline(*myLayout,"Pipeline1");
+
+		// Then clean :
+		delete myLayout;
+
+		// For a single pipeline :
+		Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");
+
+		// use them, see Glip::Core::Pipeline documentation...
+
+		// Clean all :
+		delete myPipeline1;
+		delete myPipeline2;
+		delete myPipelineU;
+	}
+	catch(Exception& e)
+	{
+		std::cout << "An exception was caught : " << std::endl;
+		std::cout << e.what() << std::endl;
+	}
 	\endcode
 
 **/
