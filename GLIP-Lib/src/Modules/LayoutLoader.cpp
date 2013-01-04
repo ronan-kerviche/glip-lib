@@ -112,24 +112,47 @@
 		for(int i=0; i<NumKeywords; i++)
 			if(keywords[i]==str) return static_cast<LoaderKeyword>(i);
 
-		throw Exception("LayoutLoader::getKeyword - Unknown keyword : <" + str + ">", __FILE__, __LINE__);
+		throw Exception("LayoutLoader::getKeyword - Unknown keyword : <" + str + ">.", __FILE__, __LINE__);
 	}
 
-	void LayoutLoader::removeCommentary(std::string& source, std::string start, std::string end)
+	void LayoutLoader::removeCommentary(std::string& source, std::string start, std::string end, bool cumulative)
 	{
-		size_t posC1 = source.find(start);
+		size_t posC1 	= source.find(start);
+		size_t pC	= posC1+start.size();
+		int level	= 0;
 
-		while(posC1!=std::string::npos)
+		while(posC1!=std::string::npos && pC<source.size())
 		{
-			size_t next = source.find(end, posC1+start.size());
+			if( source.substr(pC,end.size())==end)
+			{
+				if(level==0)
+				{
+					source.erase(source.begin()+posC1,source.begin()+pC+end.size());
 
-			if(next==std::string::npos)
-				throw Exception("LayoutLoader::removeCommentary - Unterminated commentary", __FILE__, __LINE__);
-
-			source.erase(source.begin()+posC1,source.begin()+next+end.size());
-
-			posC1 = source.find(start);
+					// Find next :
+					posC1 	= source.find(start);
+					pC 	= posC1+start.size();
+				}
+				else
+				{
+					level--;
+					pC++;
+				}
+			}
+			else if( source.substr(pC,start.size())==start && cumulative)
+			{
+				level++;
+				pC++;
+			}
+			else
+				pC++;
 		}
+
+		if(posC1!=std::string::npos)
+			throw Exception("LayoutLoader::removeCommentary - Unterminated commentary " + start + ".", __FILE__, __LINE__);
+
+		if(source.find(end)!=std::string::npos && cumulative)
+			throw Exception("LayoutLoader::removeCommentary - Ending commentary " + end + " with no start.", __FILE__, __LINE__);
 	}
 
 	std::string LayoutLoader::getSource(const std::string& sourceName, std::string& path)
@@ -154,7 +177,7 @@
 
 			// Did it fail?
 			if(!file.is_open())
-				throw Exception("LayoutLoader::getSource - Can't open file for reading : " + sourceName, __FILE__, __LINE__);
+				throw Exception("LayoutLoader::getSource - Can't open file for reading : " + sourceName + ".", __FILE__, __LINE__);
 
 			// Set starting position
 			file.seekg(0, std::ios::beg);
@@ -172,8 +195,8 @@
 			source = sourceName;
 
 		// Remove all commentaries
-		removeCommentary(source,"//","\n");
-		removeCommentary(source,"/*","*/");
+		removeCommentary(source,"//","\n",false);
+		removeCommentary(source,"/*","*/",true);
 
 		return source;
 	}
@@ -247,7 +270,7 @@
 				}
 
 				if(source.begin() + next_pos == source.end())
-					throw Exception("LayoutLoader::updateEntriesLists - '}' missing", __FILE__, __LINE__);
+					throw Exception("LayoutLoader::updateEntriesLists - '}' missing.", __FILE__, __LINE__);
 				line = source.substr(current_pos, next_pos-current_pos+1);
 				current_pos = next_pos + 1;
 			}
@@ -280,7 +303,7 @@
 			size_t argDelim  = line.find('(');
 
 			if(argDelim==std::string::npos)
-				throw Exception("LayoutLoader::updateEntriesLists - Element without argument", __FILE__, __LINE__);
+				throw Exception("LayoutLoader::updateEntriesLists - Element without argument.", __FILE__, __LINE__);
 
 			if(nameDelim!=std::string::npos)
 			{
@@ -318,7 +341,7 @@
 				#endif
 
 				if(key!=INCLUDE_FILE)
-					throw Exception("LayoutLoader::updateEntriesLists - Missing name for element of type " + type, __FILE__, __LINE__);
+					throw Exception("LayoutLoader::updateEntriesLists - Missing name for element of type " + type + ".", __FILE__, __LINE__);
 
 				entryType.push_back(getKeyword(type));
 				entryName.push_back("NONAME");
@@ -347,31 +370,31 @@
 	{
 		std::vector<std::string> arg = getArguments(code);
 		if(arg.size()<6)
-			throw Exception("LayoutLoader::buildFormat - Too few arguments for format " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Too few arguments for format " + name + ".", __FILE__, __LINE__);
 		if(arg.size()>10)
-			throw Exception("LayoutLoader::buildFormat - Too much arguments for format " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Too much arguments for format " + name + ".", __FILE__, __LINE__);
 
 		int w, h;
 		GLenum c, d, mf, Mf;
 
 		if( !from_string(arg[0],w) )
-			throw Exception("LayoutLoader::buildFormat - enable to read integers for width for " + name + ", got : " + arg[0], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - enable to read integers for width for " + name + ", got : " + arg[0] + ".", __FILE__, __LINE__);
 		if( !from_string(arg[1],h) )
-			throw Exception("LayoutLoader::buildFormat - enable to read integers for height for " + name + ", got : " + arg[1], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - enable to read integers for height for " + name + ", got : " + arg[1] + ".", __FILE__, __LINE__);
 
 		c = gl_from_string(arg[2]);
 		d = gl_from_string(arg[3]);
 		if( c==GL_FALSE )
-			throw Exception("LayoutLoader::buildFormat - Unable to read flags for channel layout for " + name + ", got : " + arg[2], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Unable to read flags for channel layout for " + name + ", got : " + arg[2] + ".", __FILE__, __LINE__);
 		if( d==GL_FALSE )
-			throw Exception("LayoutLoader::buildFormat - Unable to read flags for bit depth for " + name + ", got : " + arg[3], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Unable to read flags for bit depth for " + name + ", got : " + arg[3] + ".", __FILE__, __LINE__);
 
 		mf = gl_from_string(arg[4]);
 		Mf = gl_from_string(arg[5]);
 		if( mf==GL_FALSE )
-			throw Exception("LayoutLoader::buildFormat - Unable to read flags for min filtering for " + name + ", got : " + arg[4], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Unable to read flags for min filtering for " + name + ", got : " + arg[4] + ".", __FILE__, __LINE__);
 		if( Mf==GL_FALSE )
-			throw Exception("LayoutLoader::buildFormat - Unable to read flags for max filtering for " + name + ", got : " + arg[5], __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFormat - Unable to read flags for max filtering for " + name + ", got : " + arg[5] + ".", __FILE__, __LINE__);
 
 		// Create result :
 		HdlTextureFormat* result = new HdlTextureFormat(w,h,c,d,mf,Mf);
@@ -382,7 +405,7 @@
 			GLenum sw = gl_from_string(arg[6]);
 
 			if( sw==GL_FALSE )
-				throw Exception("LayoutLoader::buildFormat - Unable to read SWrapping option for format " + name + ", got : " + arg[6], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFormat - Unable to read SWrapping option for format " + name + ", got : " + arg[6] + ".", __FILE__, __LINE__);
 
 			result->setSWrapping(sw);
 		}
@@ -392,7 +415,7 @@
 			GLenum tw = gl_from_string(arg[7]);
 
 			if( tw==GL_FALSE )
-				throw Exception("LayoutLoader::buildFormat - Unable to read TWrapping option for format " + name + ", got : " + arg[7], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFormat - Unable to read TWrapping option for format " + name + ", got : " + arg[7] + ".", __FILE__, __LINE__);
 
 			result->setTWrapping(tw);
 		}
@@ -402,7 +425,7 @@
 			int l;
 
 			if( !from_string(arg[8],l) )
-				throw Exception("LayoutLoader::buildFormat - Unable to read max mipmapping level for format " + name + ", got : " + arg[8], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFormat - Unable to read max mipmapping level for format " + name + ", got : " + arg[8] + ".", __FILE__, __LINE__);
 
 			result->setMaxLevel(l);
 		}
@@ -412,7 +435,7 @@
 			int l;
 
 			if( !from_string(arg[9],l) )
-				throw Exception("LayoutLoader::buildFormat - Unable to read base mipmapping level for format " + name + ", got : " + arg[9], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFormat - Unable to read base mipmapping level for format " + name + ", got : " + arg[9] + ".", __FILE__, __LINE__);
 
 			result->setBaseLevel(l);
 		}
@@ -436,18 +459,18 @@
 		std::vector<std::string> arg = getArguments(code);
 
 		if(arg.size()<2)
-			throw Exception("LayoutLoader::buildFilter - Too few arguments for filter " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFilter - Too few arguments for filter " + name + ".", __FILE__, __LINE__);
 
 		if(arg.size()>5)
-			throw Exception("LayoutLoader::buildFilter - Too much arguments for filter " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFilter - Too much arguments for filter " + name + ".", __FILE__, __LINE__);
 
 		std::map<std::string, HdlTextureFormat*>::iterator it0 = formatList.find(arg[0]);
 		if(it0==formatList.end())
-			throw Exception("LayoutLoader::buildFilter - Unknown format : " + arg[0] + " for " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFilter - Unknown format : " + arg[0] + " for " + name + ".", __FILE__, __LINE__);
 
 		std::map<std::string, ShaderSource*>::iterator it1 = sourceList.find(arg[1]);
 		if(it1==sourceList.end())
-			throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[1] + " for " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[1] + " for " + name + ".", __FILE__, __LINE__);
 
 		if(arg.size()>=3)
 		{
@@ -456,7 +479,7 @@
 				std::map<std::string, ShaderSource*>::iterator it2 = sourceList.find(arg[2]);
 
 				if(it2==sourceList.end())
-					throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[2] + " for " + name, __FILE__, __LINE__);
+					throw Exception("LayoutLoader::buildFilter - Unknown shader source : " + arg[2] + " for " + name + ".", __FILE__, __LINE__);
 				else
 					ptr = new FilterLayout(name, *it0->second, *it1->second, it2->second);
 			}
@@ -476,7 +499,7 @@
 			else
 			{
 				delete ptr;
-				throw Exception("LayoutLoader::buildFilter - Unknow keyword for CLEARING parameter : " + arg[3], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFilter - Unknow keyword for CLEARING parameter : " + arg[3] + ".", __FILE__, __LINE__);
 			}
 		}
 
@@ -490,7 +513,7 @@
 			else
 			{
 				delete ptr;
-				throw Exception("LayoutLoader::buildFilter - Unknow keyword for BLENDING parameter : " + arg[4], __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildFilter - Unknow keyword for BLENDING parameter : " + arg[4] + ".", __FILE__, __LINE__);
 			}
 		}
 
@@ -529,7 +552,7 @@
 			size_t argDelim  = line.find('(');
 
 			if(argDelim==std::string::npos)
-				throw Exception("LayoutLoader::buildPipeline - Instruction has no arguments : " + line, __FILE__, __LINE__);
+				throw Exception("LayoutLoader::buildPipeline - Instruction has no arguments : " + line + ".", __FILE__, __LINE__);
 
 			if(nameDelim!=std::string::npos)
 			{
@@ -542,7 +565,7 @@
 					throw Exception("LayoutLoader::buildPipeline - Error while using type " + type + " in a pipeline description.", __FILE__, __LINE__);
 
 				if(std::find(nameList.begin(), nameList.end(), name)!=nameList.end())
-					throw Exception("LayoutLoader::buildPipeline - An instance already use the name " + name, __FILE__, __LINE__);
+					throw Exception("LayoutLoader::buildPipeline - An instance already use the name " + name + ".", __FILE__, __LINE__);
 
 				commandList.push_back(key);
 				nameList.push_back(name);
@@ -555,7 +578,7 @@
 				LoaderKeyword key = getKeyword(type);
 
 				if(getKeyword(type)!=CONNECTION && getKeyword(type)!=INPUT_PORTS && getKeyword(type)!=OUTPUT_PORTS)
-					throw Exception("LayoutLoader::buildPipeline - Missing name for element of type " + type, __FILE__, __LINE__);
+					throw Exception("LayoutLoader::buildPipeline - Missing name for element of type " + type + ".", __FILE__, __LINE__);
 
 				if(key==INPUT_PORTS)  inputDescription++;
 				if(key==OUTPUT_PORTS) outputDescription++;
@@ -570,7 +593,7 @@
 
 		// Check input and output description :
 		if(inputDescription!=1 || outputDescription!=1)
-			throw Exception("LayoutLoader::buildPipeline - Missing or redefined input or output port descriptions for pipeline " + name, __FILE__, __LINE__);
+			throw Exception("LayoutLoader::buildPipeline - Missing or redefined input or output port descriptions for pipeline " + name + ".", __FILE__, __LINE__);
 
 		// Find the Input ports
 		std::vector<std::string> inputPorts;
@@ -615,22 +638,22 @@
 				case FILTER_INSTANCE:
 					arg = getArguments(argumentList[i]);
 					if(arg.size()!=1)
-						throw Exception("LayoutLoader::buildPipeline - Filter instance as a wrong number of arguments, for " + nameList[i] + " in " + name, __FILE__, __LINE__);
+						throw Exception("LayoutLoader::buildPipeline - Filter instance as a wrong number of arguments, for " + nameList[i] + " in " + name + ".", __FILE__, __LINE__);
 					// Check if the filter exists :
 					itf = filterList.find(arg[0]);
 					if(itf==filterList.end())
-						throw Exception("LayoutLoader::buildPipeline - Undefined reference to filter : " + arg[0] + " for " + nameList[i] + " in " + name, __FILE__, __LINE__);
+						throw Exception("LayoutLoader::buildPipeline - Undefined reference to filter : " + arg[0] + " for " + nameList[i] + " in " + name + ".", __FILE__, __LINE__);
 					// Add it to pipeline :
 					result->add(*itf->second, nameList[i]);
 					break;
 				case PIPELINE_INSTANCE:
 					arg = getArguments(argumentList[i]);
 					if(arg.size()!=1)
-						throw Exception("LayoutLoader::buildPipeline - Pipeline instance as a wrong number of arguments, for " + nameList[i] + " in " + name, __FILE__, __LINE__);
+						throw Exception("LayoutLoader::buildPipeline - Pipeline instance as a wrong number of arguments, for " + nameList[i] + " in " + name + ".", __FILE__, __LINE__);
 					// Check if the filter exists :
 					itp = pipelineList.find(arg[0]);
 					if(itp==pipelineList.end())
-						throw Exception("LayoutLoader::buildPipeline - Undefined reference to pipeline : " + arg[0] + " for " + nameList[i] + " in " + name, __FILE__, __LINE__);
+						throw Exception("LayoutLoader::buildPipeline - Undefined reference to pipeline : " + arg[0] + " for " + nameList[i] + " in " + name + ".", __FILE__, __LINE__);
 					// Add it to pipeline :
 					result->add(*itp->second, nameList[i]);
 					break;
@@ -651,7 +674,7 @@
 					numConnections++;
 					std::vector<std::string> arg = getArguments(argumentList[i]);
 					if(arg.size()!=4)
-						throw Exception("LayoutLoader::buildPipeline - Wrong number of arguments for a connection in " + name, __FILE__, __LINE__);
+						throw Exception("LayoutLoader::buildPipeline - Wrong number of arguments for a connection in " + name + ".", __FILE__, __LINE__);
 
 					if(arg[0]==keywords[THIS_PIPELINE] && arg[2]==keywords[THIS_PIPELINE])
 						throw Exception("LayoutLoader::buildPipeline - Connection from input port to output port (without processing) is forbidden.", __FILE__, __LINE__);
@@ -677,12 +700,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name, __FILE__, __LINE__);
+			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name, __FILE__, __LINE__);
+			Exception m("LayoutLoader::buildPipeline - Caught an exception while creating connections in " + name + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 
@@ -716,9 +739,9 @@
 				{
 					std::vector<std::string> arg = getArguments(entryCode[i]);
 					if(arg.size()<1)
-						throw Exception("LayoutLoader::operator() - Not enough argument for INCLUDE_FILE", __FILE__, __LINE__);
+						throw Exception("LayoutLoader::operator() - Not enough argument for INCLUDE_FILE.", __FILE__, __LINE__);
 					if(arg.size()>1)
-						throw Exception("LayoutLoader::operator() - Too much arguments for INCLUDE_FILE", __FILE__, __LINE__);
+						throw Exception("LayoutLoader::operator() - Too much arguments for INCLUDE_FILE.", __FILE__, __LINE__);
 
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 						std::cout << "    Including file : " << arg[0] << std::endl;
@@ -761,7 +784,7 @@
 				for(int j=i+1; j<entryType.size(); j++)
 				{
 					if(entryType[j]==entryType[i] && entryName[j]==entryName[i])
-						throw Exception("LayoutLoader::operator() - Found two different entities of same type and name : " + entryName[j], __FILE__, __LINE__);
+						throw Exception("LayoutLoader::operator() - Found two different entities of same type and name : " + entryName[j] + ".", __FILE__, __LINE__);
 				}
 			}
 
@@ -1010,7 +1033,7 @@
 
 				// Did it fail?
 				if(!file.is_open())
-					throw Exception("LayoutLoader::write - Can't open file for writing : " + filename, __FILE__, __LINE__);
+					throw Exception("LayoutLoader::write - Can't open file for writing : " + filename + ".", __FILE__, __LINE__);
 
 				file << result << std::endl;
 
@@ -1021,12 +1044,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("LayoutLoader::write - caught an exception while writing layout to file", __FILE__, __LINE__);
+			Exception m("LayoutLoader::write - caught an exception while writing layout to file :", __FILE__, __LINE__);
 			throw m + e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("LayoutLoader::write - caught an exception while writing layout to file", __FILE__, __LINE__);
+			Exception m("LayoutLoader::write - caught an exception while writing layout to file :", __FILE__, __LINE__);
 			throw m + e;
 		}
 	}

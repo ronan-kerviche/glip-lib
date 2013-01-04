@@ -56,7 +56,8 @@
 			QPushButton	playButton,
 					stopButton,
 					loadVideoButton,
-					optionsButton;
+					optionsButton,
+					nextFrameButton;
 			QSlider		timeSlider;
 			QLineEdit	infoLine;
 			QSpinBox	frameRateSpinBox;
@@ -96,6 +97,7 @@
 			void 		pause(void);
 			void 		stop(void);
 			void 		togglePlayPause(void);
+			void		oneFrameForward(void);
 
 		signals :
 			void		newVideoLoaded(void);

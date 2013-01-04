@@ -10,7 +10,7 @@
 /*     File          : InterfqceFFMPEG.cpp                                                                       */
 /*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
-/*     Description   : Interfqce to FFMPEG library                                                               */
+/*     Description   : Interface to FFMPEG library                                                               */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 

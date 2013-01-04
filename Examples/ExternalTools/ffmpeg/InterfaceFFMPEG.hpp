@@ -10,7 +10,9 @@
 /*     File          : InterfqceFFMPEG.hpp                                                                       */
 /*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
-/*     Description   : Interfqce to FFMPEG library                                                               */
+/*     Description   : Interface to FFMPEG library                                                               */
+/*                     Compile with the following libraries :                                                    */
+/*                      -lavutil -lavformat -lavcodec -lavutil -lswscale                                         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 

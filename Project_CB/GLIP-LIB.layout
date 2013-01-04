@@ -44,7 +44,7 @@
 		<Cursor position="3819" topLine="19" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="2">
-		<Cursor position="7013" topLine="27" />
+		<Cursor position="2473" topLine="172" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/ShaderSource.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="7255" topLine="416" />
@@ -62,13 +62,13 @@
 		<Cursor position="925" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/FFT1D.hpp" open="0" top="0" tabpos="2">
-		<Cursor position="2555" topLine="36" />
+		<Cursor position="2555" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/FFT2D.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="2844" topLine="52" />
+		<Cursor position="2432" topLine="16" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/LayoutLoader.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="5829" topLine="72" />
+		<Cursor position="5885" topLine="88" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/Modules.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="809" topLine="0" />
@@ -86,7 +86,7 @@
 		<Cursor position="5211" topLine="164" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="2348" topLine="66" />
+		<Cursor position="4066" topLine="66" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Exception.cpp" open="0" top="0" tabpos="6">
 		<Cursor position="5248" topLine="145" />
@@ -110,7 +110,7 @@
 		<Cursor position="15950" topLine="459" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlTexture.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="25460" topLine="555" />
+		<Cursor position="6132" topLine="118" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/HdlTextureTools.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="12047" topLine="141" />
@@ -137,10 +137,10 @@
 		<Cursor position="13725" topLine="301" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/FFT2D.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="3271" topLine="20" />
+		<Cursor position="3271" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/LayoutLoader.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="27803" topLine="827" />
+		<Cursor position="35112" topLine="1071" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/ProceduralInput.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="809" topLine="6" />

@@ -1,0 +1,35 @@
+
+// This pipeline will average up to 5 levels of mipmaps. Ensure that input has mipmaps or output will be the same as input.
+TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP);
+
+SHADER_SOURCE:shader()
+{
+	#version 130
+
+	uniform sampler2D 	inText;
+	out     vec4 		outText;
+
+	void main()
+	{
+		vec4 col1 = textureLod(inText, gl_TexCoord[0].st, 0.0);
+		vec4 col2 = textureLod(inText, gl_TexCoord[0].st, 1.0);
+		vec4 col3 = textureLod(inText, gl_TexCoord[0].st, 2.0);
+		vec4 col4 = textureLod(inText, gl_TexCoord[0].st, 3.0);
+		vec4 col5 = textureLod(inText, gl_TexCoord[0].st, 4.0);
+
+		outText = (2.0*col1 + col2 + col3 + col4 + col5) / 6.0;
+	}
+}
+
+FILTER_LAYOUT:filter(format,shader);
+
+PIPELINE_MAIN:pMain()
+{
+	INPUT_PORTS(i0);
+	OUTPUT_PORTS(o0);
+
+	FILTER_INSTANCE:inst_filter(filter);
+
+	CONNECTION(THIS,	i0,	 inst_filter,	inText);
+	CONNECTION(inst_filter,	outText, THIS,		o0);
+}

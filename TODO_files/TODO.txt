@@ -226,7 +226,7 @@ Current Version : 0.8
 	Status : DONE
 
 [0.9]	Move pipeline description from home page.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Create new class StorageSpace to decorrelate memory usage from pipeline.
 	Status : TODO
@@ -241,25 +241,25 @@ Current Version : 0.8
 	Status : TODO
 
 [0.9]	Finish external Qt tools for displaying texture. Fix scaling problems.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Add Qt tool for loading/saving texture.
 	Status : DONE
 
 [0.9]	Add option management to Qt texture loader.
-	Status : TODO
+	Status : DONE
 x
 [0.9]	Fix previous Git errors and add new directories.
-	Status : TODO
+	Status : DONE
 
 [0.9]	Replace all abreviation 'text' by full word 'texture'
-	Status : TODO
+	Status : DONE
 
 [0.9]	Remove, whenever possible, all pointers in Qt examples.
-	Status : TODO
+	Status : DONE
 
 [0.9]	GLFW_Integration, testHeader.hpp is missing on git and not needed.
-	Status : TODO
+	Status : DONE
 
 [1.0]	Create missing projects.
 	Status : TODO

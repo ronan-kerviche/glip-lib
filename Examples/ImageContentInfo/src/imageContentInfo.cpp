@@ -93,7 +93,7 @@
 
 	void IHM::requestComputingUpdate(void)
 	{
-		if(pipelineLoaderInterface.isPipelineValid())
+		if(pipelineLoaderInterface.isPipelineValid() && imageLoaderInterface.getNumTextures()>0)
 		{
 			if(pipelineLoaderInterface.pipeline().getNumInputPort()!=1)
 			{
@@ -101,10 +101,7 @@
 				pipelineLoaderInterface.revokePipeline();
 			}
 			else
-			{
-				 if(imageLoaderInterface.getNumTextures()>0)
-					pipelineLoaderInterface.pipeline() << imageLoaderInterface.currentTexture() << Pipeline::Process;
-			}
+				pipelineLoaderInterface.pipeline() << imageLoaderInterface.currentTexture() << Pipeline::Process;
 		}
 	}
 

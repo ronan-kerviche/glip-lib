@@ -1,20 +1,18 @@
 TEXTURE_FORMAT:format(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
 TEXTURE_FORMAT:formatOut(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
 
+/* Commented :
 SHADER_SOURCE:gradient()
 {
-	/**
-		Gradient2
-
-			red   : horizontal
-			green : vertical
-			blue  : diag X
-		alpha : diag Y
-
-		11 21 31
-		12 0  32
-		13 23 33
-	**/
+	// Gradient2
+	//	red   : horizontal
+	//	green : vertical
+	//	blue  : diag X
+	//	alpha : diag Y
+	//
+	//	11 21 31
+	//	12 0  32
+	//	13 23 33
 
 	#version 130
 
@@ -55,7 +53,9 @@ SHADER_SOURCE:gradient()
 		green.a    = abs((col31.g - col0.g)-(col0.g - col13.g))/2.0;
 		blue.a     = abs((col31.b - col0.b)-(col0.b - col13.b))/2.0;
 	}
-}
+}*/
+
+SHADER_SOURCE:gradient(gradient2.glsl);
 
 SHADER_SOURCE:ampl()
 {

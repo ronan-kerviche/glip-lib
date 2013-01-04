@@ -37,9 +37,9 @@
 		filenamesList.clear();
 	}
 
-	int ImageLoader::loadFiles(GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
+	int ImageLoader::loadFiles(GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel, QWidget* parent)
 	{
-		QStringList filenames = QFileDialog::getOpenFileNames(NULL, QObject::tr("Open images..."), ".", "*.jpg *.JPG *.png *.png");
+		QStringList filenames = QFileDialog::getOpenFileNames(parent, QObject::tr("Open images..."), ".", "*.jpg *.JPG *.png *.png *.bmp");
 
 		if(filenames.empty())
 			return -1; // no selection
@@ -57,7 +57,7 @@
 
 				if (image->isNull())
 				{
-					QMessageBox::information(NULL, QObject::tr("ImageLoader::loadFiles"), QObject::tr("Cannot load image %1.").arg(filenames.at(i)));
+					QMessageBox::information(parent, QObject::tr("ImageLoader::loadFiles"), QObject::tr("Cannot load image %1.").arg(filenames.at(i)));
 					#ifdef __RESSOURCE_LOADER_VERBOSE__
 						std::cout << "ImageLoader::loadFiles - Cannot load : " << filenames.at(i).toUtf8().constData() << std::endl;
 					#endif
@@ -70,7 +70,7 @@
 					}
 					catch(Exception& e)
 					{
-						QMessageBox::information(NULL, QObject::tr("ImageLoader::loadFiles"), QObject::tr("Exception while loading image %1 :\n%2").arg(filenames.at(i)).arg(e.what()));
+						QMessageBox::information(parent, QObject::tr("ImageLoader::loadFiles"), QObject::tr("Exception while loading image %1 :\n%2").arg(filenames.at(i)).arg(e.what()));
 					}
 				}
 
@@ -107,9 +107,9 @@
 			return filenamesList[id];
 	}
 
-	bool ImageLoader::saveTexture(HdlTexture& texture)
+	bool ImageLoader::saveTexture(HdlTexture& texture, QWidget* parent)
 	{
-		QString filename = QFileDialog::getSaveFileName(NULL);
+		QString filename = QFileDialog::getSaveFileName(parent);
 
 		if (!filename.isEmpty())
 		{
@@ -416,7 +416,7 @@
 	{
 		int numFilesLoaded = loadFiles(minFilter, magFilter, sWrapping, tWrapping, maxMipmapLevel);
 
-		if(numFilesLoaded<0) // no selection made
+		if(numFilesLoaded<=0) // no selection made
 			return;
 		else if(numFilesLoaded>0)
 		{
@@ -577,7 +577,7 @@
 			}
 			catch(Exception& e)
 			{
-				QMessageBox::information(NULL, tr("PipelineLoaderInterface::loadPipeline - Error while loading the pipeline : "), e.what());
+				QMessageBox::information(parentWidget(), tr("PipelineLoaderInterface::loadPipeline - Error while loading the pipeline : "), e.what());
 				return ;
 			}
 
@@ -599,7 +599,7 @@
 			}
 			catch(Exception& e)
 			{
-				QMessageBox::information(NULL, tr("PipelineLoaderInterface::loadPipeline - Error while creating the pipeline : "), e.what());
+				QMessageBox::information(parentWidget(), tr("PipelineLoaderInterface::loadPipeline - Error while creating the pipeline : "), e.what());
 				delete loadedPipeline;
 				loadedPipeline = NULL;
 				pipelineName.setText("(No pipeline loaded)");

@@ -45,11 +45,12 @@
 
 // VideoControls
 	VideoControls::VideoControls(QWidget* parent)
-	 : QVBoxLayout(parent), timeLabel("--:--"), frameRateLabel("Frame rate : "), playButton("Play"), stopButton("Stop"), loadVideoButton("Load video..."), optionsButton("Options"), infoLine("(No video)"), timeSlider(Qt::Horizontal),
+	 : QVBoxLayout(parent), timeLabel("--:--"), frameRateLabel("Frame rate : "), playButton("Play"), stopButton("Stop"), loadVideoButton("Load video..."), optionsButton("Options"), infoLine("(No video)"), timeSlider(Qt::Horizontal), nextFrameButton(">"),
 	   minFilter(GL_NEAREST), magFilter(GL_NEAREST), sWrapping(GL_CLAMP), tWrapping(GL_CLAMP), maxMipmapLevel(0), numFrameBuffered(1), isPlaying(false), stream(NULL)
 	{
 		frameRateLabel.setAlignment(Qt::AlignRight);
 		frameRateLabel.setFixedSize(90, 20);
+		nextFrameButton.setFixedSize(20, 20);
 		timeLabel.setAlignment(Qt::AlignCenter);
 		timeLabel.setFixedSize(80, 20);
 		frameRateSpinBox.setRange(1, 1000);
@@ -58,6 +59,7 @@
 
 		layout1.addWidget(&timeLabel);
 		layout1.addWidget(&timeSlider);
+		layout1.addWidget(&nextFrameButton);
 
 		layout2.addWidget(&playButton);
 		layout2.addWidget(&stopButton);
@@ -77,13 +79,14 @@
 
 		timer.setInterval(1000);
 
-		QObject::connect(&loadVideoButton,		SIGNAL(released(void)), 		this, SLOT(loadVideoFile(void)));
-		QObject::connect(&optionsButton,		SIGNAL(released(void)), 		this, SLOT(changeOptions(void)));
-		QObject::connect(&playButton,			SIGNAL(released(void)),			this, SLOT(togglePlayPause(void)));
-		QObject::connect(&stopButton,			SIGNAL(released(void)),			this, SLOT(stop(void)));
-		QObject::connect(&timer, 			SIGNAL(timeout(void)),			this, SLOT(timerTick(void)));
-		QObject::connect(&timeSlider,			SIGNAL(sliderMoved(int)),		this, SLOT(seek(void)));
-		QObject::connect(&frameRateSpinBox,		SIGNAL(valueChanged(int)),		this, SLOT(changeFrameRate(void)));
+		QObject::connect(&loadVideoButton,	SIGNAL(released(void)), 	this, SLOT(loadVideoFile(void)));
+		QObject::connect(&optionsButton,	SIGNAL(released(void)), 	this, SLOT(changeOptions(void)));
+		QObject::connect(&playButton,		SIGNAL(released(void)),		this, SLOT(togglePlayPause(void)));
+		QObject::connect(&stopButton,		SIGNAL(released(void)),		this, SLOT(stop(void)));
+		QObject::connect(&timer, 		SIGNAL(timeout(void)),		this, SLOT(timerTick(void)));
+		QObject::connect(&timeSlider,		SIGNAL(sliderMoved(int)),	this, SLOT(seek(void)));
+		QObject::connect(&frameRateSpinBox,	SIGNAL(valueChanged(int)),	this, SLOT(changeFrameRate(void)));
+		QObject::connect(&nextFrameButton,	SIGNAL(released(void)),		this, SLOT(oneFrameForward(void)));
 
 		frameRateSpinBox.setValue(30);
 	}
@@ -115,13 +118,16 @@
 
 	void VideoControls::updateFrame(void)
 	{
-		stream->readNextFrame();
+		if(videoStreamIsValid())
+		{
+			stream->readNextFrame();
 
-		// stop if over :
-		if(stream->isOver())
-			stop();
+			// stop if over :
+			if(stream->isOver())
+				stop();
 
-		emit frameUpdated();
+			emit frameUpdated();
+		}
 	}
 
 	void VideoControls::updateInfoTool(const QString& filename)
@@ -184,7 +190,7 @@
 
 	void VideoControls::loadVideoFile(void)
 	{
-		QString filename = QFileDialog::getOpenFileName(NULL, QObject::tr("Open a video..."), ".", "*.mp4 *.avi *.mov *.flv *.webm");
+		QString filename = QFileDialog::getOpenFileName(parentWidget(), QObject::tr("Open a video..."), ".", "*.mp4 *.avi *.mov *.flv *.webm");
 
 		if (!filename.isEmpty())
 		{
@@ -212,7 +218,7 @@
 			}
 			catch(Exception& e)
 			{
-				QMessageBox::information(NULL, tr("VideoControls::loadVideoFile - Error while loading the video : "), e.what());
+				QMessageBox::information(parentWidget(), tr("VideoControls::loadVideoFile - Error while loading the video : "), e.what());
 			}
 		}
 	}
@@ -282,6 +288,20 @@
 			pause();
 		else
 			play();
+	}
+
+	void VideoControls::oneFrameForward(void)
+	{
+		if(videoStreamIsValid())
+		{
+			stream->readNextFrame();
+
+			// stop if over :
+			if(stream->isOver())
+				stop();
+
+			emit frameUpdated();
+		}
 	}
 
 // VideoRecordingDialog
@@ -484,7 +504,7 @@
 	{
 		if(!isRecording())
 		{
-			QString filename = QFileDialog::getSaveFileName(NULL);
+			QString filename = QFileDialog::getSaveFileName(parentWidget());
 
 			if (!filename.isEmpty())
 			{
@@ -515,12 +535,12 @@
 				}
 				catch(Exception& e)
 				{
-					QMessageBox::information(NULL, "VideoRecorderControls::startRecording - Error : ", e.what());
+					QMessageBox::information(parentWidget(), "VideoRecorderControls::startRecording - Error : ", e.what());
 				}
 			}
 		}
 		else
-			QMessageBox::information(NULL, "VideoRecorderControls::startRecording", "A recording session is already in place.");
+			QMessageBox::information(parentWidget(), "VideoRecorderControls::startRecording", "A recording session is already in place.");
 	}
 
 	void VideoRecorderControls::stopRecording(void)

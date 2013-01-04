@@ -13,7 +13,7 @@
 /*     Description   : Qt Widget for rendering textures.                                                         */
 /*		       It includes a set of tools to zoom, translate and rotate the texture.                     */
 /*		       The user can define the pixel aspect ratio and the image aspect ratio.			 */
-/*		       Mouse commands (enable with WindowRenderer::setMouseActions                               */
+/*		       Mouse commands (enable with WindowRenderer::setMouseActions)                              */
 /*		           - single left click                 : give focus (for keyboard interaction).          */
 /*		           - left click and drag               : translation.                                    */
 /*		           - right click and drag (horizontal) : rotation.                                       */
