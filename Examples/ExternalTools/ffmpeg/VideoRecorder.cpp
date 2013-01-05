@@ -27,6 +27,8 @@
 		textureReader("VideoRecorder_PBOTextureReader", format, GL_STREAM_READ_ARB)
 	   #endif
 	{
+		addInputPort("input");
+
 		int retCode = 0;
 
 		if(format.getWidth()%2!=0 || format.getHeight()%2!=0)
@@ -213,7 +215,7 @@
 		HdlTexture& 	texture	= in();
 
 		// Read texture :
-		textureReader << texture;
+		textureReader << texture << OutputDevice::Process;
 
 		// Copy the texture to the buffer :
 		#ifndef __USE_PBO__

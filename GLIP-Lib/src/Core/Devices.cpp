@@ -123,6 +123,16 @@
 	}
 
 	/**
+	\fn void InputDevice::declareNewImageOnAllPorts(void)
+	\brief Force declaration of a new image on all ports.
+	**/
+	void InputDevice::declareNewImageOnAllPorts(void)
+	{
+		for(int i=0; i<getNumOutputPort(); i++)
+			declareNewImage(i);
+	}
+
+	/**
 	\fn bool InputDevice::isNewImage(int port)
 	\brief Check if there is a new image.
 	\param port The index of the port. Default is first port.
@@ -235,7 +245,10 @@
 		if(!portHasValidOutput(port))
 			throw Exception("InputDevice::out - Port " + getOutputPortName(port) + " has no valid output.", __FILE__, __LINE__);
 		else
+		{
+			newImages[port] = false;
 			return *texturesLinks[port];
+		}
 	}
 
 	/**
@@ -322,6 +335,9 @@
 	**/
 	OutputDevice& OutputDevice::operator<<(HdlTexture& texture)
 	{
+		if(getNumInputPort()==0)
+			throw Exception("OutputDevice::operator<<(HdlTexture&) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+
 		if(argumentsList.size()>=getNumInputPort())
 			throw Exception("OutputDevice::operator<<(HdlTexture&) - Too much arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
 
@@ -338,6 +354,9 @@
 	**/
 	OutputDevice& OutputDevice::operator<<(Pipeline& pipeline)
 	{
+		if(getNumInputPort()==0)
+			throw Exception("OutputDevice::operator<<(Pipeline&) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
 			if(argumentsList.size()>=getNumInputPort())
@@ -357,6 +376,9 @@
 	**/
 	OutputDevice& OutputDevice::operator<<(OutputDevice::ActionType a)
 	{
+		if(getNumInputPort()==0)
+			throw Exception("OutputDevice::operator<<(OutputDevice::ActionType) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+
 		// Check the number of arguments given :
 		if(argumentsList.size()!=getNumInputPort())
 			throw Exception("OutputDevice::operator<<(ActionType) - Too few arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);

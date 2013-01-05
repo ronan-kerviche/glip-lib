@@ -46,7 +46,7 @@
 // VideoControls
 	VideoControls::VideoControls(QWidget* parent)
 	 : QVBoxLayout(parent), timeLabel("--:--"), frameRateLabel("Frame rate : "), playButton("Play"), stopButton("Stop"), loadVideoButton("Load video..."), optionsButton("Options"), infoLine("(No video)"), timeSlider(Qt::Horizontal), nextFrameButton(">"),
-	   minFilter(GL_NEAREST), magFilter(GL_NEAREST), sWrapping(GL_CLAMP), tWrapping(GL_CLAMP), maxMipmapLevel(0), numFrameBuffered(1), isPlaying(false), stream(NULL)
+	   minFilter(GL_NEAREST), magFilter(GL_NEAREST), sWrapping(GL_CLAMP), tWrapping(GL_CLAMP), maxMipmapLevel(0), numFrameBuffered(1), playing(false), stream(NULL)
 	{
 		frameRateLabel.setAlignment(Qt::AlignRight);
 		frameRateLabel.setFixedSize(90, 20);
@@ -99,7 +99,7 @@
 
 	void VideoControls::timerTick(void)
 	{
-		if(isPlaying && !timeSlider.isSliderDown() && stream!=NULL)
+		if(playing && !timeSlider.isSliderDown() && stream!=NULL)
 		{
 			stream->readNextFrame();
 			timeSlider.setValue(stream->getCurrentTimeSec());
@@ -134,10 +134,10 @@
 	{
 		if(stream!=NULL)
 		{
-			std::string tip = "Current video have the following parameters :\n    Minification filter \t : " + glParamName(stream->texture(0).getMinFilter()) + "\n    Magnification filter \t : " + glParamName(stream->texture(0).getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(stream->texture(0).getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(stream->texture(0).getTWrapping()) + "\n    Max Mipmap level \t : " + to_string(stream->texture(0).getMaxLevel()) + "\n    Number of buffers \t : " + to_string(stream->getNumBuffers());
+			std::string tip = "Current video have the following parameters :\n    Minification filter \t : " + glParamName(stream->out(0).getMinFilter()) + "\n    Magnification filter \t : " + glParamName(stream->out(0).getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(stream->out(0).getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(stream->out(0).getTWrapping()) + "\n    Max Mipmap level \t : " + to_string(stream->out(0).getMaxLevel()) + "\n    Number of buffers \t : " + to_string(stream->getNumOutputPort());
 			infoLine.setToolTip(tip.c_str());
 
-			std::string info = "File : " + filename.toStdString() + " (" + to_string(stream->texture(0).getWidth()) + "x" + to_string(stream->texture(0).getHeight()) + ")";
+			std::string info = "File : " + filename.toStdString() + " (" + to_string(stream->out(0).getWidth()) + "x" + to_string(stream->out(0).getHeight()) + ")";
 			infoLine.setText(info.c_str());
 		}
 		else
@@ -178,6 +178,11 @@
 	bool VideoControls::videoStreamIsValid(void) const
 	{
 		return stream!=NULL;
+	}
+
+	bool VideoControls::isPlaying(void) const
+	{
+		return playing && !timeSlider.isSliderDown() && stream!=NULL;
 	}
 
 	VideoStream& VideoControls::videoStream(void)
@@ -244,9 +249,9 @@
 
 	void VideoControls::play(void)
 	{
-		if(!isPlaying && stream!=NULL)
+		if(!playing && stream!=NULL)
 		{
-			isPlaying = true;
+			playing = true;
 			playButton.setText("Pause");
 			timer.start();
 		}
@@ -254,9 +259,9 @@
 
 	void VideoControls::pause(void)
 	{
-		if(isPlaying)
+		if(playing)
 		{
-			isPlaying = false;
+			playing = false;
 			playButton.setText("Play");
 			timer.stop();
 		}
@@ -266,7 +271,7 @@
 	{
 		if(stream!=NULL)
 		{
-			isPlaying = false;
+			playing = false;
 			timer.stop();
 
 			playButton.setText("Play");
@@ -284,7 +289,7 @@
 
 	void VideoControls::togglePlayPause(void)
 	{
-		if(isPlaying)
+		if(playing)
 			pause();
 		else
 			play();
@@ -567,13 +572,33 @@
 
 	void VideoRecorderControls::submitNewFrame(HdlTexture& texture)
 	{
+		static bool lock = false;
+
+		if(lock)
+			return;
+
+		lock = true;
+
 		if(!isRecording())
+		{
+			lock = false;
 			throw Exception("VideoRecorderControls::submitNewFrame - Not recording.", __FILE__, __LINE__);
+		}
 		else
 		{
-			(*recorder) << texture;
+			try
+			{
+				(*recorder) << texture << OutputDevice::Process;
 
-			recordingDialog.updateFrameCount(recorder->getNumEncodedFrames());
-			recordingDialog.updateDuration(recorder->getTotalVideoDurationSec());
+				recordingDialog.updateFrameCount(recorder->getNumEncodedFrames());
+				recordingDialog.updateDuration(recorder->getTotalVideoDurationSec());
+			}
+			catch(Exception& e)
+			{
+				lock = false;
+				throw e;
+			}
 		}
+
+		lock = false;
 	}

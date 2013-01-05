@@ -72,7 +72,7 @@
 					numFrameBuffered;
 
 			// Player data :
-			bool		isPlaying;
+			bool		playing;
 			VideoStream	*stream;
 
 		private slots :
@@ -88,6 +88,7 @@
 			~VideoControls(void);
 
 			bool		videoStreamIsValid(void) const;
+			bool		isPlaying(void) const;
 			VideoStream& 	videoStream(void);
 
 		public slots :

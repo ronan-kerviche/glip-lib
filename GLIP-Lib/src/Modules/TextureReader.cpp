@@ -158,6 +158,7 @@
 	{
 		if(isCompressed())
 			throw Exception("PBOTextureReader::PBOTextureReader - Can not read directly compressed textures with PBOTextureReader (for " + getNameExtended() + ").", __FILE__, __LINE__);
+		addInputPort("input");
 	}
 
 	PBOTextureReader::~PBOTextureReader(void)
@@ -211,6 +212,8 @@
 	{
 		if(!isCompressed())
 			throw Exception("CompressedTextureReader::CompressedTextureReader - Can only read compressed texture format (for " + getNameExtended() + ").", __FILE__, __LINE__);
+
+		addInputPort("input");
 	}
 
 	CompressedTextureReader::~CompressedTextureReader(void)
@@ -299,6 +302,8 @@
 
 		if(!customTexture)
 			targetTexture = new HdlTexture(formatOut);
+
+		addInputPort("input");
 	}
 
 	TextureCopier::~TextureCopier(void)

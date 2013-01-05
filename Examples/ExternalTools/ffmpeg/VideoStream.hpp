@@ -32,7 +32,7 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-	class VideoStream : public InterfaceFFMPEG
+	class VideoStream : public InterfaceFFMPEG, public InputDevice
 	{
 		private :
 
@@ -67,14 +67,12 @@
 			VideoStream(const std::string& filename, unsigned int numFrameBuffered = 1, GLenum minFilter=GL_NEAREST, GLenum magFilter=GL_NEAREST, GLenum sWrapping=GL_CLAMP, GLenum tWrapping=GL_CLAMP, int maxLevel=0);
 			~VideoStream(void);
 
-			int		getNumBuffers(void) const;
 			int  		getReadFrameCount(void) const;
 			float		getVideoDurationSec(void) const;
 			float  		getCurrentTimeSec(void) const;
 			bool		isOver(void) const;
 
 			void 		readNextFrame(void);
-			HdlTexture& 	texture(unsigned int id=0); // newest is 0, oldest is getNumBuffers()-1
 			void		seek(float time_sec);
 	};
 

@@ -102,14 +102,33 @@
 
 	void HistogramInterface::updateShow(void)
 	{
+		static bool lock = false;
+
+		if(lock)
+			return;
+
+		lock = true;
+
 		if(pipeline!=NULL)
 		{
-			float imageAspectRatio = static_cast<float>(pipeline->out(0).getWidth())/static_cast<float>(pipeline->out(0).getHeight());
-			window.renderer().setImageAspectRatio(imageAspectRatio);
-			window.renderer() << pipeline->out(0);
+			try
+			{
+				float imageAspectRatio = static_cast<float>(pipeline->out(0).getWidth())/static_cast<float>(pipeline->out(0).getHeight());
+				window.renderer().setImageAspectRatio(imageAspectRatio);
+				window.renderer() << pipeline->out(0) << OutputDevice::Process;
+			}
+			catch(Exception& e)
+			{
+				log << "HistogramInterface::updateShow - Exception caught : " << std::endl;
+				log << e.what() << std::endl;
+				std::cerr << "HistogramInterface::updateShow - Exception caught : " << std::endl;
+				std::cerr << e.what() << std::endl;
+			}
 		}
 		else
 			window.renderer().clearWindow();
+
+		lock = false;
 	}
 
 	HistogramApplication::HistogramApplication(int& argc, char** argv)

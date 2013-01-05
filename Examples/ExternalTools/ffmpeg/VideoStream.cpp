@@ -18,7 +18,7 @@
 #include <cstring>
 
 	VideoStream::VideoStream(const std::string& filename, unsigned int numFrameBuffered, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
-	 : idVideoStream(0), readFrameCount(0), timeStampFrameRate(1.0f), timeStampOffset(0), timeStampOfLastFrameRead(0), endReached(false),
+	 : __ReadOnly_ComponentLayout("VideoStream"), InputDevice("VideoStream"), idVideoStream(0), readFrameCount(0), timeStampFrameRate(1.0f), timeStampOffset(0), timeStampOfLastFrameRead(0), endReached(false),
 	   pFormatCtx(NULL), pCodecCtx(NULL), pCodec(NULL), pFrame(NULL), pFrameRGB(NULL), buffer(NULL), pSWSCtx(NULL), idCurrentBufferForWritting(0)
 	{
 		#ifdef __USE_PBO__
@@ -120,11 +120,15 @@
 		// Create the texture :
 		for(unsigned int i=0; i<numFrameBuffered; i++)
 		{
+			addOutputPort("output" + to_string(i));
 			textureBuffers.push_back( new HdlTexture(frameFormat) );
 
 			// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
 			// We are also doing this to prevent reading from an empty (not-yet-allocated) texture.
 			textureBuffers.back()->fill(0);
+
+			// Set links :
+			setTextureLink(textureBuffers.back(), i);
 		}
 
 		#ifdef __USE_PBO__
@@ -162,11 +166,6 @@
 
 		// Close the video file
 		avformat_close_input(&pFormatCtx);
-	}
-
-	int VideoStream::getNumBuffers(void) const
-	{
-		return textureBuffers.size();
 	}
 
 	int VideoStream::getReadFrameCount(void) const
@@ -232,7 +231,11 @@
 							pbo->copyToTexture(*textureBuffers[idCurrentBufferForWritting]);
 						#endif
 
-						// Change buffer :
+						// Change links :
+						for(int k=0; k<textureBuffers.size(); k++)
+							setTextureLink(textureBuffers[(idCurrentBufferForWritting+k)%textureBuffers.size()], k);
+
+						// Update count :
 						idCurrentBufferForWritting++;
 						idCurrentBufferForWritting = idCurrentBufferForWritting % textureBuffers.size();
 
@@ -265,20 +268,6 @@
 				return ;
 			}
 		}
-	}
-
-	HdlTexture& VideoStream::texture(unsigned int id)
-	{
-		 // newest is 0, oldest is getNumBuffers()-1
-
-		 if(id>=getNumBuffers())
-			throw Exception("VideoStream::texture - Index out of bounds.", __FILE__, __LINE__);
-
-		 int idCurrentBufferForReading = static_cast<int>(idCurrentBufferForWritting)-1-id;
-
-		 while(idCurrentBufferForReading<0) idCurrentBufferForReading += textureBuffers.size();
-
-		 return *textureBuffers[idCurrentBufferForReading];
 	}
 
 	void VideoStream::seek(float time_sec)

@@ -8,6 +8,8 @@
 	#include <QApplication>
 	#include <QTimer>
 
+	//#define __RADOM_GEN__
+
 	// Prototypes :
 		class WindowRenderer;
 
@@ -28,14 +30,21 @@
 				std::fstream	log;
 				WindowRenderer	window;
 				QTimer 		timer;
-				ProceduralInput *inp;
+
+				#ifdef __RADOM_GEN__
+					HdlTexture	*tInput;
+				#else
+					ProceduralInput *inp;
+				#endif
+
 				Pipeline	*p1,
 						*p2;
-				HdlTexture	*t,
-						*target;
+				HdlTexture	*target;
 
 				// Functions :
-				void randomTexture(float alpha);
+				#ifdef __RADOM_GEN__
+					void randomTexture(float alpha);
+				#endif
 
 			public :
 				// Functions :

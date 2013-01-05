@@ -67,9 +67,9 @@
 	{
 		if(videoControls.videoStreamIsValid() && pipelineLoaderInterface.isPipelineValid())
 		{
-			if(pipelineLoaderInterface.pipeline().getNumInputPort() >  videoControls.videoStream().getNumBuffers())
+			if(pipelineLoaderInterface.pipeline().getNumInputPort() >  videoControls.videoStream().getNumOutputPort())
 				QMessageBox::warning(NULL, tr("Test_ffmpeg - Warning : "), "Pipeline has more input ports than video frames buffered. Last port will receive a duplicate of the oldest frame in the buffer queue.");
-			else if(pipelineLoaderInterface.pipeline().getNumInputPort() <  videoControls.videoStream().getNumBuffers())
+			else if(pipelineLoaderInterface.pipeline().getNumInputPort() <  videoControls.videoStream().getNumOutputPort())
 				QMessageBox::warning(NULL, tr("Test_ffmpeg - Warning : "), "Pipeline has less input ports than video frames buffered.");
 		}
 
@@ -81,11 +81,11 @@
 		if(videoControls.videoStreamIsValid() && pipelineLoaderInterface.isPipelineValid())
 		{
 			for(int i=0; i<pipelineLoaderInterface.pipeline().getNumInputPort(); i++)
-				pipelineLoaderInterface.pipeline() << videoControls.videoStream().texture( std::min(i, videoControls.videoStream().getNumBuffers()-1) );
+				pipelineLoaderInterface.pipeline() << videoControls.videoStream().out( std::min(i, videoControls.videoStream().getNumOutputPort()-1) );
 
 			pipelineLoaderInterface.pipeline() << Pipeline::Process;
 
-			if(videoRecorderControls.isRecording())
+			if(videoRecorderControls.isRecording() && videoControls.isPlaying())
 				videoRecorderControls.submitNewFrame( pipelineLoaderInterface.pipeline().out( videoRecorderControls.getRecordedPort() ) );
 		}
 
@@ -94,17 +94,36 @@
 
 	void TestFFMPEGInterface::updateOutput(void)
 	{
-		if(videoControls.videoStreamIsValid())
-		{
-			int 	w = pipelineLoaderInterface.currentOutput( videoControls.videoStream().texture() ).getWidth(),
-				h = pipelineLoaderInterface.currentOutput( videoControls.videoStream().texture() ).getHeight();
-			float 	imageAspectRatio = static_cast<float>(w)/static_cast<float>(h);
-			window.renderer().setImageAspectRatio(imageAspectRatio);
+		static bool lock = false;
 
-			window.renderer() << pipelineLoaderInterface.currentOutput( videoControls.videoStream().texture() ) << OutputDevice::Process;
+		if(lock)
+			return;
+
+		lock = true;
+
+		try
+		{
+			if(videoControls.videoStreamIsValid())
+			{
+				int 	w = pipelineLoaderInterface.currentOutput( videoControls.videoStream().out() ).getWidth(),
+					h = pipelineLoaderInterface.currentOutput( videoControls.videoStream().out() ).getHeight();
+				float 	imageAspectRatio = static_cast<float>(w)/static_cast<float>(h);
+				window.renderer().setImageAspectRatio(imageAspectRatio);
+
+				window.renderer() << pipelineLoaderInterface.currentOutput( videoControls.videoStream().out() ) << OutputDevice::Process;
+			}
+			else
+				window.renderer().clearWindow();
 		}
-		else
-			window.renderer().clearWindow();
+		catch(Exception& e)
+		{
+			log << "TestFFMPEGInterface::updateOutput - Exception caught : " << std::endl;
+			log << e.what() << std::endl;
+			std::cerr << "TestFFMPEGInterface::updateOutput - Exception caught : " << std::endl;
+			std::cerr << e.what() << std::endl;
+		}
+
+		lock = false;
 	}
 
 	void TestFFMPEGInterface::aboutToStartRecording(void)

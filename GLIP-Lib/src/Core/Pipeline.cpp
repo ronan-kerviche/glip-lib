@@ -1661,7 +1661,7 @@
 	/**
 	\fn Pipeline& Pipeline::operator<<(Pipeline& pipeline)
 	\brief Add all the output of variable pipeline as input of this pipeline. The user must maintain the texture(s) in memory while this Pipeline hasn't received a Pipeline::Process or Pipeline::Reset signal.
-	\param texture The data to use.
+	\param pipeline The pipeline outputs to append.
 	\return This pipeline or raise an exception if any errors occur.
 	**/
 	Pipeline& Pipeline::operator<<(Pipeline& pipeline)

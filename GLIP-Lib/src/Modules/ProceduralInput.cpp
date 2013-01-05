@@ -54,8 +54,8 @@
 						"    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0; \n"
 						"    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
 
-		if(varsOut.size()!=1)
-			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have only one output (" + to_string(varsOut.size()) + " were found).", __FILE__, __LINE__);
+		if(varsOut.size()==0)
+			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have at least one output (" + to_string(varsOut.size()) + " were found).", __FILE__, __LINE__);
 
 		try
 		{
@@ -72,10 +72,14 @@
 			vbo = HdlVBO::generate2DStandardQuad();
 
 			// Create a buffer :
-			renderer	= new HdlFBO(fmt);
+			renderer	= new HdlFBO(fmt, varsOut.size());
 
 			// Link the buffer to the input device :
-			setTextureLink((*renderer)[0]);
+			for(int i=0; i<varsOut.size(); i++)
+			{
+				addOutputPort(varsOut[i]);
+				setTextureLink((*renderer)[i],i);
+			}
 		}
 		catch(Exception& e)
 		{
@@ -96,7 +100,7 @@
 	void ProceduralInput::generateNewFrame(void)
 	{
 		// Prepare the renderer
-			renderer->beginRendering(1);
+			renderer->beginRendering(); // all of the outputs...
 
 		// Enable states
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -117,7 +121,7 @@
 		// End rendering
 			renderer->endRendering();
 
-		declareNewImage();
+		declareNewImageOnAllPorts();
 	}
 
 	/**

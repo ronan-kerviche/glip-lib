@@ -58,6 +58,7 @@
 					void 		setTextureLink(HdlTexture* tex,const std::string& port);
 					void		declareNewImage(int port=0);
 					void		declareNewImage(const std::string& port);
+					void		declareNewImageOnAllPorts(void);
 				public :
 					// Tools
 					~InputDevice(void);

@@ -107,6 +107,13 @@
 
 	void IHM::updateOutput(void)
 	{
+		static bool lock = false;
+
+		if(lock)
+			return;
+
+		lock = true;
+
 		if(imageLoaderInterface.getNumTextures()==0)
 			window.renderer().clearWindow();
 		else
@@ -128,6 +135,8 @@
 				log << e.what() << std::endl;
 			}
 		}
+
+		lock = false;
 	}
 
 

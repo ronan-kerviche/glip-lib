@@ -5,7 +5,13 @@
 
 // Src :
 	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv)
-	 : QApplication(argc,argv), w(_w), h(_h), window(NULL, w, h), inp(NULL), p1(NULL), p2(NULL), t(NULL), target(NULL)
+	 : QApplication(argc,argv), w(_w), h(_h), window(NULL, w, h), p1(NULL), p2(NULL), target(NULL),
+		#ifdef __RADOM_GEN__
+			tInput(NULL)
+		#else
+			inp(NULL)
+		#endif
+
 	{
 		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
@@ -31,7 +37,7 @@
 			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
 			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
 
-			HdlTextureFormat fmt(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+			HdlTextureFormat fmt(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 
 			// Create the pipeline :
 				#define __LOAD_FROM_FILE__
@@ -64,20 +70,27 @@
 			// Create a random starting point :
 				fmt.setSWrapping(GL_REPEAT); // pac-man repetition
 				fmt.setTWrapping(GL_REPEAT);
-				t = new HdlTexture(fmt);
 
+			#ifdef __RADOM_GEN__
+				tInput = new HdlTexture(fmt);
 				randomTexture(0.3);
-				//window << (*t);
 
-			// Create another weird random (mathematical) point :
-			ShaderSource inputSrc("./Filters/gameInput.glsl");
-			inp 	= new ProceduralInput("InputPattern", fmt, inputSrc);
-			inp->prgm().modifyVar("t",HdlProgram::Var,2);
-			inp->generateNewFrame();
+				// Do the first pass :
+				(*p1) << (*tInput) << Pipeline::Process;
+				(*p2) << (*tInput) << Pipeline::Process;
+			#else
+				// Create another random (mathematical) point :
+				ShaderSource inputSrc("./Filters/gameInput.glsl");
+				inp 	= new ProceduralInput("InputPattern", fmt, inputSrc);
+				inp->prgm().modifyVar("t",HdlProgram::Var,1);
+				inp->generateNewFrame();
 
-			// Do the first pass :
-				(*p1) << (*t) << Pipeline::Process;
-				(*p2) << (*t) << Pipeline::Process;
+				// Do the first pass :
+				(*p1) << inp->out(0) << Pipeline::Process;
+				(*p2) << inp->out(1) << Pipeline::Process;
+			#endif
+
+
 
 			// Update image aspect ratio :
 			float outputAspectRatio = static_cast<float>(p1->out(0).getWidth())/static_cast<float>(p1->out(0).getHeight());
@@ -86,7 +99,7 @@
 			timer.setInterval(300);
 			QObject::connect(&timer, 	SIGNAL(timeout(void)),		this, SLOT(compute()));
 			QObject::connect(&window, 	SIGNAL(actionReceived(void)), 	this, SLOT(show()));
-			QObject::connect(&window, 	SIGNAL(resized(void)), 	this, SLOT(show()));
+			QObject::connect(&window, 	SIGNAL(resized(void)), 		this, SLOT(show()));
 			timer.start();
 		}
 		catch(Exception& e)
@@ -110,47 +123,53 @@
 		log << "> End" << std::endl;
 		log.close();
 
-		delete inp;
 		delete p1;
 		delete p2;
-		delete t;
+
+		#ifdef __RADOM_GEN__
+			delete tInput;
+		#else
+			delete inp;
+		#endif
 	}
 
-	void GameOfLife::randomTexture(float alpha)
-	{
-		srand(time(NULL));
-		unsigned char *tmp = new unsigned char [3*w*h];
-		for(int i=0; i<3*w*h; i++)
+	#ifdef __RADOM_GEN__
+		void GameOfLife::randomTexture(float alpha)
 		{
-			float a = static_cast<float>(rand())/static_cast<float>(RAND_MAX);
-			tmp[i] = 255*(a<alpha);
-		}
+			srand(time(NULL));
+			unsigned char *tmp = new unsigned char [3*w*h];
+			for(int i=0; i<3*w*h; i++)
+			{
+				float a = static_cast<float>(rand())/static_cast<float>(RAND_MAX);
+				tmp[i] = 255*(a<alpha);
+			}
 
-		t->write(tmp);
-		delete[] tmp;
-	}
+			tInput->write(tmp);
+			delete[] tmp;
+		}
+	#endif
 
 	void GameOfLife::compute(void)
 	{
 		static int i = 0;
-		static int j = 3;
+		static int j = 2;
 
 		try
 		{
-			if(i==100)
+			if(i==10)
 			{
 				//throw Exception("Stop");
 				std::cout << "> Reset" << std::endl;
 				//reset :
-				#define __RADOM_GEN__
 				#ifdef __RADOM_GEN__
 					randomTexture(0.3);
-					(*p1) << (*t) << Pipeline::Process;
-					(*p2) << (*t) << Pipeline::Process;
+					(*p1) << (*tInput) << Pipeline::Process;
+					(*p2) << (*tInput) << Pipeline::Process;
 				#else
-					inp->prgm().modifyVar("t",HdlProgram::SHADER_VAR,j);
-					(*p1) << inp->texture() << Pipeline::Process;
-					(*p2) << inp->texture() << Pipeline::Process;
+					inp->prgm().modifyVar("t",HdlProgram::Var,j);
+					inp->generateNewFrame();
+					(*p1) << inp->out(0) << Pipeline::Process;
+					(*p2) << inp->out(1) << Pipeline::Process;
 					j++;
 				#endif
 
@@ -190,7 +209,7 @@
 	void GameOfLife::show(void)
 	{
 		if(target!=NULL)
-			window << (*target);
+			window << (*target) << OutputDevice::Process;
 		else
 			window.clearWindow();
 	}
