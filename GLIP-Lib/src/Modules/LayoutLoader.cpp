@@ -382,15 +382,15 @@
 		if( !from_string(arg[1],h) )
 			throw Exception("LayoutLoader::buildFormat - enable to read integers for height for " + name + ", got : " + arg[1] + ".", __FILE__, __LINE__);
 
-		c = gl_from_string(arg[2]);
-		d = gl_from_string(arg[3]);
+		c = glFromString(arg[2]);
+		d = glFromString(arg[3]);
 		if( c==GL_FALSE )
 			throw Exception("LayoutLoader::buildFormat - Unable to read flags for channel layout for " + name + ", got : " + arg[2] + ".", __FILE__, __LINE__);
 		if( d==GL_FALSE )
 			throw Exception("LayoutLoader::buildFormat - Unable to read flags for bit depth for " + name + ", got : " + arg[3] + ".", __FILE__, __LINE__);
 
-		mf = gl_from_string(arg[4]);
-		Mf = gl_from_string(arg[5]);
+		mf = glFromString(arg[4]);
+		Mf = glFromString(arg[5]);
 		if( mf==GL_FALSE )
 			throw Exception("LayoutLoader::buildFormat - Unable to read flags for min filtering for " + name + ", got : " + arg[4] + ".", __FILE__, __LINE__);
 		if( Mf==GL_FALSE )
@@ -402,7 +402,7 @@
 		// Improvements :
 		if(arg.size()>=7)
 		{
-			GLenum sw = gl_from_string(arg[6]);
+			GLenum sw = glFromString(arg[6]);
 
 			if( sw==GL_FALSE )
 				throw Exception("LayoutLoader::buildFormat - Unable to read SWrapping option for format " + name + ", got : " + arg[6] + ".", __FILE__, __LINE__);
@@ -412,7 +412,7 @@
 
 		if(arg.size()>=8)
 		{
-			GLenum tw = gl_from_string(arg[7]);
+			GLenum tw = glFromString(arg[7]);
 
 			if( tw==GL_FALSE )
 				throw Exception("LayoutLoader::buildFormat - Unable to read TWrapping option for format " + name + ", got : " + arg[7] + ".", __FILE__, __LINE__);

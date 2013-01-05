@@ -154,7 +154,7 @@
 			void setImageAspectRatio(float ratio);	// Fix the image aspect ratio (W/H)
 			void setClearColor(float red, float green, float blue);
 			void clearWindow(bool swapNow = true);
-			void process(HdlTexture& t); 		// inherited from OutputDevice
+			void process(void); 		// inherited from OutputDevice
 
 			// Enable/Disable actions
 			bool isKeyboardActionsEnabled(void) const;

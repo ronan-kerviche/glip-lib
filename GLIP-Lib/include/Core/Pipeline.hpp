@@ -260,11 +260,14 @@ How to process the inputs :
 
 					int 		getNumActions(void);
 					int 		getSize(bool askDriver = false);
-					Pipeline& 	operator<<(HdlTexture&);
-					Pipeline& 	operator<<(ActionType);
+					Pipeline& 	operator<<(HdlTexture& texture);
+					Pipeline& 	operator<<(Pipeline& pipeline);
+					//Pipeline& 	operator<<(InputDevice& device);
+					Pipeline& 	operator<<(ActionType a);
 					HdlTexture& 	out(int id = 0);
-					HdlTexture& 	out(const std::string&);
+					HdlTexture& 	out(const std::string& portName="");
 					int 		getFilterID(const std::string& path);
+					Filter& 	operator[](int filterID);
 					Filter& 	operator[](const std::string& path);
 					void 		enablePerfsMonitoring(void);
 					void 		disablePerfsMonitoring(void);

@@ -25,15 +25,12 @@
 #define __GLIP_DEVICES__
 
     // Includes
-        #include "NamingLayout.hpp"
+        #include "Component.hpp"
         #include "HdlTexture.hpp"
+        #include "Pipeline.hpp"
 
 	namespace Glip
 	{
-		namespace CoreGL
-		{
-			class HdlTexture;
-		}
 
 		using namespace CoreGL;
 
@@ -44,48 +41,82 @@
 			\class InputDevice
 			\brief Input of data onto the GPU
 			**/
-			class InputDevice : public ObjectName
+			class InputDevice : public ComponentLayout
 			{
 				private :
 					// Data
-					HdlTexture* 	t;
-					bool        	newImage;
-					int         	imagesMissed;
+					std::vector<HdlTexture*> 	texturesLinks;
+					std::vector<bool>        	newImages;
+					std::vector<int>         	imagesMissedCount;
+
 				protected :
 					// Tools
 					InputDevice(const std::string& name);
 
-					void 		setTextureLink(HdlTexture* tex);
-					void        	declareNewImage(void);
+					int 		addOutputPort(const std::string &name);
+					void 		setTextureLink(HdlTexture* tex, int port=0);
+					void 		setTextureLink(HdlTexture* tex,const std::string& port);
+					void		declareNewImage(int port=0);
+					void		declareNewImage(const std::string& port);
 				public :
 					// Tools
 					~InputDevice(void);
-					bool        	isNewImage(void);
-					int         	getMissedImagesCount(void);
-					HdlTexture& 	texture(void);
+
+					bool 		isNewImage(int port=0) const;
+					bool		isNewImage(const std::string& port) const;
+					int		getMissedImagesCount(int port=0) const;
+					int		getMissedImagesCount(const std::string& port) const;
+					int		getMissedImagesTotalCount(void) const;
+					bool		portHasValidOutput(int port=0) const;
+					bool		portHasValidOutput(const std::string& port) const;
+					HdlTexture&	out(int port=0);
+					HdlTexture& 	out(const std::string& port);
 			};
 
 			/**
 			\class OutputDevice
 			\brief Output of data from the GPU
 			**/
-			class OutputDevice : public ObjectName
+			class OutputDevice : public ComponentLayout
 			{
+				public :
+					///Actions enumeration.
+					enum ActionType
+					{
+						///To start process.
+						Process	= Pipeline::Process,
+						///To reset argument chain.
+						Reset	= Pipeline::Reset
+					};
+
 				private :
+					int				currentArgId;
+					std::vector<HdlTexture*>	argumentsList;
+
+					void clearArgList(void);
 
 				protected :
 					// Tools
 					OutputDevice(const std::string& name);
 
+					int addInputPort(const std::string &name);
+					HdlTexture& in(int port=0);
+					HdlTexture& in(const std::string& port);
+
 					/**
-					\fn virtual void process(HdlTexture& t) = 0;
-					\brief The user-defined processing stage.
-					\param t The input texture.
+					\fn virtual void process(void) = 0;
+					\brief The user-defined processing stage. This will be called upon the reception of a Process signal. Use OutputDevice::in functions to read input.
 					**/
-					virtual void process(HdlTexture& t) = 0;
+					virtual void process(void) = 0;
+
 				public :
+					~OutputDevice(void);
+
 					// Tools
-					OutputDevice& operator<<(HdlTexture& t);
+					OutputDevice& operator<<(HdlTexture& texture);
+					OutputDevice& operator<<(Pipeline& pipeline);
+					OutputDevice& operator<<(OutputDevice::ActionType a);
+					OutputDevice& operator<<(Pipeline::ActionType a);
 			};
 		}
 	}

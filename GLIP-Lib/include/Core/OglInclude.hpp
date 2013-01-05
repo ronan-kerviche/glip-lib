@@ -79,8 +79,16 @@
 					};
 
 				private :
+					// OpenGL keyword :
+					struct KeywordPair
+					{
+						GLenum 		value;
+						std::string 	name;
+					};
+
 					static bool initDone;
 					static SupportedVendor vendor;
+					static const KeywordPair glKeywords[];
 					HandleOpenGL(void); //no Instance
 
 				public :
@@ -91,14 +99,18 @@
 					static std::string getRendererName(void);
 					static std::string getVersion(void);
 					static std::string getGLSLVersion(void);
+
+					// Friend functions :
+					friend std::string glParamName(GLenum);
+					friend GLenum glFromString(const std::string&);
 			};
 
 			// Tools
-			std::string glErrorToString(bool* caughtError = NULL);
-			bool glErrors(bool verbose = true, bool quietSituations = true);
-			void glDebug(void);
-			std::string glParamName(GLenum param);
-			GLenum gl_from_string(const std::string& name);
+			std::string 	glErrorToString(bool* caughtError = NULL);
+			bool 		glErrors(bool verbose = true, bool quietSituations = true);
+			void 		glDebug(void);
+			std::string 	glParamName(GLenum param);
+			GLenum 		glFromString(const std::string& name);
 		}
 	}
 

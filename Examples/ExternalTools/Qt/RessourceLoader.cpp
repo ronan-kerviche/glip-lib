@@ -119,7 +119,7 @@
 					TextureReader reader("reader",texture.format());
 					//reader.yFlip = true;
 
-					reader << texture;
+					reader << texture << OutputDevice::Process;
 
 					// Create an image with Qt
 					QImage image(reader.getWidth(), reader.getHeight(), QImage::Format_RGB888);
@@ -142,7 +142,7 @@
 					PBOTextureReader reader("reader", texture.format(), GL_STREAM_READ_ARB);
 
 					// Start copy to PBO :
-					reader << texture;
+					reader << texture << OutputDevice::Process;
 
 					// Get access to memory :
 					unsigned char* ptr = reinterpret_cast<unsigned char*>(reader.startReadingMemory());

@@ -54,17 +54,40 @@ namespace Glip
 	namespace Modules
 	{
 		// Structure
-		/**
-		\class TextureReader
-		\brief Copy data back from GPU memory to CPU memory (textures must not be compressed on GPU side)
-		**/
+/**
+\class TextureReader
+\brief Copy data back from GPU memory (device) to CPU memory/RAM (host) (textures must not be compressed on GPU side).
+
+Example of how to use TextureReader :
+\code
+	// For reading a known HdlTextureFormat format fmt :
+	TextureReader firstReader("FirstReader",fmt);
+
+	// Or directly from a texture :
+	TextureReader secondReader("SecondReader",texture.format());
+
+	// Or directly from a pipeline output (which is a reference to a texture) :
+	TextureReader thirdReader("ThirdReader",myPipeline.out(0).format());
+
+	// How to use them :
+	secondReader << texture;
+	thirdReader << myPipeline.out(0);
+
+	// Read the red component of the pixel on second column, third line :
+	double value;
+
+	value = secondReader(2,3,1);
+	//and value = thirdReader(2,3,1);
+\endcode
+
+**/
 		class TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
 				void* data;
 
 			protected :
-				void process(HdlTexture& t);
+				void process(void);
 
 			public :
 				// Data
@@ -79,14 +102,39 @@ namespace Glip
 				double operator()(int x, int y, int c);
 		};
 
-		/**
-		\class PBOTextureReader
-		\brief Copy data back from GPU memory to CPU memory using a PBO (textures must not be compressed on GPU side)
-		**/
+/**
+\class PBOTextureReader
+\brief Copy data back from GPU memory (device) to CPU memory/RAM (host) using a PBO (textures must not be compressed on GPU side).
+
+Example of how to use PBOTextureReader :
+\code
+	// For reading, frequently, a known HdlTextureFormat format fmt :
+	PBOTextureReader firstPBOReader("FirstPBOReader",fmt, GL_STREAM_READ);
+
+	// Or directly from a texture :
+	PBOTextureReader secondPBOReader("SecondPBOReader",texture.format(), GL_STREAM_READ);
+
+	// Or directly from a pipeline output (which is a reference to a texture) :
+	PBOTextureReader thirdPBOReader("ThirdPBOReader",myPipeline.out(0).format(), GL_STREAM_READ);
+
+	// How to use them :
+	secondPBOReader << texture;
+	thirdPBOReader << myPipeline.out(0);
+
+	// Map the internal PBO to the memory for GL_RGB, GL_UNSIGNED_BYTE :
+	unsigned char* ptr = reinterpret_cast<unsigned char*>(secondPBOReader.startReadingMemory());
+
+	// Copy to your buffer :
+	memcpy(yourBuffer, ptr, secondPBOReader.getNumPixels()*3);
+
+	// Release the mapped memory :
+	secondPBOReader.endReadingMemory();
+\endcode
+**/
 		class PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
 		{
 			protected :
-				void process(HdlTexture& t);
+				void process(void);
 
 			public :
 				// Functions
@@ -101,10 +149,12 @@ namespace Glip
 				using __ReadOnly_HdlTextureFormat::getSize;
 		};
 
-		/**
-		\class CompressedTextureReader
-		\brief Raw copy of data, back from GPU memory to CPU memory for compressed textures.
-		**/
+/**
+\class CompressedTextureReader
+\brief Raw copy of data, back from GPU memory (device) to CPU memory/RAM (host) for compressed textures.
+
+This class is working exacly as TextureReader except that you will access the data in a compressed format (no direct channels/pixels access).
+**/
 		class CompressedTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
@@ -112,7 +162,7 @@ namespace Glip
 				int size;
 
 			protected :
-				void process(HdlTexture& t);
+				void process(void);
 
 			public :
 				CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
@@ -123,19 +173,34 @@ namespace Glip
 				char&	operator[](int i);
 		};
 
-		/**
-		\class TextureCopier
-		\brief Copy data from texture to texture. Will also perform compression/decompression on the fly according to the input and output formats.
-		**/
+/**
+\class TextureCopier
+\brief Copy data from texture to texture. Will also perform compression/decompression on the fly according to the input and output formats.
+
+Example :
+\code
+	// With identical format :
+	HdlTextureFormat fmt(...);
+	HdlTexture someTexture(fmt);
+
+	// Create the object, specify that the target texture has to be allocated and managed by the object :
+	TextureCopier copier("Copier",fmt,fmt);
+
+	// Copy :
+	copier << someTexture;
+
+	// Now you can use copier.texture() which will be a perfect copy of someTexture.
+\endcode
+**/
 		class TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
 				bool 		customTexture;
-				HdlTexture	*tex;
+				HdlTexture	*targetTexture;
 				HdlPBO		*pbo;
 
 			protected :
-				void process(HdlTexture& t);
+				void process(void);
 
 			public :
 				TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture=false);

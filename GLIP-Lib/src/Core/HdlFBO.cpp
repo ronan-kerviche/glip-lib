@@ -152,7 +152,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    void HdlFBO::beginRendering(int usedTarget)
-	\param usedTarget The number of targets to be used. It must be less or equal to getAttachmentCount().
+	\param usedTarget The number of targets to be used. It must be greater or equal to 1 and less or equal to getAttachmentCount(). Default is 0 which means all targets.
 	\brief Prepare the FBO for rendering in it
 	**/
 	void HdlFBO::beginRendering(int usedTarget)

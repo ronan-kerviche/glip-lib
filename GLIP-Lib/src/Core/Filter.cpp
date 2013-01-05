@@ -177,7 +177,7 @@
 				}
 			}
 
-			///TODO Verify that variables names in vertex and fragment are different
+			//TODO Verify that variables names in vertex and fragment are different.
 		}
 		std::vector<std::string> varsOut = fragmentSource->getOutputVars();
 

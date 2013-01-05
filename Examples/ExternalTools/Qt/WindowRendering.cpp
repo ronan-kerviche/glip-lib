@@ -20,13 +20,15 @@
 
 // Class
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
-	 : QGLWidget(_parent), parent(_parent), vbo(NULL), OutputDevice("Display"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
+	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), vbo(NULL), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.1f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
 	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f)
 	{
+		addInputPort("input");
+
 		QWidget::setGeometry(10,10,w,h);
 
 		makeCurrent();
@@ -391,7 +393,7 @@
 			swapBuffers();
 	}
 
-	void WindowRenderer::process(HdlTexture& t)
+	void WindowRenderer::process(void)
 	{
 		// Check keys :
 		updateActions();
@@ -415,7 +417,7 @@
 		glScalef( scaleForCurrentSurfaceAspectRatioX/scaleFitting, -scaleForCurrentSurfaceAspectRatioY/scaleFitting, 1.0f);
 
 		// Bind texture to surface :
-		t.bind();
+		in().bind();
 
 		// Draw surface :
 		vbo->draw();

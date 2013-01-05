@@ -35,70 +35,223 @@
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const std::string& name)
-	 : ObjectName(name, "InputDevice"), t(NULL), newImage(false), imagesMissed(0)
+	 : __ReadOnly_ComponentLayout(name), ComponentLayout("InputDevice")
 	{ }
 
 	InputDevice::~InputDevice(void)
 	{
-		t = NULL;
+		texturesLinks.clear();
+		newImages.clear();
+		imagesMissedCount.clear();
 	}
 
 	/**
-	\fn void InputDevice::setTextureLink(HdlTexture* tex)
-	\brief Give a different texture as target.
-	\param tex Pointer to the texture.
+	\fn int InputDevice::addOutputPort(const std::string &name)
+	\brief Add an output port.
+	\param name The name of the new output port.
+	\return The ID of the new output port.
 	**/
-	void InputDevice::setTextureLink(HdlTexture* tex)
+	int InputDevice::addOutputPort(const std::string &name)
 	{
-		t = tex;
+		int p = ComponentLayout::addOutputPort(name);
+
+		texturesLinks.push_back(NULL);
+		newImages.push_back(false);
+		imagesMissedCount.push_back(0);
+
+		return p;
 	}
 
 	/**
-	\fn void InputDevice::declareNewImage(void)
-	\brief Declare that a new image arrived.
+	\fn void InputDevice::setTextureLink(HdlTexture* tex, int port)
+	\brief Give a different texture as target. The use ensure the memory footprint of the object, no deletion is made by this object. The pointer must remain valid until replaced. A call is made to the corresponding InputDevice::declareNewImage.
+	\param tex Pointer to the texture or raise an exception if any error occurs.
+	\param port The index of the port. Default is first port.
 	**/
-	void InputDevice::declareNewImage(void)
+	void InputDevice::setTextureLink(HdlTexture* tex, int port)
 	{
-		if(t!=NULL)
-		{
-			if(newImage)
-				imagesMissed++;
-			newImage = true;
-		}
+		checkOutputPort(port);
+
+		texturesLinks[port] = tex;
+		declareNewImage(port);
 	}
 
 	/**
-	\fn bool InputDevice::isNewImage(void)
+	\fn void InputDevice::setTextureLink(HdlTexture* tex, const std::string& port)
+	\brief Give a different texture as target. The use ensure the memory footprint of the object, no deletion is made by this object. The pointer must remain valid until replaced. A call is made to the corresponding InputDevice::declareNewImage.
+	\param tex Pointer to the texture or raise an exception if any error occurs.
+	\param port The name of the port. Default is the first port.
+	**/
+	void InputDevice::setTextureLink(HdlTexture* tex, const std::string& port)
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		setTextureLink(tex, id);
+	}
+
+	/**
+	\fn void InputDevice::declareNewImage(int port)
+	\brief Force declaration of a new image.
+	\param port The index of the port. Default is first port.
+	**/
+	void InputDevice::declareNewImage(int port)
+	{
+		checkOutputPort(port);
+
+		if(newImages[port])
+			imagesMissedCount[port]++;
+
+		newImages[port] = true;
+	}
+
+	/**
+	\fn void InputDevice::declareNewImage(const std::string& port)
+	\brief Force declaration of a new image.
+	\param port The name of the port. Default is the first port.
+	**/
+	void InputDevice::declareNewImage(const std::string& port)
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		declareNewImage(id);
+	}
+
+	/**
+	\fn bool InputDevice::isNewImage(int port)
 	\brief Check if there is a new image.
+	\param port The index of the port. Default is first port.
 	\return true if there is a new image.
 	**/
-	bool InputDevice::isNewImage(void)
+	bool InputDevice::isNewImage(int port) const
 	{
-		return newImage;
+		checkOutputPort(port);
+
+		return newImages[port];
 	}
 
 	/**
-	\fn int InputDevice::getMissedImagesCount(void)
-	\brief Get the number of images missed (texture() wasn't call for new image).
+	\fn bool InputDevice::isNewImage(const std::string& port)
+	\brief Check if there is a new image.
+	\param port The name of the port. Default is the first port.
+	\return true if there is a new image.
+	**/
+	bool InputDevice::isNewImage(const std::string& port) const
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		return isNewImage(id);
+	}
+
+	/**
+	\fn int	InputDevice::getMissedImagesCount(int port) const
+	\brief Get the number of images missed (out() wasn't call for a new image, for this port).
+	\param port The index of the port. Default is first port.
 	\return The number of images missed.
 	**/
-	int InputDevice::getMissedImagesCount(void)
+	int InputDevice::getMissedImagesCount(int port) const
 	{
-		return imagesMissed;
+		checkOutputPort(port);
+
+		return imagesMissedCount[port];
 	}
 
 	/**
-	\fn HdlTexture& InputDevice::texture(void)
-	\brief Get the current image.
-	\return Reference to the current image or raise an exception if any errors occur.
+	\fn int	InputDevice::getMissedImagesCount(const std::string& port) const
+	\brief Get the number of images missed (out() wasn't call for a new image, for this port).
+	\param port The name of the port. Default is the first port.
+	\return The number of images missed.
 	**/
-	HdlTexture& InputDevice::texture(void)
+	int InputDevice::getMissedImagesCount(const std::string& port) const
 	{
-		if(t==NULL)
-			throw Exception("InputDevice::texture - No texture was linked in " + getNameExtended() + ".", __FILE__, __LINE__);
+		int id = 0;
 
-		newImage = false;
-		return *t;
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		return getMissedImagesCount(id);
+	}
+
+	/**
+	\fn int InputDevice::getMissedImagesTotalCount(void) const
+	\brief The total number of missed images.
+	\return The total (across all output ports) number of images missed.
+	**/
+	int InputDevice::getMissedImagesTotalCount(void) const
+	{
+		int res = 0;
+
+		for(std::vector<int>::const_iterator it=imagesMissedCount.begin(); it<imagesMissedCount.end(); it++)
+			res += *it;
+
+		return res;
+	}
+
+	/**
+	\fn bool InputDevice::portHasValidOutput(int port) const
+	\brief Check if a port has a texture assigned.
+	\param port The index of the port. Default is first port.
+	\return True if it has a texture assigned and InputDevice::out can be use on it.
+	**/
+	bool InputDevice::portHasValidOutput(int port) const
+	{
+		checkOutputPort(port);
+
+		return texturesLinks[port]!=NULL;
+	}
+
+	/**
+	\fn bool InputDevice::portHasValidOutput(const std::string& port) const
+	\brief Check if a port has a texture assigned.
+	\param port The name of the port. Default is the first port.
+	\return True if it has a texture assigned and InputDevice::out can be use on it.
+	**/
+	bool InputDevice::portHasValidOutput(const std::string& port) const
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		return portHasValidOutput(id);
+	}
+
+	/**
+	\fn HdlTexture& InputDevice::texture(int port) const
+	\brief Get the current image for the port.
+	\param port The index of the port. Default is first port.
+	\return A reference to the current image or raise an exception if any errors occur.
+	**/
+	HdlTexture& InputDevice::out(int port)
+	{
+		if(!portHasValidOutput(port))
+			throw Exception("InputDevice::out - Port " + getOutputPortName(port) + " has no valid output.", __FILE__, __LINE__);
+		else
+			return *texturesLinks[port];
+	}
+
+	/**
+	\fn HdlTexture& InputDevice::texture(int port) const
+	\brief Get the current image for the port.
+	\param port The name of the port. Default is the first port.
+	\return A reference to the current image or raise an exception if any errors occur.
+	**/
+	HdlTexture& InputDevice::out(const std::string& port)
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getOutputPortID(port);
+
+		return out(id);
 	}
 
 // Tools - OutputDevice
@@ -108,17 +261,127 @@
 	\param name The name of the component.
 	**/
 	OutputDevice::OutputDevice(const std::string& name)
-	 : ObjectName(name, "OutputDevice")
+	 : __ReadOnly_ComponentLayout(name), ComponentLayout("InputDevice")
 	{ }
 
-	/**
-	\fn OutputDevice& OutputDevice::operator<<(HdlTexture& t)
-	\brief Connection to the component, will call process().
-	\param t Input texture.
-	\return Reference to this object.
-	**/
-	OutputDevice& OutputDevice::operator<<(HdlTexture& t)
+	OutputDevice::~OutputDevice(void)
 	{
-		process(t);
+		argumentsList.clear();
+	}
+
+	/**
+	\fn int OutputDevice::addInputPort(const std::string &name)
+	\brief Add an input port.
+	\param name The name of the new input port.
+	\return The ID of the new input port.
+	**/
+	int OutputDevice::addInputPort(const std::string &name)
+	{
+		int p = ComponentLayout::addInputPort(name);
+
+		argumentsList.clear();
+		argumentsList.reserve(getNumInputPort());
+
+		return p;
+	}
+
+	/**
+	\fn HdlTexture& OutputDevice::in(int port)
+	\brief Access the texture on indexed port.
+	\param port The index of the port. Default is first port.
+	\return A reference to the texture bound to the port or raise an exception if any errors occur.
+	**/
+	HdlTexture& OutputDevice::in(int port)
+	{
+		checkInputPort(port);
+
+		return *argumentsList[port];
+	}
+
+	/**
+	\fn HdlTexture& OutputDevice::in(const std::string& port)
+	\brief Access the texture on indexed port.
+	\param port The name of the port. Default is the first port.
+	\return A reference to the texture bound to the port or raise an exception if any errors occur.
+	**/
+	HdlTexture& OutputDevice::in(const std::string& port)
+	{
+		int id = 0;
+
+		if(!port.empty())
+			id = getInputPortID(port);
+
+		return in(id);
+	}
+
+	/**
+	\fn OutputDevice& OutputDevice::operator<<(HdlTexture& texture)
+	\brief Push a texture in the arguments list. The user must maintain the texture in memory while this OutputDevice hasn't received a OutputDevice::Process or OutputDevice::Reset signal.
+	\param texture Input texture.
+	\return A reference to this object.
+	**/
+	OutputDevice& OutputDevice::operator<<(HdlTexture& texture)
+	{
+		if(argumentsList.size()>=getNumInputPort())
+			throw Exception("OutputDevice::operator<<(HdlTexture&) - Too much arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+
+		argumentsList.push_back(&texture);
+
 		return *this;
+	}
+
+	/**
+	\fn OutputDevice& OutputDevice::operator<<(Pipeline& pipeline)
+	\brief Push all the output texture of pipeline in the arguments list. The user must maintain the textures in memory while this OutputDevice hasn't received a OutputDevice::Process or OutputDevice::Reset signal.
+	\param pipeline A pipeline.
+	\return A reference to this object.
+	**/
+	OutputDevice& OutputDevice::operator<<(Pipeline& pipeline)
+	{
+		for(int i=0; i<pipeline.getNumOutputPort(); i++)
+		{
+			if(argumentsList.size()>=getNumInputPort())
+				throw Exception("OutputDevice::operator<<(Pipeline&) - Too much arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+
+			argumentsList.push_back(&pipeline.out(i));
+		}
+
+		return *this;
+	}
+
+	/**
+	\fn OutputDevice& OutputDevice::operator<<(OutputDevice::ActionType a)
+	\brief Apply operation on previously input data.
+	\param a The ActionType (Process or Reset arguments).
+	\return This pipeline or raise an exception if any errors occur.
+	**/
+	OutputDevice& OutputDevice::operator<<(OutputDevice::ActionType a)
+	{
+		// Check the number of arguments given :
+		if(argumentsList.size()!=getNumInputPort())
+			throw Exception("OutputDevice::operator<<(ActionType) - Too few arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+
+		switch(a)
+		{
+			case Process:
+				process();
+			case Reset:
+				argumentsList.clear();
+				break;
+			default:
+				throw Exception("OutputDevice::operator<<(ActionType) - Unknown action for OutputDevice" + getNameExtended() + ".", __FILE__, __LINE__);
+		}
+
+		return *this;
+	}
+
+	/**
+	\fn OutputDevice& OutputDevice::operator<<(Pipeline::ActionType a)
+	\brief Apply operation on previously input data.
+	\param a The ActionType (Process or Reset arguments).
+	\return This pipeline or raise an exception if any errors occur.
+	**/
+	OutputDevice& OutputDevice::operator<<(Pipeline::ActionType a)
+	{
+		return (*this) << static_cast<OutputDevice::ActionType>(a);
 	}

@@ -19,7 +19,7 @@
 
 	// Find options for argument pixFormat at http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
 	VideoRecorder::VideoRecorder(const std::string& filename, const __ReadOnly_HdlTextureFormat &format, int _frameRate, int videoBitRate_BitPerSec, PixelFormat pixFormat)
-	 : OutputDevice("VideoRecorder"), numEncodedFrame(0), frameRate(_frameRate),
+	 : __ReadOnly_ComponentLayout("VideoRecorder"), OutputDevice("VideoRecorder"), numEncodedFrame(0), frameRate(_frameRate),
 	   oc(NULL), fmt(NULL), video_codec(NULL), video_stream(NULL), frame(NULL), buffer(NULL), swsContext(NULL), c(NULL),
 	   #ifndef __USE_PBO__
 		textureReader("VideoRecorder_TextureReader", format)
@@ -207,9 +207,10 @@
 		return textureReader;
 	}
 
-	void VideoRecorder::process(HdlTexture& texture)
+	void VideoRecorder::process(void)
 	{
-		int retCode = 0;
+		int 		retCode = 0;
+		HdlTexture& 	texture	= in();
 
 		// Read texture :
 		textureReader << texture;

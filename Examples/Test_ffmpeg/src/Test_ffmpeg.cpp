@@ -101,7 +101,7 @@
 			float 	imageAspectRatio = static_cast<float>(w)/static_cast<float>(h);
 			window.renderer().setImageAspectRatio(imageAspectRatio);
 
-			window.renderer() << pipelineLoaderInterface.currentOutput( videoControls.videoStream().texture() );
+			window.renderer() << pipelineLoaderInterface.currentOutput( videoControls.videoStream().texture() ) << OutputDevice::Process;
 		}
 		else
 			window.renderer().clearWindow();

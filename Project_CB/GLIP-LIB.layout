@@ -44,7 +44,7 @@
 		<Cursor position="3819" topLine="19" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="2">
-		<Cursor position="2473" topLine="172" />
+		<Cursor position="7490" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/ShaderSource.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="7255" topLine="416" />
@@ -68,7 +68,7 @@
 		<Cursor position="2432" topLine="16" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/LayoutLoader.hpp" open="0" top="0" tabpos="4">
-		<Cursor position="5885" topLine="88" />
+		<Cursor position="5874" topLine="82" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/Modules.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="809" topLine="0" />
@@ -140,7 +140,7 @@
 		<Cursor position="3271" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/LayoutLoader.cpp" open="0" top="0" tabpos="3">
-		<Cursor position="35112" topLine="1071" />
+		<Cursor position="6197" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Modules/ProceduralInput.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="809" topLine="6" />

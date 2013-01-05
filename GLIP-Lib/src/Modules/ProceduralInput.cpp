@@ -44,7 +44,7 @@
 	\param fragment Source of the fragment to be used.
 	**/
 	ProceduralInput::ProceduralInput(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt, ShaderSource& fragment)
-	 : InputDevice(name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)
+	 : __ReadOnly_ComponentLayout(name), InputDevice(name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)
 	{
 		ShaderSource* vertex=NULL;
 

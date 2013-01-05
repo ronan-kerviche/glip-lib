@@ -60,7 +60,7 @@
 			#endif
 
 			// Inherited from OutputDevice :
-			void process(HdlTexture& texture);
+			void process(void);
 
 		public :
 			VideoRecorder(const std::string& filename, const __ReadOnly_HdlTextureFormat &format, int _frameRate, int videoBitRate_BitPerSec=400000, PixelFormat pixFormat=PIX_FMT_YUV420P);

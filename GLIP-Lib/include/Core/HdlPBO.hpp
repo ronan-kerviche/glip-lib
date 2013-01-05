@@ -46,10 +46,28 @@
 			class HdlFBO;
 
 			// Pixel Buffer Object Handle
-			/**
-			\class HdlPBO
-			\brief Object handle for OpenGL Pixel Buffer Objects
-			**/
+/**
+\class HdlPBO
+\brief Object handle for OpenGL Pixel Buffer Objects
+
+How to use a PBO to upload data to a texture :
+\code
+	HdlTextureFormat fmt(...);
+	HdlTexture someTexture(fmt);
+
+	HdlPBO pbo(fmt, GL_PIXEL_UNPACK_BUFFER_ARB, GL_STREAM_DRAW_ARB);
+
+	unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo.map());
+
+	memcpy(ptr, yourBuffer, fmt.getNumPixels()*fmt.getNumChannels());
+
+	HdlPBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
+
+	pbo.copyToTexture(someTexture);
+\endcode
+
+For reading operations, use Glip::Modules::PBOTextureReader.
+**/
 			class HdlPBO : public HdlGeBO
 			{
 				private :
@@ -74,20 +92,6 @@
 					static void unbind(GLenum target=0);
 					static void unmap(GLenum target=0);
 			};
-
-			/*enum
-			{
-			PBO_NOMODE        = 0x00000000,
-			PBO_PACK          = 0x00000001,
-			PBO_UNPACK        = 0x00000010,
-			PBO_PACK_MAPPED   = 0x00000100,
-			PBO_UNPACK_MAPPED = 0x00001000,
-			PBO_UPLOAD        = 0x10000000,
-			PBO_DOWNLOAD      = 0x01000000,
-			PBO_BOTHWAY       = 0x11000000,
-			PBO_MASK          = 0x11111111
-			};
-			*/
 		}
 	}
 

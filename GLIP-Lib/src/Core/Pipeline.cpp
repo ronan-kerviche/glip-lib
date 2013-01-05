@@ -256,7 +256,7 @@
 			case PIPELINE:
 				return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
 			default :
-				throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized for element in " + getNameExtended(),__FILE__, __LINE__);
+				throw Exception("__ReadOnly_PipelineLayout::componentLayout - Type not recognized for element in " + getNameExtended() + ".",__FILE__, __LINE__);
 		}
 	}
 
@@ -284,7 +284,7 @@
 		//std::cout << "ACCESSING FILTER (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element of index " + to_string(i) + " exists but is not a filter in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element of index " + to_string(i) + " exists but is not a filter in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
 	}
 
@@ -299,7 +299,7 @@
 		//std::cout << "ACCESSING FILTER (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element " + name + " exists but is not a filter in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element " + name + " exists but is not a filter in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[index]);
 	}
 
@@ -314,7 +314,7 @@
 		//std::cout << "ACCESSING PIPELINE (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element of index " + to_string(i) + " exists but is not a pipeline in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element of index " + to_string(i) + " exists but is not a pipeline in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
 	}
 
@@ -329,7 +329,7 @@
 		//std::cout << "ACCESSING PIPELINE (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element " + name + " exists but is not a pipeline in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element " + name + " exists but is not a pipeline in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
 	}
 
@@ -384,10 +384,10 @@
 		if(id!=THIS_PIPELINE)
 		{
 			__ReadOnly_ComponentLayout& src = componentLayout(id);
-			throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("Element " + src.getNameExtended() + " has no source on output port " + src.getInputPortNameExtended(p) + " in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		}
 		else
-			throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p), __FILE__, __LINE__);
+			throw Exception("This Pipeline " + getNameExtended() + " has no source on output port " + getOutputPortNameExtended(p) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -522,7 +522,7 @@
 		}
 
 		if(exception && !res.empty())
-			throw Exception("check - The following errors has been found in the PipelineLayout " + getNameExtended() + " : \n" + res, __FILE__, __LINE__);
+			throw Exception("check - The following errors has been found in the PipelineLayout " + getNameExtended() + " : \n" + res + ".", __FILE__, __LINE__);
 		else
 			return false;
 
@@ -558,7 +558,7 @@
 	int PipelineLayout::add(const __ReadOnly_FilterLayout& filterLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		__ReadOnly_FilterLayout* tmp = new __ReadOnly_FilterLayout(filterLayout);
 		tmp->setName(name);
@@ -581,7 +581,7 @@
 	int PipelineLayout::add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		__ReadOnly_PipelineLayout* tmp = new __ReadOnly_PipelineLayout(pipelineLayout);
 		tmp->setName(name);
@@ -648,11 +648,11 @@
 			{
 				if(filterIn!=THIS_PIPELINE)
 				{
-					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getNameExtended() + " on port " + componentLayout(filterIn).getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 				}
 				else
 				{
-					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended(), __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getNameExtended() + " on port " + getInputPortNameExtended(portIn) + " in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 				}
 			}
 
@@ -715,12 +715,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended() + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getNameExtended() + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -755,12 +755,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended() + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getNameExtended() + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -976,7 +976,7 @@
 						#endif
 						break;
 					default :
-						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended(), __FILE__, __LINE__);
+						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended() + ".", __FILE__, __LINE__);
 					}
 				}
 				pipeList.clear();
@@ -1451,7 +1451,7 @@
 			// Check if all filters are in :
 			for(std::vector<int>::iterator it=availabilty.begin(); it!=availabilty.end(); it++)
 				if((*it)!=-1)
-					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended(), __FILE__, __LINE__);
+					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 			// Add the coordinates of the output buffers :
 			outputBuffer.assign(getNumOutputPort(), -1);
@@ -1468,7 +1468,7 @@
 			// Check that all output buffer ports have their connection :
 			for(int i=0; i<outputBuffer.size(); i++)
 				if(outputBuffer[i]==-1)
-					throw Exception("Pipeline::build - Error : Output port " + getOutputPortName(i) + " isn't connected in pipeline " + getNameExtended(), __FILE__, __LINE__);
+					throw Exception("Pipeline::build - Error : Output port " + getOutputPortName(i) + " isn't connected in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 			// Print the final layout :
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -1548,7 +1548,7 @@
 		clock_t 	timing 		= 0,
 				totalTiming 	= 0;
 
-		if(!GLEW_VERSION_3_3)
+		if(!GLEW_VERSION_3_3 && perfsMonitoring)
 		{
 			totalTiming = clock();
 			timing = clock();
@@ -1643,20 +1643,58 @@
 	}
 
 	/**
-	\fn Pipeline& Pipeline::operator<<(HdlTexture& t)
-	\brief Add a data as input to the pipeline.
-	\param t The data to use.
+	\fn Pipeline& Pipeline::operator<<(HdlTexture& texture)
+	\brief Add a data as input to the pipeline. The user must maintain the texture in memory while this Pipeline hasn't received a Pipeline::Process or Pipeline::Reset signal.
+	\param texture The data to use.
 	\return This pipeline or raise an exception if any errors occur.
 	**/
-	Pipeline& Pipeline::operator<<(HdlTexture& t)
+	Pipeline& Pipeline::operator<<(HdlTexture& texture)
 	{
 		if(input.size()>=getNumInputPort())
-			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
-		input.push_back(&t);
+		input.push_back(&texture);
 
 		return *this;
 	}
+
+	/**
+	\fn Pipeline& Pipeline::operator<<(Pipeline& pipeline)
+	\brief Add all the output of variable pipeline as input of this pipeline. The user must maintain the texture(s) in memory while this Pipeline hasn't received a Pipeline::Process or Pipeline::Reset signal.
+	\param texture The data to use.
+	\return This pipeline or raise an exception if any errors occur.
+	**/
+	Pipeline& Pipeline::operator<<(Pipeline& pipeline)
+	{
+		for(int i=0; i<pipeline.getNumOutputPort(); i++)
+		{
+			if(input.size()>=getNumInputPort())
+				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
+
+			input.push_back(&pipeline.out(i));
+		}
+
+		return *this;
+	}
+
+	/**
+	\fn Pipeline& Pipeline::operator<<(InputDevice& device)
+	\brief Add all the output of variable device as input of this pipeline. The user must maintain the texture(s) in memory while this Pipeline hasn't received a Pipeline::Process or Pipeline::Reset signal.
+	\param texture The data to use.
+	\return This pipeline or raise an exception if any errors occur.
+	**/
+	/*Pipeline& Pipeline::operator<<(InputDevice& device)
+	{
+		for(int i=0; i<device.getNumOutputPort())
+		{
+			if(input.size()>=getNumInputPort())
+				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
+
+			input.push_back(&device.out(i));
+		}
+
+		return *this;
+	}*/
 
 	/**
 	\fn Pipeline& Pipeline::operator<<(ActionType a)
@@ -1668,7 +1706,7 @@
 	{
 		// Check the number of arguments given :
 		if(input.size()!=getNumInputPort())
-			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		switch(a)
 		{
@@ -1678,7 +1716,7 @@
 				cleanInput();
 				break;
 			default:
-				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getNameExtended(), __FILE__, __LINE__);
+				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 		}
 
 		return *this;
@@ -1711,10 +1749,10 @@
 	}
 
 	/**
-	\fn Filter& Pipeline::operator[](const std::string& name)
+	\fn int Pipeline::getFilterID(const std::string& path)
 	\brief Access to the filter described by the path.
-	\param name The path.
-	\return A reference to the corresponding filter instance or raise an exception if any errors occur.
+	\param path The path to the filter.
+	\return The internal index of the corresponding filter.
 	**/
 	int Pipeline::getFilterID(const std::string& path)
 	{
@@ -1737,21 +1775,45 @@
 			int id = p->getElementIndex(filter);
 
 			if(p->getElementKind(id)!=FILTER)
-				throw Exception("Pipeline::operator[] - The element " + path + " isn't a filter", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator[] - The element " + path + " isn't a filter.", __FILE__, __LINE__);
 
 			if(p->getElementID(id)==ELEMENT_NOT_ASSOCIATED)
-				throw Exception("Pipeline::operator[] - The element " + path + " exists but wasn't associated (internal error)", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator[] - The element " + path + " exists but wasn't associated (internal error).", __FILE__, __LINE__);
 
 			return p->getElementID(id);
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::getFilterID - Error while processing request on " + path, __FILE__, __LINE__);
+			Exception m("Pipeline::getFilterID - Error while processing request on " + path + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::getFilterID - Error while processing request on " + path, __FILE__, __LINE__);
+			Exception m("Pipeline::getFilterID - Error while processing request on " + path + ".", __FILE__, __LINE__);
+			throw m+e;
+		}
+	}
+
+	/**
+	\fn Filter& Pipeline::operator[](int filterID)
+	\brief Access to the filter of described index.
+	\param filterID The index of the filter, obtained with Pipeline::getFilterID.
+	\return The index or raise an exception if any errors occur.
+	**/
+	Filter& Pipeline::operator[](int filterID)
+	{
+		try
+		{
+			return *filters[filterID];
+		}
+		catch(Exception& e)
+		{
+			Exception m("Pipeline::operator[int] - Error while processing request on filter ID : " + to_string(filterID) + ".", __FILE__, __LINE__);
+			throw m+e;
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + to_string(filterID) + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -1759,7 +1821,7 @@
 	/**
 	\fn Filter& Pipeline::operator[](const std::string& name)
 	\brief Access to the filter described by the path.
-	\param name The path.
+	\param name The path to the filter.
 	\return A reference to the corresponding filter instance or raise an exception if any errors occur.
 	**/
 	Filter& Pipeline::operator[](const std::string& path)
@@ -1770,12 +1832,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::operator[] - Error while processing request on " + path, __FILE__, __LINE__);
+			Exception m("Pipeline::operator[path] - Error while processing request on " + path + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::operator[] - Error while processing request on " + path, __FILE__, __LINE__);
+			Exception m("Pipeline::operator[path] - Error while processing request on " + path + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
