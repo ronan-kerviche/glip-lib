@@ -791,10 +791,7 @@
 					entryPath.insert(entryPath.end(), l.entryPath.begin(), l.entryPath.end());
 
 					// append its shared code base to the current shared code base :
-					if(!sharedCode.empty())
-						sharedCode += "\n\n";
-
-					sharedCode += l.sharedCode;
+					sharedCode = l.sharedCode + "\n\n" + sharedCode;
 				}
 			}
 
@@ -822,8 +819,8 @@
 			{
 				for(int j=i+1; j<entryType.size(); j++)
 				{
-					if(entryType[j]==entryType[i] && entryName[j]==entryName[i])
-						throw Exception("LayoutLoader::operator() - Found two different entities of same type and name : " + entryName[j] + ".", __FILE__, __LINE__);
+					if(entryType[j]==entryType[i] && entryName[j]==entryName[i] && entryType[j]!=SHARED_CODE && entryType[j]!=INCLUDE_FILE)
+						throw Exception("LayoutLoader::operator() - Found two different entities of same type " + std::string(keywords[entryType[j]]) + " and name : " + entryName[j] + ".", __FILE__, __LINE__);
 				}
 			}
 

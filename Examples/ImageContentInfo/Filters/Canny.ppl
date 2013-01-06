@@ -1,0 +1,173 @@
+// Include Sobel :
+INCLUDE_FILE(Sobel.ppl);
+
+// gaussian blur :
+SHADER_SOURCE:gaussianBlurShader()
+{
+	#version 130
+
+	uniform sampler2D 	inputTexture;
+	out 	vec4		blurredTexture;
+
+	INSERT_SHARED_CODE
+
+	/*const mat3 blurKernel	= mat3(	0.0740, 0.2054, 0.0740
+					0.2054, 0.5699, 0.2054
+					0.0740, 0.2054, 0.074);*/
+
+	void main()
+	{
+		ivec2 sz = textureSize(inputTexture, 0);
+		float sx = 1.0/(float(sz.s));
+		float sy = 1.0/(float(sz.t));
+
+		vec4 col;
+		float v;
+
+		col = textureLod(inputTexture, gl_TexCoord[0].st, 0.0);
+		v = 15*(col.r+col.g+col.b);
+
+		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, 2*sy), 0.0);
+		v += 2*(col.r+col.g+col.b);
+
+		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, -sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, -sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, sy), 0.0);
+		v += 9*(col.r+col.g+col.b);
+
+		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, -2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, 0), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, 2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, 0), 0.0);
+		v += 5*(col.r+col.g+col.b);
+
+		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, -sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, 0), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, 0), 0.0);
+		v += 12*(col.r+col.g+col.b);
+
+		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, -sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, -sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, sy), 0.0);
+		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, sy), 0.0);
+		v += 4*(col.r+col.g+col.b);
+
+		v = v/(153*3);
+
+		blurredTexture = vec4(v,v,v,1.0);
+	}
+}
+
+SHADER_SOURCE:sobelShaderAndDirection()
+{
+	#version 130
+
+	uniform sampler2D	blurredTexture;
+	out vec4		sobelTexture,
+				colorEdgesNonFiltered;
+
+	INSERT_SHARED_CODE
+
+	void main()
+	{
+		mat3 localRegion;
+
+		aggregateBW(blurredTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+
+		computeSobel(localRegion, sobelTexture);
+
+		// Check the direction :
+		if(sobelTexture.q< -(1.5707*0.75) || sobelTexture.q> (1.5707*0.75) )
+		{						// Vertical (red)
+			sobelTexture.q = 0.1;
+
+			colorEdgesNonFiltered.rgb = vec3(1.0,0.0,0.0);
+		}
+		else if(sobelTexture.q< -(1.5707*0.25)) 	// -pi/4 (green)
+		{
+			sobelTexture.q = 0.2;
+
+			colorEdgesNonFiltered.rgb = vec3(0.0,1.0,0.0);
+		}
+		else if(sobelTexture.q< (1.5707*0.25))		// horizontal (blue)
+		{
+			sobelTexture.q = 0.3;
+
+			colorEdgesNonFiltered.rgb = vec3(0.0,0.0,1.0);
+		}
+		else //if(sobelTexture.q< (1.5707*0.75))	// pi/4 (yellow)
+		{
+			sobelTexture.q = 0.4;
+
+			colorEdgesNonFiltered.rgb = vec3(1.0,1.0,0.0);
+		}
+
+		colorEdgesNonFiltered = colorEdgesNonFiltered*sobelTexture.p;
+	}
+}
+
+SHADER_SOURCE:nonMaximumSuppressionShader()
+{
+	#version 130
+
+	uniform sampler2D	sobelTexture;
+	out vec4		maximumFiltered;
+
+	INSERT_SHARED_CODE
+
+	void main()
+	{
+		vec4 col = textureLod(sobelTexture, gl_TexCoord[0].st, 0.0);
+
+		mat3 localRegion;
+
+		aggregateBW(sobelTexture, gl_TexCoord[0].st, vec4(0.0,0.0,1.0,0.0), localRegion);
+
+		if(col.p>0.1)
+		{
+			if(col.q<0.15)
+			{
+				if(localRegion[0][1]>col.p || localRegion[2][1]>col.p)
+					maximumFiltered.rgb = vec3(1.0,0.0,0.0);
+			}
+			else if(col.q<0.25)
+			{
+				if(localRegion[0][0]>col.p || localRegion[2][2]>col.p)
+					maximumFiltered.rgb = vec3(0.0,1.0,0.0);
+			}
+			else if(col.q<0.35)
+			{
+				if(localRegion[1][0]>col.p || localRegion[1][2]>col.p)
+					maximumFiltered.rgb = vec3(0.0,0.0,1.0);
+			}
+			else if(col.q<0.45)
+			{
+				if(localRegion[2][0]>col.p || localRegion[2][0]>col.p)
+					maximumFiltered.rgb = vec3(1.0,1.0,0.0);
+			}
+		}
+	}
+}
+
+FILTER_LAYOUT:gaussianBlurFilter(sobelOutputFormat, gaussianBlurShader);
+FILTER_LAYOUT:sobelAndDirectionFilter(sobelOutputFormat, sobelShaderAndDirection);
+FILTER_LAYOUT:nonMaximumSuppressionFilter(sobelOutputFormat, nonMaximumSuppressionShader);
+
+PIPELINE_MAIN:CannyFilter()
+{
+	INPUT_PORTS(inputTexture);
+	OUTPUT_PORTS(blurredTexture, sobelTexture, maximumFiltered, colorEdgesNonFiltered);
+
+	FILTER_INSTANCE:gaussianBlurFilterInstance(gaussianBlurFilter);
+	FILTER_INSTANCE:sobelRawFilterInstance(sobelAndDirectionFilter);
+	FILTER_INSTANCE:nonMaximumSuppressionFilterInstance(nonMaximumSuppressionFilter);
+}
