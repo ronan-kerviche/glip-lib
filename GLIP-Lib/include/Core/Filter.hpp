@@ -121,7 +121,7 @@
 					// Tools
 					~Filter(void);
 					HdlProgram& prgm(void);
-					void setGeometry(HdlVBO* v);
+					void setGeometry(HdlVBO* v=NULL);
 			};
 		}
 	}

@@ -20,7 +20,7 @@
 
 // Class
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
-	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), vbo(NULL), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
+	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.1f), keyPressIncr(0.04f),
@@ -35,16 +35,6 @@
 		HandleOpenGL::init();
 
 		glViewport(0, 0, w, h);
-
-		try
-		{
-			vbo = HdlVBO::generate2DStandardQuad();
-		}
-		catch(std::exception& e)
-		{
-			Exception m("WindowRenderer::WindowRenderer - Error while creating geometry", __FILE__, __LINE__);
-			throw m+e;
-		}
 
 		// Init keys :
 		setKeyForAction(KeyUp,				Qt::Key_Up);
@@ -72,8 +62,7 @@
 	WindowRenderer::~WindowRenderer(void)
 	{
 		this->hide();
-		delete vbo;
-		vbo = NULL;
+		HandleOpenGL::deinit();
 	}
 
 	void WindowRenderer::initializeGL(void)
@@ -420,7 +409,7 @@
 		in().bind();
 
 		// Draw surface :
-		vbo->draw();
+		HandleOpenGL::standardQuadVBO().draw();
 
 		HdlTexture::unbind();
 

@@ -45,6 +45,9 @@
 	{
 		namespace CoreGL
 		{
+			// Prototype :
+				class HdlVBO;
+
 			// Macros
 			#define NEED_EXTENSION(ext) 				if(!ext) \
 											throw Exception("OpenGL Extension " #ext " is required but not available on Hardware or Driver (updating the driver might help).",__FILE__,__LINE__);
@@ -86,19 +89,22 @@
 						std::string 	name;
 					};
 
-					static bool initDone;
-					static SupportedVendor vendor;
-					static const KeywordPair glKeywords[];
-					HandleOpenGL(void); //no Instance
-
+					static HandleOpenGL		*instance;
+					static SupportedVendor 		vendor;
+					static const KeywordPair 	glKeywords[];
+					HdlVBO				*standardQuad;
 				public :
-					static void init(void);
+					HandleOpenGL(void);
+					~HandleOpenGL(void);
 
-					static SupportedVendor getVendorID(void);
-					static std::string getVendorName(void);
-					static std::string getRendererName(void);
-					static std::string getVersion(void);
-					static std::string getGLSLVersion(void);
+					static void		init(void);
+					static void		deinit(void);
+					static SupportedVendor 	getVendorID(void);
+					static std::string 	getVendorName(void);
+					static std::string 	getRendererName(void);
+					static std::string 	getVersion(void);
+					static std::string 	getGLSLVersion(void);
+					static HdlVBO&	   	standardQuadVBO(void);
 
 					// Friend functions :
 					friend std::string glParamName(GLenum);

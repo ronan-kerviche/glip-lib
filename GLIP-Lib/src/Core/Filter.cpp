@@ -265,7 +265,7 @@
 			throw m+e;
 		}
 
-		try
+		/*try
 		{
 			// Create a basic geometry :
 			vbo = HdlVBO::generate2DStandardQuad();
@@ -277,7 +277,7 @@
 		catch(std::exception& e)
 		{
 			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
-		}
+		}*/
 
 		// Set up the data on the program :
 		if(!fragmentShader->requiresCompatibility())
@@ -295,12 +295,14 @@
 			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
 		if(fragmentShader==NULL)
 			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-		if(vbo==NULL)
-			throw Exception("Filter::~Filter - Internal error : vbo is NULL", __FILE__, __LINE__);
+		/*if(vbo==NULL)
+			throw Exception("Filter::~Filter - Internal error : vbo is NULL", __FILE__, __LINE__);*/
+		if(vbo!=NULL)
+			delete vbo;
+
 		delete program;
 		delete vertexShader;
 		delete fragmentShader;
-		delete vbo;
 	}
 
 	/**
@@ -365,7 +367,10 @@
 			//std::cout << "Using shader 		: "; glErrors(true, false);
 
 		// Draw
-			vbo->draw();
+			if(vbo!=NULL)
+				vbo->draw();
+			else
+				HandleOpenGL::standardQuadVBO().draw();
 			//std::cout << "drawing VBO 		: "; glErrors(true, false);
 
 		// Stop using the shader
@@ -403,13 +408,16 @@
 
 	/**
 	\fn void Filter::setGeometry(HdlVBO* v)
-	\brief Push different geometry rendering, the Filter object will take care of deleting the data when needed.
-	\param v Pointer to the new geometry to use.
+	\brief Push different geometry rendering, the Filter object will take care of deleting the data when needed. The object will take care to free previously used memory.
+	\param v Pointer to the new geometry to use. If set to NULL it will use the standard quad from HandleOpenGL::standardQuadVBO().
 	**/
 	void Filter::setGeometry(HdlVBO* v)
 	{
-		if(v==NULL)
-			throw Exception("Filter::setGeometry - You can't set a pointer to NULL for the geometry!", __FILE__, __LINE__);
-		delete vbo;
+		/*if(v==NULL)
+			throw Exception("Filter::setGeometry - You can't set a pointer to NULL for the geometry!", __FILE__, __LINE__);*/
+
+		if(vbo!=NULL)
+			delete vbo;
+
 		vbo = v;
 	}

@@ -133,7 +133,7 @@
 	}
 
 	/**
-	\fn bool InputDevice::isNewImage(int port)
+	\fn bool InputDevice::isNewImage(int port) const
 	\brief Check if there is a new image.
 	\param port The index of the port. Default is first port.
 	\return true if there is a new image.
@@ -146,7 +146,7 @@
 	}
 
 	/**
-	\fn bool InputDevice::isNewImage(const std::string& port)
+	\fn bool InputDevice::isNewImage(const std::string& port) const
 	\brief Check if there is a new image.
 	\param port The name of the port. Default is the first port.
 	\return true if there is a new image.
@@ -235,7 +235,7 @@
 	}
 
 	/**
-	\fn HdlTexture& InputDevice::texture(int port) const
+	\fn HdlTexture& InputDevice::out(int port)
 	\brief Get the current image for the port.
 	\param port The index of the port. Default is first port.
 	\return A reference to the current image or raise an exception if any errors occur.
@@ -252,7 +252,7 @@
 	}
 
 	/**
-	\fn HdlTexture& InputDevice::texture(int port) const
+	\fn HdlTexture& InputDevice::out(const std::string& port)
 	\brief Get the current image for the port.
 	\param port The name of the port. Default is the first port.
 	\return A reference to the current image or raise an exception if any errors occur.

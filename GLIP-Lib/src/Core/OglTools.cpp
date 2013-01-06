@@ -24,6 +24,7 @@
 #include "OglInclude.hpp"
 #include "HdlTexture.hpp"
 #include "Exception.hpp"
+#include "HdlVBO.hpp"
 #include <string>
 
 using namespace Glip;
@@ -31,23 +32,25 @@ using namespace Glip::CoreGL;
 
 // Structure
 	// Data
-		bool 				HandleOpenGL::initDone 	= false;
+		HandleOpenGL* 			HandleOpenGL::instance 	= NULL;
 		HandleOpenGL::SupportedVendor 	HandleOpenGL::vendor 	= vd_UNKNOWN;
 
 	// Functions
 		/**
-		\fn void HandleOpenGL::init(void)
-		\brief Initialize Glew and other tools for the OpenGL state machine. You have to call it before functions using OpenGL.
+		\fn void HandleOpenGL::HandleOpenGL(void)
+		\brief Initialize Glew and other tools for the OpenGL state machine.
+
+		You have to create one object of this type before functions using OpenGL.
 		**/
-		void HandleOpenGL::init(void)
+		HandleOpenGL::HandleOpenGL(void)
 		{
-			if(!initDone)
+			if(instance==NULL)
 			{
 				GLenum err = glewInit();
 				if(err != GLEW_OK)
 				{
 					std::string error = reinterpret_cast<const char*>(glewGetErrorString(err));
-					throw Exception("HandleOpenGL::init - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__);
+					throw Exception("HandleOpenGL::HandleOpenGL - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__);
 				}
 
 				// Update vendor :
@@ -62,8 +65,52 @@ using namespace Glip::CoreGL;
 				else
 				    vendor = vd_UNKNOWN;
 
-				initDone = true;
+				// Create a standard quad :
+				standardQuad = HdlVBO::generate2DStandardQuad();
+
+				instance = this;
 			}
+			else
+				throw Exception("HandleOpenGL::HandleOpenGL - GLIP-LIB has already been initialized.", __FILE__, __LINE__);
+		}
+
+		HandleOpenGL::~HandleOpenGL(void)
+		{
+			if(instance==this)
+			{
+				delete standardQuad;
+			}
+		}
+
+		/**
+		\fn void HandleOpenGL::init(void)
+		\brief Initialize Glew and other tools for the OpenGL state machine.
+
+		When using this function, you <b>MUST</b> make an explicit call to HandleOpenGL::deinit when exiting program.
+		**/
+		void HandleOpenGL::init(void)
+		{
+			if(instance==NULL)
+				instance = new HandleOpenGL;
+			else
+				throw Exception("HandleOpenGL::init - GLIP-LIB has already been initialized.", __FILE__, __LINE__);
+		}
+
+		/**
+		\fn void HandleOpenGL::deinit(void)
+		\brief Deinitialize Glew and other tools for the OpenGL state machine.
+
+		You have to call this function when the context has been created with HandleOpenGL::init.
+		**/
+		void HandleOpenGL::deinit(void)
+		{
+			if(instance!=NULL)
+			{
+				delete instance;
+				instance = NULL;
+			}
+			else
+				throw Exception("HandleOpenGL::deinit - GLIP-LIB has never been initialized for this program.", __FILE__, __LINE__);
 		}
 
 		/**
@@ -118,6 +165,16 @@ using namespace Glip::CoreGL;
 			}
 			else
 				return std::string("<Error : OpenGL version is less than 2.0>");
+		}
+
+		/**
+		\fn HdlVBO& HandleOpenGL::standardQuadVBO(void)
+		\brief Grab access to the standard quad VBO (a quad between points (-1;-1), (1;-1), (1;1), (-1;1), with texel coordinates (0;0), (0;1), (1;1), (1;0). WARNING: this function does not perform initialization test.
+		\return A reference to this geometry.
+		**/
+		HdlVBO& HandleOpenGL::standardQuadVBO(void)
+		{
+			return *(instance->standardQuad);
 		}
 
 // Errors Monitoring

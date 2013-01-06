@@ -119,9 +119,6 @@
 				clearColorBlue,
 				keyPressIncr;
 
-			// OpenGL Surface :
-			HdlVBO *vbo;
-
 			// Find correspondance Key / Action :
 			KeyAction corresponding(const Qt::Key& k) const;
 
