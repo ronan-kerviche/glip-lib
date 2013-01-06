@@ -160,7 +160,7 @@ using namespace Glip::CoreGL;
 	/**
 	\fn HdlVBO* HdlVBO::generate2DStandardQuad(void)
 	\brief Build a VBO containing a single quad between (-1.0,  1.0); (-1.0, -1.0); (1.0,  1.0); (1.0, -1.0) and adequate texcoords.
-	\return A pointer to a VBO, you must call delete on it at the end.
+	\return A pointer to a VBO, you have reponsability of freeing it.
 	**/
 	HdlVBO* HdlVBO::generate2DStandardQuad(void)
 	{
@@ -185,19 +185,16 @@ using namespace Glip::CoreGL;
 	\param appH The size of the grid in the Y direction.
 	\param cX The center of the grid in the X direction.
 	\param cY The center of the grid in the Y direction.
-	\return A pointer to a VBO, you must call delete on it at the end.
+	\return A pointer to a VBO, you have reponsability of freeing it.
 	**/
 	HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
 	{
 		if(w<=0 || h<=0)
-		{
 			throw Exception("HdlVBO::generate2DGrid : cannot create negative sized grid",__FILE__, __LINE__);
-			return NULL;
-		}
 
 		//Create the grid first:
-		GLfloat x = appW/w,
-		y = appH/h;
+		GLfloat x = appW/static_cast<GLfloat>(w-1),
+			y = appH/static_cast<GLfloat>(h-1);
 		cX = cX - appW/2.0;
 		cY = cY - appH/2.0;
 
@@ -218,6 +215,56 @@ using namespace Glip::CoreGL;
 		HdlVBO* result = new HdlVBO(w*h, 2, GL_STREAM_DRAW_ARB, data, 0, 0, NULL, GL_NONE, 2, tex);
 		delete[] data;
 		delete[] tex;
+
+		return result;
+	}
+
+	/**
+	\fn HdlVBO* HdlVBO::generate3DGrid(int w, int h, int d, GLfloat appW, GLfloat appH, GLfloat appD, GLfloat cX, GLfloat cY, GLfloat cZ)
+	\brief Build a VBO containing a grid of points. This function will not create texel coordinates for the VBO.
+	\param w The number of dots in the X direction.
+	\param h The number of dots in the Y direction.
+	\param d The number of dots in the Z direction.
+	\param appW The size of the grid in the X direction.
+	\param appH The size of the grid in the Y direction.
+	\param appD The size of the grid in the Z direction.
+	\param cX The center of the grid in the X direction.
+	\param cY The center of the grid in the Y direction.
+	\param cZ The center of the grid in the Z direction.
+	\return A pointer to a VBO, you have reponsability of freeing it.
+	**/
+	HdlVBO* HdlVBO::generate3DGrid(int w, int h, int d, GLfloat appW, GLfloat appH, GLfloat appD, GLfloat cX, GLfloat cY, GLfloat cZ)
+	{
+		if(w<=0 || h<=0 || d<=0)
+			throw Exception("HdlVBO::generate3DGrid : cannot create negative sized grid",__FILE__, __LINE__);
+
+		// Compute the steps and upper-left corner position :
+		GLfloat x = appW/static_cast<GLfloat>(w-1),
+			y = appH/static_cast<GLfloat>(h-1),
+			z = appD/static_cast<GLfloat>(d-1);
+		cX = cX - appW/2.0;
+		cY = cY - appH/2.0;
+		cZ = cZ - appD/2.0;
+
+		GLfloat* data = new GLfloat[w*h*d*3];
+		unsigned int index = 0;
+
+		for(unsigned int k=0; k<d; k++)
+		{
+			for(unsigned int i=0; i<h; i++)
+			{
+				for(unsigned int j=0; j<w; j++)
+				{
+					data[index + 0] = j*x + cX;
+					data[index + 1] = i*y + cY;
+					data[index + 2] = k*z + cZ;
+					index += 3;
+				}
+			}
+		}
+
+		HdlVBO* result = new HdlVBO(w*h*d, 3, GL_STREAM_DRAW_ARB, data, 0, 0, NULL, GL_POINTS);
+		delete[] data;
 
 		return result;
 	}

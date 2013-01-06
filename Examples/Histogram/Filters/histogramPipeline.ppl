@@ -1,103 +1,104 @@
-TEXTURE_FORMAT:colorDistribution(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST); // Histograms bins
-TEXTURE_FORMAT:histogramWindow(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);  // Final window representation
+// Histogram pipeline.
+// You must use a 3D grid as geometry for it to work.
 
-SHADER_SOURCE:vertexHistogram()
+TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);		// Histograms bins
+TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);  	// Final window representation
+
+SHADER_SOURCE:histogramVertShader()
 {
 	#version 130
 
-	uniform sampler2D tex0;
-	uniform int c; // 0:red 1:green 2:blue
+	uniform sampler2D inputTexture;
 
 	void main()
 	{
 		// Vertex texture fetching :
-		vec4 col = textureLod(tex0, gl_Vertex.xy+vec2(0.5,0.5), 0.0);
+		vec4 col = textureLod(inputTexture, gl_Vertex.xy+vec2(0.5,0.5), 0.0);
+
+		float sel = 0.0;
 
 		// "Payload"
-		gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+		if(gl_Vertex.z==-1.0)				// Red plane
+		{
+			gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
+			sel = col.r;
+		}
+		else if(gl_Vertex.z==0.0)			// Green plane
+		{
+			gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
+			sel = col.g;
+		}
+		else						// Blue plane
+		{
+			gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+			sel = col.b;
+		}
 
-		// Compute the new position!
-		float tmp = 0.0;
-		if(c==0)
-			tmp = col.r;
-		if(c==1)
-			tmp = col.g;
-		if(c==2)
-			tmp = col.b;
+		// Only on [0.0,1.0] interval :
+		clamp(sel, 0.0, 1.0);
 
 		// Done
-		gl_Position.x = (tmp-0.5)*2.0;
+		gl_Position.x = (sel-0.5)*2.0; 	// set new point position to the color intensity in [-1.0,1.0] interval
 		gl_Position.y = 0.0;
 		gl_Position.z = 0.0;
 	}
 }
 
-SHADER_SOURCE:fragHistogram()
+SHADER_SOURCE:histogramFragShader()
 {
 	#version 130
 
-	uniform float nrm, scale;
+	uniform sampler2D inputTexture;
+	out vec4 histogramBins;
 
-	out vec4 outText;
+	uniform float nrm;
 
 	void main()
 	{
-		if(gl_Color.b>0.5)
-			outText = vec4(nrm,nrm,nrm,1.0)*scale;
-		else
-			outText = vec4(0.0,0.0,0.0,0.0);
+		histogramBins = gl_Color*nrm;
 	}
 }
 
-SHADER_SOURCE:fragWinHist()
+SHADER_SOURCE:showHistogramShader()
 {
 	#version 130
-	uniform sampler2D fRed, fGreen, fBlue, tex0;
-	out vec4 outText;
+	uniform sampler2D histogramBins, inputTexture;
+	out vec4 outputTexture;
+
+	uniform float scale = 1.0f;
 
 	void main()
 	{
-		vec2 pos = gl_TexCoord[0].st;
-		vec4 pRed 	= textureLod(fRed, 	pos, 0);
-		vec4 pGreen	= textureLod(fGreen, 	pos, 0);
-		vec4 pBlue	= textureLod(fBlue,	pos, 0);
-		vec4 col	= textureLod(tex0, 	pos, 0);
+		vec2 pos 	= gl_TexCoord[0].st;
+		vec4 hist	= textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+		vec4 col	= textureLod(inputTexture,  pos, 0);
 
-		if(pos.t>1.0-pRed.r )
-			outText.r = 1.0;
+		if(pos.t>(1.0-hist.r*scale) )
+			outputTexture.r = 1.0;
 		else
-			outText.r = col.r;
-		if(pos.t>1.0-pGreen.r )
-			outText.g = 1.0;
+			outputTexture.r = col.r;
+
+		if(pos.t>(1.0-hist.g*scale) )
+			outputTexture.g = 1.0;
 		else
-			outText.g = col.g;
-		if(pos.t>1.0-pBlue.r )
-			outText.b = 1.0;
+			outputTexture.g = col.g;
+
+		if(pos.t>(1.0-hist.b*scale) )
+			outputTexture.b = 1.0;
 		else
-			outText.b = col.b;
+			outputTexture.b = col.b;
 	}
 }
 
 
-FILTER_LAYOUT:filterHistogram(colorDistribution, fragHistogram, vertexHistogram, CLEARING_ON, BLENDING_ON);
-FILTER_LAYOUT:windowHistogram(histogramWindow, fragWinHist);
+FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON);
+FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader);
 
 PIPELINE_MAIN:pipelineHistogram()
 {
-	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0);
+	INPUT_PORTS(inputTexture);
+	OUTPUT_PORTS(outputTexture, histogramBins);
 
-	FILTER_INSTANCE:instHistRed(filterHistogram);
-	FILTER_INSTANCE:instHistGreen(filterHistogram);
-	FILTER_INSTANCE:instHistBlue(filterHistogram);
-	FILTER_INSTANCE:instWin(windowHistogram);
-
-	CONNECTION(THIS, i0, instHistRed, tex0);
-	CONNECTION(THIS, i0, instHistGreen, tex0);
-	CONNECTION(THIS, i0, instHistBlue, tex0);
-	CONNECTION(instHistRed, outText, instWin, fRed);
-	CONNECTION(instHistGreen, outText, instWin, fGreen);
-	CONNECTION(instHistBlue, outText, instWin, fBlue);
-	CONNECTION(THIS, i0, instWin, tex0);
-	CONNECTION(instWin, outText, THIS, o0);
+	FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
+	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter);
 }

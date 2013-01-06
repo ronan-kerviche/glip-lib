@@ -265,20 +265,6 @@
 			throw m+e;
 		}
 
-		/*try
-		{
-			// Create a basic geometry :
-			vbo = HdlVBO::generate2DStandardQuad();
-		}
-		catch(Exception& e)
-		{
-			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
-		}
-		catch(std::exception& e)
-		{
-			throw Exception("Filter::Filter - Caught an exception while creating the geometry for " + getNameExtended() + " : \n" + e.what(), __FILE__, __LINE__);
-		}*/
-
 		// Set up the data on the program :
 		if(!fragmentShader->requiresCompatibility())
 		{
@@ -295,8 +281,6 @@
 			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
 		if(fragmentShader==NULL)
 			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-		/*if(vbo==NULL)
-			throw Exception("Filter::~Filter - Internal error : vbo is NULL", __FILE__, __LINE__);*/
 		if(vbo!=NULL)
 			delete vbo;
 
@@ -413,9 +397,6 @@
 	**/
 	void Filter::setGeometry(HdlVBO* v)
 	{
-		/*if(v==NULL)
-			throw Exception("Filter::setGeometry - You can't set a pointer to NULL for the geometry!", __FILE__, __LINE__);*/
-
 		if(vbo!=NULL)
 			delete vbo;
 

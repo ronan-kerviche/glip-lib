@@ -424,7 +424,7 @@
 					two = line.find(')');
 					int tmp;
 					if(from_string(line.substr(one, two-one), tmp))
-					str << "        >> " << getLine(tmp-1);// << std::endl;
+					str << "        >> " << getLine(tmp-1) << std::endl;
 					break;
 				case HandleOpenGL::vd_INTEL :
 				case HandleOpenGL::vd_AMDATI :

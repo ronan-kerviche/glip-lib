@@ -61,6 +61,7 @@
 					static void    unmap(void);
 					static HdlVBO* generate2DStandardQuad(void);
 					static HdlVBO* generate2DGrid(int w, int h, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat cX=0.0, GLfloat cY=0.0);
+					static HdlVBO* generate3DGrid(int w, int h, int d, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat appD=1.0, GLfloat cX=0.0, GLfloat cY=0.0, GLfloat cZ=0.0);
 			};
 		}
 	}

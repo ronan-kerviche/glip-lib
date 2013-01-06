@@ -566,3 +566,4 @@ using namespace Glip::CoreGL;
 		// Default :
 		return GL_FALSE;
 	}
+

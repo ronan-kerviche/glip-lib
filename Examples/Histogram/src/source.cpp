@@ -7,7 +7,7 @@
 
 // Code
 	HistogramInterface::HistogramInterface(void)
-	 : pipeline(NULL), window(NULL, 640, 480), layout(this), saveButton("Save result (RGB888)", this)
+	 : pipeline(NULL), window(NULL, 640, 480), layout(this), saveButton("Save result (RGB888)", this), scaleSlider(Qt::Horizontal)
 	{
 		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
@@ -19,6 +19,8 @@
 
 		try
 		{
+			scaleSlider.setRange(1,100);
+
 			// Info :
 			log << "> Histogram" << std::endl;
 			log << "Vendor name   : " << HandleOpenGL::getVendorName() << std::endl;
@@ -32,33 +34,27 @@
 
 			layout.addLayout(&imageLoaderInterface);
 			layout.addWidget(&window);
+			layout.addWidget(&scaleSlider);
 			layout.addWidget(&saveButton);
 			setGeometry(1000, 100, 800, 700);
 			show();
 
 			// Make the pipeline
-			PipelineLayout* model = NULL;
 			LayoutLoader	loader;
 
-			model = loader("./Filters/histogramPipeline.ppl");
+			pipeline = loader("./Filters/histogramPipeline.ppl", "instHistogramPipeline");
 
-			pipeline = new Pipeline(*model, "instHistogramPipeline");
-			std::cout << "Name of the pipeline : " << pipeline->getNameExtended() << std::endl;
-			delete model;
-
-			// Set variables :
-			((*pipeline)["instHistRed"]).prgm().modifyVar("c",HdlProgram::Var,0);
-			((*pipeline)["instHistGreen"]).prgm().modifyVar("c",HdlProgram::Var,1);
-			((*pipeline)["instHistBlue"]).prgm().modifyVar("c",HdlProgram::Var,2);
-			const float scale = 10.0f;
-			((*pipeline)["instHistRed"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
-			((*pipeline)["instHistGreen"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
-			((*pipeline)["instHistBlue"]).prgm().modifyVar("scale",HdlProgram::Var,scale);
+			// Set geometry and variables :
+			const int 	numWPoints = 512,
+					numHPoints = 512;
+			((*pipeline)["histogramFilterInstance"]).setGeometry( HdlVBO::generate3DGrid(numWPoints, numHPoints, 3, 1.0f, 1.0f, 2.0f) );
+			((*pipeline)["histogramFilterInstance"]).prgm().modifyVar("nrm",HdlProgram::Var, 1.0f/static_cast<float>(numWPoints*numHPoints));
 
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(process(void)));
-			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(updateShow(void)));
+			QObject::connect(&scaleSlider,			SIGNAL(sliderMoved(int)),		this, SLOT(process(void)));
 			QObject::connect(&(window.renderer()),		SIGNAL(resized(void)),  		this, SLOT(updateShow(void)));
 			QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateShow(void)));
+			QObject::connect(&saveButton,			SIGNAL(released(void)), 		this, SLOT(save(void)));
 		}
 		catch(Exception& e)
 		{
@@ -83,20 +79,15 @@
 
 	void HistogramInterface::process(void)
 	{
-		if(pipeline!=NULL)
+		if(pipeline!=NULL && imageLoaderInterface.getNumTextures()>0)
 		{
-			// Update the grid of the pipeline :
 			HdlTexture& texture = imageLoaderInterface.currentTexture();
-			(*pipeline)["instHistRed"].setGeometry(HdlVBO::generate2DGrid(texture.getWidth(), texture.getHeight()));
-			(*pipeline)["instHistGreen"].setGeometry(HdlVBO::generate2DGrid(texture.getWidth(), texture.getHeight()));
-			(*pipeline)["instHistBlue"].setGeometry(HdlVBO::generate2DGrid(texture.getWidth(), texture.getHeight()));
 
-			float a = 1.0f/static_cast<float>(texture.getNumPixels());
-			((*pipeline)["instHistRed"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
-			((*pipeline)["instHistGreen"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
-			((*pipeline)["instHistBlue"]).prgm().modifyVar("nrm",HdlProgram::Var,a);
+			((*pipeline)["histogramShowFilterInstance"]).prgm().modifyVar("scale", HdlProgram::Var, static_cast<float>(scaleSlider.value()));
 
 			(*pipeline) << texture << Pipeline::Process;
+
+			updateShow();
 		}
 	}
 
@@ -109,7 +100,7 @@
 
 		lock = true;
 
-		if(pipeline!=NULL)
+		if(pipeline!=NULL && imageLoaderInterface.getNumTextures()>0)
 		{
 			try
 			{
@@ -129,6 +120,27 @@
 			window.renderer().clearWindow();
 
 		lock = false;
+	}
+
+	void HistogramInterface::save(void)
+	{
+		if(imageLoaderInterface.getNumTextures()<=0)
+			QMessageBox::information(this, tr("Error while requesting image write"), tr("No available image."));
+		else if(pipeline!=NULL)
+		{
+			try
+			{
+				imageLoaderInterface.saveTexture(pipeline->out(0));
+			}
+			catch(Exception& e)
+			{
+				QMessageBox::information(this, tr("IHM::save - Error while writing file : "), e.what());
+				log << "IHM::save - Error while writing file :  " << std::endl;
+				log << e.what() << std::endl;
+			}
+		}
+		else
+			QMessageBox::information(this, tr("Error while requesting image write"), tr("Pipeline is not defined, this is an internal error."));
 	}
 
 	HistogramApplication::HistogramApplication(int& argc, char** argv)

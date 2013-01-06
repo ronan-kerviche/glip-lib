@@ -29,6 +29,7 @@
 		private :
 			std::fstream		log;
 			QVBoxLayout		layout;
+			QSlider			scaleSlider;
 			QPushButton		saveButton;
 			ImageLoaderInterface	imageLoaderInterface;
 			WindowRendererContainer	window;
@@ -39,10 +40,9 @@
 			~HistogramInterface(void);
 
 		public slots :
-			/*void loadImage(void);
-			void save(void);*/
 			void process(void);
 			void updateShow(void);
+			void save(void);
 	};
 
 	class HistogramApplication : public QApplication
