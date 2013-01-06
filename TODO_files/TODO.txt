@@ -238,7 +238,7 @@ Current Version : 0.8
 	Status : TODO
 
 [0.9]	Check JPEG loading in Qt examples with http://doc.qt.digia.com/4.7/deployment-plugins.html (add release to the CONFIG option of the .pro file)
-	Status : TODO
+	Status : FIXED : check if another program brings its own libraries in ldconfig, namely Matlab.
 
 [0.9]	Finish external Qt tools for displaying texture. Fix scaling problems.
 	Status : DONE
@@ -248,7 +248,7 @@ Current Version : 0.8
 
 [0.9]	Add option management to Qt texture loader.
 	Status : DONE
-x
+
 [0.9]	Fix previous Git errors and add new directories.
 	Status : DONE
 
