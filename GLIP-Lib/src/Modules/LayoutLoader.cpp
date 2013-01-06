@@ -53,7 +53,9 @@
 								"BLENDING_ON",
 								"BLENDING_OFF",
 								"REQUIRED_FORMAT",
-								"REQUIRED_PIPELINE"
+								"REQUIRED_PIPELINE",
+								"SHARED_CODE",
+								"INSERT_SHARED_CODE"
 							};
 
 	// Functions :
@@ -80,6 +82,7 @@
 
 	void LayoutLoader::clean(void)
 	{
+		sharedCode.clear();
 		entryType.clear();
 		entryName.clear();
 		entryCode.clear();
@@ -340,7 +343,7 @@
 					std::cout << "    Key  : " << key << std::endl;
 				#endif
 
-				if(key!=INCLUDE_FILE)
+				if(key!=INCLUDE_FILE && key!=SHARED_CODE)
 					throw Exception("LayoutLoader::updateEntriesLists - Missing name for element of type " + type + ".", __FILE__, __LINE__);
 
 				entryType.push_back(getKeyword(type));
@@ -353,6 +356,20 @@
 						std::cout << "    Changing filepath to : " << path << arg[0] << std::endl;
 					#endif
 					entryCode.push_back("("+path+arg[0]+")");
+				}
+				else if(key==SHARED_CODE)
+				{
+					if(!sharedCode.empty())
+						sharedCode += "\n\n";
+
+					sharedCode += getBody(code);
+
+					#ifdef __VERBOSE__
+						std::cout << "    Adding shared code : " << std::endl;
+						std::cout << getBody(code) << std::endl;
+					#endif
+
+					entryCode.push_back("(Shared code added to LayoutLoader::sharedCode)");
 				}
 				else
 					entryCode.push_back(code);
@@ -448,7 +465,23 @@
 		std::vector<std::string> arg = getArguments(code);
 
 		if(arg.size()==0)
-			return new ShaderSource(getBody(code));
+		{
+			std::string kstr = keywords[INSERT_SHARED_CODE];
+			std::string tmp = getBody(code);
+
+			size_t pos = tmp.find(kstr);
+
+			if(pos!=std::string::npos)
+				tmp.replace(tmp.begin()+pos, tmp.begin()+pos+kstr.size(), sharedCode.begin(), sharedCode.end());
+
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+				std::cout << "LayoutLoader::buildShaderSource - Code generated : " << std::endl;
+				std::cout << tmp << std::endl;
+				std::cout << "<< LayoutLoader::buildShaderSource" << std::endl;
+			#endif
+
+			return new ShaderSource(tmp);
+		}
 		else
 			return new ShaderSource(path+arg[0]);
 	}
@@ -756,6 +789,12 @@
 					entryName.insert(entryName.end(), l.entryName.begin(), l.entryName.end());
 					entryCode.insert(entryCode.end(), l.entryCode.begin(), l.entryCode.end());
 					entryPath.insert(entryPath.end(), l.entryPath.begin(), l.entryPath.end());
+
+					// append its shared code base to the current shared code base :
+					if(!sharedCode.empty())
+						sharedCode += "\n\n";
+
+					sharedCode += l.sharedCode;
 				}
 			}
 

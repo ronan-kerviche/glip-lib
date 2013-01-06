@@ -96,6 +96,17 @@ The script must be structured with the following commands (but no special order 
 - Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
 <b>INCLUDE_FILE</b>(<i>string filename</i>);
 
+- Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT_SHARED_CODE marker : <BR>
+<b>SHARED_CODE</b> <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>// shared code goes here...</i> <BR>
+} <BR>
+&nbsp;&nbsp; Then use : <BR>
+<b>SHADER_SOURCE</b>:<i>source_name</i>() <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>INSERT_SHARED_CODE</b> // The shared code will be inserted here... <BR>
+} <BR>
+
 - Comments : C++ style.
 
 <i>Hello world pipeline example </i> (no processing, just resizing to <i>format</i>) :
@@ -206,12 +217,15 @@ Loading Example :
 					BLENDING_OFF,
 					REQUIRED_FORMAT,
 					REQUIRED_PIPELINE,
+					SHARED_CODE,
+					INSERT_SHARED_CODE,
 					NumKeywords
 				};
 
 			private :
 				static const char* 				keywords[NumKeywords];
 				// Reading :
+				std::string					sharedCode;
 				std::vector<LoaderKeyword> 			entryType;
 				std::vector<std::string> 			entryName;
 				std::vector<std::string>			entryCode;

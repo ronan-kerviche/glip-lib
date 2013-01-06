@@ -1678,25 +1678,6 @@
 	}
 
 	/**
-	\fn Pipeline& Pipeline::operator<<(InputDevice& device)
-	\brief Add all the output of variable device as input of this pipeline. The user must maintain the texture(s) in memory while this Pipeline hasn't received a Pipeline::Process or Pipeline::Reset signal.
-	\param texture The data to use.
-	\return This pipeline or raise an exception if any errors occur.
-	**/
-	/*Pipeline& Pipeline::operator<<(InputDevice& device)
-	{
-		for(int i=0; i<device.getNumOutputPort())
-		{
-			if(input.size()>=getNumInputPort())
-				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
-
-			input.push_back(&device.out(i));
-		}
-
-		return *this;
-	}*/
-
-	/**
 	\fn Pipeline& Pipeline::operator<<(ActionType a)
 	\brief Apply operation on previously input data.
 	\param a The ActionType (Process or Reset arguments).

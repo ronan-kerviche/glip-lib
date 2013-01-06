@@ -262,7 +262,6 @@ How to process the inputs :
 					int 		getSize(bool askDriver = false);
 					Pipeline& 	operator<<(HdlTexture& texture);
 					Pipeline& 	operator<<(Pipeline& pipeline);
-					//Pipeline& 	operator<<(InputDevice& device);
 					Pipeline& 	operator<<(ActionType a);
 					HdlTexture& 	out(int id = 0);
 					HdlTexture& 	out(const std::string& portName="");

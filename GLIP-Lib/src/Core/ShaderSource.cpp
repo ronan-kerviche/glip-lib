@@ -62,13 +62,13 @@
 		sourceName = "<Inner String>";
 
 		if(lines>1)
+		{
+			for(int i = 1; i<lines; i++)
 			{
-				for(int i = 1; i<lines; i++)
-				{
-					if(src[i]!=NULL) source += src[i];
-					if(eol)          source += "\n";
-				}
+				if(src[i]!=NULL) source += src[i];
+				if(eol)          source += "\n";
 			}
+		}
 		else
 		{
 			int i = 0;
@@ -255,6 +255,7 @@
 		{
 			if(source[i]=='{')
 			{
+				i++;
 				int level=1;
 				while(level>0 && i<source.length())
 				{
@@ -275,6 +276,7 @@
 		{
 			if(global1[i]=='(')
 			{
+				i++;
 				int level=1;
 				while(level>0 && i<global1.length())
 				{
