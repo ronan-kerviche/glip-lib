@@ -113,7 +113,7 @@ try // always protect your code with try / catch blocks, GLIP-Lib functions will
 	// In this case we need two pipeline because we can't use the output one pipeline as own input (in this particular case).
 	\endcode
 
-	In the end, you can use these pipelines with an InputDevice or a simple texture and Display with an output device :
+	In the end, you can use these pipelines with an Glip::CorePipeline::InputDevice or a simple texture and display with an Glip::CorePipeline::OutputDevice :
 	\code
 	// We create a first texture and a buffer :
 	HdlTexture* temp = new HdlTexture(p1->out(0).format());

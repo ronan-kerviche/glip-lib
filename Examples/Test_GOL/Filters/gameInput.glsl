@@ -1,7 +1,7 @@
 #version 130
 
-out     vec4 	output1,output2;
-uniform int	t;
+out     vec4 	output1, output2;
+uniform float	seed;
 
 float rand(vec2 co)
 {
@@ -10,8 +10,8 @@ float rand(vec2 co)
 
 void main()
 {
-	float 	a = rand(gl_TexCoord[0].st*t),
-		b = rand(gl_TexCoord[0].st*t);
+	float 	a = rand((gl_TexCoord[0].st+vec2(seed,seed))*1000.0),
+		b = rand((-gl_TexCoord[0].st+vec2(seed,seed))*1000.0);
 
 	if(a<0.8)
 		a = 0.0;

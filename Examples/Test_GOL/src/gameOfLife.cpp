@@ -81,8 +81,8 @@
 			#else
 				// Create another random (mathematical) point :
 				ShaderSource inputSrc("./Filters/gameInput.glsl");
-				inp 	= new ProceduralInput("InputPattern", fmt, inputSrc);
-				inp->prgm().modifyVar("t",HdlProgram::Var,1);
+				inp = new ProceduralInput("InputPattern", fmt, inputSrc);
+				inp->prgm().modifyVar("seed",HdlProgram::Var,1.0f);
 				inp->generateNewFrame();
 
 				// Do the first pass :
@@ -152,11 +152,10 @@
 	void GameOfLife::compute(void)
 	{
 		static int i = 0;
-		static int j = 2;
 
 		try
 		{
-			if(i==10)
+			if(i%10==0)
 			{
 				//throw Exception("Stop");
 				std::cout << "> Reset" << std::endl;
@@ -165,15 +164,14 @@
 					randomTexture(0.3);
 					(*p1) << (*tInput) << Pipeline::Process;
 					(*p2) << (*tInput) << Pipeline::Process;
+					target = &p1->out(0);
 				#else
-					inp->prgm().modifyVar("t",HdlProgram::Var,j);
+					inp->prgm().modifyVar("seed",HdlProgram::Var,static_cast<float>(i/10.0f));
 					inp->generateNewFrame();
 					(*p1) << inp->out(0) << Pipeline::Process;
 					(*p2) << inp->out(1) << Pipeline::Process;
-					j++;
+					target = &p1->out(0);
 				#endif
-
-				i = 0;
 			}
 			else
 			{
@@ -187,9 +185,9 @@
 					(*p1) << p2->out(0) << Pipeline::Process;
 					target = &p1->out(0);
 				}
-
-				show();
 			}
+
+			show();
 
 			i++;
 		}

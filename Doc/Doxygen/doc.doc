@@ -19,7 +19,7 @@
 	The news feed is at : https://sourceforge.net/news/?group_id=363201
 
 \section sec_f_example Sample code
-	See the \ref page_GettingStarted page for a short example. More generally, you will find examples in the <a href="./pages.html">related pages</a>.
+	See the \ref page_GettingStarted page for a quick start guide. More generally, you will find examples in the <a href="./pages.html">related pages</a>.
 
 \section sec_examples Examples and demos
 	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
