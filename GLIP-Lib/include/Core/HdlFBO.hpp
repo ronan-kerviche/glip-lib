@@ -40,7 +40,7 @@
 			// FBO Handle
 			/**
 			\class HdlFBO
-			\brief Object handle for OpenGL Frame Buffer Objects
+			\brief Object handle for OpenGL Frame Buffer Objects.
 
 			This class can manage a Frame Buffer Object and multiple rendering target, each one of these rendering target have the same format.
 			**/

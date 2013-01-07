@@ -230,7 +230,7 @@
 			// Objects
 /**
 \class ShaderSource
-\brief Shader source code and infos
+\brief Shader source code and infos.
 
 Loading a shader from a standard string or a file :
 \code

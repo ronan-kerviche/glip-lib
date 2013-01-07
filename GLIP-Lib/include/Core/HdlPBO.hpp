@@ -48,7 +48,7 @@
 			// Pixel Buffer Object Handle
 /**
 \class HdlPBO
-\brief Object handle for OpenGL Pixel Buffer Objects
+\brief Object handle for OpenGL Pixel Buffer Objects.
 
 How to use a PBO to upload data to a texture :
 \code

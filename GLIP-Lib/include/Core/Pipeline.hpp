@@ -55,7 +55,7 @@
 			// Objects
 /**
 \class __ReadOnly_PipelineLayout
-\brief Pipeline layout (Read Only)
+\brief Pipeline layout (Read Only).
 **/
 			class __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
 			{
@@ -141,7 +141,7 @@
 
 /**
 \class PipelineLayout
-\brief Pipeline layout
+\brief Pipeline layout.
 
 How to create a pipeline layout :
 \code
@@ -200,7 +200,7 @@ How to create a pipeline layout :
 
 /**
 \class Pipeline
-\brief Pipeline object
+\brief Pipeline object.
 
 How to process the inputs :
 \code

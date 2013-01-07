@@ -1,0 +1,737 @@
+/**
+	\page page_GettingStarted Getting Started
+
+\section sec_startGOL First example of computation with GLIP-LIB : John Conway's Game of Life
+
+	This page will present you basic use of the library. We will build a simple cellular automaton based on <a href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">John Conway's Game of Life</a>. The main idea is that this engine will perform operations from a grid at a time <i>t</i> to a grid at a time <i>t+1</i>. The grid (in 2D) contains cells which can be either <i>alive</i> or <i>dead</i>. Consider a 3x3 patch within this grid, if the center cell is dead at time <i>t</i> and surrounded by exactly three neighbours alive, then it will be alive at time <i>t+1</i> or will remain dead otherwise. If the center cell is alive at time <i>t</i> and surrounded by either two or three neighbours alive, then it will stay alive at time <i>t+1</i>, or it will die otherwise.
+
+	We will skip the code for building the window context since it depends on the library you will be using (GLUT, GLFW, Qt, etc.). However, you can find a full example with GLFW on the main project page.
+
+	First, we build the shader code for computing the grid evolution. The file <i>game.glsl</i> contains the code for a simple fragment shader (per pixel operation). You can browse documentation on GLSL (<b>OpenGL Shading Language</b>) at this page : http://www.opengl.org/sdk/docs/manglsl/.
+	\code
+	// Game of life : rule B3S23 / John Conway's Game of Life
+
+	#version 130
+
+	// The input texture :
+	uniform sampler2D 	inTexture;
+
+	// The red channel of inTexture will be the previous computation, the green will be the one before and so on.
+
+	// The output texture :
+	out     vec4 		outTexture;
+
+	// The main program will be called for every written pixel.
+	// This means that you cannot change the output position of a shader.
+	void main()
+	{
+		// Gather the size of the input grid :
+		ivec2 sz 	= textureSize(inText, 0);
+		float sx 	= 1.0/(float(sz.x));
+		float sy 	= 1.0/(float(sz.y));
+
+		// Read all the eight previous and surrounding cells :
+		vec4 a00	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,-sy), 0);
+		vec4 a01	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,0.0), 0);
+		vec4 a02	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,+sy), 0);
+		vec4 a10	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,-sy), 0);
+		vec4 a11	= textureLod(inText, gl_TexCoord[0].st, 0);
+		vec4 a12	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,+sy), 0);
+		vec4 a20	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,-sy), 0);
+		vec4 a21	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,0.0), 0);
+		vec4 a22	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,+sy), 0);
+
+		// Compute the number of cell alive during last process :
+		float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
+
+		// Older cell are shifted in the next channel :
+		outText.g = a11.r;
+		outText.b = a11.g;
+		outText.a = 1.0;	// Set transparency to "opaque".
+
+		// New :
+		if(a11.r==1.0) // The center cell was previously alive
+		{
+			if((s==2.0) || (s==3.0))
+				outText.r = 1.0; // It stays alive
+			else
+				outText.r = 0.0; // It dies
+		}
+		else
+		{
+			if(s==3.0)
+				outText.r = 1.0; // Birth
+			else
+				outText.r = 0.0; // Stays dead
+		}
+	}
+	\endcode
+
+	Then in your C++ code : the first thing you must start with is the initialization Glew library and other OpenGL related tools :
+	\code
+try // always protect your code with try / catch blocks, GLIP-Lib functions will emit Glip::Exception objects.
+{
+	HandleOpenGL::init();
+	// Or create an object :
+	// HandleOpenGL glipObject;
+	\endcode
+
+	Then you can start to build a pipeline layout and some pipeline instances. In this case the pipeline is rather simple, it will be made of a single filter with one input (the grid at time <i>t</i>) and one output (the grid at time <i>t+1</i>) :
+	\code
+	// Create a format for the filters, this will be the size of the grid :
+	HdlTextureFormat fmt(640, 480, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+
+	// Load a shader source code from a file :
+	ShaderSource src("./game.glsl");
+
+	// Create a filter layout using the format and the shader source :
+	FilterLayout fl("GameOfLife_Layout", fmt, src);
+	// The filter layout will automatically create the corresponding input and output ports by analyzing the uniform samplers (input) and out vectors (output) of the shader source.
+
+	// Create a pipeline :
+	PipelineLayout pl("Main_GameOfLife");
+
+	// Add one input and one output :
+	pl.addInput("inTexture");
+	pl.addOutput("outTexture");
+
+	// Add an instance of the filter fl :
+	pl.add(fl, "GameOfLife");
+	// Here you can add mutliple filters in one pipeline.
+
+	// For this example, we use the same name for ports of the pipeline. We can use an automatic method to make the connections :
+	pl.autoConnect();
+
+	// This is equivalent to connecting the elements with :
+	//pl.connectToInput("inTexture", "GameOfLife", "inTexture");
+	//pl.connectToOutput("GameOfLife", "outTexture", "outTexture");
+	// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
+
+	// Create two pipeline on this layout, they won't share any further information :
+	Pipeline* p1 = new Pipeline(pl, "Ping");
+	Pipeline* p2 = new Pipeline(pl, "Pong");
+	// In this case we need two pipeline because we can't use the output one pipeline as own input (in this particular case).
+	\endcode
+
+	In the end, you can use these pipelines with an InputDevice or a simple texture and Display with an output device :
+	\code
+	// We create a first texture and a buffer :
+	HdlTexture* temp = new HdlTexture(p1->out(0).format());
+	unsigned char* buffer = new unsigned char[temp.getSize()];
+
+	// Fill with some random patterns :
+	for(int i=0; i<temp->getSize(); i++)
+		buffer[i] = static_cast<char>(rand()*255.0/RAND_MAX);
+
+	// We write this initialization to the texture :
+	temp->write(buffer);
+
+	// We prepare the pipelines with this first image :
+	// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
+	(*p1) << (*temp) << Pipeline::Process;
+	(*p2) << (*temp) << Pipeline::Process;
+
+	// Cleaning :
+	delete buffer;
+	delete temp;
+
+	// Now we will apply and display the computation pipeline :
+	unsigned int i=0;
+
+	while(running)
+	{
+		// Process and display :
+		if(i%2==0)
+		{
+			// Take the output on port 0 of p2 and apply it as first argument of p1
+			(*p1) << p2->out(0) << Pipeline::Process;
+
+			// Bind the texture :
+			p1->out(0).bind();
+
+		}
+		else
+		{
+			// The same but for the second pipeline.
+			(*p2) << p1->out(0) << Pipeline::Process;
+
+			// Bind the texture :
+			p2->out(0).bind();
+		}
+
+		// Draw it on a quad :
+		HandleOpenGL::standardQuadVBO().draw();
+
+		// Swap buffer to screen :
+		glSwapBuffers(); //or equivalent method
+
+		i++;
+	}
+
+	// Clean :
+	delete p1;
+	delete p2;
+
+	HandleOpenGL::deinit();
+}
+catch(Exception& e)
+{
+	// Show exception :
+	std::cout << "An exception was caught : " << std::endl;
+	std::cout << e.what() << std::endl;
+}
+	\endcode
+
+	This will produce something close to the following animation on screen :
+	<img src="./images/animation.gif" />
+
+\section sec_pipelineScripts Getting started with Pipeline Scripts
+
+	We can improve the previous pipeline construction by building a script which will contain the full description with the advantage of not requiring compilation of the C++ program when modified (the compilation of the GLSL code is made by the display driver). The Glip::Modules::LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::CorePipeline::PipelineLayout or a Glip::CorePipeline::Pipeline that you can use directly or combined with other pipeline structures. Here is an example of script for histogram computation and display. Check Glip::Modules::LayoutLoader documentation page for further information. We can write a file <i>gameOfLiFe.ppl</i> with the following script :
+	\code
+	// Description of the grid format, with the name gridFormat :
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+	// Load the shader from file game.glsl
+	SHADER_SOURCE:gameOfLifeShader(game.glsl);
+
+	// Create a filter layout, the output will be a texture of format gridFormat and the fragment shader used will be gameOfLifeShader
+	FILTER_LAYOUT:gameOfLifeFilter(gridFormat, gameOfLifeShader);
+
+	// The pipeline layout to be loaded from this file (the main pipeline) will be :
+	PIPELINE_MAIN:gameOfLifePipeline()
+	{
+		// Declare the input and output port :
+		INPUT_PORTS(inTexture);
+		OUTPUT_PORTS(outTexture);
+
+		// Declare one filter instance :
+		FILTER_INSTANCE:gameOfLifeInstance(gameOfLifeFilter);
+
+		// As the input and output ports have the same name as the ports of the filter (defined by the variables inside the shader source code) there is no need to make any connection declaration.
+		// This is equivalent to :
+		//CONNECTION(THIS, inTexture, gameOfLifeInstance, inTexture);
+		//CONNECTION(gameOfLifeInstance, outTexture, THIS, outTexture);
+	}
+	\endcode
+
+	Now we replace the pipeline declaration in the C++ code by :
+	\code
+	// Create a loader :
+	LayoutLoader loader;
+
+	// Load the pipeline layout from file :
+	PipelineLayout* pl = loader("gameOfLiFe.ppl");
+
+	// Create two pipeline on this layout, they won't share any further information :
+	Pipeline* p1 = new Pipeline(pl, "Ping");
+	Pipeline* p2 = new Pipeline(pl, "Pong");
+
+	// Delete the layout :
+	delete pl;
+	\endcode
+
+\section sec_pipelineScriptsArguments Pipeline Scripts Argument
+	In the previous example, the script is forcing the size of the grid but you might want to decide of this size within the C++ program. In that case, you need to do a few modification both in the scripts and in the C++ code. First in the file <i>gameOfLiFe.ppl</i>, we replace the lines :
+	\code
+	// Description of the grid format, with the name gridFormat :
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+	\endcode
+
+	By :
+	\code
+	// Receive the grid format from the loader :
+	REQUIRED_FORMAT:gridFormat();
+	\endcode
+
+	And in the C++ code, we must provide this format to the loader object :
+	\code
+	// The grid format :
+	HdlTextureFormat ourGridFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+	// Create a loader :
+	LayoutLoader loader;
+
+	// Add the required format BEFORE loading the file. The name must correspond to the one expected in the file :
+	loader.addRequiredElement("gridFormat", ourGridFormat);
+
+	// Load the pipeline layout from file :
+	PipelineLayout* pl = loader("gameOfLiFe.ppl");
+	\endcode
+
+	All the previously described code remain identical.
+
+\section sec_shaderInteractivity Shader Interactivity :
+	You will see that after a few thousands iterations the grid has stabilized and the is little motion of patterns in it. To remove this effect, you might want to reset the flow by starting from a new random grid. In this part, we will remove the random generation in RAM to have a random starting point computed on GPU. We will generate a texture through a Glip::Modules::ProceduralInput module.
+
+	First we need a shader which will be generating a random state for each cell. In the file <i>randomState.glsl</i> we write :
+	\code
+	#version 130
+
+	// The output texture (note that there is no input) :
+	out     vec4 	randomTexture;
+
+	// The seed which will be modify upon each call from the C++ code :
+	uniform int	t;
+
+	// The random generator :
+	float rand(vec2 co)
+	{
+	    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+	}
+
+	void main()
+	{
+		float 	a = rand(gl_TexCoord[0].st * t); // the current pixel position times the seed.
+
+		if(a<0.8)
+			a = 0.0; // dead
+		else
+			a = 1.0f; // alive
+
+		randomTexture = vec4(a,0.0,0.0,1.0);
+	}
+	\endcode
+
+	In the C++ code, we build an object :
+	\code
+	ShaderSource randomShader("randomState.glsl");
+	ProceduralInput randomGenerator("randomGenerator", ourGridFormat, randomShader);
+	\endcode
+
+	Then we set a reset every 100 frames in the loop and modify the seed :
+	\code
+	// We don't do random initialization anymore...
+
+	unsigned int i=0;
+
+	while(running)
+	{
+		// Reset :
+		if(i%100==0)
+		{
+			// We modify the variable "t", the seed, in the shader with the current count :
+			randomGenerator.prgm().modifyVar("t", HdlProgram::Var, i/100*13);
+
+			// Generate the new random grid :
+			randomGenerator.generateNewFrame();
+
+			// Apply as input on pipeline 2 (because in this loop, we will use pipeline 1) :
+			(*p2) << randomGenerator.out(0) << Pipeline::Process;
+		}
+
+		// Process and display :
+		if(i%2==0)
+		{
+			(*p1) << p2->out(0) << Pipeline::Process;
+
+			// Bind the texture :
+			p1->out(0).bind();
+		}
+		else
+		{
+			// The same but for the second pipeline.
+			(*p2) << p1->out(0) << Pipeline::Process;
+
+			// Bind the texture :
+			p2->out(0).bind();
+		}
+
+		// Draw it on a quad :
+		HandleOpenGL::standardQuadVBO().draw();
+
+		// Swap buffer to screen :
+		glSwapBuffers(); //or equivalent method
+
+		// Unbind :
+		HdlTexture::unbind();
+
+		i++;
+	}
+	\endcode
+
+	Now the output will be reset properly every 100 frames.
+**/
+
+/**
+	\page page_SobelExample Example : Sobel Filter
+
+	The Sobel filter is basically computing the local derivates of the intensity map. In this example we will show how to use the SHARED_CODE tag accross files.
+
+	First we write a script file <i>convolutionTools.ppl</i> containing :
+	\code
+	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodys loaded.
+	SHARED_CODE()
+	{
+		// Read a 3x3 matrix from the sample s, centered at position pos, use selection to mix the channels :
+		void aggregate(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)
+		{
+			localRegion = mat3(	0.0, 0.0, 0.0,
+						0.0, 0.0, 0.0,
+						0.0, 0.0, 0.0);
+
+			ivec2 sz = textureSize(s, 0);
+			float sx = 1.0/(float(sz.s));
+			float sy = 1.0/(float(sz.t));
+
+			for(int i=-1; i<=1; i++)
+			{
+				for(int j=-1; j<=1; j++)
+				{
+					vec4 col = textureLod(s, pos + vec2(j*sx, i*sy), 0.0);
+					localRegion[i+1][j+1] = dot(col,selection);
+				}
+			}
+		}
+
+		// Apply the convolution between localRegion and kernel
+		void applyKernel(in mat3 localRegion, in mat3 kernel, out float value)
+		{
+			value = 0.0;
+
+			for(int i=0; i<3; i++)
+			{
+				for(int j=0; j<3; j++)
+					value += localRegion[i][j] * kernel[i][j];
+			}
+		}
+	}
+	\endcode
+
+	Then we write a second script <i>sobel.ppl</i> :
+	\code
+	// Include previous file :
+	INCLUDE_FILE(convolutionTools.ppl);
+
+	// Format :
+	REQUIRED_FORMAT:sobelOutputFormat();
+
+	SHARED_CODE()
+	{
+		// This section will be appended at the end of the SHARED_CODE section from the included file convolutionTools.ppl.
+
+		// The kernels for the Sobel filter :
+		const mat3 kernelX = mat3(	-1.0, 0.0, 1.0,
+						-2.0, 0.0, 2.0,
+						-1.0, 0.0, 1.0);
+
+		const mat3 kernelY = mat3(	-1.0, -2.0, -1.0,
+						 0.0,  0.0,  0.0,
+						 1.0,  2.0,  1.0);
+
+		// Compute Sobel Filter
+		void computeSobel(in mat3 localRegion, out vec4 data)
+		{
+			// data.x : Gx
+			// data.y : Gy
+			// data.p : L1 Magnitude = |Gx| + |Gy|
+			// data.q : Angle = atan(Gx/Gy)
+
+			applyKernel(localRegion, kernelX, data.x);
+			applyKernel(localRegion, kernelY, data.y);
+
+			data.p = abs(data.x) + abs(data.y);
+			data.q = atan(data.y/data.x);
+		}
+	}
+
+	// The Sobel Shader :
+	SHADER_SOURCE:sobelShader()
+	{
+		#version 130
+
+		uniform sampler2D 	inputTexture;
+		out     vec4 		sobelTexture;
+
+		INSERT_SHARED_CODE
+
+		void main()
+		{
+			mat3 localRegion;
+
+			aggregate(inputTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+
+			computeSobel(localRegion, sobelTexture);
+		}
+	}
+
+	// Filter :
+	FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShader);
+
+	PIPELINE_MAIN:sobelPipeline()
+	{
+		INPUT_PORTS(inputTexture);
+		OUTPUT_PORTS(sobelTexture);
+
+		FILTER_INSTANCE:sobelFilterInstance(sobelFilter);
+	}
+	\endcode
+
+	We simply load and use with the usual code :
+	\code
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+
+	// Note that we will use a floating point texture on 4 components for the output :
+	HdlTextureFormat sobelFormat(w, h, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+
+	HdlTexture theTexture(imageFormat);
+
+	// Create and load the pipeline :
+	Loader loader;
+
+	load.addRequiredElement(sobelFormat,"sobelOutputFormat");
+
+	Pipeline* sobelPipeline = loader("sobel.ppl", "SobelPipeline");
+
+	// ...
+
+	// Write in the texture :
+	theTexture.write(/*...*/);
+
+	// Process :
+	(*sobelPipeline) << theTexture << Pipeline::Process
+
+	// Use/display sobelPipeline->out(0) or histogramPipeline->out("sobelTexture")
+	// ...
+
+	// Clean :
+	delete sobelPipeline;
+	\endcode
+
+	Output example, only L1 magnitude :
+	<img src="./images/sobelIntensity.png" />
+**/
+
+/**
+
+	\page page_HistogramExample Example : Histogram Processing
+
+	On this page, we will describe how to build a specific class of algorithm to be suitable with GPU architecture. We will use the example of the histogram computation to illustrate the possibilities offered by Vertex Texture Fetching.
+
+	The histogram algorithm can be simply written in pseudocode as :
+	\code
+	set table redBins to 0
+	set table greenBins to 0
+	set table blueBins to 0
+
+	for each pixel in the image
+		increment redBins[current red color]
+		increment greenBins[current green color]
+		increment blueBins[current green color]
+	end
+	\endcode
+
+	As discussed in the \ref page_GettingStarted page, this is not directly transferable to shader code since fragment shaders are only emitted per written texels. Thus there is no way to chose the destination texel according to input. But, what we can do is generating a geometry which can be controlled by a vertex shader. Remember that a Glip::CorePipeline::Filter is always using a vertex shader and a fragment shader. When the vertex shader is not detailed, the filter uses a generic one. In the case of a RGB image we will use a 3D grid as the geometry with 3 layers and, in each, as much points as pixels in the input image. Each point is associated to the color red, green or blue of one pixel image. In the vertex shader, we can read the value of color of the texture and modify the location of the point dynamically.
+
+	We can write a Pipeline Script <i>histogram.ppl</i> as :
+	\code
+	// The format of the bins :
+	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+
+	// The vertex shader, this will be called for every vertex in the geometry :
+	SHADER_SOURCE:histogramVertShader()
+	{
+		#version 130
+
+		uniform sampler2D inputTexture;
+
+		void main()
+		{
+			// Vertex texture fetching :
+			vec4 col = textureLod(inputTexture, gl_Vertex.xy+vec2(0.5,0.5), 0.0);
+			// gl_Vertex.xy is a vec2 corresponding to the current X and Y coordinates of the point.
+
+			float sel = 0.0;
+
+			// "Payload"
+			if(gl_Vertex.z==-1.0)				// Red plane
+			{
+				gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
+				sel = col.r;
+			}
+			else if(gl_Vertex.z==0.0)			// Green plane
+			{
+				gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
+				sel = col.g;
+			}
+			else						// Blue plane
+			{
+				gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+				sel = col.b;
+			}
+
+			// Only on [0.0,1.0] interval :
+			clamp(sel, 0.0, 1.0);
+
+			// Done
+			gl_Position.x = (sel-0.5)*2.0; 	// set new point position to the color intensity in [-1.0,1.0] interval.
+			gl_Position.y = 0.0;		// output texture is 1D, Y and Z coordinates are thus 0.
+			gl_Position.z = 0.0;
+		}
+	}
+
+	// The fragment shader :
+	SHADER_SOURCE:histogramFragShader()
+	{
+		#version 130
+
+		uniform sampler2D inputTexture;
+		out vec4 histogramBins;
+
+		void main()
+		{
+			// Get the size of the texture :
+			ivec2 sz  = textureSize(inputTexture, 0);
+
+			// Prepare normalization constant :
+			float nrm = 1.0/float(sz.s*sz.t);
+
+			histogramBins = gl_Color*nrm;
+		}
+	}
+
+	// Now we create the layout :
+	FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON);
+	// Beyond the vertex shader we also provide two options :
+	//     CLEARING_ON which means that the written texture will be cleared to black before each processing.
+	//     BLENDING_ON which means that we can write several time to a single ouput texture (with special geometry) and that the "colors" will be added.
+
+	// The pipeline layout :
+	PIPELINE_MAIN:pipelineHistogram()
+	{
+		INPUT_PORTS(inputTexture);
+		OUTPUT_PORTS(histogramBins);
+
+		FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
+	}
+	\endcode
+
+	Now we have to load this pipeline and setup the 3D grid geometry :
+	\code
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+	HdlTexture theTexture(imageFormat);
+
+	// Create and load the pipeline :
+	Loader loader;
+	Pipeline* histogramPipeline = loader("histogram.ppl", "HistogramPipeline");
+
+	// Set the geometry with the name of the filter instance in the pipeline :
+	(*histogramPipeline)["histogramFilterInstance"].setGeometry( HdlVBO::generate3DGrid(imageFormat.getWidth(), imageFormat.getHeight(), 3, 1.0f, 1.0f, 2.0f) );
+	// Will create a 3D grid with 3 planes (at z=-1, z=0 and z=1).
+
+	// ...
+
+	// Write in the texture :
+	theTexture.write(/*...*/);
+
+	// Process :
+	(*histogramPipeline) << theTexture << Pipeline::Process
+
+	// Use/display histogramPipeline->out(0) or histogramPipeline->out("histogramBins")
+	// ...
+
+	// Clean :
+	delete histogramPipeline;
+	\endcode
+
+	This will write into the 1D texture the density (normalized sum) of rescpectively, the red, the green and the blue components. We can ellaborate something a little bit more complicated in order to super-impose the histogram on top of the image from which it was generated.
+
+	We write a file <i>prettyHistogram.ppl</i>
+	\code
+	// Include previous file in order to re-use some of the elements :
+	INCLUDE_FILE(histogram.ppl);
+	// This inclusion will transform the PIPELINE_MAIN:pipelineHistogram of the file to a simple PIPELINE_LAYOUT:pipelineHistogram.
+
+	// Require to have the exact format of the image :
+	REQUIRED_FORMAT:imageFormat();
+
+	// Make a mixing shader :
+	SHADER_SOURCE:showHistogramShader()
+	{
+		#version 130
+
+		// Two inputs : the histogram from previous computation and the inputTexture
+		uniform sampler2D histogramBins, inputTexture;
+		out vec4 outputTexture;
+
+		// A stretching factor which can be modified from teh C++ code, default is 1.0 :
+		uniform float scale = 1.0;
+
+		void main()
+		{
+			vec2 pos 	= gl_TexCoord[0].st;
+			vec4 hist	= textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+			vec4 col	= textureLod(inputTexture,  pos, 0);
+
+			// If the coordinates is under the value (normalized to 1) of the histogram, we change the color of the output.
+			// This will draw the surface under the histogram curve, for each channel.
+			if(pos.t>(1.0-hist.r*scale) )
+				outputTexture.r = 1.0;
+			else
+				outputTexture.r = col.r;
+
+			if(pos.t>(1.0-hist.g*scale) )
+				outputTexture.g = 1.0;
+			else
+				outputTexture.g = col.g;
+
+			if(pos.t>(1.0-hist.b*scale) )
+				outputTexture.b = 1.0;
+			else
+				outputTexture.b = col.b;
+		}
+	}
+
+	// Make the filter histogramShowFilter :
+	FILTER_LAYOUT:histogramShowFilter(imageFormat, showHistogramShader);
+
+	// Create the pipeline :
+	PIPELINE_MAIN:prettyHistogramPipeline()
+	{
+		INPUT_PORTS(inputTexture);
+		OUTPUT_PORTS(histogramBins, outputTexture); // The first port will be the actual histogram and the second will be the enhanced image.
+
+		FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
+		FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter);
+
+		// Connections will be made automatically as our ports name are matching.
+	}
+	\endcode
+
+	The C++ program will load this with :
+	\code
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+	HdlTexture theTexture(imageFormat);
+
+	// Create and load the pipeline :
+	Loader loader;
+	loader.addRequiredElement(imageFormat, "imageFormat");
+	Pipeline* prettyHistogramPipeline = loader("prettyHistogram.ppl", "PrettyHistogramPipeline");
+
+	// Set the geometry with the name of the filter instance in the pipeline :
+	(*prettyHistogramPipeline)["histogramFilterInstance"].setGeometry( HdlVBO::generate3DGrid(imageFormat.getWidth(), imageFormat.getHeight(), 3, 1.0f, 1.0f, 2.0f) );
+	// Will create a 3D grid with 3 planes (at z=-1, z=0 and z=1).
+
+	// Set a nice scale factor :
+	(*prettyHistogramPipeline)["histogramShowFilterInstance"].prgm().modifyVar("scale", HdlProgram::Var, 12.0f);
+
+	// ...
+
+	// Write in the texture :
+	theTexture.write(/*...*/);
+
+	// Process :
+	(*prettyHistogramPipeline) << theTexture << Pipeline::Process
+
+	// Use/display prettyHistogramPipeline->out(0) or prettyHistogramPipeline->out("histogramBins") for the actual histogram
+	// or prettyHistogramPipeline->out(1) or prettyHistogramPipeline->out("outputTexture") for the enhanced image.
+	// ...
+
+	// Clean :
+	delete prettyHistogramPipeline;
+	\endcode
+
+	An example of output :
+	<img src="./images/histogram.png" />
+	<div align="center"><i>Original Image Credit & Copyright: <a href="http://www.luisargerich.com/about.html">Luis Argerich</a></i></div>
+**/

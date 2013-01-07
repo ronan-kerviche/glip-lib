@@ -34,7 +34,7 @@
 		// Object
 		/**
 		\class Exception
-		\brief Exception class, derived from std::exception
+		\brief Exception class, derived from std::exception.
 		**/
 		class Exception : public std::exception
 		{

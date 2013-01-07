@@ -581,21 +581,26 @@
 				return ;
 			}
 
+			// Keep the path :
+			previousFilename = filename;
+			refreshButton.setToolTip(filename);
+
 			if(loadedPipeline!=NULL)
 			{
 				delete loadedPipeline;
 				loadedPipeline = NULL;
-			}
-
-			try
-			{
-				loadedPipeline = new Pipeline(*model, "LoadedPipeline");
 
 				// clean the outputChoice box too...
 				outputChoice.setCurrentIndex(0);
 				while(outputChoice.count()>1)
 					outputChoice.removeItem(1);
+				pipelineName.setText("(No pipeline loaded)");
 				pipelineName.setToolTip("");
+			}
+
+			try
+			{
+				loadedPipeline = new Pipeline(*model, "LoadedPipeline");
 			}
 			catch(Exception& e)
 			{
@@ -606,10 +611,6 @@
 				pipelineName.setToolTip("");
 				return ;
 			}
-
-			// Keep the path :
-			previousFilename = filename;
-			refreshButton.setToolTip(filename);
 
 			// Update the name :
 			QFileInfo pathInfo( filename );

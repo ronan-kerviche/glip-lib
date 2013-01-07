@@ -23,6 +23,6 @@ void main()
 	else
 		b = 1.0f;
 
-	output1 = vec4(a,a,a,a);
-	output2 = vec4(b,b,b,b);
+	output1 = vec4(a,0.0,0.0,1.0);
+	output2 = vec4(b,0.0,0.0,1.0);
 }

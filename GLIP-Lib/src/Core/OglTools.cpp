@@ -179,7 +179,8 @@ using namespace Glip::CoreGL;
 
 // Errors Monitoring
 	/**
-	\fn std::string glErrorToString(bool* caughtError = NULL)
+	\fn std::string Glip::CoreGL::glErrorToString(bool* caughtError = NULL)
+	\related HandleOpenGL
 	\brief Get a string corresponding to the last error raised by OpenGL.
 	\param caughtError Pointer to a boolean, will be set to true if an error is caught, or false otherwise.
 	\return A standard string containing human readable information.
@@ -211,7 +212,8 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn bool glErrors(bool verbose, bool quietSituations)
+	\fn bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
+	\related HandleOpenGL
 	\brief Check for errors returned by OpenGL.
 	\param verbose If set to true, the error will be output on std::cout.
 	\param quietSituations If set to true, no print will be sent on std::cout in case there is no error.
@@ -247,7 +249,8 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn void glDebug(void)
+	\fn void Glip::CoreGL::glDebug(void)
+	\related HandleOpenGL
 	\brief Print the current binding points state on std::cout (GL_TEXTURE_BINDING_1D, GL_TEXTURE_BINDING_2D, GL_TEXTURE_BINDING_3D, GL_ARRAY_BUFFER_BINDING, GL_ELEMENT_ARRAY_BUFFER_BINDING, GL_PIXEL_PACK_BUFFER_BINDING, GL_PIXEL_UNPACK_BUFFER_BINDING, GL_FRAMEBUFFER_BINDING, GL_TEXTURE_BUFFER_EXT, GL_CURRENT_PROGRAM).
 	**/
 	void Glip::CoreGL::glDebug(void)
@@ -524,7 +527,8 @@ using namespace Glip::CoreGL;
 
 	// OpenGL - Parameters Naming :
 	/**
-	\fn std::string glParamName(GLenum param)
+	\related HandleOpenGL
+	\fn std::string Glip::CoreGL::glParamName(GLenum param)
 	\brief Get the parameter name as a string.
 	\param param The GLenum parameter.
 	\return A standard string.
@@ -548,9 +552,10 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn GLenum glFromString(const std::string& name)
+	\related HandleOpenGL
+	\fn GLenum Glip::CoreGL::glFromString(const std::string& name)
 	\brief Get the parameter from its name in a string.
-	\param param The GLenum parameter name.
+	\param name The GLenum parameter name.
 	\return The corresponding enum.
 	**/
 	GLenum Glip::CoreGL::glFromString(const std::string& name)

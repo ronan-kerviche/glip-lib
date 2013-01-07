@@ -50,7 +50,7 @@
 			// Objects
 			/**
 			\class __ReadOnly_FilterLayout
-			\brief Filter layout (Read Only)
+			\brief Filter layout (Read Only).
 			**/
 			class __ReadOnly_FilterLayout : virtual public __ReadOnly_ComponentLayout, virtual public __ReadOnly_HdlTextureFormat
 			{
@@ -84,7 +84,7 @@
 
 			/**
 			\class FilterLayout
-			\brief Filter layout
+			\brief Filter layout.
 			**/
 			class FilterLayout : virtual public ComponentLayout, virtual public __ReadOnly_FilterLayout
 			{
@@ -95,7 +95,7 @@
 
 			/**
 			\class Filter
-			\brief Filter object
+			\brief Filter object.
 			**/
 			class Filter : virtual public Component, virtual public __ReadOnly_FilterLayout
 			{

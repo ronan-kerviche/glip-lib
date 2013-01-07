@@ -36,7 +36,7 @@
 			// Texture Format Handle
 			/**
 			\class __ReadOnly_HdlTextureFormat
-			\brief Object handle for OpenGL texture formats (Read Only)
+			\brief Object handle for OpenGL texture formats (Read Only).
 			**/
 			class __ReadOnly_HdlTextureFormat
 			{
@@ -95,7 +95,7 @@
 			// Texture Format Handle
 			/**
 			\class HdlTextureFormat
-			\brief Object handle for OpenGL texture formats
+			\brief Object handle for OpenGL texture formats.
 			**/
 			class HdlTextureFormat : public __ReadOnly_HdlTextureFormat
 			{
@@ -123,7 +123,7 @@
 			// Texture Handle
 			/**
 			\class HdlTexture
-			\brief Object handle for OpenGL textures
+			\brief Object handle for OpenGL textures.
 			**/
 			class HdlTexture : public __ReadOnly_HdlTextureFormat
 			{

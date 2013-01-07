@@ -49,7 +49,7 @@
 			// Object
 			/**
 			\class ObjectName
-			\brief Handling name and type name of a pipeline element
+			\brief Handling name and type name of a pipeline element.
 			**/
 			class ObjectName
 			{

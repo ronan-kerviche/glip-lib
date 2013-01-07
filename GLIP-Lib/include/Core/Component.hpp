@@ -44,7 +44,7 @@
 			// Objects
 			/**
 			\class __ReadOnly_ComponentLayout
-			\brief Layout of a component template (Read Only)
+			\brief Layout of a component template (Read Only).
 			**/
 			class __ReadOnly_ComponentLayout : public ObjectName
 			{
@@ -79,7 +79,7 @@
 
 			/**
 			\class ComponentLayout
-			\brief Layout of a component template
+			\brief Layout of a component template.
 			**/
 			class ComponentLayout : virtual public __ReadOnly_ComponentLayout
 			{
@@ -99,7 +99,7 @@
 
 			/**
 			\class Component
-			\brief Element of a pipeline
+			\brief Element of a pipeline.
 			**/
 			class Component : virtual public __ReadOnly_ComponentLayout
 			{

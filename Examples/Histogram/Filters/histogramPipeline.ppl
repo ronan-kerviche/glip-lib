@@ -48,7 +48,6 @@ SHADER_SOURCE:histogramFragShader()
 {
 	#version 130
 
-	uniform sampler2D inputTexture;
 	out vec4 histogramBins;
 
 	uniform float nrm;

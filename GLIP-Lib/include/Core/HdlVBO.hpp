@@ -35,7 +35,7 @@
 			// Vertex Buffer Object Handle
 			/**
 			\class HdlVBO
-			\brief Object handle for OpenGL Vertex Buffer Objects
+			\brief Object handle for OpenGL Vertex Buffer Objects.
 			**/
 			class HdlVBO
 			{

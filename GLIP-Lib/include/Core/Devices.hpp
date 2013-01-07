@@ -37,10 +37,41 @@
 		namespace CorePipeline
 		{
 			// Objects
-			/**
-			\class InputDevice
-			\brief Input of data onto the GPU
-			**/
+/**
+\class InputDevice
+\brief Input of data onto the GPU.
+
+Using input device :
+\code
+class MyInputDevice : public InputDevice
+{
+	public :
+		MyInputDevice(...)
+		 : __ReadOnly_ComponentLayout("MyInputMethod"), InputDevice("MyInputMethod")
+		{
+			// You must add output ports here :
+			addOutputPort("output1");
+
+			//...
+
+			// Set the texture links :
+			setTextureLink(texture1,0);
+		}
+
+	private :
+		void someMethodToAddImage(void)
+		{
+			// Prepare a new image...
+
+			// Declare new image by relinking it to output :
+			setTextureLink(texture1,0);
+
+			// Or just keep previous link and declare :
+			//declareNewImage(0);
+		}
+}
+\endcode
+**/
 			class InputDevice : public ComponentLayout
 			{
 				private :
@@ -74,10 +105,37 @@
 					HdlTexture& 	out(const std::string& port);
 			};
 
-			/**
-			\class OutputDevice
-			\brief Output of data from the GPU
-			**/
+/**
+\class OutputDevice
+\brief Output of data from the GPU.
+
+Using output device :
+\code
+class MyOutputDevice : public InputDevice
+{
+	public :
+		MyOutputDevice(...)
+		 : __ReadOnly_ComponentLayout("MyOutputMethod"), OutputDevice("MyOutputMethod")
+		{
+			// You must add input ports here :
+			addInputPort("input1");
+
+			//...
+		}
+
+	private :
+		vodi process(void)
+		{
+			// Process argument lists with :
+			for(int i=0; i<getNumInputPort(); i++)
+			{
+				// Read the i'th argument with :
+				in(i);
+			}
+		}
+}
+\endcode
+**/
 			class OutputDevice : public ComponentLayout
 			{
 				public :

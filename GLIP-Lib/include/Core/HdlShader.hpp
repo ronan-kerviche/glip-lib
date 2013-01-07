@@ -37,7 +37,7 @@ namespace Glip
 		// Shader Handle
 		/**
 		\class HdlShader
-		\brief Object handle for OpenGL Shaders Objects (both vertex and fragment shaders)
+		\brief Object handle for OpenGL Shaders Objects (both vertex and fragment shaders).
 		**/
 		class HdlShader : public ShaderSource
 		{
@@ -58,7 +58,7 @@ namespace Glip
 		// Program Handle
 		/**
 		\class HdlProgram
-		\brief Object handle for OpenGL Program (A vertex and a fragment program)
+		\brief Object handle for OpenGL Program (A vertex and a fragment program).
 		**/
 		class HdlProgram
 		{

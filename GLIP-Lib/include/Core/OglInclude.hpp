@@ -63,7 +63,7 @@
 			// Object
 			/**
 			\class HandleOpenGL
-			\brief Main OpenGL Handle
+			\brief Main OpenGL Handle.
 			**/
 			class HandleOpenGL
 			{

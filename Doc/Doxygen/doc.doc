@@ -1,0 +1,45 @@
+/* ************************************************************************************************************* */
+/**
+\mainpage OpenGL Image Processing Library (GLIP-Lib)
+
+\section sec_intro Introduction
+	GLIP-LIB : The OpenGL Image Processing LIBrary is a C++ library which provides some tools to design image processing pipelines based on hardware accelerated computing (GPGPU) via OpenGL and GLSL. It uses a graph oriented approach to the description of processing tasks : you describe, in the initialization of the program, your processing pipeline as a series of filters (each can have multiple inputs and outputs). Then, you apply inputs as different image on the port(s) of the pipeline(s) and obtain the results at the output port(s).
+
+	This library also ensures that the processing of images is not only made as a general purpose computation task on the GPU, but effectively use hardware enabled advantages of such architecture such as textured memory for fast global memory access, fast linear algebra in 2,3 and 4 dimensions and fast floating point functions. Moreover, this library can be interface either with CUDA or OpenCL APIs. Another advantage is the Just-In-Time (JIT) compilation of the shaders on the targeted plateform by the display driver. This guarantees at the same time the highest performances on the hardware and the flexibility in algorithm development.
+
+	The library, in itself, DOES NOT provide any function for context handling (except for GLEW) nor image acquisition from files, videos or cameras, nor display tools. However, we provide examples and easily reusable code for interfacing the library with Qt, GLFW and FFMPEG.
+
+\section sec_download Download and News
+	<b>This project is currently in development, prefer downloading the code from the Git repository for latest updates</b> : http://sourceforge.net/scm/?type=git&group_id=363201 <i>(It also contains tests and examples)</i>
+
+	The project page on SourceForge is at : http://sourceforge.net/projects/glip-lib
+
+	You can download the last version of GLIP-Lib from the file page on SourceForge : http://sourceforge.net/projects/glip-lib/files/
+
+	The news feed is at : https://sourceforge.net/news/?group_id=363201
+
+\section sec_f_example Sample code
+	See the \ref page_GettingStarted page for a short example. More generally, you will find examples in the <a href="./pages.html">related pages</a>.
+
+\section sec_examples Examples and demos
+	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./WindowRendering.hpp">WindowRendering.hpp</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./WindowRendering.cpp">WindowRendering.cpp</a><BR>
+	GLFW "Hello World" - Game of Life :<BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./mainGLFW.cpp">mainGLFW.cpp</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./game.glsl">game.glsl</a><BR>
+
+\section sec_contributors Contributors
+	<a href="mailto:ronan-kerviche@users.sf.net">Ronan Kerviche</a> , Corentin Derbois.
+
+\section sec_license License
+	Copyright (C) 2011, 2012 Ronan Kerviche
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**/
+/* ************************************************************************************************************* */

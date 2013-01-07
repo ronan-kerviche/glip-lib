@@ -34,7 +34,7 @@
 			// Buffer Object Handle
 			/**
 			\class HdlGeBO
-			\brief Object handle for OpenGL Buffer Object (VBO, PBO, VAO, ...)
+			\brief Object handle for OpenGL Buffer Object (VBO, PBO, VAO, ...).
 			**/
 			class HdlGeBO
 			{
