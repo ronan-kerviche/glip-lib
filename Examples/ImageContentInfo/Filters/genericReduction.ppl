@@ -1,0 +1,24 @@
+
+SHARED_CODE()
+{
+	// This segment requires the use to prepare a function of the following prototype signature :
+	// void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
+
+	void reduceData(in sampler2D inputSampler, in vec2 pos, in int blocSize, out vec4 stackResult)
+	{
+		ivec2 sz = textureSize(inputSampler, 0);
+		float sx = 1.0/(float(sz.s));
+		float sy = 1.0/(float(sz.t));
+
+		vec4 col;
+
+		for(int i=0; i<blocSize; i++)
+		{
+			for(int j=0; j<blocSize; j++)
+			{
+				col = textureLod(inputSampler, pos + vec2(j*sx, i*sy), 0.0);
+				reductionFunction(stackResult, col, i==0 && j==0);
+			}
+		}
+	}
+}

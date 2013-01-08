@@ -25,7 +25,8 @@
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.1f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
-	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f)
+	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f),
+	   originalOrientationBeforeRightClick(0.0f)
 	{
 		addInputPort("input");
 
@@ -99,9 +100,11 @@
 				deltaX 			= 0;
 				deltaY 			= 0;
 			}
-			else if(rightClick) // Rotation?
+			else if(rightClick && lastPosY!=-1 && lastPosX!=-1) // Rotation?
 			{
-				rotation(deltaX / static_cast<float>(width()));
+				float a = atan2( lastPosY - height()/2, lastPosX - width()/2 ) * 180.0f / M_PI;
+
+				rotation(originalOrientationBeforeRightClick+a, true);
 
 				// Reset mouse translation :
 				deltaX 			= 0;
@@ -302,7 +305,11 @@
 		if(event->buttons() & Qt::LeftButton)
 			leftClick = true;
 		else if(event->buttons() & Qt::RightButton)
+		{
 			rightClick = true;
+			originalOrientationBeforeRightClick = currentRotationDegrees - atan2( event->y() - height()/2, event->x() - width()/2 ) * 180.0f / M_PI;
+;
+		}
 
 		lastPosX = -1;
 		lastPosY = -1;
@@ -503,9 +510,12 @@
 		currentCenterY 	+= (-dx*currentRotationSin + dy*currentRotationCos) / currentScale;
 	}
 
-	void WindowRenderer::rotation(float d)
+	void WindowRenderer::rotation(float d, bool realRotation)
 	{
-		currentRotationDegrees 	+= d * currentStepRotationDegrees;
+		if(!realRotation)
+			currentRotationDegrees	+= d * currentStepRotationDegrees;
+		else
+			currentRotationDegrees	= d;
 
 		currentRotationCos 	= cos(currentRotationDegrees*M_PI/180.0f);
 		currentRotationSin 	= sin(currentRotationDegrees*M_PI/180.0f);

@@ -81,7 +81,7 @@ SHADER_SOURCE:sobelShaderAndDirection()
 	{
 		mat3 localRegion;
 
-		aggregateBW(blurredTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+		aggregate(blurredTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
 
 		computeSobel(localRegion, sobelTexture);
 
@@ -130,7 +130,7 @@ SHADER_SOURCE:nonMaximumSuppressionShader()
 
 		mat3 localRegion;
 
-		aggregateBW(sobelTexture, gl_TexCoord[0].st, vec4(0.0,0.0,1.0,0.0), localRegion);
+		aggregate(sobelTexture, gl_TexCoord[0].st, vec4(0.0,0.0,1.0,0.0), localRegion);
 
 		if(col.p>0.1)
 		{

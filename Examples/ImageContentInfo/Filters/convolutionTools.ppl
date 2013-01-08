@@ -2,7 +2,7 @@
 SHARED_CODE()
 {
 	// Read a 3x3 matrix from the sample s, centered at position s :
-	void aggregateBW(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)
+	void aggregate(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)
 	{
 		localRegion = mat3(	0.0, 0.0, 0.0,
 					0.0, 0.0, 0.0,

@@ -106,6 +106,7 @@
 			float 	currentCenterX,
 				currentCenterY,
 				currentRotationDegrees,
+				originalOrientationBeforeRightClick,
 				currentRotationCos,
 				currentRotationSin,
 				currentStepRotationDegrees,
@@ -166,7 +167,7 @@
 
 			// Special actions :
 			void translation(float dx, float dy);
-			void rotation(float d);
+			void rotation(float d, bool realRotation=false);
 			void zoom(int incr);
 			void setFullscreenMode(bool enabled);
 			void toggleFullscreenMode(void);

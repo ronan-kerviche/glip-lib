@@ -44,7 +44,7 @@ SHADER_SOURCE:sobelShaderPlusVisualization()
 	{
 		mat3 localRegion;
 
-		aggregateBW(inputTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+		aggregate(inputTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
 
 		computeSobel(localRegion, sobelTexture);
 

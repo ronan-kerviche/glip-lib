@@ -2,10 +2,10 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../Examples/Test_GOL/src/gameOfLife.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="583" topLine="0" />
+		<Cursor position="4842" topLine="149" />
 	</File>
 	<File name="../Examples/Test_GOL/src/gameOfLife.hpp" open="0" top="0" tabpos="8">
-		<Cursor position="478" topLine="0" />
+		<Cursor position="196" topLine="2" />
 	</File>
 	<File name="../Examples/Test_GOL/src/main.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="209" topLine="0" />

@@ -359,17 +359,12 @@
 				}
 				else if(key==SHARED_CODE)
 				{
-					if(!sharedCode.empty())
-						sharedCode += "\n\n";
-
-					sharedCode += getBody(code);
+					entryCode.push_back(code);
 
 					#ifdef __VERBOSE__
 						std::cout << "    Adding shared code : " << std::endl;
-						std::cout << getBody(code) << std::endl;
+						std::cout << entryCode.back() << std::endl;
 					#endif
-
-					entryCode.push_back("(Shared code added to LayoutLoader::sharedCode)");
 				}
 				else
 					entryCode.push_back(code);
@@ -784,14 +779,11 @@
 					LayoutLoader l;
 					l.updateEntriesLists(arg[0], true);
 
-					// append its lists to the EntryList :
-					entryType.insert(entryType.end(), l.entryType.begin(), l.entryType.end());
-					entryName.insert(entryName.end(), l.entryName.begin(), l.entryName.end());
-					entryCode.insert(entryCode.end(), l.entryCode.begin(), l.entryCode.end());
-					entryPath.insert(entryPath.end(), l.entryPath.begin(), l.entryPath.end());
-
-					// append its shared code base to the current shared code base :
-					sharedCode = l.sharedCode + "\n\n" + sharedCode;
+					// insert its lists to the EntryList :
+					entryType.insert(entryType.begin()+i+1, l.entryType.begin(), l.entryType.end());
+					entryName.insert(entryName.begin()+i+1, l.entryName.begin(), l.entryName.end());
+					entryCode.insert(entryCode.begin()+i+1, l.entryCode.begin(), l.entryCode.end());
+					entryPath.insert(entryPath.begin()+i+1, l.entryPath.begin(), l.entryPath.end());
 				}
 			}
 
@@ -821,6 +813,18 @@
 				{
 					if(entryType[j]==entryType[i] && entryName[j]==entryName[i] && entryType[j]!=SHARED_CODE && entryType[j]!=INCLUDE_FILE)
 						throw Exception("LayoutLoader::operator() - Found two different entities of same type " + std::string(keywords[entryType[j]]) + " and name : " + entryName[j] + ".", __FILE__, __LINE__);
+				}
+			}
+
+			// List all the shared code base in order :
+			for(int i=0; i<entryType.size(); i++)
+			{
+				if(entryType[i]==SHARED_CODE)
+				{
+					if(sharedCode.empty())
+						sharedCode = getBody(entryCode[i]);
+					else
+						sharedCode += "\n\n" + getBody(entryCode[i]);
 				}
 			}
 

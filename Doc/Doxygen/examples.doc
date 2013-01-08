@@ -360,7 +360,7 @@ catch(Exception& e)
 
 	First we write a script file <i>convolutionTools.ppl</i> containing :
 	\code
-	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodys loaded.
+	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodies loaded.
 	SHARED_CODE()
 	{
 		// Read a 3x3 matrix from the sample s, centered at position pos, use selection to mix the channels :
@@ -443,6 +443,7 @@ catch(Exception& e)
 		uniform sampler2D 	inputTexture;
 		out     vec4 		sobelTexture;
 
+		// Insert the content of SHARED_CODE here :
 		INSERT_SHARED_CODE
 
 		void main()
@@ -491,7 +492,7 @@ catch(Exception& e)
 	// Process :
 	(*sobelPipeline) << theTexture << Pipeline::Process
 
-	// Use/display sobelPipeline->out(0) or histogramPipeline->out("sobelTexture")
+	// Use/display sobelPipeline->out(0) or sobelPipeline->out("sobelTexture")
 	// ...
 
 	// Clean :
@@ -500,6 +501,143 @@ catch(Exception& e)
 
 	Output example, only L1 magnitude :
 	<img src="./images/sobelIntensity.png" />
+**/
+
+/**
+	\page page_MinMaxMean Example : Reduction operation (min, max, sum, ...)
+
+	Finding the minimum or maximum instensity in an image, or computing the sum of a function over an image : \f$s = \sum_i \sum_j f(M_{i,j})\f$ is an interesting task which is naturally written on a sequential processor in pseudocode as :
+	\code
+	s = 0;
+
+	for each pixel in the image
+		s = s + f(current pixel value)
+	end
+	\endcode
+
+	This operation cannot ported directly to a parallel architecture since the access to variable s should be made from all the threads/shaders and that would be a huge bottleneck for the algorithm. We can note that the <b>order of operation does not matter</b> and <b>for every pixel processed, the result does not depend on previous value of s</b>. The key to port this algorithm to GPU is to use a simple <i>divide and conquer</i> type of algorithm.
+
+	For example, we consider the <i>max</i> operator over a texture of dimensions 512x512 (an image of 512x512 pixels and only one channel). We will use a first intermediate texture of 64x64 pixels and a second of 8x8 pixels. The first step is that the shaders are called on the first intermediate texture. Each of the 64x64 = 4096 shaders created will apply the <i>max</i> operator in a small window of 8x8 pixels of the original image. They will store their result in the intermediate 64x64 texture. Then we start back the same process but using the 64x64 texture as input and 8x8 pixels as output. At last, we can use a texture made of a single pixel and repeat the process with the intermediate 8x8 texture. Each step of the process perform a parallel (fast) reduction over a 8x8 window and give, as final result, a single pixel texture.
+
+	First, we write a generic shader source file <i>genericReduction.ppl</i> for reduction opertions :
+	\code
+	SHARED_CODE()
+	{
+		// This segment requires the use to prepare a function of the following prototype signature :
+		// void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
+
+		void reduceData(in sampler2D inputSampler, in vec2 pos, in int blocSize, out vec4 stackResult)
+		{
+			ivec2 sz = textureSize(inputSampler, 0);
+			float sx = 1.0/(float(sz.s));
+			float sy = 1.0/(float(sz.t));
+
+			vec4 col;
+
+			for(int i=0; i<blocSize; i++)
+			{
+				for(int j=0; j<blocSize; j++)
+				{
+					col = textureLod(inputSampler, pos + vec2(j*sx, i*sy), 0.0);
+					reductionFunction(stackResult, col, i==0 && j==0);
+				}
+			}
+		}
+	}
+	\endcode
+
+	Now we write the specific reduction function for min, max and sum of the red channel in the file <i>minMaxReduction.ppl</i>, and the pipeline :
+	\code
+	// Declare the function needed :
+	SHARED_CODE()
+	{
+		void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
+		{
+			if(firstCall)
+			{
+				stackResult = vec4(stackResult.r, stackResult.r, stackResult.r, 0.0);
+			}
+			else
+			{
+				stackResult.r = min(stackResult.r, current.r);
+				stackResult.g = max(stackResult.g, current.r);
+				stackResult.b = stackResult.b + current.r;
+			}
+		}
+	}
+
+	// Include file, the SHARED_CODE section in the file will be appended after the previous section :
+	INCLUDE_FILE(genericReduction.ppl);
+
+	// Intermediate format 1 :
+	TEXTURE_FORMAT:intermediateTexture1(64,64,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+
+	// Intermediate format 2 :
+	TEXTURE_FORMAT:intermediateTexture2(8,8,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+
+	// Result format :
+	TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+
+	// The filter :
+	SHADER_SOURCE:reductionMMSShader()
+	{
+		#version 130
+
+		// Insert the compiled SHARED_CODE
+		INSERT_SHARED_CODE
+
+		uniform sampler2D 	inputTexture;
+		out vec4		resultTexture;
+
+		const int blocSize = 8;
+
+		void main()
+		{
+			reduceData(inputTexture, gl_TexCoord[0].st, blocSize, resultTexture);
+		}
+	}
+
+	// Declare the 3 filters :
+	FILTER_LAYOUT:reductionMMSFilter1(intermediateTexture1, reductionMMSShader);
+	FILTER_LAYOUT:reductionMMSFilter2(intermediateTexture2, reductionMMSShader);
+	FILTER_LAYOUT:reductionMMSFilter3(resultFormat, reductionMMSShader);
+
+	// Declare the pipeline :
+	PIPELINE_MAIN:reductionMMSPipeline()
+	{
+		INPUT_PORTS(inputTexture);
+		OUTPUT_PORTS(resultTexture);
+
+                FILTER_INSTANCE:inst1(reductionMMSFilter1);
+                FILTER_INSTANCE:inst2(reductionMMSFilter2);
+                FILTER_INSTANCE:inst3(reductionMMSFilter3);
+
+                // Make the connections :
+                CONNECTION(THIS, inputTexture, inst1, inputTexture);
+		CONNECTION(inst1, resultTexture, inst2, inputTexture);
+		CONNECTION(inst2, resultTexture, inst3, inputTexture);
+		CONNECTION(inst3, resultTexture, THIS, resultTexture);
+	}
+	\endcode
+
+	We use the ususal code to load and use this pipeline :
+	\code
+	// Load the pipeline :
+	Loader loader;
+
+	Pipeline* reductionPipeline = loader("minMaxReduction.ppl", "MMSReductionPipeline");
+
+	// ...
+
+	// Process :
+	(*reductionPipeline) << someTexture << Pipeline::Process
+
+	// Use/display reductionPipeline->out(0) or reductionPipeline->out("resultTexture")
+	// ...
+
+	// Clean :
+	delete reductionPipeline;
+	\endcode
 **/
 
 /**
@@ -734,4 +872,211 @@ catch(Exception& e)
 	An example of output :
 	<img src="./images/histogram.png" />
 	<div align="center"><i>Original Image Credit & Copyright: <a href="http://www.luisargerich.com/about.html">Luis Argerich</a></i></div>
+**/
+
+/**
+	\page page_LucasKanade Example : Lucas Kanade optical flow estimator
+
+	In this example we present a simple approximation to the <a href="http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method">Lucas Kanade Optical Flow Estimator</a>. The goal is to solve the 2x2 system describing the change in intensity by translation. We write the Pipeline Script <i>LucasKanade.ppl</i> which will contain both the algorithm implementation and a representation stage :
+	\code
+	// The different formats needed :
+	TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+	TEXTURE_FORMAT:visualizationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+	TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+
+	SHADER_SOURCE:derivativesShader()
+	{
+		#version 130
+
+		uniform sampler2D 	latest, oldest;
+		out     vec4 		derivatives, grayScale;
+
+		void main()
+		{
+			const float step = 1.0/512.0;
+
+			// Compute all the derivates of the intensity image :
+			vec4 col11 = textureLod(latest, gl_TexCoord[0].st, 0);
+			vec4 col01 = textureLod(latest, gl_TexCoord[0].st + vec2(-step, 0.0), 0);
+			vec4 col21 = textureLod(latest, gl_TexCoord[0].st + vec2( step, 0.0), 0);
+			vec4 col10 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0, -step), 0);
+			vec4 col12 = textureLod(latest, gl_TexCoord[0].st + vec2(0.0,  step), 0);
+			vec4 colB  = textureLod(oldest, gl_TexCoord[0].st, 0);
+
+			float 	v11 = (col11.r+col11.g+col11.b)/3.0,
+				v01 = (col01.r+col01.g+col01.b)/3.0,
+				v21 = (col21.r+col21.g+col21.b)/3.0,
+				v10 = (col10.r+col10.g+col10.b)/3.0,
+				v12 = (col12.r+col12.g+col12.b)/3.0,
+				vB  = (colB.r+colB.g+colB.b)/3.0;
+
+			derivatives.r = (v21-v01)/2.0;
+			derivatives.g = (v12-v10)/2.0;
+			derivatives.b = (v11-vB)/2.0;
+
+			grayScale.rgb = vec3(v11,v11,v11);
+		}
+	}
+
+	SHADER_SOURCE:opticalFlowShader()
+	{
+		#version 130
+
+		uniform sampler2D derivatives;
+		out vec4 opticalFlow;
+
+		void main()
+		{
+			const float step = 1.0/512.0;
+			const int wSize = 5;
+			const float mWindow = pow((2*wSize+1)*step/(3.14159265),2.0);
+			float w = 0.0;
+			int i, j;
+
+			vec2 	pos,
+				delta;
+			vec4 	col;
+			float 	x = 0.0,
+				y = 0.0,
+				A = 0.0,
+				B = 0.0,
+				C = 0.0,
+				idet = 0.0;
+
+			// Build the 2x2 matrix and the Intensity vector: :
+			for( i=-wSize; i<=wSize; i++)
+			{
+				for( j=-wSize; j<=wSize; j++)
+				{
+					vec2 delta = vec2( i*step, j*step);
+					w 	= cos(dot(delta,delta)*40.0);
+					pos   	= gl_TexCoord[0].st + delta;
+					col   	= textureLod(derivatives, pos, 0.0);
+					A 	= A + w*col.r*col.r;
+					B 	= B + w*col.g*col.g;
+					C 	= C + w*col.r*col.g;
+					x 	= x + w*col.r*col.b;
+					y 	= y + w*col.g*col.b;
+				}
+			}
+
+			// Solve 2x2 matrix inverse :
+			idet = 1.0/(A*B-C*C);
+
+			if(idet>1000.0)
+				idet = 0.0;
+
+			opticalFlow.r = idet*(-B*x+C*y);
+			opticalFlow.g = idet*( C*x-A*y);
+		}
+	}
+
+	SHADER_SOURCE:visualizationShader()
+	{
+		#version 130
+
+		uniform sampler2D opticalFlow;
+		out vec4 visualization;
+
+		const float eLim = 0.1;
+		const float ctr = 0.1;
+
+		void getHSL(in vec2 d, out vec3 res)
+		{
+			float   e	= (d.x*d.x + d.y*d.y)/2.0;
+
+			// Angles :
+			float 	h	= (atan(d.x, d.y) + 3.14159)/1.047;
+			int 	prt 	= int(h/2.0);
+			float 	hp 	= h-float(prt)*2.0;
+			float 	v 	= 1.0-abs(hp-1.0);
+
+			if(h<1.0)
+				res = vec3(1.0,v,0.0)*e;
+			else if(h<2.0)
+				res = vec3(v,1.0,0.0)*e;
+			else if(h<3.0)
+				res = vec3(0.0,1.0,v)*e;
+			else if(h<4.0)
+				res = vec3(0.0,v,1.0)*e;
+			else if(h<5.0)
+				res = vec3(v,0.0,1.0)*e;
+			else //if(h<6.0)
+				res = vec3(1.0,0.0,v)*e;
+		}
+
+		void main()
+		{
+			visualization.a = 1.0;
+
+			// Draw a small legend for the directions :
+			if(gl_TexCoord[0].s<ctr && gl_TexCoord[0].t<ctr)
+			{
+				getHSL(gl_TexCoord[0].st-vec2(ctr,ctr)/2.0, visualization.rgb);
+				visualization.rgb = visualization.rgb*400.0;
+			}
+			else // The rest of the image :
+			{
+				vec4 flow = textureLod(opticalFlow, gl_TexCoord[0].st, 0);
+
+				// Make the visualization easier by using HSL color space and associate directions with color.
+				getHSL(flow.rg, visualization.rgb);
+				visualization.rgb = visualization.rgb*0.5;
+			}
+		}
+	}
+
+	SHADER_SOURCE:sideBySideShader()
+	{
+		#version 130
+
+		uniform sampler2D latest, visualization;
+		out vec4 sideBySide;
+
+		void main()
+		{
+			vec2 pos = gl_TexCoord[0].st;
+
+			// Separate the output image in left image and right image :
+			if(pos.s<=0.5)
+			{
+				// The original image goes on left :
+				pos.s = pos.s*2.0;
+				sideBySide  = textureLod(latest, pos, 0);
+			}
+			else
+			{
+				// The motion image goes on right :
+				pos.s = (pos.s-0.5)*2.0;
+				sideBySide = textureLod(visualization, pos, 0);
+			}
+		}
+	}
+
+	FILTER_LAYOUT:derivatives(computationFormatFloat,derivativesShader);
+	FILTER_LAYOUT:opticalFlow(computationFormatFloat,opticalFlowShader);
+	FILTER_LAYOUT:visualizationFilter(visualizationFormat,visualizationShader);
+	FILTER_LAYOUT:sideBySideFilter(sideBySideFormat,sideBySideShader);
+
+	PIPELINE_MAIN:opticalFlow()
+	{
+		INPUT_PORTS(latest, oldest);
+		OUTPUT_PORTS(grayScale, derivatives, opticalFlow, visualization, sideBySide);
+
+		FILTER_INSTANCE:instDerivatives(cDerivatives);
+		FILTER_INSTANCE:instOpticalFlow(cOpticalFlow);
+		FILTER_INSTANCE:instVisualization(cMix);
+		FILTER_INSTANCE:instSideBySide(cSBS);
+
+		// Automatic connection will be performed.
+	}
+	\endcode
+
+	\htmlonly
+	Example of recording of the output port <b>sideBySide</b> with <a href="http://ffmpeg.org/">FFMPEG</a> : <BR>
+	<center>
+		<iframe width="560" height="315" src="http://www.youtube-nocookie.com/embed/0uhZFEhIG-0?rel=0" frameborder="0" allowfullscreen></iframe><BR>
+		Animation Big Buck Bunny under Creative Commons License, see <a href="www.bigbuckbunny.org/">www.bigbuckbunny.org/</a>.<BR>
+	</center><BR>
+	\endhtmlonly
 **/

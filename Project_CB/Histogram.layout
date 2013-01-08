@@ -2,12 +2,12 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
 	<File name="../Examples/Histogram/src/header.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="1007" topLine="0" />
+		<Cursor position="918" topLine="2" />
 	</File>
 	<File name="../Examples/Histogram/src/main.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="261" topLine="0" />
 	</File>
 	<File name="../Examples/Histogram/src/source.cpp" open="0" top="0" tabpos="1">
-		<Cursor position="6196" topLine="135" />
+		<Cursor position="1490" topLine="32" />
 	</File>
 </CodeBlocks_layout_file>
