@@ -4,7 +4,7 @@
 #include <QMessageBox>
 
 // Src :
-	GameOfLife::GameOfLife(int _w, int _h, int argc, char** argv)
+	GameOfLife::GameOfLife(int _w, int _h, int& argc, char** argv)
 	 : QApplication(argc,argv), w(_w), h(_h), window(NULL, w, h), p1(NULL), p2(NULL), target(NULL),
 		#ifdef __RADOM_GEN__
 			tInput(NULL)

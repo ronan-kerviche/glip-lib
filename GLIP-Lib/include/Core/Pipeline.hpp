@@ -264,7 +264,7 @@ How to process the inputs :
 					Pipeline& 	operator<<(Pipeline& pipeline);
 					Pipeline& 	operator<<(ActionType a);
 					HdlTexture& 	out(int id = 0);
-					HdlTexture& 	out(const std::string& portName="");
+					HdlTexture& 	out(const std::string& portName);
 					int 		getFilterID(const std::string& path);
 					Filter& 	operator[](int filterID);
 					Filter& 	operator[](const std::string& path);

@@ -26,43 +26,43 @@
 	void main()
 	{
 		// Gather the size of the input grid :
-		ivec2 sz 	= textureSize(inText, 0);
+		ivec2 sz 	= textureSize(inTexture, 0);
 		float sx 	= 1.0/(float(sz.x));
 		float sy 	= 1.0/(float(sz.y));
 
 		// Read all the eight previous and surrounding cells :
-		vec4 a00	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,-sy), 0);
-		vec4 a01	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,0.0), 0);
-		vec4 a02	= textureLod(inText, gl_TexCoord[0].st + vec2(-sx,+sy), 0);
-		vec4 a10	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,-sy), 0);
-		vec4 a11	= textureLod(inText, gl_TexCoord[0].st, 0);
-		vec4 a12	= textureLod(inText, gl_TexCoord[0].st + vec2(0.0,+sy), 0);
-		vec4 a20	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,-sy), 0);
-		vec4 a21	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,0.0), 0);
-		vec4 a22	= textureLod(inText, gl_TexCoord[0].st + vec2(+sx,+sy), 0);
+		vec4 a00	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,-sy), 0);
+		vec4 a01	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,0.0), 0);
+		vec4 a02	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,+sy), 0);
+		vec4 a10	= textureLod(inTexture, gl_TexCoord[0].st + vec2(0.0,-sy), 0);
+		vec4 a11	= textureLod(inTexture, gl_TexCoord[0].st, 0);
+		vec4 a12	= textureLod(inTexture, gl_TexCoord[0].st + vec2(0.0,+sy), 0);
+		vec4 a20	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,-sy), 0);
+		vec4 a21	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,0.0), 0);
+		vec4 a22	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,+sy), 0);
 
 		// Compute the number of cell alive during last process :
 		float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
 
 		// Older cell are shifted in the next channel :
-		outText.g = a11.r;
-		outText.b = a11.g;
-		outText.a = 1.0;	// Set transparency to "opaque".
+		outTexture.g = a11.r;
+		outTexture.b = a11.g;
+		outTexture.a = 1.0;	// Set transparency to "opaque".
 
 		// New :
 		if(a11.r==1.0) // The center cell was previously alive
 		{
 			if((s==2.0) || (s==3.0))
-				outText.r = 1.0; // It stays alive
+				outTexture.r = 1.0; // It stays alive
 			else
-				outText.r = 0.0; // It dies
+				outTexture.r = 0.0; // It dies
 		}
 		else
 		{
 			if(s==3.0)
-				outText.r = 1.0; // Birth
+				outTexture.r = 1.0; // Birth
 			else
-				outText.r = 0.0; // Stays dead
+				outTexture.r = 0.0; // Stays dead
 		}
 	}
 	\endcode
@@ -185,7 +185,7 @@ catch(Exception& e)
 	This will produce something close to the following animation on screen :
 	<img src="./images/animation.gif" />
 
-\section sec_pipelineScripts Getting started with Pipeline Scripts
+\section sec_pipelineScripts Pipeline Scripts
 
 	We can improve the previous pipeline construction by building a script which will contain the full description with the advantage of not requiring compilation of the C++ program when modified (the compilation of the GLSL code is made by the display driver). The Glip::Modules::LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::CorePipeline::PipelineLayout or a Glip::CorePipeline::Pipeline that you can use directly or combined with other pipeline structures. Here is an example of script for histogram computation and display. Check Glip::Modules::LayoutLoader documentation page for further information. We can write a file <i>gameOfLiFe.ppl</i> with the following script :
 	\code
@@ -231,7 +231,7 @@ catch(Exception& e)
 	delete pl;
 	\endcode
 
-\section sec_pipelineScriptsArguments Pipeline Scripts Argument
+\section sec_pipelineScriptsArguments Pipeline Scripts Arguments
 	In the previous example, the script is forcing the size of the grid but you might want to decide of this size within the C++ program. In that case, you need to do a few modification both in the scripts and in the C++ code. First in the file <i>gameOfLiFe.ppl</i>, we replace the lines :
 	\code
 	// Description of the grid format, with the name gridFormat :
@@ -1076,7 +1076,7 @@ catch(Exception& e)
 	Example of recording of the output port <b>sideBySide</b> with <a href="http://ffmpeg.org/">FFMPEG</a> : <BR>
 	<center>
 		<iframe width="560" height="315" src="http://www.youtube-nocookie.com/embed/0uhZFEhIG-0?rel=0" frameborder="0" allowfullscreen></iframe><BR>
-		Animation Big Buck Bunny under Creative Commons License, see <a href="www.bigbuckbunny.org/">www.bigbuckbunny.org/</a>.<BR>
+		Animation Big Buck Bunny under Creative Commons License, see <a href="http://www.bigbuckbunny.org/">www.bigbuckbunny.org</a>.<BR>
 	</center><BR>
 	\endhtmlonly
 **/

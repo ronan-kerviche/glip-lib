@@ -86,9 +86,6 @@
 			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
 			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
 
-			// Create a Quad inside a VBO for display
-			HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
-
 			// Create a format for the filters
 			HdlTextureFormat fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 			ShaderSource src("./Filters/gen1D.glsl");
@@ -126,13 +123,13 @@
 
 				input.generateNewFrame();
 
-				fft1D.process(input.texture());
+				fft1D.process(input.out());
 				ifft1D.process(fft1D.output());
 
-				visualization << input.texture() << fft1D.output() << ifft1D.output() << Pipeline::Process;
+				visualization << input.out() << fft1D.output() << ifft1D.output() << Pipeline::Process;
 				visualization.out().bind();
 
-				vbo->draw();
+				HandleOpenGL::standardQuadVBO().draw();
 
 				i++;
 
@@ -160,7 +157,7 @@
 			log << "> End" << std::endl;
 			log.close();
 
-			delete vbo;
+			HandleOpenGL::deinit();
 
 			// Close window and terminate GLFW
 			glfwTerminate();

@@ -48,7 +48,7 @@
 
 			public :
 				// Functions :
-				GameOfLife(int _w, int _h, int argc, char** argv);
+				GameOfLife(int _w, int _h, int& argc, char** argv);
 				~GameOfLife(void);
 
 			private slots :

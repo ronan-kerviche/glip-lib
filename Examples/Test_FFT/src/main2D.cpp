@@ -87,9 +87,6 @@
 			log << "GL version    : " << HandleOpenGL::getVersion() << std::endl;
 			log << "GLSL version  : " << HandleOpenGL::getGLSLVersion() << std::endl;
 
-			// Create a Quad inside a VBO for display
-			HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
-
 			// Create a format for the filters
 			HdlTextureFormat fmt(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 			fmt.setSWrapping(GL_REPEAT);
@@ -213,7 +210,7 @@
 					else
 						p2->out(0).bind();
 
-				vbo->draw();
+				HandleOpenGL::standardQuadVBO().draw();
 
 				i++;
 
@@ -247,7 +244,8 @@
 
 			delete p1;
 			delete p2;
-			delete vbo;
+
+			HandleOpenGL::deinit();
 
 			// Close window and terminate GLFW
 			glfwTerminate();

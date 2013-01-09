@@ -149,6 +149,8 @@
 		delete p2;
 		delete vbo;
 
+		HandleOpenGL::deinit();
+
 		// Close window and terminate GLFW
 		glfwTerminate();
 
