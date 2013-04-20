@@ -38,7 +38,8 @@
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB + GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__);
 
 		// allocate the output media context
-		avformat_alloc_output_context2(&oc, NULL, NULL, filename.c_str());
+		//MODIFICATION 15/02/13 : avformat_alloc_output_context2(&oc, NULL, NULL, filename.c_str());
+		avformat_alloc_output_context(&oc, NULL, NULL, filename.c_str());
 		if (!oc)
 		{
 			#ifdef __VIDEO_RECORDER_VERBOSE__
@@ -263,7 +264,8 @@
 			pkt.data = NULL; // packet data will be allocated by the encoder.
 			pkt.size = 0;
 
-			retCode = avcodec_encode_video2(c, &pkt, frame, &got_output);
+			//MODIFICATION 15/02/13 : retCode = avcodec_encode_video2(c, &pkt, frame, &got_output);
+			retCode = avcodec_encode_video(c, &pkt, frame, &got_output);
 			if(retCode<0)
 				throw Exception("VideoRecorder::VideoRecorder - Error encoding video frame.", __FILE__, __LINE__);
 

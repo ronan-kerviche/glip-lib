@@ -559,15 +559,18 @@
 
 	void WindowRenderer::resetTransformation(void)
 	{
-		wheelSteps		= 0;
-		deltaX			= 0;
-		deltaY			= 0;
-		lastPosX		= -1;
-		lastPosY		= -1;
-		currentCenterX		= 0.0f;
-		currentCenterY		= 0.0f;
-		currentRotationDegrees	= 0.0f;
-		currentScale		= 1.0f;
+		wheelSteps		                = 0;
+		deltaX			                = 0;
+		deltaY			                = 0;
+		lastPosX		                = -1;
+		lastPosY		                = -1;
+		currentCenterX		                = 0.0f;
+		currentCenterY		                = 0.0f;
+		currentRotationDegrees	                = 0.0f;
+		currentScale		                = 1.0f;
+		originalOrientationBeforeRightClick     = 0.0f;
+		currentRotationCos                      = 1.0f;
+		currentRotationSin                      = 0.0f;
 	}
 
 	WindowRendererContainer::WindowRendererContainer(QWidget* _parent, int w, int h)

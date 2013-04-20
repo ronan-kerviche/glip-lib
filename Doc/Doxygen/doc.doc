@@ -23,11 +23,11 @@
 
 \section sec_examples Examples and demos
 	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./WindowRendering.hpp">WindowRendering.hpp</a><BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./WindowRendering.cpp">WindowRendering.cpp</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.hpp">WindowRendering.hpp</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.cpp">WindowRendering.cpp</a><BR>
 	GLFW "Hello World" - Game of Life :<BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./mainGLFW.cpp">mainGLFW.cpp</a><BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./game.glsl">game.glsl</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/mainGLFW.cpp">mainGLFW.cpp</a><BR>
+	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/game.glsl">game.glsl</a><BR>
 
 \section sec_contributors Contributors
 	<a href="mailto:ronan-kerviche@users.sf.net">Ronan Kerviche</a> , Corentin Derbois.
