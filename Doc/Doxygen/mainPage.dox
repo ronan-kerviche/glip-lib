@@ -1,4 +1,3 @@
-/* ************************************************************************************************************* */
 /**
 \mainpage OpenGL Image Processing Library (GLIP-Lib)
 
@@ -10,7 +9,7 @@
 	The library, in itself, DOES NOT provide any function for context handling (except for GLEW) nor image acquisition from files, videos or cameras, nor display tools. However, we provide examples and easily reusable code for interfacing the library with Qt, GLFW and FFMPEG.
 
 \section sec_download Download and News
-	<b>This project is currently in development, prefer downloading the code from the Git repository for latest updates</b> : http://sourceforge.net/scm/?type=git&group_id=363201 <i>(It also contains tests and examples)</i>
+	<b>This project is currently in development, prefer downloading the code from the Git repository for latest updates</b> : http://sourceforge.net/p/glip-lib/code/ci/master/tree/ <i>(It also contains tests and examples)</i>
 
 	The project page on SourceForge is at : http://sourceforge.net/projects/glip-lib
 
@@ -42,4 +41,3 @@
 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **/
-/* ************************************************************************************************************* */
