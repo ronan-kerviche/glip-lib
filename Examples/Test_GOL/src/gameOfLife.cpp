@@ -96,7 +96,7 @@
 			float outputAspectRatio = static_cast<float>(p1->out(0).getWidth())/static_cast<float>(p1->out(0).getHeight());
 			window.setImageAspectRatio(outputAspectRatio);
 
-			timer.setInterval(300);
+			timer.setInterval(100);
 			QObject::connect(&timer, 	SIGNAL(timeout(void)),		this, SLOT(compute()));
 			QObject::connect(&window, 	SIGNAL(actionReceived(void)), 	this, SLOT(show()));
 			QObject::connect(&window, 	SIGNAL(resized(void)), 		this, SLOT(show()));

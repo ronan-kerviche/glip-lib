@@ -52,6 +52,11 @@
 							*buffer;	// Proxy
 			SwsContext			*swsContext;
 
+			#ifdef __FFMPEG_VX1__
+				uint8_t 		*video_outbuf;
+				int 			video_outbuf_size;
+			#endif
+
 			// From GLIP lib :
 			#ifndef __USE_PBO__
 				TextureReader		textureReader;

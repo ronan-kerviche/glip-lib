@@ -38,24 +38,50 @@
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB + GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__);
 
 		// allocate the output media context
-		//MODIFICATION 15/02/13 : avformat_alloc_output_context2(&oc, NULL, NULL, filename.c_str());
-		avformat_alloc_output_context(&oc, NULL, NULL, filename.c_str());
-		if (!oc)
-		{
-			#ifdef __VIDEO_RECORDER_VERBOSE__
-				std::cout << "Could not deduce output format from file extension: using MPEG." << std::endl;
-			#endif
+		#ifdef __FFMPEG_VX1__
+			// Find the format :
+			AVOutputFormat 	*fmtTmp;
 
-			avformat_alloc_output_context2(&oc, NULL, "mpeg", filename.c_str());
-		}
+			// auto detect the output format from the name. default is mpeg.
+			fmt = av_guess_format(NULL, filename.c_str(), NULL);
+			if (!fmt)
+			{
+				std::cout << "VideoRecorder::VideoRecorder - Could not deduce output format from file extension: using MPEG." << std::endl;
+				fmt = av_guess_format("mpeg", NULL, NULL);
+			}
 
-		if (!oc)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context2).", __FILE__, __LINE__);
+			if(!fmt)
+				throw Exception("VideoRecorder::VideoRecorder - Could not find suitable output format", __FILE__, __LINE__);
+
+			oc = avformat_alloc_context();
+
+			oc->oformat = fmt;
+		#elif __FFMPEG_VX2__
+			//MODIFICATION 15/02/13 : avformat_alloc_output_context2(&oc, NULL, NULL, filename.c_str());
+			avformat_alloc_output_context(&oc, NULL, NULL, filename.c_str());
+
+			if(!oc)
+			{
+				#ifdef __VIDEO_RECORDER_VERBOSE__
+					std::cout << "VideoRecorder::VideoRecorder - Could not deduce output format from file extension: using MPEG." << std::endl;
+				#endif
+
+				avformat_alloc_output_context2(&oc, NULL, "mpeg", filename.c_str());
+			}
+		#endif
+
+		if(!oc)
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context).", __FILE__, __LINE__);
 
 		fmt 		= oc->oformat;
 
-		if(fmt->video_codec==AV_CODEC_ID_NONE)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__);
+		#ifdef __FFMPEG_VX1__
+			if(fmt->video_codec==CODEC_ID_NONE)
+				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__);
+		#elif __FFMPEG_VX2__
+			if(fmt->video_codec==AV_CODEC_ID_NONE)
+				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__);
+		#endif
 
 		// Add an output stream :
 		// Find the encoder :
@@ -93,15 +119,26 @@
 		c->time_base.num= 1;
 		c->gop_size 	= 12; // emit one intra frame every twelve frames at most.
 		c->pix_fmt 	= pixFormat; //or PIX_FMT_YUV420P;
-		if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO)
-			// Just for testing, we also add B frames :
-			c->max_b_frames = 2;
 
-		if (c->codec_id == AV_CODEC_ID_MPEG1VIDEO)
-			// Needed to avoid using macroblocks in which some coeffs overflow.
+		// Just for testing, we also add B frames :
+		#ifdef __FFMPEG_VX1__
+			if (c->codec_id == CODEC_ID_MPEG2VIDEO)
+				c->max_b_frames = 2;
+		#elif __FFMPEG_VX2__
+			if (c->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+				c->max_b_frames = 2;
+		#endif
+
+		// Needed to avoid using macroblocks in which some coeffs overflow.
 			// This does not happen with normal video, it just happens here as
 			// the motion of the chroma plane does not match the luma plane.
-			c->mb_decision = 2;
+		#ifdef __FFMPEG_VX1__
+			if (c->codec_id == CODEC_ID_MPEG1VIDEO)
+				c->mb_decision = 2;
+		#elif __FFMPEG_VX2__
+			if (c->codec_id == AV_CODEC_ID_MPEG1VIDEO)
+				c->mb_decision = 2;
+		#endif
 
 		// Some formats want stream headers to be separate :
 		if (oc->oformat->flags & AVFMT_GLOBALHEADER)
@@ -166,6 +203,11 @@
 		{
 			swsContext = sws_getContext( format.getWidth(), format.getHeight(), PIX_FMT_RGB24, format.getWidth(), format.getHeight(), c->pix_fmt, SWS_POINT, NULL, NULL, NULL);
 		}
+
+		#ifdef __FFMPEG_VX1__
+			video_outbuf_size 	= format.getSize();
+			video_outbuf 		= reinterpret_cast<uint8_t*>( av_malloc(video_outbuf_size) );
+		#endif
 	}
 
 	VideoRecorder::~VideoRecorder(void)
@@ -200,6 +242,11 @@
 		av_free(oc);
 
 		sws_freeContext(swsContext);
+
+		#ifdef __FFMPEG_VX1__
+			av_free(video_outbuf);
+
+		#endif
 
 		// Remain :
 		//AVCodec		*video_codec; // Not destroyed in the example
@@ -256,32 +303,57 @@
 		}
 		else
 		{
-			// Encode the image :
-			AVPacket pkt;
-			int got_output;
+			#ifdef __FFMPEG_VX1__
+				//encode the image
+				int out_size = avcodec_encode_video(c, video_outbuf, video_outbuf_size, frame);
 
-			av_init_packet(&pkt);
-			pkt.data = NULL; // packet data will be allocated by the encoder.
-			pkt.size = 0;
+				// if zero size, it means the image was buffered
+				if (out_size > 0)
+				{
+					AVPacket pkt;
 
-			//MODIFICATION 15/02/13 : retCode = avcodec_encode_video2(c, &pkt, frame, &got_output);
-			retCode = avcodec_encode_video(c, &pkt, frame, &got_output);
-			if(retCode<0)
-				throw Exception("VideoRecorder::VideoRecorder - Error encoding video frame.", __FILE__, __LINE__);
+					av_init_packet(&pkt);
 
-			// If size is zero, it means the image was buffered :
-			if (got_output)
-			{
-				if (c->coded_frame->key_frame)
-					pkt.flags |= AV_PKT_FLAG_KEY;
+					if(c->coded_frame->key_frame)
+						pkt.flags |= AV_PKT_FLAG_KEY;
 
-				pkt.stream_index = video_stream->index;
+					pkt.stream_index = video_stream->index;
 
-				// Write the compressed frame to the media file :
-				retCode = av_interleaved_write_frame(oc, &pkt);
-			}
-			else
-				retCode = 0;
+					pkt.data = video_outbuf;
+
+					pkt.size = out_size;
+
+					//write the compressed frame in the media file
+					retCode = av_interleaved_write_frame(oc, &pkt);
+				}
+			#elif __FMPEG_VX2__
+				// Encode the image :
+				AVPacket pkt;
+				int got_output;
+
+				av_init_packet(&pkt);
+				pkt.data = NULL; // packet data will be allocated by the encoder.
+				pkt.size = 0;
+
+				//MODIFICATION 15/02/13 : retCode = avcodec_encode_video2(c, &pkt, frame, &got_output);
+				retCode = avcodec_encode_video(c, &pkt, frame, &got_output);
+				if(retCode<0)
+					throw Exception("VideoRecorder::VideoRecorder - Error encoding video frame.", __FILE__, __LINE__);
+
+				// If size is zero, it means the image was buffered :
+				if (got_output)
+				{
+					if (c->coded_frame->key_frame)
+						pkt.flags |= AV_PKT_FLAG_KEY;
+
+					pkt.stream_index = video_stream->index;
+
+					// Write the compressed frame to the media file :
+					retCode = av_interleaved_write_frame(oc, &pkt);
+				}
+				else
+					retCode = 0;
+			#endif
 		}
 
 		if(retCode!= 0)

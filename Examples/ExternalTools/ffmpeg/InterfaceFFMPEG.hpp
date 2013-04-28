@@ -21,6 +21,9 @@
 
 	#include <string>
 
+	// FFMPEG version :
+	#define __FFMPEG_VX1__
+
 	// Include FFMPEG (which is a pure C project, protect with : )
 	extern "C"
 	{
