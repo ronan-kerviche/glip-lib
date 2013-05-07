@@ -666,7 +666,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = ../../GLIP-Lib \
-                         doc.doc \
+                         mainPage.dox \
                          examples.dox
 
 # This tag can be used to specify the character encoding of the source files 

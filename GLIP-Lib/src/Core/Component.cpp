@@ -65,7 +65,7 @@
 
 	/**
 	\fn void __ReadOnly_ComponentLayout::checkInputPort(int i) const
-	\brief Check the validity of an input port. Raise an exception if any errors occur.
+	\brief Check the validity of an input port. Raise an Exception if any errors occur.
 	\param i Index of the input port to test.
 	**/
 	void __ReadOnly_ComponentLayout::checkInputPort(int i) const
@@ -76,7 +76,7 @@
 
 	/**
 	\fn void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
-	\brief Check the validity of an output port. Raise an exception if any errors occur.
+	\brief Check the validity of an output port. Raise an Exception if any errors occur.
 	\param i Index of the output port to test.
 	**/
 	void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
@@ -97,7 +97,7 @@
 
 	/**
 	\fn const std::string& __ReadOnly_ComponentLayout::getInputPortName(int id) const
-	\brief Return the name of an input port. Raise an exception if any errors occur.
+	\brief Return the name of an input port. Raise an Exception if any errors occur.
 	\param id The index of the input port.
 	\return The name of the input port as a standard string.
 	**/
@@ -109,7 +109,7 @@
 
 	/**
 	\fn std::string __ReadOnly_ComponentLayout::getInputPortNameExtended(int id) const
-	\brief Return the name of an input port. Raise an exception if any errors occur.
+	\brief Return the name of an input port. Raise an Exception if any errors occur.
 	\param id The index of the input port.
 	\return The name of the input port as a standard string.
 	**/
@@ -121,15 +121,23 @@
 
 	/**
 	\fn int __ReadOnly_ComponentLayout::getInputPortID(const std::string& name) const
-	\brief Get the index of an input port knowing its name. Raise an exception if any errors occur.
-	\param name The name of the input port.
+	\brief Get the index of an input port knowing its name. Raise an Exception if any errors occur.
+	\param name The name of the input port. If the component has a single input port, the wildcard character '*' is tolerated (if it has more input ports, then it will result in an Exception).
 	\return The index of the input port.
 	**/
 	int __ReadOnly_ComponentLayout::getInputPortID(const std::string& name) const
 	{
 		try
 		{
-			return getIndexByName(name, inputPortDescription);
+			if(name=="*")
+			{
+				if(getNumInputPort()==1)
+					return 0;
+				else
+					throw  Exception("__ReadOnly_ComponentLayout::getInputPortID - Use of wildcard character '*' is not allowed as object has " + to_string(getNumInputPort()) + " input ports (!=1).", __FILE__, __LINE__); 
+			}
+			else
+				return getIndexByName(name, inputPortDescription);
 		}
 		catch(Exception& e)
 		{
@@ -166,7 +174,7 @@
 
 	/**
 	\fn const std::string& __ReadOnly_ComponentLayout::getOutputPortName(int id) const
-	\brief Return the name of an output port. Raise an exception if any errors occur.
+	\brief Return the name of an output port. Raise an Exception if any errors occur.
 	\param id The index of the output port.
 	\return The name of the output port as a standard string.
 	**/
@@ -178,7 +186,7 @@
 
 	/**
 	\fn std::string __ReadOnly_ComponentLayout::getOutputPortNameExtended(int id) const
-	\brief Return the name of an output port. Raise an exception if any errors occur.
+	\brief Return the name of an output port. Raise an Exception if any errors occur.
 	\param id The index of the output port.
 	\return The name of the output port as a standard string.
 	**/
@@ -190,15 +198,23 @@
 
 	/**
 	\fn int __ReadOnly_ComponentLayout::getOutputPortID(const std::string& name) const
-	\brief Get the index of an output port knowing its name. Raise an exception if any errors occur.
-	\param name The name of the output port.
+	\brief Get the index of an output port knowing its name. Raise an Exception if any errors occur.
+	\param name The name of the output port. If the component has a single output port, the wildcard character '*' is tolerated (if it has more output ports, then it will result in an Exception).
 	\return The index of the output port.
 	**/
 	int __ReadOnly_ComponentLayout::getOutputPortID(const std::string& name) const
 	{
 		try
 		{
-			return getIndexByName(name, outputPortDescription);
+			if(name=="*")
+			{
+				if(getNumOutputPort()==1)
+					return 0;
+				else
+					throw  Exception("__ReadOnly_ComponentLayout::getOutputPortID - Use of wildcard character '*' is not allowed as object has " + to_string(getNumOutputPort()) + " input ports (!=1).", __FILE__, __LINE__); 
+			}
+			else
+				return getIndexByName(name, outputPortDescription);
 		}
 		catch(Exception& e)
 		{
@@ -247,7 +263,7 @@
 
 	/**
 	\fn void ComponentLayout::setInputPortName(int id, const std::string& name)
-	\brief Sets the name of an input port. Raise an exception if any errors occur.
+	\brief Sets the name of an input port. Raise an Exception if any errors occur.
 	\param id The index of the input port.
 	\param name The new name of the port.
 	**/

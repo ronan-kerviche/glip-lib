@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Release" />
-	<File name="../Examples/Test_GOL/src/gameOfLife.cpp" open="1" top="0" tabpos="1">
-		<Cursor position="4872" topLine="133" />
+	<File name="../Examples/Test_GOL/src/gameOfLife.cpp" open="0" top="0" tabpos="1">
+		<Cursor position="4872" topLine="0" />
 	</File>
 	<File name="../Examples/Test_GOL/src/gameOfLife.hpp" open="0" top="0" tabpos="8">
 		<Cursor position="898" topLine="2" />
 	</File>
 	<File name="../Examples/Test_GOL/src/main.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="209" topLine="0" />
+		<Cursor position="371" topLine="0" />
 	</File>
 </CodeBlocks_layout_file>

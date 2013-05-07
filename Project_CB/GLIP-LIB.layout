@@ -58,7 +58,7 @@
 	<File name="../GLIP-Lib/include/Core/wglew.h" open="0" top="0" tabpos="0">
 		<Cursor position="0" topLine="45" />
 	</File>
-	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="1">
+	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="1" top="1" tabpos="0">
 		<Cursor position="1857" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/FFT1D.hpp" open="0" top="0" tabpos="2">
