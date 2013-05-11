@@ -312,7 +312,7 @@ We can improve the previous pipeline construction by building a script which wil
 		if(i%100==0)
 		{
 			// We modify the variable "t", the seed, in the shader with the current count :
-			randomGenerator.prgm().modifyVar("t", HdlProgram::Var, i/100*13);
+			randomGenerator.prgm().modifyVar("t", GL_INT, i/100*13);
 
 			// Generate the new random grid :
 			randomGenerator.generateNewFrame();
@@ -852,7 +852,7 @@ We can improve the previous pipeline construction by building a script which wil
 	// Will create a 3D grid with 3 planes (at z=-1, z=0 and z=1).
 
 	// Set a nice scale factor :
-	(*prettyHistogramPipeline)["histogramShowFilterInstance"].prgm().modifyVar("scale", HdlProgram::Var, 12.0f);
+	(*prettyHistogramPipeline)["histogramShowFilterInstance"].prgm().modifyVar("scale", GL_FLOAT, 12.0f);
 
 	// ...
 
