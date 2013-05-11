@@ -82,6 +82,25 @@
 				// Create another random (mathematical) point :
 				ShaderSource inputSrc("./Filters/gameInput.glsl");
 				inp = new ProceduralInput("InputPattern", fmt, inputSrc);
+
+				// Test : print available uniform variables along their type, in stdout :
+				std::cout << "Uniforms samplers : " << std::endl;
+				for(std::vector<std::string>::const_iterator it=inputSrc.getInputVars().begin(); it!=inputSrc.getInputVars().end(); it++)
+						std::cout << "   " << *it << std::endl;
+	
+				if(inputSrc.getUniformVars().empty())
+					throw Exception("GameOfLife::GameOfLife	- No uniform variable in random generation shader.", __FILE__, __LINE__);
+				else
+				{
+					std::cout << "Uniform variables list in : " << inputSrc.getSourceName() << std::endl;
+					for(std::vector<std::string>::const_iterator it=inputSrc.getUniformVars().begin(); it!=inputSrc.getUniformVars().end(); it++)
+						std::cout << "   " << *it << std::endl;
+				}	
+
+				std::cout << "Out variables : " << std::endl;
+				for(std::vector<std::string>::const_iterator it=inputSrc.getOutputVars().begin(); it!=inputSrc.getOutputVars().end(); it++)
+						std::cout << "   " << *it << std::endl;
+
 				inp->prgm().modifyVar("seed",GL_FLOAT,1.0f);
 				inp->generateNewFrame();
 

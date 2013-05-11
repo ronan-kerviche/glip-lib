@@ -223,7 +223,7 @@
 	void ShaderSource::wordSplit(const std::string& line, std::vector<std::string>& split)
 	{
 		const std::string 	delimiters = " \n\r\t.,;/\\?*+-:#'\"",
-					wordsDelim = ".,;/\\?*+-:#'\"";
+					wordsDelim = ";";
 
 		std::string current;
 		bool recording=false;
@@ -237,7 +237,7 @@
 				recording = false;
 				current.clear();
 
-				if(wordsDelim.find(line[i])!=std::string::npos)
+				if(wordsDelim.find(line[i])!=std::string::npos) // some Delimiter are worth putting in the stream
 				{
 					split.push_back( "" );
 					split.back() += line[i];
@@ -325,7 +325,8 @@
 
 	void ShaderSource::parseCode(void)
 	{
-		const std::string wordsDelim = ".,;/\\?*+-:#'\"";
+		const std::string 	wordsDelim 	= ".,;/\\?*+-:#'\"",
+					endOfCodeLine 	= ";";
 
 		std::string line = source;
 
@@ -360,7 +361,7 @@
 		for(int k=0; k<split.size(); k++)
 		{
 
-			if(wordsDelim.find(split[k])!=std::string::npos)
+			if(endOfCodeLine.find(split[k])!=std::string::npos)
 			{
 				previousWasVersion 	= false,
 				previousWasUniform 	= false,
