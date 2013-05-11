@@ -392,7 +392,7 @@
 			// Update the offsets :
 			int 	offset = (size-input.getWidth())/2;
 
-			lnkFirstFilter->prgm().modifyVar("offset", HdlProgram::Var, offset);
+			lnkFirstFilter->prgm().modifyVar("offset", GL_INT, offset);
 		}
 
 		(*pipeline) << input << (*bitReversal) << (*wpTexture) << Pipeline::Process;

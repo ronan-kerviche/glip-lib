@@ -62,20 +62,6 @@ namespace Glip
 		**/
 		class HdlProgram
 		{
-			public :
-				// Data
-				/// Flags describing the dimension of an uniform variable.
-				enum ShaderDataType
-				{
-					///Variable.
-					Var,
-					///2D Vector (vec2).
-					Vec2,
-					///3D Vector (vec3).
-					Vec3,
-					///4D Vector (vec4).
-					Vec4
-				};
 			private :
 				// Data
 				bool valid;
@@ -95,9 +81,13 @@ namespace Glip
 				void update(const HdlShader& shader, bool lnk = true);
 				void use(void);
 
-				bool setFragmentLocation(const std::string& fragName, int frag);
-				bool modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2=0, int val3=0, int val4=0);
-				bool modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2=0, float val3=0, float val4=0);
+				void setFragmentLocation(const std::string& fragName, int frag);
+				void modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0);
+				void modifyVar(const std::string& varName, GLenum type, int* v);
+				void modifyVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0);
+				void modifyVar(const std::string& varName, GLenum type, unsigned int* v);
+				void modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0);
+				void modifyVar(const std::string& varName, GLenum type, float* v);
 
 				// Static tools :
 				static int maxVaryingVar(void);

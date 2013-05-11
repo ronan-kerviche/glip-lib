@@ -39,8 +39,10 @@
 	{
 		source     		= ss.source;
 		sourceName 		= ss.sourceName;
-		inVars    		= ss.inVars;
-		outVars    		= ss.outVars;
+		inSamplers2D    	= ss.inSamplers2D;
+		uniformVars		= ss.uniformVars;
+		uniformVarsType		= ss.uniformVarsType;
+		outFragments    	= ss.outFragments;
 		compatibilityRequest	= ss.compatibilityRequest;
 		versionNumber		= ss.versionNumber;
 	}
@@ -80,7 +82,7 @@
 			}
 		}
 
-		parseGlobals();
+		parseCode();
 	}
 
 	/**
@@ -124,7 +126,7 @@
 			source = src;
 		}
 
-		parseGlobals();
+		parseCode();
 	}
 
 	/**
@@ -165,221 +167,207 @@
 			return std::string(res);
 	}
 
-	int ShaderSource::removeKeyword(std::string& str, GLSL_KEYWORD kw)
+	bool ShaderSource::removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd)
 	{
-		size_t one = 0;
-		int count = 0;
-		std::string key(GLSLKeyword[static_cast<int>(kw)]);
-		std::string separator(" \n\t,;");
-		while((one=str.find(key, one))!=std::string::npos)
-		{
-			if(separator.find_first_of(str[one-1])!=std::string::npos && separator.find_first_of(str[one+key.length()])!=std::string::npos)
-			{
-				str.erase(one, key.length());
-				count++;
-			}
-			else
-				one += key.length();
-		}
+		size_t pStart = line.find(bStart);
 
-		return count;
+		if(pStart!=std::string::npos)
+		{
+			size_t pEnd = line.find( bEnd, pStart+bStart.size()-1);
+
+			line.erase(pStart, pEnd-pStart+1);
+
+			return true;
+		}
+		else
+			return false;
 	}
 
-	int ShaderSource::removeAnyOfSampler(std::string& str)
+	void ShaderSource::wordSplit(const std::string& line, std::vector<std::string>& split)
 	{
-		GLSL_KEYWORD samplersKeywords[] = {	GLSL_KW_sampler1D,
-							GLSL_KW_sampler2D,
-							GLSL_KW_sampler3D,
-							GLSL_KW_samplerCube,
-							GLSL_KW_sampler1DShadow,
-							GLSL_KW_sampler2DShadow,
-							GLSL_KW_samplerCubeShadow,
-							GLSL_KW_sampler1DArray,
-							GLSL_KW_sampler2DArray,
-							GLSL_KW_sampler1DArrayShadow,
-							GLSL_KW_sampler2DArrayShadow,
-							GLSL_KW_isampler1D,
-							GLSL_KW_isampler2D,
-							GLSL_KW_isampler3D,
-							GLSL_KW_isamplerCube,
-							GLSL_KW_isampler1DArray,
-							GLSL_KW_isampler2DArray,
-							GLSL_KW_usampler1D,
-							GLSL_KW_usampler2D,
-							GLSL_KW_usampler3D,
-							GLSL_KW_usamplerCube,
-							GLSL_KW_usampler1DArray,
-							GLSL_KW_usampler2DArray,
-							GLSL_KW_sampler2DRect,
-							GLSL_KW_sampler2DRectShadow,
-							GLSL_KW_isampler2DRect,
-							GLSL_KW_usampler2DRect,
-							GLSL_KW_samplerBuffer,
-							GLSL_KW_isamplerBuffer,
-							GLSL_KW_usamplerBuffer,
-							GLSL_KW_sampler2DMS,
-							GLSL_KW_isampler2DMS,
-							GLSL_KW_usampler2DMS,
-							GLSL_KW_sampler2DMSArray,
-							GLSL_KW_isampler2DMSArray,
-							GLSL_KW_usampler2DMSArray,
-							GLSL_KW_samplerCubeArray,
-							GLSL_KW_samplerCubeArrayShadow,
-							GLSL_KW_isamplerCubeArray,
-							GLSL_KW_usamplerCubeArray,
-							GLSL_KW_END};
-		int i  = 0,
-		ct = 0;
+		const std::string delimiters = " \n\r\t.,;/\\";
 
-		while(samplersKeywords[i]!=GLSL_KW_END)
+		std::string current;
+		bool recording=false;
+		for(int i=0; i<line.size(); i++)
 		{
-			ct += removeKeyword(str,samplersKeywords[i]);
-			i++;
+			bool isDelimiter = (delimiters.find(line[i])!=std::string::npos);
+
+			if(recording && isDelimiter)
+			{
+				split.push_back(current);
+				recording = false;
+				current.clear();
+			}
+			else if(!isDelimiter)
+			{
+				current += line[i];
+				recording = true;
+			}
 		}
 
-		return ct;
+		if(!current.empty())
+			split.push_back(current);
 	}
 
-	void ShaderSource::parseGlobals(void)
+	void ShaderSource::parseUniformLine(const std::vector<std::string>& split)
 	{
-		std::string global1, global2, global3, global4;
-		size_t one = 0,
-		two = 0;
-		inVars.clear();
-		outVars.clear();
+		// Compare typename to known types : 
+		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
+		GLenum typeCode;
+		if(	split[0]	== "float")				typeCode = GL_FLOAT;
+		else if(split[0]	== "vec2")				typeCode = GL_FLOAT_VEC2;
+		else if(split[0]	== "vec3")				typeCode = GL_FLOAT_VEC3;
+		else if(split[0]	== "vec4")				typeCode = GL_FLOAT_VEC4;
+		else if(split[0]	== "double")				typeCode = GL_DOUBLE;
+		else if(split[0]	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
+		else if(split[0]	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
+		else if(split[0]	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
+		else if(split[0]	== "int")				typeCode = GL_INT;
+		else if(split[0]	== "ivec2")				typeCode = GL_INT_VEC2;
+		else if(split[0]	== "ivec3")				typeCode = GL_INT_VEC3;
+		else if(split[0]	== "ivec4")				typeCode = GL_INT_VEC4;
+		else if(split[0]	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(split[0]	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(split[0]	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(split[0]	== "bool")				typeCode = GL_BOOL;
+		else if(split[0]	== "bvec2")				typeCode = GL_BOOL_VEC2;
+		else if(split[0]	== "bvec3")				typeCode = GL_BOOL_VEC3;
+		else if(split[0]	== "bvec4")				typeCode = GL_BOOL_VEC4;
+		else if(split[0]	== "mat2")				typeCode = GL_FLOAT_MAT2;
+		else if(split[0]	== "mat3")				typeCode = GL_FLOAT_MAT3;
+		else if(split[0]	== "mat4")				typeCode = GL_FLOAT_MAT4;
+		else if(split[0]	== "mat2")				typeCode = GL_DOUBLE_MAT2;
+		else if(split[0]	== "mat3")				typeCode = GL_DOUBLE_MAT3;
+		else if(split[0]	== "mat4")				typeCode = GL_DOUBLE_MAT4;
+		else if(split[0]	== "sampler2D")				typeCode = GL_SAMPLER_2D;
+		else if(split[0]	== "unsigned" && split[1]=="int")	typeCode = GL_UNSIGNED_INT;
+ 		else
+			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + split[0] + "\".", __FILE__, __LINE__); 
 
-		bool hasGl_FragColor = source.find("gl_FragColor");
+		int k = 1;
 
-		// Remove all scopes {}
-		for(int i=0; i<source.length(); i++)
+		if(typeCode==GL_UNSIGNED_INT) k++;
+
+		// Parse the variables : 
+		for( ; k<split.size(); k++)
 		{
-			if(source[i]=='{')
+			// Register variable : 
+			if(typeCode != GL_SAMPLER_2D)
 			{
-				i++;
-				int level=1;
-				while(level>0 && i<source.length())
-				{
-					if(source[i]=='{') level++;
-					if(source[i]=='}') level--;
-					i++;
-				}
+				uniformVars.push_back(split[k]);
+				uniformVarsType.push_back(typeCode);
 			}
 			else
-				global1 += source[i];
+				inSamplers2D.push_back(split[k]);
 		}
+	}
 
-		if(global1.empty())
-			return ;
+	void ShaderSource::parseOutLine(const std::vector<std::string>& split)
+	{
+		// Compare typename to known types : 
+		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
+		GLenum typeCode;
+		if(	split[0]	== "float")				typeCode = GL_FLOAT;
+		else if(split[0]	== "vec2")				typeCode = GL_FLOAT_VEC2;
+		else if(split[0]	== "vec3")				typeCode = GL_FLOAT_VEC3;
+		else if(split[0]	== "vec4")				typeCode = GL_FLOAT_VEC4;
+		else if(split[0]	== "double")				typeCode = GL_DOUBLE;
+		else if(split[0]	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
+		else if(split[0]	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
+		else if(split[0]	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
+		else if(split[0]	== "int")				typeCode = GL_INT;
+		else if(split[0]	== "ivec2")				typeCode = GL_INT_VEC2;
+		else if(split[0]	== "ivec3")				typeCode = GL_INT_VEC3;
+		else if(split[0]	== "ivec4")				typeCode = GL_INT_VEC4;
+		else if(split[0]	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(split[0]	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(split[0]	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(split[0]	== "bool")				typeCode = GL_BOOL;
+		else if(split[0]	== "bvec2")				typeCode = GL_BOOL_VEC2;
+		else if(split[0]	== "bvec3")				typeCode = GL_BOOL_VEC3;
+		else if(split[0]	== "bvec4")				typeCode = GL_BOOL_VEC4;
+		else if(split[0]	== "unsigned" && split[1]=="int")	typeCode = GL_UNSIGNED_INT;
+		else
+			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + split[0] + "\".", __FILE__, __LINE__); 
 
-		// Remove all parenthesis
-		for(int i=0; i<global1.length(); i++)
+		int k = 1;
+
+		if(typeCode==GL_UNSIGNED_INT) k++;
+
+		// Parse the variables : 
+		for( ; k<split.size(); k++)
 		{
-			if(global1[i]=='(')
-			{
-				i++;
-				int level=1;
-				while(level>0 && i<global1.length())
-				{
-					if(global1[i]=='(') level++;
-					else if(global1[i]==')') level--;
-					i++;
-				}
-				global2 += ';'; // Add ; to the functions end (for the following parts)
-			}
-			else
-				global2 += global1[i];
+			// Register variable : 
+			outFragments.push_back(split[k]);
 		}
+	}
 
-		if(global2.empty())
-			return ;
+	void ShaderSource::parseCode(void)
+	{
+		std::string line = source;
 
-		// Remove all commentaries
-		for(int i=0; i<global2.length()-1; i++)
-		{
-			if(global2[i]=='/' && global2[i+1]=='*')
-			{
-				int level=1;
-				while(level>0 && i<global2.length()-1)
-				{
-					if(global2[i]=='*' && global2[i+1]=='/') level--;
-					i++;
-				}
-				i++;
-			}
-			else if(global2[i]=='/' && global2[i+1]=='/')
-				while(global2[i]!='\n' && i<global2.length()-1) i++;
-			else
-				global3 += global2[i];
-		}
+		inSamplers2D.clear();
+		uniformVars.clear();
+		uniformVarsType.clear();
+		outFragments.clear();
 
-		if(global3.empty())
-			return ;
+		// Test compatibility needed : 
+		bool hasGl_FragColor = line.find("gl_FragColor");
 
-		// Test : find the version of the source :
+		// Clean the code :  
+		while( removeBloc(line, "//", "\n") ) ;
+		while( removeBloc(line, "/*", "*/") ) ;
+		while( removeBloc(line, "{", "}") ) ;
+
+		// Test version : 
 		const std::string versionKeyword = "#version";
-		size_t pVersion = global3.find(versionKeyword);
+		size_t pVersion = line.find(versionKeyword);
 
 		if(pVersion!=std::string::npos)
 		{
-			size_t pVersionLine = global3.find('\n',pVersion+versionKeyword.size()-1);
-			from_string(global3.substr(pVersion+versionKeyword.size(),pVersionLine-pVersion-versionKeyword.size()), versionNumber);
+			size_t pVersionLine = line.find(';',pVersion+versionKeyword.size()-1);
+			from_string(line.substr(pVersion+versionKeyword.size(),pVersionLine-pVersion-versionKeyword.size()), versionNumber);
 		}
 
-		// Remove all macros
-		for(int i=0; i<global3.length()-1; i++)
+		std::vector<std::string> split;
+
+		// Get all the uniforms : 
+		const std::string uniformKeyword = "uniform";
+		size_t pUniform = line.find(uniformKeyword);
+
+		while(pUniform!=std::string::npos)
 		{
-			if(global3[i]=='#')
-				while(global3[i]!='\n' && i<global3.length()-1) i++;
-			else
-				global4 += global3[i];
+			size_t pUniformLine = line.find(';',pUniform + uniformKeyword.size()-1);
+
+			split.clear();
+			wordSplit(line.substr(pUniform + uniformKeyword.size(),pUniformLine-pUniform-uniformKeyword.size()), split);
+			parseUniformLine( split );
+
+			pUniform = line.find(uniformKeyword, pUniformLine + 1);
 		}
 
-		if(global4.empty())
-			return ;
+		// Get all the out variables : 
+		const std::string outKeyword = "out";
+		size_t pOut = line.find(outKeyword);
 
-		// cut in parts along the ;
-		std::vector<std::string> cutting;
-		one = two = 0;
-		while((two=global4.find_first_of(';', one))!=std::string::npos)
+		while(pOut!=std::string::npos)
 		{
-			cutting.push_back(global4.substr(one, two-one));
-			one = two+1;
+			size_t pOutLine = line.find(';',pOut + outKeyword.size()-1);
+
+			split.clear();
+			wordSplit(line.substr(pOut + outKeyword.size(),pOutLine-pOut-outKeyword.size()), split);
+			parseOutLine( split );
+
+			pOut = line.find(outKeyword, pOutLine + 1);
 		}
 
-		for(std::vector<std::string>::iterator it=cutting.begin(); it!=cutting.end(); it++)
-		{
-			bool in  = false,
-			out = false;
-			// Find all descriptors :
-			if(removeKeyword(*it, GLSL_KW_in)>0 || (removeKeyword(*it, GLSL_KW_uniform)>0 && removeAnyOfSampler(*it)>0))
-				in = true;
-			if(removeKeyword(*it, GLSL_KW_out)>0)
-				out = true;
-			for(int i = static_cast<int>(GLSL_KW_attribute); i<static_cast<int>(GLSL_KW_END); i++)
-				removeKeyword(*it, static_cast<GLSL_KEYWORD>(i));
-
-			// *it contains only variables name :
-			if(in || out)
-			{
-				one = two = 0;
-				while((one = (*it).find_first_not_of("\n\t ,;", two))!=std::string::npos)
-				{
-					two = (*it).find_first_of("\n\t ,;", one+1);
-
-					if(in)
-						inVars.push_back((*it).substr(one, two-one));
-					if(out)
-						outVars.push_back((*it).substr(one, two-one));
-				}
-			}
-		}
-
-		if(outVars.empty() && hasGl_FragColor)
+		if(outFragments.empty() && hasGl_FragColor)
 		{
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
 			#endif
-			outVars.push_back(portNameForFragColor);
+			outFragments.push_back(portNameForFragColor);
 			compatibilityRequest = true;
 		}
 	}
@@ -505,206 +493,36 @@
 	**/
 	const std::vector<std::string>& ShaderSource::getInputVars(void)
 	{
-		return inVars;
+		return inSamplers2D;
 	}
 
 	/**
 	\fn const std::vector<std::string>& ShaderSource::getOutputVars(void)
-	\brief Return a vector containing the name of all the output textures (uniform sampler*).
+	\brief Return a vector containing the name of all the output textures (uniform {vec2, vec3, vec4, ...}).
 	\return A vector of standard string.
 	**/
 	const std::vector<std::string>& ShaderSource::getOutputVars(void)
 	{
-		return outVars;
+		return outFragments;
 	}
 
-// Constant :
-	const char* Glip::CoreGL::GLSLKeyword[] =
+	/**
+	\fn const std::vector<std::string>& ShaderSource::getUniformVars(void)
+	\brief Return a vector containing the name of all the uniform variables which are not 2D samplers.
+	\return A vector of standard string.
+	**/
+	const std::vector<std::string>& ShaderSource::getUniformVars(void)
 	{
-		"attribute\0",
-		"const\0",
-		"uniform\0",
-		"varying\0",
-		"layout\0",
-		"centroid\0",
-		"flat\0",
-		"smooth\0",
-		"noperspective\0",
-		"patch\0",
-		"sample\0",
-		"break\0",
-		"continue\0",
-		"do\0",
-		"for\0",
-		"while\0",
-		"switch\0",
-		"case\0",
-		"default\0",
-		"if\0",
-		"else\0",
-		"subroutine\0",
-		"in\0",
-		"out\0",
-		"inout\0",
-		"float\0",
-		"double\0",
-		"int\0",
-		"void\0",
-		"bool\0",
-		"true\0",
-		"false\0",
-		"invariant\0",
-		"discard\0",
-		"return\0",
-		"mat2\0",
-		"mat3\0",
-		"mat4\0",
-		"dmat2\0",
-		"dmat3\0",
-		"dmat4\0",
-		"mat2x2\0",
-		"mat2x3\0",
-		"mat2x4\0",
-		"dmat2x2\0",
-		"dmat2x3\0",
-		"dmat2x4\0",
-		"mat3x2\0",
-		"mat3x3\0",
-		"mat3x4\0",
-		"dmat3x2\0",
-		"dmat3x3\0",
-		"dmat3x4\0",
-		"mat4x2\0",
-		"mat4x3\0",
-		"mat4x4\0",
-		"dmat4x2\0",
-		"dmat4x3\0",
-		"dmat4x4\0",
-		"vec2\0",
-		"vec3\0",
-		"vec4\0",
-		"ivec2\0",
-		"ivec3\0",
-		"ivec4\0",
-		"bvec2\0",
-		"bvec3\0",
-		"bvec4\0",
-		"dvec2\0",
-		"dvec3\0",
-		"dvec4\0",
-		"uint\0",
-		"uvec2\0",
-		"uvec3\0",
-		"uvec4\0",
-		"lowp\0",
-		"mediump\0",
-		"highp\0",
-		"precision\0",
-		"sampler1D\0",
-		"sampler2D\0",
-		"sampler3D\0",
-		"samplerCube\0",
-		"sampler1DShadow\0",
-		"sampler2DShadow\0",
-		"samplerCubeShadow\0",
-		"sampler1DArray\0",
-		"sampler2DArray\0",
-		"sampler1DArrayShadow\0",
-		"sampler2DArrayShadow\0",
-		"isampler1D\0",
-		"isampler2D\0",
-		"isampler3D\0",
-		"isamplerCube\0",
-		"isampler1DArray\0",
-		"isampler2DArray\0",
-		"usampler1D\0",
-		"usampler2D\0",
-		"usampler3D\0",
-		"usamplerCube\0",
-		"usampler1DArray\0",
-		"usampler2DArray\0",
-		"sampler2DRect\0",
-		"sampler2DRectShadow\0",
-		"isampler2DRect\0",
-		"usampler2DRect\0",
-		"samplerBuffer\0",
-		"isamplerBuffer\0",
-		"usamplerBuffer\0",
-		"sampler2DMS\0",
-		"isampler2DMS\0",
-		"usampler2DMS\0",
-		"sampler2DMSArray\0",
-		"isampler2DMSArray\0",
-		"usampler2DMSArray\0",
-		"samplerCubeArray\0",
-		"samplerCubeArrayShadow\0",
-		"isamplerCubeArray\0",
-		"usamplerCubeArray\0",
-		"struct\0",
-		"common\0",
-		"partition\0",
-		"active\0",
-		"asm\0",
-		"class\0",
-		"union\0",
-		"enum\0",
-		"typedef\0",
-		"template\0",
-		"this\0",
-		"packed\0",
-		"goto\0",
-		"inline\0",
-		"noinline\0",
-		"volatile\0",
-		"public\0",
-		"static\0",
-		"extern\0",
-		"external\0",
-		"interface\0",
-		"long\0",
-		"short\0",
-		"half\0",
-		"fixed\0",
-		"unsigned\0",
-		"superp\0",
-		"input\0",
-		"output\0",
-		"hvec2\0",
-		"hvec3\0",
-		"hvec4\0",
-		"fvec2\0",
-		"fvec3\0",
-		"fvec4\0",
-		"sampler3DRect\0",
-		"filter\0",
-		"image1D\0",
-		"image2D\0",
-		"image3D\0",
-		"imageCube\0",
-		"iimage1D\0",
-		"iimage2D\0",
-		"iimage3D\0",
-		"iimageCube\0",
-		"uimage1D\0",
-		"uimage2D\0",
-		"uimage3D\0",
-		"uimageCube\0",
-		"image1DArray\0",
-		"image2DArray\0",
-		"iimage1DArray\0",
-		"iimage2DArray\0",
-		"uimage1DArray\0",
-		"uimage2DArray\0",
-		"image1DShadow\0",
-		"image2DShadow\0",
-		"image1DArrayShadow\0",
-		"image2DArrayShadow\0",
-		"imageBuffer\0",
-		"iimageBuffer\0",
-		"uimageBuffer\0",
-		"sizeof\0",
-		"cast\0",
-		"namespace\0",
-		"using\0",
-		"row_major\0" // 185 lines
-	};
+		return uniformVars;
+	}
+
+	/**
+	\fn const std::vector<GLenum>& ShaderSource::getUniformTypes(void)
+	\brief Return a vector containing the type of the uniform variables which are not 2D samplers (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for a table of possible values).
+	\return A vector of GLenum.
+	**/
+	const std::vector<GLenum>& ShaderSource::getUniformTypes(void)
+	{
+		return uniformVarsType;
+	}
+

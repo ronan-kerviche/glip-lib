@@ -244,7 +244,7 @@
 		{
 			// Set the names of the samplers :
 			for(int i=0; i<getNumInputPort(); i++)
-				program->modifyVar(getInputPortName(i), HdlProgram::Var, i);
+				program->modifyVar(getInputPortName(i), GL_INT, i);
 
 			if(!fragmentShader->requiresCompatibility())
 			{

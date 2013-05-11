@@ -82,7 +82,7 @@
 				// Create another random (mathematical) point :
 				ShaderSource inputSrc("./Filters/gameInput.glsl");
 				inp = new ProceduralInput("InputPattern", fmt, inputSrc);
-				inp->prgm().modifyVar("seed",HdlProgram::Var,1.0f);
+				inp->prgm().modifyVar("seed",GL_FLOAT,1.0f);
 				inp->generateNewFrame();
 
 				// Do the first pass :
@@ -164,7 +164,7 @@
 					(*p2) << (*tInput) << Pipeline::Process;
 					target = &p1->out(0);
 				#else
-					inp->prgm().modifyVar("seed",HdlProgram::Var,static_cast<float>(i/10.0f));
+					inp->prgm().modifyVar("seed",GL_FLOAT,static_cast<float>(i/10.0f));
 					inp->generateNewFrame();
 					(*p1) << inp->out(0) << Pipeline::Process;
 					(*p2) << inp->out(1) << Pipeline::Process;

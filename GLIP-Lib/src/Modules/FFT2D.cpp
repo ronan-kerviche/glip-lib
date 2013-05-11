@@ -580,8 +580,8 @@
 			int 	xOffset = (w-input.getWidth())/2,
 				yOffset = (h-input.getHeight())/2;
 
-			lnkFirstWidthFilter->prgm().modifyVar("xOffset", HdlProgram::Var, xOffset);
-			lnkFirstWidthFilter->prgm().modifyVar("yOffset", HdlProgram::Var, yOffset);
+			lnkFirstWidthFilter->prgm().modifyVar("xOffset", GL_INT, xOffset);
+			lnkFirstWidthFilter->prgm().modifyVar("yOffset", GL_INT, yOffset);
 		}
 
 		(*pipeline) << input << (*width_bitReversal) << (*height_bitReversal) << (*width_wpTexture) << (*height_wpTexture) << Pipeline::Process;

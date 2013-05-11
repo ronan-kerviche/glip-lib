@@ -350,15 +350,13 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
+	\fn    void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	\brief Link the name of a fragment output variable to a fragment unit.
 
 	\param fragName Name of the fragment output variable.
 	\param frag     Index of the desired fragment unit.
-
-	\return False in case of failure, true otherwise.
 	**/
-	bool HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
+	void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	{
 		glErrors(); // clean error buffer
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -369,98 +367,121 @@ using namespace Glip::CoreGL;
 		bool test = glErrors();
 
 		if(test)
-			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location " + fragName, __FILE__, __LINE__);
-
-		return test; //return false if any error
+			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\".", __FILE__, __LINE__);
 	}
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2, int val3, int val4)
-	\brief Change a uniform variable in a shader (Integer version).
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see ShaderDataType.
-	\param val1    Corresponding value to assign.
-	\param val2    Corresponding value to assign.
-	\param val3    Corresponding value to assign.
-	\param val4    Corresponding value to assign.
-
-	\return False in case of failure, true otherwise.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v0      Corresponding value to assign.
+	\param v1      Corresponding value to assign.
+	\param v2      Corresponding value to assign.
+	\param v3      Corresponding value to assign.
 	**/
-	bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, int val1, int val2, int val3, int val4)
-	{
-		use();
-		GLint loc = glGetUniformLocation(program, varName.c_str());
+	/**
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<int>", "glGetUniformLocation()")
-		#endif
+	\param varName Name of the fragment output variable.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v0      Corresponding value to assign.
+	\param v1      Corresponding value to assign.
+	\param v2      Corresponding value to assign.
+	\param v3      Corresponding value to assign.
+	**/
+	/**
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
-		if (loc==-1)
-		{
-			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
-			return false;
-		}
-
-		switch(type)
-		{
-			case Var  : 	glUniform1i(loc, val1);                   break;
-			case Vec2 : 	glUniform2i(loc, val1, val2);             break;
-			case Vec3 : 	glUniform3i(loc, val1, val2, val3);       break;
-			case Vec4 : 	glUniform4i(loc, val1, val2, val3, val4); break;
-			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
-		}
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<int>", "glUniformXi()")
-		#endif
-
-		return true;
-	}
+	\param varName Name of the fragment output variable.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v0      Corresponding value to assign.
+	\param v1      Corresponding value to assign.
+	\param v2      Corresponding value to assign.
+	\param v3      Corresponding value to assign.
+	**/
 
 	/**
-	\fn    bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2, float val3, float val4)
-	\brief Change a uniform variable in a shader (Floating point version).
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, int* v)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable, see ShaderDataType.
-	\param val1    Corresponding value to assign.
-	\param val2    Corresponding value to assign.
-	\param val3    Corresponding value to assign.
-	\param val4    Corresponding value to assign.
-
-	\return False in case of failure, true otherwise.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v       Pointer to the values to assign.
 	**/
-	bool HdlProgram::modifyVar(const std::string& varName, ShaderDataType type, float val1, float val2, float val3, float val4)
-	{
-		use();
-		GLint loc = glGetUniformLocation(program, varName.c_str());
+	/**
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, unsigned int* v)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<float>", "glGetUniformLocation()")
-		#endif
+	\param varName Name of the fragment output variable.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v       Pointer to the values to assign.
+	**/
+	/**
+	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, float* v)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
-		if (loc==-1)
-		{
-			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it)", __FILE__, __LINE__);
-			return false;
+	\param varName Name of the fragment output variable.
+	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param v       Pointer to the values to assign.
+	**/
+
+	#define GENmodifyVar( argT1, argT2, argT3)   \
+		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1 v0, argT1 v1, argT1 v2, argT1 v3) \
+		{ \
+			use(); \
+			GLint loc = glGetUniformLocation(program, varName.c_str()); \
+			 \
+			if (loc==-1) \
+				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
+			 \
+			switch(t) \
+			{ \
+				case GL_##argT2 : 		glUniform1##argT3 (loc, v0);		break; \
+				case GL_##argT2##_VEC2 : 	glUniform2##argT3 (loc, v0, v1);		break; \
+				case GL_##argT2##_VEC3 : 	glUniform3##argT3 (loc, v0, v1, v2);	break; \
+				case GL_##argT2##_VEC4 : 	glUniform4##argT3 (loc, v0, v1, v2, v3);	break; \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
+			} \
+			 \
+			bool test = glErrors(); \
+			 \
+			if(test) \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
+		} \
+		 \
+		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1* v) \
+		{ \
+			use(); \
+			GLint loc = glGetUniformLocation(program, varName.c_str()); \
+			 \
+			if (loc==-1) \
+				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
+			 \
+			switch(t) \
+			{ \
+				case GL_##argT2 : 		glUniform1##argT3##v(loc, 1, v);	break; \
+				case GL_##argT2##_VEC2 : 	glUniform2##argT3##v(loc, 2, v);	break; \
+				case GL_##argT2##_VEC3 : 	glUniform3##argT3##v(loc, 3, v);	break; \
+				case GL_##argT2##_VEC4 : 	glUniform4##argT3##v(loc, 4, v);	break; \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
+			} \
+			 \
+			bool test = glErrors(); \
+			 \
+			if(test) \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
 		}
 
-		switch(type)
-		{
-			case Var  : 	glUniform1f(loc, val1);                   break;
-			case Vec2 : 	glUniform2f(loc, val1, val2);             break;
-			case Vec3 : 	glUniform3f(loc, val1, val2, val3);       break;
-			case Vec4 : 	glUniform4f(loc, val1, val2, val3, val4); break;
-			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type");
-		}
+	GENmodifyVar( int, INT, i)
+	GENmodifyVar( unsigned int, UNSIGNED_INT, ui)
+	GENmodifyVar( float, FLOAT, f)
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::modifyVar<float>", "glUniformXi()")
-		#endif
-
-		return true;
-	}
+	#undef GEN_modifyVar
+		
 
 	// tools
 	/**

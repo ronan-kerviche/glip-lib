@@ -1175,7 +1175,6 @@
 			TableIndex		options;
 
 			// Prepare the buffer list :
-			//MODIFICATION 04/02/2012 : buffers.assign(filters.size(), NULL);
 			std::vector<int> occupancy;
 			buffers.clear();
 			useBuffer.assign(filters.size(), -1);
@@ -1906,3 +1905,4 @@
 		else
 			throw Exception("Pipeline::getTotalTiming - Monitoring is disabled.", __FILE__, __LINE__);
 	}
+

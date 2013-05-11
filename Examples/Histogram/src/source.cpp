@@ -48,7 +48,7 @@
 			const int 	numWPoints = 512,
 					numHPoints = 512;
 			((*pipeline)["histogramFilterInstance"]).setGeometry( HdlVBO::generate3DGrid(numWPoints, numHPoints, 3, 1.0f, 1.0f, 2.0f) );
-			((*pipeline)["histogramFilterInstance"]).prgm().modifyVar("nrm",HdlProgram::Var, 1.0f/static_cast<float>(numWPoints*numHPoints));
+			((*pipeline)["histogramFilterInstance"]).prgm().modifyVar("nrm", GL_FLOAT, 1.0f/static_cast<float>(numWPoints*numHPoints));
 
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(process(void)));
 			QObject::connect(&scaleSlider,			SIGNAL(sliderMoved(int)),		this, SLOT(process(void)));
@@ -83,7 +83,7 @@
 		{
 			HdlTexture& texture = imageLoaderInterface.currentTexture();
 
-			((*pipeline)["histogramShowFilterInstance"]).prgm().modifyVar("scale", HdlProgram::Var, static_cast<float>(scaleSlider.value()));
+			((*pipeline)["histogramShowFilterInstance"]).prgm().modifyVar("scale", GL_FLOAT, static_cast<float>(scaleSlider.value()));
 
 			(*pipeline) << texture << Pipeline::Process;
 
