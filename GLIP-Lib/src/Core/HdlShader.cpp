@@ -55,14 +55,14 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glCompileShader, glCompileShaderARB)
 		FIX_MISSING_GLEW_CALL(glLinkProgram, glLinkProgramARB)
 		FIX_MISSING_GLEW_CALL(glGetUniformLocation, glGetUniformLocationARB)
-		FIX_MISSING_GLEW_CALL(glUniform1i, glUniform1iARB)
-		FIX_MISSING_GLEW_CALL(glUniform2i, glUniform2iARB)
-		FIX_MISSING_GLEW_CALL(glUniform3i, glUniform3iARB)
-		FIX_MISSING_GLEW_CALL(glUniform4i, glUniform4iARB)
-		FIX_MISSING_GLEW_CALL(glUniform1f, glUniform1fARB)
-		FIX_MISSING_GLEW_CALL(glUniform2f, glUniform2fARB)
-		FIX_MISSING_GLEW_CALL(glUniform3f, glUniform3fARB)
-		FIX_MISSING_GLEW_CALL(glUniform4f, glUniform4fARB)
+		FIX_MISSING_GLEW_CALL(glUniform1i,  glUniform1iARB)
+		FIX_MISSING_GLEW_CALL(glUniform2i,  glUniform2iARB)
+		FIX_MISSING_GLEW_CALL(glUniform3i,  glUniform3iARB)
+		FIX_MISSING_GLEW_CALL(glUniform4i,  glUniform4iARB)
+		FIX_MISSING_GLEW_CALL(glUniform1f,  glUniform1fARB)
+		FIX_MISSING_GLEW_CALL(glUniform2f,  glUniform2fARB)
+		FIX_MISSING_GLEW_CALL(glUniform3f,  glUniform3fARB)
+		FIX_MISSING_GLEW_CALL(glUniform4f,  glUniform4fARB)
 
 		type = _type; //either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
 
@@ -282,6 +282,32 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlProgram::link - Error during Program linking : \n" + logstr, __FILE__, __LINE__);
 			return false;
 		}
+		else
+		{	
+			use();
+		
+			// Update available uniforms of the following types : 
+			const GLenum interestTypes[] = {GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4, GL_DOUBLE, GL_DOUBLE_VEC2, GL_DOUBLE_VEC3, GL_DOUBLE_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4, GL_UNSIGNED_INT_VEC2, GL_UNSIGNED_INT_VEC3, GL_UNSIGNED_INT_VEC4, GL_BOOL, GL_BOOL_VEC2, GL_BOOL_VEC3, GL_BOOL_VEC4, GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, GL_DOUBLE_MAT2, GL_DOUBLE_MAT3, GL_DOUBLE_MAT4, GL_UNSIGNED_INT};
+			const int numAllowedTypes = sizeof(interestTypes) / sizeof(GLenum);
+
+			// Get number of uniforms :  
+			GLint numUniforms = 0;
+			glGetProgramiv(	program, GL_ACTIVE_UNIFORMS, &numUniforms);
+ 	
+			char buffer[1024];	
+			GLenum type;
+			GLint actualSize, actualSizeName;
+			for(int k=0; k<numUniforms; k++)
+			{
+				glGetActiveUniform( program, k, 1024, &actualSizeName, &actualSize, &type, buffer);
+
+				if( std::find(interestTypes, interestTypes + numAllowedTypes, type) != interestTypes + numAllowedTypes)
+				{
+ 					activeUniforms.push_back(buffer);
+					activeTypes.push_back(type);
+				}
+			}
+		}
 
 		return true;
 	}
@@ -347,6 +373,26 @@ using namespace Glip::CoreGL;
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlProgram::use", "glUseProgram()")
 		#endif
+	}
+
+	/**
+	\fn    const std::vector<std::string>& getUniformVarsNames(void) const
+	\brief Get access to the list of uniform variables names of supported types managed by the program (GL based).
+	\return Access to a sting based vector.
+	**/
+	const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
+	{
+		return activeUniforms;
+	}
+
+	/**
+	\fn    const std::vector<std::string>& getUniformVarsTypes(void) const
+	\brief Get access to the list of uniform variables types corresponding to the names provided by HdlProgram::getUniformVarsNames (GL based).
+	\return Access to a sting based vector.
+	**/
+	const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
+	{
+		return activeTypes;
 	}
 
 	/**
@@ -480,7 +526,7 @@ using namespace Glip::CoreGL;
 	GENmodifyVar( unsigned int, UNSIGNED_INT, ui)
 	GENmodifyVar( float, FLOAT, f)
 
-	#undef GEN_modifyVar
+	#undef GENmodifyVar
 		
 
 	// tools

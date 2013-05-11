@@ -64,9 +64,12 @@ namespace Glip
 		{
 			private :
 				// Data
-				bool valid;
-				GLuint program;
-				GLuint attachedVertexShader, attachedFragmentShader;
+				bool 				valid;
+				GLuint 				program;
+				GLuint 				attachedVertexShader, 
+								attachedFragmentShader;
+				std::vector<std::string>	activeUniforms;
+				std::vector<GLenum>		activeTypes;
 
 				// Functions
 				bool link(void);
@@ -80,6 +83,9 @@ namespace Glip
 
 				void update(const HdlShader& shader, bool lnk = true);
 				void use(void);
+
+				const std::vector<std::string>& getUniformVarsNames(void) const;
+				const std::vector<GLenum>& getUniformVarsTypes(void) const;
 
 				void setFragmentLocation(const std::string& fragName, int frag);
 				void modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0);

@@ -93,13 +93,18 @@
 				else
 				{
 					std::cout << "Uniform variables list in : " << inputSrc.getSourceName() << std::endl;
-					for(std::vector<std::string>::const_iterator it=inputSrc.getUniformVars().begin(); it!=inputSrc.getUniformVars().end(); it++)
-						std::cout << "   " << *it << std::endl;
+					for(int k=0; k<inputSrc.getUniformVars().size(); k++)
+						std::cout << "   " << inputSrc.getUniformVars()[k] << " [" << glParamName( inputSrc.getUniformTypes()[k] ) << "]" << std::endl;
 				}	
 
 				std::cout << "Out variables : " << std::endl;
 				for(std::vector<std::string>::const_iterator it=inputSrc.getOutputVars().begin(); it!=inputSrc.getOutputVars().end(); it++)
 						std::cout << "   " << *it << std::endl;
+
+				// Test : print uniform variables from program : 
+				std::cout << "Uniform variables list in compiled shader program : " << std::endl;
+				for(int k=0; k<inp->prgm().getUniformVarsNames().size(); k++)
+					std::cout << "   " << inp->prgm().getUniformVarsNames()[k] << " [" << glParamName( inp->prgm().getUniformVarsTypes()[k] ) << "]" << std::endl;
 
 				inp->prgm().modifyVar("seed",GL_FLOAT,1.0f);
 				inp->generateNewFrame();
