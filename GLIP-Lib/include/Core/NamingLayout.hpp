@@ -64,7 +64,7 @@
 
 				protected :
 					// Tools
-					ObjectName(const std::string& name, const std::string& type); // For a  Filter or a Pipeline with name and type
+					ObjectName(const std::string& name, const std::string& type); // For a Filter or a Pipeline with name and type
 					ObjectName(const std::string& name, int port);                // For a port with a name
 					void checkName(void);
 					void checkType(void);
@@ -75,7 +75,7 @@
 				public :
 					// Tools
 					ObjectName(const ObjectName&); // As a copy
-					virtual ~ObjectName(void);
+					/*virtual*/ ~ObjectName(void);
 					void               setName(const std::string&);
 					const std::string& getName(void) const;
 					std::string        getNameExtended(void) const;

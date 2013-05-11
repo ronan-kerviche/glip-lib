@@ -72,6 +72,7 @@
 				KeyToggleFullscreen,
 				KeyExitOnlyFullscreen,
 				KeyResetView,
+				KeyControl,
 				// Add new keys before this line
 				NumActionKey,
 				NoAction
@@ -89,10 +90,13 @@
 				rightClick,
 				mouseWheelTurned;
 			int 	wheelSteps,
+				deltaWheelSteps,
 				deltaX,
 				deltaY,
 			 	lastPosX,
-			 	lastPosY;
+			 	lastPosY,
+				wheelRotationAtX,
+				wheelRotationAtY;
 
 			// Data - Keyboard status :
 			Qt::Key	keyAssociation[NumActionKey];
@@ -201,3 +205,4 @@
 	};
 
 #endif
+

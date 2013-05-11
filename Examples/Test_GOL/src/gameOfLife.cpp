@@ -90,8 +90,6 @@
 				(*p2) << inp->out(1) << Pipeline::Process;
 			#endif
 
-
-
 			// Update image aspect ratio :
 			float outputAspectRatio = static_cast<float>(p1->out(0).getWidth())/static_cast<float>(p1->out(0).getHeight());
 			window.setImageAspectRatio(outputAspectRatio);

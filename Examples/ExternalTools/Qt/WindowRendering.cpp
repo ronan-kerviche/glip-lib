@@ -22,6 +22,7 @@
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
 	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
+	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.1f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
@@ -49,6 +50,7 @@
 		setKeyForAction(KeyToggleFullscreen,		Qt::Key_Return);
 		setKeyForAction(KeyExitOnlyFullscreen,		Qt::Key_Escape);
 		setKeyForAction(KeyResetView,			Qt::Key_Space);
+		setKeyForAction(KeyControl,			Qt::Key_Control);
 
 		for(int i=0; i<NumActionKey; i++)
 		{
@@ -56,8 +58,6 @@
 			keyJustPressed[i]	= false;
 			keyJustReleased[i]	= false;
 		}
-
-		//show();
 	}
 
 	WindowRenderer::~WindowRenderer(void)
@@ -88,7 +88,7 @@
 		if(mouseMovementsEnabled)
 		{
 			// Translation?
-			if(leftClick)
+			if(leftClick && !pressed(KeyControl))
 			{
 				// Method 2 :
 				float 	dx 		= 2.0f * deltaX / static_cast<float>(width()),
@@ -100,7 +100,7 @@
 				deltaX 			= 0;
 				deltaY 			= 0;
 			}
-			else if(rightClick && lastPosY!=-1 && lastPosX!=-1) // Rotation?
+			else if( (rightClick || (leftClick && pressed(KeyControl))) && lastPosY!=-1 && lastPosX!=-1) // Rotation?
 			{
 				float a = atan2( lastPosY - height()/2, lastPosX - width()/2 ) * 180.0f / M_PI;
 
@@ -286,9 +286,15 @@
 		#endif
 
 		if(event->delta()!=0)
+		{
 			wheelSteps += event->delta()/(8*15);
+			deltaWheelSteps = event->delta()/(8*15);
+		}
 
 		mouseWheelTurned = true;
+
+		wheelRotationAtX = event->x();
+		wheelRotationAtY = event->y();
 
 		emit actionReceived();
 
@@ -302,14 +308,13 @@
 			std::cout << "WindowRenderer::mousePressEvent - Click event." << std::endl;
 		#endif
 
-		if(event->buttons() & Qt::LeftButton)
+		if( (event->buttons() & Qt::LeftButton) && !pressed(KeyControl) )
 			leftClick = true;
-		else if(event->buttons() & Qt::RightButton)
-		{
+		else if( (event->buttons() & Qt::RightButton) )
 			rightClick = true;
+
+		if( (event->buttons() & Qt::RightButton) || ((event->buttons() & Qt::LeftButton) && pressed(KeyControl)) )
 			originalOrientationBeforeRightClick = currentRotationDegrees - atan2( event->y() - height()/2, event->x() - width()/2 ) * 180.0f / M_PI;
-;
-		}
 
 		lastPosX = -1;
 		lastPosY = -1;
@@ -596,3 +601,4 @@
 	{
 		childRenderer.resize(width(),height());
 	}
+
