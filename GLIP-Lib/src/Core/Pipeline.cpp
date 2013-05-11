@@ -866,12 +866,7 @@
 	{
 		cleanInput();
 
-		for(std::vector<TableIndex*>::iterator it = listOfArgBuffersOutput.begin(); it!=listOfArgBuffersOutput.end(); it++)
-			delete (*it);
 		listOfArgBuffersOutput.clear();
-
-		for(std::vector<TableIndex*>::iterator it = listOfArgBuffers.begin(); it!=listOfArgBuffers.end(); it++)
-			delete (*it);
 		listOfArgBuffers.clear();
 
 		actionFilter.clear();
@@ -1184,8 +1179,8 @@
 			std::vector<int> occupancy;
 			buffers.clear();
 			useBuffer.assign(filters.size(), -1);
-			listOfArgBuffers.assign(filters.size(), NULL);
-			listOfArgBuffersOutput.assign(filters.size(), NULL);
+			listOfArgBuffers.assign(filters.size(), TableIndex());
+			listOfArgBuffersOutput.assign(filters.size(), TableIndex());
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "    Updating availability" << std::endl;
@@ -1393,10 +1388,10 @@
 				actionFilter.push_back(best);
 
 				// Create the argument list :
-				TableIndex 	*bufferArg = new TableIndex,
-						*outputArg = new TableIndex;
-				bufferArg->resize(filters[best]->getNumInputPort());
-				outputArg->resize(filters[best]->getNumInputPort());
+				TableIndex 	bufferArg,
+						outputArg;
+				bufferArg.resize(filters[best]->getNumInputPort());
+				outputArg.resize(filters[best]->getNumInputPort());
 
 				// Find in the connections, the input ports
 				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
@@ -1405,10 +1400,10 @@
 					{
 						test++;
 						if((*it).idOut!=THIS_PIPELINE)
-							(*bufferArg)[(*it).portIn] = useBuffer[(*it).idOut]; // buffer used by source Filter
+							bufferArg[(*it).portIn] = useBuffer[(*it).idOut]; // buffer used by source Filter
 						else
-							(*bufferArg)[(*it).portIn] = (*it).idOut; // THIS_PIPELINE as source
-						(*outputArg)[(*it).portIn] = (*it).portOut;
+							bufferArg[(*it).portIn] = (*it).idOut; // THIS_PIPELINE as source
+						outputArg[(*it).portIn] = (*it).portOut;
 						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 							std::cout << "        Connecting port " << (*it).portIn << " to buffer " << (*it).idOut << "::" << (*it).portOut << std::endl;
 						#endif
@@ -1476,8 +1471,8 @@
 				for(int i=0; i<actionFilter.size(); i++)
 				{
 					std::cout << "        Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << " (Buffer : " << useBuffer[i] << ')' << std::endl;
-					for(int j=0; j<listOfArgBuffers[actionFilter[i]]->size(); j++)
-						std::cout << "            Connection " << j << " to : (" << (*listOfArgBuffers[actionFilter[i]])[j] << ';' << (*listOfArgBuffersOutput[actionFilter[i]])[j] << ')' << std::endl;
+					for(int j=0; j<listOfArgBuffers[actionFilter[i]].size(); j++)
+						std::cout << "            Connection " << j << " to : (" << listOfArgBuffers[actionFilter[i]][j] << ';' << listOfArgBuffersOutput[actionFilter[i]][j] << ')' << std::endl;
 				}
 				std::cout << "    End Actions" << std::endl;
 			#endif
@@ -1570,8 +1565,8 @@
 			Filter* f = filters[action];
 			for(int j=0; j<f->getNumInputPort(); j++)
 			{
-				int bufferID 	= (*listOfArgBuffers[action])[j];
-				int portID 	= (*listOfArgBuffersOutput[action])[j];
+				int bufferID 	= listOfArgBuffers[action][j];
+				int portID 	= listOfArgBuffersOutput[action][j];
 
 				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 					std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;

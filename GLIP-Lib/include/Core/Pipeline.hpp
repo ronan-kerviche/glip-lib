@@ -238,8 +238,8 @@ How to process the inputs :
 					TableBuffer				buffers;
 					TableIndex				useBuffer;
 					TableIndex				actionFilter;
-					std::vector<TableIndex*>		listOfArgBuffers;
-					std::vector<TableIndex*>		listOfArgBuffersOutput;
+					std::vector<TableIndex>			listOfArgBuffers;
+					std::vector<TableIndex>			listOfArgBuffersOutput;
 					bool 					perfsMonitoring;
 					GLuint					queryObject;
 					std::vector<double>			perfs;
