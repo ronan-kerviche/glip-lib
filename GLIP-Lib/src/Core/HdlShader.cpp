@@ -286,6 +286,10 @@ using namespace Glip::CoreGL;
 		{	
 			use();
 		
+			// Clean : 
+			activeUniforms.clear();
+			activeTypes.clear();
+
 			// Update available uniforms of the following types : 
 			const GLenum interestTypes[] = {GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4, GL_DOUBLE, GL_DOUBLE_VEC2, GL_DOUBLE_VEC3, GL_DOUBLE_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4, GL_UNSIGNED_INT_VEC2, GL_UNSIGNED_INT_VEC3, GL_UNSIGNED_INT_VEC4, GL_BOOL, GL_BOOL_VEC2, GL_BOOL_VEC3, GL_BOOL_VEC4, GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, GL_DOUBLE_MAT2, GL_DOUBLE_MAT3, GL_DOUBLE_MAT4, GL_UNSIGNED_INT};
 			const int numAllowedTypes = sizeof(interestTypes) / sizeof(GLenum);
