@@ -167,25 +167,63 @@
 			return std::string(res);
 	}
 
-	bool ShaderSource::removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd)
+	bool ShaderSource::removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested)
 	{
-		size_t pStart = line.find(bStart);
-
-		if(pStart!=std::string::npos)
+		if(!nested)
 		{
-			size_t pEnd = line.find( bEnd, pStart+bStart.size()-1);
+			size_t pStart = line.find(bStart);
 
-			line.erase(pStart, pEnd-pStart+1);
+			if(pStart!=std::string::npos)
+			{
+				size_t pEnd = line.find( bEnd, pStart+bStart.size()-1);
 
-			return true;
+				line.erase(pStart, pEnd-pStart+1);
+
+				return true;
+			}
+			else
+				return false;
 		}
 		else
-			return false;
+		{
+			size_t 	s = std::string::npos, 
+				e = std::string::npos;
+			int 	level = 0;
+			bool 	madeIt = false;
+			for(size_t k=0; k<line.size()-std::max(bStart.size(),bEnd.size()); k++)
+			{
+				if( line.substr(k,bStart.size())==bStart )
+				{
+					if(!madeIt)
+						s = k;
+
+					level++;
+					madeIt = true;
+				}
+				else if( line.substr(k,bEnd.size())==bEnd )
+					level--;
+
+				if(level==0 && madeIt)
+				{
+					e = k;
+					break;
+				}
+			}
+
+			if(s!=std::string::npos)
+			{
+				line.erase(s,e-s+1);
+				return true;
+			}
+			else
+				return false;		
+		}
 	}
 
 	void ShaderSource::wordSplit(const std::string& line, std::vector<std::string>& split)
 	{
-		const std::string delimiters = " \n\r\t.,;/\\";
+		const std::string 	delimiters = " \n\r\t.,;/\\?*+-:#'\"",
+					wordsDelim = ".,;/\\?*+-:#'\"";
 
 		std::string current;
 		bool recording=false;
@@ -198,6 +236,12 @@
 				split.push_back(current);
 				recording = false;
 				current.clear();
+
+				if(wordsDelim.find(line[i])!=std::string::npos)
+				{
+					split.push_back( "" );
+					split.back() += line[i];
+				}
 			}
 			else if(!isDelimiter)
 			{
@@ -210,101 +254,79 @@
 			split.push_back(current);
 	}
 
-	void ShaderSource::parseUniformLine(const std::vector<std::string>& split)
+	GLenum ShaderSource::parseUniformTypeCode(const std::string& str, const std::string& cpl)
 	{
 		// Compare typename to known types : 
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
-		if(	split[0]	== "float")				typeCode = GL_FLOAT;
-		else if(split[0]	== "vec2")				typeCode = GL_FLOAT_VEC2;
-		else if(split[0]	== "vec3")				typeCode = GL_FLOAT_VEC3;
-		else if(split[0]	== "vec4")				typeCode = GL_FLOAT_VEC4;
-		else if(split[0]	== "double")				typeCode = GL_DOUBLE;
-		else if(split[0]	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
-		else if(split[0]	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
-		else if(split[0]	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
-		else if(split[0]	== "int")				typeCode = GL_INT;
-		else if(split[0]	== "ivec2")				typeCode = GL_INT_VEC2;
-		else if(split[0]	== "ivec3")				typeCode = GL_INT_VEC3;
-		else if(split[0]	== "ivec4")				typeCode = GL_INT_VEC4;
-		else if(split[0]	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
-		else if(split[0]	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
-		else if(split[0]	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
-		else if(split[0]	== "bool")				typeCode = GL_BOOL;
-		else if(split[0]	== "bvec2")				typeCode = GL_BOOL_VEC2;
-		else if(split[0]	== "bvec3")				typeCode = GL_BOOL_VEC3;
-		else if(split[0]	== "bvec4")				typeCode = GL_BOOL_VEC4;
-		else if(split[0]	== "mat2")				typeCode = GL_FLOAT_MAT2;
-		else if(split[0]	== "mat3")				typeCode = GL_FLOAT_MAT3;
-		else if(split[0]	== "mat4")				typeCode = GL_FLOAT_MAT4;
-		else if(split[0]	== "mat2")				typeCode = GL_DOUBLE_MAT2;
-		else if(split[0]	== "mat3")				typeCode = GL_DOUBLE_MAT3;
-		else if(split[0]	== "mat4")				typeCode = GL_DOUBLE_MAT4;
-		else if(split[0]	== "sampler2D")				typeCode = GL_SAMPLER_2D;
-		else if(split[0]	== "unsigned" && split[1]=="int")	typeCode = GL_UNSIGNED_INT;
+		if(	str	== "float")				typeCode = GL_FLOAT;
+		else if(str	== "vec2")				typeCode = GL_FLOAT_VEC2;
+		else if(str	== "vec3")				typeCode = GL_FLOAT_VEC3;
+		else if(str	== "vec4")				typeCode = GL_FLOAT_VEC4;
+		else if(str	== "double")				typeCode = GL_DOUBLE;
+		else if(str	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
+		else if(str	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
+		else if(str	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
+		else if(str	== "int")				typeCode = GL_INT;
+		else if(str	== "ivec2")				typeCode = GL_INT_VEC2;
+		else if(str	== "ivec3")				typeCode = GL_INT_VEC3;
+		else if(str	== "ivec4")				typeCode = GL_INT_VEC4;
+		else if(str	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(str	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(str	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(str	== "bool")				typeCode = GL_BOOL;
+		else if(str	== "bvec2")				typeCode = GL_BOOL_VEC2;
+		else if(str	== "bvec3")				typeCode = GL_BOOL_VEC3;
+		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
+		else if(str	== "mat2")				typeCode = GL_FLOAT_MAT2;
+		else if(str	== "mat3")				typeCode = GL_FLOAT_MAT3;
+		else if(str	== "mat4")				typeCode = GL_FLOAT_MAT4;
+		else if(str	== "mat2")				typeCode = GL_DOUBLE_MAT2;
+		else if(str	== "mat3")				typeCode = GL_DOUBLE_MAT3;
+		else if(str	== "mat4")				typeCode = GL_DOUBLE_MAT4;
+		else if(str	== "sampler2D")				typeCode = GL_SAMPLER_2D;
+		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
  		else
-			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + split[0] + "\".", __FILE__, __LINE__); 
+			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__); 
 
-		int k = 1;
-
-		if(typeCode==GL_UNSIGNED_INT) k++;
-
-		// Parse the variables : 
-		for( ; k<split.size(); k++)
-		{
-			// Register variable : 
-			if(typeCode != GL_SAMPLER_2D)
-			{
-				uniformVars.push_back(split[k]);
-				uniformVarsType.push_back(typeCode);
-			}
-			else
-				inSamplers2D.push_back(split[k]);
-		}
+		return typeCode;
 	}
 
-	void ShaderSource::parseOutLine(const std::vector<std::string>& split)
+	GLenum ShaderSource::parseOutTypeCode(const std::string& str, const std::string& cpl)
 	{
 		// Compare typename to known types : 
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
-		if(	split[0]	== "float")				typeCode = GL_FLOAT;
-		else if(split[0]	== "vec2")				typeCode = GL_FLOAT_VEC2;
-		else if(split[0]	== "vec3")				typeCode = GL_FLOAT_VEC3;
-		else if(split[0]	== "vec4")				typeCode = GL_FLOAT_VEC4;
-		else if(split[0]	== "double")				typeCode = GL_DOUBLE;
-		else if(split[0]	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
-		else if(split[0]	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
-		else if(split[0]	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
-		else if(split[0]	== "int")				typeCode = GL_INT;
-		else if(split[0]	== "ivec2")				typeCode = GL_INT_VEC2;
-		else if(split[0]	== "ivec3")				typeCode = GL_INT_VEC3;
-		else if(split[0]	== "ivec4")				typeCode = GL_INT_VEC4;
-		else if(split[0]	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
-		else if(split[0]	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
-		else if(split[0]	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
-		else if(split[0]	== "bool")				typeCode = GL_BOOL;
-		else if(split[0]	== "bvec2")				typeCode = GL_BOOL_VEC2;
-		else if(split[0]	== "bvec3")				typeCode = GL_BOOL_VEC3;
-		else if(split[0]	== "bvec4")				typeCode = GL_BOOL_VEC4;
-		else if(split[0]	== "unsigned" && split[1]=="int")	typeCode = GL_UNSIGNED_INT;
+		if(	str	== "float")				typeCode = GL_FLOAT;
+		else if(str	== "vec2")				typeCode = GL_FLOAT_VEC2;
+		else if(str	== "vec3")				typeCode = GL_FLOAT_VEC3;
+		else if(str	== "vec4")				typeCode = GL_FLOAT_VEC4;
+		else if(str	== "double")				typeCode = GL_DOUBLE;
+		else if(str	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
+		else if(str	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
+		else if(str	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
+		else if(str	== "int")				typeCode = GL_INT;
+		else if(str	== "ivec2")				typeCode = GL_INT_VEC2;
+		else if(str	== "ivec3")				typeCode = GL_INT_VEC3;
+		else if(str	== "ivec4")				typeCode = GL_INT_VEC4;
+		else if(str	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(str	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(str	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(str	== "bool")				typeCode = GL_BOOL;
+		else if(str	== "bvec2")				typeCode = GL_BOOL_VEC2;
+		else if(str	== "bvec3")				typeCode = GL_BOOL_VEC3;
+		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
+		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
 		else
-			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + split[0] + "\".", __FILE__, __LINE__); 
+			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + str + "\".", __FILE__, __LINE__); 
 
-		int k = 1;
-
-		if(typeCode==GL_UNSIGNED_INT) k++;
-
-		// Parse the variables : 
-		for( ; k<split.size(); k++)
-		{
-			// Register variable : 
-			outFragments.push_back(split[k]);
-		}
+		return typeCode;
 	}
 
 	void ShaderSource::parseCode(void)
 	{
+		const std::string wordsDelim = ".,;/\\?*+-:#'\"";
+
 		std::string line = source;
 
 		inSamplers2D.clear();
@@ -316,50 +338,70 @@
 		bool hasGl_FragColor = line.find("gl_FragColor");
 
 		// Clean the code :  
-		while( removeBloc(line, "//", "\n") ) ;
-		while( removeBloc(line, "/*", "*/") ) ;
-		while( removeBloc(line, "{", "}") ) ;
+		while( removeBloc(line, "//", "\n", false) ) ;
+		while( removeBloc(line, "/*", "*/", false) ) ;
+		while( removeBloc(line, "{", "}", true) ) ;
+		while( removeBloc(line, "(", ")", true) ) ;
 
-		// Test version : 
-		const std::string versionKeyword = "#version";
-		size_t pVersion = line.find(versionKeyword);
-
-		if(pVersion!=std::string::npos)
-		{
-			size_t pVersionLine = line.find(';',pVersion+versionKeyword.size()-1);
-			from_string(line.substr(pVersion+versionKeyword.size(),pVersionLine-pVersion-versionKeyword.size()), versionNumber);
-		}
-
+		// Clean what remains of the code : 
 		std::vector<std::string> split;
+		wordSplit(line, split);
 
-		// Get all the uniforms : 
-		const std::string uniformKeyword = "uniform";
-		size_t pUniform = line.find(uniformKeyword);
-
-		while(pUniform!=std::string::npos)
+		// Read it :
+		const std::string 	versionKeyword 	= "#version",
+					uniformKeyword 	= "uniform",
+					outKeyword 	= "out";
+		
+		bool 	previousWasVersion 	= false,
+			previousWasUniform 	= false,
+			previousWasOut		= false,
+			readingVarNames		= false;
+		GLenum typeCode;
+		for(int k=0; k<split.size(); k++)
 		{
-			size_t pUniformLine = line.find(';',pUniform + uniformKeyword.size()-1);
 
-			split.clear();
-			wordSplit(line.substr(pUniform + uniformKeyword.size(),pUniformLine-pUniform-uniformKeyword.size()), split);
-			parseUniformLine( split );
-
-			pUniform = line.find(uniformKeyword, pUniformLine + 1);
-		}
-
-		// Get all the out variables : 
-		const std::string outKeyword = "out";
-		size_t pOut = line.find(outKeyword);
-
-		while(pOut!=std::string::npos)
-		{
-			size_t pOutLine = line.find(';',pOut + outKeyword.size()-1);
-
-			split.clear();
-			wordSplit(line.substr(pOut + outKeyword.size(),pOutLine-pOut-outKeyword.size()), split);
-			parseOutLine( split );
-
-			pOut = line.find(outKeyword, pOutLine + 1);
+			if(wordsDelim.find(split[k])!=std::string::npos)
+			{
+				previousWasVersion 	= false,
+				previousWasUniform 	= false,
+				previousWasOut		= false,
+				readingVarNames		= false;
+			}
+			else if(split[k]==versionKeyword)
+				previousWasVersion = true;
+			else if(split[k]==uniformKeyword)
+				previousWasUniform = true;
+			else if(split[k]==outKeyword)
+				previousWasOut = true;
+			else if(previousWasVersion)
+			{
+				if(!from_string(split[k], versionNumber))
+					throw Exception("ShaderSource::parseCode - GLSL version number cannot be read from string \"" + split[k] + "\".", __FILE__, __LINE__);
+			}
+			else if(previousWasUniform && !readingVarNames && k<split.size()-1)
+			{
+				typeCode = parseUniformTypeCode(split[k], split[k+1]);
+				readingVarNames = true;
+			}
+			else if(previousWasUniform && readingVarNames)
+			{
+				if(typeCode != GL_SAMPLER_2D)
+				{
+					uniformVars.push_back(split[k]);
+					uniformVarsType.push_back(typeCode);
+				}
+				else
+					inSamplers2D.push_back(split[k]);
+			}
+			else if(previousWasOut && !readingVarNames && k<split.size()-1)
+			{
+				typeCode = parseOutTypeCode(split[k], split[k+1]);
+				readingVarNames = true;
+			}
+			else if(previousWasOut && readingVarNames)
+			{
+				outFragments.push_back(split[k]);
+			}
 		}
 
 		if(outFragments.empty() && hasGl_FragColor)

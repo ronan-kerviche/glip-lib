@@ -13,8 +13,10 @@ SHADER_SOURCE:sh_Derivatives()
 {
 	#version 130
 
-	uniform sampler2D 	latest, oldest;
-	out     vec4 		derivatives, grayScale;
+	uniform sampler2D 	latest;
+	uniform sampler2D 	oldest;
+	out     vec4 		derivatives;
+	out     vec4 		grayScale;
 
 	void main()
 	{
@@ -154,7 +156,8 @@ SHADER_SOURCE:sh_sideBySide()
 {
 	#version 130
 
-	uniform sampler2D latest, outVisu;
+	uniform sampler2D latest;
+	uniform sampler2D outVisu;
 	out vec4 outSideBySide;
 
 	void main()

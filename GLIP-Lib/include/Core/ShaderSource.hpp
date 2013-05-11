@@ -64,10 +64,10 @@ The shader source will be parsed to find input and output ports name. In the cas
 
 					// Tools
 					std::string getLine(int l);
-					bool removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd);
+					bool removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested);
 					void wordSplit(const std::string& line, std::vector<std::string>& split);
-					void parseUniformLine(const std::vector<std::string>& line);
-					void parseOutLine(const std::vector<std::string>& line);
+					GLenum parseUniformTypeCode(const std::string& str, const std::string& cpl);
+					GLenum parseOutTypeCode(const std::string& str, const std::string& cpl);
 					void parseCode(void);
 
 				public :
