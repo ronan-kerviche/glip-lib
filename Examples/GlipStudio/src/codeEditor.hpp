@@ -2,7 +2,6 @@
 #define __GLIPSTUDIO_CODE_EDITOR__
 
 	#include "GLIPLib.hpp"
-	#include <QWidget>
 	#include <QtGui>
 
 	using namespace Glip::CoreGL;

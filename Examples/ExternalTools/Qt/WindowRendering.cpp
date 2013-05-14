@@ -18,7 +18,7 @@
 // Includes
 	#include "WindowRendering.hpp"
 
-// Class
+// WindowRenderer
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
 	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
@@ -58,6 +58,9 @@
 			keyJustPressed[i]	= false;
 			keyJustReleased[i]	= false;
 		}
+
+		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		setMinimumSize(QSize(256,256));
 	}
 
 	WindowRenderer::~WindowRenderer(void)
@@ -578,9 +581,13 @@
 		currentRotationSin                      = 0.0f;
 	}
 
+//WindowRendererContainer
 	WindowRendererContainer::WindowRendererContainer(QWidget* _parent, int w, int h)
 	 : QWidget(_parent), childRenderer(this, w, h)
 	{
+		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		setMinimumSize(QSize(256,256));
+
 		QObject::connect(&childRenderer, SIGNAL(requireResize(void)), 	this, SLOT(handleResizeRequirement(void)));
 	}
 

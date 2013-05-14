@@ -5,19 +5,35 @@
 	#include "WindowRendering.hpp"
 	#include "codeEditor.hpp"
 	#include "libraryInterface.hpp"
-	#include <QApplication>
-	#include <QWidget>
+	#include <QtGui>
+
+	using namespace Glip;
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
+	using namespace Glip::Modules;
 
 	class MainWindow : public QWidget	
 	{
 		Q_OBJECT
 
 		private : 
-			QVBoxLayout		layout;
+			QVBoxLayout		mainLayout;
+			QSplitter		mainSplitter;
+			QWidget			container;
+			QVBoxLayout		containerLayout;
+			QSplitter		secondarySplitter;
+			WindowRendererContainer display;
+			LibraryInterface	libraryInterface;
 			CodeEditorsPannel 	codeEditors;
 
-		public slots :
+			LayoutLoader		pipelineLoader;
+			Pipeline*		mainPipeline;
+
+			void closeEvent(QCloseEvent *event);
+
+		private slots :
 			void refreshPipeline(void);
+			void updateOutput(void);
 
 		public : 
 			MainWindow(void);
