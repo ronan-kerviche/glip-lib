@@ -46,6 +46,7 @@
 	#include <cmath>
 	#include <QGLWidget>
 	#include <QKeyEvent>
+	#include <QVBoxLayout>
 
 	// Namespaces
 	using namespace Glip;
@@ -154,6 +155,7 @@
 			void resizeGL(int width, int height); 	// inherited from QGLWidget
 			void setPixelAspectRatio(float ratio);	// Fix the pixel aspect ratio (W/H)
 			void setImageAspectRatio(float ratio);	// Fix the image aspect ratio (W/H)
+			void setImageAspectRatio(const __ReadOnly_HdlTextureFormat& fmt);
 			void setClearColor(float red, float green, float blue);
 			void clearWindow(bool swapNow = true);
 			void process(void); 		// inherited from OutputDevice

@@ -34,6 +34,26 @@
 			const QString& getName(void) const;
 	};
 
+	class ConnectToInputHub : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			QList<QAction *>	currentActions;
+			QSignalMapper		mapper;
+
+		public : 
+			ConnectToInputHub(QWidget* parent=NULL);
+			~ConnectToInputHub(void);
+
+			void clearHub(void);
+			void activate(bool a);
+			void update(const __ReadOnly_PipelineLayout& layout);
+		
+		signals :
+			void connectToInput(int i);			
+	};
+
 	class LibraryInterface : public QWidget
 	{
 		Q_OBJECT
@@ -41,37 +61,55 @@
 		private : 
 			enum
 			{
-				RessourceImages 	= QTreeWidgetItem::UserType + 1,
-				RessourceImages_Max 	= QTreeWidgetItem::UserType + 1025,
-				RessourceFormats	= QTreeWidgetItem::UserType + 1026,
-				RessourceFormats_Max	= QTreeWidgetItem::UserType + 2030,
-				RessourceOutputs	= QTreeWidgetItem::UserType + 2031,
-				RessourceOutputs_Max	= QTreeWidgetItem::UserType + 3055
+				RessourceImages,
+				RessourceFormats,
+				RessourceInputs,
+				RessourceOutputs,
+				RessourceNumber
 			};
 
 			QVBoxLayout			layout;
 			QMenuBar 			menuBar;
 			QAction 			openAct,
+							freeImageAct,
 							saveAct,
 							saveAsAct;
+			ConnectToInputHub		connectionMenu;
 			QTabWidget			tabs;
 			QTreeWidget			ressourceTab,
 							uniformsTab;
-			QListView			compilationTab;
+			QListWidget			compilationTab;
 
-			QList<QTreeWidgetItem*> 	ressourcesHeaders;
-			QList<QTreeWidgetItem*> 	imagesList;
+			QTreeWidgetItem* 		ressourcesHeaders[RessourceNumber];
 
 			std::vector<TextureObject*>	textures;
 			std::vector<FormatObject>	formats;
-			HdlTexture*			currentOutTexture;
+			std::vector<TextureObject*>	preferredConnections;
+			
+			LayoutLoader			pipelineLoader;
+			Pipeline*			mainPipeline;
+			HdlTexture*			currentOutputLnk;
+			int 				lastUsedPipelineOutput;
+			bool 				lastComputeSucceeded;
+
+			void removeAllChildren(QTreeWidgetItem* root);
+			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
+			void updateRessourceAlternateColors(QTreeWidgetItem* root);
+			void updateFormatList(void);
+			void cleanCompilationTab(bool writeNoPipeline);
+			void compilationSucceeded(void);
+			void compilationFailed(Exception& e);
+			void updateInputConnectionDisplay(void);
+			bool disconnectLinkFromPipelineOutput(void);
+			void removeImage(int id);
 
 		private slots :
 			void imageSelected(QTreeWidgetItem* item, int column);
 			void loadImage(void);
-			void updateFormatList(void);
-			void updateRessourceAlternateColors(void);			
-
+			void updateConnection(int idInput);
+			void compute(bool forcePipelineOutput=false);
+			void freeImage(void);
+					
 		public : 
 			LibraryInterface(QWidget *parent=NULL);
 			~LibraryInterface(void);
@@ -79,8 +117,7 @@
 			int getNumImages(void) const;
 			bool hasOutput(void) const;
 			HdlTexture& currentOutput(void);
-			HdlTexture& texture(const std::string& name);			
-			HdlTextureFormat& format(const std::string& name);
+			void compile(const std::string& code); 
 			
 		signals : 
 			void requireRedraw(void);

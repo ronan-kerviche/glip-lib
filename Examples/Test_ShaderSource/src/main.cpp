@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 
 	QApplication app(argc, argv);
 
-	//#define __BASIC_TEST__
+	/*//#define __BASIC_TEST__
 	//#define __LOG_NVIDIA__
 	//#define __LOG_AMDATI__
 	#define __LOG_INTEL__
@@ -70,8 +70,22 @@ int main(int argc, char** argv)
 		std::cout << src.errorLog(log) << std::endl;
 	#endif
 
-	std::cout << "End Test ShaderSource" << std::endl;
+	std::cout << "End Test ShaderSource" << std::endl;*/
 
+	ShaderSource src("uniform sampler2D a, b=1, c; \n uniform sampler2D d2, e4=1, f25e; \n out vec2 o1, o2=2, o3; \n out vec4 o4, o5=1; \n uniform float alpha = 6.0f, beta, gamma=1.0f;\n uniform mat4 m1=16.0; uniform mat2 m2 =mat2(0,0,0,0), m3=0;");
+
+	std::cout << "Inputs : " << std::endl;
+	for(int k=0; k< src.getInputVars().size(); k++)
+		std::cout << k << " > " <<  src.getInputVars()[k] << std::endl;
+
+	std::cout << "Outputs : " << std::endl;
+	for(int k=0; k< src.getOutputVars().size(); k++)
+		std::cout << k << " > " <<  src.getOutputVars()[k] << std::endl;
+
+	std::cout << "Variables : " << std::endl;
+	for(int k=0; k< src.getUniformVars().size(); k++)
+		std::cout << k << " > " <<  src.getUniformVars()[k] << " [" << glParamName(src.getUniformTypes()[k]) << "]" << std::endl;
+	
 	return 0;
 }
 

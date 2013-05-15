@@ -50,6 +50,8 @@
 		public : 
 			GlipStudio(int& argc, char** argv);
 			~GlipStudio(void); 
+
+			virtual bool notify(QObject* receiver, QEvent* event);
 	};
 
 #endif

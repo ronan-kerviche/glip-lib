@@ -291,7 +291,7 @@
 
 	bool CodeEditor::maybeSave(void)
 	{
-		if(document()->isModified())
+		if(modified)
 		{
 			QMessageBox::StandardButton ret;
 			ret = QMessageBox::warning(this, tr("Warning!"), tr("The document has been modified.\n Do you want to save your changes?"), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
@@ -369,6 +369,8 @@
 		setCurrentFile(fileName);
 		modified = false;
 
+		emit titleChanged();
+
 		return true;
 	}
 
@@ -402,6 +404,17 @@
 	std::string CodeEditor::getCode(void) const
 	{
 		return toPlainText().toStdString();
+	}
+
+	bool CodeEditor::openFile(const QString& filename)
+	{
+		if(!filename.isEmpty())
+		{
+			maybeSave();
+			return loadFile(filename);
+		}
+		else
+			return false;
 	}
 
 // LineNumberArea 
@@ -451,6 +464,9 @@
 		closeTabAct.setStatusTip(tr("Close tab"));
 		connect(&closeTabAct, SIGNAL(triggered()), this, SLOT(closeTab()));
 
+		// Movable : 	
+		widgets.setMovable(true);
+
 		// Menus :
 		menuBar.addAction(&newTabAct);
 		menuBar.addAction(&openAct);
@@ -488,11 +504,19 @@
 
 	void CodeEditorsPannel::open(void)
 	{
-		newTab();
-		int c = widgets.currentIndex();
+		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Pipeline Script Files"), "./Filters/", tr("Pipeline Script Files (*.ppl *.glsl *.ext)"));
+
+		for(int k=0; k<filenames.count(); k++)
+		{
+			if(!filenames[k].isEmpty())
+			{
+				newTab();
+				int c = widgets.currentIndex();
 		
-		if(!tabs[c]->open())
-			closeTab();
+				if(!tabs[c]->openFile(filenames[k]))
+					closeTab();
+			}
+		}
 	}
 
 	void CodeEditorsPannel::save(void)

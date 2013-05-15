@@ -49,53 +49,16 @@
 
 	void MainWindow::refreshPipeline(void)
 	{
-		bool success = true;
-
-		try
-		{
-			delete mainPipeline;
-			mainPipeline = NULL;
-			mainPipeline = pipelineLoader(codeEditors.getCurrentCode(), "MainPipeline");
-		}
-		catch(Exception& e)
-		{
-			success = false;
-
-			std::cerr << e.what() << std::endl;
-			delete mainPipeline;
-			mainPipeline = NULL;
-		}
-
-		if(success)
-			updateOutput();
+		libraryInterface.compile( codeEditors.getCurrentCode() );
 	}
 
 	void MainWindow::updateOutput(void)
 	{
 		static bool initBackground = true;
 
-		if(initBackground)
+		if(libraryInterface.hasOutput())
 		{
-			QColor darkbg = palette().background().color().lighter(70);
-
-			float 	r = static_cast<float>(darkbg.red()) / 255.0f,
-				g = static_cast<float>(darkbg.green()) / 255.0f,
-				b = static_cast<float>(darkbg.blue()) / 255.0f;
-		
-			display.renderer().setClearColor(r, g, b);
-
-			initBackground = false;
-		}
-		
-		if(mainPipeline!=NULL && libraryInterface.hasOutput())
-		{
-			(*mainPipeline)	<<  libraryInterface.currentOutput() << Pipeline::Process;
-			display.renderer() << mainPipeline->out(0) << OutputDevice::Process;
-		}
-		else if(libraryInterface.hasOutput())
-		{
-			float 	imageAspectRatio = static_cast<float>(libraryInterface.currentOutput().getWidth())/static_cast<float>(libraryInterface.currentOutput().getHeight());
-			display.renderer().setImageAspectRatio(imageAspectRatio);
+			display.renderer().setImageAspectRatio(libraryInterface.currentOutput());
 
 			display.renderer() << libraryInterface.currentOutput() << OutputDevice::Process;
 		}
@@ -128,5 +91,17 @@
 	GlipStudio::~GlipStudio(void)
 	{
 		delete mainWindow;
+	}
+
+	bool GlipStudio::notify(QObject * receiver, QEvent * event) 
+	{
+		try 
+		{
+			return QApplication::notify(receiver, event);
+		} 
+		catch(std::exception& e) 
+		{
+			qDebug() << "Exception caught :" << e.what();
+		}
 	}
  

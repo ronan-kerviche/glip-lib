@@ -222,14 +222,15 @@
 
 	void ShaderSource::wordSplit(const std::string& line, std::vector<std::string>& split)
 	{
-		const std::string 	delimiters = " \n\r\t.,;/\\?*+-:#'\"",
-					wordsDelim = ";";
+		const std::string 	delimiters = " \n\r\t.,;/\\?*+-:#'\"=",	// Will be used to split words
+					wordsDelim = "=,;";			// Will also be appended to the list
 
 		std::string current;
 		bool recording=false;
 		for(int i=0; i<line.size(); i++)
 		{
-			bool isDelimiter = (delimiters.find(line[i])!=std::string::npos);
+			bool 	isDelimiter = (delimiters.find(line[i])!=std::string::npos),
+				isWordDelim = (wordsDelim.find(line[i])!=std::string::npos);
 
 			if(recording && isDelimiter)
 			{
@@ -237,11 +238,16 @@
 				recording = false;
 				current.clear();
 
-				if(wordsDelim.find(line[i])!=std::string::npos) // some Delimiter are worth putting in the stream
+				if(isWordDelim) // some Delimiter are worth putting in the stream
 				{
 					split.push_back( "" );
 					split.back() += line[i];
 				}
+			}
+			else if(isWordDelim)
+			{
+				split.push_back( "" );
+				split.back() += line[i];
 			}
 			else if(!isDelimiter)
 			{
@@ -356,18 +362,23 @@
 		bool 	previousWasVersion 	= false,
 			previousWasUniform 	= false,
 			previousWasOut		= false,
-			readingVarNames		= false;
+			readingVarNames		= false,
+			waitComa		= false;
 		GLenum typeCode;
 		for(int k=0; k<split.size(); k++)
 		{
-
 			if(endOfCodeLine.find(split[k])!=std::string::npos)
 			{
-				previousWasVersion 	= false,
-				previousWasUniform 	= false,
-				previousWasOut		= false,
+				previousWasVersion 	= false;
+				previousWasUniform 	= false;
+				previousWasOut		= false;
 				readingVarNames		= false;
+				waitComa		= false;
 			}
+			else if(split[k]=="=")
+				waitComa=true;
+			else if(split[k]==",")
+				waitComa=false;
 			else if(split[k]==versionKeyword)
 				previousWasVersion = true;
 			else if(split[k]==uniformKeyword)
@@ -384,7 +395,7 @@
 				typeCode = parseUniformTypeCode(split[k], split[k+1]);
 				readingVarNames = true;
 			}
-			else if(previousWasUniform && readingVarNames)
+			else if(!waitComa && previousWasUniform && readingVarNames)
 			{
 				if(typeCode != GL_SAMPLER_2D)
 				{
@@ -399,10 +410,12 @@
 				typeCode = parseOutTypeCode(split[k], split[k+1]);
 				readingVarNames = true;
 			}
-			else if(previousWasOut && readingVarNames)
+			else if(!waitComa && previousWasOut && readingVarNames && split[k]!="," && split[k]!="=")
 			{
 				outFragments.push_back(split[k]);
 			}
+			// else
+				// discard
 		}
 
 		if(outFragments.empty() && hasGl_FragColor)

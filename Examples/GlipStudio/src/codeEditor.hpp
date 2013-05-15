@@ -85,6 +85,7 @@
 			bool canBeClosed(void);
 			QString getTitle(void) const;
 			std::string getCode(void) const;
+			bool openFile(const QString& filename);
 
 		signals : 
 			void titleChanged(void);

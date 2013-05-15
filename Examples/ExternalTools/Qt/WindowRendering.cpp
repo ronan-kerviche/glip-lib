@@ -379,6 +379,12 @@
 		currentImageAspectRatio = ratio;
 	}
 
+	void WindowRenderer::setImageAspectRatio(const __ReadOnly_HdlTextureFormat& fmt)
+	{
+		float ratio = static_cast<float>(fmt.getWidth())/static_cast<float>(fmt.getHeight());
+		setImageAspectRatio(ratio);
+	}
+
 	void WindowRenderer::setClearColor(float red, float green, float blue)
 	{
 		clearColorRed	= red;
