@@ -1,4 +1,4 @@
-CONFIG 		+= 	qt release
+CONFIG 		+= 	qt
 QT           	+= 	opengl
 INCLUDEPATH  	+= 	/usr/local/lib \
 			../ExternalTools/Qt \

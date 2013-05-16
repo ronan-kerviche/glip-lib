@@ -188,11 +188,19 @@
 
 	HdlTexture* ImageLoader::createTexture(const QImage& image, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
 	{
-		HdlTextureFormat fmt(image.width(),image.height(),GL_RGB,GL_UNSIGNED_BYTE,minFilter,magFilter,sWrapping,tWrapping,0,maxLevel);
+		GLenum mode = GL_RGB;
+
+		if(image.hasAlphaChannel())
+			mode = GL_RGBA;
+
+		const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
+		
+		HdlTextureFormat fmt(image.width(),image.height(),mode,GL_UNSIGNED_BYTE,minFilter,magFilter,sWrapping,tWrapping,0,maxLevel);
+		
 		HdlTexture* texture = new HdlTexture(fmt);
 
 		#ifndef __USE_PBO__
-			unsigned char* temp = new unsigned char[image.width()*image.height()*3];
+			unsigned char* temp = new unsigned char[image.width()*image.height()*descriptor.numComponents];
 			int t=0;
 
 			for(int i=0; i<image.height(); i++)
@@ -203,7 +211,11 @@
 					temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
 					temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
 					temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
-					t += 3;
+
+					if(descriptor.hasAlphaLayer)
+						temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
+
+					t += descriptor.numComponents;
 				}
 			}
 
@@ -214,7 +226,8 @@
 			try
 			{
 				//Example for texture streaming to the GPU (live video for example, but in that case, the PBO is only created once)
-				HdlPBO pbo(image.width(),image.height(),3,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
+				//HdlPBO pbo(image.width(),image.height(),descriptor.numComponents,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
+				HdlPBO pbo(fmt, GL_PIXEL_UNPACK_BUFFER_ARB, GL_STREAM_DRAW_ARB);
 
 				// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
 				texture->fill(0);
@@ -230,7 +243,11 @@
 						ptr[t+0] 	= static_cast<unsigned char>( qRed( col ) );
 						ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
 						ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
-						t += 3;
+
+						if(descriptor.hasAlphaLayer)
+							temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
+
+						t += descriptor.numComponents;
 					}
 				}
 

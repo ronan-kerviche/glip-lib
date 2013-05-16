@@ -32,6 +32,7 @@
 			FormatObject(const FormatObject& cpy);
 
 			const QString& getName(void) const;
+			void setFormat(const __ReadOnly_HdlTextureFormat& cpy);
 	};
 
 	class ConnectToInputHub : public QMenu
@@ -59,7 +60,7 @@
 		Q_OBJECT
 
 		private : 
-			enum
+			enum RessourceCategory
 			{
 				RessourceImages,
 				RessourceFormats,
@@ -80,8 +81,6 @@
 							uniformsTab;
 			QListWidget			compilationTab;
 
-			QTreeWidgetItem* 		ressourcesHeaders[RessourceNumber];
-
 			std::vector<TextureObject*>	textures;
 			std::vector<FormatObject>	formats;
 			std::vector<TextureObject*>	preferredConnections;
@@ -92,14 +91,21 @@
 			int 				lastUsedPipelineOutput;
 			bool 				lastComputeSucceeded;
 
+			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
 			void removeAllChildren(QTreeWidgetItem* root);
+			void appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& texture, size_t provideSize=0);
 			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
 			void updateRessourceAlternateColors(QTreeWidgetItem* root);
-			void updateFormatList(void);
+			
+			void updateImageListDisplay(void);
+			void updateFormatListDisplay(void);
+			void updateInputConnectionDisplay(void);
+			void updateOutputConnectionDisplay(void);
+
 			void cleanCompilationTab(bool writeNoPipeline);
 			void compilationSucceeded(void);
 			void compilationFailed(Exception& e);
-			void updateInputConnectionDisplay(void);
+
 			bool disconnectLinkFromPipelineOutput(void);
 			void removeImage(int id);
 

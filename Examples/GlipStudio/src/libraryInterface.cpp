@@ -1,4 +1,5 @@
 #include "libraryInterface.hpp"
+#include <algorithm>
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -77,6 +78,11 @@
 		return name;
 	}
 
+	void FormatObject::setFormat(const __ReadOnly_HdlTextureFormat& cpy)
+	{
+		HdlTextureFormat::operator=(cpy);
+	}
+
 // ConnectToInputHub
 	ConnectToInputHub::ConnectToInputHub(QWidget* parent)
 	 : QMenu("Connect to input", parent)
@@ -118,10 +124,6 @@
 	   openAct(tr("&Load Image"), this), freeImageAct(tr("&Free Image"), this), saveAct(tr("Save Output"), this), saveAsAct(tr("Save Output as"), this),
 	   currentOutputLnk(NULL), mainPipeline(NULL), lastUsedPipelineOutput(-1), lastComputeSucceeded(false)
 	{
-		// Init : 
-		for(int k=0; k<RessourceNumber; k++)
-			ressourcesHeaders[k] = NULL;
-		
 		// Layout : 
 		openAct.setShortcuts(QKeySequence::Open);
 		openAct.setStatusTip(tr("Load image ..."));
@@ -157,34 +159,31 @@
 			QStringList listLabels;
 			listLabels.push_back("Name");
 			listLabels.push_back("Size");
+			listLabels.push_back("Mode/Depth");
 			listLabels.push_back("Min/Mag");
 			listLabels.push_back("SWarp/TWarp");
 			listLabels.push_back("Mipmap");
 			ressourceTab.setHeaderLabels( listLabels );
 
-			ressourcesHeaders[RessourceImages] = new QTreeWidgetItem(RessourceImages);
-			ressourcesHeaders[RessourceImages]->setText(0, "Images (0)");
-			ressourcesHeaders[RessourceImages]->setData(0, Qt::UserRole, QVariant(-1));
-			ressourcesHeaders[RessourceImages]->setFont(0, QFont("", 12));
-			ressourceTab.addTopLevelItem(ressourcesHeaders[RessourceImages]);			
+			ressourceTab.addTopLevelItem(new QTreeWidgetItem(RessourceImages));
+			ressourceTab.topLevelItem(RessourceImages)->setText(0, "Images (0)");
+			ressourceTab.topLevelItem(RessourceImages)->setData(0, Qt::UserRole, QVariant(-1));
+			ressourceTab.topLevelItem(RessourceImages)->setFont(0, QFont("", 12));			
 			
-			ressourcesHeaders[RessourceFormats] = new QTreeWidgetItem(RessourceFormats);
-			ressourcesHeaders[RessourceFormats]->setText(0, "Formats (0)");
-			ressourcesHeaders[RessourceFormats]->setData(0, Qt::UserRole, QVariant(-1));
-			ressourcesHeaders[RessourceFormats]->setFont(0, QFont("", 12));
-			ressourceTab.addTopLevelItem(ressourcesHeaders[RessourceFormats]);
+			ressourceTab.addTopLevelItem(new QTreeWidgetItem(RessourceFormats));
+			ressourceTab.topLevelItem(RessourceFormats)->setText(0, "Formats (0)");
+			ressourceTab.topLevelItem(RessourceFormats)->setData(0, Qt::UserRole, QVariant(-1));
+			ressourceTab.topLevelItem(RessourceFormats)->setFont(0, QFont("", 12));
 
-			ressourcesHeaders[RessourceInputs] = new QTreeWidgetItem(RessourceInputs);
-			ressourcesHeaders[RessourceInputs]->setText(0, "Inputs (0)");
-			ressourcesHeaders[RessourceInputs]->setData(0, Qt::UserRole, QVariant(-1));
-			ressourcesHeaders[RessourceInputs]->setFont(0, QFont("", 12));
-			ressourceTab.addTopLevelItem(ressourcesHeaders[RessourceInputs]);
+			ressourceTab.addTopLevelItem(new QTreeWidgetItem(RessourceInputs));
+			ressourceTab.topLevelItem(RessourceInputs)->setText(0, "Inputs (0)");
+			ressourceTab.topLevelItem(RessourceInputs)->setData(0, Qt::UserRole, QVariant(-1));
+			ressourceTab.topLevelItem(RessourceInputs)->setFont(0, QFont("", 12));
 
-			ressourcesHeaders[RessourceOutputs] = new QTreeWidgetItem(RessourceOutputs);
-			ressourcesHeaders[RessourceOutputs]->setText(0, "Outputs (0)");
-			ressourcesHeaders[RessourceOutputs]->setData(0, Qt::UserRole, QVariant(-1));
-			ressourcesHeaders[RessourceOutputs]->setFont(0, QFont("", 12));
-			ressourceTab.addTopLevelItem(ressourcesHeaders[RessourceOutputs]);
+			ressourceTab.addTopLevelItem(new QTreeWidgetItem(RessourceOutputs));
+			ressourceTab.topLevelItem(RessourceOutputs)->setText(0, "Outputs (0)");
+			ressourceTab.topLevelItem(RessourceOutputs)->setData(0, Qt::UserRole, QVariant(-1));
+			ressourceTab.topLevelItem(RessourceOutputs)->setFont(0, QFont("", 12));
 			
 
 			QObject::connect(&ressourceTab, 	SIGNAL(itemClicked(QTreeWidgetItem*, int)), 	this, SLOT(imageSelected(QTreeWidgetItem*, int)));
@@ -208,6 +207,20 @@
 		textures.clear();
 	}
 
+	QTreeWidgetItem* LibraryInterface::addItem(RessourceCategory category, QString title, int ressourceID)
+	{
+		QTreeWidgetItem* item = new QTreeWidgetItem(category);
+
+		item->setText(0, title);
+
+		// Set the link to the data : 
+		item->setData(0, Qt::UserRole, QVariant(ressourceID));
+
+		ressourceTab.topLevelItem(category)->addChild(item);
+	
+		return item;
+	}
+
 	void LibraryInterface::removeAllChildren(QTreeWidgetItem* root)
 	{
 		if(root==NULL)
@@ -220,9 +233,13 @@
 		}
 	}
 
-	void LibraryInterface::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
+	void LibraryInterface::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
 	{
-		size_t s = texture.getSizeOnGPU();
+		size_t s = fmt.getSize();
+
+		if(provideSize!=0)
+			s = provideSize;		
+		
 		QString sizeStr;
 
 		if(s>1024*1024)
@@ -230,14 +247,176 @@
 		else
 			sizeStr = tr("%1 KB").arg(s/(1024));
 
-		item->setText(1, tr("%1 x %2 (%3)").arg(texture.getWidth()).arg(texture.getHeight()).arg(sizeStr));
-		item->setText(2, tr("%1 / %2").arg(glParamName(texture.getMinFilter()).c_str()).arg(glParamName(texture.getMagFilter()).c_str()));
-		item->setText(3, tr("%1 / %2").arg(glParamName(texture.getSWrapping()).c_str()).arg(glParamName(texture.getTWrapping()).c_str()));
-		item->setText(4, tr("%1").arg(texture.getMaxLevel()));
+		item->setText(1, tr("%1 x %2 (%3)").arg(fmt.getWidth()).arg(fmt.getHeight()).arg(sizeStr));
+		item->setText(2, tr("%1 / %2").arg(glParamName(fmt.getGLMode()).c_str()).arg(glParamName(fmt.getGLDepth()).c_str()));
+		item->setText(3, tr("%1 / %2").arg(glParamName(fmt.getMinFilter()).c_str()).arg(glParamName(fmt.getMagFilter()).c_str()));
+		item->setText(4, tr("%1 / %2").arg(glParamName(fmt.getSWrapping()).c_str()).arg(glParamName(fmt.getTWrapping()).c_str()));
+		item->setText(5, tr("%1").arg(fmt.getMaxLevel()));
 	}
 
-	void LibraryInterface::updateFormatList(void)
+	void LibraryInterface::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
 	{
+		// First on the format : 
+		appendTextureInformation(item, texture.format(), texture.getSizeOnGPU());
+	}
+
+	void LibraryInterface::updateImageListDisplay(void)
+	{
+		int count = 0;
+		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceImages);
+		removeAllChildren(root);
+
+		for(int k=0; k<textures.size(); k++)
+		{
+			if(textures[k]!=NULL)
+			{
+				// Write infos : 
+				QString title = tr("    %1").arg(textures[k]->getName());
+
+				QTreeWidgetItem* item = addItem(RessourceImages, title, k);
+
+				appendTextureInformation(item, textures[k]->texture());
+		
+				count++;
+			}
+		}
+
+		if(count>0)
+		{
+			// Update design : 
+			updateRessourceAlternateColors(ressourceTab.topLevelItem(RessourceImages));
+		}
+		
+		// Update the title : 
+		ressourceTab.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(count));
+	}
+
+	void LibraryInterface::updateFormatListDisplay(void)
+	{
+		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceFormats);
+		removeAllChildren(root);
+
+		// List all current images formats : 
+		for(int k=0; k<textures.size(); k++)
+		{
+			if(textures[k]!=NULL)
+			{
+				// Get format : 
+				FormatObject obj(tr("Format_%1").arg(textures[k]->getName()), textures[k]->texture());				 
+
+				// Write infos : 
+				QString title = tr("    %1").arg(obj.getName());
+
+				QTreeWidgetItem* item = addItem(RessourceFormats, title, formats.size());
+
+				appendTextureInformation(item, obj);
+
+				// Add the format object to the list : 
+				formats.push_back(obj);
+			}
+		}
+
+		if(!formats.empty())
+		{
+			// Find and create the other formats
+			std::vector<FormatObject> specials; 	
+
+			specials.push_back( FormatObject("FormatLargest", formats[0]) );
+			specials.push_back( FormatObject("FormatSmallest", formats[0]) );
+
+			for(int k=1; k<formats.size(); k++)
+			{
+				if(specials[0].getNumPixels() < formats[k].getNumPixels())
+					specials[0].setFormat( formats[k] );
+				if(specials[1].getNumPixels() > formats[k].getNumPixels())
+					specials[1].setFormat( formats[k] );
+			}
+
+			// Add them : 
+			for(int k=0; k<specials.size(); k++)
+			{
+				QString title = tr("    %1").arg(specials[k].getName());
+
+				QTreeWidgetItem* item = addItem(RessourceFormats, title, formats.size() + k);
+
+				appendTextureInformation(item, specials[k]);
+			}
+
+			// Push them :
+			formats.insert(formats.end(), specials.begin(), specials.end() );
+
+			// Update design : 
+			updateRessourceAlternateColors(root);		
+		}
+
+		// Update the title : 
+		root->setText(0, tr("Formats (%1)").arg(formats.size()));
+	}
+
+	void LibraryInterface::updateInputConnectionDisplay(void)
+	{
+		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceInputs);
+		removeAllChildren(root);
+
+		if(mainPipeline!=NULL)
+		{
+			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
+			{
+				QString title;
+
+				if(preferredConnections[k]==NULL)
+					title = tr("    %1 (Not Connected)").arg(mainPipeline->getInputPortName(k).c_str());
+				else
+					title = tr("    %1 <- %2").arg(mainPipeline->getInputPortName(k).c_str()).arg(preferredConnections[k]->getName()); 
+
+				QTreeWidgetItem* item = addItem(RessourceInputs, title, k);
+
+				if(preferredConnections[k]!=NULL)
+					appendTextureInformation(item, preferredConnections[k]->texture());
+			}
+
+			if( mainPipeline->getNumInputPort()>0 )
+			{
+				// Update design : 
+				updateRessourceAlternateColors(root);	
+			}
+		
+			// Update the title : 
+			root->setText(0, tr("Inputs (%1)").arg(mainPipeline->getNumInputPort()));
+		}
+		else
+			// Update the title : 
+			root->setText(0, tr("Inputs (0)"));
+	}
+
+	void LibraryInterface::updateOutputConnectionDisplay(void)
+	{
+		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceOutputs);
+		removeAllChildren(root);
+
+		if(mainPipeline!=NULL)
+		{
+			for(int k=0; k<mainPipeline->getNumOutputPort(); k++)
+			{
+				QString title= tr("    %1").arg(mainPipeline->getOutputPortName(k).c_str()); 
+
+				QTreeWidgetItem* item = addItem(RessourceOutputs, title, k);
+
+				appendTextureInformation(item, mainPipeline->out(k));
+			}
+
+			if( mainPipeline->getNumOutputPort()>0 )
+			{
+				// Update design : 
+				updateRessourceAlternateColors(root);	
+			}
+
+			// Update the title : 
+			root->setText(0, tr("Outputs (%1)").arg(mainPipeline->getNumOutputPort()));
+		}
+		else
+			// Update the title : 
+			root->setText(0, tr("Outputs (0)"));
 		
 	}
 
@@ -279,22 +458,7 @@
 		tabs.setCurrentWidget(&compilationTab);
 	}
 
-	void LibraryInterface::updateInputConnectionDisplay(void)
-	{
-		if(mainPipeline!=NULL)
-		{
-			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
-			{
-				if(preferredConnections[k]==NULL)
-					ressourcesHeaders[RessourceInputs]->child(k)->setText(0, tr("    %1 (Not Connected)").arg(mainPipeline->getInputPortName(k).c_str()));
-				else
-				{
-					ressourcesHeaders[RessourceInputs]->child(k)->setText(0, tr("    %1 <- %2").arg(mainPipeline->getInputPortName(k).c_str()).arg(preferredConnections[k]->getName()));
-					appendTextureInformation(ressourcesHeaders[RessourceInputs]->child(k), preferredConnections[k]->texture());
-				}
-			}
-		}
-	}
+	
 
 	bool LibraryInterface::disconnectLinkFromPipelineOutput(void)
 	{
@@ -315,7 +479,7 @@
 
 	void LibraryInterface::removeImage(int id)
 	{
-		QTreeWidgetItem* 	item = ressourcesHeaders[RessourceImages]->takeChild(id);
+		QTreeWidgetItem* 	item = ressourceTab.topLevelItem(RessourceImages)->takeChild(id);
 		int 			idi = item->data(0, Qt::UserRole).toInt();
 
 		if(idi<0)
@@ -345,7 +509,7 @@
 		// Update display : 
 		if(inputConnectionChanged)
 		{
-			updateRessourceAlternateColors(ressourcesHeaders[RessourceImages]);
+			updateRessourceAlternateColors(ressourceTab.topLevelItem(RessourceImages));
 			updateInputConnectionDisplay();
 			compute();
 		}
@@ -431,7 +595,7 @@
 
 	void LibraryInterface::loadImage(void)
 	{
-		QTreeWidgetItem* lastItem = NULL;
+		bool oneSucceeded = false;
 		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Load an Image"), ".", tr("Image (*.bmp *.png *.jpg"));
 		
 		for(int k=0; k<filenames.count(); k++)
@@ -442,30 +606,10 @@
 
 				if(obj->isValid())
 				{
-					// Write infos : 
-					QTreeWidgetItem* item = new QTreeWidgetItem(RessourceImages);
-
-					item->setText(0, tr("    %1").arg(obj->getName()));
-
-					appendTextureInformation(item, obj->texture());
-
-					// Set the link to the data : 
-					item->setData(0, Qt::UserRole, QVariant(static_cast<int>(textures.size())));
-
-					ressourcesHeaders[RessourceImages]->addChild(item);
-
 					// Add the texture object to the list : 
 					textures.push_back(obj);
 
-					// Update the title : 
-					ressourcesHeaders[RessourceImages]->setText(0, tr("Images (%1)").arg(getNumImages()));
-
-					// Update design : 
-					updateFormatList();
-					updateRessourceAlternateColors(ressourcesHeaders[RessourceImages]);
-
-					// Set as last item : 
-					lastItem = item;
+					oneSucceeded = true;
 				}
 				else
 				{
@@ -476,22 +620,14 @@
 		}
 
 		// If at least one item was loaded, show it : 
-		if(lastItem!=NULL)	
+		if(oneSucceeded)	
 		{
+			// Update designs : 
+			updateImageListDisplay();
+			updateFormatListDisplay();
+	
 			// Expand : 
-			ressourcesHeaders[RessourceImages]->setExpanded(true);
-
-			// Unselect all the previous children : 
-			QList<QTreeWidgetItem*> selectedChildren = ressourceTab.selectedItems();
-
-			for(int k=0; k<selectedChildren.count(); k++)
-				selectedChildren[k]->setSelected(false);
-
-			lastItem->setSelected(true);
-
-			// Show image and require update : 
-			currentOutputLnk = &textures[ lastItem->data(0, Qt::UserRole).toInt() ]->texture();
-			emit requireRedraw();
+			ressourceTab.topLevelItem(RessourceImages)->setExpanded(true);
 		}
 	}
 
@@ -564,7 +700,7 @@
 			int id = item->data(0, Qt::UserRole).toInt();
 
 			if(item->type()==RessourceImages && id>=0)
-				removeImage(id);
+				removeImage(ressourceTab.topLevelItem(RessourceImages)->indexOfChild(item));
 		}
 	}
 
@@ -604,7 +740,16 @@
 		{
 			delete mainPipeline;
 			mainPipeline = NULL;
+
 			disconnectLinkFromPipelineOutput();
+
+			// Put the formats : 
+			pipelineLoader.clearRequiredElements();
+			
+			for(int k=0; k<formats.size(); k++)
+				pipelineLoader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
+
+			// Load : 
 			mainPipeline = pipelineLoader(code, "MainPipeline");
 		}
 		catch(Exception& e)
@@ -614,12 +759,8 @@
 			// Info : 
 			compilationFailed(e);
 
-			//std::cerr << e.what() << std::endl;
 			delete mainPipeline;
 			mainPipeline = NULL;
-
-			ressourcesHeaders[RessourceInputs]->setText(0, tr("Inputs (0)"));
-			ressourcesHeaders[RessourceOutputs]->setText(0, tr("Outputs (0)"));
 		}
 
 		if(success)
@@ -630,64 +771,16 @@
 			
 			compilationSucceeded();
 
-			// clean input list : 
-			QTreeWidgetItem* inputsList = ressourcesHeaders[RessourceInputs];
-			removeAllChildren(inputsList);
-
-			// Update input list :
-			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
-			{
-				// Append new child : 
-				QTreeWidgetItem* item = new QTreeWidgetItem(RessourceInputs);
-
-				// Set the link to the data : 
-				item->setData(0, Qt::UserRole, QVariant(k));
-			
-				// Push : 
-				inputsList->addChild(item);
-			}
-
-			// Update the infos : 
 			updateInputConnectionDisplay();
 
-			// Update the title : 
-			ressourcesHeaders[RessourceInputs]->setText(0, tr("Inputs (%1)").arg(mainPipeline->getNumInputPort()));
-		
-			// Update the colors : 
-			updateRessourceAlternateColors(ressourcesHeaders[RessourceInputs]);
-
 			// Expand : 
-			ressourcesHeaders[RessourceInputs]->setExpanded(true);
+			ressourceTab.topLevelItem(RessourceInputs)->setExpanded(true);
 
 			// Update output list : 
-			QTreeWidgetItem* outputsList = ressourcesHeaders[RessourceOutputs];
-			removeAllChildren(outputsList);
-
-			// Update output list :
-			for(int k=0; k<mainPipeline->getNumOutputPort(); k++)
-			{
-				// Append new child : 
-				QTreeWidgetItem* item = new QTreeWidgetItem(RessourceOutputs);
-
-				// Set the link to the data : 
-				item->setData(0, Qt::UserRole, QVariant(k));
-
-				// Add information : 
-				item->setText(0, tr("    %1").arg(mainPipeline->getOutputPortName(k).c_str()));
-				appendTextureInformation(item, mainPipeline->out(k));
-			
-				// Push : 
-				outputsList->addChild(item);
-			}
-
-			// Update the title : 
-			ressourcesHeaders[RessourceOutputs]->setText(0, tr("Outputs (%1)").arg(mainPipeline->getNumOutputPort()));
-
-			// Update the colors : 
-			updateRessourceAlternateColors(ressourcesHeaders[RessourceOutputs]);
+			updateOutputConnectionDisplay();
 
 			// Expand : 
-			ressourcesHeaders[RessourceOutputs]->setExpanded(true);
+			ressourceTab.topLevelItem(RessourceOutputs)->setExpanded(true);
 
 			// Update the connection menu : 
 			connectionMenu.update(*mainPipeline);
@@ -698,13 +791,8 @@
 		else
 		{
 			// Clean outputs and inputs :
-			QTreeWidgetItem* inputsList = ressourcesHeaders[RessourceInputs];
-			removeAllChildren(inputsList);
-			inputsList->setExpanded(false);
-
-			QTreeWidgetItem* outputsList = ressourcesHeaders[RessourceOutputs];
-			removeAllChildren(outputsList);
-			outputsList->setExpanded(false);
+			updateInputConnectionDisplay();
+			updateOutputConnectionDisplay();
 
 			connectionMenu.clearHub();
 

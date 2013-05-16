@@ -58,8 +58,8 @@
 			int  			getNumTextures(void) const;
 			HdlTexture& 		texture(int id);
 			const std::string&	filename(int id);
-			bool 			saveTexture(HdlTexture& texture, QWidget* parent=NULL);
 
+			static bool 		saveTexture(HdlTexture& texture, QWidget* parent=NULL);
 			static HdlTexture* 	createTexture(const QImage& image, GLenum minFilter=GL_NEAREST, GLenum magFilter=GL_NEAREST, GLenum sWrapping=GL_CLAMP, GLenum tWrapping=GL_CLAMP, int maxLevel=0);
 	};
 
