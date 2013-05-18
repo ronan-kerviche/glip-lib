@@ -2,9 +2,9 @@
 	This filter performs the difference between latest and oldest frame
 */
 
-TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 
-SHADER_SOURCE:shader()
+SHADER_SOURCE:shader
 {
 	#version 130
 
@@ -21,12 +21,12 @@ SHADER_SOURCE:shader()
 	}
 }
 
-FILTER_LAYOUT:filter(format,shader);
+FILTER_LAYOUT:filter(format,shader)
 
 PIPELINE_MAIN:pMain()
 {
-	INPUT_PORTS(latest, oldest);
-	OUTPUT_PORTS(outTexture);
-	FILTER_INSTANCE:inst_filter(filter);
+	INPUT_PORTS(latest, oldest)
+	OUTPUT_PORTS(outTexture)
+	FILTER_INSTANCE:inst_filter(filter)
 }
 

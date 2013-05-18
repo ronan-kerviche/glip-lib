@@ -75,21 +75,42 @@
 		}
 		else
 		{
-			if(h!="")
-				completeMsg += "[ 1 | " + h + " ] " + msg + "\n";
-			else
-				completeMsg += "[ 1 ] " + msg + "\n";
+			// Create all headers : 
+			std::vector<std::string> headers, messages;
+			size_t maxLength = 0;
+
+			if(!h.empty())
+			{
+				headers.push_back( std::string("[ 1 | " + h + " ") );
+				maxLength = headers.back().size();
+				messages.push_back(msg);
+			}
 
 			for(int i=subErrors.size()-1; i>=0; i--)
 			{
-				std::string he = subErrors[i].header();
-				if(he!="")
-					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " | " + he + " ] " + subErrors[i].msg;
-				else
-					completeMsg += "[ " + to_string(subErrors.size()-i+1) + " ] " + subErrors[i].msg;
+				headers.push_back("");
+				std::string header = subErrors[i].header();
 
-				if(i>0)
-					completeMsg += "\n";
+				if(!header.empty())
+					headers.back() = "[ " + to_string(subErrors.size()-i+1) + " | " + header + " ";
+				else
+					headers.back() = "[ " + to_string(subErrors.size()-i+1) + " ";
+
+				messages.push_back(subErrors[i].msg);
+
+				maxLength = std::max(maxLength, headers.back().size());
+			}
+
+			// Finally : padd and create
+			const std::string blank(maxLength, ' ');
+			std::string padded;
+
+			for(int k=0; k<headers.size(); k++)
+			{
+				padded = blank;
+				padded.replace(0, headers[k].size(), headers[k]);
+				padded += "] ";
+				completeMsg += padded + messages[k] + "\n";
 			}
 		}
 	}

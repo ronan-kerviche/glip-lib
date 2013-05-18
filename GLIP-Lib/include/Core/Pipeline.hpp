@@ -183,7 +183,7 @@ How to create a pipeline layout :
 				public :
 					// Tools
 					PipelineLayout(const std::string& type);
-					PipelineLayout(__ReadOnly_PipelineLayout& c);
+					PipelineLayout(const __ReadOnly_PipelineLayout& c);
 					int	add(const __ReadOnly_FilterLayout& filterLayout,     const std::string& name);
 					int  	add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name);
 					int  	addInput(const std::string& name);
@@ -255,7 +255,7 @@ How to process the inputs :
 
 				public :
 					// Tools
-					Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name);
+					Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
 					int 		getNumActions(void);

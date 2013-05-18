@@ -1,10 +1,10 @@
 // Include :
-INCLUDE_FILE(convolutionTools.ppl);
+INCLUDE_FILE(convolutionTools.ppl)
 
 // Format :
-TEXTURE_FORMAT:sobelOutputFormat(1920,1200,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:sobelOutputFormat(1920,1200,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
-SHARED_CODE()
+SHARED_SOURCE:Sobel
 {
 	const mat3 kernelX = mat3(	-1.0, 0.0, 1.0,
 					-2.0, 0.0, 2.0,
@@ -38,7 +38,7 @@ SHADER_SOURCE:sobelShaderPlusVisualization()
 	out     vec4 		sobelTexture,
 				visualization;
 
-	INSERT_SHARED_CODE
+	INCLUDE_SHARED_CODE:convolutionTool
 
 	void main()
 	{
@@ -53,12 +53,12 @@ SHADER_SOURCE:sobelShaderPlusVisualization()
 }
 
 // Filter :
-FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShaderPlusVisualization);
+FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShaderPlusVisualization)
 
 PIPELINE_MAIN:sobelPipeline()
 {
-	INPUT_PORTS(inputTexture);
-	OUTPUT_PORTS(sobelTexture,visualization);
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(sobelTexture,visualization)
 
-	FILTER_INSTANCE:sobelFilterInstance(sobelFilter);
+	FILTER_INSTANCE:sobelFilterInstance(sobelFilter)
 }

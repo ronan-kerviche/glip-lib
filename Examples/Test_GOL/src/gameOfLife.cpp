@@ -61,10 +61,9 @@
 				#else
 					// Load the same settings but from a file :
 					LayoutLoader loader;
-					PipelineLayout* model = loader("./Filters/pipelineGOL.ppl");
-					p1 = new Pipeline(*model, "Ping");
-					p2 = new Pipeline(*model, "Pong");
-					delete model;
+					PipelineLayout model( loader("./Filters/pipelineGOL.ppl") );
+					p1 = new Pipeline(model, "Ping");
+					p2 = new Pipeline(model, "Pong");
 				#endif
 
 			// Create a random starting point :

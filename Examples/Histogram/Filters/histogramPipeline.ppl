@@ -1,10 +1,10 @@
 // Histogram pipeline.
 // You must use a 3D grid as geometry for it to work.
 
-TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);		// Histograms bins
-TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);  	// Final window representation
+TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins
+TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)  	// Final window representation
 
-SHADER_SOURCE:histogramVertShader()
+SHADER_SOURCE:histogramVertShader
 {
 	#version 130
 
@@ -44,7 +44,7 @@ SHADER_SOURCE:histogramVertShader()
 	}
 }
 
-SHADER_SOURCE:histogramFragShader()
+SHADER_SOURCE:histogramFragShader
 {
 	#version 130
 
@@ -58,7 +58,7 @@ SHADER_SOURCE:histogramFragShader()
 	}
 }
 
-SHADER_SOURCE:showHistogramShader()
+SHADER_SOURCE:showHistogramShader
 {
 	#version 130
 	uniform sampler2D histogramBins, inputTexture;
@@ -90,14 +90,14 @@ SHADER_SOURCE:showHistogramShader()
 }
 
 
-FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON);
-FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader);
+FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON)
+FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader)
 
 PIPELINE_MAIN:pipelineHistogram()
 {
-	INPUT_PORTS(inputTexture);
-	OUTPUT_PORTS(outputTexture, histogramBins);
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture, histogramBins)
 
-	FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
-	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter);
+	FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
+	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
 }

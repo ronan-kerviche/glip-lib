@@ -1,15 +1,15 @@
 // Include Sobel :
-INCLUDE_FILE(Sobel.ppl);
+INCLUDE_FILE(Sobel.ppl)
 
 // gaussian blur :
-SHADER_SOURCE:gaussianBlurShader()
+SHADER_SOURCE:gaussianBlurShader
 {
 	#version 130
 
 	uniform sampler2D 	inputTexture;
 	out 	vec4		blurredTexture;
 
-	INSERT_SHARED_CODE
+	INCLUDE_SHARED_CODE:convolutionTool
 
 	/*const mat3 blurKernel	= mat3(	0.0740, 0.2054, 0.0740
 					0.2054, 0.5699, 0.2054
@@ -67,7 +67,7 @@ SHADER_SOURCE:gaussianBlurShader()
 	}
 }
 
-SHADER_SOURCE:sobelShaderAndDirection()
+SHADER_SOURCE:sobelShaderAndDirection
 {
 	#version 130
 
@@ -75,7 +75,8 @@ SHADER_SOURCE:sobelShaderAndDirection()
 	out vec4		sobelTexture,
 				colorEdgesNonFiltered;
 
-	INSERT_SHARED_CODE
+	INCLUDE_SHARED_CODE:convolutionTool
+	INCLUDE_SHARED_CODE:Sobel
 
 	void main()
 	{
@@ -115,14 +116,14 @@ SHADER_SOURCE:sobelShaderAndDirection()
 	}
 }
 
-SHADER_SOURCE:nonMaximumSuppressionShader()
+SHADER_SOURCE:nonMaximumSuppressionShader
 {
 	#version 130
 
 	uniform sampler2D	sobelTexture;
 	out vec4		maximumFiltered;
 
-	INSERT_SHARED_CODE
+	INCLUDE_SHARED_CODE:convolutionTool
 
 	void main()
 	{
@@ -158,16 +159,16 @@ SHADER_SOURCE:nonMaximumSuppressionShader()
 	}
 }
 
-FILTER_LAYOUT:gaussianBlurFilter(sobelOutputFormat, gaussianBlurShader);
-FILTER_LAYOUT:sobelAndDirectionFilter(sobelOutputFormat, sobelShaderAndDirection);
-FILTER_LAYOUT:nonMaximumSuppressionFilter(sobelOutputFormat, nonMaximumSuppressionShader);
+FILTER_LAYOUT:gaussianBlurFilter(sobelOutputFormat, gaussianBlurShader)
+FILTER_LAYOUT:sobelAndDirectionFilter(sobelOutputFormat, sobelShaderAndDirection)
+FILTER_LAYOUT:nonMaximumSuppressionFilter(sobelOutputFormat, nonMaximumSuppressionShader)
 
 PIPELINE_MAIN:CannyFilter()
 {
-	INPUT_PORTS(inputTexture);
-	OUTPUT_PORTS(blurredTexture, sobelTexture, maximumFiltered, colorEdgesNonFiltered);
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(blurredTexture, sobelTexture, maximumFiltered, colorEdgesNonFiltered)
 
-	FILTER_INSTANCE:gaussianBlurFilterInstance(gaussianBlurFilter);
-	FILTER_INSTANCE:sobelRawFilterInstance(sobelAndDirectionFilter);
-	FILTER_INSTANCE:nonMaximumSuppressionFilterInstance(nonMaximumSuppressionFilter);
+	FILTER_INSTANCE:gaussianBlurFilterInstance(gaussianBlurFilter)
+	FILTER_INSTANCE:sobelRawFilterInstance(sobelAndDirectionFilter)
+	FILTER_INSTANCE:nonMaximumSuppressionFilterInstance(nonMaximumSuppressionFilter)
 }

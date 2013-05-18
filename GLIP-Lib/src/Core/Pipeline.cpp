@@ -540,11 +540,11 @@
 	{ }
 
 	/**
-	\fn PipelineLayout::PipelineLayout(__ReadOnly_PipelineLayout& c)
+	\fn PipelineLayout::PipelineLayout(const __ReadOnly_PipelineLayout& c)
 	\brief PipelineLayout constructor.
 	\param c Copy.
 	**/
-	PipelineLayout::PipelineLayout(__ReadOnly_PipelineLayout& c)
+	PipelineLayout::PipelineLayout(const __ReadOnly_PipelineLayout& c)
 	 : __ReadOnly_PipelineLayout(c), __ReadOnly_ComponentLayout(c), ComponentLayout(c)
 	{ }
 
@@ -852,7 +852,7 @@
 	\param p Pipeline layout.
 	\param name Name of the pipeline.
 	**/
-	Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
+	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name)
 	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0)
 	{
 		cleanInput();

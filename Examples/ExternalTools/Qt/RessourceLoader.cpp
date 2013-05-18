@@ -590,7 +590,7 @@
 
 			try
 			{
-				model = loader(filename.toStdString());
+				model = new PipelineLayout( loader(filename.toStdString()) );
 			}
 			catch(Exception& e)
 			{
@@ -618,6 +618,8 @@
 			try
 			{
 				loadedPipeline = new Pipeline(*model, "LoadedPipeline");
+				delete model;
+				model = NULL;
 			}
 			catch(Exception& e)
 			{

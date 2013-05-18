@@ -194,6 +194,11 @@
 			cleanCompilationTab(true);
 			compilationTab.setAlternatingRowColors(true);
 
+			QFont font;
+			font.setFamily("Monospace");
+			font.setFixedPitch(true);
+			compilationTab.setFont(font);
+
 		// Connections : 
 			QObject::connect(&connectionMenu, SIGNAL(connectToInput(int)),	this, SLOT(updateConnection(int)));
 	}

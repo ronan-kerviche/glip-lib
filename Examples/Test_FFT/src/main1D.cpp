@@ -97,11 +97,8 @@
 
 			LayoutLoader loader;
 
-			PipelineLayout* ppl = NULL;
-
-			ppl = loader("./Filters/visu1D.ppl");
-			Pipeline visualization(*ppl,"Visualization");
-			delete ppl;
+			PipelineLayout ppl = loader("./Filters/visu1D.ppl");
+			Pipeline visualization(ppl,"Visualization");
 
 			fft1D.enablePerfsMonitoring();
 			ifft1D.enablePerfsMonitoring();

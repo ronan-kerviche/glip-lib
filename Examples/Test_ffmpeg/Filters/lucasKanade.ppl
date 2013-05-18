@@ -5,9 +5,9 @@
 	GLSL Quick reference : mew.cx/glsl_quickref.pdf
 */
 
-TEXTURE_FORMAT:computationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
-TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
-TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+TEXTURE_FORMAT:computationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
+TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
+TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 
 SHADER_SOURCE:sh_Derivatives()
 {
@@ -177,20 +177,20 @@ SHADER_SOURCE:sh_sideBySide()
 	}
 }
 
-FILTER_LAYOUT:cDerivatives(computationFormatFloat,sh_Derivatives);
-FILTER_LAYOUT:cOpticalFlow(computationFormatFloat,sh_opticalFlow);
-FILTER_LAYOUT:cMix(computationFormat,sh_Mix);
-FILTER_LAYOUT:cSBS(sideBySideFormat,sh_sideBySide);
+FILTER_LAYOUT:cDerivatives(computationFormatFloat,sh_Derivatives)
+FILTER_LAYOUT:cOpticalFlow(computationFormatFloat,sh_opticalFlow)
+FILTER_LAYOUT:cMix(computationFormat,sh_Mix)
+FILTER_LAYOUT:cSBS(sideBySideFormat,sh_sideBySide)
 
 PIPELINE_MAIN:opticalFlow()
 {
-	INPUT_PORTS(latest, oldest);
-	OUTPUT_PORTS(grayScale, derivatives, opticalFlow, outVisu, outSideBySide);
+	INPUT_PORTS(latest, oldest)
+	OUTPUT_PORTS(grayScale, derivatives, opticalFlow, outVisu, outSideBySide)
 
-	FILTER_INSTANCE:instDerivatives(cDerivatives);
-	FILTER_INSTANCE:instOpticalFlow(cOpticalFlow);
-	FILTER_INSTANCE:instMix(cMix);
-	FILTER_INSTANCE:instSBS(cSBS);
+	FILTER_INSTANCE:instDerivatives(cDerivatives)
+	FILTER_INSTANCE:instOpticalFlow(cOpticalFlow)
+	FILTER_INSTANCE:instMix(cMix)
+	FILTER_INSTANCE:instSBS(cSBS)
 
 	// Automatic connection will be performed.
 }

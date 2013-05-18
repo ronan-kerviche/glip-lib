@@ -145,15 +145,11 @@
 			// Convolution :
 			LayoutLoader loader;
 			loader.addRequiredElement("format", fft2D.output().format());
-			PipelineLayout* ppl = loader("./Filters/convolution.ppl");
-			Pipeline conv(*ppl,"Convolution");
-			delete ppl;
+			Pipeline conv( loader("./Filters/convolution.ppl") ,"Convolution");
 
 			loader.clearRequiredElements("format");
 			loader.addRequiredElement("format", fmt);
-			ppl = loader("./Filters/mix.ppl");
-			Pipeline mix(*ppl,"mix");
-			delete ppl;
+			Pipeline mix( loader("./Filters/mix.ppl") ,"mix");
 
 			p1->enablePerfsMonitoring();
 			p2->enablePerfsMonitoring();

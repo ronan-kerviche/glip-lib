@@ -38,6 +38,165 @@ namespace Glip
 	namespace Modules
 	{
 
+		enum LayoutLoaderKeyword
+		{
+			FORMAT_LAYOUT,
+			SHADER_SOURCE,
+			FILTER_LAYOUT,
+			PIPELINE_LAYOUT,
+			PIPELINE_MAIN,
+			INCLUDE_FILE,
+			FILTER_INSTANCE,
+			PIPELINE_INSTANCE,
+			CONNECTION,
+			INPUT_PORTS,
+			OUTPUT_PORTS,
+			THIS_PIPELINE,
+			DEFAULT_VERTEX_SHADER,
+			CLEARING_ON,
+			CLEARING_OFF,
+			BLENDING_ON,
+			BLENDING_OFF,
+			REQUIRED_FORMAT,
+			REQUIRED_PIPELINE,
+			SHARED_SOURCE,
+			INCLUDE_SHARED_SOURCE,
+			NumKeywords,
+			UnknownKeyword
+		};
+
+		extern const char* keywords[NumKeywords];
+
+		namespace LayoutLoaderParser
+		{
+
+			/*
+				Script general specification : 
+				
+					// Comment
+					KEYWORD:NAME(arg1, arg2, ..., argN)
+					{
+						BODY
+					}
+					/* Comment ...
+					   On Multiple lines ...
+					*/
+			/**/
+
+			// Layout
+			struct Element
+			{
+				enum Field
+				{
+					Keyword,
+					Name,
+					Arguments,
+					AfterArguments,
+					Body,
+					NumField,
+					Unknown
+				};
+
+
+				std::string 			strKeyword,
+								name,
+								body;
+				std::vector<std::string>	arguments;
+				bool				noName,		// Missing ':'
+								noArgument,	// Missing '(' to ')'
+								noBody;		// Missing '{' to '}'
+				int				startLine,
+								bodyLine;
+
+				Element(void);
+				Element(const Element& cpy);
+				const Element& operator=(const Element& cpy);
+				void clear(void);
+				bool empty(void) const;
+			};
+
+			// Parser Class : 
+			class VanillaParser 
+			{
+				private : 
+					bool compare(const std::string& code, int& k, const std::string token);
+					void testAndSaveCurrentElement(Element::Field& current, const Element::Field& next, Element& el);
+					void record(Element& el, const Element::Field& field, char c, int currentLine);
+		
+				public :
+					std::vector<Element>		elements;
+
+					VanillaParser(const std::string& code, int lineOffset=1);
+					const VanillaParser& operator<<(VanillaParser& subParser); 
+			};
+		}
+
+		class LayoutLoader
+		{
+			private :
+				bool 					isSubLoader;
+
+				// Reading dynamic :
+				std::string				dynpath;
+				std::vector<LayoutLoaderKeyword>	associatedKeyword;
+				std::map<std::string, std::string>	sharedCodeList;
+				std::map<std::string, HdlTextureFormat> formatList;
+				std::map<std::string, ShaderSource> 	sourceList;
+				std::map<std::string, FilterLayout> 	filterList;
+				std::map<std::string, PipelineLayout> 	pipelineList;
+
+				// Static : 
+				std::string				path;
+				std::map<std::string,HdlTextureFormat>	requiredFormatList;
+				std::map<std::string,PipelineLayout>	requiredPipelineList;
+
+				// Tools : 
+				LayoutLoaderKeyword getKeyword(const std::string& str);
+
+				void 	clean(void);			
+				void	classify(const std::vector<LayoutLoaderParser::Element>& elements, std::vector<LayoutLoaderKeyword>& keywords);
+				void	loadFile(const std::string& filename, std::string& content);
+				void	preliminaryTests(const LayoutLoaderParser::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
+				void	enhanceShaderSource(std::string& str);
+				void	append(LayoutLoader& subLoader);
+				void	includeFile(const LayoutLoaderParser::Element& e);
+				void	buildRequiredFormat(const LayoutLoaderParser::Element& e);
+				void	buildRequiredPipeline(const LayoutLoaderParser::Element& e);
+				void	buildSharedCode(const LayoutLoaderParser::Element& e);
+				void	buildFormat(const LayoutLoaderParser::Element& e);
+				void	buildShaderSource(const LayoutLoaderParser::Element& e);
+				void	buildFilter(const LayoutLoaderParser::Element& e);
+				void	buildPipeline(const LayoutLoaderParser::Element& e);
+				void	process(const std::string& code, std::string& mainPipelineName);
+
+			public :
+				LayoutLoader(void);
+				~LayoutLoader(void);
+
+				void setPath(const std::string& _path);
+
+				__ReadOnly_PipelineLayout operator()(const std::string& source); //can be a file or directly the source
+				Pipeline* operator()(const std::string& source, const std::string& pipelineName);
+				
+				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
+				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
+				int  clearRequiredElements(const std::string& name = "");
+		};
+
+		class LayoutWriter
+		{
+			private :
+				
+				void 	writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name);
+				void 	writeSourceCode(const ShaderSource& source, std::string name);
+				void 	writeFilterCode(const __ReadOnly_FilterLayout& fLayout);
+				void 	writePipelineCode(const __ReadOnly_PipelineLayout& pLayout, bool main=false);
+
+			public :
+				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
+		};
+	}
+}
 /**
 \class LayoutLoader
 \brief Load and save pipelines layouts to file
@@ -193,7 +352,7 @@ Loading Example :
 	\endcode
 
 **/
-		class LayoutLoader
+		/*class LayoutLoader
 		{
 			public :
 				enum LoaderKeyword
@@ -269,8 +428,6 @@ Loading Example :
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
 				int  clearRequiredElements(const std::string& name = "");
-		};
-	}
-}
+		};*/
 
 #endif // LAYOUTLOADER_HPP_INCLUDED

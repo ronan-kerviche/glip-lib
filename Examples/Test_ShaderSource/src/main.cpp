@@ -72,7 +72,8 @@ int main(int argc, char** argv)
 
 	std::cout << "End Test ShaderSource" << std::endl;*/
 
-	ShaderSource src("uniform sampler2D a, b=1, c; \n uniform sampler2D d2, e4=1, f25e; \n out vec2 o1, o2=2, o3; \n out vec4 o4, o5=1; \n uniform float alpha = 6.0f, beta, gamma=1.0f;\n uniform mat4 m1=16.0; uniform mat2 m2 =mat2(0,0,0,0), m3=0;");
+	// New :
+	/*ShaderSource src("uniform sampler2D a, b=1, c; \n uniform sampler2D d2, e4=1, f25e; \n out vec2 o1, o2=2, o3; \n out vec4 o4, o5=1; \n uniform float alpha = 6.0f, beta, gamma=1.0f;\n uniform mat4 m1=16.0; uniform mat2 m2 =mat2(0,0,0,0), m3=0;");
 
 	std::cout << "Inputs : " << std::endl;
 	for(int k=0; k< src.getInputVars().size(); k++)
@@ -84,8 +85,59 @@ int main(int argc, char** argv)
 
 	std::cout << "Variables : " << std::endl;
 	for(int k=0; k< src.getUniformVars().size(); k++)
-		std::cout << k << " > " <<  src.getUniformVars()[k] << " [" << glParamName(src.getUniformTypes()[k]) << "]" << std::endl;
+		std::cout << k << " > " <<  src.getUniformVars()[k] << " [" << glParamName(src.getUniformTypes()[k]) << "]" << std::endl;*/
 	
+	// LayoutLoaderParser :
+	std::fstream file;
+	file.open("tmp.txt");
+
+	// Did it fail?
+	if(!file.is_open())
+		throw Exception("Can't open file for reading : tmp.txt.", __FILE__, __LINE__);
+
+	// Set starting position
+	file.seekg(0, std::ios::beg);
+
+	std::string line, source;
+	while(std::getline(file,line))
+	{
+		source += line;
+		source += "\n";
+	}
+
+	file.close();
+
+	// Parse : 
+	Glip::Modules::LayoutLoaderParser::VanillaParser parser(source);
+
+	// Show : 
+	std::cout << "Elements : " << std::endl;
+	for(std::vector<Glip::Modules::LayoutLoaderParser::Element>::iterator p=parser.elements.begin(); p!=parser.elements.end(); p++)
+	{
+		std::cout << "Element      : " << std::endl;
+		std::cout << "   Keyword   : " << (*p).strKeyword << std::endl;
+
+		std::cout << "   Name      : " << (*p).name;
+		if( (*p).noName )
+			std::cout << '*' << std::endl;
+		else
+			std::cout << std::endl;
+
+		std::cout << "   Arguments : ";
+		for(std::vector<std::string>::iterator q=(*p).arguments.begin(); q!=(*p).arguments.end(); q++)
+			std::cout << *q << ", ";
+		if( (*p).noArgument )
+			std::cout << '*' << std::endl;
+		else
+			std::cout << std::endl;
+
+		std::cout << "   Body      : " << (*p).body;
+		if( (*p).noBody )
+			std::cout << '*' << std::endl;
+		else
+			std::cout << std::endl;
+	}
+
 	return 0;
 }
 

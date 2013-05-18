@@ -1,4 +1,4 @@
-TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 
 SHADER_SOURCE:mix()
 {
@@ -52,12 +52,12 @@ SHADER_SOURCE:mix()
 	}
 }
 
-FILTER_LAYOUT:filter(format,mix);
+FILTER_LAYOUT:filter(format,mix)
 
 PIPELINE_MAIN:pMain()
 {
-	INPUT_PORTS(original, fft, ifft);
-	OUTPUT_PORTS(outTexture);
-	FILTER_INSTANCE:inst_filter(filter);
+	INPUT_PORTS(original, fft, ifft)
+	OUTPUT_PORTS(outTexture)
+	FILTER_INSTANCE:inst_filter(filter)
 }
 
