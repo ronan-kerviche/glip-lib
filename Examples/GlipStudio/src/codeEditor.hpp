@@ -85,6 +85,7 @@
 			bool canBeClosed(void);
 			QString getTitle(void) const;
 			std::string getCode(void) const;
+			std::string getPath(void) const;
 			bool openFile(const QString& filename);
 
 		signals : 
@@ -136,6 +137,7 @@
 			~CodeEditorsPannel(void);
 
 			std::string getCurrentCode(void) const;
+			std::string getCodePath(void) const;
 			bool canBeClosed(void);
 
 		signals : 

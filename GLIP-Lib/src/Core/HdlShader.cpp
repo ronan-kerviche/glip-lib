@@ -380,7 +380,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const std::vector<std::string>& getUniformVarsNames(void) const
+	\fn    const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
 	\brief Get access to the list of uniform variables names of supported types managed by the program (GL based).
 	\return Access to a sting based vector.
 	**/
@@ -390,7 +390,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const std::vector<std::string>& getUniformVarsTypes(void) const
+	\fn    const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
 	\brief Get access to the list of uniform variables types corresponding to the names provided by HdlProgram::getUniformVarsNames (GL based).
 	\return Access to a sting based vector.
 	**/
@@ -459,7 +459,7 @@ using namespace Glip::CoreGL;
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 	/**
@@ -467,7 +467,7 @@ using namespace Glip::CoreGL;
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 	/**
@@ -475,7 +475,7 @@ using namespace Glip::CoreGL;
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 
@@ -531,27 +531,6 @@ using namespace Glip::CoreGL;
 	GENmodifyVar( float, FLOAT, f)
 
 	#undef GENmodifyVar
-		
-
-	// tools
-	/**
-	\fn    int HdlProgram::maxVaryingVar(void)
-	\brief Returns the maximum number of varying variables available.
-
-	\return The maximum number of varying variables.
-	**/
-	int HdlProgram::maxVaryingVar(void)
-	{
-		GLint param;
-
-		glGetIntegerv(GL_MAX_VARYING_FLOATS, &param);
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::maxVaryingVar", "glGetIntegerv()")
-		#endif
-
-		return param;
-	}
 
 	HdlProgram::~HdlProgram(void)
 	{
@@ -576,6 +555,25 @@ using namespace Glip::CoreGL;
 
 // Static tools :
 	/**
+	\fn    int HdlProgram::maxVaryingVar(void)
+	\brief Returns the maximum number of varying variables available.
+
+	\return The maximum number of varying variables.
+	**/
+	int HdlProgram::maxVaryingVar(void)
+	{
+		GLint param;
+
+		glGetIntegerv(GL_MAX_VARYING_FLOATS, &param);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::maxVaryingVar", "glGetIntegerv()")
+		#endif
+
+		return param;
+	}
+
+	/**
 	\fn    void HdlProgram::stopProgram(void)
 	\brief Stop using a program
 	**/
@@ -583,3 +581,4 @@ using namespace Glip::CoreGL;
 	{
 		glUseProgram(0);
 	}
+

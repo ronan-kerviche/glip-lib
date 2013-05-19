@@ -56,7 +56,7 @@
 								"REQUIRED_FORMAT",
 								"REQUIRED_PIPELINE",
 								"SHARED_SOURCE",
-								"INCLUDE_SHARED_CODE"
+								"INCLUDE_SHARED_SOURCE"
 						};
 
 // LayoutLoaderParser::Element
@@ -401,13 +401,16 @@
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should not have arguments, but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(minArguments>0 && e.arguments.empty())
-			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " arguments.", __FILE__, __LINE__);
+			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " argument(s).", __FILE__, __LINE__);
+
+		if(e.arguments.size()!=minArguments && minArguments==maxArguments)
+			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have exactly "  + to_string(minArguments) + " argument(s).", __FILE__, __LINE__);
 
 		if(e.arguments.size()<minArguments)
-			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " arguments, but it has only " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " argument(s), but it has only " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.arguments.size()>maxArguments)
-			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + to_string(minArguments) + " arguments, but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + to_string(minArguments) + " argument(s), but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.noBody && bodyProperty>0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " does not have a body.", __FILE__, __LINE__);
@@ -691,7 +694,7 @@
 
 				enhanceShaderSource(content);
 
-				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content) ) );
+				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content, "ShaderSource:" + e.name, e.startLine) ) );
 			}
 			catch(Exception& ex)
 			{
@@ -707,7 +710,7 @@
 
 				enhanceShaderSource(content);
 
-				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content) ) );
+				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content, "ShaderSource:" + e.name, e.startLine) ) );
 			}
 			catch(Exception& ex)
 			{

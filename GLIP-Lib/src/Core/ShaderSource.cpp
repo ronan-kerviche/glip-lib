@@ -45,6 +45,8 @@
 		outFragments    	= ss.outFragments;
 		compatibilityRequest	= ss.compatibilityRequest;
 		versionNumber		= ss.versionNumber;
+		sourceInfo		= ss.sourceInfo;
+		lineOffset		= ss.lineOffset;
 	}
 
 	/**
@@ -54,7 +56,7 @@
 	\param eol Set to true if the code contains End Of Line delimiters.
 	\param lines Number of lines to consider.
 	**/
-	ShaderSource::ShaderSource(const char** src, bool eol, int lines)
+	/*ShaderSource::ShaderSource(const char** src, bool eol, int lines)
 	 : compatibilityRequest(false), versionNumber(0)
 	{
 		if(src==NULL)
@@ -83,15 +85,17 @@
 		}
 
 		parseCode();
-	}
+	}*/
 
 	/**
-	\fn    ShaderSource::ShaderSource(const std::string& src)
+	\fn    ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
 	\brief Constructor of ShaderSource, load from a standard string or a file.
 	\param src Source data (must have at least one '\n') or filename (without '\n').
+	\param _sourceInfo Some information about the source (if loaded from a Layout File for example).
+	\param _lineOffset Correction added to the debugger info (also if loaded from a Layout File for example).
 	**/
-	ShaderSource::ShaderSource(const std::string& src)
-	 : compatibilityRequest(false), versionNumber(0)
+	ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
+	 : compatibilityRequest(false), versionNumber(0), sourceInfo(_sourceInfo), lineOffset(_lineOffset)
 	{
 		size_t newline = src.find('\n');
 
@@ -121,7 +125,7 @@
 		else
 		{
 			// Inner string
-			sourceName = "<Inner String>";
+			sourceName.clear();
 			source.clear();
 			source = src;
 		}
@@ -437,14 +441,31 @@
 	std::string ShaderSource::errorLog(std::string log)
 	{
 		bool 	firstLine = true,
-			prevLineEnhancement = false;
+			prevLineEnhancement = false,
+			atLeastOneInfo = false;
+		int	incriminatedLine = 0;
+
 		const std::string delimAMDATI = "ERROR: 0:";
+		std::string buggyLine;
 		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
 		std::stringstream str("");
 		std::istringstream iss(log);
 		std::string line;
 
-		str << "Shader Name : " << sourceName << std::endl;
+		if(!sourceName.empty())
+		{
+			str << "Shader Name : " << sourceName << std::endl;
+			atLeastOneInfo = true;
+		}
+
+		if(!sourceInfo.empty())
+		{
+			str << "Shader Info : " << sourceInfo << std::endl;
+			atLeastOneInfo = true;
+		}
+
+		if(!atLeastOneInfo)
+			str << "Shader compilation log : " << std::endl;
 
 		while( std::getline( iss, line) )
 		{
@@ -461,14 +482,15 @@
 
 			str << "    " << line << std::endl;
 
+			// Get the corresponding line : 
+			buggyLine.clear();
 			switch(v)
 			{
 				case HandleOpenGL::vd_NVIDIA :
 					one = line.find('(') + 1;
 					two = line.find(')');
-					int tmp;
-					if(from_string(line.substr(one, two-one), tmp))
-					str << "        >> " << getLine(tmp-1) << std::endl;
+					if(from_string(line.substr(one, two-one), incriminatedLine))
+						buggyLine = getLine(incriminatedLine-1);
 					break;
 				case HandleOpenGL::vd_INTEL :
 				case HandleOpenGL::vd_AMDATI :
@@ -477,15 +499,27 @@
 					{
 						two = line.find(':',one+delimAMDATI.size()+1);
 						if(two!=std::string::npos)
-							if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), tmp))
+							if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
 							{
-								str << "        >> " << getLine(tmp-1);
+								buggyLine = getLine(incriminatedLine-1);
 								prevLineEnhancement = true;
 							}
 					}
 					break;
 				case HandleOpenGL::vd_UNKNOWN :
 					break;
+			}
+
+			// Print log : 
+			if(!buggyLine.empty())
+			{
+				str << "        At line ";
+				if(lineOffset>=0)
+					str << lineOffset + incriminatedLine;
+				else 
+					str << incriminatedLine; 
+
+				str << " : \"" << buggyLine << "\"" << std::endl;
 			}
 		}
 

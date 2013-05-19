@@ -49,7 +49,7 @@
 
 	void MainWindow::refreshPipeline(void)
 	{
-		libraryInterface.compile( codeEditors.getCurrentCode() );
+		libraryInterface.compile( codeEditors.getCurrentCode(), codeEditors.getCodePath() );
 	}
 
 	void MainWindow::updateOutput(void)

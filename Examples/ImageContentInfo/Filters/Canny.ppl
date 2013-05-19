@@ -9,7 +9,7 @@ SHADER_SOURCE:gaussianBlurShader
 	uniform sampler2D 	inputTexture;
 	out 	vec4		blurredTexture;
 
-	INCLUDE_SHARED_CODE:convolutionTool
+	INCLUDE_SHARED_SOURCE:convolutionTool
 
 	/*const mat3 blurKernel	= mat3(	0.0740, 0.2054, 0.0740
 					0.2054, 0.5699, 0.2054
@@ -75,8 +75,8 @@ SHADER_SOURCE:sobelShaderAndDirection
 	out vec4		sobelTexture,
 				colorEdgesNonFiltered;
 
-	INCLUDE_SHARED_CODE:convolutionTool
-	INCLUDE_SHARED_CODE:Sobel
+	INCLUDE_SHARED_SOURCE:convolutionTool
+	INCLUDE_SHARED_SOURCE:Sobel
 
 	void main()
 	{
@@ -123,7 +123,7 @@ SHADER_SOURCE:nonMaximumSuppressionShader
 	uniform sampler2D	sobelTexture;
 	out vec4		maximumFiltered;
 
-	INCLUDE_SHARED_CODE:convolutionTool
+	INCLUDE_SHARED_SOURCE:convolutionTool
 
 	void main()
 	{

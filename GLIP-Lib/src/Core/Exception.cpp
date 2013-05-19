@@ -33,7 +33,7 @@
 	\param l Line number (__LINE__).
 	**/
 	Exception::Exception(const std::string& m, std::string f, unsigned int l)
-	 : msg(m), filename(f), line(l)
+	 : msg(m), filename(f), line(l), showHeader(true)
 	{
 		if(filename!="")
 		{
@@ -50,7 +50,7 @@
 	\param e Copy.
 	**/
 	Exception::Exception(const Exception& e)
-	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors), completeMsg(e.completeMsg)
+	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors), completeMsg(e.completeMsg), showHeader(e.showHeader)
 	{ }
 
 	Exception::~Exception(void) throw()
@@ -60,11 +60,11 @@
 
 	void Exception::updateCompleteMessage(void)
 	{
-		completeMsg = "";
+		completeMsg.clear();
 
 		int nMessages = subErrors.size() + 1;
 
-		std::string h = header();
+		std::string h = header(showHeader);
 
 		if(nMessages==1)
 		{
@@ -72,7 +72,7 @@
 				completeMsg += "[ " + h + " ] " + msg;
 			else
 				completeMsg += msg;
-		}
+		} 
 		else
 		{
 			// Create all headers : 
@@ -83,13 +83,16 @@
 			{
 				headers.push_back( std::string("[ 1 | " + h + " ") );
 				maxLength = headers.back().size();
-				messages.push_back(msg);
 			}
+			else
+				headers.push_back( std::string("[ 1 ") );
+
+			messages.push_back(msg);
 
 			for(int i=subErrors.size()-1; i>=0; i--)
 			{
 				headers.push_back("");
-				std::string header = subErrors[i].header();
+				std::string header = subErrors[i].header(showHeader);
 
 				if(!header.empty())
 					headers.back() = "[ " + to_string(subErrors.size()-i+1) + " | " + header + " ";
@@ -155,10 +158,10 @@
 		return line;
 	}
 
-	std::string Exception::header(void) const throw()
+	std::string Exception::header(bool showHeaderControl) const throw()
 	{
-		if(filename=="")
-			return "";
+		if(filename.empty() || !showHeaderControl)
+			return std::string();
 		else
 		{
 			if(line!=0)
@@ -227,3 +230,15 @@
 		else
 			return subErrors[i];
 	}
+
+	/**
+	\fn void Exception::hideHeader(bool t)
+	\brief Hide (or show) the headers in messages provided by what().
+	\param t true (default) to hide the headers or true to show them.
+	**/
+	void Exception::hideHeader(bool t)
+	{
+		showHeader = !t;
+		updateCompleteMessage();
+	}
+

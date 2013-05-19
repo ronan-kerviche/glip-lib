@@ -199,6 +199,10 @@
 			font.setFixedPitch(true);
 			compilationTab.setFont(font);
 
+		// Context menu :
+			ressourceTab.setContextMenuPolicy(Qt::CustomContextMenu);
+			QObject::connect(&ressourceTab, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
 		// Connections : 
 			QObject::connect(&connectionMenu, SIGNAL(connectToInput(int)),	this, SLOT(updateConnection(int)));
 	}
@@ -300,6 +304,8 @@
 	{
 		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceFormats);
 		removeAllChildren(root);
+
+		formats.clear();
 
 		// List all current images formats : 
 		for(int k=0; k<textures.size(); k++)
@@ -454,6 +460,7 @@
 		cleanCompilationTab(false);
 
 		// Add errors : 
+		e.hideHeader(true);
 		std::string line;
 		std::istringstream stream(e.what());
 		while( std::getline(stream, line) )
@@ -735,11 +742,16 @@
 			throw Exception("LibraryInterface::currentOutput - Internal error : no currently associated texture.", __FILE__, __LINE__);
 	}
 
-	void LibraryInterface::compile(const std::string& code)
+	void LibraryInterface::compile(const std::string& code, const std::string& path)
 	{
+		if(code.empty())
+			return ; //Nothing to do...
+
 		bool success = true;
 		
 		disconnectLinkFromPipelineOutput();
+
+		pipelineLoader.setPath(path);
 
 		try
 		{
@@ -804,4 +816,104 @@
 			emit requireRedraw();
 		}
 	}
+
+	void LibraryInterface::showContextMenu(const QPoint& pos)
+	{
+		// Get the global position : 
+		QPoint globalPos = ressourceTab.mapToGlobal(pos);
+
+		// Get the item under the right click : 
+		QTreeWidgetItem* item =  ressourceTab.itemAt(pos);
+
+		if(item!=NULL)
+		{
+			if(item->type()!=RessourceImages || item->data(0, Qt::UserRole).toInt()<0)
+				return ; // Not an image
+
+			// Get the corresponding object : 
+			TextureObject* obj = textures[item->data(0, Qt::UserRole).toInt()];
+
+			// Change the menu according to the column : 
+			int c = ressourceTab.currentColumn();
+
+			if(c==0) // Name 
+			{
+				QMenu menu;
+
+				// Create connection menu : 
+				if(mainPipeline!=NULL)
+				{
+					for(int k=0; k<mainPipeline->getNumInputPort(); k++)
+						menu.addAction( tr("Connect to %1").arg(mainPipeline->getInputPortName(k).c_str()) )->setData( QVariant(k) );
+
+					// Separator : 
+					menu.addSeparator();
+				} 
+
+				// Free image : 
+				menu.addAction("Free image")->setData( QVariant(-1) );
+
+				menu.exec(globalPos);
+			}
+			else if(c==3) // Min/Mag 
+			{
+				QMenu menu(&ressourceTab);
+
+				menu.addAction("NEAREST")->setData( QVariant( QPoint(GL_NEAREST, GL_NEAREST) ) );
+				menu.addAction("LINEAR")->setData( QVariant( QPoint(GL_LINEAR, GL_LINEAR) ) );
+
+				QAction* selectedItem = menu.exec(globalPos);
+
+				if(selectedItem!=NULL)
+				{
+					obj->texture().setMinFilter( selectedItem->data().toPoint().x() );
+					obj->texture().setMagFilter( selectedItem->data().toPoint().y() );
+					updateImageListDisplay();
+					emit requireRedraw();
+				}
+			}
+			else if(c==4) // Warp
+			{
+				QMenu menu;
+
+				menu.addAction("CLAMP")->setData( QVariant( QPoint(GL_CLAMP, GL_CLAMP) ) );
+				menu.addAction("CLAMP_TO_EDGE")->setData( QVariant( QPoint(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE) ) );
+				menu.addAction("REPEAT")->setData( QVariant( QPoint(GL_REPEAT, GL_REPEAT) ) );
+
+				QAction* selectedItem = menu.exec(globalPos);
+
+				if(selectedItem!=NULL)
+				{
+					obj->texture().setSWrapping( selectedItem->data().toPoint().x() );
+					obj->texture().setTWrapping( selectedItem->data().toPoint().y() );
+					updateImageListDisplay();
+					emit requireRedraw();
+				}
+			}
+			else if(c==5)
+			{
+
+			}
+
+			/*std::cout << item->data(0, Qt::UserRole).toInt() << std::endl;
+			if(item->data(0, Qt::UserRole).toInt()>=0)
+				std::cout << textures[item->data(0, Qt::UserRole).toInt()]->getName().toStdString() << std::endl;*/
+		}
+
+		/*QMenu myMenu;
+		myMenu.addAction("Menu Item 1");
+
+		QAction* selectedItem = myMenu.exec(globalPos);
+		if(selectedItem!=NULL)
+		{
+			std::cout << "Something" << std::endl;
+			// something was chosen, do stuff
+		}
+		else
+		{
+			std::cout << "Nothing" << std::endl;
+			// nothing was chosen
+		}*/
+	}
+
 

@@ -53,9 +53,9 @@
 			glipkeywordFormat.setFontWeight(QFont::Bold);
 			QStringList glipkeywordPatterns;
 
-			for(int i=0; i<GLIP_KW_END; i++)
+			for(int i=0; i<Glip::Modules::NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + GLIPKeyword[i] + "\\b";
+				std::string str = std::string("\\b") + Glip::Modules::keywords[i] + "\\b";
 				glipkeywordPatterns << str.c_str();
 			}
 
@@ -241,7 +241,7 @@
 			{
 				QString number = QString::number(blockNumber + 1);
 				painter.setPen(ed);
-				painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
+				painter.drawText(0, top-3, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
 			}
 
 			block = block.next();
@@ -404,6 +404,14 @@
 	std::string CodeEditor::getCode(void) const
 	{
 		return toPlainText().toStdString();
+	}
+
+	std::string CodeEditor::getPath(void) const
+	{
+		QFileInfo path(currentFilename);
+		QString str = path.path() + "/";
+
+		return str.toStdString();
 	}
 
 	bool CodeEditor::openFile(const QString& filename)
@@ -572,6 +580,18 @@
 			int c = widgets.currentIndex();
 
 			return tabs[c]->getCode();
+		}
+		else
+			return "";	
+	}
+
+	std::string CodeEditorsPannel::getCodePath(void) const
+	{
+		if(widgets.count() > 0)
+		{
+			int c = widgets.currentIndex();
+
+			return tabs[c]->getPath();
 		}
 		else
 			return "";	

@@ -53,14 +53,16 @@ The shader source will be parsed to find input and output ports name. In the cas
 			{
 				private :
 					// Data
-					std::string 			source;
-					std::string 			sourceName;
+					std::string 			source,
+									sourceName,
+									sourceInfo;
 					std::vector<std::string> 	inSamplers2D;
 					std::vector<std::string> 	uniformVars;
 					std::vector<GLenum>		uniformVarsType;
 					std::vector<std::string> 	outFragments;
 					bool 				compatibilityRequest;
-					int 				versionNumber;
+					int 				versionNumber,
+									lineOffset;
 
 					// Tools
 					std::string getLine(int l);
@@ -75,8 +77,8 @@ The shader source will be parsed to find input and output ports name. In the cas
 					static std::string portNameForFragColor;
 
 					// Tools
-					ShaderSource(const char** src, bool eol = true, int lines=-1);
-					ShaderSource(const std::string& src);
+					//ShaderSource(const char** src, bool eol = true, int lines=-1);
+					ShaderSource(const std::string& src, const std::string& _sourceInfo="", int _lineOffset=-1);
 					ShaderSource(const ShaderSource& ss);
 
 					const std::string& getSource(void)     const;

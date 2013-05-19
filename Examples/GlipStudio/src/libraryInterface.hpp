@@ -115,6 +115,7 @@
 			void updateConnection(int idInput);
 			void compute(bool forcePipelineOutput=false);
 			void freeImage(void);
+			void showContextMenu(const QPoint& pos);
 					
 		public : 
 			LibraryInterface(QWidget *parent=NULL);
@@ -123,7 +124,7 @@
 			int getNumImages(void) const;
 			bool hasOutput(void) const;
 			HdlTexture& currentOutput(void);
-			void compile(const std::string& code); 
+			void compile(const std::string& code, const std::string& path); 
 			
 		signals : 
 			void requireRedraw(void);
