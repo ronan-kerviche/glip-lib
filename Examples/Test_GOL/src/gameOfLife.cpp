@@ -120,7 +120,6 @@
 			timer.setInterval(100);
 			QObject::connect(&timer, 	SIGNAL(timeout(void)),		this, SLOT(compute()));
 			QObject::connect(&window, 	SIGNAL(actionReceived(void)), 	this, SLOT(show()));
-			QObject::connect(&window, 	SIGNAL(resized(void)), 		this, SLOT(show()));
 			timer.start();
 		}
 		catch(Exception& e)

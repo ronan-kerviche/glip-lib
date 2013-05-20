@@ -9,7 +9,6 @@
 	MainWindow::MainWindow(void)
 	 : mainLayout(this), codeEditors(this), libraryInterface(this), display(this,640,480), mainPipeline(NULL)
 	{
-		QObject::connect(&(display.renderer()),		SIGNAL(resized(void)),  		this, SLOT(updateOutput(void)));
 		QObject::connect(&(display.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateOutput(void)));
 		QObject::connect(&codeEditors, 			SIGNAL(requireRefresh(void)), 		this, SLOT(refreshPipeline(void)));
 		QObject::connect(&libraryInterface,		SIGNAL(requireRedraw(void)),		this, SLOT(updateOutput(void)));

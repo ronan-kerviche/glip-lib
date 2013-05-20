@@ -364,9 +364,10 @@
 
 		glViewport(0, 0, width, height);
 
-		currentWindowAspectRatio = static_cast<float>(QWidget::width())/static_cast<float>(QWidget::height());
+		//currentWindowAspectRatio = static_cast<float>(QWidget::width())/static_cast<float>(QWidget::height());
+		currentWindowAspectRatio = static_cast<float>(width)/static_cast<float>(height);
 
-		emit resized();
+		//emit resized();
 	}
 
 	void WindowRenderer::setPixelAspectRatio(float ratio)
@@ -394,6 +395,9 @@
 
 	void WindowRenderer::clearWindow(bool swapNow)
 	{
+		// Check keys :
+		updateActions();
+
 		// Clear screen :
 		glClearColor( clearColorRed, clearColorGreen, clearColorBlue, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -405,9 +409,6 @@
 
 	void WindowRenderer::process(void)
 	{
-		// Check keys :
-		updateActions();
-
 		clearWindow(false); // false = don't swap now
 
 		float 	scaleForCurrentWindowAspectRatioX,
@@ -446,6 +447,11 @@
 
 		// Done!
 		swapBuffers();
+	}
+
+	void WindowRenderer::paintGL(void)
+	{
+		emit actionReceived();
 	}
 
 	bool WindowRenderer::isKeyboardActionsEnabled(void) const
@@ -554,7 +560,7 @@
 			{
 				setParent(parent);
 				showNormal();
-				emit requireResize();
+				emit requireContainerCatch();
 			}
 
 			fullscreenModeEnabled = enabled;
@@ -589,29 +595,27 @@
 
 //WindowRendererContainer
 	WindowRendererContainer::WindowRendererContainer(QWidget* _parent, int w, int h)
-	 : QWidget(_parent), childRenderer(this, w, h)
+	 : QWidget(_parent), container(this), childRenderer(this, w, h)
 	{
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 		setMinimumSize(QSize(256,256));
 
-		QObject::connect(&childRenderer, SIGNAL(requireResize(void)), 	this, SLOT(handleResizeRequirement(void)));
+		container.addWidget(&childRenderer);
+
+		QObject::connect(&childRenderer, SIGNAL(requireContainerCatch(void)), 	this, SLOT(handleCatch(void)));
 	}
 
 	WindowRendererContainer::~WindowRendererContainer(void)
 	{ }
-
-	void WindowRendererContainer::resizeEvent(QResizeEvent* event)
-	{
-		childRenderer.resize(event->size().width(),event->size().height());
-	}
 
 	WindowRenderer& WindowRendererContainer::renderer(void)
 	{
 		return childRenderer;
 	}
 
-	void WindowRendererContainer::handleResizeRequirement(void)
+	void WindowRendererContainer::handleCatch(void)
 	{
-		childRenderer.resize(width(),height());
+		container.removeWidget(&childRenderer);
+		container.addWidget(&childRenderer);
 	}
 

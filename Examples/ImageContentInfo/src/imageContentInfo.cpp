@@ -48,7 +48,6 @@
 			QObject::connect(&saveButton,			SIGNAL(released(void)), 		this, SLOT(save(void)));
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(requestComputingUpdate(void)));
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(updateOutput(void)));
-			QObject::connect(&(window.renderer()),		SIGNAL(resized(void)),  		this, SLOT(updateOutput(void)));
 			QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface, 	SIGNAL(outputIndexChanged(void)),	this, SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface, 	SIGNAL(requestComputingUpdate(void)),	this, SLOT(requestComputingUpdate(void)));

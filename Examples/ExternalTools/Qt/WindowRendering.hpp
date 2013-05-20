@@ -158,7 +158,8 @@
 			void setImageAspectRatio(const __ReadOnly_HdlTextureFormat& fmt);
 			void setClearColor(float red, float green, float blue);
 			void clearWindow(bool swapNow = true);
-			void process(void); 		// inherited from OutputDevice
+			void process(void); 			// inherited from OutputDevice
+			void paintGL(void);			// inherited from QGLWidget
 
 			// Enable/Disable actions
 			bool isKeyboardActionsEnabled(void) const;
@@ -181,8 +182,7 @@
 			void resetTransformation(void);
 
 		signals :
-			void resized(void);
-			void requireResize(void);
+			void requireContainerCatch(void);
 			void actionReceived(void);
 	};
 
@@ -191,13 +191,11 @@
 		Q_OBJECT
 
 		private :
+			QVBoxLayout 	container;
 			WindowRenderer 	childRenderer;
 
 		private slots :
-			void handleResizeRequirement(void);
-
-		protected :
-			void resizeEvent(QResizeEvent* event);
+			void handleCatch(void);
 
 		public :
 			WindowRendererContainer(QWidget* _parent, int w, int h);

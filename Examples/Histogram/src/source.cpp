@@ -52,7 +52,6 @@
 
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(process(void)));
 			QObject::connect(&scaleSlider,			SIGNAL(sliderMoved(int)),		this, SLOT(process(void)));
-			QObject::connect(&(window.renderer()),		SIGNAL(resized(void)),  		this, SLOT(updateShow(void)));
 			QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateShow(void)));
 			QObject::connect(&saveButton,			SIGNAL(released(void)), 		this, SLOT(save(void)));
 		}

@@ -37,7 +37,6 @@
 			show();
 
 			QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, 			SLOT(updateOutput(void)));
-			QObject::connect(&(window.renderer()),		SIGNAL(resized(void)),			this, 			SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface,	SIGNAL(outputIndexChanged(void)),	this, 			SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface,	SIGNAL(requestComputingUpdate(void)),	this, 			SLOT(process(void)));
 			QObject::connect(&pipelineLoaderInterface,	SIGNAL(pipelineChanged(void)),		this,			SLOT(resetProcessTest(void)));

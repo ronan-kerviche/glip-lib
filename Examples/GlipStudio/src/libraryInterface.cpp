@@ -820,7 +820,7 @@
 	void LibraryInterface::showContextMenu(const QPoint& pos)
 	{
 		// Get the global position : 
-		QPoint globalPos = ressourceTab.mapToGlobal(pos);
+		QPoint globalPos = ressourceTab.viewport()->mapToGlobal(pos); //ressourceTab.mapToGlobal(pos);
 
 		// Get the item under the right click : 
 		QTreeWidgetItem* item =  ressourceTab.itemAt(pos);
