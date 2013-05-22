@@ -1,4 +1,4 @@
-#include "ressourceTab.hpp"
+#include "ressourcesTab.hpp"
 
 // TextureObject
 	TextureObject::TextureObject(const QString& _filename, int maxLevel)
@@ -78,12 +78,321 @@
 		HdlTextureFormat::operator=(cpy);
 	}
 
-// Ressources GUI :
-	RessourcesTab::RessourcesTab(QWidget* parent=NULL)
+// ConnectionMenu
+	ConnectionMenu::ConnectionMenu(QWidget* parent)
+	 : QMenu("Connect", parent)	
 	{
+		update();
+	
+		QObject::connect(&mapper, SIGNAL(mapped(int)), this, SIGNAL(connectToInput(int))); 
+	}
+
+	ConnectionMenu::~ConnectionMenu(void)
+	{
+		clear();
+		currentActions.clear();
+	}
+
+	void ConnectionMenu::activate(bool state)
+	{
+		for(int k=0; k<currentActions.size(); k++)
+			currentActions.at(k)->setEnabled(state);
+	}
+
+	void ConnectionMenu::update(void)
+	{
+		clear();
+		currentActions.clear();
+		addAction("No available input port")->setEnabled(false);
+	}
+
+	void ConnectionMenu::update(const __ReadOnly_PipelineLayout& layout)
+	{
+		clear();
+		currentActions.clear();
+
+		for(int k=0; k<layout.getNumInputPort(); k++)
+		{
+			QAction* action = addAction(tr("To %1").arg(layout.getInputPortName(k).c_str()));
+			currentActions.push_back(action);
+			mapper.setMapping(action, k);
+			QObject::connect(action, SIGNAL(triggered(bool)), &mapper, SLOT(map(void))); 
+		}
+	}
+
+// FilterMenu
+	FilterMenu::FilterMenu(QWidget* parent)
+	 : 	QMenu("Filtering", parent),
+		minFilter("Min filter", this),
+		magFilter("Mag filter", this),
+		bothNearest("Change both to GL_NEAREST", this),
+		bothLinear("Change both to GL_LINEAR", this),
+		minNearest("GL_NEAREST", this),
+		minLinear("GL_LINEAR", this),
+		minNearestMipmapNearest("GL_NEAREST_MIPMAP_NEAREST", this),
+		minNearestMipmapLinear("GL_NEAREST_MIPMAP_LINEAR", this),
+		minLinerarMipmapNearest("GL_LINEAR_MIPMAP_NEAREST", this),
+		minLinearMipmapLinear("GL_LINEAR_MIPMAP_LINEAR", this),
+		magNearest("GL_NEAREST", this),
+		magLinear("GL_LINEAR", this)
+	{
+		minFilter.addAction(&minNearest);
+		minFilter.addAction(&minLinear);
+		minFilter.addAction(&minNearestMipmapNearest);
+		minFilter.addAction(&minNearestMipmapLinear);
+		minFilter.addAction(&minLinerarMipmapNearest);
+		minFilter.addAction(&minLinearMipmapLinear);
+
+		magFilter.addAction(&magNearest);
+		magFilter.addAction(&magLinear);
+
+		addAction(&bothNearest);
+		addAction(&bothLinear);				
+		addMenu(&minFilter);
+		addMenu(&magFilter);
+
+		update();
+	}
+
+	void FilterMenu::update(void)
+	{
+		const bool state = false;
 		
+		bothNearest.setEnabled(state);
+		bothLinear.setEnabled(state);
+		minNearest.setEnabled(state);
+		minLinear.setEnabled(state);
+		magNearest.setEnabled(state);
+		magLinear.setEnabled(state);
+		minNearestMipmapNearest.setEnabled(state);
+		minNearestMipmapLinear.setEnabled(state);
+		minLinerarMipmapNearest.setEnabled(state);
+		minLinearMipmapLinear.setEnabled(state);
+	}
+
+	void FilterMenu::update(const __ReadOnly_HdlTextureFormat& fmt)
+	{
+		const bool state = true;
+
+		// Set default data : 
+		bothNearest.setData( QVariant( QPoint( GL_NEAREST, GL_NEAREST ) ) );
+		bothLinear.setData( QVariant( QPoint( GL_LINEAR, GL_LINEAR ) ) );
+
+		minNearest.setData( QVariant( QPoint( GL_NEAREST, fmt.getMagFilter() ) ) );
+		minLinear.setData( QVariant( QPoint( GL_LINEAR, fmt.getMagFilter() ) ) );
+
+		minNearestMipmapNearest.setData( QVariant( QPoint( GL_NEAREST_MIPMAP_NEAREST, fmt.getMagFilter() ) ) );
+		minNearestMipmapLinear.setData( QVariant( QPoint( GL_NEAREST_MIPMAP_LINEAR, fmt.getMagFilter() ) ) );
+		minLinerarMipmapNearest.setData( QVariant( QPoint( GL_LINEAR_MIPMAP_NEAREST, fmt.getMagFilter() ) ) );
+		minLinearMipmapLinear.setData( QVariant( QPoint( GL_LINEAR_MIPMAP_LINEAR, fmt.getMagFilter() ) ) );
+
+		magNearest.setData( QVariant( QPoint( fmt.getMinFilter(), GL_LINEAR ) ) );
+		magLinear.setData( QVariant( QPoint( fmt.getMinFilter(), GL_LINEAR ) ) );
+
+		bothNearest.setEnabled(state);
+		bothLinear.setEnabled(state);
+		minNearest.setEnabled(state);
+		minLinear.setEnabled(state);
+		magNearest.setEnabled(state);
+		magLinear.setEnabled(state);
+
+		// Disable unaccessible data : 
+		if(fmt.getMaxLevel()==0)
+		{
+			minNearestMipmapNearest.setEnabled(!state);
+			minNearestMipmapLinear.setEnabled(!state);
+			minLinerarMipmapNearest.setEnabled(!state);
+			minLinearMipmapLinear.setEnabled(!state);
+		}
+		else
+		{
+			minNearestMipmapNearest.setEnabled(state);
+			minNearestMipmapLinear.setEnabled(state);
+			minLinerarMipmapNearest.setEnabled(state);
+			minLinearMipmapLinear.setEnabled(state);
+		}
+	}
+
+	bool FilterMenu::ask(const QPoint& pos, GLenum& minFilter, GLenum& magFilter)
+	{
+		QAction* selectedItem = exec(pos);
+
+		if(selectedItem!=NULL)
+		{
+			minFilter = selectedItem->data().toPoint().x();
+			magFilter = selectedItem->data().toPoint().y();
+			return true;
+		}
+		else
+			return false;
+	}
+
+	void FilterMenu::processAction(QAction* action)
+	{
+		if(action!=NULL)
+			emit changeFilter( action->data().toPoint().x(), action->data().toPoint().y() );
+	}
+
+// WrappingMenu
+	WrappingMenu::WrappingMenu(QWidget* parent)
+	 : 	QMenu("Wrapping", parent),
+		sMenu("S Wrapping", this),
+		tMenu("T Wrapping", this), 
+		bothClamp("Change both to GL_CLAMP", this),
+		bothClampToBorder("Change both to GL_CLAMP_TO_BORDER", this),
+		bothClampToEdge("Change both to GL_CLAMP_TO_EDGE", this),
+		bothRepeat("Change both to GL_REPEAT", this),
+		bothMirroredRepeat("Change both to GL_MIRRORED_REPEAT", this),
+		sClamp("GL_CLAMP", this),
+		sClampToBorder("GL_CLAMP_TO_BORDER", this),
+		sClampToEdge("GL_CLAMP_TO_EDGE", this),
+		sRepeat("GL_REPEAT", this),
+		sMirroredRepeat("GL_MIRRORED_REPEAT", this),
+		tClamp("GL_CLAMP", this),
+		tClampToBorder("GL_CLAMP_TO_BORDER", this),
+		tClampToEdge("GL_CLAMP_TO_EDGE", this),
+		tRepeat("GL_REPEAT", this),
+		tMirroredRepeat("GL_MIRRORED_REPEAT", this)
+	{
+		sMenu.addAction(&sClamp);
+		sMenu.addAction(&sClampToBorder);
+		sMenu.addAction(&sClampToEdge);
+		sMenu.addAction(&sRepeat);
+		sMenu.addAction(&sMirroredRepeat);
+
+		tMenu.addAction(&tClamp);
+		tMenu.addAction(&tClampToBorder);
+		tMenu.addAction(&tClampToEdge);
+		tMenu.addAction(&tRepeat);
+		tMenu.addAction(&tMirroredRepeat);
+
+		addAction(&bothClamp);
+		addAction(&bothClampToBorder);
+		addAction(&bothClampToEdge);
+		addAction(&bothRepeat);
+		addAction(&bothMirroredRepeat);
+
+		addMenu(&sMenu);
+		addMenu(&tMenu);
+
+		update();
+	}
+
+	void WrappingMenu::update(void)
+	{
+		const bool state = false;
+
+		bothClamp.setEnabled(state);
+		bothClampToBorder.setEnabled(state);
+		bothClampToEdge.setEnabled(state);
+		bothRepeat.setEnabled(state);
+		bothMirroredRepeat.setEnabled(state);
+		sClamp.setEnabled(state);
+		sClampToBorder.setEnabled(state);
+		sClampToEdge.setEnabled(state);
+		sRepeat.setEnabled(state);
+		sMirroredRepeat.setEnabled(state);
+		tClamp.setEnabled(state);
+		tClampToBorder.setEnabled(state);
+		tClampToEdge.setEnabled(state);
+		tRepeat.setEnabled(state);
+		tMirroredRepeat.setEnabled(state);
+	}
+
+	void WrappingMenu::update(const __ReadOnly_HdlTextureFormat& fmt)
+	{
+		bothClamp.setData( QVariant( QPoint(		GL_CLAMP,		GL_CLAMP) ) );
+		bothClampToBorder.setData( QVariant( QPoint(	GL_CLAMP_TO_BORDER, 	GL_CLAMP_TO_BORDER) ) );
+		bothClampToEdge.setData( QVariant( QPoint(	GL_CLAMP_TO_EDGE,	GL_CLAMP_TO_EDGE) ) );
+		bothRepeat.setData( QVariant( QPoint(		GL_REPEAT,		GL_REPEAT) ) );
+		bothMirroredRepeat.setData( QVariant( QPoint(	GL_MIRRORED_REPEAT,	GL_MIRRORED_REPEAT) ) );
+
+		sClamp.setData( QVariant( QPoint(		GL_CLAMP,		fmt.getTWrapping() ) ) );
+		sClampToBorder.setData( QVariant( QPoint(	GL_CLAMP_TO_BORDER, 	fmt.getTWrapping() ) ) );
+		sClampToEdge.setData( QVariant( QPoint(		GL_CLAMP_TO_EDGE,	fmt.getTWrapping() ) ) );
+		sRepeat.setData( QVariant( QPoint(		GL_REPEAT,		fmt.getTWrapping() ) ) );
+		sMirroredRepeat.setData( QVariant( QPoint(	GL_MIRRORED_REPEAT,	fmt.getTWrapping() ) ) );
+
+		tClamp.setData( QVariant( QPoint(		fmt.getSWrapping(),	GL_CLAMP) ) );
+		tClampToBorder.setData( QVariant( QPoint(	fmt.getSWrapping(),	GL_CLAMP_TO_BORDER) ) );
+		tClampToEdge.setData( QVariant( QPoint(		fmt.getSWrapping(),	GL_CLAMP_TO_EDGE) ) );
+		tRepeat.setData( QVariant( QPoint(		fmt.getSWrapping(),	GL_REPEAT) ) );
+		tMirroredRepeat.setData( QVariant( QPoint(	fmt.getSWrapping(),	GL_MIRRORED_REPEAT) ) );
+	}
+
+	bool WrappingMenu::ask(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping)
+	{
+		QAction* selectedItem = exec(pos);
+
+		if(selectedItem!=NULL)
+		{
+			sWrapping = selectedItem->data().toPoint().x();
+			tWrapping = selectedItem->data().toPoint().y();
+			return true;
+		}
+		else
+			return false;
+	}
+
+	void  WrappingMenu::processAction(QAction* action)
+	{
+		if(action!=NULL)
+			emit changeWrapping( action->data().toPoint().x(), action->data().toPoint().y() );
+	}
+
+// Ressources GUI :
+	RessourcesTab::RessourcesTab(QWidget* parent)
+	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this),
+	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this)
+	{
+		// Create image menu : 
+		imageMenu.addAction(&loadImage);
+		imageMenu.addAction(&freeImage);
+	
+		// Create Menu bar : 
+		menuBar.addMenu(&imageMenu);
+		menuBar.addMenu(&connectionMenu);
+		menuBar.addMenu(&filterMenu);
+		menuBar.addMenu(&wrappingMenu);
+
+		// Create tree : 
+			tree.setIndentation(2);
+
+			QStringList listLabels;
+			listLabels.push_back("Name");
+			listLabels.push_back("Size");
+			listLabels.push_back("Mode/Depth");
+			listLabels.push_back("Min/Mag");
+			listLabels.push_back("SWarp/TWarp");
+			listLabels.push_back("Mipmap");
+			tree.setHeaderLabels( listLabels );
+
+			tree.addTopLevelItem(new QTreeWidgetItem(RessourceImages));
+			tree.topLevelItem(RessourceImages)->setText(0, "Images (0)");
+			tree.topLevelItem(RessourceImages)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(RessourceImages)->setFont(0, QFont("", 12));			
+			
+			tree.addTopLevelItem(new QTreeWidgetItem(RessourceFormats));
+			tree.topLevelItem(RessourceFormats)->setText(0, "Formats (0)");
+			tree.topLevelItem(RessourceFormats)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(RessourceFormats)->setFont(0, QFont("", 12));
+
+			tree.addTopLevelItem(new QTreeWidgetItem(RessourceInputs));
+			tree.topLevelItem(RessourceInputs)->setText(0, "Inputs (0)");
+			tree.topLevelItem(RessourceInputs)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(RessourceInputs)->setFont(0, QFont("", 12));
+
+			tree.addTopLevelItem(new QTreeWidgetItem(RessourceOutputs));
+			tree.topLevelItem(RessourceOutputs)->setText(0, "Outputs (0)");
+			tree.topLevelItem(RessourceOutputs)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(RessourceOutputs)->setFont(0, QFont("", 12));
+
+		// Build layout : 
+		layout.addWidget(&menuBar);
+		layout.addWidget(&tree);
+
 		// Connections : 
-		QObject::connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
+		//QObject::connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
 	}
 
 	RessourcesTab::~RessourcesTab(void)
@@ -92,7 +401,7 @@
 	}
 
 // Tools : 
-	QTreeWidgetItem* LibraryInterface::addItem(RessourceCategory category, QString title, int ressourceID)
+	QTreeWidgetItem* RessourcesTab::addItem(RessourceCategory category, QString title, int ressourceID)
 	{
 		QTreeWidgetItem* item = new QTreeWidgetItem(category);
 
@@ -101,12 +410,12 @@
 		// Set the link to the data : 
 		item->setData(0, Qt::UserRole, QVariant(ressourceID));
 
-		ressourceTab.topLevelItem(category)->addChild(item);
+		tree.topLevelItem(category)->addChild(item);
 	
 		return item;
 	}
 
-	void LibraryInterface::removeAllChildren(QTreeWidgetItem* root)
+	void RessourcesTab::removeAllChildren(QTreeWidgetItem* root)
 	{
 		if(root==NULL)
 			return ;
@@ -118,7 +427,7 @@
 		}
 	}
 
-	void LibraryInterface::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
+	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
 	{
 		size_t s = fmt.getSize();
 
@@ -139,13 +448,36 @@
 		item->setText(5, tr("%1").arg(fmt.getMaxLevel()));
 	}
 
-	void LibraryInterface::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
+	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
 	{
 		// First on the format : 
 		appendTextureInformation(item, texture.format(), texture.getSizeOnGPU());
 	}
+	
+	void RessourcesTab::updateRessourceAlternateColors(QTreeWidgetItem* root)
+	{
+		QBrush 	foreground	= palette().foreground().color(),
+			original 	= palette().background().color(),
+			darker		= QBrush(original.color().lighter(80)),
+			lighter		= QBrush(original.color().lighter(120));
+		
+		QBrush* ptr = NULL;
+		for(int k=0; k<root->childCount(); k++)
+		{
+			if(k%2==0)
+				ptr = &lighter;
+			else
+				ptr = &darker;
 
-	TextureObject* LibraryInterface::getCorrespondingTexture(QTreeWidgetItem* item)
+			for(int l=0; l<tree.columnCount(); l++)
+			{
+				root->child(k)->setForeground(l, QBrush(foreground));
+				root->child(k)->setBackground(l, QBrush(*ptr));
+			}
+		}
+	}
+
+	TextureObject* RessourcesTab::getCorrespondingTexture(QTreeWidgetItem* item)
 	{
 		if(item==NULL)
 			return NULL;
@@ -157,7 +489,7 @@
 			return textures[item->data(0, Qt::UserRole).toInt()];
 	}
 
-	FormatObject* LibraryInterface::getCorrespondingFormat(QTreeWidgetItem* item)
+	FormatObject* RessourcesTab::getCorrespondingFormat(QTreeWidgetItem* item)
 	{
 		if(item==NULL)
 			return NULL;
@@ -166,14 +498,14 @@
 		else if(item->data(0, Qt::UserRole).toInt()<0)
 			return NULL;
 		else
-			return formats[item->data(0, Qt::UserRole).toInt()];
+			return &formats[item->data(0, Qt::UserRole).toInt()];
 	}
 	
 // Update sections : 
-	void LibraryInterface::updateImageListDisplay(void)
+	void RessourcesTab::updateImageListDisplay(void)
 	{
 		int count = 0;
-		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceImages);
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceImages);
 		removeAllChildren(root);
 
 		for(int k=0; k<textures.size(); k++)
@@ -194,16 +526,16 @@
 		if(count>0)
 		{
 			// Update design : 
-			updateRessourceAlternateColors(ressourceTab.topLevelItem(RessourceImages));
+			updateRessourceAlternateColors(tree.topLevelItem(RessourceImages));
 		}
 		
 		// Update the title : 
-		ressourceTab.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(count));
+		tree.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(count));
 	}
 
-	void LibraryInterface::updateFormatListDisplay(void)
+	void RessourcesTab::updateFormatListDisplay(void)
 	{
-		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceFormats);
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceFormats);
 		removeAllChildren(root);
 
 		formats.clear();
@@ -265,9 +597,9 @@
 		root->setText(0, tr("Formats (%1)").arg(formats.size()));
 	}
 
-	void LibraryInterface::updateInputConnectionDisplay(void)
+	void RessourcesTab::updateInputConnectionDisplay(void)
 	{
-		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceInputs);
+		/*QTreeWidgetItem* root = topLevelItem(RessourceInputs);
 		removeAllChildren(root);
 
 		if(mainPipeline!=NULL)
@@ -298,12 +630,12 @@
 		}
 		else
 			// Update the title : 
-			root->setText(0, tr("Inputs (0)"));
+			root->setText(0, tr("Inputs (0)"));*/
 	}
 
-	void LibraryInterface::updateOutputConnectionDisplay(void)
+	void RessourcesTab::updateOutputConnectionDisplay(void)
 	{
-		QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceOutputs);
+		/*QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceOutputs);
 		removeAllChildren(root);
 
 		if(mainPipeline!=NULL)
@@ -328,7 +660,7 @@
 		}
 		else
 			// Update the title : 
-			root->setText(0, tr("Outputs (0)"));
+			root->setText(0, tr("Outputs (0)"));*/
 	}
 
 // Private Slots : 

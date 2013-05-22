@@ -226,8 +226,8 @@
 
 	void ShaderSource::wordSplit(const std::string& line, std::vector<std::string>& split)
 	{
-		const std::string 	delimiters = " \n\r\t.,;/\\?*+-:#'\"=",	// Will be used to split words
-					wordsDelim = "=,;";			// Will also be appended to the list
+		const std::string 	delimiters = " \n\r\t\f\v.,;/\\?*+-:#'\"=",	// Will be used to split words
+					wordsDelim = "=,;";				// Will also be appended to the list
 
 		std::string current;
 		bool recording=false;

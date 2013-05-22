@@ -104,7 +104,7 @@
 // LayoutLoaderParser::VanillaParser
 	VanillaParser::VanillaParser(const std::string& code, int lineOffset)
 	{
-		const std::string	spacers 		= " \t\r\n",
+		const std::string	spacers 		= " \t\r\n\f\v",
 				  	cmtMultiStart		= "/*",
 				  	cmtMultiEnd		= "*/",
 				  	cmtMonoStart  		= "//",
@@ -436,8 +436,8 @@
 
 	void LayoutLoader::enhanceShaderSource(std::string& str)
 	{
-		const std::string 	spacers 	= " \t\r\n",
-					endSpacers 	= " \t\r\n;(){}[],./\\|+*",
+		const std::string 	spacers 	= " \t\r\n\f\v",
+					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
 					keyword 	= keywords[INCLUDE_SHARED_SOURCE];
 
 		size_t pos = str.find(keyword);

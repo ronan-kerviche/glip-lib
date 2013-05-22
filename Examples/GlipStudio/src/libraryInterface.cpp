@@ -4,8 +4,6 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-
-
 // ConnectToInputHub
 	ConnectToInputHub::ConnectToInputHub(QWidget* parent)
 	 : QMenu("Connect to input", parent)
@@ -43,7 +41,7 @@
 
 // LibraryInterface :
 	LibraryInterface::LibraryInterface(QWidget *parent)
-	 : QWidget(parent), menuBar(this), layout(this), tabs(this), ressourceTab(this), uniformsTab(this), connectionMenu(this),
+	 : QWidget(parent), /*menuBar(this),*/ layout(this), tabs(this), ressourceTab(this), uniformsTab(this), connectionMenu(this),
 	   openAct(tr("&Load Image"), this), freeImageAct(tr("&Free Image"), this), saveAct(tr("Save Output"), this), saveAsAct(tr("Save Output as"), this),
 	   currentOutputLnk(NULL), mainPipeline(NULL), lastUsedPipelineOutput(-1), lastComputeSucceeded(false)
 	{
@@ -63,21 +61,21 @@
 		saveAsAct.setStatusTip(tr("Save output to ..."));
 		//QObject::connect(&saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
 
-		menuBar.addAction(&openAct);		
+		/*menuBar.addAction(&openAct);		
 		menuBar.addMenu(&connectionMenu);
 		menuBar.addAction(&saveAct);
 		menuBar.addAction(&saveAsAct);
-		menuBar.addAction(&freeImageAct);
+		menuBar.addAction(&freeImageAct);*/
 
 		tabs.addTab(&ressourceTab, 	"Ressources");
 		tabs.addTab(&compilationTab,	"Compilation");
 		tabs.addTab(&uniformsTab, 	"Uniforms");
 
-		layout.addWidget(&menuBar);
+		//layout.addWidget(&menuBar);
 		layout.addWidget(&tabs);
 
 		// Ressources : 
-			ressourceTab.setIndentation(1);
+			/*ressourceTab.setIndentation(1);
 
 			QStringList listLabels;
 			listLabels.push_back("Name");
@@ -111,7 +109,7 @@
 
 			QObject::connect(&ressourceTab, 	SIGNAL(itemClicked(QTreeWidgetItem*, int)), 	this, SLOT(imageSelected(QTreeWidgetItem*, int)));
 			QObject::connect(&ressourceTab,		SIGNAL(itemActivated(QTreeWidgetItem*, int)),	this, SLOT(imageSelected(QTreeWidgetItem*, int)));
-			//QObject::connect(&ressourceTab, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(imageSelected(QTreeWidgetItem*, int)));
+			//QObject::connect(&ressourceTab, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(imageSelected(QTreeWidgetItem*, int)));*/
 
 		// Compilation : 
 			cleanCompilationTab(true);
@@ -123,8 +121,8 @@
 			compilationTab.setFont(font);
 
 		// Context menu :
-			ressourceTab.setContextMenuPolicy(Qt::CustomContextMenu);
-			QObject::connect(&ressourceTab, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+			//ressourceTab.setContextMenuPolicy(Qt::CustomContextMenu);
+			//QObject::connect(&ressourceTab, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
 		// Connections : 
 			QObject::connect(&connectionMenu, SIGNAL(connectToInput(int)),	this, SLOT(updateConnection(int)));
@@ -199,7 +197,7 @@
 
 	void LibraryInterface::removeImage(int id)
 	{
-		QTreeWidgetItem* 	item = ressourceTab.topLevelItem(RessourceImages)->takeChild(id);
+		/*QTreeWidgetItem* 	item = ressourceTab.topLevelItem(RessourceImages)->takeChild(id);
 		int 			idi = item->data(0, Qt::UserRole).toInt();
 
 		if(idi<0)
@@ -237,10 +235,10 @@
 		delete item;
 		delete obj;
 
-		emit requireRedraw();
+		emit requireRedraw();*/
 	}
 
-	void LibraryInterface::updateRessourceAlternateColors(QTreeWidgetItem* root)
+	/*void LibraryInterface::updateRessourceAlternateColors(QTreeWidgetItem* root)
 	{
 		QBrush 	foreground	= ressourceTab.palette().foreground().color(),
 			original 	= ressourceTab.palette().background().color(),
@@ -261,12 +259,11 @@
 				root->child(k)->setBackground(l, QBrush(*ptr));
 			}
 		}
-	}
-	
+	}*/
 
 	void LibraryInterface::imageSelected(QTreeWidgetItem* item, int column)
 	{
-		int 	type = item->type(),
+		/*int 	type = item->type(),
 			id = item->data(0, Qt::UserRole).toInt();
 
 		switch(type)
@@ -308,14 +305,12 @@
 				break;
 			default :
 				throw Exception("LibraryInterface::imageSelected - Internal error : unknown scalar type for QTreeWidgetItem.", __FILE__, __LINE__);
-		}
-
-		
+		}*/
 	}
 
 	void LibraryInterface::loadImage(void)
 	{
-		bool oneSucceeded = false;
+		/*bool oneSucceeded = false;
 		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Load an Image"), ".", tr("Image (*.bmp *.png *.jpg"));
 		
 		for(int k=0; k<filenames.count(); k++)
@@ -348,12 +343,12 @@
 	
 			// Expand : 
 			ressourceTab.topLevelItem(RessourceImages)->setExpanded(true);
-		}
+		}*/
 	}
 
 	void LibraryInterface::updateConnection(int idInput)
 	{
-		// Get the current selected items :
+		/*// Get the current selected items :
 		QList<QTreeWidgetItem *> selectedItems = ressourceTab.selectedItems();
 
 		if(selectedItems.count()==1)
@@ -373,12 +368,12 @@
 				else
 					throw Exception("LibraryInterface::updateConnection - Internal error : Item does not correspond to any ressource.", __FILE__, __LINE__);
 			}
-		}
+		}*/
 	}
 
 	void LibraryInterface::compute(bool forcePipelineOutput)
 	{
-		if(mainPipeline!=NULL)
+		/*if(mainPipeline!=NULL)
 		{
 			lastComputeSucceeded = false;
 
@@ -405,12 +400,12 @@
 
 			// Need redraw : 
 			emit requireRedraw();
-		}
+		}*/
 	}
 
 	void LibraryInterface::freeImage(void)
 	{
-		// Get the current selected items :
+		/*// Get the current selected items :
 		QList<QTreeWidgetItem *> selectedItems = ressourceTab.selectedItems();
 
 		if(selectedItems.count()==1)
@@ -421,12 +416,12 @@
 
 			if(item->type()==RessourceImages && id>=0)
 				removeImage(ressourceTab.topLevelItem(RessourceImages)->indexOfChild(item));
-		}
+		}*/
 	}
 
 	int LibraryInterface::getNumImages(void) const
 	{
-		int res = 0;
+		/*int res = 0;
 
 		for(int k=0; k<textures.size(); k++)
 		{
@@ -434,12 +429,15 @@
 				res++;
 		}
 
-		return res;
+		return res;*/
+
+		return 0;
 	}
 
 	bool LibraryInterface::hasOutput(void) const
 	{
-		return currentOutputLnk!=NULL;
+		//return currentOutputLnk!=NULL;
+		return false;
 	}
 
 	HdlTexture& LibraryInterface::currentOutput(void)
@@ -452,7 +450,7 @@
 
 	void LibraryInterface::compile(const std::string& code, const std::string& path)
 	{
-		if(code.empty())
+		/*if(code.empty())
 			return ; //Nothing to do...
 
 		bool success = true;
@@ -522,11 +520,12 @@
 			connectionMenu.clearHub();
 
 			emit requireRedraw();
-		}
+		}*/
 	}
 
 	void LibraryInterface::showContextMenu(const QPoint& pos)
 	{
+		/*
 		// Get the global position : 
 		QPoint globalPos = ressourceTab.viewport()->mapToGlobal(pos); //ressourceTab.mapToGlobal(pos);
 
@@ -603,10 +602,10 @@
 
 			}
 
-			/*std::cout << item->data(0, Qt::UserRole).toInt() << std::endl;
-			if(item->data(0, Qt::UserRole).toInt()>=0)
-				std::cout << textures[item->data(0, Qt::UserRole).toInt()]->getName().toStdString() << std::endl;*/
-		}
+			//std::cout << item->data(0, Qt::UserRole).toInt() << std::endl;
+			//if(item->data(0, Qt::UserRole).toInt()>=0)
+			//	std::cout << textures[item->data(0, Qt::UserRole).toInt()]->getName().toStdString() << std::endl;
+		}*/
 
 		/*QMenu myMenu;
 		myMenu.addAction("Menu Item 1");

@@ -8,6 +8,7 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/Qt/RessourceLoader.hpp \
 			./src/codeEditor.hpp \
 			./src/keywords.hpp \
+			./src/ressourcesTab.hpp \
 			./src/libraryInterface.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
@@ -15,6 +16,7 @@ SOURCES      	+= 	./src/main.cpp \
 			../ExternalTools/Qt/RessourceLoader.cpp \
 			./src/codeEditor.cpp \
 			./src/keywords.cpp \
+			./src/ressourcesTab.cpp \
 			./src/libraryInterface.cpp \
 			./src/mainInterface.cpp
 

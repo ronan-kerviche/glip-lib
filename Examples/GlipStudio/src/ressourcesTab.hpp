@@ -1,8 +1,13 @@
 #ifndef __GLIPSTUDIO_RESSOURCETAB__
-#ifndef __GLIPSTUDIO_RESSOURCETAB__
+#define __GLIPSTUDIO_RESSOURCETAB__
 
 	#include "GLIPLib.hpp"
+	#include "RessourceLoader.hpp"
 	#include <QtGui>
+
+	using namespace Glip;
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
 
 // Texture object :
 	class TextureObject
@@ -36,9 +41,110 @@
 			void setFormat(const __ReadOnly_HdlTextureFormat& cpy);
 	};
 
-// Ressources GUI :
-	class RessourcesTab : public QTreeWidget
+// Menus : 
+	class ConnectionMenu : public QMenu
 	{
+		Q_OBJECT
+
+		private : 
+			QList<QAction *>	currentActions;
+			QSignalMapper		mapper;
+
+		public : 
+			ConnectionMenu(QWidget* parent=NULL);
+			~ConnectionMenu(void);
+
+			void activate(bool state);
+			void update(void);
+			void update(const __ReadOnly_PipelineLayout& layout);			
+
+		signals :
+			void connectToInput(int i);
+	};
+
+	class FilterMenu : public QMenu
+	{
+		// GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR
+
+		Q_OBJECT
+
+		private : 
+			// Sub menus : 
+			QMenu 	minFilter,
+				magFilter;
+
+			// Actions list : 
+			QAction bothNearest,
+				bothLinear,
+				minNearest,
+				minLinear,
+				minNearestMipmapNearest,
+				minNearestMipmapLinear,
+				minLinerarMipmapNearest,
+				minLinearMipmapLinear,
+				magNearest,
+				magLinear;
+
+		private slots : 
+			void processAction(QAction* action);
+
+		public : 
+			FilterMenu(QWidget* parent=NULL);
+
+			void update(void);
+			void update(const __ReadOnly_HdlTextureFormat& fmt);
+			bool ask(const QPoint& pos, GLenum& minFilter, GLenum& magFilter);
+
+		signals : 
+			void changeFilter(GLenum minFilter, GLenum magFilter);
+	};
+
+	class WrappingMenu : public QMenu 
+	{
+		// GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT
+
+		Q_OBJECT
+
+		private : 
+			// Sub Menus : 
+			QMenu 	sMenu,
+				tMenu;
+	
+			QAction	bothClamp,
+				bothClampToBorder,
+				bothClampToEdge,
+				bothRepeat,
+				bothMirroredRepeat,
+				sClamp,
+				sClampToBorder,
+				sClampToEdge,
+				sRepeat,
+				sMirroredRepeat,
+				tClamp,
+				tClampToBorder,
+				tClampToEdge,
+				tRepeat,
+				tMirroredRepeat;		
+			
+		private slots : 
+			void processAction(QAction* action);
+
+		public : 
+			WrappingMenu(QWidget* parent=NULL);
+
+			void update(void);
+			void update(const __ReadOnly_HdlTextureFormat& fmt);
+			bool ask(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping);
+
+		signals : 
+			void changeWrapping(GLenum sWrapping, GLenum tWrapping);
+	};
+
+// Ressources GUI :
+	class RessourcesTab : public QWidget
+	{
+		Q_OBJECT
+
 		private : 
 			enum RessourceCategory
 			{
@@ -54,18 +160,18 @@
 			std::vector<FormatObject>	formats;
 			std::vector<TextureObject*>	preferredConnections;
 
-			// GUI : 
+			// GUI : 	
+			QVBoxLayout	layout;
 			QMenuBar 	menuBar;
-			QMenu		imageMenu,
-					connectionMenu,
-					outputMenu,
-					filterMenu,
-					clampingMenu;
+			QTreeWidget	tree;
+			ConnectionMenu	connectionMenu;
+			FilterMenu	filterMenu;
+			WrappingMenu	wrappingMenu;
+			QMenu		imageMenu;
 			QAction		loadImage,
-					freeImage,
-					freeAllImages;
+					freeImage;
 
-			QProgressBar	loadProgress;
+			//QProgressBar	loadProgress;
 
 			// Tools : 
 			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
@@ -86,16 +192,16 @@
 			void updateClampMenu(void);
 
 		private slots :
-			void selectionChanged(void);
+			//void selectionChanged(void);
 
 		public : 
 			RessourcesTab(QWidget* parent=NULL);
 			~RessourcesTab(void);
 
-		public slots :
+		//public slots :
 			
 
-		signals : 
+		//signals : 
 
 	};
 

@@ -2,8 +2,7 @@
 #define __GLIPSTUDIO_LIBRARY_INTERFACE__
 
 	#include "GLIPLib.hpp"
-	#include "RessourceLoader.hpp"
-	#include "RessourceTab.hpp"
+	#include "ressourcesTab.hpp"
 	#include <QtGui>
 
 	class ConnectToInputHub : public QMenu
@@ -38,8 +37,8 @@
 							saveAsAct;
 			ConnectToInputHub		connectionMenu;
 			QTabWidget			tabs;
-			QTreeWidget			ressourceTab,
-							uniformsTab;
+			RessourcesTab			ressourceTab;
+			QTreeWidget			uniformsTab;
 			QListWidget			compilationTab;
 
 			std::vector<TextureObject*>	textures;
