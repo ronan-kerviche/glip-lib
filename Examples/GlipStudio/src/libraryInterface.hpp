@@ -3,37 +3,8 @@
 
 	#include "GLIPLib.hpp"
 	#include "RessourceLoader.hpp"
+	#include "RessourceTab.hpp"
 	#include <QtGui>
-
-	class TextureObject
-	{
-		private : 
-			QString 	filename;
-			HdlTexture*	textureData;
-
-		public : 
-			TextureObject(const QString& _filename, int maxLevel=0);
-			~TextureObject(void);
-		
-			bool isValid(void) const;
-			void reload(int maxLevel=0);
-			const QString& getFileName(void) const;
-			QString getName(void) const;
-			HdlTexture& texture(void);
-	};
-
-	class FormatObject : public HdlTextureFormat
-	{
-		private : 
-			QString name;
-		
-		public : 
-			FormatObject(const QString& _name, const __ReadOnly_HdlTextureFormat& fmt);
-			FormatObject(const FormatObject& cpy);
-
-			const QString& getName(void) const;
-			void setFormat(const __ReadOnly_HdlTextureFormat& cpy);
-	};
 
 	class ConnectToInputHub : public QMenu
 	{
@@ -60,17 +31,7 @@
 		Q_OBJECT
 
 		private : 
-			enum RessourceCategory
-			{
-				RessourceImages,
-				RessourceFormats,
-				RessourceInputs,
-				RessourceOutputs,
-				RessourceNumber
-			};
-
 			QVBoxLayout			layout;
-			QMenuBar 			menuBar;
 			QAction 			openAct,
 							freeImageAct,
 							saveAct,
@@ -90,18 +51,7 @@
 			HdlTexture*			currentOutputLnk;
 			int 				lastUsedPipelineOutput;
 			bool 				lastComputeSucceeded;
-
-			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
-			void removeAllChildren(QTreeWidgetItem* root);
-			void appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& texture, size_t provideSize=0);
-			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
-			void updateRessourceAlternateColors(QTreeWidgetItem* root);
 			
-			void updateImageListDisplay(void);
-			void updateFormatListDisplay(void);
-			void updateInputConnectionDisplay(void);
-			void updateOutputConnectionDisplay(void);
-
 			void cleanCompilationTab(bool writeNoPipeline);
 			void compilationSucceeded(void);
 			void compilationFailed(Exception& e);

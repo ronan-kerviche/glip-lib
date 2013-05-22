@@ -1,37 +1,23 @@
 // Declare the function needed :
-SHARED_CODE()
+SHARED_SOURCE:reductionFunction()
 {
-	void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
-	{
-		float v = dot(current.rgb, vec3(0.0, 1.0, 0.0));
-
-		if(firstCall)
-		{
-			stackResult = vec4(v, v, v/100.0f, 0.0);
-		}
-		else
-		{
-			stackResult.r = min(stackResult.r, v);
-			stackResult.g = max(stackResult.g, v);
-			stackResult.b = stackResult.b + v/100.0f;
-		}
-	}
+	
 }
 
 // Include file :
-INCLUDE_FILE(genericReduction.ppl);
+INCLUDE_FILE(genericReduction.ppl)
 
 // Input format :
-TEXTURE_FORMAT:inputFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:inputFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
 
 // Intermediate format 1 :
-TEXTURE_FORMAT:intermediateTexture1(64,64,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:intermediateTexture1(64,64,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 // Intermediate format 2 :
-TEXTURE_FORMAT:intermediateTexture2(8,8,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:intermediateTexture2(8,8,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 // Result format :
-TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 // Resize texture shader :
 SHADER_SOURCE:resizeTextureShader()
@@ -52,8 +38,24 @@ SHADER_SOURCE:reductionMMSShader()
 {
 	#version 130
 
-	// Insert the compiled SHARED_CODE
-	INSERT_SHARED_CODE
+	void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
+	{
+		float v = dot(current.rgb, vec3(0.0, 1.0, 0.0));
+
+		if(firstCall)
+		{
+			stackResult = vec4(v, v, v/100.0f, 0.0);
+		}
+		else
+		{
+			stackResult.r = min(stackResult.r, v);
+			stackResult.g = max(stackResult.g, v);
+			stackResult.b = stackResult.b + v/100.0f;
+		}
+	}
+
+	// Insert the shared source : 
+	INCLUDE_SHARED_SOURCE:genericReduction
 
 	uniform sampler2D       inputTexture;
 	out vec4                resultTexture;
@@ -67,30 +69,31 @@ SHADER_SOURCE:reductionMMSShader()
 }
 
 // Declare the 3 filters :
-FILTER_LAYOUT:reductionResizeFilter(inputFormat, resizeTextureShader);
-FILTER_LAYOUT:reductionMMSFilter1(intermediateTexture1, reductionMMSShader);
-FILTER_LAYOUT:reductionMMSFilter2(intermediateTexture2, reductionMMSShader);
-FILTER_LAYOUT:reductionMMSFilter3(resultFormat, reductionMMSShader);
+FILTER_LAYOUT:reductionResizeFilter(inputFormat, resizeTextureShader)
+FILTER_LAYOUT:reductionMMSFilter1(intermediateTexture1, reductionMMSShader)
+FILTER_LAYOUT:reductionMMSFilter2(intermediateTexture2, reductionMMSShader)
+FILTER_LAYOUT:reductionMMSFilter3(resultFormat, reductionMMSShader)
 
 // Declare the pipeline :
 PIPELINE_MAIN:reductionMMSPipeline()
 {
-	INPUT_PORTS(inputTexture);
-	OUTPUT_PORTS(resultTexture, inter1, inter2);
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(resultTexture, inter1, inter2)
 
-	FILTER_INSTANCE:inst0(reductionResizeFilter);
-	FILTER_INSTANCE:inst1(reductionMMSFilter1);
-	FILTER_INSTANCE:inst2(reductionMMSFilter2);
-	FILTER_INSTANCE:inst3(reductionMMSFilter3);
+	FILTER_INSTANCE:inst0(reductionResizeFilter)
+	FILTER_INSTANCE:inst1(reductionMMSFilter1)
+	FILTER_INSTANCE:inst2(reductionMMSFilter2)
+	FILTER_INSTANCE:inst3(reductionMMSFilter3)
 
 	// Make the connections :
-	CONNECTION(THIS, inputTexture, inst0, inputTexture);
-	CONNECTION(inst0, resizedTexture, inst1, inputTexture);
-	CONNECTION(inst1, resultTexture, inst2, inputTexture);
-	CONNECTION(inst2, resultTexture, inst3, inputTexture);
-	CONNECTION(inst3, resultTexture, THIS, resultTexture);
+	CONNECTION(THIS, inputTexture, inst0, inputTexture)
+	CONNECTION(inst0, resizedTexture, inst1, inputTexture)
+	CONNECTION(inst1, resultTexture, inst2, inputTexture)
+	CONNECTION(inst2, resultTexture, inst3, inputTexture)
+	CONNECTION(inst3, resultTexture, THIS, resultTexture)
 
 	// For visualization :
-	CONNECTION(inst1, resultTexture, THIS, inter1);
-	CONNECTION(inst2, resultTexture, THIS, inter2);
+	CONNECTION(inst1, resultTexture, THIS, inter1)
+	CONNECTION(inst2, resultTexture, THIS, inter2)
 }
+

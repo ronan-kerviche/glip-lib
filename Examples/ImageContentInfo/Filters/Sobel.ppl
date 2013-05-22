@@ -38,7 +38,8 @@ SHADER_SOURCE:sobelShaderPlusVisualization()
 	out     vec4 		sobelTexture,
 				visualization;
 
-	INCLUDE_SHARED_CODE:convolutionTool
+	INCLUDE_SHARED_SOURCE:convolutionTool
+	INCLUDE_SHARED_SOURCE:Sobel
 
 	void main()
 	{

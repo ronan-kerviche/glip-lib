@@ -1,5 +1,5 @@
 
-SHARED_CODE()
+SHARED_SOURCE:genericReduction()
 {
 	// This segment requires the use to prepare a function of the following prototype signature :
 	// void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)

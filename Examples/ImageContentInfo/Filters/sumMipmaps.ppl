@@ -1,6 +1,6 @@
 
 // This pipeline will average up to 5 levels of mipmaps. Ensure that input has mipmaps or output will be the same as input.
-TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP);
+TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR,GL_CLAMP,GL_CLAMP)
 
 SHADER_SOURCE:shader()
 {
@@ -21,15 +21,15 @@ SHADER_SOURCE:shader()
 	}
 }
 
-FILTER_LAYOUT:filter(format,shader);
+FILTER_LAYOUT:filter(format,shader)
 
 PIPELINE_MAIN:pMain()
 {
-	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0);
+	INPUT_PORTS(i0)
+	OUTPUT_PORTS(o0)
 
-	FILTER_INSTANCE:inst_filter(filter);
+	FILTER_INSTANCE:inst_filter(filter)
 
-	CONNECTION(THIS,	i0,	 inst_filter,	inText);
-	CONNECTION(inst_filter,	outText, THIS,		o0);
+	CONNECTION(THIS,	i0,	 inst_filter,	inText)
+	CONNECTION(inst_filter,	outText, THIS,		o0)
 }

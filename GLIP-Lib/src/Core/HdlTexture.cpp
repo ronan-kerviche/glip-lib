@@ -418,6 +418,10 @@ using namespace Glip::CoreGL;
 		if(isCompressed())
 			NEED_EXTENSION(GLEW_ARB_texture_compression);
 
+		// Test : 
+		if(getBaseLevel()>getMaxLevel())
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + to_string(getBaseLevel()) + ") is greater than maximum mipmap level (" + to_string(getMaxLevel()) + ").", __FILE__, __LINE__);
+
 		glEnable(GL_TEXTURE_2D);
 
 		// Create the texture

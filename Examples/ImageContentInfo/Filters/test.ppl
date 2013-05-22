@@ -1,5 +1,5 @@
-TEXTURE_FORMAT:format(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
-TEXTURE_FORMAT:formatOut(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR);
+TEXTURE_FORMAT:format(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
+TEXTURE_FORMAT:formatOut(480,360,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 
 /* Commented :
 SHADER_SOURCE:gradient()
@@ -55,7 +55,7 @@ SHADER_SOURCE:gradient()
 	}
 }*/
 
-SHADER_SOURCE:gradient(gradient2.glsl);
+SHADER_SOURCE:gradient(gradient2.glsl)
 
 SHADER_SOURCE:ampl()
 {
@@ -77,21 +77,22 @@ SHADER_SOURCE:ampl()
 	}
 }
 
-FILTER_LAYOUT:gradFilter(format,gradient);
-FILTER_LAYOUT:amplFilter(formatOut,ampl);
+FILTER_LAYOUT:gradFilter(format,gradient)
+FILTER_LAYOUT:amplFilter(formatOut,ampl)
 
 PIPELINE_MAIN:pMainGradient()
 {
-	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0);
+	INPUT_PORTS(i0)
+	OUTPUT_PORTS(o0)
 
-	FILTER_INSTANCE:instGrad(gradFilter);
-	FILTER_INSTANCE:instAmpl(amplFilter);
+	FILTER_INSTANCE:instGrad(gradFilter)
+	FILTER_INSTANCE:instAmpl(amplFilter)
 
-	CONNECTION(THIS,i0,instGrad,tex0);
-	CONNECTION(instGrad,red,instAmpl,red);
-	CONNECTION(instGrad,green,instAmpl,green);
-	CONNECTION(instGrad,blue,instAmpl,blue);
-	CONNECTION(instAmpl,col,THIS,o0);
-	//CONNECTION(instGrad,blue,THIS,o0);
+	CONNECTION(THIS,i0,instGrad,tex0)
+	CONNECTION(instGrad,red,instAmpl,red)
+	CONNECTION(instGrad,green,instAmpl,green)
+	CONNECTION(instGrad,blue,instAmpl,blue)
+	CONNECTION(instAmpl,col,THIS,o0)
+	//CONNECTION(instGrad,blue,THIS,o0)
 }
+

@@ -168,6 +168,9 @@
 			}
 			else if(code[k]==':')
 			{
+				if(currentField==Element::Arguments)
+					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ':' when parsing arguments.", __FILE__, __LINE__);
+
 				testAndSaveCurrentElement(currentField, Element::Name, el);
 				el.noName = false;
 				after = false;
@@ -175,6 +178,9 @@
 			}
 			else if(code[k]=='{')
 			{
+				if(currentField==Element::Arguments)
+					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '{' when parsing arguments.", __FILE__, __LINE__);
+
 				testAndSaveCurrentElement(currentField, Element::Body, el);
 				el.noBody = false;
 				after = false;
@@ -191,6 +197,9 @@
 			}
 			else if(code[k]=='(')
 			{
+				if(currentField==Element::Arguments)
+					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '(' when parsing arguments.", __FILE__, __LINE__);
+
 				testAndSaveCurrentElement(currentField, Element::Arguments, el);
 				el.noArgument = false;
 				after = false;
@@ -240,6 +249,13 @@
 				after = false;
 			}
 		}
+
+		// Test for possible end of input : 
+		if(bracketLevel>0)
+			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing '}'.", __FILE__, __LINE__);
+			
+		if(currentField==Element::Arguments)
+			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing ')'.", __FILE__, __LINE__);
 
 		// Force save the last element :
 		if(!el.empty())
@@ -430,7 +446,7 @@
 		{
 			size_t k = pos + keyword.size();
 
-			// Find the following traling ':' :
+			// Find the following trailing ':' :
 			for(; k<str.size(); k++)
 			{
 				if(str[k]==':')
@@ -639,8 +655,8 @@
 	
 		if(e.arguments.size()>8)
 		{
-			if(!from_string(e.arguments[0], mipmap))
-				throw Exception("From line " + to_string(e.startLine) + " : Canno read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+			if(!from_string(e.arguments[8], mipmap))
+				throw Exception("From line " + to_string(e.startLine) + " : Canno read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
 		}
 		else
 			mipmap = 0;
@@ -664,8 +680,8 @@
 		if(formatList.find(e.name)!=formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A Format Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
-		// Create and push :
-		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, mipmap) ) );
+		// Create and push (note the 0 base mipmap) :
+		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
 	}
 
 	void LayoutLoader::buildShaderSource(const LayoutLoaderParser::Element& e)
