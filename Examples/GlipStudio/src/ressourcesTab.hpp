@@ -4,6 +4,7 @@
 	#include "GLIPLib.hpp"
 	#include "RessourceLoader.hpp"
 	#include <QtGui>
+	#include <unistd.h>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -93,6 +94,7 @@
 
 			void update(void);
 			void update(const __ReadOnly_HdlTextureFormat& fmt);
+			void get(QAction* action, GLenum& dminFilter, GLenum& dmagFilter);
 			bool ask(const QPoint& pos, GLenum& minFilter, GLenum& magFilter);
 
 		signals : 
@@ -134,10 +136,46 @@
 
 			void update(void);
 			void update(const __ReadOnly_HdlTextureFormat& fmt);
+			void get(QAction* action, GLenum& dsWrapping, GLenum& dtWrapping);
 			bool ask(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping);
-
+			
 		signals : 
 			void changeWrapping(GLenum sWrapping, GLenum tWrapping);
+	};
+
+// Loading widget : 
+	class LoadingWidget : public QWidget
+	{
+		Q_OBJECT
+
+		private : 
+			bool				canceled;
+			QHBoxLayout 			layout;
+			QPushButton 			cancelButton;
+			QProgressBar			progressBar;
+			QStringList			filenames;
+			std::vector<TextureObject*> 	loadedObjects;
+		
+			// Loader : 
+			void clear(void);
+			void loadImageProcess(const QStringList& filenames);
+
+		private slots :
+			void load(void);
+
+		public : 
+			LoadingWidget(QWidget* parent);
+			~LoadingWidget(void);
+
+			void insertNewImagesInto(std::vector<TextureObject*>& mainCollection);
+
+		public slots :
+			void cancel(void);
+			void startLoad(void);		
+
+		signals :
+			void loadNext(void);
+			void finished(void);
 	};
 
 // Ressources GUI :
@@ -167,11 +205,10 @@
 			ConnectionMenu	connectionMenu;
 			FilterMenu	filterMenu;
 			WrappingMenu	wrappingMenu;
+			LoadingWidget	loadingWidget;
 			QMenu		imageMenu;
 			QAction		loadImage,
 					freeImage;
-
-			//QProgressBar	loadProgress;
 
 			// Tools : 
 			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
@@ -183,16 +220,19 @@
 			FormatObject* getCorrespondingFormat(QTreeWidgetItem* item);
 
 			// Update sections : 
+			void rebuildImageList(void);
 			void updateImageListDisplay(void);
 			void updateFormatListDisplay(void);
 			void updateInputConnectionDisplay(void);
 			void updateOutputConnectionDisplay(void);
-			void updateConnectionMenu(void);
-			void updateFilterMenu(void);
-			void updateClampMenu(void);
+			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL);
 
 		private slots :
-			//void selectionChanged(void);
+			void fetchLoadedImages(void);
+			void selectionChanged(void);
+			void updateImageFiltering(GLenum minFilter, GLenum magFilter);
+			void updateImageWrapping(GLenum sWrapping, GLenum tWrapping);
+			void showContextMenu(const QPoint& point);
 
 		public : 
 			RessourcesTab(QWidget* parent=NULL);
@@ -200,9 +240,8 @@
 
 		//public slots :
 			
-
 		//signals : 
-
+			
 	};
 
 #endif

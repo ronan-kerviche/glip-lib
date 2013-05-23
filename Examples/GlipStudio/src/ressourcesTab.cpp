@@ -152,6 +152,8 @@
 		addMenu(&magFilter);
 
 		update();
+
+		QObject::connect(this, SIGNAL(triggered(QAction*)), this, SLOT(processAction(QAction*)));
 	}
 
 	void FilterMenu::update(void)
@@ -210,6 +212,15 @@
 			minNearestMipmapLinear.setEnabled(state);
 			minLinerarMipmapNearest.setEnabled(state);
 			minLinearMipmapLinear.setEnabled(state);
+		}
+	}
+
+	void FilterMenu::get(QAction* action, GLenum& dminFilter, GLenum& dmagFilter)
+	{
+		if(action!=NULL)
+		{
+			dminFilter = action->data().toPoint().x();
+			dmagFilter = action->data().toPoint().y();
 		}
 	}
 
@@ -276,6 +287,8 @@
 		addMenu(&tMenu);
 
 		update();
+
+		QObject::connect(this, SIGNAL(triggered(QAction*)), this, SLOT(processAction(QAction*)));
 	}
 
 	void WrappingMenu::update(void)
@@ -301,6 +314,24 @@
 
 	void WrappingMenu::update(const __ReadOnly_HdlTextureFormat& fmt)
 	{
+		const bool state = true;
+
+		bothClamp.setEnabled(state);
+		bothClampToBorder.setEnabled(state);
+		bothClampToEdge.setEnabled(state);
+		bothRepeat.setEnabled(state);
+		bothMirroredRepeat.setEnabled(state);
+		sClamp.setEnabled(state);
+		sClampToBorder.setEnabled(state);
+		sClampToEdge.setEnabled(state);
+		sRepeat.setEnabled(state);
+		sMirroredRepeat.setEnabled(state);
+		tClamp.setEnabled(state);
+		tClampToBorder.setEnabled(state);
+		tClampToEdge.setEnabled(state);
+		tRepeat.setEnabled(state);
+		tMirroredRepeat.setEnabled(state);
+
 		bothClamp.setData( QVariant( QPoint(		GL_CLAMP,		GL_CLAMP) ) );
 		bothClampToBorder.setData( QVariant( QPoint(	GL_CLAMP_TO_BORDER, 	GL_CLAMP_TO_BORDER) ) );
 		bothClampToEdge.setData( QVariant( QPoint(	GL_CLAMP_TO_EDGE,	GL_CLAMP_TO_EDGE) ) );
@@ -318,6 +349,15 @@
 		tClampToEdge.setData( QVariant( QPoint(		fmt.getSWrapping(),	GL_CLAMP_TO_EDGE) ) );
 		tRepeat.setData( QVariant( QPoint(		fmt.getSWrapping(),	GL_REPEAT) ) );
 		tMirroredRepeat.setData( QVariant( QPoint(	fmt.getSWrapping(),	GL_MIRRORED_REPEAT) ) );
+	}
+
+	void WrappingMenu::get(QAction* action, GLenum& dsWrapping, GLenum& dtWrapping)
+	{
+		if(action!=NULL)
+		{
+			dsWrapping = action->data().toPoint().x();
+			dtWrapping = action->data().toPoint().y();
+		}
 	}
 
 	bool WrappingMenu::ask(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping)
@@ -340,9 +380,113 @@
 			emit changeWrapping( action->data().toPoint().x(), action->data().toPoint().y() );
 	}
 
+// LoadingWidget : 
+	LoadingWidget::LoadingWidget(QWidget* parent)
+	 : QWidget(parent), layout(this), cancelButton("Cancel", this)
+	{
+		QPalette pal = progressBar.palette();
+		pal.setColor(QPalette::Text, Qt::white);
+		progressBar.setPalette(pal);
+
+		progressBar.setMinimum(0);
+		progressBar.setMaximum(100);
+
+		layout.addWidget(&progressBar);
+		layout.addWidget(&cancelButton);
+
+		QObject::connect(this, 		SIGNAL(loadNext(void)), this, SLOT(load(void)));
+		QObject::connect(&cancelButton, SIGNAL(released(void)), this, SLOT(cancel(void)));
+
+		hide();
+	}
+
+	LoadingWidget::~LoadingWidget(void)
+	{
+		clear();
+		filenames.clear();
+	}
+
+	void LoadingWidget::clear(void)
+	{
+		for(std::vector<TextureObject*>::iterator it=loadedObjects.begin(); it!=loadedObjects.end(); it++)
+			delete *it;
+		loadedObjects.clear();
+	}
+
+	void LoadingWidget::cancel(void)
+	{
+		canceled = true;
+	}
+
+	void LoadingWidget::startLoad(void)
+	{
+		filenames.clear();
+
+		// Get files : 
+		filenames = QFileDialog::getOpenFileNames(this, tr("Load images : "), ".", tr("Image (*.bmp *.png *.jpg"));
+
+		// If some file were selected, then start to load them : 
+		if(!filenames.isEmpty())
+		{
+			canceled = false;
+			clear();
+			show();
+			emit loadNext();
+		}
+	}
+
+	void LoadingWidget::load(void)
+	{
+		if(canceled || (loadedObjects.size() >= filenames.size()) )
+		{
+			canceled = false;
+			filenames.clear();
+			clear();
+			hide();
+
+			return ;
+		}
+
+		try
+		{
+			QString currentFilename = filenames.at( loadedObjects.size() );
+
+			// Try to load : 
+			TextureObject* ptr = new TextureObject(currentFilename);
+
+			// Save : 
+			loadedObjects.push_back(ptr);
+		}
+		catch(Exception& e)
+		{
+			// Todo
+			std::cerr << "Caught exception while loading : " << std::endl;
+			std::cout << e.what() << std::endl;
+		}
+
+		progressBar.setValue(100 * loadedObjects.size() / filenames.size());
+
+		if(loadedObjects.size() < filenames.size() )
+			emit loadNext();
+		else
+		{
+			filenames.clear();
+			hide();
+
+			// Ok : 
+			emit finished();
+		}
+	}
+
+	void LoadingWidget::insertNewImagesInto(std::vector<TextureObject*>& mainCollection)
+	{
+		mainCollection.insert( mainCollection.end(), loadedObjects.begin(), loadedObjects.end() );
+		loadedObjects.clear();
+	}
+
 // Ressources GUI :
 	RessourcesTab::RessourcesTab(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this),
+	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
 	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this)
 	{
 		// Create image menu : 
@@ -357,6 +501,8 @@
 
 		// Create tree : 
 			tree.setIndentation(2);
+			tree.setSelectionMode(QAbstractItemView::ExtendedSelection);
+			tree.setContextMenuPolicy(Qt::CustomContextMenu);
 
 			QStringList listLabels;
 			listLabels.push_back("Name");
@@ -390,14 +536,20 @@
 		// Build layout : 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&tree);
+		layout.addWidget(&loadingWidget);
 
 		// Connections : 
-		//QObject::connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
+		QObject::connect(&loadImage, 		SIGNAL(triggered()), 					&loadingWidget, SLOT(startLoad()));
+		QObject::connect(&loadingWidget, 	SIGNAL(finished()), 					this, 		SLOT(fetchLoadedImages()));
+		QObject::connect(&tree,			SIGNAL(itemSelectionChanged()),				this,		SLOT(selectionChanged()));
+		QObject::connect(&filterMenu,		SIGNAL(changeFilter(GLenum, GLenum)),			this,		SLOT(updateImageFiltering(GLenum, GLenum)));
+		QObject::connect(&wrappingMenu,		SIGNAL(changeWrapping(GLenum, GLenum)),			this,		SLOT(updateImageWrapping(GLenum, GLenum)));
+		QObject::connect(&tree, 		SIGNAL(customContextMenuRequested(const QPoint&)), 	this, 		SLOT(showContextMenu(const QPoint&)));
 	}
 
 	RessourcesTab::~RessourcesTab(void)
 	{
-
+		loadingWidget.cancel();
 	}
 
 // Tools : 
@@ -502,35 +654,42 @@
 	}
 	
 // Update sections : 
-	void RessourcesTab::updateImageListDisplay(void)
+	void RessourcesTab::rebuildImageList(void)
 	{
-		int count = 0;
 		QTreeWidgetItem* root = tree.topLevelItem(RessourceImages);
 		removeAllChildren(root);
 
 		for(int k=0; k<textures.size(); k++)
 		{
 			if(textures[k]!=NULL)
-			{
-				// Write infos : 
-				QString title = tr("    %1").arg(textures[k]->getName());
-
-				QTreeWidgetItem* item = addItem(RessourceImages, title, k);
-
-				appendTextureInformation(item, textures[k]->texture());
-		
-				count++;
-			}
+				QTreeWidgetItem* item = addItem(RessourceImages, "    -", k);
 		}
 
-		if(count>0)
+		updateImageListDisplay();
+	}
+
+	void RessourcesTab::updateImageListDisplay(void)
+	{
+		int count = 0;
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceImages);
+
+		for(int k=0; k<root->childCount(); k++)
 		{
-			// Update design : 
-			updateRessourceAlternateColors(tree.topLevelItem(RessourceImages));
+			TextureObject* obj = getCorrespondingTexture( root->child(k) );
+
+			// Write infos : 
+			QString title = tr("    %1").arg(obj->getName());
+
+			root->child(k)->setText(0, title);
+
+			appendTextureInformation(root->child(k), obj->texture());
 		}
+
+		// Update design : 
+		updateRessourceAlternateColors(tree.topLevelItem(RessourceImages));
 		
 		// Update the title : 
-		tree.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(count));
+		tree.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(root->childCount()));
 	}
 
 	void RessourcesTab::updateFormatListDisplay(void)
@@ -663,6 +822,131 @@
 			root->setText(0, tr("Outputs (0)"));*/
 	}
 
-// Private Slots : 
+	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(!selectedItems.isEmpty())
+		{
+			bool allImages = true;
+
+			for(int k=0; k<selectedItems.size() && allImages; k++)
+				allImages = allImages && getCorrespondingTexture(selectedItems.at(k))!=NULL;
 	
+			// If they are all ressources :  
+			if(allImages) 
+			{
+				if(connections!=NULL)	connections->activate(true);
+				if(filters!=NULL)	filters->update( getCorrespondingTexture(selectedItems.at(0))->texture() );
+				if(wrapping!=NULL)	wrapping->update( getCorrespondingTexture(selectedItems.at(0))->texture() );
+			}
+			else
+			{
+				if(connections!=NULL)	connections->activate(false);
+				if(filters!=NULL)	filters->update();
+				if(wrapping!=NULL)	wrapping->update();
+			}
+		}
+	}
+
+// Private Slots :
+	void RessourcesTab::fetchLoadedImages(void)
+	{
+		loadingWidget.insertNewImagesInto(textures);
+		rebuildImageList();
+		updateImageListDisplay();
+
+		// Open section : 
+		tree.topLevelItem(RessourceImages)->setExpanded(true);
+	}
+
+	void RessourcesTab::selectionChanged(void)
+	{
+		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu);
+	}
+
+	void RessourcesTab::updateImageFiltering(GLenum minFilter, GLenum magFilter)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(!selectedItems.isEmpty())
+		{
+			for(int k=0; k<selectedItems.size(); k++)
+			{
+				getCorrespondingTexture(selectedItems.at(k))->texture().setMinFilter(minFilter);
+				getCorrespondingTexture(selectedItems.at(k))->texture().setMagFilter(magFilter);
+			}
+
+			updateImageListDisplay();
+		}
+	}
+
+	void RessourcesTab::updateImageWrapping(GLenum sWrapping, GLenum tWrapping)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(!selectedItems.isEmpty())
+		{
+			for(int k=0; k<selectedItems.size(); k++)
+			{
+				getCorrespondingTexture(selectedItems.at(k))->texture().setSWrapping(sWrapping);
+				getCorrespondingTexture(selectedItems.at(k))->texture().setTWrapping(tWrapping);
+			}
+
+			updateImageListDisplay();
+		}
+	}
+
+	void RessourcesTab::showContextMenu(const QPoint& point)
+	{
+		// Get the global position : 
+		QPoint globalPos = tree.viewport()->mapToGlobal(point); //ressourceTab.mapToGlobal(pos);
+
+		// Get the item under the right click : 
+		//QTreeWidgetItem* item =  ressourceTab.itemAt(pos);
+
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(!selectedItems.isEmpty())
+		{
+			int c = tree.currentColumn();
+			
+			if(c==0)
+			{
+				// Images menu...
+				// Connections...
+			}
+			else if(c==3)
+			{
+				FilterMenu menu;
+
+				updateMenuOnCurrentSelection(NULL, &menu, NULL);
+
+				QAction* action = menu.exec(globalPos);
+
+				if(action!=NULL)
+				{
+					GLenum a, b;
+					menu.get(action, a, b);
+					updateImageFiltering(a, b);
+				}
+			}
+			else if(c==4)
+			{
+				WrappingMenu menu;
+
+				updateMenuOnCurrentSelection(NULL, NULL, &menu);
+
+				QAction* action = menu.exec(globalPos);
+
+				if(action!=NULL)
+				{
+					GLenum a, b;
+					menu.get(action, a, b);
+					updateImageWrapping(a, b);
+				}
+			}			
+		}
+	}
+
 

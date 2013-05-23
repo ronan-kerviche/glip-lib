@@ -256,3 +256,16 @@
 		background: #505050;
 	}
 
+/* PROGRESS BAR */
+	QProgressBar:horizontal
+	{
+		border:none;
+		background: #222222;
+		text-align: center;
+	}
+
+	QProgressBar::chunk:horizontal
+	{
+		background: #777777;
+	} 
+
