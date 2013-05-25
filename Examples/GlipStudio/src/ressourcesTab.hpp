@@ -199,20 +199,24 @@
 			std::vector<TextureObject*>	preferredConnections;
 
 			// GUI : 	
-			QVBoxLayout	layout;
-			QMenuBar 	menuBar;
-			QTreeWidget	tree;
-			ConnectionMenu	connectionMenu;
-			FilterMenu	filterMenu;
-			WrappingMenu	wrappingMenu;
-			LoadingWidget	loadingWidget;
-			QMenu		imageMenu;
-			QAction		loadImage,
-					freeImage;
+			QVBoxLayout		layout;
+			QMenuBar 		menuBar;
+			QTreeWidget		tree;
+			ConnectionMenu		connectionMenu;
+			FilterMenu		filterMenu;
+			WrappingMenu		wrappingMenu;
+			LoadingWidget		loadingWidget;
+			QMenu			imageMenu;
+			QAction			loadImage,
+						freeImage;
+
+			RessourceCategory	currentOutputCategory;
+			int			currentOutputID;
 
 			// Tools : 
 			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
 			void removeAllChildren(QTreeWidgetItem* root);
+			void appendTextureInformation(QTreeWidgetItem* item);
 			void appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& texture, size_t provideSize=0);
 			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
 			void updateRessourceAlternateColors(QTreeWidgetItem* root);
@@ -224,8 +228,7 @@
 			void updateImageListDisplay(void);
 			void updateFormatListDisplay(void);
 			void updateInputConnectionDisplay(void);
-			void updateOutputConnectionDisplay(void);
-			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL);
+			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL);
 
 		private slots :
 			void fetchLoadedImages(void);
@@ -233,15 +236,27 @@
 			void updateImageFiltering(GLenum minFilter, GLenum magFilter);
 			void updateImageWrapping(GLenum sWrapping, GLenum tWrapping);
 			void showContextMenu(const QPoint& point);
+			void freeSelectedImages(void);
+			void applyConnection(int idInput);
 
 		public : 
 			RessourcesTab(QWidget* parent=NULL);
 			~RessourcesTab(void);
 
-		//public slots :
-			
-		//signals : 
-			
+			bool isInputConnected(int id) const;
+			HdlTexture& input(int id);
+
+			bool hasOutput(void) const;
+			bool outputIsPartOfPipelineOutputs(void) const;
+			HdlTexture* getOutput(Pipeline* pipeline);
+
+		public slots :
+			void updatePipelineInfos(void);
+			void updatePipelineInfos(Pipeline* pipeline);		
+	
+		signals : 
+			void outputChanged(void);
+			void updatePipelineRequest(void);
 	};
 
 #endif

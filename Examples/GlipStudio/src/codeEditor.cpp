@@ -235,13 +235,16 @@
 		int 		top 		= (int) blockBoundingGeometry(block).translated(contentOffset()).top();
 		int 		bottom 		= top + (int) blockBoundingRect(block).height();
 
+		QFontMetrics metrics(font);
+
 		while (block.isValid() && top <= event->rect().bottom())
 		{
 			if (block.isVisible() && bottom >= event->rect().top())
 			{
 				QString number = QString::number(blockNumber + 1);
 				painter.setPen(ed);
-				painter.drawText(0, top-3, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
+				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
+				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight, number);
 			}
 
 			block = block.next();

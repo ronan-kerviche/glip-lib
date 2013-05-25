@@ -1,4 +1,5 @@
 #include "ressourcesTab.hpp"
+#include <algorithm>
 
 // TextureObject
 	TextureObject::TextureObject(const QString& _filename, int maxLevel)
@@ -188,7 +189,7 @@
 		minLinerarMipmapNearest.setData( QVariant( QPoint( GL_LINEAR_MIPMAP_NEAREST, fmt.getMagFilter() ) ) );
 		minLinearMipmapLinear.setData( QVariant( QPoint( GL_LINEAR_MIPMAP_LINEAR, fmt.getMagFilter() ) ) );
 
-		magNearest.setData( QVariant( QPoint( fmt.getMinFilter(), GL_LINEAR ) ) );
+		magNearest.setData( QVariant( QPoint( fmt.getMinFilter(), GL_NEAREST ) ) );
 		magLinear.setData( QVariant( QPoint( fmt.getMinFilter(), GL_LINEAR ) ) );
 
 		bothNearest.setEnabled(state);
@@ -487,7 +488,8 @@
 // Ressources GUI :
 	RessourcesTab::RessourcesTab(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
-	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this)
+	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this),
+	   currentOutputCategory(RessourceImages), currentOutputID(-1)
 	{
 		// Create image menu : 
 		imageMenu.addAction(&loadImage);
@@ -545,11 +547,24 @@
 		QObject::connect(&filterMenu,		SIGNAL(changeFilter(GLenum, GLenum)),			this,		SLOT(updateImageFiltering(GLenum, GLenum)));
 		QObject::connect(&wrappingMenu,		SIGNAL(changeWrapping(GLenum, GLenum)),			this,		SLOT(updateImageWrapping(GLenum, GLenum)));
 		QObject::connect(&tree, 		SIGNAL(customContextMenuRequested(const QPoint&)), 	this, 		SLOT(showContextMenu(const QPoint&)));
+		QObject::connect(&freeImage,		SIGNAL(triggered()),					this,		SLOT(freeSelectedImages()));
+		QObject::connect(&connectionMenu,	SIGNAL(connectToInput(int)),				this,		SLOT(applyConnection(int)));
+
+		// Update buttons to current selection : 
+		selectionChanged();
 	}
 
 	RessourcesTab::~RessourcesTab(void)
 	{
 		loadingWidget.cancel();
+
+		for(std::vector<TextureObject*>::iterator it=textures.begin(); it!=textures.end(); it++)
+			delete *it;
+		textures.clear();
+
+		formats.clear();
+
+		preferredConnections.clear();
 	}
 
 // Tools : 
@@ -569,14 +584,29 @@
 
 	void RessourcesTab::removeAllChildren(QTreeWidgetItem* root)
 	{
+		// Disconnect : 
+		tree.blockSignals(true);
+
 		if(root==NULL)
 			return ;
-	
+
 		while(root->childCount()>0)
 		{
 			QTreeWidgetItem* ptr = root->takeChild(0);
 			delete ptr;
 		}
+
+		// reconnect : 
+		tree.blockSignals(false);
+	}
+
+	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item)
+	{
+		item->setText(1, "");
+		item->setText(2, "");
+		item->setText(3, "");
+		item->setText(4, "");
+		item->setText(5, "");
 	}
 
 	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
@@ -611,7 +641,7 @@
 		QBrush 	foreground	= palette().foreground().color(),
 			original 	= palette().background().color(),
 			darker		= QBrush(original.color().lighter(80)),
-			lighter		= QBrush(original.color().lighter(120));
+			lighter		= QBrush(original.color().lighter(110));
 		
 		QBrush* ptr = NULL;
 		for(int k=0; k<root->childCount(); k++)
@@ -758,94 +788,80 @@
 
 	void RessourcesTab::updateInputConnectionDisplay(void)
 	{
-		/*QTreeWidgetItem* root = topLevelItem(RessourceInputs);
-		removeAllChildren(root);
+		int count = 0;
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
 
-		if(mainPipeline!=NULL)
+		for(int k=0; k<root->childCount(); k++)
 		{
-			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
+			// Write infos : 
+			QString title,
+				currentName = root->child(k)->data(0, Qt::StatusTipRole).toString();
+
+			if(preferredConnections[k]!=NULL)
 			{
-				QString title;
-
-				if(preferredConnections[k]==NULL)
-					title = tr("    %1 (Not Connected)").arg(mainPipeline->getInputPortName(k).c_str());
-				else
-					title = tr("    %1 <- %2").arg(mainPipeline->getInputPortName(k).c_str()).arg(preferredConnections[k]->getName()); 
-
-				QTreeWidgetItem* item = addItem(RessourceInputs, title, k);
-
-				if(preferredConnections[k]!=NULL)
-					appendTextureInformation(item, preferredConnections[k]->texture());
+				title = tr("    %1 <- %2").arg(currentName).arg(preferredConnections[k]->getName());
+				appendTextureInformation(root->child(k), preferredConnections[k]->texture());
 			}
-
-			if( mainPipeline->getNumInputPort()>0 )
+			else
 			{
-				// Update design : 
-				updateRessourceAlternateColors(root);	
+				title = tr("    %1").arg(currentName);
+				appendTextureInformation(root->child(k));
 			}
+			
+			root->child(k)->setText(0, title);
+		}
+
+		// Update design : 
+		updateRessourceAlternateColors(tree.topLevelItem(RessourceInputs));
 		
-			// Update the title : 
-			root->setText(0, tr("Inputs (%1)").arg(mainPipeline->getNumInputPort()));
-		}
-		else
-			// Update the title : 
-			root->setText(0, tr("Inputs (0)"));*/
+		// Update the title : 
+		tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
 	}
 
-	void RessourcesTab::updateOutputConnectionDisplay(void)
-	{
-		/*QTreeWidgetItem* root = ressourceTab.topLevelItem(RessourceOutputs);
-		removeAllChildren(root);
-
-		if(mainPipeline!=NULL)
-		{
-			for(int k=0; k<mainPipeline->getNumOutputPort(); k++)
-			{
-				QString title= tr("    %1").arg(mainPipeline->getOutputPortName(k).c_str()); 
-
-				QTreeWidgetItem* item = addItem(RessourceOutputs, title, k);
-
-				appendTextureInformation(item, mainPipeline->out(k));
-			}
-
-			if( mainPipeline->getNumOutputPort()>0 )
-			{
-				// Update design : 
-				updateRessourceAlternateColors(root);	
-			}
-
-			// Update the title : 
-			root->setText(0, tr("Outputs (%1)").arg(mainPipeline->getNumOutputPort()));
-		}
-		else
-			// Update the title : 
-			root->setText(0, tr("Outputs (0)"));*/
-	}
-
-	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping)
+	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
 		if(!selectedItems.isEmpty())
 		{
-			bool allImages = true;
+			bool 	allImages 		= true,
+				atLeastOneHeader	= false;
 
 			for(int k=0; k<selectedItems.size() && allImages; k++)
-				allImages = allImages && getCorrespondingTexture(selectedItems.at(k))!=NULL;
-	
+			{
+				allImages 		= allImages && (getCorrespondingTexture(selectedItems.at(k))!=NULL);
+				atLeastOneHeader	= atLeastOneHeader || (selectedItems.at(k)->data(0, Qt::UserRole).toInt()>=0);	
+			}	
+
 			// If they are all ressources :  
 			if(allImages) 
 			{
-				if(connections!=NULL)	connections->activate(true);
 				if(filters!=NULL)	filters->update( getCorrespondingTexture(selectedItems.at(0))->texture() );
 				if(wrapping!=NULL)	wrapping->update( getCorrespondingTexture(selectedItems.at(0))->texture() );
+				if(removeImage!=NULL)	removeImage->setEnabled(true);
 			}
 			else
 			{
-				if(connections!=NULL)	connections->activate(false);
 				if(filters!=NULL)	filters->update();
 				if(wrapping!=NULL)	wrapping->update();
+				if(removeImage!=NULL)	removeImage->setEnabled(false);
 			}
+
+			if(allImages && selectedItems.size()==1)
+			{
+				if(connections!=NULL)	connections->activate(true);
+			}			
+			else
+			{
+				if(connections!=NULL)	connections->activate(false);
+			}		
+		}
+		else
+		{
+			if(connections!=NULL)	connections->activate(false);
+			if(filters!=NULL)	filters->update();
+			if(wrapping!=NULL)	wrapping->update();
+			if(removeImage!=NULL)	removeImage->setEnabled(false);
 		}
 	}
 
@@ -854,7 +870,6 @@
 	{
 		loadingWidget.insertNewImagesInto(textures);
 		rebuildImageList();
-		updateImageListDisplay();
 
 		// Open section : 
 		tree.topLevelItem(RessourceImages)->setExpanded(true);
@@ -862,7 +877,26 @@
 
 	void RessourcesTab::selectionChanged(void)
 	{
-		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu);
+		// Update menus : 
+		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu, &freeImage);
+
+		// Update output, maybe : 
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(selectedItems.size()==1)
+		{
+			RessourceCategory category = static_cast<RessourceCategory>(selectedItems.front()->type());
+			int id = selectedItems.front()->data(0, Qt::UserRole).toInt();
+
+			if(((category==RessourceImages || category==RessourceOutputs) && id>=0) || (category==RessourceInputs && id>=0 && preferredConnections[id]!=NULL) )
+			{
+				currentOutputCategory 	= category;
+				currentOutputID		= id;
+
+				// Output changed : 
+				emit outputChanged();
+			}
+		}
 	}
 
 	void RessourcesTab::updateImageFiltering(GLenum minFilter, GLenum magFilter)
@@ -871,13 +905,25 @@
 
 		if(!selectedItems.isEmpty())
 		{
+			bool needToUpdatePipeline = false;
+
 			for(int k=0; k<selectedItems.size(); k++)
 			{
-				getCorrespondingTexture(selectedItems.at(k))->texture().setMinFilter(minFilter);
-				getCorrespondingTexture(selectedItems.at(k))->texture().setMagFilter(magFilter);
+				TextureObject* ptr = getCorrespondingTexture(selectedItems.at(k));
+				ptr->texture().setMinFilter(minFilter);
+				ptr->texture().setMagFilter(magFilter);
+
+				needToUpdatePipeline = needToUpdatePipeline || (std::find(preferredConnections.begin(), preferredConnections.end(), ptr)!=preferredConnections.end());
+
+				// If this is the output : 
+				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==RessourceImages)
+					emit outputChanged();
 			}
 
 			updateImageListDisplay();
+
+			if(needToUpdatePipeline)
+				emit updatePipelineRequest();
 		}
 	}
 
@@ -887,23 +933,32 @@
 
 		if(!selectedItems.isEmpty())
 		{
+			bool needToUpdatePipeline = false;
+
 			for(int k=0; k<selectedItems.size(); k++)
 			{
-				getCorrespondingTexture(selectedItems.at(k))->texture().setSWrapping(sWrapping);
-				getCorrespondingTexture(selectedItems.at(k))->texture().setTWrapping(tWrapping);
+				TextureObject* ptr = getCorrespondingTexture(selectedItems.at(k));
+				ptr->texture().setSWrapping(sWrapping);
+				ptr->texture().setTWrapping(tWrapping);
+
+				needToUpdatePipeline = needToUpdatePipeline || (std::find(preferredConnections.begin(), preferredConnections.end(), ptr)!=preferredConnections.end());
+
+				// If this is the output : 
+				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==RessourceImages)
+					emit outputChanged();
 			}
 
 			updateImageListDisplay();
+
+			if(needToUpdatePipeline)
+				emit updatePipelineRequest();
 		}
 	}
 
 	void RessourcesTab::showContextMenu(const QPoint& point)
 	{
 		// Get the global position : 
-		QPoint globalPos = tree.viewport()->mapToGlobal(point); //ressourceTab.mapToGlobal(pos);
-
-		// Get the item under the right click : 
-		//QTreeWidgetItem* item =  ressourceTab.itemAt(pos);
+		QPoint globalPos = tree.viewport()->mapToGlobal(point); 
 
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -911,10 +966,14 @@
 		{
 			int c = tree.currentColumn();
 			
-			if(c==0)
+			if(c>=0 && c<=2)
 			{
-				// Images menu...
-				// Connections...
+				QMenu menu;
+
+				menu.addAction(&freeImage);
+				menu.addMenu(&connectionMenu);
+
+				QAction* action = menu.exec(globalPos);
 			}
 			else if(c==3)
 			{
@@ -947,6 +1006,185 @@
 				}
 			}			
 		}
+	}
+
+	void RessourcesTab::freeSelectedImages(void)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		bool    requestRebuild 		= false,
+			requestPipelineUpdate 	= false;
+
+		for(int k=0; k<selectedItems.size(); k++)
+		{
+			int id = selectedItems.at(k)->data(0, Qt::UserRole).toInt();
+
+			if(textures[id]!=NULL)
+			{
+				std::vector<TextureObject*>::iterator it = std::find(preferredConnections.begin(), preferredConnections.end(), textures[id]);
+
+				delete textures[id];
+				textures[id] = NULL;
+
+				if(it!=preferredConnections.end())
+				{
+					*it = NULL;
+					requestPipelineUpdate = true;
+				}
+
+				requestRebuild = true;
+
+				if(currentOutputID==id && currentOutputCategory==RessourceImages)
+				{
+					currentOutputID = -1;
+					emit outputChanged();
+				}
+			}
+		}
+
+		if(requestRebuild)
+			rebuildImageList();
+
+		if(requestPipelineUpdate)
+		{
+			updateInputConnectionDisplay();
+			emit updatePipelineRequest();
+		}
+	}
+
+	void RessourcesTab::applyConnection(int idInput)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(selectedItems.size()==1)
+		{
+			if(preferredConnections.size() <= idInput)
+				preferredConnections.resize(idInput+1, NULL);
+
+			preferredConnections[idInput] = getCorrespondingTexture(selectedItems.front());
+	
+			// update : 
+			updateInputConnectionDisplay();
+
+			emit updatePipelineRequest();
+		}
+	}
+
+// Public : 
+	bool RessourcesTab::isInputConnected(int id) const
+	{
+		if(id<0 || id>=preferredConnections.size())
+			return false;
+		else
+			return (preferredConnections[id]!=NULL);
+	}
+
+	HdlTexture& RessourcesTab::input(int id)
+	{
+		if(!isInputConnected(id))
+			throw Exception("RessourcesTab::input - Internal error : input " + to_string(id) + " is not connected.", __FILE__, __LINE__);
+		else
+			return preferredConnections[id]->texture();
+	}
+
+	bool RessourcesTab::hasOutput(void) const
+	{
+		return ( (currentOutputCategory==RessourceImages || currentOutputCategory==RessourceInputs || currentOutputCategory==RessourceOutputs) && currentOutputID>=0 );
+	}
+
+	bool RessourcesTab::outputIsPartOfPipelineOutputs(void) const
+	{
+		return (currentOutputCategory==RessourceOutputs) && currentOutputID>=0;
+	}
+
+	HdlTexture* RessourcesTab::getOutput(Pipeline* pipeline)
+	{
+		if(currentOutputID<0)
+			return NULL;
+
+		switch(currentOutputCategory)
+		{
+			case RessourceImages :
+				return &textures[currentOutputID]->texture();
+			case RessourceInputs :
+				return &preferredConnections[currentOutputID]->texture();
+			case RessourceOutputs :
+				if(pipeline==NULL)
+					return NULL;
+				else
+					return &pipeline->out(currentOutputID);
+			default :
+				return NULL;
+		}
+	}
+
+// Public slots : 
+	void RessourcesTab::updatePipelineInfos(void)
+	{
+		// update the connection menu : 
+		connectionMenu.update();
+
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
+		removeAllChildren(root);
+
+		root->setText(0, tr("Inputs (0)"));
+
+		root = tree.topLevelItem(RessourceOutputs);
+		removeAllChildren(root);
+
+		root->setText(0, tr("Outputs (0)"));
+	}
+
+	void RessourcesTab::updatePipelineInfos(Pipeline* pipeline)
+	{
+		if(pipeline==NULL)
+			updatePipelineInfos();
+
+		// update connection size : 
+		if(pipeline->getNumInputPort()>preferredConnections.size())
+			preferredConnections.resize(pipeline->getNumInputPort(), NULL);
+
+		// update the connection menu : 
+		connectionMenu.update(*pipeline);
+
+		// Rebuild input list : 
+		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
+		removeAllChildren(root);
+
+		for(int k=0; k<pipeline->getNumInputPort(); k++)
+		{
+			QString title = tr("    %1").arg(pipeline->getInputPortName(k).c_str());
+
+			QTreeWidgetItem* item = addItem(RessourceInputs, title, k);
+
+			item->setData(0, Qt::StatusTipRole, QString(pipeline->getInputPortName(k).c_str()));
+		}
+		
+		// Update the list : 
+		updateInputConnectionDisplay();
+
+		tree.topLevelItem(RessourceInputs)->setExpanded(true);
+
+		// Rebuild output list : 
+		root = tree.topLevelItem(RessourceOutputs);
+		removeAllChildren(root);
+
+		for(int k=0; k<pipeline->getNumOutputPort(); k++)
+		{
+			QString title = tr("    %1").arg(pipeline->getOutputPortName(k).c_str());
+
+			QTreeWidgetItem* item = addItem(RessourceOutputs, title, k);
+
+			appendTextureInformation(item, pipeline->out(k));
+		}
+
+		// Update design : 
+		updateRessourceAlternateColors(root);
+
+		// Update the title : 
+		root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
+
+		tree.topLevelItem(RessourceOutputs)->setExpanded(true);
 	}
 
 
