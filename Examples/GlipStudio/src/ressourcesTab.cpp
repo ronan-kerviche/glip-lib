@@ -1188,6 +1188,12 @@
 		root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
 
 		tree.topLevelItem(RessourceOutputs)->setExpanded(true);
+
+		if( (currentOutputCategory==RessourceOutputs && currentOutputID>=pipeline->getNumOutputPort()) || (currentOutputCategory==RessourceInputs && currentOutputID>=pipeline->getNumInputPort()) )
+		{
+			currentOutputID = -1;
+			emit outputChanged();
+		}
 	}
 
 

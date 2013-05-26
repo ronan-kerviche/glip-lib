@@ -280,9 +280,12 @@
 		{
 			bool processNewItem = true;
 
-			if(filter.prgm().getUniformVarsNames()[k]=="gl_ModelViewMatrix" || filter.prgm().getUniformVarsNames()[k]=="gl_TextureMatrix[0]")
+			// Omit the variables : 
+			/*if(filter.prgm().getUniformVarsNames()[k]=="gl_ModelViewMatrix" || filter.prgm().getUniformVarsNames()[k]=="gl_TextureMatrix[0]")
 				objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.prgm().getUniformVarsNames()[k], "(Forbidden)")) );
-			else
+			else*/
+
+			if(filter.prgm().getUniformVarsNames()[k]!="gl_ModelViewMatrix" && filter.prgm().getUniformVarsNames()[k]!="gl_TextureMatrix[0]")
 			{
 				switch(filter.prgm().getUniformVarsTypes()[k])
 				{
@@ -334,16 +337,16 @@
 					default : 
 						objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.prgm().getUniformVarsNames()[k], tr("Unable to generate interface for type %1").arg(glParamName(filter.prgm().getUniformVarsTypes()[k]).c_str()))) );
 				}
-			}
 
-			objects.back()->read(filter.prgm());
+				objects.back()->read(filter.prgm());
 
-			item->addChild( objects.back()->treeItem() );
+				item->addChild( objects.back()->treeItem() );
 				
-			tree->setItemWidget( objects.back()->treeItem(), 1, objects.back() );
+				tree->setItemWidget( objects.back()->treeItem(), 1, objects.back() );
 
-			QObject::connect( objects.back(), SIGNAL(updated(void)), this, SIGNAL(updated(void)) );
-			QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), objects.back(), SLOT(applySettings(BoxesSettings&)));
+				QObject::connect( objects.back(), SIGNAL(updated(void)), this, SIGNAL(updated(void)) );
+				QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), objects.back(), SLOT(applySettings(BoxesSettings&)));
+			}
 		}
 	}
 

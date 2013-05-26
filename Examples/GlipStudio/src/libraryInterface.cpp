@@ -36,7 +36,10 @@
 			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
 			{
 				if(!ressourceTab.isInputConnected(k))
+				{
+					emit requireRedraw();
 					return ;
+				}
 			}
 
 			// Apply : 
