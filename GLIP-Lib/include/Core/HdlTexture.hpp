@@ -55,7 +55,7 @@
 					bool	isFloatingPointMode(GLenum _mode, GLenum _depth)	const;
 					GLenum	getCorrespondingCompressedMode(GLenum _mode)		const;
 					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 		const;
-					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
@@ -79,6 +79,8 @@
 					bool	isCompressed	(void) const;
 					bool	isFloatingPoint	(void) const;
 
+					const HdlTextureFormatDescriptor& getFormatDescriptor(void) const;
+
 					bool	operator==(const __ReadOnly_HdlTextureFormat&) const;
 					bool	operator!=(const __ReadOnly_HdlTextureFormat&) const;
 
@@ -101,7 +103,7 @@
 			{
 				public :
 					// reproduce constructor :
-					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt);
 
 					// Writing Functions

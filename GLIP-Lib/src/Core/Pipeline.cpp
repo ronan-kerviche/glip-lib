@@ -49,8 +49,7 @@
 	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c)
 	 : __ReadOnly_ComponentLayout(c)
 	{
-		//std::cout << "Starting copy of pipeline layout for " << getNameExtended() << std::endl;
-		// Copy of the whole vector
+		// Copy of the whole vectors : 
 		elementsKind   	= c.elementsKind;
 		elementsID     	= c.elementsID;
 		connections	= c.connections;
@@ -1494,8 +1493,8 @@
 
 	/**
 	\fn int Pipeline::getNumActions(void)
-	\brief Get the number of filters in processing.
-	\return Number of filters in processing.
+	\brief Get the number of filters applied during processing.
+	\return Number of filters applied during processing.
 	**/
 	int Pipeline::getNumActions(void)
 	{
@@ -1741,7 +1740,12 @@
 			std::string filter = tree.back();
 			tree.pop_back();
 
-			for(std::vector<std::string>::iterator it=tree.begin(); it!=tree.end(); it++)
+			std::vector<std::string>::iterator it=tree.begin();
+			
+			if(*it==getName())
+				it++;
+
+			for(; it!=tree.end(); it++)
 			{
 				__ReadOnly_PipelineLayout& tmp = p->pipelineLayout(*it);
 				p = &tmp;

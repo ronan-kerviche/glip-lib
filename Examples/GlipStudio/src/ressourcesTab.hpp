@@ -243,6 +243,8 @@
 			RessourcesTab(QWidget* parent=NULL);
 			~RessourcesTab(void);
 
+			void appendFormats(LayoutLoader& loader);
+
 			bool isInputConnected(int id) const;
 			HdlTexture& input(int id);
 

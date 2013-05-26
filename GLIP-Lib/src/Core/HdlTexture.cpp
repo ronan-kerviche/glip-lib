@@ -178,6 +178,15 @@ using namespace Glip::CoreGL;
 	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return isFloatingPointMode(mode, depth); }
 
 	/**
+	\fn const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
+	\return A constatnt reference to the descriptor of the current mode.
+	**/
+	const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
+	{	
+		return HdlTextureFormatDescriptorsList::get(getGLMode());
+	}
+
+	/**
 	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
 	\param f Format to be compared with this.
 	\return True if the two format have the same parameters.

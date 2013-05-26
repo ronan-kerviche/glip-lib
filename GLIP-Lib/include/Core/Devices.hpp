@@ -124,7 +124,7 @@ class MyOutputDevice : public InputDevice
 		}
 
 	private :
-		vodi process(void)
+		void process(void)
 		{
 			// Process argument lists with :
 			for(int i=0; i<getNumInputPort(); i++)

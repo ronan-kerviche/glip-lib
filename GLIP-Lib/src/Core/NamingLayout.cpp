@@ -78,7 +78,7 @@ using namespace Glip;
 			std::cout << "ObjectName::checkName - Checking name : \"" << name << '\"' << std::endl;
 		#endif
 
-		#define EXCEPTION(s) throw Exception("ObjectName - Name \"" + name + "\" contains illegal symbol : " + s, __FILE__, __LINE__);
+		#define EXCEPTION(s) throw Exception("ObjectName - Name \"" + name + "\" contains illegal symbol : '" + s + "'.", __FILE__, __LINE__);
 		if( name.find(SEPARATOR)!=std::string::npos )
 			EXCEPTION(SEPARATOR)
 		if( name.find(BEGIN_TYPE)!=std::string::npos )
@@ -249,10 +249,11 @@ using namespace Glip;
 			end = prc.find(sep, beg);
 			res.push_back(prc.substr(beg, end-beg));
 			if(end!=std::string::npos)
-			beg = end + sep.length();
+				beg = end + sep.length();
 			else
-			beg = end;
-		}while(beg<prc.length());
+				beg = end;
+		}
+		while(beg<prc.length());
 
 		return res;
 	}

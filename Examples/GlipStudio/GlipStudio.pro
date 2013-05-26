@@ -9,6 +9,8 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			./src/codeEditor.hpp \
 			./src/keywords.hpp \
 			./src/ressourcesTab.hpp \
+			./src/compilationTab.hpp \
+			./src/uniformsTab.hpp \
 			./src/libraryInterface.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
@@ -17,6 +19,8 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/codeEditor.cpp \
 			./src/keywords.cpp \
 			./src/ressourcesTab.cpp \
+			./src/compilationTab.cpp \
+			./src/uniformsTab.cpp \
 			./src/libraryInterface.cpp \
 			./src/mainInterface.cpp
 

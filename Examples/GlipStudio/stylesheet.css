@@ -269,3 +269,30 @@
 		background: #777777;
 	} 
 
+/* LABEL */
+	QLabel
+	{
+		background: none;/*#222222;*/
+		color: #FFFFFF;
+	}
+
+/* SPINBOX */
+	QSpinBox
+	{
+		padding-left: 5px;
+		padding-right: 15px; /* make room for the arrows */
+		border:none;
+		background: #282828;
+		color: #FFFFFF;
+	}
+
+	QDoubleSpinBox
+	{
+		padding-left: 5px;
+		padding-right: 15px; /* make room for the arrows */
+		border:none;
+		background: #282828;
+		color: #FFFFFF;
+	}
+
+

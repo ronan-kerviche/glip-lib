@@ -95,6 +95,10 @@ namespace Glip
 				void modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0);
 				void modifyVar(const std::string& varName, GLenum type, float* v);
 
+				void getVar(const std::string& varName, int* ptr);
+				void getVar(const std::string& varName, unsigned int* ptr);
+				void getVar(const std::string& varName, float* ptr);				
+
 				// Static tools :
 				static int maxVaryingVar(void);
 				static void stopProgram(void);

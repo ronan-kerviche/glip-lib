@@ -479,7 +479,7 @@ using namespace Glip::CoreGL;
 	\param v       Pointer to the values to assign.
 	**/
 
-	#define GENmodifyVar( argT1, argT2, argT3)   \
+	#define GENmodifyVarA( argT1, argT2, argT3)   \
 		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1 v0, argT1 v1, argT1 v2, argT1 v3) \
 		{ \
 			use(); \
@@ -490,9 +490,9 @@ using namespace Glip::CoreGL;
 			 \
 			switch(t) \
 			{ \
-				case GL_##argT2 : 		glUniform1##argT3 (loc, v0);		break; \
+				case GL_##argT2 : 		glUniform1##argT3 (loc, v0);			break; \
 				case GL_##argT2##_VEC2 : 	glUniform2##argT3 (loc, v0, v1);		break; \
-				case GL_##argT2##_VEC3 : 	glUniform3##argT3 (loc, v0, v1, v2);	break; \
+				case GL_##argT2##_VEC3 : 	glUniform3##argT3 (loc, v0, v1, v2);		break; \
 				case GL_##argT2##_VEC4 : 	glUniform4##argT3 (loc, v0, v1, v2, v3);	break; \
 				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
 			} \
@@ -502,7 +502,8 @@ using namespace Glip::CoreGL;
 			if(test) \
 				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
 		} \
-		 \
+	
+	#define GENmodifyVarB( argT1, argT2, argT3)   \
 		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1* v) \
 		{ \
 			use(); \
@@ -513,10 +514,10 @@ using namespace Glip::CoreGL;
 			 \
 			switch(t) \
 			{ \
-				case GL_##argT2 : 		glUniform1##argT3##v(loc, 1, v);	break; \
-				case GL_##argT2##_VEC2 : 	glUniform2##argT3##v(loc, 2, v);	break; \
-				case GL_##argT2##_VEC3 : 	glUniform3##argT3##v(loc, 3, v);	break; \
-				case GL_##argT2##_VEC4 : 	glUniform4##argT3##v(loc, 4, v);	break; \
+				case GL_##argT2 : 		glUniform1##argT3##v(loc, 1, v);			break; \
+				case GL_##argT2##_VEC2 : 	glUniform2##argT3##v(loc, 1, v);			break; \
+				case GL_##argT2##_VEC3 : 	glUniform3##argT3##v(loc, 1, v);			break; \
+				case GL_##argT2##_VEC4 : 	glUniform4##argT3##v(loc, 1, v);			break; \
 				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
 			} \
 			 \
@@ -526,11 +527,108 @@ using namespace Glip::CoreGL;
 				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
 		}
 
-	GENmodifyVar( int, INT, i)
-	GENmodifyVar( unsigned int, UNSIGNED_INT, ui)
-	GENmodifyVar( float, FLOAT, f)
+	GENmodifyVarA( int, INT, i)
+	GENmodifyVarB( int, INT, i)
+	GENmodifyVarA( unsigned int, UNSIGNED_INT, ui)
+	GENmodifyVarB( unsigned int, UNSIGNED_INT, ui)
+	GENmodifyVarA( float, FLOAT, f)
 
 	#undef GENmodifyVar
+
+	// Last one, with matrices : 
+	void HdlProgram::modifyVar(const std::string& varName, GLenum t, float* v)
+	{
+		use();
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+
+		if (loc==-1)
+			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+
+		switch(t)
+		{
+			case GL_FLOAT : 	glUniform1fv(loc, 1, v);			break;
+			case GL_FLOAT_VEC2 : 	glUniform2fv(loc, 1, v);			break;
+			case GL_FLOAT_VEC3 : 	glUniform3fv(loc, 1, v);			break;
+			case GL_FLOAT_VEC4 : 	glUniform4fv(loc, 1, v);			break;
+			case GL_FLOAT_MAT2 :	glUniformMatrix2fv(loc, 1, GL_FALSE, v);	break;
+			case GL_FLOAT_MAT3 :	glUniformMatrix3fv(loc, 1, GL_FALSE, v);	break;
+			case GL_FLOAT_MAT4 :	glUniformMatrix4fv(loc, 1, GL_FALSE, v);	break;
+			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+		}
+		
+		bool test = glErrors();
+		
+		if(test)
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__);
+	}	
+
+	/**
+	\fn    void HdlProgram::getVar(const std::string& varName, int* ptr)
+	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care. 
+
+	\param varName The name of the uniform variable to read from.
+	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
+	**/
+	void HdlProgram::getVar(const std::string& varName, int* ptr)
+	{
+		use();
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+		
+		if (loc==-1)
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+		
+		glGetUniformiv(program, loc, ptr);
+
+		bool test = glErrors();
+
+		if(test)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn    void HdlProgram::getVar(const std::string& varName, unsigned int* ptr)
+	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care. 
+
+	\param varName The name of the uniform variable to read from.
+	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
+	**/
+	void HdlProgram::getVar(const std::string& varName, unsigned int* ptr)
+	{
+		use();
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+		
+		if (loc==-1)
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+		
+		glGetUniformuiv(program, loc, ptr);
+
+		bool test = glErrors();
+
+		if(test)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn    void HdlProgram::getVar(const std::string& varName, float* ptr)
+	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care. 
+
+	\param varName The name of the uniform variable to read from.
+	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
+	**/
+	void HdlProgram::getVar(const std::string& varName, float* ptr)
+	{
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+		
+		if (loc==-1)
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+		
+		glGetUniformfv(program, loc, ptr);
+
+		bool test = glErrors();
+
+		if(test)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+	}
 
 	HdlProgram::~HdlProgram(void)
 	{

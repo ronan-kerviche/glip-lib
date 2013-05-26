@@ -727,62 +727,47 @@
 		QTreeWidgetItem* root = tree.topLevelItem(RessourceFormats);
 		removeAllChildren(root);
 
-		formats.clear();
+		// Rebuild Format list : 
+			formats.clear();
 
-		// List all current images formats : 
-		for(int k=0; k<textures.size(); k++)
+			// Add inputs : 
+			for(int k=0; k<preferredConnections.size(); k++)
+			{
+				if(preferredConnections[k]!=NULL)
+					formats.push_back( FormatObject(tr("FormatIn_%1").arg(k), preferredConnections[k]->texture().format() ) );
+			}
+
+			// Add largest and smallest : 
+			if(!formats.empty())
+			{
+				formats.push_back( FormatObject("FormatLargest", formats[0]) );
+				formats.push_back( FormatObject("FormatSmallest", formats[0]) );
+
+				int 	idLargest 	= formats.size() - 2,
+					idSmallest	= formats.size() - 1;
+
+				for(int k=1; k<formats.size(); k++)
+				{
+					if(textures[k]!=NULL)
+					{
+						if(formats[idLargest].getNumPixels() < formats[k].getNumPixels())
+							formats[idLargest].setFormat( formats[k] );
+						if(formats[idSmallest].getNumPixels() > formats[k].getNumPixels())
+							formats[idSmallest].setFormat( formats[k] );
+					}
+				}
+			}
+
+		// Build list : 
+		for(int k=0; k<formats.size(); k++)
 		{
-			if(textures[k]!=NULL)
-			{
-				// Get format : 
-				FormatObject obj(tr("Format_%1").arg(textures[k]->getName()), textures[k]->texture());				 
+			QString title = tr("    %1").arg(formats[k].getName());
+			QTreeWidgetItem* item = addItem(RessourceFormats, title, k);
 
-				// Write infos : 
-				QString title = tr("    %1").arg(obj.getName());
+			appendTextureInformation(item, formats[k]);
+		}	
 
-				QTreeWidgetItem* item = addItem(RessourceFormats, title, formats.size());
-
-				appendTextureInformation(item, obj);
-
-				// Add the format object to the list : 
-				formats.push_back(obj);
-			}
-		}
-
-		if(!formats.empty())
-		{
-			// Find and create the other formats
-			std::vector<FormatObject> specials; 	
-
-			specials.push_back( FormatObject("FormatLargest", formats[0]) );
-			specials.push_back( FormatObject("FormatSmallest", formats[0]) );
-
-			for(int k=1; k<formats.size(); k++)
-			{
-				if(specials[0].getNumPixels() < formats[k].getNumPixels())
-					specials[0].setFormat( formats[k] );
-				if(specials[1].getNumPixels() > formats[k].getNumPixels())
-					specials[1].setFormat( formats[k] );
-			}
-
-			// Add them : 
-			for(int k=0; k<specials.size(); k++)
-			{
-				QString title = tr("    %1").arg(specials[k].getName());
-
-				QTreeWidgetItem* item = addItem(RessourceFormats, title, formats.size() + k);
-
-				appendTextureInformation(item, specials[k]);
-			}
-
-			// Push them :
-			formats.insert(formats.end(), specials.begin(), specials.end() );
-
-			// Update design : 
-			updateRessourceAlternateColors(root);		
-		}
-
-		// Update the title : 
+		updateRessourceAlternateColors(root);
 		root->setText(0, tr("Formats (%1)").arg(formats.size()));
 	}
 
@@ -923,7 +908,11 @@
 			updateImageListDisplay();
 
 			if(needToUpdatePipeline)
+			{
+				updateFormatListDisplay();
+				updateInputConnectionDisplay();
 				emit updatePipelineRequest();
+			}
 		}
 	}
 
@@ -951,7 +940,11 @@
 			updateImageListDisplay();
 
 			if(needToUpdatePipeline)
+			{
+				updateFormatListDisplay();
+				updateInputConnectionDisplay();
 				emit updatePipelineRequest();
+			}
 		}
 	}
 
@@ -1043,7 +1036,10 @@
 		}
 
 		if(requestRebuild)
+		{
 			rebuildImageList();
+			updateFormatListDisplay();
+		}
 
 		if(requestPipelineUpdate)
 		{
@@ -1065,12 +1061,19 @@
 	
 			// update : 
 			updateInputConnectionDisplay();
+			updateFormatListDisplay();
 
 			emit updatePipelineRequest();
 		}
 	}
 
 // Public : 
+	void RessourcesTab::appendFormats(LayoutLoader& loader)
+	{
+		for(int k=0; k<formats.size(); k++)
+			loader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
+	}
+
 	bool RessourcesTab::isInputConnected(int id) const
 	{
 		if(id<0 || id>=preferredConnections.size())
