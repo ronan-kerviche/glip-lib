@@ -17,6 +17,7 @@
 		// Connections : 
 			QObject::connect(&ressourceTab,		SIGNAL(outputChanged(void)),		this,	SIGNAL(requireRedraw(void)));
 			QObject::connect(&ressourceTab,		SIGNAL(updatePipelineRequest(void)),	this,	SLOT(compute(void)));
+			QObject::connect(&ressourceTab,		SIGNAL(saveOutput(int)),		this,	SLOT(saveOutput(int)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataUpdate(void)),	this,	SLOT(updateUniforms(void)));
 	}
 
@@ -26,11 +27,17 @@
 		mainPipeline = NULL;
 	}
 
+	void LibraryInterface::updateComputeStatus(bool status)
+	{
+		lastComputeSucceeded = status;
+		ressourceTab.updateLastComputingStatus(status);
+	}
+
 	void LibraryInterface::compute(void)
 	{
 		if(mainPipeline!=NULL)
 		{
-			lastComputeSucceeded = false;
+			updateComputeStatus(false);
 
 			// Check that all of the input have a connection : 
 			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
@@ -48,7 +55,7 @@
 
 			(*mainPipeline) << Pipeline::Process;
 
-			lastComputeSucceeded = true;
+			updateComputeStatus(true);
 
 			// Need redraw : 
 			emit requireRedraw();
@@ -62,6 +69,18 @@
 			uniformsTab.updateData(*mainPipeline);
 
 			compute();
+		}
+	}
+
+	void LibraryInterface::saveOutput(int id)
+	{
+		if(mainPipeline!=NULL)
+		{
+			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
+			{
+				// Save output with ressources : 
+				ressourceTab.saveOutputToFile( mainPipeline->out(id) );
+			}
 		}
 	}
 
@@ -87,7 +106,7 @@
 			return ; //Nothing to do...
 
 		bool success = true;
-
+		
 		pipelineLoader.setPath(path);
 
 		try
@@ -127,6 +146,7 @@
 		{
 			ressourceTab.updatePipelineInfos();
 			uniformsTab.updatePipeline();
+			updateComputeStatus(false);
 		}
 	}
 

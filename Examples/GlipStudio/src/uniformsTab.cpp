@@ -519,7 +519,12 @@
 			minDoubleBox.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
 			maxDoubleBox.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
 			stepDoubleBox.setRange(0.0, std::numeric_limits<double>::max());
-			stepDoubleBox.setSingleStep(0.01);
+			stepDoubleBox.setSingleStep(1e-6);
+
+			minDoubleBox.setDecimals(6);
+			maxDoubleBox.setDecimals(6);
+			stepDoubleBox.setDecimals(6);
+			
 		
 			minDoubleBox.setValue(-1e3);
 			maxDoubleBox.setValue(1e3);

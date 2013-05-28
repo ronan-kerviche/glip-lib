@@ -23,8 +23,10 @@
 			bool 				lastComputeSucceeded;
 
 		private slots :
+			void updateComputeStatus(bool status);
 			void compute(void);
 			void updateUniforms(void);
+			void saveOutput(int id);
 					
 		public : 
 			LibraryInterface(QWidget *parent=NULL);

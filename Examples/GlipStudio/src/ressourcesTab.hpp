@@ -208,10 +208,12 @@
 			LoadingWidget		loadingWidget;
 			QMenu			imageMenu;
 			QAction			loadImage,
-						freeImage;
+						freeImage,
+						saveOutputAs;
 
 			RessourceCategory	currentOutputCategory;
 			int			currentOutputID;
+			bool			infoLastComputeSucceeded;
 
 			// Tools : 
 			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
@@ -228,7 +230,7 @@
 			void updateImageListDisplay(void);
 			void updateFormatListDisplay(void);
 			void updateInputConnectionDisplay(void);
-			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL);
+			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL, QAction* saveOutAs=NULL);
 
 		private slots :
 			void fetchLoadedImages(void);
@@ -238,6 +240,7 @@
 			void showContextMenu(const QPoint& point);
 			void freeSelectedImages(void);
 			void applyConnection(int idInput);
+			void startRequestSaveImage(void);
 
 		public : 
 			RessourcesTab(QWidget* parent=NULL);
@@ -254,11 +257,14 @@
 
 		public slots :
 			void updatePipelineInfos(void);
-			void updatePipelineInfos(Pipeline* pipeline);		
+			void updatePipelineInfos(Pipeline* pipeline);	
+			void saveOutputToFile(HdlTexture& output);
+			void updateLastComputingStatus(bool succeeded);
 	
 		signals : 
 			void outputChanged(void);
 			void updatePipelineRequest(void);
+			void saveOutput(int i);
 	};
 
 #endif

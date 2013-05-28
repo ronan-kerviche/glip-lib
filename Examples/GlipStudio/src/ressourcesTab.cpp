@@ -488,12 +488,15 @@
 // Ressources GUI :
 	RessourcesTab::RessourcesTab(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
-	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this),
-	   currentOutputCategory(RessourceImages), currentOutputID(-1)
+	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this), saveOutputAs("Save output as...", this),
+	   currentOutputCategory(RessourceImages), currentOutputID(-1), infoLastComputeSucceeded(false)
 	{
 		// Create image menu : 
 		imageMenu.addAction(&loadImage);
 		imageMenu.addAction(&freeImage);
+		imageMenu.addAction(&saveOutputAs);
+
+		saveOutputAs.setEnabled(false);
 	
 		// Create Menu bar : 
 		menuBar.addMenu(&imageMenu);
@@ -542,6 +545,7 @@
 
 		// Connections : 
 		QObject::connect(&loadImage, 		SIGNAL(triggered()), 					&loadingWidget, SLOT(startLoad()));
+		QObject::connect(&saveOutputAs,		SIGNAL(triggered()),					this,		SLOT(startRequestSaveImage()));
 		QObject::connect(&loadingWidget, 	SIGNAL(finished()), 					this, 		SLOT(fetchLoadedImages()));
 		QObject::connect(&tree,			SIGNAL(itemSelectionChanged()),				this,		SLOT(selectionChanged()));
 		QObject::connect(&filterMenu,		SIGNAL(changeFilter(GLenum, GLenum)),			this,		SLOT(updateImageFiltering(GLenum, GLenum)));
@@ -803,7 +807,7 @@
 		tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
 	}
 
-	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage)
+	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage, QAction* saveOutAs)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -839,7 +843,16 @@
 			else
 			{
 				if(connections!=NULL)	connections->activate(false);
-			}		
+			}	
+
+			if(selectedItems.size()==1 && selectedItems.front()->type()==RessourceOutputs && infoLastComputeSucceeded)
+			{
+				if(saveOutAs!=NULL)	saveOutAs->setEnabled(true);
+			}			
+			else
+			{
+				if(saveOutAs!=NULL)	saveOutAs->setEnabled(false);
+			}
 		}
 		else
 		{
@@ -847,6 +860,7 @@
 			if(filters!=NULL)	filters->update();
 			if(wrapping!=NULL)	wrapping->update();
 			if(removeImage!=NULL)	removeImage->setEnabled(false);
+			if(saveOutAs!=NULL)	saveOutAs->setEnabled(false);
 		}
 	}
 
@@ -863,7 +877,7 @@
 	void RessourcesTab::selectionChanged(void)
 	{
 		// Update menus : 
-		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu, &freeImage);
+		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu, &freeImage, &saveOutputAs);
 
 		// Update output, maybe : 
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
@@ -963,8 +977,9 @@
 			{
 				QMenu menu;
 
+				menu.addMenu(&connectionMenu);				
+				menu.addAction(&saveOutputAs);
 				menu.addAction(&freeImage);
-				menu.addMenu(&connectionMenu);
 
 				QAction* action = menu.exec(globalPos);
 			}
@@ -1064,6 +1079,19 @@
 			updateFormatListDisplay();
 
 			emit updatePipelineRequest();
+		}
+	}
+
+	void RessourcesTab::startRequestSaveImage(void)
+	{
+		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
+
+		if(selectedItems.size()==1)
+		{
+			int id = selectedItems.front()->data(0, Qt::UserRole).toInt();
+
+			if(selectedItems.front()->type()==RessourceOutputs && id>=0 && infoLastComputeSucceeded)
+				emit saveOutput(id);
 		}
 	}
 
@@ -1196,4 +1224,14 @@
 		}
 	}
 
+	void RessourcesTab::saveOutputToFile(HdlTexture& output)
+	{
+		// Perform save : 
+		ImageLoader::saveTexture(output);
+	}
+
+	void RessourcesTab::updateLastComputingStatus(bool succeeded)
+	{
+		infoLastComputeSucceeded = succeeded;
+	}
 
