@@ -288,12 +288,12 @@
 		else if(str	== "bvec2")				typeCode = GL_BOOL_VEC2;
 		else if(str	== "bvec3")				typeCode = GL_BOOL_VEC3;
 		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
-		else if(str	== "mat2")				typeCode = GL_FLOAT_MAT2;
-		else if(str	== "mat3")				typeCode = GL_FLOAT_MAT3;
-		else if(str	== "mat4")				typeCode = GL_FLOAT_MAT4;
-		else if(str	== "mat2")				typeCode = GL_DOUBLE_MAT2;
+		else if(str	== "mat2" || str=="mat2x2")		typeCode = GL_FLOAT_MAT2;
+		else if(str	== "mat3" || str=="mat3x3")		typeCode = GL_FLOAT_MAT3;
+		else if(str	== "mat4" || str=="mat4x4")		typeCode = GL_FLOAT_MAT4;
+		/*else if(str	== "mat2")				typeCode = GL_DOUBLE_MAT2;
 		else if(str	== "mat3")				typeCode = GL_DOUBLE_MAT3;
-		else if(str	== "mat4")				typeCode = GL_DOUBLE_MAT4;
+		else if(str	== "mat4")				typeCode = GL_DOUBLE_MAT4;*/
 		else if(str	== "sampler2D")				typeCode = GL_SAMPLER_2D;
 		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
  		else

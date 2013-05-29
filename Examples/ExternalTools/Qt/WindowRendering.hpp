@@ -107,7 +107,8 @@
 				keyJustReleased[NumActionKey];
 
 			// OpenGL Positions and window status :
-			bool 	fullscreenModeEnabled;
+			bool 	lastWasClear,
+				fullscreenModeEnabled;
 			float 	currentCenterX,
 				currentCenterY,
 				currentRotationDegrees,

@@ -22,7 +22,7 @@
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
 	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
-	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0),
+	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0), lastWasClear(true),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.2f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
@@ -404,13 +404,16 @@
 		glLoadIdentity();
 
 		if(swapNow)
+		{
 			swapBuffers();
+			lastWasClear = true;
+		}
 	}
 
 	void WindowRenderer::process(void)
 	{
 		clearWindow(false); // false = don't swap now
-
+		
 		float 	scaleForCurrentWindowAspectRatioX,
 			scaleForCurrentWindowAspectRatioY,
 			scaleForCurrentSurfaceAspectRatioX,
@@ -447,11 +450,15 @@
 
 		// Done!
 		swapBuffers();
+		lastWasClear = false;
 	}
 
 	void WindowRenderer::paintGL(void)
 	{
-		emit actionReceived();
+		if(lastWasClear)
+			clearWindow(true);
+		else
+			emit actionReceived();
 	}
 
 	bool WindowRenderer::isKeyboardActionsEnabled(void) const
@@ -548,7 +555,7 @@
 
 	void WindowRenderer::setFullscreenMode(bool enabled)
 	{
-		if(enabled!=fullscreenModeEnabled)
+		if(enabled!=fullscreenModeEnabled && !lastWasClear) // Do not toggle (or save toggle) if empty
 		{
 			if(enabled)
 			{

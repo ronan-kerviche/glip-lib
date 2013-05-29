@@ -383,7 +383,7 @@
 
 // LoadingWidget : 
 	LoadingWidget::LoadingWidget(QWidget* parent)
-	 : QWidget(parent), layout(this), cancelButton("Cancel", this)
+	 : QWidget(parent), layout(this), cancelButton("Cancel", this), currentPath(".")
 	{
 		QPalette pal = progressBar.palette();
 		pal.setColor(QPalette::Text, Qt::white);
@@ -424,11 +424,15 @@
 		filenames.clear();
 
 		// Get files : 
-		filenames = QFileDialog::getOpenFileNames(this, tr("Load images : "), ".", tr("Image (*.bmp *.png *.jpg"));
+		filenames = QFileDialog::getOpenFileNames(this, tr("Load images : "), currentPath, tr("Image (*.bmp *.png *.jpg"));
 
 		// If some file were selected, then start to load them : 
 		if(!filenames.isEmpty())
 		{
+			// Set the current path : 
+			QFileInfo info(filenames.front());
+			currentPath = info.path();
+
 			canceled = false;
 			clear();
 			show();

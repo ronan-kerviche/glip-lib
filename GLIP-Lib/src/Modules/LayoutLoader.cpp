@@ -408,9 +408,9 @@
 			nameDecorator = ", with name \"" + e.name + "\",";
 
 		// Tests : 
-		if(e.noName && nameProperty>0)
+		if((e.noName || e.name.empty()) && nameProperty>0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + " does not have a name.", __FILE__, __LINE__);
-		else if(!e.noName && nameProperty<0)
+		else if((!e.noName || !e.name.empty()) && nameProperty<0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should not have a name.", __FILE__, __LINE__);
 
 		if(maxArguments==0 && !e.arguments.empty())
@@ -532,7 +532,10 @@
 
 		LayoutLoader subLoader;
 
+		// Set it as a sub-loader :
 		subLoader.isSubLoader = true;
+		subLoader.requiredFormatList = requiredFormatList;
+		subLoader.requiredPipelineList = requiredPipelineList;
 
 		// Copy this path to the inner version :
 		subLoader.dynpath = path + dynpath;
@@ -814,7 +817,8 @@
 
 			// Test for possible external elements : 
 			int 	inputPorts = -1,
-				outputPorts = -1;
+				outputPorts = -1,
+				components = 0;
 			for(int k=0; k<associatedKeywords.size(); k++)
 			{
 				switch(associatedKeywords[k])
@@ -833,6 +837,8 @@
 						break;
 					case FILTER_INSTANCE : 
 					case PIPELINE_INSTANCE : 
+						components++;
+						break;
 					case CONNECTION : 
 						break; //OK
 					default : 
@@ -849,6 +855,9 @@
 
 			if(outputPorts<0)
 				throw Exception("From line " + to_string(e.startLine) + " : The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+
+			if(components==0)
+				throw Exception("From line " + to_string(e.startLine) + " : The PipelineLayout \"" + e.name + "\" does not contain any sub-component (such as Filters or sub-Pipelines).", __FILE__, __LINE__);
 
 			// Create the object : 
 			PipelineLayout layout(e.name);

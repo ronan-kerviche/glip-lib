@@ -149,6 +149,7 @@
 		Q_OBJECT
 
 		private : 
+			QString				currentPath;
 			bool				canceled;
 			QHBoxLayout 			layout;
 			QPushButton 			cancelButton;

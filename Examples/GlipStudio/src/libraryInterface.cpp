@@ -147,6 +147,9 @@
 			ressourceTab.updatePipelineInfos();
 			uniformsTab.updatePipeline();
 			updateComputeStatus(false);
+
+			// require a failed redraw (clear) : 
+			emit requireRedraw();
 		}
 	}
 
