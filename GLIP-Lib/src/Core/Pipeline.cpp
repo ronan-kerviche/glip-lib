@@ -1088,15 +1088,15 @@
 			{
 				ActionHub hub;
 
-				hub.inputBufferIdx.assign( filtersList[k]->getNumOutputPort(), -1);
-				hub.inputArgumentIdx.assign( filtersList[k]->getNumOutputPort(), -1);
+				hub.inputBufferIdx.assign( filtersList[k]->getNumInputPort(), -1);
+				hub.inputArgumentIdx.assign( filtersList[k]->getNumInputPort(), -1);
 				hub.bufferIdx		= -1;
 				hub.filterIdx 		= k;
 
 				tmpActions.push_back(hub);
 
 				// Set the number of inputs not satisfied to be equal to the number of inputs : 
-				requestedInputConnections.push_back( filtersList[k]->getNumOutputPort() );
+				requestedInputConnections.push_back( filtersList[k]->getNumInputPort() );
 			}
 
 			// Initialize by decrementing the connections to this pipeline inputs : 
@@ -1106,7 +1106,7 @@
 				{
 					// Set up the links : 
 					const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
-					
+
 					tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= THIS_PIPELINE;
 					tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
 					requestedInputConnections[fid]--;
@@ -1128,6 +1128,7 @@
 				std::vector<int> candidatesIdx;
 				for(int k=0; k<requestedInputConnections.size(); k++)
 				{
+					std::cout << k << " -> " << requestedInputConnections[k] << std::endl;
 					if(requestedInputConnections[k]==0)
 					{
 						candidatesIdx.push_back(k);
@@ -1137,10 +1138,15 @@
 					}
 				}
 
+				if(candidatesIdx.empty())
+					throw Exception("No available filter matches input conditions.", __FILE__, __LINE__);
+
 				// Find best candidate along the priority order (from highest to lowest) : 
 				// 1 - A filter that has exactly the same format as a buffer which is currently unused, this buffer must as large as possible.
 				// 2 - A filter that has the largest format which is not allocated yet.
 				// 3 - A filter that has the smallest format already allocated (but not available).
+				// 4 - (reserved)
+				// 5 - No decision.
 
 				HdlTextureFormat fmt(0,0,GL_RGB,GL_UNSIGNED_BYTE);	// A format (in case we need to create one).
 				int fIdx = -1;						// The index of the filter chosen.
@@ -1199,7 +1205,8 @@
 					std::cout << "    Buffer   : " << bIdx << std::endl;
 				#endif
 
-				std::cout << __LINE__ << std::endl;
+				if(currentDecision>=5)
+					throw Exception("No correct decision was made.", __FILE__, __LINE__);
 
 				// Create the action : 
 				if(currentDecision==1)
@@ -1224,8 +1231,6 @@
 				else
 					throw Exception("Internal error : Unkown action decision (" + to_string(currentDecision) + ").", __FILE__, __LINE__);
 
-				std::cout << __LINE__ << std::endl;
-
 				// Find all the buffers read by the current actions and decrease their occupancy : 
 				for(int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
 				{
@@ -1235,8 +1240,6 @@
 
 				// Lock down this filter as "done" : 
 				requestedInputConnections[fIdx] = -1;
-
-				std::cout << __LINE__ << std::endl;
 
 				// Update the buffer occupancy to the new number of output and at the same time decrease the number of requests : 
 				for(int k=0; k<remainingConnections.size(); k++)
@@ -1268,8 +1271,6 @@
 					}
 				}
 
-				std::cout << __LINE__ << std::endl;
-
 				// Test if all were processed : 
 				allProcessed 	= true;
 				bool noNextStep = true;
@@ -1283,14 +1284,13 @@
 
 				if(noNextStep && !allProcessed)
 					throw Exception("The pipeline building process is stuck as some elements remains but cannot be integrated as they lack input.", __FILE__, __LINE__);
-
-				std::cout << __LINE__ << std::endl;
 			}
 			while(!allProcessed);
 
 			// Final tests : 
 			if(filtersList.size()!=actionsList.size())
 				throw Exception("Some filters were omitted because their connections scheme does not allow usage.", __FILE__, __LINE__);
+
 		}
 		catch(Exception& e)
 		{
@@ -1306,6 +1306,7 @@
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "END ALLOCATE" << std::endl;
 		#endif
+
 	}
 
 	/**
