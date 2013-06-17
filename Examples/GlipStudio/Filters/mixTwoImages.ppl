@@ -1,5 +1,5 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
-//TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 //REQUIRED_FORMAT:format(FormatLargest)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :

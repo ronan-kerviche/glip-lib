@@ -47,12 +47,18 @@
 		if(versionNumber>0)
 			str << "#version " << versionNumber << std::endl;
 
-		str << "void main() \n { \n    gl_FrontColor  = gl_Color; \n";
+		str << "void main()" << std::endl;
+		str << "{" << std::endl;
+		str << "    gl_FrontColor = gl_Color;" << std::endl;
 
-		for(int i=0; i<nUnits; i++)
+		/*for(int i=0; i<nUnits; i++)
 			str << "    gl_TexCoord[" << i << "] = gl_TextureMatrix[" << i << "] * gl_MultiTexCoord" << i << "; \n";
 
-		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
+		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";*/
+
+		str << "    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;" << std::endl;
+		str << "    gl_Position = ftransform();" << std::endl; 
+		str << "}" << std::endl;
 
 		return std::string(str.str());
 	}
@@ -216,7 +222,7 @@
 		if(getNumInputPort()>limInput)
 			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
-		if(getNumInputPort()>limOutput)
+		if(getNumOutputPort()>limOutput)
 			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
 		// Build arguments table :
@@ -263,13 +269,6 @@
 		{
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
 			throw m+e;
-		}
-
-		// Set up the data on the program :
-		if(!fragmentShader->requiresCompatibility())
-		{
-			for(int i=0; i<getNumInputPort(); i++)
-				program->setFragmentLocation(getInputPortName(i), i);
 		}
 	}
 

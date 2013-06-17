@@ -285,7 +285,7 @@
 				objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.prgm().getUniformVarsNames()[k], "(Forbidden)")) );
 			else*/
 
-			if(filter.prgm().getUniformVarsNames()[k]!="gl_ModelViewMatrix" && filter.prgm().getUniformVarsNames()[k]!="gl_TextureMatrix[0]")
+			if(filter.prgm().getUniformVarsNames()[k]!="gl_ModelViewMatrix" && filter.prgm().getUniformVarsNames()[k]!="gl_TextureMatrix[0]" && filter.prgm().getUniformVarsNames()[k]!="gl_ModelViewProjectionMatrixTranspose")
 			{
 				switch(filter.prgm().getUniformVarsTypes()[k])
 				{

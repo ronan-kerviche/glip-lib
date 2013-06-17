@@ -813,8 +813,9 @@ using namespace Glip::CoreGL;
 	int HdlTexture::getMaxImageUnits(void)
 	{
 		int maxTextureImageUnits;
-		//glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
-		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
+
+		std::cout << "HdlTexture::getMaxImageUnits => " << maxTextureImageUnits << std::endl;
 
 		return maxTextureImageUnits;
 	}
