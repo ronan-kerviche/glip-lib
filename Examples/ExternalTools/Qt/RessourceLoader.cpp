@@ -39,7 +39,7 @@
 
 	int ImageLoader::loadFiles(GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel, QWidget* parent)
 	{
-		QStringList filenames = QFileDialog::getOpenFileNames(parent, QObject::tr("Open images..."), ".", "*.jpg *.JPG *.png *.png *.bmp");
+		QStringList filenames = QFileDialog::getOpenFileNames(parent, QObject::tr("Open images..."), ".", "*.jpg *.JPG *.png *.png *.bmp *.pgm *.ppm");
 
 		if(filenames.empty())
 			return -1; // no selection
@@ -172,7 +172,6 @@
 
 				if(!image.save(filename))
 					throw Exception("Error while writing file " + filename.toStdString() + ".", __FILE__, __LINE__);
-
 			}
 			catch(Exception& e)
 			{
@@ -188,10 +187,15 @@
 
 	HdlTexture* ImageLoader::createTexture(const QImage& image, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
 	{
-		GLenum mode = GL_RGB;
+		// Format description : 
+		GLenum mode;
 
-		if(image.hasAlphaChannel())
+		if(image.allGray())
+			mode = GL_LUMINANCE;
+		else if(image.hasAlphaChannel())
 			mode = GL_RGBA;
+		else
+			mode = GL_RGB;
 
 		const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
 		

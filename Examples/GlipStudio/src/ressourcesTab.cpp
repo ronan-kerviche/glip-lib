@@ -424,7 +424,7 @@
 		filenames.clear();
 
 		// Get files : 
-		filenames = QFileDialog::getOpenFileNames(this, tr("Load images : "), currentPath, tr("Image (*.bmp *.png *.jpg"));
+		filenames = QFileDialog::getOpenFileNames(this, tr("Load images : "), currentPath, tr("Image (*.bmp *.png *.jpg *.JPEG *.pgm *.ppm)"));
 
 		// If some file were selected, then start to load them : 
 		if(!filenames.isEmpty())
@@ -808,7 +808,10 @@
 		updateRessourceAlternateColors(tree.topLevelItem(RessourceInputs));
 		
 		// Update the title : 
-		tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
+		if(!pipelineName.isEmpty())
+			tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs of %1 (%2)").arg(pipelineName).arg(root->childCount()));
+		else
+			tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
 	}
 
 	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage, QAction* saveOutAs)
@@ -1102,8 +1105,17 @@
 // Public : 
 	void RessourcesTab::appendFormats(LayoutLoader& loader)
 	{
-		for(int k=0; k<formats.size(); k++)
-			loader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
+		if(!formats.empty())
+		{
+			for(int k=0; k<formats.size(); k++)
+				loader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
+		}
+		else
+		{
+			// Default, for first time load : 
+			for(int k=0; k<16; k++)
+				loader.addRequiredElement("FormatIn_" + to_string(k), HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE));
+		}
 	}
 
 	bool RessourcesTab::isInputConnected(int id) const
@@ -1156,6 +1168,8 @@
 // Public slots : 
 	void RessourcesTab::updatePipelineInfos(void)
 	{
+		pipelineName.clear();
+
 		// update the connection menu : 
 		connectionMenu.update();
 
@@ -1174,6 +1188,8 @@
 	{
 		if(pipeline==NULL)
 			updatePipelineInfos();
+
+		pipelineName = pipeline->getType().c_str();
 
 		// update connection size : 
 		if(pipeline->getNumInputPort()>preferredConnections.size())
@@ -1217,8 +1233,11 @@
 		updateRessourceAlternateColors(root);
 
 		// Update the title : 
-		root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
-
+		if(!pipelineName.isEmpty())
+			root->setText(0, tr("Outputs of %1 (%2)").arg(pipelineName).arg(pipeline->getNumOutputPort()));
+		else
+			root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
+	
 		tree.topLevelItem(RessourceOutputs)->setExpanded(true);
 
 		if( (currentOutputCategory==RessourceOutputs && currentOutputID>=pipeline->getNumOutputPort()) || (currentOutputCategory==RessourceInputs && currentOutputID>=pipeline->getNumInputPort()) )

@@ -34,7 +34,22 @@
 		QWidget::setGeometry(10,10,w,h);
 
 		makeCurrent();
-		HandleOpenGL::init();
+
+		try
+		{
+			HandleOpenGL::init();
+		}
+		catch(Exception& e)
+		{
+			// Show Error : 
+			std::cout << "Caught an exception : " << std::endl;
+			std::cout << e.what() << std::endl;
+
+			QMessageBox::information(parentWidget(), tr("GlipStudio - Error during initialization : "), e.what());
+
+			// re-throw :
+			throw e; 
+		}
 
 		glViewport(0, 0, w, h);
 

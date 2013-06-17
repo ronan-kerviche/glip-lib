@@ -59,7 +59,7 @@
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
-					~__ReadOnly_HdlTextureFormat(void);
+					virtual ~__ReadOnly_HdlTextureFormat(void);
 
 					int	getWidth    	(void) const;
 					int	getHeight   	(void) const;
@@ -139,7 +139,7 @@
 				public :
 					// Functions
 					HdlTexture(const __ReadOnly_HdlTextureFormat& fmt);
-					~HdlTexture(void);
+					virtual ~HdlTexture(void);
 
 					GLuint	getID     (void)  const;
 					int	getSizeOnGPU(int m=0);

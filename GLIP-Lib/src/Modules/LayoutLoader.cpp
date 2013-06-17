@@ -33,291 +33,31 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
-	using namespace Glip::Modules::LayoutLoaderParser;
+	using namespace Glip::Modules::VanillaParserSpace;
 
 	// Static variables :
-	const char* Glip::Modules::keywords[NumKeywords] =  {	"TEXTURE_FORMAT",
-								"SHADER_SOURCE",
-								"FILTER_LAYOUT",
-								"PIPELINE_LAYOUT",
-								"PIPELINE_MAIN",
-								"INCLUDE_FILE",
-								"FILTER_INSTANCE",
-								"PIPELINE_INSTANCE",
-								"CONNECTION",
-								"INPUT_PORTS",
-								"OUTPUT_PORTS",
-								"THIS",
-								"DEFAULT_VERTEX_SHADER",
-								"CLEARING_ON",
-								"CLEARING_OFF",
-								"BLENDING_ON",
-								"BLENDING_OFF",
-								"REQUIRED_FORMAT",
-								"REQUIRED_PIPELINE",
-								"SHARED_SOURCE",
-								"INCLUDE_SHARED_SOURCE"
-						};
-
-// LayoutLoaderParser::Element
-	Element::Element(void)
-	{
-		clear();
-	}
-
-	Element::Element(const Element& cpy)
-	{
-		(*this) = cpy;
-	}
-
-	const Element& Element::operator=(const Element& cpy)
-	{
-		strKeyword	= cpy.strKeyword;
-		name		= cpy.name;
-		body		= cpy.body;
-		arguments	= cpy.arguments;
-		noName		= cpy.noName;
-		noArgument	= cpy.noArgument;
-		noBody		= cpy.noBody;
-		startLine	= cpy.startLine;
-		bodyLine	= cpy.bodyLine;
-	}
-
-	void Element::clear(void)
-	{
-		noName		= true;
-		noArgument	= true;
-		noBody		= true;
-		startLine	= -1;
-		bodyLine	= -1;
-		strKeyword.clear();
-		name.clear();
-		body.clear();
-		arguments.clear();
-	}
-
-	bool Element::empty(void) const
-	{
-		return strKeyword.empty() && name.empty() && body.empty() && arguments.empty();
-	}
-	
-// LayoutLoaderParser::VanillaParser
-	VanillaParser::VanillaParser(const std::string& code, int lineOffset)
-	{
-		const std::string	spacers 		= " \t\r\n\f\v",
-				  	cmtMultiStart		= "/*",
-				  	cmtMultiEnd		= "*/",
-				  	cmtMonoStart  		= "//",
-				  	cmtMonoEnd    		= "\n";
-
-		bool			multiLineComment	= false,
-					monoLineComment		= false,
-					before			= true,
-					after			= false;
-		int 			currentLine		= lineOffset,
-					bracketLevel		= 0;
-		Element::Field 		currentField 		= Element::Keyword;
-		Element			el;
-
-		for(int k=0; k<code.size(); k++)
-		{
-			const bool isSpacer = (spacers.find(code[k])!=std::string::npos);
-
-			if(code[k]=='\n')
-				currentLine++;
-
-			if(bracketLevel>0)
-			{
-				// Inside some brackets?
-				if(code[k]=='{')
-					bracketLevel++;
-				else if(code[k]=='}')
-					bracketLevel--;
-				
-				if(currentField==Element::Body && bracketLevel>0)
-					el.body += code[k];
-
-				if(bracketLevel==0) //out
-				{
-					testAndSaveCurrentElement(currentField, Element::Keyword, el);
-					after = false;
-					before = true;
-				}
-			}
-			else if(multiLineComment)
-			{
-				// This is the end of the multiline comment :  
-				if( compare(code, k, cmtMultiEnd) )
-					multiLineComment = false;
-			}
-			else if(monoLineComment)
-			{
-				// This is the end of the monoline comment : 
-				if( compare(code, k, cmtMonoEnd) )
-					monoLineComment = false;
-			}
-			else if( compare(code, k, cmtMultiStart) )
-			{
-				// Start multi line comment : 
-				multiLineComment = true;
-			}
-			else if( compare(code, k, cmtMonoStart) )
-			{
-				// Start mono line comment : 
-				monoLineComment = true;
-			}
-			else if(code[k]==':')
-			{
-				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ':' when parsing arguments.", __FILE__, __LINE__);
-
-				testAndSaveCurrentElement(currentField, Element::Name, el);
-				el.noName = false;
-				after = false;
-				before = true;
-			}
-			else if(code[k]=='{')
-			{
-				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '{' when parsing arguments.", __FILE__, __LINE__);
-
-				testAndSaveCurrentElement(currentField, Element::Body, el);
-				el.noBody = false;
-				after = false;
-				before = true;
-				bracketLevel = 1;
-				if(el.startLine<0)
-					el.startLine = currentLine;
-				if(el.bodyLine<0)
-					el.bodyLine = currentLine;
-			}
-			else if(code[k]=='}')
-			{
-				throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '}'.", __FILE__, __LINE__);
-			}
-			else if(code[k]=='(')
-			{
-				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '(' when parsing arguments.", __FILE__, __LINE__);
-
-				testAndSaveCurrentElement(currentField, Element::Arguments, el);
-				el.noArgument = false;
-				after = false;
-				before = true;
-			}
-			else if(code[k]==',')
-			{
-				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ','.", __FILE__, __LINE__);
-				else
-					el.arguments.push_back("");
-
-				after = false;
-				before = true;
-			}
-			else if(code[k]==')')
-			{
-				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ')'.", __FILE__, __LINE__);
-				else
-					currentField = Element::AfterArguments;
-
-				after = false;
-				before = true;
-			}
-			else if(!isSpacer && !after)
-			{
-				if(currentField==Element::AfterArguments)
-					testAndSaveCurrentElement(currentField, Element::Keyword, el);
-
-				record(el, currentField, code[k], currentLine);
-				before = false;
-			}
-			else if(isSpacer && !after && !before)
-			{
-				after = true;
-			}
-			else if(!isSpacer && after && currentField==Element::Arguments)
-			{
-				throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : missing delimiter ','.", __FILE__, __LINE__);
-			}
-			else if(!isSpacer && after)
-			{
-				// Will necessarily save!
-				testAndSaveCurrentElement(currentField, Element::Keyword, el);
-				record(el, currentField, code[k], currentLine);
-				after = false;
-			}
-		}
-
-		// Test for possible end of input : 
-		if(bracketLevel>0)
-			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing '}'.", __FILE__, __LINE__);
-			
-		if(currentField==Element::Arguments)
-			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing ')'.", __FILE__, __LINE__);
-
-		// Force save the last element :
-		if(!el.empty())
-			elements.push_back(el);
-	}
-
-	bool VanillaParser::compare(const std::string& code, int& k, const std::string token)
-	{
-		if(code.substr(k,token.size())==token)
-		{
-			k += token.size() - 1;
-			return true;
-		}
-		else 
-			return false;
-	}
-
-	void VanillaParser::testAndSaveCurrentElement(Element::Field& current, const Element::Field& next, Element& el)
-	{
-		if(next<=current && !el.empty())
-		{
-			elements.push_back(el);
-			el.clear();
-		}
-
-		current = next;
-	}
-
-	void VanillaParser::record(Element& el, const Element::Field& field, char c, int currentLine)
-	{
-		switch(field)
-		{
-			case Element::Keyword : 
-				el.strKeyword += c;
-				break;
-			case Element::Name : 
-				el.name += c;
-				break;
-			case Element::Arguments :
-				if(el.arguments.empty())
-					el.arguments.push_back("");
-				el.arguments.back() += c;
-				break;
-			case Element::AfterArguments :
-				throw Exception("VanillaParser::record - Internal error : attempt to save field after parsing arguments.", __FILE__, __LINE__);
-			case Element::Body : 
-				el.body += c;
-				break;
-			case Element::Unknown : 
-			default :
-				throw Exception("VanillaParser::record - Internal error : unknown field.", __FILE__, __LINE__);
-		}
-
-		if(el.startLine==-1)
-			el.startLine = currentLine;
-	}
-	
-	const VanillaParser& VanillaParser::operator<<(VanillaParser& subParser)
-	{
-		elements.insert(elements.end(), subParser.elements.begin(), subParser.elements.end());
-		subParser.elements.clear();
-	}
+	const char* Glip::Modules::keywordsLayoutLoader[NumKeywords] =  {	"TEXTURE_FORMAT",
+										"SHADER_SOURCE",
+										"FILTER_LAYOUT",
+										"PIPELINE_LAYOUT",
+										"PIPELINE_MAIN",
+										"INCLUDE_FILE",
+										"FILTER_INSTANCE",
+										"PIPELINE_INSTANCE",
+										"CONNECTION",
+										"INPUT_PORTS",
+										"OUTPUT_PORTS",
+										"THIS",
+										"DEFAULT_VERTEX_SHADER",
+										"CLEARING_ON",
+										"CLEARING_OFF",
+										"BLENDING_ON",
+										"BLENDING_OFF",
+										"REQUIRED_FORMAT",
+										"REQUIRED_PIPELINE",
+										"SHARED_SOURCE",
+										"INCLUDE_SHARED_SOURCE"
+								};
 	
 // LayoutLoader
 	LayoutLoader::LayoutLoader(void)
@@ -349,16 +89,16 @@
 	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
 	{
 		for(int i=0; i<NumKeywords; i++)
-			if(keywords[i]==str) return static_cast<LayoutLoaderKeyword>(i);
+			if(keywordsLayoutLoader[i]==str) return static_cast<LayoutLoaderKeyword>(i);
 
 		return UnknownKeyword;
 	}
 
-	void LayoutLoader::classify(const std::vector<LayoutLoaderParser::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords)
+	void LayoutLoader::classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords)
 	{
 		associatedKeywords.clear();
 
-		for(std::vector<LayoutLoaderParser::Element>::const_iterator it = elements.begin(); it!=elements.end(); it++)
+		for(std::vector<VanillaParserSpace::Element>::const_iterator it = elements.begin(); it!=elements.end(); it++)
 			associatedKeywords.push_back( getKeyword( (*it).strKeyword ) );
 	}
 
@@ -394,7 +134,7 @@
 		file.close();
 	}
 
-	void LayoutLoader::preliminaryTests(const LayoutLoaderParser::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
+	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
 	{
 		// xxxProperty : 
 		//	1  : Must have.
@@ -438,7 +178,7 @@
 	{
 		const std::string 	spacers 	= " \t\r\n\f\v",
 					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
-					keyword 	= keywords[INCLUDE_SHARED_SOURCE];
+					keyword 	= keywordsLayoutLoader[INCLUDE_SHARED_SOURCE];
 
 		size_t pos = str.find(keyword);
 
@@ -522,7 +262,7 @@
 		#undef INSERTION
 	}
 
-	void LayoutLoader::includeFile(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::includeFile(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
 		preliminaryTests(e, -1, 1, 1, -1, "IncludeFile");
@@ -569,26 +309,144 @@
 		}
 	}
 
-	void LayoutLoader::buildRequiredFormat(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildRequiredFormat(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
-		preliminaryTests(e, 1, 1, 1, -1, "RequiredFormat");
+		preliminaryTests(e, 1, 1, 10, -1, "RequiredFormat");
 
 		// Identify the target : 
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(e.arguments[0]);
 		
 		if(it==requiredFormatList.end())
-			throw Exception("From line " + to_string(e.startLine) + " : The required format \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
-		
+		{
+			// Try in the current format list also : 
+			it = formatList.find(e.arguments[0]);
+
+			if(it==formatList.end())
+				throw Exception("From line " + to_string(e.startLine) + " : The required format \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
+		}		
+
 		std::map<std::string,HdlTextureFormat>::iterator it2 = formatList.find(e.name);
 		
 		if(it2!=formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A Format Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+		
+		// Check for possible arguments, to modify the texture : 
+		// Get the data : 
+		int w, h, mipmap = 0;
+		GLenum mode, depth, minFilter, magFilter, sWrap, tWrap;
+
+		if(e.arguments.size()>1)
+		{
+			if(e.arguments[1]=="*")
+				w = it->second.getWidth();
+			else if(!from_string(e.arguments[1], w))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+		}
 		else
-			formatList.insert( std::pair<std::string, HdlTextureFormat>(e.name, it->second) );
+			w = it->second.getWidth();
+
+		if(e.arguments.size()>2)
+		{
+			if(e.arguments[2]=="*")
+				h = it->second.getHeight();
+			else if(!from_string(e.arguments[2], h))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+		}
+		else
+			h = it->second.getHeight();
+
+		if(e.arguments.size()>3)
+		{
+			if(e.arguments[3]=="*")
+				mode = it->second.getGLMode();
+			else
+				mode = glFromString(e.arguments[3]);
+		}
+		else
+			mode = it->second.getGLMode();
+
+		if(e.arguments.size()>4)
+		{
+			if(e.arguments[4]=="*")
+				depth = it->second.getGLDepth();
+			else
+				depth = glFromString(e.arguments[4]);
+		}
+		else
+			depth = it->second.getGLDepth();
+
+		if(e.arguments.size()>5)
+		{
+			if(e.arguments[5]=="*")
+				minFilter = it->second.getMinFilter();
+			else
+				minFilter = glFromString(e.arguments[5]);
+		}
+		else 
+			minFilter = it->second.getMinFilter();
+
+		if(e.arguments.size()>6)
+		{
+			if(e.arguments[6]=="*")
+				magFilter = it->second.getMagFilter();
+			else
+				magFilter = glFromString(e.arguments[6]);
+		}
+		else 
+			magFilter = it->second.getMagFilter();
+
+		if(e.arguments.size()>7)
+		{
+			if(e.arguments[7]=="*")
+				sWrap = it->second.getSWrapping();
+			else
+				sWrap = glFromString(e.arguments[7]);
+		}
+		else 
+			sWrap = it->second.getSWrapping();
+		
+		if(e.arguments.size()>8)
+		{
+			if(e.arguments[8]=="*")
+				tWrap = it->second.getTWrapping();
+			else
+				tWrap = glFromString(e.arguments[8]);
+		}
+		else 
+			tWrap = it->second.getTWrapping();
+
+		if(e.arguments.size()>9)
+		{
+			if(e.arguments[9]=="*")
+				mipmap = it->second.getMaxLevel();
+			else if(!from_string(e.arguments[9], mipmap))
+				throw Exception("From line " + to_string(e.startLine) + " : Canno read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
+		}
+		else
+			mipmap = it->second.getMaxLevel();
+
+		// Find possible errors :
+		if(mode==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read mode for format \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+		if(depth==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read depth for format \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+		if(minFilter==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read MinFilter for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+		if(magFilter==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read MagFilter for format \"" + e.name + "\". Token : \"" + e.arguments[5] + "\".", __FILE__, __LINE__);
+		if(sWrap==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read SWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[6] + "\".", __FILE__, __LINE__);
+		if(sWrap==GL_FALSE)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot read TWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[7] + "\".", __FILE__, __LINE__);
+		if(mipmap<0)
+			throw Exception("From line " + to_string(e.startLine) + " : Mipmap cannot be negative for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+
+		// Create and push (note the 0 base mipmap) :
+		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
 	}
 
-	void LayoutLoader::buildRequiredPipeline(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildRequiredPipeline(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredPipeline");
@@ -607,7 +465,7 @@
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
 	}
 
-	void LayoutLoader::buildSharedCode(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildSharedCode(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
 		preliminaryTests(e, 1, 0, 0, 1, "SharedCode");
@@ -618,7 +476,7 @@
 		sharedCodeList.insert( std::pair<std::string, std::string>(e.name, e.body) );
 	}
 
-	void LayoutLoader::buildFormat(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildFormat(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
 		preliminaryTests(e, 1, 4, 9, -1, "Format");
@@ -687,7 +545,7 @@
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
 	}
 
-	void LayoutLoader::buildShaderSource(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildShaderSource(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
 		preliminaryTests(e, 1, 0, 1, 0, "ShaderSource");
@@ -739,7 +597,7 @@
 		}
 	}
 
-	void LayoutLoader::buildFilter(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
 	{
 		bool toBuild = true;
 
@@ -761,7 +619,7 @@
 
 		if(e.arguments.size()>2)
 		{
-			if(e.arguments[2]!=keywords[DEFAULT_VERTEX_SHADER])
+			if(e.arguments[2]!=keywordsLayoutLoader[DEFAULT_VERTEX_SHADER])
 			{
 				vertexSource = sourceList.find(e.arguments[2]);
 
@@ -781,26 +639,26 @@
 
 		if(e.arguments.size()>3)
 		{
-			if(e.arguments[3]==keywords[CLEARING_ON])
+			if(e.arguments[3]==keywordsLayoutLoader[CLEARING_ON])
 				filterLayout->second.enableClearing();
-			else if(e.arguments[3]==keywords[CLEARING_OFF])
+			else if(e.arguments[3]==keywordsLayoutLoader[CLEARING_OFF])
 				filterLayout->second.disableClearing();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[CLEARING_ON] + "\" or \"" + keywords[CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[CLEARING_ON] + "\" or \"" + keywordsLayoutLoader[CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 		}
 
 		if(e.arguments.size()>4)
 		{
-			if(e.arguments[4]==keywords[BLENDING_ON])
+			if(e.arguments[4]==keywordsLayoutLoader[BLENDING_ON])
 				filterLayout->second.enableClearing();
-			else if(e.arguments[4]==keywords[BLENDING_OFF])
+			else if(e.arguments[4]==keywordsLayoutLoader[BLENDING_OFF])
 				filterLayout->second.disableClearing();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[BLENDING_ON] + "\" or \"" + keywords[BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[BLENDING_ON] + "\" or \"" + keywordsLayoutLoader[BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
 		}
 	}
 
-	void LayoutLoader::buildPipeline(const LayoutLoaderParser::Element& e)
+	void LayoutLoader::buildPipeline(const VanillaParserSpace::Element& e)
 	{
 		try
 		{
@@ -843,7 +701,7 @@
 						break; //OK
 					default : 
 						if( associatedKeywords[k]<NumKeywords )
-							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						break;
@@ -918,11 +776,11 @@
 					preliminaryTests(parser.elements[k], -1, 4, 4, -1, "Connection");
 
 					// Test the nature of the connection : 
-					if(parser.elements[k].arguments[0]==keywords[THIS_PIPELINE] && parser.elements[k].arguments[1]==keywords[THIS_PIPELINE])
+					if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE] && parser.elements[k].arguments[1]==keywordsLayoutLoader[THIS_PIPELINE])
 						throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Direct connections between input and output are not allowed.", __FILE__, __LINE__);
-					else if(parser.elements[k].arguments[0]==keywords[THIS_PIPELINE])
+					else if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE])
 						layout.connectToInput(parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
-					else if(parser.elements[k].arguments[2]==keywords[THIS_PIPELINE])
+					else if(parser.elements[k].arguments[2]==keywordsLayoutLoader[THIS_PIPELINE])
 						layout.connectToOutput(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[3]);
 					else
 						layout.connect(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
@@ -987,7 +845,7 @@
 						break;
 					default : 
 						if(associatedKeyword[k]<NumKeywords)
-							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywords[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
 						else 
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;
@@ -996,7 +854,7 @@
 
 			// Check Errors : 
 			if(mainPipelineName.empty() && !isSubLoader)
-				throw Exception("No main pipeline (\"" + std::string(keywords[PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
+				throw Exception("No main pipeline (\"" + std::string(keywordsLayoutLoader[PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
 		}
 		catch(Exception& ex)
 		{

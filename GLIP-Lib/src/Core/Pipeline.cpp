@@ -337,7 +337,7 @@
 	\brief Get all destinations of an output port.
 	\param id The ID of the output element.
 	\param p The port of the output element.
-	\return A vector of Conection object, all having output as (id,p) or raise an exception if any errors occur.
+	\return A vector of Connection object, all having output as (id,p) or raise an exception if any errors occur.
 	**/
 	std::vector<__ReadOnly_PipelineLayout::Connection> __ReadOnly_PipelineLayout::getConnectionDestinations(int id, int p)
 	{
@@ -362,7 +362,7 @@
 	\brief Get the source of an input port.
 	\param id The ID of the input element.
 	\param p The port of the input element.
-	\return A Conection object, having input as (id,p) or raise an exception if any errors occur.
+	\return A Connection object, having input as (id,p) or raise an exception if any errors occur.
 	**/
 	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnectionSource(int id, int p)
 	{
@@ -845,6 +845,10 @@
 	}
 
 // Pipeline
+	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, p.getName()), perfsMonitoring(false), queryObject(0)
+	{ }
+
 	/**
 	\fn Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
 	\brief Pipeline constructor.
@@ -855,30 +859,33 @@
 	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0)
 	{
 		cleanInput();
-		outputBuffer.assign(getNumOutputPort(), 0);
-                outputBufferPort.assign(getNumOutputPort(), 0);
+		//outputBuffer.assign(getNumOutputPort(), 0);
+                //outputBufferPort.assign(getNumOutputPort(), 0);
 
-		build();
+		std::vector<Connection> connections;
+		int idx = THIS_PIPELINE;
+		build(idx, filtersList, filtersGlobalIDsList, connections, *this);
+		allocateBuffers(connections);
 	}
 
 	Pipeline::~Pipeline(void)
 	{
 		cleanInput();
 
-		listOfArgBuffersOutput.clear();
-		listOfArgBuffers.clear();
+		//listOfArgBuffersOutput.clear();
+		//listOfArgBuffers.clear();
 
-		actionFilter.clear();
-		outputBuffer.clear();
-		outputBufferPort.clear();
+		//actionFilter.clear();
+		//outputBuffer.clear();
+		//outputBufferPort.clear();
 
-		for(TableBuffer::iterator it = buffers.begin(); it!=buffers.end(); it++)
+		for(std::vector<HdlFBO*>::iterator it = buffersList.begin(); it!=buffersList.end(); it++)
 			delete (*it);
-		buffers.clear();
+		buffersList.clear();
 
-		for(TableFilter::iterator it = filters.begin(); it!=filters.end(); it++)
+		for(std::vector<Filter*>::iterator it = filtersList.begin(); it!=filtersList.end(); it++)
 			delete (*it);
-		filters.clear();
+		filtersList.clear();
 
 		if(queryObject>0)
 			glDeleteQueries(1, &queryObject);
@@ -890,604 +897,414 @@
 	**/
 	void Pipeline::cleanInput(void)
 	{
-		input.clear();
+		inputsList.clear();
 	}
 
-	/**
-	\fn void Pipeline::build(void)
-	\brief Build pipeline process from layout information, choosing the best path.
-	**/
-	void Pipeline::build(void)
+	void Pipeline::build(int& currentIdx, std::vector<Filter*>& filters, std::map<int, int>& filtersGlobalID, std::vector<Connection>& connections, __ReadOnly_PipelineLayout& originalLayout)
 	{
-		int dummy;
-
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "Pipeline::build - Building pipeline " << getNameExtended() << std::endl;
+			std::cout << "BUILD" << std::endl;
 		#endif
 
+		const int thisPipelineIdx = currentIdx;
+		currentIdx++;
+
+		// Extract and build elements, get the connections done too : 
 		try
 		{
-			// 1st Step
+			std::vector<int> 	localToGlobalIdx;
+			std::vector<Connection> localConnections;
 
-			// Push this as the first item of the wait list
-			// While the wait list is not empty
-			//     	Take the first/last element in the list and look for all its elements
-			//          	If the element is a pipeline, push it in the wait list and add it an INDEX
-			//          	If the element is a filter, create an instance of it and set its ID
-			//     	Done.
-			//	For each link of the current pipeline :
-			//		Change coordinates to absolute ones
-			//	Done.
-			// Done.
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    First step" << std::endl;
-			#endif
-
-			int startPipeline = 0;
-			std::vector<__ReadOnly_PipelineLayout*> pipeList;
-			std::list<int> waitList;
-			TableConnection  tmpConnections;
-			std::vector<int> connectionOwner;
-
-			getInfoElements(startPipeline, dummy); //startPipeline will contain the number of filter
-			pipeList.push_back(this);
-			waitList.push_back(startPipeline);
-
-			while(!waitList.empty())
+			// First extract the elements : 
+			for(int k=0; k<getNumElements(); k++)
 			{
-				int 	currentPipeline	= waitList.front();
-				 	//offsetPipeline	= pipeList.size()+startPipeline, // OLD? -Wall
-					//offsetFilter	= filters.size();  // OLD? -Wall
-				__ReadOnly_PipelineLayout* tmp = pipeList[currentPipeline-startPipeline];
+				ComponentKind currentElKind = getElementKind(k);
 
-				// Create instance of all elements :
-				for(int i=0; i<tmp->getNumElements(); i++)
+				if(currentElKind==FILTER)
 				{
-					switch(tmp->getElementKind(i))
-					{
-					case FILTER :
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        Adding a new filter" << std::endl;
-						#endif
-						filters.push_back(new Filter(tmp->filterLayout(i)));
-						tmp->setElementID(i, filters.size()-1);
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        Adding : " << filters.back()->getNameExtended() << std::endl;
-							std::cout << "        ID     : " << filters.size()-1 << std::endl;
-						#endif
-						break;
-					case PIPELINE :
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        Adding a new Pipeline" << std::endl;
-						#endif
-						pipeList.push_back(&tmp->pipelineLayout(i));
-						waitList.push_back(pipeList.size()-1 + startPipeline);
-						tmp->setElementID(i, pipeList.size()-1 + startPipeline);
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        Adding : " << pipeList.back()->getNameExtended() << std::endl;
-							std::cout << "        ID     : " << pipeList.size()-1 + startPipeline << std::endl;
-						#endif
-						break;
-					default :
-						throw Exception("Pipeline::build - Element type not recognized for " + tmp->componentLayout(i).getNameExtended() + ".", __FILE__, __LINE__);
-					}
-				}
-				pipeList.clear();
+					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+						std::cout << "    Adding a new filter" << std::endl;
+					#endif
+					originalLayout.setElementID(k, currentIdx);
+					localToGlobalIdx.push_back(currentIdx);
 
-				// Save all the connections to absolute basis :
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					// OLD ?
-					//std::cout << "    Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ", offset = " << offsetPipeline << ", offsetFilter = " << offsetFilter << ')' << std::endl;
-					std::cout << "    Adding " << tmp->getNumConnections() << " connections from " << tmp->getNameExtended() << " (Current pipeline ID : " << currentPipeline << ')' << std::endl;
-				#endif
-				for(int i=0; i<tmp->getNumConnections(); i++)
+					filters.push_back(new Filter(filterLayout(k)));	
+
+					// Save the link to the global ID : 
+					filtersGlobalID[currentIdx] = filters.size()-1;	
+					
+					currentIdx++;
+					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+						std::cout << "    Adding : " << filters.back()->getNameExtended() << std::endl;
+						std::cout << "    ID     : " << originalLayout.getElementID(k) << std::endl;
+					#endif
+				}
+				else if(currentElKind==PIPELINE)
 				{
-					Connection c = tmp->getConnection(i);
-
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-						std::cout << "        Connection BEFORE  : " << std::endl;
-						std::cout << "            idIn    : " << c.idIn << std::endl;
-						std::cout << "            portIn  : " << c.portIn << std::endl;
-						std::cout << "            idOut   : " << c.idOut << std::endl;
-						std::cout << "            portOut : " << c.portOut << std::endl;
-					#endif
+							std::cout << "    Adding a new Pipeline" << std::endl;
+					#endif					
+					originalLayout.setElementID(k, currentIdx);
+					localToGlobalIdx.push_back(currentIdx);
 
-					// Replace to absolute coordinates :
-					if(c.idIn==THIS_PIPELINE)
-					{
-						if(currentPipeline>startPipeline) // Not main pipeline
-							c.idIn = currentPipeline;
-						// else nothing, THIS_PIPELINE is valid
-					}
-					else
-					{
-						if(tmp->getElementKind(c.idIn)==PIPELINE)
-							//OLD : c.idIn = c.idIn + offsetPipeline;
-							c.idIn = tmp->getElementID(c.idIn);
-						else
-							//OLD : c.idIn = c.idIn + offsetFilter;
-							c.idIn = tmp->getElementID(c.idIn);
-					}
-					if(c.idOut==THIS_PIPELINE)
-					{
-						if(currentPipeline>startPipeline)
-							c.idOut = currentPipeline;
-						//else nothing, THIS_PIPELINE is valid
-					}
-					else
-					{
-						if(tmp->getElementKind(c.idOut)==PIPELINE)
-							//OLD : c.idOut = c.idOut + offsetPipeline;
-							c.idOut = tmp->getElementID(c.idOut);
-						else
-							//OLD : c.idOut = c.idOut + offsetFilter;
-							c.idOut = tmp->getElementID(c.idOut);
-					}
+					// Create a sub-pipeline : 
+					Pipeline tmpPipeline( pipelineLayout(k) );
+					tmpPipeline.build(currentIdx, filters, filtersGlobalID, localConnections, pipelineLayout(k));
 
+					currentIdx++;
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-						std::cout << "        Connection AFTER : " << std::endl;
-						std::cout << "            idIn    : " << c.idIn << std::endl;
-						std::cout << "            portIn  : " << c.portIn << std::endl;
-						std::cout << "            idOut   : " << c.idOut << std::endl;
-						std::cout << "            portOut : " << c.portOut << std::endl;
+						std::cout << "    Adding : " << pipelineLayout(k).getNameExtended() << std::endl;
+						std::cout << "    ID     : " << originalLayout.getElementID(k) << std::endl;
 					#endif
-
-					tmpConnections.push_back(c);
-					connectionOwner.push_back(currentPipeline);
 				}
-
-				waitList.pop_front();
+				else
+					throw Exception("Unknown exception kind.", __FILE__, __LINE__);
 			}
 
-			// 2nd Step
-
-			// Do
-			//	For each links in tmpConnections
-			//		If the idOut is a Pipeline and not THIS_PIPELINE
-			//			For each links in tmpConnections
-			//				If current links input is the same as upper links output
-			//					Add a link using input of upperlinks and output of  this link
-			//					Remove this link
-			//			Done.
-			//	Done.
-			//	Update proposition (there is Pipeline links in tmpConnections)
-			// While (there is Pipeline links in tmpConnections)
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Second step (Num connections : " << tmpConnections.size() << ')' << std::endl;
-			#endif
-			bool test = true;
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Connection list : " << tmpConnections.size() << std::endl;
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
-				{
-					std::cout << "        Connection  : " << std::endl;
-					std::cout << "            idIn    : " << (*it).idIn << std::endl;
-					std::cout << "            portIn  : " << (*it).portIn << std::endl;
-					std::cout << "            idOut   : " << (*it).idOut << std::endl;
-					std::cout << "            portOut : " << (*it).portOut << std::endl;
-				}
-				std::cout << "    End Connection list" << std::endl;
-			#endif
-
-			do
+			// Then change the connections : 
+			// The main rule is : each pipeline scale MUST untangle and shorten all of ITS connection before passing to the upper level.
+			std::vector<Connection> innerOutputConnections;
+			for(int k=0; k<getNumConnections(); k++)
 			{
-				for(int i=0; i<tmpConnections.size(); i++)
+				bool saveConnection = true;
+				Connection c = getConnection(k);
+	
+				// If the output is this pipeline : 
+				if(c.idOut==THIS_PIPELINE)
+					c.idOut = thisPipelineIdx;
+				else if(getElementKind(c.idOut)==PIPELINE) // or is a pipeline...
 				{
-					if(tmpConnections[i].idIn>startPipeline)
-					{
-						int merges = 0;
-						for(int j=0; j<tmpConnections.size(); j++)
-						{
-							if(tmpConnections[i].idIn==tmpConnections[j].idOut && tmpConnections[i].portIn==tmpConnections[j].portOut && connectionOwner[i]!=connectionOwner[j])
-							{
-								#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-									std::cout << "        Merging connection : " << std::endl;
-									std::cout << "            idIn    : " << tmpConnections[i].idIn 	<< "\t idIn    : " << tmpConnections[j].idIn 	<< std::endl;
-									std::cout << "            portIn  : " << tmpConnections[i].portIn 	<< "\t portIn  : " << tmpConnections[j].portIn 	<< std::endl;
-									std::cout << "            idOut   : " << tmpConnections[i].idOut 	<< "\t idOut   : " << tmpConnections[j].idOut 	<< std::endl;
-									std::cout << "            portOut : " << tmpConnections[i].portOut 	<< "\t portOut : " << tmpConnections[j].portOut << std::endl;
-								#endif
-								Connection c;
-								c.idIn 		= tmpConnections[j].idIn;
-								c.portIn 	= tmpConnections[j].portIn;
-								c.idOut 	= tmpConnections[i].idOut;
-								c.portOut 	= tmpConnections[i].portOut;
+					const int elIdx = localToGlobalIdx[c.idOut];
 
-								#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-									if(j<i)
-									{
-										std::cout << "        Comparison Connection BEFORE : " << std::endl;
-										std::cout << "            idIn    : " << tmpConnections[i].idIn << std::endl;
-										std::cout << "            portIn  : " << tmpConnections[i].portIn << std::endl;
-										std::cout << "            idOut   : " << tmpConnections[i].idOut << std::endl;
-										std::cout << "            portOut : " << tmpConnections[i].portOut << std::endl;
-									}
-								#endif
-								tmpConnections.erase(tmpConnections.begin() + j);
-								connectionOwner.erase(connectionOwner.begin() + j);
-								if(j<i)
-								{
-									i--;
-									#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-										std::cout << "        Comparison Connection AFTER : " << std::endl;
-										std::cout << "            idIn    : " << tmpConnections[i].idIn << std::endl;
-										std::cout << "            portIn  : " << tmpConnections[i].portIn << std::endl;
-										std::cout << "            idOut   : " << tmpConnections[i].idOut << std::endl;
-										std::cout << "            portOut : " << tmpConnections[i].portOut << std::endl;
-									#endif
-								}
-								j--;
-								tmpConnections.push_back(c);
-								merges++;
+					// We have identify a connection for which the source is actually the output of a pipeline.
+					// This means that this connection is either already identified in innerOutputConnections
+					// (and thus removed from localConections) or that we have to find first.
+
+					int idx = -1;
+					for(int l=0; l<innerOutputConnections.size(); l++)
+					{
+						if(innerOutputConnections[l].idIn==elIdx && innerOutputConnections[l].portIn==c.portOut)
+						{
+							idx = l;
+							break;
+						}
+					}
+
+					// Otherwise, try to find it in localConnections and push it in innerOutputConnections :
+					if(idx<0)
+					{
+						for(int l=0; l<localConnections.size(); l++)
+						{
+							if(localConnections[l].idIn==elIdx && localConnections[l].portIn==c.portOut)
+							{
+								idx = innerOutputConnections.size();
+								innerOutputConnections.push_back( localConnections[l] );
+								localConnections.erase( localConnections.begin()+l );		// We know the nature of this connection now, and we won't use it anymore in localConnections
+								break;
 							}
 						}
-						if(merges>0)
+					}
+
+					// Manage a possible error : 
+					if(idx<0)
+						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getNameExtended() + ", port : " + to_string(c.portOut) + ".", __FILE__, __LINE__);
+
+					// Finally : shorten the connection :
+					c.idOut = innerOutputConnections[idx].idOut;
+					c.portOut = innerOutputConnections[idx].portOut;
+				}
+				else // otherwise...
+					c.idOut = localToGlobalIdx[c.idOut];
+
+				// If the input is this pipeline : 
+				if(c.idIn==THIS_PIPELINE)
+					c.idIn = thisPipelineIdx;
+				else if(getElementKind(c.idIn)==PIPELINE) // or is a pipeline...
+				{
+					const int elIdx = localToGlobalIdx[c.idIn];
+
+					// Shorten paths : 
+					for(int l=0; l<localConnections.size(); l++)
+					{
+						if(localConnections[l].idOut==elIdx && localConnections[l].portOut==c.portIn) // If the connections correspond to the other end.
 						{
-							tmpConnections.erase(tmpConnections.begin() + i);
-							connectionOwner.erase(connectionOwner.begin() + i);
+							localConnections[l].idOut = c.idOut;
+							localConnections[l].portOut = c.portOut;
 						}
 					}
+
+					saveConnection = false;
 				}
+				else // otherwise... 
+					c.idIn = localToGlobalIdx[c.idIn];
 
-				// Is there any modification to do?
-				test = false;
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end() && !test; it++)
-					if((*it).idOut>startPipeline)
-					{
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "    Modifications remain" << std::endl;
-							std::cout << "            idIn    : " << (*it).idIn << std::endl;
-							std::cout << "            portIn  : " << (*it).portIn << std::endl;
-							std::cout << "            idOut   : " << (*it).idOut << std::endl;
-							std::cout << "            portOut : " << (*it).portOut << std::endl;
-						#endif
-						test = true;
-						throw Exception("Stop");
-					}
-			} while(test);
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Connection list : " << tmpConnections.size() << std::endl;
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
-				{
-					std::cout << "        Connection  : " << std::endl;
-					std::cout << "            idIn    : " << (*it).idIn << std::endl;
-					std::cout << "            portIn  : " << (*it).portIn << std::endl;
-					std::cout << "            idOut   : " << (*it).idOut << std::endl;
-					std::cout << "            portOut : " << (*it).portOut << std::endl;
-				}
-				std::cout << "    End Connection list" << std::endl;
-			#endif
-
-			// 3nd Step
-
-			// Manage memory
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Third step" << std::endl;
-			#endif
-
-			std::vector<int> 	availabilty;
-			TableConnection		remainingConnections = tmpConnections;
-			TableIndex		options;
-
-			// Prepare the buffer list :
-			std::vector<int> occupancy;
-			buffers.clear();
-			useBuffer.assign(filters.size(), -1);
-			listOfArgBuffers.assign(filters.size(), TableIndex());
-			listOfArgBuffersOutput.assign(filters.size(), TableIndex());
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Updating availability" << std::endl;
-			#endif
-
-			// Update availability :
-			for(TableFilter::iterator it=filters.begin(); it!=filters.end(); it++)
-				availabilty.push_back((*it)->getNumInputPort());
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Updating first links" << std::endl;
-			#endif
-			// Update the first links :
-			for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
-			{
-				if((*it).idOut==THIS_PIPELINE)
-				{
-					availabilty[(*it).idIn]--;
-					remainingConnections.erase(it);
-					it--;
-				}
+				// Save connection : 
+				if(saveConnection)
+					connections.push_back(c);
 			}
 
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Starting decision loop" << std::endl;
-			#endif
-			bool remaingFilter 	= false;
-			bool stuck 		= true;
-			do
-			{
-				remaingFilter 	= false;
-				stuck 		= (options.size()==0);
-
-				// Put the available filters in options
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					std::cout << "        Options list contains " << options.size() << " elements" << std::endl;
-				#endif
-				for(int id=0; id<availabilty.size(); id++)
-				{
-					if(availabilty[id]==0)
-					{
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "            adding filter " << id << " to the option list" << std::endl;
-						#endif
-						availabilty[id] = -1;
-						options.push_back(id);
-						stuck = false;
-					}
-					else
-					{
-						if(availabilty[id]>0)
-						{
-							#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-								std::cout << "            discarding filter " << id << " of the option list : " << availabilty[id] << std::endl;
-							#endif
-							remaingFilter = true;
-						}
-					}
-				}
-
-				if(stuck && remaingFilter)
-					throw Exception("Pipeline::build - Error : Building routine is stuck probably because of missing connection.", __FILE__, __LINE__);
-
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					std::cout << "        Best Filter" << std::endl;
-				#endif
-				// Search the best next filter in 'options'
-				TableIndex::iterator bestIt = options.begin();
-				bool notFoundMandatory = true;
-				int size = std::numeric_limits<int>::max();
-
-				// Loop aim : find the next step by giving priority to filter using a new format
-				for(TableIndex::iterator it=options.begin(); it!=options.end() && notFoundMandatory; it++)
-				{
-					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-						std::cout << "            Monitoring : " << *it << '/' << filters.size() << std::endl;
-						std::cout << "            Name       : " << filters[(*it)]->getName() << std::endl; //SEGFAULT if extended
-					#endif
-					// Is it a mandatory step?
-						// Look for the format in the FBO list
-						bool alreadyExist = false;
-						for(TableBuffer::iterator it2=buffers.begin(); it2!=buffers.end() && !alreadyExist; it2++)
-						{
-							if((*it2)!=NULL)
-								// If same texture format between the FBO and the target filter :
-								if((*(*it2))==(*filters[*it]) && (*it2)->getAttachmentCount()==filters[*it]->getNumOutputPort())
-									alreadyExist = true;
-						}
-
-					if(alreadyExist)
-					{
-						// Compare the size with the best one found for the moment :
-						int s = filters[*it]->getSize();
-						if(size>s)
-						{
-							size = s;
-							bestIt = it;
-						}
-					}
-					else // If not alreadyExist, then it is mandatory to create it :
-					{
-						notFoundMandatory = false;
-						bestIt = it;
-					}
-				}
-
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					std::cout << "        Saving Best Filter" << std::endl;
-				#endif
-
-				// Remove it from the options :
-				int best = *bestIt;
-				options.erase(bestIt);
-
-				// Addendum 04/02/2012
-				// Find if there is a FBO corresponding to format and not use at this moment
-				bool ableToFindMatchingBuffer = false;
-				for(int idBuffer = 0; idBuffer < buffers.size(); idBuffer++)
-				{
-					if( (*buffers[idBuffer]) == (*filters[best]) && occupancy[idBuffer]==0)
-					{
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        [MEM] Found a matching buffer for " << filters[best]->getNameExtended() << ". ID is : " << idBuffer << std::endl;
-						#endif
-
-						// Save the index of the buffer to use :
-						useBuffer[best] = idBuffer;
-
-						// If it has not a sufficient number of targets (less target than needed), count the number to add
-						int neededTarget = filters[best]->getNumOutputPort()-buffers[idBuffer]->getAttachmentCount();
-
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        [MEM] Adding MAX(0," << neededTarget << ") to buffer ID : " << idBuffer << std::endl;
-						#endif
-
-						for(int i=0; i<neededTarget; i++)
-							buffers[idBuffer]->addTarget();
-
-
-
-						ableToFindMatchingBuffer = true;
-					}
-				}
-
-				if(!ableToFindMatchingBuffer)
-				{
-					//We have to create a new buffer
-					int idBuffer = buffers.size();
-
-					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-						std::cout << "        [MEM] Building new buffer ID " << idBuffer << std::endl;
-					#endif
-
-
-					HdlFBO* tmp = new HdlFBO(*filters[best], filters[best]->getNumOutputPort());
-					buffers.push_back(tmp);
-					useBuffer[best] = idBuffer;
-
-					// Find new occupancy
-					occupancy.push_back(0);
-				}
-
-				// Reset the occupancy for the buffer by counting the number of time the buffer appears as "in"
-				std::vector<bool> outputPortUsed(filters[best]->getNumOutputPort(), false);
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
-				{
-					if((*it).idOut==best)
-					{
-						occupancy[useBuffer[best]]++;
-						outputPortUsed[(*it).portOut] = true;
-					}
-				}
-
-				// Check that all outputs are used or raise an exception otherwise
-				if(std::find(outputPortUsed.begin(), outputPortUsed.end(), false)!=outputPortUsed.end())
-				{
-					std::string listUnused;
-					bool oncePretty = false;
-
-					// Build the list of the unused output port(s) name(s)
-					for(int i=0; i<outputPortUsed.size(); i++)
-					{
-						if(!outputPortUsed[i])
-						{
-							if(!oncePretty)
-								oncePretty = true;
-							else
-								listUnused += ", ";
-
-							listUnused += filters[best]->getOutputPortName(i);
-						}
-					}
-
-					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " has some of the following output port(s) unused : " + listUnused + ".", __FILE__, __LINE__);
-				}
-
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					std::cout << "        [MEM] New occupancy of buffer ID " << useBuffer[best] << " is : " << occupancy[useBuffer[best]] << std::endl;
-				#endif
-
-				/*if(occupancy[useBuffer[best]]==0)
-					throw Exception("Pipeline::build - Error : Filter " + filters[best]->getNameExtended() + " result(s) is/are not used. You must remove it from the pipeline " + getNameExtended() + " or corresponding sub-structure or fix the connection error.", __FILE__, __LINE__);*/
-
-				// Save the corresponding action in the action list :
-				actionFilter.push_back(best);
-
-				// Create the argument list :
-				TableIndex 	bufferArg,
-						outputArg;
-				bufferArg.resize(filters[best]->getNumInputPort());
-				outputArg.resize(filters[best]->getNumInputPort());
-
-				// Find in the connections, the input ports
-				for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
-				{
-					if((*it).idIn==best)
-					{
-						test++;
-						if((*it).idOut!=THIS_PIPELINE)
-							bufferArg[(*it).portIn] = useBuffer[(*it).idOut]; // buffer used by source Filter
-						else
-							bufferArg[(*it).portIn] = (*it).idOut; // THIS_PIPELINE as source
-						outputArg[(*it).portIn] = (*it).portOut;
-						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "        Connecting port " << (*it).portIn << " to buffer " << (*it).idOut << "::" << (*it).portOut << std::endl;
-						#endif
-
-						//Decrease occupancy of the corresponding buffer (04/02/2012) :
-						if((*it).idOut!=THIS_PIPELINE)
-						{
-							#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-								std::cout << "        Decreasing occupancy for Buffer " << useBuffer[(*it).idOut] << " to " << occupancy[useBuffer[(*it).idOut]]-1 << std::endl;
-							#endif
-							occupancy[useBuffer[(*it).idOut]]--;
-						}
-					}
-
-				}
-
-				listOfArgBuffers[best] 		= bufferArg;
-				listOfArgBuffersOutput[best] 	= outputArg;
-
-				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-					std::cout << "        Removing connection outgoing from best filter" << std::endl;
-				#endif
-				// Find in the connections, the filters that depends on this step
-				for(TableConnection::iterator it=remainingConnections.begin(); it!=remainingConnections.end(); it++)
-				{
-					if((*it).idOut==best && (*it).idIn!=THIS_PIPELINE) // find a filter that is not this!
-					{
-						availabilty[(*it).idIn]--;
-						remainingConnections.erase(it);
-						it--;
-					}
-				}
-			}
-			while( remaingFilter );
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    End decision loop" << std::endl;
-			#endif
-
-			// Check if all filters are in :
-			for(std::vector<int>::iterator it=availabilty.begin(); it!=availabilty.end(); it++)
-				if((*it)!=-1)
-					throw Exception("Pipeline::build - Error : some filters aren't connected at the end of the parsing step in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
-
-			// Add the coordinates of the output buffers :
-			outputBuffer.assign(getNumOutputPort(), -1);
-			outputBufferPort.assign(getNumOutputPort(), 0);
-			for(TableConnection::iterator it=tmpConnections.begin(); it!=tmpConnections.end(); it++)
-			{
-				if((*it).idIn==THIS_PIPELINE)
-				{
-					outputBuffer[(*it).portIn] 	= (*it).idOut;
-					outputBufferPort[(*it).portIn] 	= (*it).portOut;
-				}
-			}
-
-			// Check that all output buffer ports have their connection :
-			for(int i=0; i<outputBuffer.size(); i++)
-				if(outputBuffer[i]==-1)
-					throw Exception("Pipeline::build - Error : Output port " + getOutputPortName(i) + " isn't connected in pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
-
-			// Print the final layout :
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    Actions : " << std::endl;
-				for(int i=0; i<actionFilter.size(); i++)
-				{
-					std::cout << "        Action " << i+1 << '/' << actionFilter.size() << " -> Filter : <" << actionFilter[i] << "> " << filters[actionFilter[i]]->getName() << " (Buffer : " << useBuffer[i] << ')' << std::endl;
-					for(int j=0; j<listOfArgBuffers[actionFilter[i]].size(); j++)
-						std::cout << "            Connection " << j << " to : (" << listOfArgBuffers[actionFilter[i]][j] << ';' << listOfArgBuffersOutput[actionFilter[i]][j] << ')' << std::endl;
-				}
-				std::cout << "    End Actions" << std::endl;
-			#endif
+			// Finally, append to the connections list : 
+			connections.insert(connections.end(), localConnections.begin(), localConnections.end());
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended() + " : ", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::build - Error while building the pipeline " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Pipeline::build - Error (std) while building the pipeline " + getNameExtended() + " : ", __FILE__, __LINE__);
 			throw m+e;
 		}
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "Pipeline::build - Done." << std::endl;
+			std::cout << "END BUILD" << std::endl;
+		#endif
+	}
+
+	void Pipeline::allocateBuffers(std::vector<Connection>& connections)
+	{
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "ALLOCATE" << std::endl;
+		#endif
+
+		try
+		{
+			// The input is a list of all the connections, untangle, where the ID -1 is reserved for this pipeline.
+			std::vector<Connection> 	remainingConnections = connections;	// The remaining (not processed) connections.
+			std::vector<int>		requestedInputConnections;		// The number of connections not satisfied for this filter.
+			std::vector<int>		bufferOccupancy;			// The number of filter which will use the buffer as inputs.
+			std::vector<ActionHub>		tmpActions;				// The temporary actions list.
+			bool allProcessed = false;
+
+			// Initialize the outputs : 
+			OutputHub blankOutput;
+			blankOutput.bufferIdx = -1;
+			blankOutput.outputIdx = -1;
+			outputsList.assign( getNumOutputPort(), blankOutput );
+
+			// Setup the requirements counters : 
+			for(int k=0; k<filtersList.size(); k++)
+			{
+				ActionHub hub;
+
+				hub.inputBufferIdx.assign( filtersList[k]->getNumOutputPort(), -1);
+				hub.inputArgumentIdx.assign( filtersList[k]->getNumOutputPort(), -1);
+				hub.bufferIdx		= -1;
+				hub.filterIdx 		= k;
+
+				tmpActions.push_back(hub);
+
+				// Set the number of inputs not satisfied to be equal to the number of inputs : 
+				requestedInputConnections.push_back( filtersList[k]->getNumOutputPort() );
+			}
+
+			// Initialize by decrementing the connections to this pipeline inputs : 
+			for(int k=0; k<remainingConnections.size(); k++)
+			{
+				if(remainingConnections[k].idOut==THIS_PIPELINE)
+				{
+					// Set up the links : 
+					const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
+					
+					tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= THIS_PIPELINE;
+					tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
+					requestedInputConnections[fid]--;
+
+					// Remove : 
+					remainingConnections.erase( remainingConnections.begin() + k );
+					k--;
+				}
+			}
+
+			// Generate the final actions list and buffers : 
+			do
+			{
+
+				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+					std::cout << "    Finding candidates : " << std::endl;
+				#endif
+				// Explore the list to find the possibles solutions :
+				std::vector<int> candidatesIdx;
+				for(int k=0; k<requestedInputConnections.size(); k++)
+				{
+					if(requestedInputConnections[k]==0)
+					{
+						candidatesIdx.push_back(k);
+						#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+							std::cout << "        Adding : " << filtersList[k]->getNameExtended() << std::endl;
+						#endif
+					}
+				}
+
+				// Find best candidate along the priority order (from highest to lowest) : 
+				// 1 - A filter that has exactly the same format as a buffer which is currently unused, this buffer must as large as possible.
+				// 2 - A filter that has the largest format which is not allocated yet.
+				// 3 - A filter that has the smallest format already allocated (but not available).
+
+				HdlTextureFormat fmt(0,0,GL_RGB,GL_UNSIGNED_BYTE);	// A format (in case we need to create one).
+				int fIdx = -1;						// The index of the filter chosen.
+				int bIdx = -1;						// The buffer index (if one already exists).
+				int currentDecision = 5;				// No decision.
+
+				for(int k=0; k<candidatesIdx.size(); k++)
+				{
+					// Try to find a match in the buffers : 
+					bool noMatch = true;
+					for(int l=0; l<buffersList.size(); l++)
+					{
+						// If this buffer is a match : 
+						if( *filtersList[ candidatesIdx[k] ] == *buffersList[l] )
+						{
+							noMatch = false;
+
+							// If this buffer is free : 
+							if(bufferOccupancy[l]==0)
+							{
+								// If the current choice is lower in priority or larger in buffer size : 
+								if( currentDecision>1 || ((currentDecision==1) && fmt.getSize()<buffersList[l]->getSize()) )
+								{
+									fIdx = candidatesIdx[k];
+									bIdx = l;
+									currentDecision = 1;
+									fmt = *buffersList[l];
+								}
+							}
+							else // The buffer is not free :
+							{
+								// If no other choices were made : 
+								if(currentDecision>3 || ( (currentDecision==3) && (fmt.getSize()<buffersList[l]->getSize()) ) )
+								{
+									fIdx = candidatesIdx[k];
+									bIdx = -1;
+									currentDecision = 3;
+									fmt = *buffersList[l];
+								}
+							}
+						}
+					}
+
+					if(noMatch && currentDecision>=2 && filtersList[ candidatesIdx[k] ]->getSize() > fmt.getSize())
+					{
+						fIdx = candidatesIdx[k];
+						bIdx = -1;
+						currentDecision = 2;
+						fmt = *filtersList[ candidatesIdx[k] ];
+					}
+				}
+
+				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+					std::cout << "    Decision : " << currentDecision << std::endl;
+					std::cout << "    Filter   : " << filtersList[fIdx]->getNameExtended() << std::endl;
+					std::cout << "    Buffer   : " << bIdx << std::endl;
+				#endif
+
+				std::cout << __LINE__ << std::endl;
+
+				// Create the action : 
+				if(currentDecision==1)
+				{
+					tmpActions[ fIdx ].bufferIdx = bIdx;
+
+					// Push : 
+					actionsList.push_back( tmpActions[ fIdx ] );
+				}
+				else if(currentDecision==2 || currentDecision==3)
+				{
+					// Create a new buffer : 
+					buffersList.push_back( new HdlFBO(fmt, filtersList[ fIdx ]->getNumOutputPort() ) );
+					bufferOccupancy.push_back(0);
+
+					bIdx = buffersList.size()-1;
+					tmpActions[ fIdx ].bufferIdx = bIdx;
+					
+					// Push : 
+					actionsList.push_back( tmpActions[ fIdx ] );
+				}
+				else
+					throw Exception("Internal error : Unkown action decision (" + to_string(currentDecision) + ").", __FILE__, __LINE__);
+
+				std::cout << __LINE__ << std::endl;
+
+				// Find all the buffers read by the current actions and decrease their occupancy : 
+				for(int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
+				{
+					if( actionsList.back().inputBufferIdx[k]!=THIS_PIPELINE )
+						bufferOccupancy[ actionsList.back().inputBufferIdx[k] ]--;
+				}
+
+				// Lock down this filter as "done" : 
+				requestedInputConnections[fIdx] = -1;
+
+				std::cout << __LINE__ << std::endl;
+
+				// Update the buffer occupancy to the new number of output and at the same time decrease the number of requests : 
+				for(int k=0; k<remainingConnections.size(); k++)
+				{
+					if(filtersGlobalIDsList[remainingConnections[k].idOut]==fIdx)
+					{
+						if(remainingConnections[k].idIn==THIS_PIPELINE)
+						{
+							outputsList[ remainingConnections[k].portIn ].bufferIdx 	= bIdx;
+							outputsList[ remainingConnections[k].portIn ].outputIdx		= remainingConnections[k].portOut;
+							
+							bufferOccupancy[bIdx] = std::numeric_limits<int>::max();
+						}
+						else
+						{
+							// Set up the links : 
+							const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
+					
+							tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= bIdx;
+							tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
+							requestedInputConnections[fid]--;
+
+							// Remove : 
+							remainingConnections.erase( remainingConnections.begin() + k );
+							k--;
+
+							bufferOccupancy[bIdx]++;
+						}
+					}
+				}
+
+				std::cout << __LINE__ << std::endl;
+
+				// Test if all were processed : 
+				allProcessed 	= true;
+				bool noNextStep = true;
+				for(int k=0; k<requestedInputConnections.size(); k++)
+				{
+					if(requestedInputConnections[k]>=0)
+						allProcessed = false;
+					if(requestedInputConnections[k]==0)
+						noNextStep = false;
+				}
+
+				if(noNextStep && !allProcessed)
+					throw Exception("The pipeline building process is stuck as some elements remains but cannot be integrated as they lack input.", __FILE__, __LINE__);
+
+				std::cout << __LINE__ << std::endl;
+			}
+			while(!allProcessed);
+
+			// Final tests : 
+			if(filtersList.size()!=actionsList.size())
+				throw Exception("Some filters were omitted because their connections scheme does not allow usage.", __FILE__, __LINE__);
+		}
+		catch(Exception& e)
+		{
+			Exception m("Pipeline::allocateBuffers - Error while allocating the buffers in the pipeline " + getNameExtended() + " : ", __FILE__, __LINE__);
+			throw m+e;
+		}
+		catch(std::exception& e)
+		{
+			Exception m("Pipeline::allocateBuffers - Error (std) while allocating the buffers in the pipeline " + getNameExtended() + " : ", __FILE__, __LINE__);
+			throw m+e;
+		}
+
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "END ALLOCATE" << std::endl;
 		#endif
 	}
 
@@ -1498,7 +1315,7 @@
 	**/
 	int Pipeline::getNumActions(void)
 	{
-		return actionFilter.size();
+		return actionsList.size();
 	}
 
 	/**
@@ -1512,15 +1329,15 @@
 		int size = 0;
 
 		#ifdef __GLIPLIB_VERBOSE__
-			std::cout << "Pipeline::getSize for " << getNameExtended() << " (" << buffers.size() << " buffers)" <<std::endl;
+			std::cout << "Pipeline::getSize for " << getNameExtended() << " (" << buffersList.size() << " buffers)" <<std::endl;
 		#endif
 
-		for(int i=0; i<buffers.size(); i++)
+		for(int i=0; i<buffersList.size(); i++)
 		{
-			int fsize = buffers[i]->getSize(askDriver);
+			int fsize = buffersList[i]->getSize(askDriver);
 
 			#ifdef __GLIPLIB_VERBOSE__
-				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << buffers[i]->getWidth() << ", H:" << buffers[i]->getHeight() << ",T:" << buffers[i]->getAttachmentCount() << ')' << std::endl;
+				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << buffersList[i]->getWidth() << ", H:" << buffersList[i]->getHeight() << ",T:" << buffersList[i]->getAttachmentCount() << ')' << std::endl;
 			#endif
 			size += fsize;
 		}
@@ -1551,33 +1368,33 @@
 			std::cout << "Pipeline::process - Processing : " << getNameExtended() << std::endl;
 		#endif
 
-		for(int i = 0; i<actionFilter.size(); i++)
+		for(int k = 0; k<actionsList.size(); k++)
 		{
-			int action = actionFilter[i];
+			ActionHub* 	action 	= &actionsList[k];
+			Filter* 	f 	= filtersList[ action->filterIdx ];
+			HdlFBO* 	t 	= buffersList[ action->bufferIdx ];
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    applying filter : " << filters[action]->getNameExtended() << "..." << std::endl;
+				std::cout << "    applying filter : " << f->getNameExtended() << "..." << std::endl;
 			#endif
 
-			// Apply filter *filter[actionFilter]
-			Filter* f = filters[action];
-			for(int j=0; j<f->getNumInputPort(); j++)
+			for(int l=0; l<f->getNumInputPort(); l++)
 			{
-				int bufferID 	= listOfArgBuffers[action][j];
-				int portID 	= listOfArgBuffersOutput[action][j];
+				int bufferID 	= action->inputBufferIdx[l];
+				int portID 	= action->inputArgumentIdx[l];
 
 				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 					std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;
 				#endif
 
 				if(bufferID==THIS_PIPELINE)
-					f->setInputForNextRendering(j, input[portID]);
+					f->setInputForNextRendering(l, inputsList[portID]);
 				else
-					f->setInputForNextRendering(j, (*buffers[bufferID])[portID]);
+					f->setInputForNextRendering(l, (*buffersList[bufferID])[portID]);
 			}
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "        Processing using buffer " << useBuffer[action] << "..." << std::endl;
+				std::cout << "        Processing using buffer " << action->bufferIdx << "..." << std::endl;
 			#endif
 
 			if(perfsMonitoring)
@@ -1590,7 +1407,7 @@
 				//glFlush();
 			}
 
-			f->process(*buffers[useBuffer[action]]);
+			f->process(*t);
 
 			if(perfsMonitoring)
 			{
@@ -1601,12 +1418,12 @@
 					GLuint64 querytime;
 					glEndQuery(GL_TIME_ELAPSED);
 					glGetQueryObjectui64v(queryObject, GL_QUERY_RESULT, &querytime);
-					perfs[action] = static_cast<double>(querytime)/1e6;
+					perfs[k] = static_cast<double>(querytime)/1e6;
 				}
 				else
 				{
 					timing = clock() - timing;
-					perfs[action] = static_cast<double>(timing)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
+					perfs[k] = static_cast<double>(timing)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
 				}
 			}
 
@@ -1643,10 +1460,10 @@
 	**/
 	Pipeline& Pipeline::operator<<(HdlTexture& texture)
 	{
-		if(input.size()>=getNumInputPort())
+		if(inputsList.size()>=getNumInputPort())
 			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
-		input.push_back(&texture);
+		inputsList.push_back(&texture);
 
 		return *this;
 	}
@@ -1661,10 +1478,10 @@
 	{
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
-			if(input.size()>=getNumInputPort())
+			if(inputsList.size()>=getNumInputPort())
 				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
-			input.push_back(&pipeline.out(i));
+			inputsList.push_back(&pipeline.out(i));
 		}
 
 		return *this;
@@ -1679,7 +1496,7 @@
 	Pipeline& Pipeline::operator<<(ActionType a)
 	{
 		// Check the number of arguments given :
-		if(input.size()!=getNumInputPort())
+		if(inputsList.size()!=getNumInputPort())
 			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getNameExtended() + ".", __FILE__, __LINE__);
 
 		switch(a)
@@ -1705,9 +1522,10 @@
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-		int bufferID 		= useBuffer[outputBuffer[i]];
+		/*int bufferID 		= useBuffer[outputBuffer[i]];
 		int bufferPortID 	= outputBufferPort[i];
-		return *((*buffers[bufferID])[bufferPortID]);
+		return *((*buffers[bufferID])[bufferPortID]);*/
+		return (*(*buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
 	}
 
 	/**
@@ -1759,7 +1577,7 @@
 			if(p->getElementID(id)==ELEMENT_NOT_ASSOCIATED)
 				throw Exception("Pipeline::operator[] - The element " + path + " exists but wasn't associated (internal error).", __FILE__, __LINE__);
 
-			return p->getElementID(id);
+			return filtersGlobalIDsList[ p->getElementID(id) ];
 		}
 		catch(Exception& e)
 		{
@@ -1783,7 +1601,7 @@
 	{
 		try
 		{
-			return *filters[filterID];
+			return *filtersList[filterID];
 		}
 		catch(Exception& e)
 		{
@@ -1807,7 +1625,7 @@
 	{
 		try
 		{
-			return *filters[getFilterID(path)];
+			return *filtersList[getFilterID(path)];
 		}
 		catch(Exception& e)
 		{
@@ -1832,7 +1650,7 @@
 		if(!perfsMonitoring)
 		{
 			perfsMonitoring = true;
-			perfs.assign(filters.size(),0.0f);
+			perfs.assign(filtersList.size(),0.0f);
 			totalPerf = 0.0f;
 
 			if(GLEW_VERSION_3_3)
@@ -1884,11 +1702,11 @@
 	{
 		if(perfsMonitoring)
 		{
-			if(action<0 || action>=actionFilter.size())
+			if(action<0 || action>=actionsList.size())
 				throw Exception("Pipeline::getTiming - Action index is outside of range.", __FILE__, __LINE__);
 			else
 			{
-				filterName = filters[actionFilter[action]]->getNameExtended();
+				filterName = filtersList[ actionsList[action].filterIdx ]->getNameExtended();
 				return perfs[action];
 			}
 		}

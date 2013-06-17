@@ -79,6 +79,7 @@
 			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
 			{
 				// Save output with ressources : 
+				std::cout << "Save output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
 				ressourceTab.saveOutputToFile( mainPipeline->out(id) );
 			}
 		}

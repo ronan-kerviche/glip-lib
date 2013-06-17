@@ -1,0 +1,71 @@
+// The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
+//TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+//REQUIRED_FORMAT:format(FormatLargest)
+
+// The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
+SHADER_SOURCE:mixTwoImagesShader
+{
+	#version 130
+
+	uniform sampler2D	texture1, texture2;
+	out     vec4 		texout1, texout2;
+
+	uniform float alpha = 0.5;
+
+	void main()
+	{
+		// Get the input data :
+		vec2 d = (gl_TexCoord[0].st - vec2(0.5,0.5))*0.75 + vec2(0.5,0.5);
+		vec4 col1  = textureLod(texture1, d, 0.0);
+		vec4 col2 = textureLod(texture2, gl_TexCoord[0].st, 0.0);
+
+		// Write the output data :
+		col1.rgb = (col1.rrr + col1.ggg + col1.bbb)/3.0;
+		texout1 = col1*alpha + col2*(1-alpha);
+		texout2 = col1*(1-alpha) + col2*alpha;
+	}
+}
+
+SHADER_SOURCE:splitShader
+{
+	#version 130
+
+	uniform sampler2D	texout1, texout2;
+	out vec4		outSplitted;
+
+	uniform float lim = 0.5;
+
+	void main()
+	{
+		vec4 col;
+		vec2 pos = gl_TexCoord[0].st;
+
+		if(pos.s<=lim)
+		{
+			//pos.s = pos.s*2.0;
+			col = textureLod(texout1, pos, 0.0);
+		}
+		else
+		{
+			//pos.s = (pos.s - 0.5) * 2.0;
+			col = textureLod(texout2, pos, 0.0);
+		}
+
+		outSplitted = col;
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:mixFilter(format,mixTwoImagesShader)
+FILTER_LAYOUT:splitFilter(format,splitShader)
+
+
+PIPELINE_MAIN:pMainMixTwoImages()
+{
+	// Declare some input and output ports for this pipeline ::
+	INPUT_PORTS(texture1, texture2)
+	OUTPUT_PORTS(texout1, texout2, outSplitted)
+
+	FILTER_INSTANCE:instMix(mixFilter)
+	FILTER_INSTANCE:instSplit(splitFilter)
+}

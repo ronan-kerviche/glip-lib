@@ -70,8 +70,8 @@ Example of how to use TextureReader :
 	TextureReader thirdReader("ThirdReader",myPipeline.out(0).format());
 
 	// How to use them :
-	secondReader << texture;
-	thirdReader << myPipeline.out(0);
+	secondReader << texture << OutputDevice::Process;
+	thirdReader << myPipeline.out(0) << OutputDevice::Process;
 
 	// Read the red component of the pixel on second column, third line :
 	double value;
@@ -84,6 +84,7 @@ Example of how to use TextureReader :
 		class TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
+				char* originalPointer;
 				void* data;
 
 			protected :
@@ -118,8 +119,8 @@ Example of how to use PBOTextureReader :
 	PBOTextureReader thirdPBOReader("ThirdPBOReader",myPipeline.out(0).format(), GL_STREAM_READ);
 
 	// How to use them :
-	secondPBOReader << texture;
-	thirdPBOReader << myPipeline.out(0);
+	secondPBOReader << texture << OutputDevice::Process;
+	thirdPBOReader << myPipeline.out(0) << OutputDevice::Process;
 
 	// Map the internal PBO to the memory for GL_RGB, GL_UNSIGNED_BYTE :
 	unsigned char* ptr = reinterpret_cast<unsigned char*>(secondPBOReader.startReadingMemory());
@@ -187,7 +188,7 @@ Example :
 	TextureCopier copier("Copier",fmt,fmt);
 
 	// Copy :
-	copier << someTexture;
+	copier << someTexture << OutputDevice::Process;
 
 	// Now you can use copier.texture() which will be a perfect copy of someTexture.
 \endcode

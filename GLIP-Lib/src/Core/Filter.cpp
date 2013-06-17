@@ -214,10 +214,10 @@
 
 		// Check for the number of input
 		if(getNumInputPort()>limInput)
-			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()), __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
 		if(getNumInputPort()>limOutput)
-			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()), __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
 		// Build arguments table :
 		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));

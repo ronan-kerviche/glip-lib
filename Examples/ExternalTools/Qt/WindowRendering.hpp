@@ -47,6 +47,7 @@
 	#include <QGLWidget>
 	#include <QKeyEvent>
 	#include <QVBoxLayout>
+	#include <QMessageBox>
 
 	// Namespaces
 	using namespace Glip;

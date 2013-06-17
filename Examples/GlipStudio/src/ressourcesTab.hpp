@@ -212,6 +212,7 @@
 						freeImage,
 						saveOutputAs;
 
+			QString			pipelineName;
 			RessourceCategory	currentOutputCategory;
 			int			currentOutputID;
 			bool			infoLastComputeSucceeded;

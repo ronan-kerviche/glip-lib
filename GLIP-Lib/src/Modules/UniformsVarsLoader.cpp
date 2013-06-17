@@ -7,42 +7,29 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : devDebugTools.hpp                                                                         */
-/*     Original Date : August 15th 2011                                                                          */
+/*     File          : UniformVarsLoader.cpp                                                                     */
+/*     Original Date : June 8th 2013                                                                             */
 /*                                                                                                               */
-/*     Description   : Development and debugging tools                                                           */
+/*     Description   : Uniforms variables save/load.                                                             */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
 /**
- * \file    devDebugTools.hpp
- * \brief   Development and debugging tools
+ * \file    UniformVarsLoader.cpp 
+ * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
- * \date    August 15th 2011
+ * \date    June 8th 2013
 **/
 
-#ifndef __DEV_DEBUG_TOOLS__
-#define __DEV_DEBUG_TOOLS__
+	// Includes : 
+	#include "UniformsVarsLoader.hpp"
+	#include "VanillaParser.hpp"
 
-	// Development flags
-		#define __GLIPLIB_VERBOSE__
-		#define __GLIPLIB_DEVELOPMENT_VERBOSE__
-		#define __GLIPLIB_TRACK_GL_ERRORS__
+	// Namespaces :
+	using namespace Glip;
+	using namespace Glip::CoreGL;
+	using namespace Glip::CorePipeline;
+	using namespace Glip::Modules;
+	using namespace Glip::Modules::VanillaParserSpace;
 
-	// Tools
-		#define STR_EXPAND(tok) 	#tok
-		#define STR(tok) 		STR_EXPAND(tok)
-		#define __HERE__		"["STR(__FUNCTION__)" at "STR(__FILE__)" : "STR(__LINE__)"] "
 
-		#define OPENGL_ERROR_TRACKER(functionName, callLine) \
-			{ \
-				bool caughtError; \
-				std::string errDescription = glErrorToString(&caughtError); \
-				if(caughtError) \
-				{ \
-					std::cout << functionName << " / " << callLine << " - Opengl error : " << errDescription << std::endl; \
-					glDebug(); \
-				} \
-			}
-
-#endif

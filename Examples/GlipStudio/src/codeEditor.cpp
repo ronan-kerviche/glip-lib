@@ -55,7 +55,7 @@
 
 			for(int i=0; i<Glip::Modules::NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + Glip::Modules::keywords[i] + "\\b";
+				std::string str = std::string("\\b") + Glip::Modules::keywordsLayoutLoader[i] + "\\b";
 				glipkeywordPatterns << str.c_str();
 			}
 

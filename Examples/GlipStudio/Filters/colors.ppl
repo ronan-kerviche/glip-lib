@@ -1,0 +1,432 @@
+// Colors library : 
+
+SHARED_SOURCE:ColorPrimitives
+{
+	void RGBToHSV( in vec3 rgb, out vec3 hsv )
+	{
+		float mn, mx, delta;
+
+		mn = min( min(rgb.r, rgb.g), rgb.b );
+		mx = max( max(rgb.r, rgb.g), rgb.b );
+		hsv.z = mx;
+
+		delta = mx - mn;
+
+		if( mx != 0.0 )
+		{
+			hsv.y = delta / mx;
+
+			if( rgb.r == mx )
+				hsv.x = ( rgb.g - rgb.b ) / delta;
+			else if( rgb.g == mx )
+				hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
+			else
+				hsv.x = 4 + ( rgb.r - rgb.g ) / delta;	
+
+			hsv.x = hsv.x * 60.0;
+			if( hsv.x < 0 )
+				hsv.x = hsv.x + 360.0;
+		}
+		else
+		{
+			hsv.y = 0;
+			hsv.x = -1;
+		}
+	}
+
+	void HSVToRGB( in vec3 hsv, out vec3 rgb )
+	{
+		int i;
+		float f, p, q, t;
+
+		if( hsv.y == 0 ) 
+			rgb = hsv.zzz;
+		else
+		{
+			hsv.x = hsv.x / 60;
+			i = int( floor( hsv.x ) );
+			f = hsv.x - i;
+			p = hsv.z * ( 1 - hsv.y );
+			q = hsv.z * ( 1 - hsv.y * f );
+			t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
+
+			if( i==0 )
+				rgb = vec3(hsv.z, t, p);
+			else if( i==1 )
+				rgb = vec3(q, hsv.z, p);
+			else if( i==2 )
+				rgb = vec3(p, hsv.z, t);
+			else if( i==3 )
+				rgb = vec3(p, q, hsv.z);
+			else if( i==4 )
+				rgb = vec3(t, p, hsv.z);
+			else
+				rgb = vec3(hsv.z, p, q);
+		}
+	}
+
+	// From XYZ to ...
+	void XYZToxyz(double& v0, double& v1, double& v2)
+	{
+		double 	X = v0,
+			Y = v1,
+			Z = v2;
+		double	x = 0.0,
+			y = 0.0,
+			z = 0.0;
+		double  s = X+Y+Z;
+
+		if(s!=0.0)
+		{
+			x = X/s;
+			y = Y/s;
+			z = Z/s;
+		}
+		// else x = y = z = 0.0;
+
+		v0 = x;
+		v1 = y;
+		v2 = z;
+	}
+
+	void XYZToLsUsVs(double& v0, double& v1, double& v2)
+	{
+		double	X = v0,
+			Y = v1,
+			Z = v2;
+		double 	Ls = 0.0,
+			Us = 0.0,
+			Vs = 0.0;
+
+		// Ls
+		if(Y/YD65 < 0.008856)
+			Ls = 903.3 * Y/YD65;
+		else
+			Ls = 116.0 * pow(Y/YD65,1.0/3.0) - 16.0;
+
+		// Us
+			Us = 13.0 * Ls * ( 4.0*X/(X+15.0*Y+3.0*Z) - UPD65);
+		// Vs
+			Vs = 13.0 * Ls * ( 9.0*Y/(X+15.0*Y+3.0*Z) - VPD65);
+
+		v0 = Ls;
+		v1 = Us;
+		v2 = Vs;
+	}
+
+	void XYZToLAB(double& v0, double& v1, double& v2)
+	{
+		double	X = v0,
+			Y = v1,
+			Z = v2;
+		double 	L = 0.0,
+			a = 0.0,
+			b = 0.0;
+
+		L = 100.0*sqrt(Y/YD65);
+		a = 172.30*(X/XD65-Y/YD65)/sqrt(Y/YD65);
+		b = 67.20*(Y/YD65-Z/ZD65)/sqrt(Y/YD65);
+
+		v0 = L;
+		v1 = a;
+		v2 = b;
+	}
+
+	void XYZToLsAsBs(double& v0, double& v1, double& v2)
+	{
+		double	X = v0,
+			Y = v1,
+			Z = v2;
+		double 	Ls = 0.0,
+			As = 0.0,
+			Bs = 0.0;
+
+		Ls = 116.0*fLsAsBs(Y/YD65) - 16.0;
+		As = 500.0*(fLsAsBs(X/XD65)-fLsAsBs(Y/YD65));
+		Bs = 200.0*(fLsAsBs(Y/YD65)-fLsAsBs(Z/ZD65));
+
+		v0 = Ls;
+		v1 = As;
+		v2 = Bs;
+	}
+
+	void XYZToRGB(double& v0, double& v1, double& v2)
+	{
+		double	X = v0/YD65,
+			Y = v1/YD65,
+			Z = v2/YD65;
+		double 	R = 0.0,
+			G = 0.0,
+			B = 0.0;
+
+		R =  0.41846*X - 0.15860*Y - 0.08283*Z;
+		G = -0.09117*X + 0.25243*Y + 0.01571*Z;
+		B =  0.00092*X - 0.00255*Y + 0.17860*Z;
+
+		v0 = R;
+		v1 = G;
+		v2 = B;
+	}
+
+	void XYZTosRGB(double& v0, double& v1, double& v2)
+	{
+		double	X = v0/YD65,
+			Y = v1/YD65,
+			Z = v2/YD65;
+		double 	R = 0.0,
+			G = 0.0,
+			B = 0.0;
+
+		R =  3.2406*X - 1.5372*Y - 0.4986*Z;
+		G = -0.9689*X + 1.8758*Y + 0.0415*Z;
+		B =  0.0557*X - 0.2040*Y + 1.0570*Z;
+
+		v0 = fSRGB(R);
+		v1 = fSRGB(G);
+		v2 = fSRGB(B);
+	}
+
+	void XYZToYIQ(double& v0, double& v1, double& v2)
+	{
+		double	X = v0/YD65,
+			Y = v1/YD65,
+			Z = v2/YD65;
+		double 	Y2 = 0.0,
+			I2 = 0.0,
+			Q2 = 0.0;
+
+		Y2 = 0.0131*X + 0.3325*Y + 0.0729*Z;
+		I2 = 0.1264*X - 0.1310*Y - 0.0866*Z;
+		Q2 = 0.0365*X - 0.0921*Y + 0.0565*Z;
+
+		v0=Y2;
+		v1=I2;
+		v2=Q2;
+	}
+
+	void XYZToYpUV(double& v0, double& v1, double& v2)
+	{
+		double	X = v0/YD65,
+			Y = v1/YD65,
+			Z = v2/YD65;
+		double 	Yp = 0.0,
+			U  = 0.0,
+			V  = 0.0;
+
+		Yp =  0.0975*X + 0.3341*Y + 0.1251*Z;
+		U  = -0.0547*X - 0.1345*Y - 0.1220*Z;
+		V  =  0.1105*X - 0.0907*Y - 0.0166*Z;
+
+		v0=Yp;
+		v1=U;
+		v2=V;
+	}
+
+	void XYZToAdobeRGB(double& v0, double& v1, double& v2)
+	{
+		double	X = v0/YD65,
+			Y = v1/YD65,
+			Z = v2/YD65;
+		double 	R = 0.0,
+			G = 0.0,
+			B = 0.0;
+
+		R =  2.04159*X - 0.56501*Y - 0.34473*Z;
+		G = -0.96924*X + 1.87597*Y + 0.04156*Z;
+		B =  0.01344*X - 0.11836*Y + 1.01517*Z;
+
+		R = pow(R,1.0/2.2);
+		G = pow(G,1.0/2.2);
+		B = pow(B,1.0/2.2);
+
+		v0 = R;
+		v1 = G;
+		v2 = B;
+	}
+
+	// From ... to XYZ
+	void xyzToXYZ(double& v0, double& v1, double& v2)
+	{
+		double 	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double	x = v0,
+			y = v1,
+			z = v2;
+		double  a = MAX(MAX(x,y),z); // Normalization to the max
+
+		if(a!=0.0)
+		{
+			X = x/a;
+			Y = y/a;
+			Z = z/a;
+		}
+		// else X = Y = Z = 0.0;
+
+		v0 = X*YD65;
+		v1 = Y*YD65;
+		v2 = Z*YD65;
+	}
+
+	void LsUsVsToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	Ls = v0,
+			Us = v1,
+			Vs = v2;
+
+		// Y
+		if(Ls <= 8.0)
+			Y = YD65 * Ls * 9.0 / 841.0;
+		else
+			Y = YD65 * pow((Ls+16.0)/116.0,3.0);
+
+		double up = Us/(13.0*Ls) + UPD65;
+		double vp = Vs/(13.0*Ls) + VPD65;
+
+		// X
+			X = Y * (9.0*up)/(4.0*vp);
+		// Z
+			Z = Y * (12.0-3.0*up-20.0*vp)/(4.0*vp);
+
+		v0 = X;
+		v1 = Y;
+		v2 = Z;
+	}
+
+	void LABToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	L = v0,
+			a = v1,
+			b = v2;
+
+		Y = pow(L/100.0, 2.0)*YD65;
+		X = Y/YD65 + a/172.30*sqrt(Y/YD65);
+		Z = Y/YD65 - b/67.20*sqrt(Y/YD65);
+
+		v0 = X;
+		v1 = Y;
+		v2 = Z;
+	}
+
+	void LsAsBsToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	Ls = v0,
+			As = v1,
+			Bs = v2;
+
+		X = XD65 * gLsAsBs((Ls+16.0)/116.0);
+		Y = YD65 * gLsAsBs((Ls+16.0)/116.0 + As/500.0);
+		Z = ZD65 * gLsAsBs((Ls+16.0)/116.0 - Bs/200.0);
+
+		v0 = X;
+		v1 = Y;
+		v2 = Z;
+	}
+
+	void RGBToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	R = v0,
+			G = v1,
+			B = v2;
+
+		X = 2.76888*R + 1.75175*G + 1.13016*B;
+		Y =         R + 4.59070*G + 0.06010*B;
+		Z =             0.05651*G + 5.59427*B;
+
+		v0 = X*YD65;
+		v1 = Y*YD65;
+		v2 = Z*YD65;
+	}
+
+	void sRGBToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	R = v0,
+			G = v1,
+			B = v2;
+
+		R = gSRGB(R);
+		G = gSRGB(G);
+		B = gSRGB(B);
+
+		X = 0.4124*R + 0.3576*G + 0.1805*B;
+		Y = 0.2126*R + 0.7152*G + 0.0722*B;
+		Z = 0.0193*R + 0.1192*G + 0.9505*B;
+
+		v0 = X*YD65;
+		v1 = Y*YD65;
+		v2 = Z*YD65;
+	}
+
+	void YIQToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	Y2 = v0,
+			I2 = v1,
+			Q2 = v2;
+
+		X = 3.7250*Y2 + 6.1758*I2 + 4.6615*Q2;
+		Y = 2.4966*Y2 + 0.4652*I2 - 2.5078*Q2;
+		Z = 1.6618*Y2 - 3.2342*I2 + 10.5995*Q2;
+
+		v0=X*YD65;
+		v1=Y*YD65;
+		v2=Z*YD65;
+	}
+
+	void YpUVToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	Yp = v0,
+			U  = v1,
+			V  = v2;
+
+		X = 2.7687*Yp + 1.8154*U  + 7.5062*V;
+		Y = 2.3741*Yp - 0.0934*U  - 2.1416*V;
+		Z = 4.8008*Yp + 11.0791*U + 1.2519*V;
+
+		v0=X*YD65;
+		v1=Y*YD65;
+		v2=Z*YD65;
+	}
+
+	void AdobeRGBToXYZ(double& v0, double& v1, double& v2)
+	{
+		double	X = 0.0,
+			Y = 0.0,
+			Z = 0.0;
+		double 	R = v0,
+			G = v1,
+			B = v2;
+
+		R = pow(R,2.2);
+		G = pow(G,2.2);
+		B = pow(B,2.2);
+
+		X = 0.57667*R + 0.18556*G + 0.18823*B;
+		Y = 0.29734*R + 0.62736*G + 0.07529*B;
+		Z = 0.02703*R + 0.07069*G + 0.99134*B;
+
+		v0 = X*YD65;
+		v1 = Y*YD65;
+		v2 = Z*YD65;
+	}
+}

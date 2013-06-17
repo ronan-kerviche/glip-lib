@@ -27,6 +27,8 @@
 	// Includes
 	#include <ctime>
 	#include <algorithm>
+	#include <map>
+	#include <limits>
         #include "Component.hpp"
         #include "Filter.hpp"
 
@@ -77,13 +79,13 @@
 					**/
 					struct Connection // Connection goes from idOut::portOut to idIn::portIn
 					{
-						/// The ID of the element receiving the conection
+						/// The ID of the element receiving the connection
 						int idIn;
-						/// The ID of the port of the element receiving the conection
+						/// The ID of the port of the element receiving the connection
 						int portIn;
-						/// The ID of the element emitting the conection
+						/// The ID of the element emitting the connection
 						int idOut;
-						/// The ID of the port of the element emitting the conection
+						/// The ID of the port of the element emitting the connection
 						int portOut;
 					};
 
@@ -225,29 +227,39 @@ How to process the inputs :
 					};
 
 				private :
+					struct ActionHub
+					{
+						std::vector<int> 	inputBufferIdx;		// The index of the buffer providing the argument k.
+						std::vector<int> 	inputArgumentIdx;	// The index of the output providing the argument k.
+						int			bufferIdx;		// The index of the buffer to use for output.
+						int			filterIdx;		// The index of the filter.
+					};
+
+					struct OutputHub
+					{
+						int 			bufferIdx;		// The index of the targeted buffer holding the input.
+						int			outputIdx;		// The index of the output for this buffer which has to be used.
+					};
+
 					// Data
-					typedef std::vector<HdlTexture*> 	TablePtr;
-					typedef std::vector<Filter*>     	TableFilter;
-					typedef std::vector<Connection>   	TableConnection;
-					typedef std::vector<int>		TableIndex;
-					typedef std::vector<HdlFBO*>		TableBuffer;
-					TablePtr       				input;
-					TableIndex       			outputBuffer;
-					TableIndex       			outputBufferPort;
-					TableFilter    				filters;
-					TableBuffer				buffers;
-					TableIndex				useBuffer;
-					TableIndex				actionFilter;
-					std::vector<TableIndex>			listOfArgBuffers;
-					std::vector<TableIndex>			listOfArgBuffersOutput;
+					std::vector<HdlTexture*> 		inputsList;
+					std::vector<HdlFBO*>			buffersList;				
+					std::vector<Filter*>			filtersList;					
+					std::vector<ActionHub>			actionsList;
+					std::vector<OutputHub>			outputsList;
+					std::map<int, int>			filtersGlobalIDsList;
+
 					bool 					perfsMonitoring;
 					GLuint					queryObject;
 					std::vector<double>			perfs;
 					double					totalPerf;
 
 					// Tools
+					Pipeline(const __ReadOnly_PipelineLayout& p);
 					void cleanInput(void);
-					void build(void);
+					void build(int& currentIdx, std::vector<Filter*>& filters, std::map<int, int>& filtersGlobalID, std::vector<Connection>& connections, __ReadOnly_PipelineLayout& originalLayout);
+					void allocateBuffers(std::vector<Connection>& connections);
+					//void build(void);
 
 				protected :
 					// Tools

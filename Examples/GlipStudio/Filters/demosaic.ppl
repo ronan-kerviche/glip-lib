@@ -1,0 +1,188 @@
+// Use DCRAW To get raw data : ./dcraw -v -D ../CR2/IMG_XXXX.CR2
+// For 16 bits : ./dcraw -v -D -6 ../CR2/IMG_XXXX.CR2
+// Full decompositon : ../../tmpDCRAW/dcraw -v -w -H 1 *.CR2
+// Pre-adjustement (black point) : ./dcraw -v -d ../CR2/IMG_XXXX.CR2
+// Avoid blow : ../../tmpDCRAW/dcraw -v -d -w -H 1 *.CR2
+//TEXTURE_FORMAT:original(2856, 4290, GL_RGB, GL_UNSIGNED_BYTE)
+//TEXTURE_FORMAT:original(4290, 2856, GL_RGB, GL_UNSIGNED_BYTE)
+REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+
+/*
+	White balance points : 
+	
+	Default (D65 lamp): multipliers 2.395443 1.000000 1.253807
+	Tungsten: multipliers 1.392498 1.000000 2.375114
+	Daylight: multipliers 2.132483 1.000000 1.480864
+	Fluorescent: multipliers 1.783446 1.000000 1.997113
+	Shade: multipliers 2.531894 1.000000 1.223749
+	Flash: multipliers 2.429833 1.000000 1.284593
+	Cloudy: multipliers 2.336605 1.000000 1.334642
+*/
+
+SHARED_SOURCE:demosaic
+{
+	void demosaicSimple(in int mode, in sampler2D inputTexture, out vec3 outputColor)
+	{
+		// Demosaic the input with the following layout : 
+		// mode == 1 :
+		// 	G1 B
+		// 	R  G2
+		// mode == 2 :
+		//	R  G1
+		//	G2 B
+
+		ivec2	size	= textureSize( inputTexture, 0);
+		ivec2 	cPos	= ivec2( vec2(size) * gl_TexCoord[0].st ),
+			lPos	= cPos % 2;
+		
+		vec2	f	= 1.0 / vec2(size);
+		vec4 	cin00 	= textureLod(inputTexture, gl_TexCoord[0].st, 0.0),
+			cin10	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(f.x,0.0), 0.0),
+			cin01	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(0.0,f.y), 0.0),
+			cin11	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(f.x,f.y), 0.0);
+
+		if(mode==1)
+		{
+			if(lPos.xy==ivec2(0,0))
+				outputColor.rgb = vec3(cin01.r, (cin00.g + cin11.g)/2.0, cin10.b);
+			else if(lPos.xy==ivec2(1,1))
+				outputColor.rgb = vec3(cin10.r, (cin00.g + cin11.g)/2.0, cin01.b);
+			else if(lPos.xy==ivec2(0,1))
+				outputColor.rgb = vec3(cin00.r, (cin10.g + cin01.g)/2.0, cin11.b);
+			else
+				outputColor.rgb = vec3(cin11.r, (cin10.g + cin01.g)/2.0, cin00.b);
+		}
+		else if(mode==2)
+		{
+			if(lPos.xy==ivec2(0,0))
+				outputColor.rgb = vec3(cin00.r, (cin10.g + cin01.g)/2.0, cin11.b);
+			else if(lPos.xy==ivec2(1,1))
+				outputColor.rgb = vec3(cin11.r, (cin10.g + cin01.g)/2.0, cin00.b);
+			else if(lPos.xy==ivec2(0,1))
+				outputColor.rgb = vec3(cin01.r, (cin00.g + cin11.g)/2.0, cin10.b);
+			else
+				outputColor.rgb = vec3(cin10.r, (cin00.g + cin11.g)/2.0, cin01.b);
+		}
+		else 
+			outputColor.rg = lPos;
+	}
+}
+
+SHADER_SOURCE:demosaic
+{
+	#version 130
+
+	void RGBToHSV( in vec3 rgb, out vec3 hsv )
+	{
+		float mn, mx, delta;
+
+		mn = min( min(rgb.r, rgb.g), rgb.b );
+		mx = max( max(rgb.r, rgb.g), rgb.b );
+		hsv.z = mx;
+
+		delta = mx - mn;
+
+		if( mx != 0.0 )
+		{
+			hsv.y = delta / mx;
+
+			if( rgb.r == mx )
+				hsv.x = ( rgb.g - rgb.b ) / delta;
+			else if( rgb.g == mx )
+				hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
+			else
+				hsv.x = 4 + ( rgb.r - rgb.g ) / delta;	
+
+			hsv.x = hsv.x * 60.0;
+			if( hsv.x < 0 )
+				hsv.x = hsv.x + 360.0;
+		}
+		else
+		{
+			hsv.y = 0;
+			hsv.x = -1;
+		}
+	}
+
+	void HSVToRGB( in vec3 hsv, out vec3 rgb )
+	{
+		int i;
+		float f, p, q, t;
+
+		if( hsv.y == 0 ) 
+			rgb = hsv.zzz;
+		else
+		{
+			hsv.x = hsv.x / 60;
+			i = int( floor( hsv.x ) );
+			f = hsv.x - i;
+			p = hsv.z * ( 1 - hsv.y );
+			q = hsv.z * ( 1 - hsv.y * f );
+			t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
+
+			if( i==0 )
+				rgb = vec3(hsv.z, t, p);
+			else if( i==1 )
+				rgb = vec3(q, hsv.z, p);
+			else if( i==2 )
+				rgb = vec3(p, hsv.z, t);
+			else if( i==3 )
+				rgb = vec3(p, q, hsv.z);
+			else if( i==4 )
+				rgb = vec3(t, p, hsv.z);
+			else
+				rgb = vec3(hsv.z, p, q);
+		}
+	}
+
+	INCLUDE_SHARED_SOURCE:demosaic
+
+	uniform sampler2D inputTexture;
+	out vec4 outputTexture;
+
+	uniform float offset = 0.0, gamma=2.2, scale=1.0;
+	uniform vec3 wb = vec3(1, 1, 1); //vec3(0.1371, 0.1620, 0.1771);
+	uniform vec3 hsv = vec3(0.0, 1.0, 1.0);
+
+	void main()
+	{
+		ivec2	size	= textureSize( inputTexture, 0);
+		int 	mode 	= 1 + int(size.x>size.y);
+
+		demosaicSimple( mode, inputTexture, outputTexture.rgb);
+
+		// Show alignment : 
+		//outputTexture.rg = vec2(lPos);
+		//outputTexture.b = outputTexture.b * 0.01;
+
+		//outputTexture = (outputTexture - 0.7)*2.0;
+
+		if(mode!=0)
+		{
+			outputTexture.rgb = outputTexture.rgb - offset;
+			//outputTexture.rgb = pow(outputTexture.rgb, vec3(1.0, 1.0, 1.0)*gamma);
+			outputTexture.rgb = outputTexture.rgb / wb * scale;
+		}
+
+		/*vec3 tmp;
+		RGBToHSV(outputTexture.rgb, tmp);
+
+		tmp.x += 360.0 * hsv.x;
+		tmp.y *= hsv.y;
+		tmp.z *= hsv.z;
+
+		HSVToRGB( tmp, outputTexture.rgb);*/
+
+		
+	}
+}
+
+FILTER_LAYOUT:demosaic(original, demosaic)
+
+PIPELINE_MAIN:demosaic
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture)
+
+	FILTER_INSTANCE:demosaic(demosaic)
+}

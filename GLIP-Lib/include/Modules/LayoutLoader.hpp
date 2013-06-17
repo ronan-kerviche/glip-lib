@@ -29,6 +29,7 @@
 	#include "../Core/ShaderSource.hpp"
 	#include "../Core/Filter.hpp"
 	#include "../Core/Pipeline.hpp"
+	#include "./VanillaParser.hpp"
 
 namespace Glip
 {
@@ -37,7 +38,6 @@ namespace Glip
 
 	namespace Modules
 	{
-
 		enum LayoutLoaderKeyword
 		{
 			FORMAT_LAYOUT,
@@ -65,71 +65,7 @@ namespace Glip
 			UnknownKeyword
 		};
 
-		extern const char* keywords[NumKeywords];
-
-		namespace LayoutLoaderParser
-		{
-
-			/*
-				Script general specification : 
-				
-					// Comment
-					KEYWORD:NAME(arg1, arg2, ..., argN)
-					{
-						BODY
-					}
-					/* Comment ...
-					   On Multiple lines ...
-					*/
-			/**/
-
-			// Layout
-			struct Element
-			{
-				enum Field
-				{
-					Keyword,
-					Name,
-					Arguments,
-					AfterArguments,
-					Body,
-					NumField,
-					Unknown
-				};
-
-
-				std::string 			strKeyword,
-								name,
-								body;
-				std::vector<std::string>	arguments;
-				bool				noName,		// Missing ':'
-								noArgument,	// Missing '(' to ')'
-								noBody;		// Missing '{' to '}'
-				int				startLine,
-								bodyLine;
-
-				Element(void);
-				Element(const Element& cpy);
-				const Element& operator=(const Element& cpy);
-				void clear(void);
-				bool empty(void) const;
-			};
-
-			// Parser Class : 
-			class VanillaParser 
-			{
-				private : 
-					bool compare(const std::string& code, int& k, const std::string token);
-					void testAndSaveCurrentElement(Element::Field& current, const Element::Field& next, Element& el);
-					void record(Element& el, const Element::Field& field, char c, int currentLine);
-		
-				public :
-					std::vector<Element>		elements;
-
-					VanillaParser(const std::string& code, int lineOffset=1);
-					const VanillaParser& operator<<(VanillaParser& subParser); 
-			};
-		}
+		extern const char* keywordsLayoutLoader[NumKeywords];
 
 /**
 \class LayoutLoader
@@ -143,7 +79,8 @@ The script must be structured with the following commands (but no special order 
 <b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i> [, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ])
 
 - Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement() : <BR>
-<b>REQUIRED_FORMAT</b>:<i>format_name</i>(required_format_name)
+If the format is not found in the required element, it is searched in the known formats. You can also use character '*' to keep or replace some of the parameters. <BR>
+<b>REQUIRED_FORMAT</b>:<i>format_name</i>(<i>required_format_name</i> [, <i>integer width / *</i>, <i>integer height / *</i>, <i>GLEnum mode / *</i>, <i>GLEnum depth / *</i>, <i>GLEnum minFiltering / *</i>, <i>GLEnum maxFiltering / *</i>, <i>GLEnum sWrapping / *</i>, <i>GLEnum TWrapping / *</i>, <i>integer maximum_mipmap_level / *</i>])
 
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>
@@ -306,19 +243,19 @@ Loading Example :
 				LayoutLoaderKeyword getKeyword(const std::string& str);
 
 				void 	clean(void);			
-				void	classify(const std::vector<LayoutLoaderParser::Element>& elements, std::vector<LayoutLoaderKeyword>& keywords);
+				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& keywords);
 				void	loadFile(const std::string& filename, std::string& content);
-				void	preliminaryTests(const LayoutLoaderParser::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
+				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
 				void	enhanceShaderSource(std::string& str);
 				void	append(LayoutLoader& subLoader);
-				void	includeFile(const LayoutLoaderParser::Element& e);
-				void	buildRequiredFormat(const LayoutLoaderParser::Element& e);
-				void	buildRequiredPipeline(const LayoutLoaderParser::Element& e);
-				void	buildSharedCode(const LayoutLoaderParser::Element& e);
-				void	buildFormat(const LayoutLoaderParser::Element& e);
-				void	buildShaderSource(const LayoutLoaderParser::Element& e);
-				void	buildFilter(const LayoutLoaderParser::Element& e);
-				void	buildPipeline(const LayoutLoaderParser::Element& e);
+				void	includeFile(const VanillaParserSpace::Element& e);
+				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
+				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
+				void	buildSharedCode(const VanillaParserSpace::Element& e);
+				void	buildFormat(const VanillaParserSpace::Element& e);
+				void	buildShaderSource(const VanillaParserSpace::Element& e);
+				void	buildFilter(const VanillaParserSpace::Element& e);
+				void	buildPipeline(const VanillaParserSpace::Element& e);
 				void	process(const std::string& code, std::string& mainPipelineName);
 
 			public :

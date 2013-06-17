@@ -239,7 +239,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
-	\brief Get the equivalenet, but compressed, format.
+	\brief Get the equivalent, but compressed, format.
 	\return A __ReadOnly_HdlTextureFormat object instance identical to this, but mode is set to the corresponding compressed format.
 	**/
 	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
@@ -256,7 +256,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const
-	\brief Get the equivalenet, but uncompressed, format.
+	\brief Get the equivalent, but uncompressed, format.
 	\return A __ReadOnly_HdlTextureFormat object instance identical to this, but mode is set to the corresponding uncompressed format.
 	**/
 	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const

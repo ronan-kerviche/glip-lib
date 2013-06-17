@@ -1,0 +1,44 @@
+TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+//REQUIRED_FORMAT:format(FormatIn_0)
+
+SHADER_SOURCE:HelloWorld()
+{
+	#version 130
+
+	uniform sampler2D	texInput;
+	out     vec4 		texOutput;
+
+	uniform float rot = 0.0;
+	uniform mat2 trsm 	= mat2(1.0, 0.0, 0.0, 1.0);
+	uniform mat3 projCol 	= mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+
+	void main()
+	{
+		float aRot = rot * 10.0;
+
+		vec2 tex = gl_TexCoord[0].st - vec2(0.5, 0.5);
+
+		tex = mat2(cos(aRot), -sin(aRot), sin(aRot), cos(aRot)) * trsm * tex;
+
+		tex = tex + vec2(0.5, 0.5);
+
+		// Get the input data :
+		vec4 col  = textureLod(texInput, tex, 0.0);
+
+		// Write the output data :
+		texOutput.rgb = projCol*col.rgb;
+		texOutput.a = col.a;
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:helloFilter(format,HelloWorld)
+
+PIPELINE_MAIN:pMainGradient()
+{
+	// Declare some input and output ports for this pipeline ::
+	INPUT_PORTS(texInput)
+	OUTPUT_PORTS(texOutput)
+
+	FILTER_INSTANCE:instHello(helloFilter)
+}

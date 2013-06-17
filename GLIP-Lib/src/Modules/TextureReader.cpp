@@ -44,15 +44,17 @@
 
 		addInputPort("input");
 
-		char* tmp = new char[getSize()];
-		data = reinterpret_cast<void*>(tmp);
+		originalPointer = new char[getSize()];
+		data = reinterpret_cast<void*>(originalPointer);
+
+		// Make sure to unpack correctly ; 
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	}
 
 	TextureReader::~TextureReader(void)
 	{
-		char* tmp = reinterpret_cast<char*>(data);
+		delete[] originalPointer;
 		data = NULL;
-		delete[] tmp;
 	}
 
 	void TextureReader::process(void)
@@ -70,6 +72,10 @@
 
 		glGetTexImage(GL_TEXTURE_2D, 0, alias, getGLDepth(), reinterpret_cast<GLvoid*>(data));
 		//glGetTexImage(GL_TEXTURE_2D, 0, getGLMode(), getGLDepth(), reinterpret_cast<GLvoid*>(data));
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("TextureReader::process", "glGetTexImage()")
+		#endif
 
 		HdlTexture::unbind();
 	}
@@ -159,6 +165,9 @@
 		if(isCompressed())
 			throw Exception("PBOTextureReader::PBOTextureReader - Can not read directly compressed textures with PBOTextureReader (for " + getNameExtended() + ").", __FILE__, __LINE__);
 		addInputPort("input");
+
+		// Make sure to unpack correctly ; 
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	}
 
 	PBOTextureReader::~PBOTextureReader(void)
@@ -214,6 +223,9 @@
 			throw Exception("CompressedTextureReader::CompressedTextureReader - Can only read compressed texture format (for " + getNameExtended() + ").", __FILE__, __LINE__);
 
 		addInputPort("input");
+
+		// Make sure to unpack correctly ; 
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	}
 
 	CompressedTextureReader::~CompressedTextureReader(void)
@@ -304,6 +316,9 @@
 			targetTexture = new HdlTexture(formatOut);
 
 		addInputPort("input");
+
+		// Make sure to unpack correctly ; 
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	}
 
 	TextureCopier::~TextureCopier(void)

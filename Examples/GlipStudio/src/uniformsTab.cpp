@@ -476,8 +476,8 @@
 			maxIntBox.setRange(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
 			stepIntBox.setRange(0, std::numeric_limits<int>::max());
 		
-			minIntBox.setValue(-1024);
-			maxIntBox.setValue(1024);
+			minIntBox.setValue(-8192);
+			maxIntBox.setValue(8192);
 			stepIntBox.setValue(1);
 		
 			layout.addWidget(&intLabel,0,0);
@@ -499,7 +499,7 @@
 			maxUnBox.setRange(0, std::numeric_limits<int>::max());
 			stepUnBox.setRange(0, std::numeric_limits<int>::max());
 		
-			maxUnBox.setValue(1024);
+			maxUnBox.setValue(8192);
 			stepUnBox.setValue(1);
 		
 			layout.addWidget(&unLabel,1,0);
