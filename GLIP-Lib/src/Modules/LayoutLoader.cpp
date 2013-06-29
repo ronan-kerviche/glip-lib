@@ -56,7 +56,17 @@
 										"REQUIRED_FORMAT",
 										"REQUIRED_PIPELINE",
 										"SHARED_SOURCE",
-										"INCLUDE_SHARED_SOURCE"
+										"INCLUDE_SHARED_SOURCE",
+										"GEOMETRY",
+										"GRID_2D",
+										"GRID_3D",
+										"CUSTOM_GEOMETRY",
+										"GEOMETRY_FROM_FILE",
+										"STANDARD_QUAD",
+										"QUAD",
+										"TRIANGLE",
+										"POINT",
+										"ELEMENT"
 								};
 	
 // LayoutLoader
@@ -81,6 +91,7 @@
 		associatedKeyword.clear();
 		formatList.clear();
 		sourceList.clear();
+		geometryList.clear();
 		filterList.clear();
 		pipelineList.clear();
 		sharedCodeList.clear();
@@ -166,7 +177,7 @@
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " argument(s), but it has only " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.arguments.size()>maxArguments)
-			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + to_string(minArguments) + " argument(s), but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + to_string(maxArguments) + " argument(s), but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.noBody && bodyProperty>0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " does not have a body.", __FILE__, __LINE__);
@@ -245,6 +256,7 @@
 			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::map<std::string, std::string>) 
 			TEST_FOR_DOUBLES( formatList,		"Format", 		std::map<std::string, HdlTextureFormat>)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	std::map<std::string, ShaderSource>)
+			TEST_FOR_DOUBLES( geometryList,		"Geometry",		std::map<std::string, GeometryFormat>)
 			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	std::map<std::string, FilterLayout>)
 			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	std::map<std::string, PipelineLayout>)
 		
@@ -256,6 +268,7 @@
 			INSERTION( sharedCodeList );
 			INSERTION( formatList );
 			INSERTION( sourceList );
+			INSERTION( geometryList );
 			INSERTION( filterList ); 
 			INSERTION( pipelineList );
 
@@ -517,7 +530,7 @@
 		if(e.arguments.size()>8)
 		{
 			if(!from_string(e.arguments[8], mipmap))
-				throw Exception("From line " + to_string(e.startLine) + " : Canno read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
 		}
 		else
 			mipmap = 0;
@@ -597,18 +610,69 @@
 		}
 	}
 
+	void LayoutLoader::buildGeometry(const VanillaParserSpace::Element& e)
+	{
+		// Preliminary tests : 
+		preliminaryTests(e, 1, 1, 4, 0, "Geometry");
+
+		// Test for duplicata : 
+		if(geometryList.find(e.name)!=geometryList.end())
+			throw Exception("From line " + to_string(e.startLine) + " : A Geometry Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+
+		// Find the first argument : 
+		if(e.arguments[0]==keywordsLayoutLoader[STANDARD_QUAD])
+		{
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, StandardQuadGeometry() ) );
+		}
+		else if(e.arguments[0]==keywordsLayoutLoader[GRID_2D])
+		{
+			if(e.arguments.size()!=3)
+				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+
+			int w, h;
+
+			if(!from_string(e.arguments[1], w))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read width for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
+
+			if(!from_string(e.arguments[2], h))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid2DGeometry(w,h) ) );
+		}
+		else if(e.arguments[0]==keywordsLayoutLoader[GRID_3D])
+		{
+			if(e.arguments.size()!=4)
+				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+
+			int w, h, z;
+
+			if(!from_string(e.arguments[1], w))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read width for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
+
+			if(!from_string(e.arguments[2], h))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+
+			if(!from_string(e.arguments[3], z))
+				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid3DGeometry(w,h,z) ) );
+		}
+		else
+			throw Exception("From line " + to_string(e.startLine) + " : Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", __FILE__, __LINE__);
+	}
+
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
 	{
-		bool toBuild = true;
-
 		// Preliminary tests : 
-		preliminaryTests(e, 1, 2, 5, -1, "FilterLayout");
+		preliminaryTests(e, 1, 2, 6, -1, "FilterLayout");
 
 		// Find the format : 
-		std::map<std::string,HdlTextureFormat>::iterator 	format		= formatList.find(e.arguments[0]);
-		std::map<std::string,ShaderSource>::iterator 		fragmentSource	= sourceList.find(e.arguments[1]),
+		std::map<std::string,HdlTextureFormat>::iterator 	format		 = formatList.find(e.arguments[0]);
+		std::map<std::string,ShaderSource>::iterator 		fragmentSource	 = sourceList.find(e.arguments[1]),
 							 		vertexSource;
-		
+		std::map<std::string, GeometryFormat>::iterator		geometry;
+		ShaderSource						*vertexSourcePtr = NULL;
+		GeometryFormat						*geometryPtr	 = NULL;
 		
 		if(format==formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
@@ -626,14 +690,21 @@
 				if(vertexSource==sourceList.end())
 					throw Exception("From line " + to_string(e.startLine) + " : No ShaderSource with name \"" + e.arguments[2] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
 
-				filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second, &vertexSource->second) ) );
+				vertexSourcePtr = &vertexSource->second;
+			}
 
-				toBuild = false;
+			if(e.arguments[5]!=keywordsLayoutLoader[STANDARD_QUAD])
+			{
+				geometry = geometryList.find(e.arguments[5]);
+
+				if(geometry==geometryList.end())
+					throw Exception("From line " + to_string(e.startLine) + " : No Geometry with name \"" + e.arguments[5] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+
+				geometryPtr = &geometry->second;
 			}
 		}
 		
-		if(toBuild)
-			filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second) ) );
+		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second, vertexSourcePtr, geometryPtr) ) );
 
 		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
 
@@ -833,6 +904,9 @@
 						break;
 					case SHADER_SOURCE :
 						buildShaderSource(rootParser.elements[k]);
+						break;
+					case GEOMETRY :
+						buildGeometry(rootParser.elements[k]);
 						break;
 					case FILTER_LAYOUT :
 						buildFilter(rootParser.elements[k]);

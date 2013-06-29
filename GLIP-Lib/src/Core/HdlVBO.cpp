@@ -212,7 +212,7 @@ using namespace Glip::CoreGL;
 				index += 2;
 			}
 
-		HdlVBO* result = new HdlVBO(w*h, 2, GL_STREAM_DRAW_ARB, data, 0, 0, NULL, GL_NONE, 2, tex);
+		HdlVBO* result = new HdlVBO(w*h, 2, GL_STATIC_DRAW_ARB, data, 0, 0, NULL, GL_NONE, 2, tex);
 		delete[] data;
 		delete[] tex;
 
@@ -263,7 +263,7 @@ using namespace Glip::CoreGL;
 			}
 		}
 
-		HdlVBO* result = new HdlVBO(w*h*d, 3, GL_STREAM_DRAW_ARB, data, 0, 0, NULL, GL_POINTS);
+		HdlVBO* result = new HdlVBO(w*h*d, 3, GL_STATIC_DRAW_ARB, data, 0, 0, NULL, GL_POINTS);
 		delete[] data;
 
 		return result;

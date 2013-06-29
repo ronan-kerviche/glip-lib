@@ -46,6 +46,8 @@
 			// Prototypes
 			class Pipeline;
 			class FilterLayout;
+			class GeometryFormat;
+			class GeometryInstance;
 
 			// Objects
 			/**
@@ -58,6 +60,7 @@
 					// Data
 					ShaderSource 	*vertexSource,
 							*fragmentSource;
+					GeometryFormat	*geometryFormat;
 					bool blending, clearing;
 
 					// Friends
@@ -73,6 +76,7 @@
 					~__ReadOnly_FilterLayout(void);
 					ShaderSource& getVertexSource(void) const;
 					ShaderSource& getFragmentSource(void) const;
+					GeometryFormat& getGeometryFormat(void) const;
 
 					bool isBlendingEnabled(void) const;
 					void enableBlending(void);
@@ -90,7 +94,7 @@
 			{
 				public :
 					// Tools
-					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL);
+					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryFormat* geometry = NULL);
 			};
 
 			/**
@@ -104,7 +108,8 @@
 					HdlShader*  			vertexShader;
 					HdlShader*  			fragmentShader;
 					HdlProgram* 			program;
-					HdlVBO*     			vbo;
+					GeometryInstance*		geometry;
+					//HdlVBO*     			vbo;
 					std::vector<HdlTexture*>	arguments;
 
 				protected :
@@ -121,7 +126,7 @@
 					// Tools
 					~Filter(void);
 					HdlProgram& prgm(void);
-					void setGeometry(HdlVBO* v=NULL);
+					//void setGeometry(HdlVBO* v=NULL);
 			};
 		}
 	}

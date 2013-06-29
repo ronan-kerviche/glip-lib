@@ -134,6 +134,14 @@
 	**/
 	int __ReadOnly_ComponentLayout::getInputPortID(const std::string& name) const
 	{
+		if(name=="*")
+		{
+			if(getNumInputPort()==1)
+				return 0;
+			else
+				throw Exception("__ReadOnly_ComponentLayout::getInputPortID - Unable to use wildcard '*' in component \"" + getFullName() + "\".", __FILE__, __LINE__);
+		}
+
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
 
 		if(it==inputPorts.end())
@@ -150,6 +158,14 @@
 	**/
 	bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
 	{
+		if(name=="*")
+		{
+			if(getNumInputPort()==1)
+				return true;
+			else
+				throw Exception("__ReadOnly_ComponentLayout::doesInputPortExist( - Unable to use wildcard '*' in component \"" + getFullName() + "\".", __FILE__, __LINE__);
+		}
+
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
 
 		return it!=inputPorts.end();
@@ -185,6 +201,14 @@
 	**/
 	int __ReadOnly_ComponentLayout::getOutputPortID(const std::string& name) const
 	{
+		if(name=="*")
+		{
+			if(getNumOutputPort()==1)
+				return 0;
+			else
+				throw Exception("__ReadOnly_ComponentLayout::getOutputPortID - Unable to use wildcard '*' in component \"" + getFullName() + "\".", __FILE__, __LINE__);
+		}
+
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
 
 		if(it==outputPorts.end())
@@ -201,6 +225,14 @@
 	**/
 	bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
 	{
+		if(name=="*")
+		{
+			if(getNumOutputPort()==1)
+				return true;
+			else
+				throw Exception("__ReadOnly_ComponentLayout::doesOutputPortExist - Unable to use wildcard '*' in component \"" + getFullName() + "\".", __FILE__, __LINE__);
+		}
+
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
 
 		return it!=outputPorts.end();

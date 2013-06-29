@@ -29,6 +29,7 @@
 #include "HdlVBO.hpp"
 #include "HdlFBO.hpp"
 #include "devDebugTools.hpp"
+#include "Geometry.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
@@ -72,7 +73,7 @@
 	\param f The texture format associated to all outputs of the filter.
 	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), blending(false), clearing(true)
+	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryFormat(NULL), blending(false), clearing(true)
 	{ }
 
 	/**
@@ -81,7 +82,7 @@
 	\param c Copy.
 	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), blending(c.blending), clearing(c.clearing)
+	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryFormat(NULL), blending(c.blending), clearing(c.clearing)
 	{
 		if(c.vertexSource!=NULL)
 			vertexSource   = new ShaderSource(*c.vertexSource);
@@ -92,12 +93,18 @@
 			fragmentSource = new ShaderSource(*c.fragmentSource);
 		else
 			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
+
+		if(c.geometryFormat!=NULL)
+			geometryFormat = new GeometryFormat(*c.geometryFormat);
+		else
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryFormat is NULL for " + getFullName(), __FILE__, __LINE__);
 	}
 
 	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
 	{
 		delete vertexSource;
 		delete fragmentSource;
+		delete geometryFormat;
 	}
 
 	/**
@@ -124,6 +131,14 @@
 			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
 
 		return *fragmentSource;
+	}
+
+	GeometryFormat& __ReadOnly_FilterLayout::getGeometryFormat(void) const
+	{
+		if(geometryFormat==NULL)
+			throw Exception("FilterLayout::getGeometryFormat - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__);
+
+		return *geometryFormat;
 	}
 
 	/**
@@ -156,13 +171,18 @@
 	\param fragment The ShaderSource of the fragement shader.
 	\param vertex [Optional] The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
+	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryFormat* geometry)
 	 : __ReadOnly_HdlTextureFormat(fout), __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout)
 	{
 		fragmentSource = new ShaderSource(fragment);
 
 		if(vertex!=NULL)
 			vertexSource = new ShaderSource(*vertex);
+
+		if(geometry!=NULL)
+			geometryFormat = new GeometryFormat(*geometry);
+		else
+			geometryFormat = new StandardQuadGeometry;
 
 		// Analyze sources to get the variables and the outputs
 		std::vector<std::string> varsIn  = fragmentSource->getInputVars();
@@ -214,7 +234,7 @@
 	\param c Filter layout.
 	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
-	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), vbo(NULL)
+	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), geometry(NULL) /*vbo(NULL)*/
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
@@ -271,6 +291,9 @@
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
+
+		// Build the geometry : 
+		geometry = new GeometryInstance( getGeometryFormat(), GL_STATIC_DRAW_ARB );
 	}
 
 	Filter::~Filter(void)
@@ -281,12 +304,13 @@
 			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
 		if(fragmentShader==NULL)
 			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-		if(vbo!=NULL)
-			delete vbo;
+		/*if(vbo!=NULL)
+			delete vbo;*/
 
 		delete program;
 		delete vertexShader;
 		delete fragmentShader;
+		delete geometry;
 	}
 
 	/**
@@ -351,10 +375,11 @@
 			//std::cout << "Using shader 		: "; glErrors(true, false);
 
 		// Draw
-			if(vbo!=NULL)
+			/*if(vbo!=NULL)
 				vbo->draw();
 			else
-				HandleOpenGL::standardQuadVBO().draw();
+				HandleOpenGL::standardQuadVBO().draw();*/
+			geometry->draw();
 			//std::cout << "drawing VBO 		: "; glErrors(true, false);
 
 		// Stop using the shader
@@ -395,11 +420,11 @@
 	\brief Push different geometry rendering, the Filter object will take care of deleting the data when needed. The object will take care to free previously used memory.
 	\param v Pointer to the new geometry to use. If set to NULL it will use the standard quad from HandleOpenGL::standardQuadVBO().
 	**/
-	void Filter::setGeometry(HdlVBO* v)
+	/*void Filter::setGeometry(HdlVBO* v)
 	{
 		if(vbo!=NULL)
 			delete vbo;
 
 		vbo = v;
-	}
+	}*/
 

@@ -26,6 +26,7 @@
 
 	#include <map>
 	#include "../Core/HdlTexture.hpp"
+	#include "../Core/Geometry.hpp"
 	#include "../Core/ShaderSource.hpp"
 	#include "../Core/Filter.hpp"
 	#include "../Core/Pipeline.hpp"
@@ -61,6 +62,16 @@ namespace Glip
 			REQUIRED_PIPELINE,
 			SHARED_SOURCE,
 			INCLUDE_SHARED_SOURCE,
+			GEOMETRY,
+			GRID_2D,
+			GRID_3D,
+			CUSTOM_GEOMETRY,
+			GEOMETRY_FROM_FILE,
+			STANDARD_QUAD,
+			QUAD,
+			TRIANGLE,
+			POINT,
+			ELEMENT,
 			NumKeywords,
 			UnknownKeyword
 		};
@@ -231,6 +242,7 @@ Loading Example :
 				std::map<std::string, std::string>	sharedCodeList;
 				std::map<std::string, HdlTextureFormat> formatList;
 				std::map<std::string, ShaderSource> 	sourceList;
+				std::map<std::string, GeometryFormat>	geometryList;
 				std::map<std::string, FilterLayout> 	filterList;
 				std::map<std::string, PipelineLayout> 	pipelineList;
 
@@ -254,6 +266,7 @@ Loading Example :
 				void	buildSharedCode(const VanillaParserSpace::Element& e);
 				void	buildFormat(const VanillaParserSpace::Element& e);
 				void	buildShaderSource(const VanillaParserSpace::Element& e);
+				void	buildGeometry(const VanillaParserSpace::Element& e);
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
 				void	process(const std::string& code, std::string& mainPipelineName);
