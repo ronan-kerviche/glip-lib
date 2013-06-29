@@ -88,10 +88,10 @@ The shader source will be parsed to find input and output ports name. In the cas
 					bool		   requiresCompatibility(void) const;
 					int		   getVersion(void) const;
 
-					const std::vector<std::string>& getInputVars(void);
-					const std::vector<std::string>& getOutputVars(void);
-					const std::vector<std::string>& getUniformVars(void);
-					const std::vector<GLenum>&	getUniformTypes(void);
+					const std::vector<std::string>& getInputVars(void) const;
+					const std::vector<std::string>& getOutputVars(void) const;
+					const std::vector<std::string>& getUniformVars(void) const;
+					const std::vector<GLenum>&	getUniformTypes(void) const;
 			};
 		}
 	}

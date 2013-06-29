@@ -48,7 +48,7 @@ namespace Glip
 
 			public :
 				// Functions
-				HdlShader(GLenum _type, ShaderSource& src);
+				HdlShader(GLenum _type, const ShaderSource& src);
 				~HdlShader(void);
 
 				GLuint getShaderID(void) const;

@@ -87,6 +87,8 @@ Example of how to use TextureReader :
 				char* originalPointer;
 				void* data;
 
+				OutputDevice::OutputDeviceLayout getLayout(void) const;
+
 			protected :
 				void process(void);
 
@@ -134,6 +136,9 @@ Example of how to use PBOTextureReader :
 **/
 		class PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
 		{
+			private : 
+				OutputDevice::OutputDeviceLayout getLayout(void) const;
+		
 			protected :
 				void process(void);
 
@@ -161,6 +166,8 @@ This class is working exacly as TextureReader except that you will access the da
 			private :
 				char* data;
 				int size;
+
+				OutputDevice::OutputDeviceLayout getLayout(void) const;
 
 			protected :
 				void process(void);
@@ -199,6 +206,8 @@ Example :
 				bool 		customTexture;
 				HdlTexture	*targetTexture;
 				HdlPBO		*pbo;
+
+				OutputDevice::OutputDeviceLayout getLayout(void) const;
 
 			protected :
 				void process(void);

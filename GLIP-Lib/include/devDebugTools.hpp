@@ -25,9 +25,9 @@
 #define __DEV_DEBUG_TOOLS__
 
 	// Development flags
-		#define __GLIPLIB_VERBOSE__
-		#define __GLIPLIB_DEVELOPMENT_VERBOSE__
-		#define __GLIPLIB_TRACK_GL_ERRORS__
+		//#define __GLIPLIB_VERBOSE__
+		//#define __GLIPLIB_DEVELOPMENT_VERBOSE__
+		//#define __GLIPLIB_TRACK_GL_ERRORS__
 
 	// Tools
 		#define STR_EXPAND(tok) 	#tok

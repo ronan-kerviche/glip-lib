@@ -109,7 +109,7 @@
 
 				protected :
 					// Tools
-					Filter(const __ReadOnly_FilterLayout&); // A filter can't be created outside a Pipeline
+					Filter(const __ReadOnly_FilterLayout&, const std::string& name);
 
 					void setInputForNextRendering(int id, HdlTexture* ptr);
 					void process(HdlFBO& renderer);

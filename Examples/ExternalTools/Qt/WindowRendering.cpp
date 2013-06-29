@@ -20,7 +20,7 @@
 
 // WindowRenderer
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
-	 : __ReadOnly_ComponentLayout("QtDisplay"), QGLWidget(_parent), parent(_parent), OutputDevice("QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
+	 : __ReadOnly_ComponentLayout(getLayout()), QGLWidget(_parent), parent(_parent), OutputDevice(getLayout(), "QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
 	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0), lastWasClear(true),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
@@ -29,8 +29,6 @@
 	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f),
 	   originalOrientationBeforeRightClick(0.0f)
 	{
-		addInputPort("input");
-
 		QWidget::setGeometry(10,10,w,h);
 
 		makeCurrent();
@@ -82,6 +80,15 @@
 	{
 		this->hide();
 		HandleOpenGL::deinit();
+	}
+
+	OutputDevice::OutputDeviceLayout WindowRenderer::getLayout(void) const
+	{
+		OutputDeviceLayout l("WindowRenderer");
+
+		l.addInputPort("input");
+
+		return OutputDeviceLayout(l);
 	}
 
 	void WindowRenderer::initializeGL(void)

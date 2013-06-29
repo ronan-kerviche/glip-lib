@@ -89,7 +89,7 @@
 			// Create a format for the filters
 			HdlTextureFormat fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 			ShaderSource src("./Filters/gen1D.glsl");
-			ProceduralInput input("ProceduralInput", fmt, src);
+			ProceduralInput input(fmt, src, "FFT1D Input");
 
 			// FFT :
 			FFT1D fft1D(fmt.getWidth(), FFT1D::Shifted | FFT1D::ComputeMagnitude);

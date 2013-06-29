@@ -39,7 +39,7 @@ using namespace Glip::CoreGL;
 	\param _type The kind of shader it will be : either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
 	\param src   The source code used.
 	**/
-	HdlShader::HdlShader(GLenum _type, ShaderSource& src)
+	HdlShader::HdlShader(GLenum _type, const ShaderSource& src)
 	 : ShaderSource(src)
 	{
 		NEED_EXTENSION(GLEW_ARB_vertex_shader)
@@ -122,7 +122,7 @@ using namespace Glip::CoreGL;
 
 			log[logSize] = 0;
 
-			std::string err = src.errorLog(std::string(log));
+			std::string err = this->errorLog(std::string(log));
 
 			delete[] log;
 

@@ -134,6 +134,7 @@
 			void updateActions(void);
 
 		private :
+			OutputDevice::OutputDeviceLayout getLayout(void) const;
 			void getScalingCoefficients(float& scaleForCurrentWindowAspectRatioX, float& scaleForCurrentWindowAspectRatioY, float& scaleForCurrentSurfaceAspectRatioX, float& scaleForCurrentSurfaceAspectRatioY, float& scaleFitting);
 			void initializeGL(void);
 

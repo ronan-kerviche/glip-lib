@@ -43,8 +43,8 @@
 	\param fmt Format ot the output.
 	\param fragment Source of the fragment to be used.
 	**/
-	ProceduralInput::ProceduralInput(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt, ShaderSource& fragment)
-	 : __ReadOnly_ComponentLayout(name), InputDevice(name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)
+	ProceduralInput::ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name)
+	 : __ReadOnly_ComponentLayout(getLayout(fragment)), InputDevice(getLayout(fragment), name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)
 	{
 		ShaderSource* vertex=NULL;
 
@@ -53,9 +53,6 @@
 		std::string vertexSrc = 	"void main() \n { \n    gl_FrontColor  = gl_Color; \n"
 						"    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0; \n"
 						"    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";
-
-		if(varsOut.size()==0)
-			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have at least one output (" + to_string(varsOut.size()) + " were found).", __FILE__, __LINE__);
 
 		try
 		{
@@ -76,10 +73,7 @@
 
 			// Link the buffer to the input device :
 			for(int i=0; i<varsOut.size(); i++)
-			{
-				addOutputPort(varsOut[i]);
 				setTextureLink((*renderer)[i],i);
-			}
 		}
 		catch(Exception& e)
 		{
@@ -91,6 +85,21 @@
 			Exception m("ProceduralInput::ProceduralInput - Caught an exception while creating the shaders for " + name + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
+	}
+
+	InputDevice::InputDeviceLayout ProceduralInput::getLayout(const ShaderSource& fragment)
+	{
+		std::vector<std::string> varsOut = fragment.getOutputVars();
+
+		InputDeviceLayout l("ProceduralInput");
+
+		if(varsOut.size()==0)
+			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have at least one output (" + to_string(varsOut.size()) + " were found).", __FILE__, __LINE__);
+
+		for(int i=0; i<varsOut.size(); i++)
+			l.addOutputPort(varsOut[i]);
+
+		return InputDeviceLayout(l);
 	}
 
 	/**

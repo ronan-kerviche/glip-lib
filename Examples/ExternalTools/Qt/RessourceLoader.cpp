@@ -638,7 +638,7 @@
 			// Update the name :
 			QFileInfo pathInfo( filename );
 			QString strippedFilename( pathInfo.fileName() );
-			std::string extName = loadedPipeline->getNameExtended();
+			std::string extName = loadedPipeline->getFullName();
 			pipelineName.setText(tr("Pipeline : %1 (%2)").arg(strippedFilename).arg(extName.c_str()));
 
 			// Update the tooltip :

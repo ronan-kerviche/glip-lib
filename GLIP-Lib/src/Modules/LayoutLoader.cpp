@@ -650,9 +650,9 @@
 		if(e.arguments.size()>4)
 		{
 			if(e.arguments[4]==keywordsLayoutLoader[BLENDING_ON])
-				filterLayout->second.enableClearing();
+				filterLayout->second.enableBlending();
 			else if(e.arguments[4]==keywordsLayoutLoader[BLENDING_OFF])
-				filterLayout->second.disableClearing();
+				filterLayout->second.disableBlending();
 			else
 				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[BLENDING_ON] + "\" or \"" + keywordsLayoutLoader[BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
 		}

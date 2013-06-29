@@ -90,7 +90,7 @@ SHADER_SOURCE:showHistogramShader
 }
 
 
-FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON)
+FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON)  // Clearing and Blending!
 FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader)
 
 PIPELINE_MAIN:pipelineHistogram()
@@ -101,3 +101,4 @@ PIPELINE_MAIN:pipelineHistogram()
 	FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
 	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
 }
+

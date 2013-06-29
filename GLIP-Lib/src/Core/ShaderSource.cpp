@@ -577,41 +577,41 @@
 	}
 
 	/**
-	\fn const std::vector<std::string>& ShaderSource::getInputVars(void)
+	\fn const std::vector<std::string>& ShaderSource::getInputVars(void) const
 	\brief Return a vector containing the name of all the input textures (uniform sampler*).
 	\return A vector of standard string.
 	**/
-	const std::vector<std::string>& ShaderSource::getInputVars(void)
+	const std::vector<std::string>& ShaderSource::getInputVars(void) const
 	{
 		return inSamplers2D;
 	}
 
 	/**
-	\fn const std::vector<std::string>& ShaderSource::getOutputVars(void)
+	\fn const std::vector<std::string>& ShaderSource::getOutputVars(void) const
 	\brief Return a vector containing the name of all the output textures (uniform {vec2, vec3, vec4, ...}).
 	\return A vector of standard string.
 	**/
-	const std::vector<std::string>& ShaderSource::getOutputVars(void)
+	const std::vector<std::string>& ShaderSource::getOutputVars(void) const
 	{
 		return outFragments;
 	}
 
 	/**
-	\fn const std::vector<std::string>& ShaderSource::getUniformVars(void)
+	\fn const std::vector<std::string>& ShaderSource::getUniformVars(void) const
 	\brief Return a vector containing the name of all the uniform variables which are not 2D samplers.
 	\return A vector of standard string.
 	**/
-	const std::vector<std::string>& ShaderSource::getUniformVars(void)
+	const std::vector<std::string>& ShaderSource::getUniformVars(void) const
 	{
 		return uniformVars;
 	}
 
 	/**
-	\fn const std::vector<GLenum>& ShaderSource::getUniformTypes(void)
+	\fn const std::vector<GLenum>& ShaderSource::getUniformTypes(void) const
 	\brief Return a vector containing the type of the uniform variables which are not 2D samplers (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for a table of possible values).
 	\return A vector of GLenum.
 	**/
-	const std::vector<GLenum>& ShaderSource::getUniformTypes(void)
+	const std::vector<GLenum>& ShaderSource::getUniformTypes(void) const
 	{
 		return uniformVarsType;
 	}

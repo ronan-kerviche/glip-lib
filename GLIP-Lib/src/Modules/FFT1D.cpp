@@ -140,7 +140,11 @@
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT");
 
-			lnkFirstFilter = &((*pipeline)[firstFilterName]);
+			//throw Exception("FFT1D is not available at the moment.", __FILE__, __LINE__);
+			//lnkFirstFilter = &((*pipeline)[firstFilterName]);
+
+			int id = pipeline->getElementID(firstFilterName);
+			lnkFirstFilter = &((*pipeline)[id]);
 
 			delete fmtout;
 		}

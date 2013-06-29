@@ -217,7 +217,12 @@
 
 			// Done :
 			pipeline = new Pipeline(playout, "instFFT2D");
-			lnkFirstWidthFilter = &((*pipeline)[firstWidthFilterName]);
+			
+			//throw Exception("FFT2D is not available at the moment.", __FILE__, __LINE__);
+			//lnkFirstWidthFilter = &((*pipeline)[firstWidthFilterName]);
+
+			int id = pipeline->getElementID(firstWidthFilterName);
+			lnkFirstWidthFilter = &((*pipeline)[id]);
 
 			delete fmtout;
 		}

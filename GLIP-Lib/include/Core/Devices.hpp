@@ -72,7 +72,7 @@ class MyInputDevice : public InputDevice
 }
 \endcode
 **/
-			class InputDevice : public ComponentLayout
+			class InputDevice : public Component
 			{
 				private :
 					// Data
@@ -81,10 +81,20 @@ class MyInputDevice : public InputDevice
 					std::vector<int>         	imagesMissedCount;
 
 				protected :
-					// Tools
-					InputDevice(const std::string& name);
+					// Sub structure : 
+					class InputDeviceLayout : public ComponentLayout
+					{
+						public : 
+							InputDeviceLayout(const std::string& _typeName);
+							InputDeviceLayout(const InputDeviceLayout& c);
 
-					int 		addOutputPort(const std::string &name);
+							int addOutputPort(const std::string& name);
+							int addInputPort(const std::string& name);
+					};
+
+					// Tools
+					InputDevice(const InputDeviceLayout& layout, const std::string& name);
+
 					void 		setTextureLink(HdlTexture* tex, int port=0);
 					void 		setTextureLink(HdlTexture* tex,const std::string& port);
 					void		declareNewImage(int port=0);
@@ -136,7 +146,7 @@ class MyOutputDevice : public InputDevice
 }
 \endcode
 **/
-			class OutputDevice : public ComponentLayout
+			class OutputDevice : public Component
 			{
 				public :
 					///Actions enumeration.
@@ -155,10 +165,20 @@ class MyOutputDevice : public InputDevice
 					void clearArgList(void);
 
 				protected :
-					// Tools
-					OutputDevice(const std::string& name);
+					// Sub structure : 
+					class OutputDeviceLayout : public ComponentLayout
+					{
+						public : 
+							OutputDeviceLayout(const std::string& _typeName);
+							OutputDeviceLayout(const OutputDeviceLayout& c);
 
-					int addInputPort(const std::string &name);
+							int addOutputPort(const std::string& name);
+							int addInputPort(const std::string& name);
+					};
+
+					// Tools
+					OutputDevice(const OutputDeviceLayout& layout, const std::string& name);
+
 					HdlTexture& in(int port=0);
 					HdlTexture& in(const std::string& port);
 

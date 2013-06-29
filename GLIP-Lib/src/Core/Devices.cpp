@@ -28,38 +28,44 @@
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
 
-// Tools - InputDevice
+// InputDeviceLayout
+	InputDevice::InputDeviceLayout::InputDeviceLayout(const std::string& _typeName)
+	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
+	{ }
+
+	InputDevice::InputDeviceLayout::InputDeviceLayout(const InputDeviceLayout& c)
+	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
+	{ }
+
+	int InputDevice::InputDeviceLayout::addOutputPort(const std::string& name)
+	{
+		return ComponentLayout::addOutputPort(name);
+	}
+
+	int InputDevice::InputDeviceLayout::addInputPort(const std::string& name)
+	{
+		return ComponentLayout::addInputPort(name);
+	}
+
+// InputDevice
 	/**
 	\fn InputDevice::InputDevice(const std::string& name)
 	\brief InputDevice constructor.
 	\param name The name of the component.
 	**/
-	InputDevice::InputDevice(const std::string& name)
-	 : __ReadOnly_ComponentLayout(name), ComponentLayout("InputDevice")
-	{ }
+	InputDevice::InputDevice(const InputDeviceLayout& layout, const std::string& name)
+	 : __ReadOnly_ComponentLayout(layout), Component(layout, name)
+	{
+		texturesLinks.assign(getNumOutputPort(),NULL);
+		newImages.assign(getNumOutputPort(),false);
+		imagesMissedCount.assign(getNumOutputPort(), 0);
+	}
 
 	InputDevice::~InputDevice(void)
 	{
 		texturesLinks.clear();
 		newImages.clear();
 		imagesMissedCount.clear();
-	}
-
-	/**
-	\fn int InputDevice::addOutputPort(const std::string &name)
-	\brief Add an output port.
-	\param name The name of the new output port.
-	\return The ID of the new output port.
-	**/
-	int InputDevice::addOutputPort(const std::string &name)
-	{
-		int p = ComponentLayout::addOutputPort(name);
-
-		texturesLinks.push_back(NULL);
-		newImages.push_back(false);
-		imagesMissedCount.push_back(0);
-
-		return p;
 	}
 
 	/**
@@ -267,35 +273,40 @@
 		return out(id);
 	}
 
-// Tools - OutputDevice
+// OutputDeviceLayout
+	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const std::string& _typeName)
+	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
+	{ }
+
+	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const OutputDeviceLayout& c)
+	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
+	{ }
+
+	int OutputDevice::OutputDeviceLayout::addOutputPort(const std::string& name)
+	{
+		return ComponentLayout::addOutputPort(name);
+	}
+
+	int OutputDevice::OutputDeviceLayout::addInputPort(const std::string& name)
+	{
+		return ComponentLayout::addInputPort(name);
+	}
+
+// OutputDevice
 	/**
 	\fn OutputDevice::OutputDevice(const std::string& name)
 	\brief OutputDevice constructor.
 	\param name The name of the component.
 	**/
-	OutputDevice::OutputDevice(const std::string& name)
-	 : __ReadOnly_ComponentLayout(name), ComponentLayout("InputDevice")
-	{ }
+	OutputDevice::OutputDevice(const OutputDeviceLayout& layout, const std::string& name)
+	 : __ReadOnly_ComponentLayout(layout), Component(layout, name)
+	{
+		argumentsList.reserve(getNumInputPort());
+	}
 
 	OutputDevice::~OutputDevice(void)
 	{
 		argumentsList.clear();
-	}
-
-	/**
-	\fn int OutputDevice::addInputPort(const std::string &name)
-	\brief Add an input port.
-	\param name The name of the new input port.
-	\return The ID of the new input port.
-	**/
-	int OutputDevice::addInputPort(const std::string &name)
-	{
-		int p = ComponentLayout::addInputPort(name);
-
-		argumentsList.clear();
-		argumentsList.reserve(getNumInputPort());
-
-		return p;
 	}
 
 	/**
@@ -336,10 +347,10 @@
 	OutputDevice& OutputDevice::operator<<(HdlTexture& texture)
 	{
 		if(getNumInputPort()==0)
-			throw Exception("OutputDevice::operator<<(HdlTexture&) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+			throw Exception("OutputDevice::operator<<(HdlTexture&) - OutputDevice " + getFullName() + " has no configured input ports.", __FILE__, __LINE__);
 
 		if(argumentsList.size()>=getNumInputPort())
-			throw Exception("OutputDevice::operator<<(HdlTexture&) - Too much arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+			throw Exception("OutputDevice::operator<<(HdlTexture&) - Too much arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 		argumentsList.push_back(&texture);
 
@@ -355,12 +366,12 @@
 	OutputDevice& OutputDevice::operator<<(Pipeline& pipeline)
 	{
 		if(getNumInputPort()==0)
-			throw Exception("OutputDevice::operator<<(Pipeline&) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+			throw Exception("OutputDevice::operator<<(Pipeline&) - OutputDevice " + getFullName() + " has no configured input ports.", __FILE__, __LINE__);
 
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
 			if(argumentsList.size()>=getNumInputPort())
-				throw Exception("OutputDevice::operator<<(Pipeline&) - Too much arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+				throw Exception("OutputDevice::operator<<(Pipeline&) - Too much arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 			argumentsList.push_back(&pipeline.out(i));
 		}
@@ -377,11 +388,11 @@
 	OutputDevice& OutputDevice::operator<<(OutputDevice::ActionType a)
 	{
 		if(getNumInputPort()==0)
-			throw Exception("OutputDevice::operator<<(OutputDevice::ActionType) - OutputDevice " + getNameExtended() + " has no configured input ports.", __FILE__, __LINE__);
+			throw Exception("OutputDevice::operator<<(OutputDevice::ActionType) - OutputDevice " + getFullName() + " has no configured input ports.", __FILE__, __LINE__);
 
 		// Check the number of arguments given :
 		if(argumentsList.size()!=getNumInputPort())
-			throw Exception("OutputDevice::operator<<(ActionType) - Too few arguments given to OutputDevice " + getNameExtended() + ".", __FILE__, __LINE__);
+			throw Exception("OutputDevice::operator<<(ActionType) - Too few arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 		switch(a)
 		{
@@ -391,7 +402,7 @@
 				argumentsList.clear();
 				break;
 			default:
-				throw Exception("OutputDevice::operator<<(ActionType) - Unknown action for OutputDevice" + getNameExtended() + ".", __FILE__, __LINE__);
+				throw Exception("OutputDevice::operator<<(ActionType) - Unknown action for OutputDevice" + getFullName() + ".", __FILE__, __LINE__);
 		}
 
 		return *this;

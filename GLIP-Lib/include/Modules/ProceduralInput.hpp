@@ -66,8 +66,10 @@ namespace Glip
 				HdlVBO*		vbo;
 				HdlFBO*		renderer;
 
+				static InputDeviceLayout getLayout(const ShaderSource& fragment);
+
 			public :
-				ProceduralInput(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt, ShaderSource& fragment);
+				ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name);
 
 				// Tools :
 				void generateNewFrame(void);

@@ -37,12 +37,10 @@
 	\param format Format expected.
 	**/
 	TextureReader::TextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format)
-	 : __ReadOnly_ComponentLayout(name), OutputDevice(name), __ReadOnly_HdlTextureFormat(format), xFlip(false), yFlip(false)
+	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(format), xFlip(false), yFlip(false)
 	{
 		if(isCompressed())
-			throw Exception("TextureReader::TextureReader - Can not read directly compressed textures with TextureReader (for " + getNameExtended() + ").", __FILE__, __LINE__);
-
-		addInputPort("input");
+			throw Exception("TextureReader::TextureReader - Can not read directly compressed textures with TextureReader (for " + getFullName() + ").", __FILE__, __LINE__);
 
 		originalPointer = new char[getSize()];
 		data = reinterpret_cast<void*>(originalPointer);
@@ -57,12 +55,21 @@
 		data = NULL;
 	}
 
+	OutputDevice::OutputDeviceLayout TextureReader::getLayout(void) const
+	{
+		OutputDeviceLayout l("TextureReader");
+
+		l.addInputPort("input");
+
+		return OutputDeviceLayout(l);
+	}
+
 	void TextureReader::process(void)
 	{
 		HdlTexture& texture = in();
 
 		if(!isCompatibleWith(texture))
-			throw Exception("TextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("TextureReader::process - Can not read texture having different layout format (for " + getFullName() + ").", __FILE__, __LINE__);
 
 		texture.bind();
 
@@ -160,12 +167,11 @@
 	\param freq The frequency (GL_STATIC_READ_ARB, GL_DYNAMIC_READ_ARB, GL_STREAM_READ_ARB).
 	**/
 	PBOTextureReader::PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq)
-	 : __ReadOnly_ComponentLayout(name), OutputDevice(name), __ReadOnly_HdlTextureFormat(format), HdlPBO(format.getWidth(), format.getHeight(), format.getNumChannels(), format.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, freq)
+	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(format), HdlPBO(format.getWidth(), format.getHeight(), format.getNumChannels(), format.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, freq)
 	{
 		if(isCompressed())
-			throw Exception("PBOTextureReader::PBOTextureReader - Can not read directly compressed textures with PBOTextureReader (for " + getNameExtended() + ").", __FILE__, __LINE__);
-		addInputPort("input");
-
+			throw Exception("PBOTextureReader::PBOTextureReader - Can not read directly compressed textures with PBOTextureReader (for " + getFullName() + ").", __FILE__, __LINE__);
+		
 		// Make sure to unpack correctly ; 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	}
@@ -175,12 +181,21 @@
 		endReadingMemory();
 	}
 
+	OutputDevice::OutputDeviceLayout PBOTextureReader::getLayout(void) const
+	{
+		OutputDeviceLayout l("PBOTextureReader");
+
+		l.addInputPort("input");
+
+		return OutputDeviceLayout(l);
+	}
+
 	void PBOTextureReader::process(void)
 	{
 		HdlTexture& texture = in();
 
 		if(!isCompatibleWith(texture))
-			throw Exception("PBOTextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("PBOTextureReader::process - Can not read texture having different layout format (for " + getFullName() + ").", __FILE__, __LINE__);
 
 		texture.bind();
 
@@ -210,6 +225,7 @@
 		HdlPBO::unbind(getTarget());
 	}
 
+// Compressed Texture Reader
 	/**
 	\fn CompressedTextureReader::CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format)
 	\brief CompressedTextureReader constructor.
@@ -217,12 +233,10 @@
 	\param format Format expected (must be a compressed format, will raise an exception otherwise).
 	**/
 	CompressedTextureReader::CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format)
-	 : __ReadOnly_ComponentLayout(name), OutputDevice(name), __ReadOnly_HdlTextureFormat(format), data(NULL), size(0)
+	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(format), data(NULL), size(0)
 	{
 		if(!isCompressed())
-			throw Exception("CompressedTextureReader::CompressedTextureReader - Can only read compressed texture format (for " + getNameExtended() + ").", __FILE__, __LINE__);
-
-		addInputPort("input");
+			throw Exception("CompressedTextureReader::CompressedTextureReader - Can only read compressed texture format (for " + getFullName() + ").", __FILE__, __LINE__);
 
 		// Make sure to unpack correctly ; 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -234,12 +248,21 @@
 		data = NULL;
 	}
 
+	OutputDevice::OutputDeviceLayout CompressedTextureReader::getLayout(void) const
+	{
+		OutputDeviceLayout l("CompressedTextureReader");
+
+		l.addInputPort("input");
+
+		return OutputDeviceLayout(l);
+	}
+
 	void CompressedTextureReader::process(void)
 	{
 		HdlTexture& texture = in();
 
 		if(!isCompatibleWith(texture))
-			throw Exception("CompressedTextureReader::process - Can not read texture having different layout format (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("CompressedTextureReader::process - Can not read texture having different layout format (for " + getFullName() + ").", __FILE__, __LINE__);
 
 		// Create buffer if it is the first time this function is called :
 		if(data==NULL)
@@ -263,7 +286,7 @@
 	int CompressedTextureReader::getSize(void) const
 	{
 		if(data==NULL)
-			throw Exception("CompressedTextureReader::getSize - Read at least one texture before calling this function (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("CompressedTextureReader::getSize - Read at least one texture before calling this function (for " + getFullName() + ").", __FILE__, __LINE__);
 		else
 			return size;
 	}
@@ -276,7 +299,7 @@
 	char* CompressedTextureReader::getData(void) const
 	{
 		if(data==NULL)
-			throw Exception("CompressedTextureReader::getData - Read at least one texture before calling this function (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("CompressedTextureReader::getData - Read at least one texture before calling this function (for " + getFullName() + ").", __FILE__, __LINE__);
 		else
 			return data;
 	}
@@ -290,11 +313,12 @@
 	char& CompressedTextureReader::operator[](int i)
 	{
 		if(data==NULL)
-			throw Exception("CompressedTextureReader::operator[] - Read at least one texture before calling this function (for " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("CompressedTextureReader::operator[] - Read at least one texture before calling this function (for " + getFullName() + ").", __FILE__, __LINE__);
 		else
 			return *(data+i);
 	}
 
+// TextureCopier 
 	/**
 	\fn TextureCopier::TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture)
 	\brief TextureCopier constructor.
@@ -304,18 +328,16 @@
 	\param _customTexture If set to true, no texture will be created by this object and user must provide the correct target via TextureCopier::provideTexture() (custom mode).
 	**/
 	TextureCopier::TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture)
-	 : __ReadOnly_ComponentLayout(name), OutputDevice(name), __ReadOnly_HdlTextureFormat(formatOut), targetTexture(NULL), pbo(NULL), customTexture(_customTexture)
+	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(formatOut), targetTexture(NULL), pbo(NULL), customTexture(_customTexture)
 	{
 		if(!( formatIn.isCorrespondingCompressedFormat(formatOut) || formatOut.isCorrespondingCompressedFormat(formatIn) || formatIn.isCompatibleWith(formatOut)))
-			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though) in " + getNameExtended() + ".", __FILE__, __LINE__);
+			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though) in " + getFullName() + ".", __FILE__, __LINE__);
 
 		if(!formatIn.isCompressed())
 			pbo = new HdlPBO(formatIn, GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_COPY_ARB);
 
 		if(!customTexture)
 			targetTexture = new HdlTexture(formatOut);
-
-		addInputPort("input");
 
 		// Make sure to unpack correctly ; 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -328,18 +350,27 @@
 		delete pbo;
 	}
 
+	OutputDevice::OutputDeviceLayout TextureCopier::getLayout(void) const
+	{
+		OutputDeviceLayout l("CompressedTextureReader");
+
+		l.addInputPort("input");
+
+		return OutputDeviceLayout(l);
+	}
+
 	void TextureCopier::process(void)
 	{
 		HdlTexture& texture = in();
 
 		if(!( texture.isCorrespondingCompressedFormat(*this) || isCorrespondingCompressedFormat(texture) || isCompatibleWith(texture) ))
-			throw Exception("TextureCopier::process - Can not read texture having different layout format (for copier " + getNameExtended() + ").", __FILE__, __LINE__);
+			throw Exception("TextureCopier::process - Can not read texture having different layout format (for copier " + getFullName() + ").", __FILE__, __LINE__);
 
 		if(targetTexture==NULL)
 			if(!customTexture)
-				throw Exception("TextureCopier::process - Internal error : texture wasn't properly created for " + getNameExtended() + ".", __FILE__, __LINE__);
+				throw Exception("TextureCopier::process - Internal error : texture wasn't properly created for " + getFullName() + ".", __FILE__, __LINE__);
 			else
-				throw Exception("TextureCopier::process - A custom texture was declared bu not given for " + getNameExtended() + ".", __FILE__, __LINE__);
+				throw Exception("TextureCopier::process - A custom texture was declared bu not given for " + getFullName() + ".", __FILE__, __LINE__);
 
 		int tsize = texture.getSizeOnGPU();
 		GLint inputMode = texture.getInternalMode();
@@ -390,7 +421,7 @@
 	void TextureCopier::provideTexture(HdlTexture* texture)
 	{
 		if(!targetTexture->isCompatibleWith(*this))
-			throw Exception("TextureCopier::process - The texture given to " + getNameExtended() + " as an incompatible format.", __FILE__, __LINE__);
+			throw Exception("TextureCopier::process - The texture given to " + getFullName() + " as an incompatible format.", __FILE__, __LINE__);
 
 		if(!customTexture)
 			delete targetTexture;

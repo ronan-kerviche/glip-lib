@@ -25,7 +25,8 @@
 #define __GLIP_COMPONENT_HPP__
 
 	// Includes
-        #include "NamingLayout.hpp"
+	#include <string>
+        #include <vector>
 
 	namespace Glip
 	{
@@ -44,69 +45,74 @@
 			// Objects
 			/**
 			\class __ReadOnly_ComponentLayout
-			\brief Layout of a component template (Read Only).
+			\brief Layout of a component template (Read Only)
 			**/
-			class __ReadOnly_ComponentLayout : public ObjectName
+			class __ReadOnly_ComponentLayout
 			{
 				private :
 					// Data
-					std::vector<ObjectName> inputPortDescription;
-					std::vector<ObjectName> outputPortDescription;
+					std::string typeName;
+					std::vector<std::string> inputPorts;
+					std::vector<std::string> outputPorts;
 
 					friend class ComponentLayout;
+
 				protected :
 					// Tools
-					__ReadOnly_ComponentLayout(const std::string& type);
+					__ReadOnly_ComponentLayout(const std::string& _typeName);
+					__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts);
 
 				public :
 					// Tools
 					__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout&);
-					virtual ~__ReadOnly_ComponentLayout(void);
 
 					void checkInputPort(int i) const;
 					void checkOutputPort(int i) const;
+					virtual std::string	getFullName(void) const;
+					const std::string&	getTypeName(void) const;
 					int                	getNumInputPort(void) const;
 					const std::string& 	getInputPortName(int i) const;
-					std::string        	getInputPortNameExtended(int i) const;
 					int                	getInputPortID(const std::string& name) const;
 					bool			doesInputPortExist(const std::string& name) const;
 					int                	getNumOutputPort(void) const;
 					const std::string& 	getOutputPortName(int i) const;
-					std::string        	getOutputPortNameExtended(int i) const;
 					int                	getOutputPortID(const std::string& name) const;
 					bool 			doesOutputPortExist(const std::string& name) const;
 			};
 
 			/**
 			\class ComponentLayout
-			\brief Layout of a component template.
+			\brief Layout of a component template
 			**/
 			class ComponentLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				protected :
 					// Tools
-					int addOutputPort(const std::string& name); // =""?
-					int addInputPort(const std::string& name);  // =""?
+					int addOutputPort(const std::string& name);
+					int addInputPort(const std::string& name);
+
 				public :
 					// Tools
-					ComponentLayout(const std::string& type);
+					ComponentLayout(const std::string& _typeName);
 					ComponentLayout(const __ReadOnly_ComponentLayout&);
-					virtual ~ComponentLayout(void);
-
-					void setInputPortName(int id, const std::string& name);
-					void setOutputPortName(int id, const std::string& name);
 			};
 
 			/**
 			\class Component
-			\brief Element of a pipeline.
+			\brief Element of a pipeline
 			**/
 			class Component : virtual public __ReadOnly_ComponentLayout
 			{
+				private :
+					std::string instanceName;
 				protected :
 					// Tools
-					Component(const __ReadOnly_ComponentLayout&, const std::string& name);
-					virtual ~Component(void);
+					Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName);
+					Component(const __ReadOnly_ComponentLayout&, const std::string& _instanceName);
+
+				public :
+					std::string getFullName(void) const;
+					const std::string& getName(void) const;
 			};
 		}
 	}

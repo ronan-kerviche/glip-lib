@@ -22,6 +22,7 @@
 **/
 
 #include <algorithm>
+#include "Exception.hpp"
 #include "Filter.hpp"
 #include "HdlTexture.hpp"
 #include "HdlShader.hpp"
@@ -34,13 +35,13 @@
 
 // Tools
 	/**
-	\fn std::string getStandardVertexSource(int nUnits, int versionNumber=0)
+	\fn std::string getStandardVertexSource(int versionNumber=0)
 	\brief Build the standard vertex shader.
 	\param nUnits Number of texturing units to be used.
 	\param versionNumber The targeted version as an integer. It won't be included by default (0).
 	\return Standard string containing the GLSL code.
 	**/
-	std::string getStandardVertexSource(int nUnits, int versionNumber=0)
+	std::string getStandardVertexSource(int versionNumber=0)
 	{
 		std::stringstream str;
 
@@ -85,12 +86,12 @@
 		if(c.vertexSource!=NULL)
 			vertexSource   = new ShaderSource(*c.vertexSource);
 		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
 		if(c.fragmentSource!=NULL)
 			fragmentSource = new ShaderSource(*c.fragmentSource);
 		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
 	}
 
 	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
@@ -107,7 +108,7 @@
 	ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
 	{
 		if(vertexSource==NULL)
-			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
 
 		return *vertexSource;
 	}
@@ -120,7 +121,7 @@
 	ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
 	{
 		if(fragmentSource==NULL)
-			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getNameExtended(), __FILE__, __LINE__);
+			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
 
 		return *fragmentSource;
 	}
@@ -200,9 +201,9 @@
 			// Build one :
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "FilterLayout::FilterLayout - Using for vertex shader : " << std::endl;
-				std::cout << getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()) << std::endl;
+				std::cout << getStandardVertexSource(fragmentSource->getVersion()) << std::endl;
 			#endif
-			vertexSource = new ShaderSource(getStandardVertexSource(varsIn.size(), fragmentSource->getVersion()));
+			vertexSource = new ShaderSource(getStandardVertexSource(fragmentSource->getVersion()));
 		}
 	}
 
@@ -212,18 +213,18 @@
 	\brief Filter constructor.
 	\param c Filter layout.
 	**/
-	Filter::Filter(const __ReadOnly_FilterLayout& c)
-	: Component(c, c.getName()), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), vbo(NULL)
+	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
+	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), vbo(NULL)
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
 
 		// Check for the number of input
 		if(getNumInputPort()>limInput)
-			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
 		if(getNumOutputPort()>limOutput)
-			throw Exception("Filter::Filter - Filter " + getNameExtended() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many output port for hardware (Max : " + to_string(limOutput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
 
 		// Build arguments table :
 		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));
@@ -237,12 +238,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 
@@ -262,12 +263,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getNameExtended(), __FILE__, __LINE__);
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -310,7 +311,7 @@
 	void Filter::process(HdlFBO& renderer)
 	{
 		if(renderer.getAttachmentCount()<getNumOutputPort())
-			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getNameExtended() + " has outputs.", __FILE__, __LINE__);
+			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getFullName() + " has outputs.", __FILE__, __LINE__);
 
 		// Prepare the renderer
 			renderer.beginRendering(getNumOutputPort());

@@ -266,14 +266,14 @@
 	}
 
 // FilterGroup
-	FilterElement::FilterElement(Filter& filter, const std::string& _path, QTreeWidget* tree)
+	FilterElement::FilterElement(Filter& filter, const std::vector<std::string>& _path, QTreeWidget* tree)
 	 : name(filter.getName()), path(_path), item(NULL)
 	{
 		std::cout << "FilterElement::FilterElement : " << this << std::endl;
 
 		item = new QTreeWidgetItem(NodeFilter);
 
-		item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(path.c_str()) );
+		item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(filter.getTypeName().c_str()) );
 
 		// List the variables : 
 		for(int k=0; k<filter.prgm().getUniformVarsNames().size(); k++)
@@ -362,8 +362,20 @@
 
 	void FilterElement::update(Pipeline& pipeline)
 	{
-		Filter& filter = pipeline[path + SEPARATOR + name];
+		//throw Exception("Update is disabled.", __FILE__, __LINE__);
 
+		/*Filter& filter = pipeline[path + SEPARATOR + name];
+
+		for(int k=0; k<objects.size(); k++)
+		{
+			if(objects[k]->wasUpdated())
+				objects[k]->update(filter.prgm());
+		}*/
+
+		__ReadOnly_PipelineLayout& parent = pipeline.pipelineLayout(path);
+		int id = parent.getElementID(name);
+		Filter& filter = pipeline[id];
+		
 		for(int k=0; k<objects.size(); k++)
 		{
 			if(objects[k]->wasUpdated())
@@ -372,7 +384,7 @@
 	}
 
 // PipelineElement
-	PipelineElement::PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot)
+	PipelineElement::PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& name, const std::string& pathStr, const std::vector<std::string>& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot)
 	 : item(NULL)
 	{
 		std::cout << "PipelineElement::PipelineElement : " << this << std::endl;
@@ -380,18 +392,22 @@
 		item = new QTreeWidgetItem(NodeFilter);
 
 		if(!path.empty())
-			item->setText(0, tr("%1 [%2]").arg(pipeline.getName().c_str()).arg(path.c_str()));
+			item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(pathStr.c_str()));
 		else
-			item->setText(0, tr("%1").arg(pipeline.getName().c_str()) );
+			item->setText(0, tr("%1").arg(name.c_str()) );
 
-		std::string currentPath;
+		std::string currentPathStr;
 
-		if(!path.empty())
-			currentPath = path + SEPARATOR + pipeline.getName();
+		if(!pathStr.empty())
+			currentPathStr = pathStr + "::" + name;
 		else
-			currentPath = pipeline.getName();
+			currentPathStr = name;
 
-		if(isRoot)
+		std::vector<std::string> currentPath = path;
+
+		if(!isRoot)
+			currentPath.push_back(name);
+		else
 			tree->addTopLevelItem(item);
 
 		// Store the sub-elements : 
@@ -401,19 +417,20 @@
 			
 			if( kind==__ReadOnly_PipelineLayout::FILTER )
 			{
-				Filter& filter = mainPipeline[pipeline.componentLayout(k).getName()];
+				//Filter& filter = mainPipeline[pipeline.componentLayout(k).getName()];
+				int id = pipeline.getElementID(k);
+				Filter& filter = mainPipeline[id];
 
 				filterObjects.push_back( new FilterElement(filter, currentPath, tree) );
 
 				item->addChild( filterObjects.back()->treeItem() );
-				filterObjects.back()->treeItem()->setExpanded(true);
 
 				QObject::connect( filterObjects.back(), SIGNAL(updated(void)), this, SIGNAL(updated(void)) );
 				QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), filterObjects.back(), SIGNAL(propagateSettings(BoxesSettings&)));
 			}
 			else if( kind==__ReadOnly_PipelineLayout::PIPELINE )
 			{
-				pipelineObjects.push_back( new PipelineElement( pipeline.pipelineLayout(k), currentPath, mainPipeline, tree) );
+				pipelineObjects.push_back( new PipelineElement( pipeline.pipelineLayout(k), pipeline.getElementName(k), currentPathStr, currentPath, mainPipeline, tree) );
 
 				item->addChild( pipelineObjects.back()->treeItem() );
 
@@ -421,10 +438,8 @@
 				QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), pipelineObjects.back(), SIGNAL(propagateSettings(BoxesSettings&)));
 			}
 			else
-				throw Exception("PipelineElement::PipelineElement - Internal error : unable to read component type.", __FILE__, __LINE__);
+				throw Exception("PipelineElement::PipelineElement - Internal error : unable to read component type for \"" + pipeline.getElementName(k) + "\" in path : \"" + currentPathStr + "\".", __FILE__, __LINE__);
 		}
-
-		item->setExpanded(true);
 	}
 
 	PipelineElement::~PipelineElement(void)
@@ -649,7 +664,9 @@
 	{
 		clear();
 
-		mainPipeline = new PipelineElement(pipeline, "", pipeline, &tree, true);
+		std::vector<std::string> emptyPath;
+		mainPipeline = new PipelineElement(pipeline, pipeline.getName(), "", emptyPath, pipeline, &tree, true);
+		tree.expandAll();
 
 		QObject::connect( mainPipeline, SIGNAL(updated(void)), this, SIGNAL(requestDataUpdate(void)) );
 		QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), mainPipeline, SIGNAL(propagateSettings(BoxesSettings&)));

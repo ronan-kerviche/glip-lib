@@ -92,10 +92,11 @@
 				private :
 					// Data
 					typedef std::vector<__ReadOnly_ComponentLayout*> ComponentList;
-					std::vector<Connection>    connections;
-					ComponentList              elementsLayout;
-					std::vector<ComponentKind> elementsKind;
-					std::vector<int>           elementsID;
+					std::vector<Connection>		connections;
+					ComponentList			elementsLayout;
+					std::vector<ComponentKind>	elementsKind;
+					std::vector<std::string>	elementsName;	
+					std::vector<int>		elementsID;
 
 					// Friends
 					friend class PipelineLayout;
@@ -103,10 +104,9 @@
 				protected :
 					// Tools
 					__ReadOnly_PipelineLayout(const std::string& type);
-					int                    	getElementID(int i);
-					void                   	setElementID(int i, int ID);
-					std::vector<Connection> getConnectionDestinations(int id, int p);
-					Connection              getConnectionSource(int id, int p);
+					void				setElementID(int i, int ID);
+					std::vector<Connection>		getConnectionDestinations(int id, int p);
+					Connection			getConnectionSource(int id, int p);
 
 					// Friends
 					friend class Pipeline;
@@ -122,7 +122,9 @@
 					int  				getElementIndex(const std::string& name) const;
 					bool				doesElementExist(const std::string& name) const;
 					ComponentKind 			getElementKind(int i) const;
-					static ObjectName&      	componentName(int i, const void* obj);
+					const std::string&		getElementName(int i) const;	
+					int				getElementID(int i) const;
+					int				getElementID(const std::string& name) const;
 					__ReadOnly_ComponentLayout& 	componentLayout(int i) const;
 					__ReadOnly_ComponentLayout& 	componentLayout(const std::string& name) const;
 
@@ -130,6 +132,7 @@
 					__ReadOnly_FilterLayout&   	filterLayout(const std::string& name) const;
 					__ReadOnly_PipelineLayout& 	pipelineLayout(int i) const;
 					__ReadOnly_PipelineLayout& 	pipelineLayout(const std::string& name) const;
+					__ReadOnly_PipelineLayout& 	pipelineLayout(const std::vector<std::string>& path); // Cannot be const as it can return itself.
 
 					Connection              	getConnection(int i) const;
 					std::string 			getConnectionDestinationsName(int filterSource, int port);
@@ -255,11 +258,10 @@ How to process the inputs :
 					double					totalPerf;
 
 					// Tools
-					Pipeline(const __ReadOnly_PipelineLayout& p);
+					Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake);
 					void cleanInput(void);
 					void build(int& currentIdx, std::vector<Filter*>& filters, std::map<int, int>& filtersGlobalID, std::vector<Connection>& connections, __ReadOnly_PipelineLayout& originalLayout);
 					void allocateBuffers(std::vector<Connection>& connections);
-					//void build(void);
 
 				protected :
 					// Tools
@@ -277,12 +279,10 @@ How to process the inputs :
 					Pipeline& 	operator<<(ActionType a);
 					HdlTexture& 	out(int id = 0);
 					HdlTexture& 	out(const std::string& portName);
-					int 		getFilterID(const std::string& path);
 					Filter& 	operator[](int filterID);
-					Filter& 	operator[](const std::string& path);
 					void 		enablePerfsMonitoring(void);
 					void 		disablePerfsMonitoring(void);
-					double		getTiming(const std::string& path);
+					double		getTiming(int filterID);
 					double 		getTiming(int action, std::string& filterName);
 					double 		getTotalTiming(void);
 			};

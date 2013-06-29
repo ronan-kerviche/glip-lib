@@ -126,13 +126,13 @@
 		Q_OBJECT
 
 		private : 
-			const std::string		name,
-							path;
+			const std::string		name;
+			const std::vector<std::string>	path;
 			QTreeWidgetItem			*item;
 			std::vector<UniformObject*>	objects;
 
 		public : 
-			FilterElement(Filter& filter, const std::string& _path, QTreeWidget* tree);
+			FilterElement(Filter& filter, const std::vector<std::string>& _path, QTreeWidget* tree);
 			~FilterElement(void);
 
 			QTreeWidgetItem* treeItem(void) const;
@@ -153,7 +153,7 @@
 			std::vector<PipelineElement*>	pipelineObjects;
 
 		public : 
-			PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot = false);
+			PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& name, const std::string& pathStr, const std::vector<std::string>& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot = false);
 			~PipelineElement(void);
 
 			QTreeWidgetItem* treeItem(void) const;

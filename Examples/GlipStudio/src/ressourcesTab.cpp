@@ -1189,7 +1189,7 @@
 		if(pipeline==NULL)
 			updatePipelineInfos();
 
-		pipelineName = pipeline->getType().c_str();
+		pipelineName = pipeline->getTypeName().c_str();
 
 		// update connection size : 
 		if(pipeline->getNumInputPort()>preferredConnections.size())
