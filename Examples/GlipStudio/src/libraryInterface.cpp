@@ -19,6 +19,8 @@
 			QObject::connect(&ressourceTab,		SIGNAL(updatePipelineRequest(void)),	this,	SLOT(compute(void)));
 			QObject::connect(&ressourceTab,		SIGNAL(saveOutput(int)),		this,	SLOT(saveOutput(int)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataUpdate(void)),	this,	SLOT(updateUniforms(void)));
+			QObject::connect(&uniformsTab,		SIGNAL(requestDataLoad()),		this,	SLOT(loadUniforms(void)));
+			QObject::connect(&uniformsTab,		SIGNAL(requestDataSave()),		this,	SLOT(saveUniforms(void)));
 	}
 
 	LibraryInterface::~LibraryInterface(void)
@@ -72,6 +74,19 @@
 		}
 	}
 
+	void LibraryInterface::loadUniforms(void)
+	{
+		if(mainPipeline!=NULL)
+			if( uniformsTab.loadData(*mainPipeline) )
+				compute();
+	}
+
+	void LibraryInterface::saveUniforms(void)
+	{
+		if(mainPipeline!=NULL)
+			uniformsTab.saveData(*mainPipeline);
+	}
+
 	void LibraryInterface::saveOutput(int id)
 	{
 		if(mainPipeline!=NULL)
@@ -120,7 +135,7 @@
 			ressourceTab.appendFormats(pipelineLoader);
 			
 			// Load : 
-			mainPipeline = pipelineLoader(code, "MainPipeline");
+			mainPipeline = pipelineLoader(code, "");
 		}
 		catch(Exception& e)
 		{

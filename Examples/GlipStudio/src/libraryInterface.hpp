@@ -26,6 +26,8 @@
 			void updateComputeStatus(bool status);
 			void compute(void);
 			void updateUniforms(void);
+			void loadUniforms(void);
+			void saveUniforms(void);
 			void saveOutput(int id);
 					
 		public : 

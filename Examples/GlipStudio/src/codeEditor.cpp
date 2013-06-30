@@ -258,7 +258,7 @@
 	{
 		maybeSave();
 
-		QString fileName = QFileDialog::getOpenFileName(this, tr("Open Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext)"));
+		QString fileName = QFileDialog::getOpenFileName(this, tr("Open Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
 		
 		if(!fileName.isEmpty())
 			return loadFile(fileName);
@@ -276,7 +276,7 @@
 
 	bool CodeEditor::saveAs(void)
 	{
-		QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext)"));
+		QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
 		if (fileName.isEmpty())
 			return false;
 
@@ -531,7 +531,7 @@
 		else
 			currentPath = "./";
 
-		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Pipeline Script Files"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext)"));
+		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Pipeline Script Files"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
 
 		for(int k=0; k<filenames.count(); k++)
 		{

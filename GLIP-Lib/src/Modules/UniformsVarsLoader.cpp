@@ -400,7 +400,7 @@
 
 			// Did it fail?
 			if(!file.is_open())
-				throw Exception("Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
+				throw Exception("UniformsVarsLoader::load - Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
 
 
 			source.clear();
@@ -584,7 +584,7 @@
 		}
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(RessourceNode& node, std::string padding)
+	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(RessourceNode& node)
 	{
 		VanillaParserSpace::Element e;
 
@@ -617,7 +617,7 @@
 
 			for(int k=0; k<node.subNodes.size(); k++)
 			{
-				VanillaParserSpace::Element es = getNodeCode(node.subNodes[k], "\t");
+				VanillaParserSpace::Element es = getNodeCode(node.subNodes[k]);
 
 				// Don't show empty elements : 
 				if(!es.body.empty())
@@ -648,7 +648,7 @@
 		}
 	}
 
-	bool UniformsVarsLoader::hasPipeline(const std::string& name)
+	bool UniformsVarsLoader::hasPipeline(const std::string& name) const
 	{
 		for(int k=0; k<ressources.size(); k++)
 		{
@@ -657,6 +657,11 @@
 		}
 		
 		return false;
+	}
+
+	bool UniformsVarsLoader::empty(void) const
+	{
+		return ressources.empty();
 	}
 
 	int UniformsVarsLoader::applyTo(Pipeline& pipeline)
@@ -696,6 +701,15 @@
 
 	void UniformsVarsLoader::writeToFile(const std::string& filename)
 	{
-		throw Exception("UniformsVarsLoader::writeToFile - Not yet available.", __FILE__, __LINE__);
+		std::fstream file;
+
+		file.open(filename.c_str(), std::ios_base::out);
+
+		if(!file.is_open())
+				throw Exception("UniformsVarsLoader::writeToFile - Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
+
+		file << getCode();
+
+		file.close();
 	}
 

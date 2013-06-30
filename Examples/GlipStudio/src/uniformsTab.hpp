@@ -196,9 +196,12 @@
 		private : 
 			QVBoxLayout		layout;
 			QMenuBar		menuBar;
-			QAction			showSettings;
+			QAction			showSettings,
+						loadUniforms,
+						saveUniforms;
 			BoxesSettings		settings;
 			QTreeWidget		tree;
+			QString			currentPath;
 
 			PipelineElement*	mainPipeline;
 
@@ -214,10 +217,14 @@
 
 			void updatePipeline(void);
 			void updatePipeline(Pipeline& pipeline);			
-			void updateData(Pipeline& pipeline);		
+			void updateData(Pipeline& pipeline);
+			bool loadData(Pipeline& pipeline);	
+			void saveData(Pipeline& pipeline);	
 
 		signals :
 			void requestDataUpdate(void);
+			void requestDataLoad(void);
+			void requestDataSave(void);
 			void propagateSettings(BoxesSettings&);
 	};
 

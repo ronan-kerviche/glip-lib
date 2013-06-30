@@ -584,8 +584,10 @@
 
 // UniformsTab
 	UniformsTab::UniformsTab(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), showSettings("Settings", this), tree(this), settings(this), mainPipeline(NULL)
+	 : QWidget(parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./")
 	{
+		menuBar.addAction(&loadUniforms);
+		menuBar.addAction(&saveUniforms);
 		menuBar.addAction(&showSettings);
 
 		layout.addWidget(&menuBar);
@@ -603,6 +605,8 @@
 		tree.setHeaderLabels( listLabels );
 
 		QObject::connect(&showSettings,	SIGNAL(triggered()),		this, 	SLOT(switchSettings()));
+		QObject::connect(&loadUniforms,	SIGNAL(triggered()),		this, 	SIGNAL(requestDataLoad()));
+		QObject::connect(&saveUniforms,	SIGNAL(triggered()),		this, 	SIGNAL(requestDataSave()));
 		QObject::connect(&settings,	SIGNAL(settingsChanged()),	this,	SLOT(settingsChanged()));
 	}
 
@@ -677,13 +681,13 @@
 		HdlProgram::stopProgram();
 	
 		// Test : 
-		std::cout << "=======> TEST" << std::endl;
+		/*std::cout << "=======> TEST" << std::endl;
 		Modules::UniformsVarsLoader u;
 		u.load(pipeline);
 		std::cout << "Code : " << std::endl;
 		std::cout << u.getCode();
 		
-		std::cout << "=======> END TEST" << std::endl;
+		std::cout << "=======> END TEST" << std::endl;*/
 	}
 
 	void UniformsTab::updateData(Pipeline& pipeline)
@@ -693,5 +697,103 @@
 			mainPipeline->update(pipeline);
 			HdlProgram::stopProgram();
 		}
+	}
+
+	bool UniformsTab::loadData(Pipeline& pipeline)
+	{
+		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Uniforms Variables Data Files"), currentPath, tr("Pipeline Script Files (*.uvd)"));
+
+		if(filenames.empty())
+			return false;
+
+		Modules::UniformsVarsLoader uLoader;
+
+		try
+		{
+			for(int k=0; k<filenames.count(); k++)
+			{
+				if(!filenames[k].isEmpty())
+				{
+					uLoader.load( filenames[k].toStdString() );
+				
+					// Update current path : 
+					QFileInfo path(filenames[k]);
+					currentPath = path.path() + "/";
+				}
+			}
+		}
+		catch(Exception& e)
+		{
+			std::cerr << "Exception cauhgt : " << std::endl;
+			std::cerr << e.what() << std::endl;
+			QMessageBox::information(this, tr("Error while loading uniforms data : "), e.what());
+
+			return false;
+		}
+
+		if(!uLoader.empty())
+		{
+			int c = 0;
+
+			try
+			{
+				c = uLoader.applyTo(pipeline);
+
+			}
+			catch(Exception& e)
+			{
+				std::cerr << "Exception cauhgt : " << std::endl;
+				std::cerr << e.what() << std::endl;
+				QMessageBox::information(this, tr("Error while loading uniforms data : "), e.what());
+
+				return false;
+			}
+
+			if(c==0)
+			{
+				std::string name = pipeline.getFullName();
+				QMessageBox::information(this, tr("Error while loading uniforms data : "), tr("No data was loaded in the pipeline %1.").arg(name.c_str()));
+				return false;
+			}
+			else
+				std::cout << "UniformsTab::loadData - Loaded variables : " << c << std::endl;
+		}
+		else
+			return false;
+
+		// Update GUI : 
+		updatePipeline(pipeline);
+
+		HdlProgram::stopProgram();
+
+		return true;
+	}
+
+	void UniformsTab::saveData(Pipeline& pipeline)
+	{
+		// Sync !
+		updateData(pipeline);
+
+		// Load and save : 
+		Modules::UniformsVarsLoader uWriter;
+
+		uWriter.load(pipeline);
+
+		if(uWriter.empty())
+			return ;
+
+		// Get the filename : 
+		QString fileName = QFileDialog::getSaveFileName(this, tr("Save Uniforms Variables Data File"), currentPath, tr("Pipeline Script Files (*.uvd)"));
+		
+		if(fileName.isEmpty())
+			return ;
+
+		uWriter.writeToFile( fileName.toStdString() );
+
+		// Update current path : 
+		QFileInfo path(fileName);
+		currentPath = path.path() + "/";
+
+		HdlProgram::stopProgram();
 	}
 

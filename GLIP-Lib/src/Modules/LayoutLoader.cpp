@@ -1010,12 +1010,15 @@
 	\fn Pipeline* LayoutLoader::operator()(const std::string& source, const std::string& pipelineName)
 	\brief Loads a pipeline from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
-	\param pipelineName The name of the unique instance created
+	\param pipelineName The name of the unique instance created (or take the type name if left empty).
 	\return A pointer to the unique instance built on the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
 	**/
-	Pipeline* LayoutLoader::operator()(const std::string& source, const std::string& pipelineName)
+	Pipeline* LayoutLoader::operator()(const std::string& source, std::string pipelineName)
 	{
 		__ReadOnly_PipelineLayout layout = (*this)(source);
+
+		if(pipelineName.empty())
+			pipelineName = layout.getTypeName();
 
 		Pipeline* pipeline = new Pipeline(layout, pipelineName);
 

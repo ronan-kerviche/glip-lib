@@ -278,7 +278,7 @@ Loading Example :
 				void setPath(const std::string& _path);
 
 				__ReadOnly_PipelineLayout operator()(const std::string& source); //can be a file or directly the source
-				Pipeline* operator()(const std::string& source, const std::string& pipelineName);
+				Pipeline* operator()(const std::string& source, std::string pipelineName);
 				
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
