@@ -250,12 +250,18 @@
 		}
 	}
 
+	GeometryInstance::GeometryInstance(const GeometryInstance& instance)
+	 : id(instance.id)	
+	{
+		counters[id]++;
+	}
+
 	GeometryInstance::~GeometryInstance(void)
 	{
 		counters[id]--;
 
 		// If no more reference : 
-		if(counters[id]==0)
+		if(counters[id]<=0)
 		{
 			delete vbos[id];
 			vbos[id] = NULL;
@@ -316,7 +322,5 @@
 					}
 				}
 			}
-
-			std::cout << "3D grid registered with " << getNumVertices() << " vertices (" << w << "x" << h << "x" << z << ")." << std::endl;
 		}
 

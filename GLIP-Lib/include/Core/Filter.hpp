@@ -73,7 +73,7 @@
 				public :
 					// Tools
 					__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout&);
-					~__ReadOnly_FilterLayout(void);
+					virtual ~__ReadOnly_FilterLayout(void);
 					ShaderSource& getVertexSource(void) const;
 					ShaderSource& getFragmentSource(void) const;
 					GeometryFormat& getGeometryFormat(void) const;
@@ -124,7 +124,7 @@
 
 				public :
 					// Tools
-					~Filter(void);
+					virtual ~Filter(void);
 					HdlProgram& prgm(void);
 					//void setGeometry(HdlVBO* v=NULL);
 			};

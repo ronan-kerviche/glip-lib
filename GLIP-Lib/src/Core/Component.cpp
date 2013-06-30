@@ -62,6 +62,9 @@
 		#endif
 	}
 
+	__ReadOnly_ComponentLayout::~__ReadOnly_ComponentLayout(void)
+	{ }
+	
 	/**
 	\fn std::string __ReadOnly_ComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
@@ -257,6 +260,9 @@
 	 : __ReadOnly_ComponentLayout(c)
 	{ }
 
+	ComponentLayout::~ComponentLayout(void)
+	{ }
+
 	/**
 	\fn int ComponentLayout::addInputPort(const std::string& name)
 	\brief Add an input port.
@@ -306,6 +312,9 @@
 	**/
 	Component::Component(const __ReadOnly_ComponentLayout& c, const std::string& _instanceName)
 	 : __ReadOnly_ComponentLayout(c), instanceName(_instanceName)
+	{ }
+
+	Component::~Component(void)
 	{ }
 
 	/**

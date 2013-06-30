@@ -1,0 +1,108 @@
+// Histogram pipeline.
+// You must use a 3D grid as geometry for it to work.
+
+TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins
+//TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)  	// Final window representation
+REQUIRED_FORMAT:showHistogramFormat(FormatIn_0)
+
+GEOMETRY:grid(GRID_3D, 512, 512, 3)
+
+SHADER_SOURCE:histogramVertShader
+{
+	#version 130
+
+	uniform sampler2D inputTexture;
+
+	void main()
+	{
+		// Vertex texture fetching :
+		vec4 col = textureLod(inputTexture, gl_Vertex.xy/512.0f, 0.0);
+		
+
+		float sel = 0.0;
+
+		// "Payload"
+		if(gl_Vertex.z==0.0)				// Red plane
+		{
+			gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
+			sel = col.r;
+		}
+		else if(gl_Vertex.z==1.0)			// Green plane
+		{
+			gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
+			sel = col.g;
+		}
+		else						// Blue plane
+		{
+			gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+			sel = col.b;
+		}
+
+		// Only on [0.0,1.0] interval :
+		clamp(sel, 0.0, 1.0);
+
+		// Done
+		gl_Position.x = (sel-0.5)*2.0; 	// set new point position to the color intensity in [-1.0,1.0] interval
+		gl_Position.y = 0.0;
+		gl_Position.z = 0.0;
+	}
+}
+
+SHADER_SOURCE:histogramFragShader
+{
+	#version 130
+
+	out vec4 histogramBins;
+
+	const float nrm = 1.0f / (512.0f * 512.0f);
+
+	void main()
+	{
+		histogramBins = gl_Color*nrm;
+	}
+}
+
+SHADER_SOURCE:showHistogramShader
+{
+	#version 130
+	uniform sampler2D histogramBins, inputTexture;
+	out vec4 outputTexture;
+
+	uniform float scale = 1.0f;
+
+	void main()
+	{
+		vec2 pos 	= gl_TexCoord[0].st;
+		vec4 hist	= textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+		vec4 col	= textureLod(inputTexture,  pos, 0);
+
+		if(pos.t>(1.0-hist.r*scale) )
+			outputTexture.r = 1.0;
+		else
+			outputTexture.r = col.r;
+
+		if(pos.t>(1.0-hist.g*scale) )
+			outputTexture.g = 1.0;
+		else
+			outputTexture.g = col.g;
+
+		if(pos.t>(1.0-hist.b*scale) )
+			outputTexture.b = 1.0;
+		else
+			outputTexture.b = col.b;
+	}
+}
+
+
+FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON, grid)  // Clearing and Blending!
+FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader)
+
+PIPELINE_MAIN:pipelineHistogram()
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture, histogramBins)
+
+	FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
+	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
+}
+

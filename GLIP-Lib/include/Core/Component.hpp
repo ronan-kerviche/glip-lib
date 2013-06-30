@@ -65,6 +65,7 @@
 				public :
 					// Tools
 					__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout&);
+					virtual ~__ReadOnly_ComponentLayout(void);
 
 					void checkInputPort(int i) const;
 					void checkOutputPort(int i) const;
@@ -95,6 +96,7 @@
 					// Tools
 					ComponentLayout(const std::string& _typeName);
 					ComponentLayout(const __ReadOnly_ComponentLayout&);
+					virtual ~ComponentLayout(void);
 			};
 
 			/**
@@ -111,6 +113,8 @@
 					Component(const __ReadOnly_ComponentLayout&, const std::string& _instanceName);
 
 				public :
+					virtual ~Component(void);
+
 					std::string getFullName(void) const;
 					const std::string& getName(void) const;
 			};

@@ -67,10 +67,33 @@
 					elementsLayout.push_back(reinterpret_cast<__ReadOnly_ComponentLayout*>(new __ReadOnly_PipelineLayout(c.pipelineLayout(i))));
 					break;
 				default:
-					throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy for element in Z" + getFullName(), __FILE__, __LINE__);
+					throw Exception("__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout - Unknown type for copy for element in " + getFullName(), __FILE__, __LINE__);
 			}
 		}
 		//std::cout << "end copy of pipeline layout for " << getFullName() << std::endl;
+	}
+
+	__ReadOnly_PipelineLayout::~__ReadOnly_PipelineLayout(void)
+	{
+		for(int k=0; k<elementsLayout.size(); k++)
+		{
+			switch(elementsKind[k])
+			{
+				case FILTER:
+					delete &filterLayout(k);
+					break;
+				case PIPELINE:
+					delete &pipelineLayout(k);
+					break;
+				default:
+					throw Exception("__ReadOnly_PipelineLayout::~__ReadOnly_PipelineLayout - Unknown type for delete for element in " + getFullName(), __FILE__, __LINE__);
+			}
+		}
+		
+		connections.clear();
+		elementsKind.clear();
+		elementsName.clear();
+		elementsID.clear();
 	}
 
 	/**
@@ -898,13 +921,6 @@
 	Pipeline::~Pipeline(void)
 	{
 		cleanInput();
-
-		//listOfArgBuffersOutput.clear();
-		//listOfArgBuffers.clear();
-
-		//actionFilter.clear();
-		//outputBuffer.clear();
-		//outputBufferPort.clear();
 
 		for(std::vector<HdlFBO*>::iterator it = buffersList.begin(); it!=buffersList.end(); it++)
 			delete (*it);

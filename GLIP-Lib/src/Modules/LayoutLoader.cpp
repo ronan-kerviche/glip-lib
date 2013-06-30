@@ -655,7 +655,7 @@
 			if(!from_string(e.arguments[3], z))
 				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid3DGeometry(w,h,z) ) );
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid3DGeometry(w,h,z)) );
 		}
 		else
 			throw Exception("From line " + to_string(e.startLine) + " : Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", __FILE__, __LINE__);

@@ -108,6 +108,7 @@
 
 				public : 
 					GeometryInstance(GeometryFormat& fmt, GLenum freq);
+					GeometryInstance(const GeometryInstance& instance);
 					~GeometryInstance(void);
 
 					const GeometryFormat& format(void) const;
