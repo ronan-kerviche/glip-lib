@@ -86,7 +86,7 @@ namespace Glip
 					void build(const VanillaParserSpace::Element& e);
 					void build(const std::string& varName, GLenum t, HdlProgram& prgm);
 					void apply(Filter& filter);
-					std::string getCode(void);
+					VanillaParserSpace::Element getCode(void);
 				};
 
 				struct RessourceNode
@@ -103,7 +103,7 @@ namespace Glip
 
 				void processNode(std::string body, RessourceNode& root);			
 				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);		
-				std::string getCode(RessourceNode& node, std::string padding="");
+				VanillaParserSpace::Element getNodeCode(RessourceNode& node, std::string padding="");
 			public : 
 				UniformsVarsLoader(void);
 				~UniformsVarsLoader(void);
@@ -113,7 +113,7 @@ namespace Glip
 				void clear(const std::string& name="");
 				bool hasPipeline(const std::string& name);
 				int applyTo(Pipeline& pipeline);
-				std::string getString(void);
+				std::string getCode(void);
 				void writeToFile(const std::string& filename);
 		};
 	}

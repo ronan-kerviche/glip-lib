@@ -76,6 +76,7 @@ namespace Glip
 				const Element& operator=(const Element& cpy);
 				void clear(void);
 				bool empty(void) const;
+				std::string getCode(void) const;
 			};
 
 			// Parser Class : 

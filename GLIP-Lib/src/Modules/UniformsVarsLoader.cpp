@@ -289,21 +289,25 @@
 		#undef APPLY
 	}
 
-	std::string UniformsVarsLoader::Ressource::getCode(void)
+	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCode(void)
 	{
 		#define GET_CODE( glType, cType, narg ) \
 			if( type == glType ) \
 			{ \
-				std::string str = glParamName(type) + ":" + name + "( "; \
+				VanillaParserSpace::Element e; \
+				e.strKeyword 	= glParamName(type); \
+				e.name		= name; \
+				e.noName	= false; \
+				e.noArgument	= false; \
+				e.noBody	= true; \
+				e.body.clear(); \
 				\
 				cType* tmp = reinterpret_cast< cType* >( data ); \
 				\
-				for(int k=0; k<( narg -1); k++) \
-					str += to_string(tmp[k]) + ", "; \
+				for(int k=0; k< narg ; k++) \
+					e.arguments.push_back( to_string(tmp[k]) ); \
 				\
-				str += to_string(tmp[ narg -1]) + ")"; \
-				\
-				return str; \
+				return e; \
 			}
 
 			GET_CODE( GL_FLOAT, 		float, 		1 )
@@ -580,34 +584,53 @@
 		}
 	}
 
-	std::string UniformsVarsLoader::getCode(RessourceNode& node, std::string padding)
+	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(RessourceNode& node, std::string padding)
 	{
-		std::string res;
+		VanillaParserSpace::Element e;
 
 		if(node.subNodes.empty())
 		{
 			// Filter : 
-			res += padding + keywordsUniformsVarsLoader[KW_UL_FILTER] + ":" + node.name + "\n";
-			res += padding + "{\n";
-
+			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_FILTER];
+			e.name		= node.name;
+			e.noName	= false;
+			e.arguments.clear();
+			e.noArgument	= true;
+			
 			for(int k=0; k<node.ressources.size(); k++)
-				res += padding + "\t" + node.ressources[k].getCode() + "\n";
+			{
+				VanillaParserSpace::Element es = node.ressources[k].getCode();
+				e.body += es.getCode();
 
-			res += padding + "}\n\n";
+				if(k<node.ressources.size()-1)
+					e.body += "\n";
+			}
 		}
 		else
 		{
 			// Pipeline : 
-			res += padding + keywordsUniformsVarsLoader[KW_UL_PIPELINE] + ":" + node.name + "\n";
-			res += padding + "{\n";
+			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_PIPELINE];
+			e.name		= node.name;
+			e.noName	= false;
+			e.arguments.clear();
+			e.noArgument	= true;
 
 			for(int k=0; k<node.subNodes.size(); k++)
-				res += getCode(node.subNodes[k], padding + "\t");
+			{
+				VanillaParserSpace::Element es = getNodeCode(node.subNodes[k], "\t");
 
-			res += padding + "}\n\n";
+				// Don't show empty elements : 
+				if(!es.body.empty())
+				{
+					e.body += es.getCode();
+	
+					if(k<node.subNodes.size()-1)
+						e.body += "\n\n";
+				}
+			}
 		}
 
-		return res;
+		return e;
 	}
 
 	void UniformsVarsLoader::clear(const std::string& name)
@@ -658,13 +681,14 @@
 		return c;
 	}
 
-	std::string UniformsVarsLoader::getString(void)
+	std::string UniformsVarsLoader::getCode(void)
 	{
 		std::string res;
 
 		for(int k=0; k<ressources.size(); k++)
 		{
-			res += getCode(ressources[k]) + "\n";
+			VanillaParserSpace::Element e = getNodeCode(ressources[k]);
+			res += e.getCode() + "\n";
 		}
 
 		return res;

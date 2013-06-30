@@ -675,6 +675,15 @@
 		settingsChanged();
 
 		HdlProgram::stopProgram();
+	
+		// Test : 
+		std::cout << "=======> TEST" << std::endl;
+		Modules::UniformsVarsLoader u;
+		u.load(pipeline);
+		std::cout << "Code : " << std::endl;
+		std::cout << u.getCode();
+		
+		std::cout << "=======> END TEST" << std::endl;
 	}
 
 	void UniformsTab::updateData(Pipeline& pipeline)

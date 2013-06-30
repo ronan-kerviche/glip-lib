@@ -71,6 +71,61 @@
 	{
 		return strKeyword.empty() && name.empty() && body.empty() && arguments.empty();
 	}
+
+	std::string Element::getCode(void) const
+	{
+		std::string res;
+
+		if(strKeyword.empty())
+			throw Exception("Element::getCode - No keyword defined.", __FILE__, __LINE__);
+
+		// Header :
+		res += strKeyword;
+
+		if(!noName || !name.empty())
+			res += ":" + name;
+
+		if(!noArgument || !arguments.empty())
+		{
+			bool putComa = false;
+		
+			res += "(";
+
+			for(int k=0; k<arguments.size(); k++)
+			{
+				if(putComa)
+					res += ", ";
+				
+				res += arguments[k];
+
+				putComa = true;
+			}
+
+			res +=")";
+		}
+
+		// Body and indent
+		if(!noBody || !body.empty())
+		{
+			res += "\n{\n";
+
+			std::string tmpBody = body;
+
+			size_t ptr = tmpBody.find('\n');
+
+			while(ptr!=std::string::npos)
+			{
+				tmpBody.insert( ptr+1, "\t");
+				ptr = tmpBody.find('\n', ptr+1);
+			}
+
+			res += "\t" + tmpBody;
+
+			res += "\n}";
+		}
+
+		return res;
+	}
 	
 // LayoutLoaderParser::VanillaParser
 	VanillaParser::VanillaParser(const std::string& code, int lineOffset)
