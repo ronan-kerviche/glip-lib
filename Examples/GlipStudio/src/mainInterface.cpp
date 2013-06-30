@@ -102,5 +102,7 @@
 		{
 			qDebug() << "Exception caught :" << e.what();
 		}
+
+		return false;
 	}
  

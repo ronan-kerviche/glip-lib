@@ -242,6 +242,26 @@
 		return it!=elementsName.end();
 	}
 
+	bool __ReadOnly_PipelineLayout::doesElementExist(const std::vector<std::string>& path) const
+	{
+		const __ReadOnly_PipelineLayout* ptr = this;
+
+		for(std::vector<std::string>::const_iterator it=path.begin(); it!=path.end(); it++)
+		{
+			if(!ptr->doesElementExist(*it))
+				return false;
+
+			int id = ptr->getElementIndex(*it);
+			
+			if(ptr->getElementKind(id)!=PIPELINE)
+				return false;
+
+			ptr = &ptr->pipelineLayout(*it);
+		}		
+
+		return true;
+	}
+
 	/**
 	\fn ComponentKind __ReadOnly_PipelineLayout::getElementKind(int i) const
 	\brief Get the kind of an element.

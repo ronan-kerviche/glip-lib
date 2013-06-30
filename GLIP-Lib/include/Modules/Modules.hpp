@@ -25,6 +25,7 @@
 #define __GLIP_LIB_MODULES_LIBRARY_INCLUDE__
 
 	#include "./LayoutLoader.hpp"
+	#include "./UniformsVarsLoader.hpp"
 	#include "./TextureReader.hpp"
 	#include "./ProceduralInput.hpp"
 	#include "./FFT1D.hpp"

@@ -28,6 +28,7 @@
 	#include "../Core/HdlTexture.hpp"
 	#include "../Core/HdlShader.hpp"
 	#include "../Core/Pipeline.hpp"
+	#include "VanillaParser.hpp"
 
 namespace Glip
 {
@@ -38,53 +39,83 @@ namespace Glip
 	{
 		enum UniformVarsLoaderKeyword
 		{
-			PIPELINE,
-			FILTER,
-			KW_GL_FLOAT,
-			KW_GL_FLOAT_VEC2,
-			KW_GL_FLOAT_VEC3,
-			KW_GL_FLOAT_VEC4,
-			KW_GL_DOUBLE,
-			KW_GL_DOUBLE_VEC2,
-			KW_GL_DOUBLE_VEC3,
-			KW_GL_DOUBLE_VEC4,
-			KW_GL_INT,
-			KW_GL_INT_VEC2,
-			KW_GL_INT_VEC3,
-			KW_GL_INT_VEC4,
-			KW_GL_UNSIGNED_INT,
-			KW_GL_UNSIGNED_INT_VEC2,
-			KW_GL_UNSIGNED_INT_VEC3,
-			KW_GL_UNSIGNED_INT_VEC4,
-			KW_GL_BOOL,
-			KW_GL_BOOL_VEC2,
-			KW_GL_BOOL_VEC3,
-			KW_GL_BOOL_VEC4,
-			KW_GL_FLOAT_MAT2,
-			KW_GL_FLOAT_MAT3,
-			KW_GL_FLOAT_MAT4,
-			NumKeywords,
-			UnknownKeyword
+			KW_UL_PIPELINE,
+			KW_UL_FILTER,
+			KW_UL_GL_FLOAT,
+			KW_UL_GL_FLOAT_VEC2,
+			KW_UL_GL_FLOAT_VEC3,
+			KW_UL_GL_FLOAT_VEC4,
+			KW_UL_GL_DOUBLE,
+			KW_UL_GL_DOUBLE_VEC2,
+			KW_UL_GL_DOUBLE_VEC3,
+			KW_UL_GL_DOUBLE_VEC4,
+			KW_UL_GL_INT,
+			KW_UL_GL_INT_VEC2,
+			KW_UL_GL_INT_VEC3,
+			KW_UL_GL_INT_VEC4,
+			KW_UL_GL_UNSIGNED_INT,
+			KW_UL_GL_UNSIGNED_INT_VEC2,
+			KW_UL_GL_UNSIGNED_INT_VEC3,
+			KW_UL_GL_UNSIGNED_INT_VEC4,
+			KW_UL_GL_BOOL,
+			KW_UL_GL_BOOL_VEC2,
+			KW_UL_GL_BOOL_VEC3,
+			KW_UL_GL_BOOL_VEC4,
+			KW_UL_GL_FLOAT_MAT2,
+			KW_UL_GL_FLOAT_MAT3,
+			KW_UL_GL_FLOAT_MAT4,
+			UL_NumKeywords,
+			UL_UnknownKeyword
 		};
 
-		extern const char* keywordsUniformsVarsLoader[NumKeywords];
+		extern const char* keywordsUniformsVarsLoader[UL_NumKeywords];
 
-		/*class UniformsVarsLoader
+		class UniformsVarsLoader
 		{
 			private : 
 				struct Ressource
 				{
+					std::string name;
+					GLenum type;
+					void* data;
+
+					Ressource(void);
+					Ressource(const Ressource& cpy);
+					~Ressource(void);
+	
+					void build(const VanillaParserSpace::Element& e);
+					void build(const std::string& varName, GLenum t, HdlProgram& prgm);
+					void apply(Filter& filter);
+					std::string getCode(void);
+				};
+
+				struct RessourceNode
+				{
+					std::string name;
 					
-				}
+					std::vector<RessourceNode> 	subNodes;
+					std::vector<Ressource>		ressources;
 
-				std::map<std::string, Ressource> 			
+					int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
+				};			
 
+				std::vector<RessourceNode> ressources;
+
+				void processNode(std::string body, RessourceNode& root);			
+				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);		
+				std::string getCode(RessourceNode& node, std::string padding="");
 			public : 
-				UniformsVarsLoader(const std::string& source);
+				UniformsVarsLoader(void);
 				~UniformsVarsLoader(void);
 
+				void load(std::string source, bool replace=false);
+				void load(Pipeline& pipeline, bool replace=false);
+				void clear(const std::string& name="");
+				bool hasPipeline(const std::string& name);
 				int applyTo(Pipeline& pipeline);
-		};*/
+				std::string getString(void);
+				void writeToFile(const std::string& filename);
+		};
 	}
 }
 

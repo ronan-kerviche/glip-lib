@@ -285,7 +285,7 @@ Loading Example :
 				int  clearRequiredElements(const std::string& name = "");
 		};
 
-		class LayoutWriter
+		/*class LayoutWriter
 		{
 			private :
 				
@@ -296,7 +296,7 @@ Loading Example :
 
 			public :
 				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
-		};
+		};*/
 	}
 }
 

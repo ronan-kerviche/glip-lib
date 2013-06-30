@@ -122,6 +122,7 @@
 					void				getInfoElements(int& numFilters, int& numPipelines);
 					int  				getElementIndex(const std::string& name) const;
 					bool				doesElementExist(const std::string& name) const;
+					bool				doesElementExist(const std::vector<std::string>& path) const;
 					ComponentKind 			getElementKind(int i) const;
 					const std::string&		getElementName(int i) const;	
 					int				getElementID(int i) const;
