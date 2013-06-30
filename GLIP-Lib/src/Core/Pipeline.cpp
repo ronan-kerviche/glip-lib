@@ -520,13 +520,8 @@
 				}
 				catch(Exception& e)
 				{
-					res += e.what();
 					res += '\n';
-				}
-				catch(std::exception& e)
-				{
-					res += e.what();
-					res += '\n';
+					res += e.message();
 				}
 			}
 
@@ -534,8 +529,8 @@
 			{
 				if(getConnectionDestinations(i,j).empty())
 				{
-					res += "__ReadOnly_PipelineLayout::check - Error : Element " + tmp.getFullName() + " output port " +  tmp.getOutputPortName(i) + " is not connected.";
 					res += '\n';
+					res += "Element " + tmp.getFullName() + " output port " +  tmp.getOutputPortName(i) + " is not connected.";
 				}
 			}
 		}
@@ -548,13 +543,8 @@
 			}
 			catch(Exception& e)
 			{
-				res += e.what();
 				res += '\n';
-			}
-			catch(std::exception& e)
-			{
-				res += e.what();
-				res += '\n';
+				res += e.message();
 			}
 		}
 
@@ -562,14 +552,14 @@
 		{
 			if(getConnectionDestinations(THIS_PIPELINE,i).empty())
 			{
-				res += "__ReadOnly_PipelineLayout::check - Error : Input port " + getInputPortName(i) + " is not connected inside the pipeline.";
 				res += '\n';
+				res += "Input port " + getInputPortName(i) + " is not connected inside the pipeline.";
 			}
 		}
 
 		if(exception && !res.empty())
-			throw Exception("check - The following errors has been found in the PipelineLayout " + getFullName() + " : \n" + res + ".", __FILE__, __LINE__);
-		else
+			throw Exception("PipelineLayout::check - The following errors has been found in the PipelineLayout " + getFullName() + " : " + res, __FILE__, __LINE__);
+		else if(!res.empty())
 			return false;
 
 		return true;
@@ -912,10 +902,19 @@
 		//outputBuffer.assign(getNumOutputPort(), 0);
                 //outputBufferPort.assign(getNumOutputPort(), 0);
 
-		std::vector<Connection> connections;
-		int idx = THIS_PIPELINE;
-		build(idx, filtersList, filtersGlobalIDsList, connections, *this);
-		allocateBuffers(connections);
+		try
+		{
+			std::vector<Connection> connections;
+			int idx = THIS_PIPELINE;
+			build(idx, filtersList, filtersGlobalIDsList, connections, *this);
+			allocateBuffers(connections);
+		}
+		catch(Exception& e)
+		{
+			std::cout << "in Pipeline : " << std::endl << e.what() << std::endl;
+			Exception m("Exception caught while building Pipeline \"" + getFullName() + "\" : ", __FILE__, __LINE__);
+			throw m + e;
+		}
 	}
 
 	Pipeline::~Pipeline(void)
@@ -955,6 +954,9 @@
 		// Extract and build elements, get the connections done too : 
 		try
 		{
+			// First, test the basic connections : 
+			check(true);
+
 			std::vector<int> 	localToGlobalIdx;
 			std::vector<Connection> localConnections;
 
