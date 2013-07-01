@@ -394,7 +394,7 @@
 		if(!path.empty())
 			item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(pathStr.c_str()));
 		else
-			item->setText(0, tr("%1").arg(name.c_str()) );
+			item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(pipeline.getTypeName().c_str()) );
 
 		std::string currentPathStr;
 
