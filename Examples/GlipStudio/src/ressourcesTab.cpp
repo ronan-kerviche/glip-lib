@@ -1061,6 +1061,7 @@
 		{
 			rebuildImageList();
 			updateFormatListDisplay();
+			updateInputConnectionDisplay();
 		}
 
 		if(requestPipelineUpdate)

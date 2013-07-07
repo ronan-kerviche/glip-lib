@@ -153,7 +153,7 @@
 			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations : ";
 			
 			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
-				msg  += "\n" + *it;
+				msg  += "\n-> " + *it;
 
 			throw Exception(msg, __FILE__, __LINE__);
 		}
@@ -317,10 +317,16 @@
 
 		std::string resultingPath = currentPath + e.arguments[0];
 
+		if( e.arguments[0].empty() )
+			throw Exception("From line " + to_string(e.startLine) + " : Path is empty.", __FILE__, __LINE__);
+
+		if( resultingPath[resultingPath.size()-1]!='/' )
+			throw Exception("From line " + to_string(e.startLine) + " : Path should be ended by delimiter '/' (current : \"" + e.arguments[0] + "\").", __FILE__, __LINE__);
+
 		// Test if it is already in the dynamic path list : 
 		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
 
-		if(it!=dynamicPaths.end())
+		if(it==dynamicPaths.end())
 			dynamicPaths.push_back(resultingPath);
 	}
 
@@ -331,8 +337,6 @@
 
 		if(e.arguments[0].find('\n')!=std::string::npos)
 			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains a newline character.", __FILE__, __LINE__);
-		else if(e.arguments[0].find('/')!=std::string::npos)
-			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '/'.", __FILE__, __LINE__);
 		else if(e.arguments[0].find('\\')!=std::string::npos)
 			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '\\'.", __FILE__, __LINE__);
 
@@ -362,20 +366,16 @@
 		}
 		catch(Exception& ex)
 		{
-			// Old : single static path :
-			/*if(!subLoader.path.empty() || !subLoader.dynpath.empty())
+			if(!subLoader.currentPath.empty())
 			{
-				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.path + subLoader.dynpath + "\") : ", __FILE__, __LINE__);
+				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.currentPath + "\") : ", __FILE__, __LINE__);
 				throw m + ex;
 			}
 			else
 			{
 				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", __FILE__, __LINE__);
 				throw m + ex;
-			}*/
-
-			Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", __FILE__, __LINE__);
-			throw m + ex;
+			}
 		}
 	}
 
@@ -946,6 +946,9 @@
 			{
 				switch(associatedKeyword[k])
 				{
+					case ADD_PATH :
+						appendPath(rootParser.elements[k]);
+						break;
 					case INCLUDE_FILE :
 						includeFile(rootParser.elements[k]);
 						break;
