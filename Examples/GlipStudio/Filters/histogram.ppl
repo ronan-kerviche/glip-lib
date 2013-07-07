@@ -105,4 +105,3 @@ PIPELINE_MAIN:pipelineHistogram()
 	FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
 	FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
 }
-

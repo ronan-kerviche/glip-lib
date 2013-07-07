@@ -72,6 +72,7 @@ namespace Glip
 			TRIANGLE,
 			POINT,
 			ELEMENT,
+			ADD_PATH,
 			NumKeywords,
 			UnknownKeyword
 		};
@@ -237,7 +238,8 @@ Loading Example :
 				bool 					isSubLoader;
 
 				// Reading dynamic :
-				std::string				dynpath;
+				std::string				currentPath;
+				std::vector<std::string>		dynamicPaths;
 				std::vector<LayoutLoaderKeyword>	associatedKeyword;
 				std::map<std::string, std::string>	sharedCodeList;
 				std::map<std::string, HdlTextureFormat> formatList;
@@ -247,7 +249,7 @@ Loading Example :
 				std::map<std::string, PipelineLayout> 	pipelineList;
 
 				// Static : 
-				std::string				path;
+				std::vector<std::string>		staticPaths;
 				std::map<std::string,HdlTextureFormat>	requiredFormatList;
 				std::map<std::string,PipelineLayout>	requiredPipelineList;
 
@@ -256,10 +258,12 @@ Loading Example :
 
 				void 	clean(void);			
 				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& keywords);
-				void	loadFile(const std::string& filename, std::string& content);
+				bool	fileExists(const std::string& filename);
+				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
 				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
 				void	enhanceShaderSource(std::string& str);
 				void	append(LayoutLoader& subLoader);
+				void 	appendPath(const VanillaParserSpace::Element& e);
 				void	includeFile(const VanillaParserSpace::Element& e);
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
@@ -274,8 +278,12 @@ Loading Example :
 			public :
 				LayoutLoader(void);
 				~LayoutLoader(void);
-
-				void setPath(const std::string& _path);
+				
+				const std::vector<std::string>& paths(void) const;
+				void clearPaths(void);
+				void addToPaths(const std::string& p);
+				void addToPaths(const std::vector<std::string>& paths);
+				bool removeFromPaths(const std::string& p);
 
 				__ReadOnly_PipelineLayout operator()(const std::string& source); //can be a file or directly the source
 				Pipeline* operator()(const std::string& source, std::string pipelineName);

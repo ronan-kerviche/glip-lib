@@ -116,14 +116,15 @@
 			throw Exception("LibraryInterface::currentOutput - Internal error : no currently associated texture.", __FILE__, __LINE__);
 	}
 
-	void LibraryInterface::compile(const std::string& code, const std::string& path)
+	void LibraryInterface::compile(const std::string& code, const std::vector<std::string>& paths)
 	{
 		if(code.empty())
 			return ; //Nothing to do...
 
 		bool success = true;
 		
-		pipelineLoader.setPath(path);
+		pipelineLoader.clearPaths();
+		pipelineLoader.addToPaths(paths);
 
 		try
 		{

@@ -66,13 +66,16 @@
 										"QUAD",
 										"TRIANGLE",
 										"POINT",
-										"ELEMENT"
+										"ELEMENT",
+										"ADD_PATH"
 								};
 	
 // LayoutLoader
 	LayoutLoader::LayoutLoader(void)
 	 : isSubLoader(false)
-	{ }
+	{
+		clearPaths();
+	}
 
 	LayoutLoader::~LayoutLoader(void)
 	{
@@ -87,7 +90,8 @@
 	void LayoutLoader::clean(void)
 	{
 		// Dynamic only : 
-		dynpath.clear();
+		currentPath.clear();
+		dynamicPaths.clear();
 		associatedKeyword.clear();
 		formatList.clear();
 		sourceList.clear();
@@ -113,22 +117,54 @@
 			associatedKeywords.push_back( getKeyword( (*it).strKeyword ) );
 	}
 
-	void LayoutLoader::loadFile(const std::string& filename, std::string& content)
+	bool LayoutLoader::fileExists(const std::string& filename)
 	{
-		const std::string 	totalPath 	= path + dynpath,
-					realFilename 	= totalPath + filename;
+		std::ifstream tmp(filename.c_str());
+		return tmp.good();
+	}
 
+	void LayoutLoader::loadFile(const std::string& filename, std::string& content, std::string& usedPath)
+	{
+		// New version : check all path : 
+		std::vector<std::string> possiblePaths;
+
+		// Blank : 
+		if( fileExists( filename ) )
+			possiblePaths.push_back("");
+
+		// From dynamic path :
+		for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+		{
+			if( fileExists( *it + filename ) )
+				possiblePaths.push_back( *it );
+		}
+
+		if(possiblePaths.empty())
+		{
+			std::string msg = "Unable to load file \"" + filename + "\" from the following locations : ";
+			
+			for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+				msg  += "\n-> " + *it;
+
+			throw Exception(msg, __FILE__, __LINE__);
+		}
+		else if(possiblePaths.size()>1)
+		{
+			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations : ";
+			
+			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
+				msg  += "\n" + *it;
+
+			throw Exception(msg, __FILE__, __LINE__);
+		}
+		//else
+
+		usedPath = possiblePaths.front();
+		std::string realFilename = usedPath + filename;
+
+		// Else, open the file : 
 		std::fstream file;
 		file.open(realFilename.c_str());
-
-		// Did it fail?
-		if(!file.is_open())
-		{
-			if(!totalPath.empty())
-				throw Exception("Cannot load file : \"" + filename + "\" (path : \"" + totalPath + "\").", __FILE__, __LINE__);
-			else
-				throw Exception("Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
-		}
 
 		content.clear();
 
@@ -275,6 +311,19 @@
 		#undef INSERTION
 	}
 
+	void LayoutLoader::appendPath(const VanillaParserSpace::Element& e)
+	{
+		preliminaryTests(e, -1, 1, 1, -1, "AppendPath");
+
+		std::string resultingPath = currentPath + e.arguments[0];
+
+		// Test if it is already in the dynamic path list : 
+		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
+
+		if(it!=dynamicPaths.end())
+			dynamicPaths.push_back(resultingPath);
+	}
+
 	void LayoutLoader::includeFile(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests : 
@@ -282,6 +331,10 @@
 
 		if(e.arguments[0].find('\n')!=std::string::npos)
 			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains a newline character.", __FILE__, __LINE__);
+		else if(e.arguments[0].find('/')!=std::string::npos)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '/'.", __FILE__, __LINE__);
+		else if(e.arguments[0].find('\\')!=std::string::npos)
+			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '\\'.", __FILE__, __LINE__);
 
 		LayoutLoader subLoader;
 
@@ -291,12 +344,12 @@
 		subLoader.requiredPipelineList = requiredPipelineList;
 
 		// Copy this path to the inner version :
-		subLoader.dynpath = path + dynpath;
+		subLoader.dynamicPaths = dynamicPaths;
 
 		// Load the file : 
 		std::string content;
 
-		loadFile(e.arguments[0], content);
+		loadFile(e.arguments[0], content, subLoader.currentPath);
 
 		try
 		{
@@ -309,7 +362,8 @@
 		}
 		catch(Exception& ex)
 		{
-			if(!subLoader.path.empty() || !subLoader.dynpath.empty())
+			// Old : single static path :
+			/*if(!subLoader.path.empty() || !subLoader.dynpath.empty())
 			{
 				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.path + subLoader.dynpath + "\") : ", __FILE__, __LINE__);
 				throw m + ex;
@@ -318,7 +372,10 @@
 			{
 				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", __FILE__, __LINE__);
 				throw m + ex;
-			}
+			}*/
+
+			Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", __FILE__, __LINE__);
+			throw m + ex;
 		}
 	}
 
@@ -575,12 +632,14 @@
 		// Load data : 
 		if(e.noBody)
 		{
+			std::string usedPath;
+
 			try
 			{
 				std::string content;
 
 				// Custom load : 				
-				loadFile(e.arguments[0], content);
+				loadFile(e.arguments[0], content, usedPath);
 
 				enhanceShaderSource(content);
 
@@ -588,7 +647,7 @@
 			}
 			catch(Exception& ex)
 			{
-				Exception m("From line " + to_string(e.startLine) + " : An exception was caught while building ShaderSource \"" + e.name + "\" (loading from file \"" + e.arguments[0] + "\", path : \"" + path + dynpath + "\") : ", __FILE__, __LINE__);
+				Exception m("From line " + to_string(e.startLine) + " : An exception was caught while building ShaderSource \"" + e.name + "\" (loading from file \"" + e.arguments[0] + "\", (possibly incomplete) path : \"" + usedPath + "\") : ", __FILE__, __LINE__);
 				throw m + ex;
 			}
 		}
@@ -937,10 +996,49 @@
 		}
 	}
 
-	void LayoutLoader::setPath(const std::string& _path)
+	const std::vector<std::string>& LayoutLoader::paths(void) const
+	{
+		return staticPaths;
+	}
+
+	void LayoutLoader::clearPaths(void)
+	{
+		staticPaths.clear();
+		staticPaths.push_back("./");
+	}
+
+	void LayoutLoader::addToPaths(const std::string& p)
+	{
+		if(!p.empty())
+		{
+			removeFromPaths(p);
+			staticPaths.push_back(p);
+		}
+	}
+
+	void LayoutLoader::addToPaths(const std::vector<std::string>& paths)
+	{
+		for(std::vector<std::string>::const_iterator it = paths.begin(); it!=paths.end(); it++)
+			addToPaths(*it);
+	}
+
+	bool LayoutLoader::removeFromPaths(const std::string& p)
+	{
+		std::vector<std::string>::iterator it = std::find(staticPaths.begin(), staticPaths.end(), p);
+
+		if(it!=staticPaths.end())
+		{
+			staticPaths.erase(it);
+			return true;
+		}
+		else
+			return false;
+	}
+
+	/*void LayoutLoader::setPath(const std::string& _path)
 	{
 		path = _path;
-	}
+	}*/
 
 	/**
 	\fn __ReadOnly_PipelineLayout LayoutLoader::operator()(const std::string& source)
@@ -955,15 +1053,22 @@
 		bool isAFile = false;
 		std::string content;
 
+		// Copy the path :
+		dynamicPaths = staticPaths;
+
 		// Is it a filename or the content :
 		if(source.find('\n')==std::string::npos)
 		{
 			// Split : 
 			size_t section = source.find_last_of("/");
 			std::string filename = source.substr(section+1);
-			dynpath = source.substr(0, section+1);
+			currentPath = source.substr(0, section+1);
 
-			loadFile(filename, content);
+			// Add to the path : 
+			if(!currentPath.empty())
+				dynamicPaths.push_back(currentPath);
+
+			loadFile(filename, content, currentPath);
 			isAFile = true;
 		}		
 		else
@@ -981,19 +1086,14 @@
 		}
 		catch(Exception& e)
 		{
-			if(isAFile && (!path.empty() || !dynpath.empty()))
+			if(isAFile && currentPath.empty())
 			{
 				Exception m("Exception caught while processing file \"" + source + "\" : ", __FILE__, __LINE__);
 				throw m+e;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + path + dynpath + "\") : ", __FILE__, __LINE__);
-				throw m+e;
-			}
-			else if(!path.empty() || !dynpath.empty())
-			{
-				Exception m("Exception caught while processing string (path : \"" + path + dynpath + "\") : ", __FILE__, __LINE__);
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", __FILE__, __LINE__);
 				throw m+e;
 			}
 			else 

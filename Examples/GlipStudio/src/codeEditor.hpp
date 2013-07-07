@@ -107,6 +107,32 @@
 			QSize sizeHint() const;
 	};
 
+	class PathWidget : public QWidget
+	{
+		Q_OBJECT
+
+		private : 
+			std::vector<std::string> 	paths;
+			QListWidget			data;
+			QVBoxLayout			layout;
+			QMenuBar 			menuBar;
+			QAction 			addPathAct,
+							removePathAct,
+							clearAllPathAct;
+
+		private slots :
+			void addPath(void);
+			void removePath(void);
+			void clearAll(void);
+
+		public : 
+			PathWidget(QWidget* parent=NULL);
+			~PathWidget(void);
+
+			void addPath(const std::string&);
+			const std::vector<std::string>& getPaths(void) const;
+	};
+
 	class CodeEditorsPannel : public QWidget
 	{
 		Q_OBJECT
@@ -120,7 +146,9 @@
 						saveAsAct,
 						openAct,
 						refreshAct,
-						closeTabAct;
+						closeTabAct,
+						showPathWidget;
+			PathWidget		pathWidget;
 			QVector<CodeEditor*>	tabs;
 
 		private slots : 	
@@ -130,6 +158,7 @@
 			void saveAs(void);
 			void refresh(void);
 			void closeTab(void);
+			void switchPathWidget(void);
 			void updateTitles(void);
 
 		public :
@@ -137,7 +166,7 @@
 			~CodeEditorsPannel(void);
 
 			std::string getCurrentCode(void) const;
-			std::string getCodePath(void) const;
+			const std::vector<std::string>& getPaths(void);
 			bool canBeClosed(void);
 
 		signals : 

@@ -448,10 +448,105 @@
 		return QSize(codeEditor->lineNumberAreaWidth(), 0);
 	}
 
+// PathWidget
+	PathWidget::PathWidget(QWidget* parent)
+	 : QWidget(parent), layout(this), menuBar(this), addPathAct(tr("Add path"), this), removePathAct(tr("Remove path"), this), clearAllPathAct(tr("Clear all paths"), this)
+	{
+		connect(&addPathAct, 		SIGNAL(triggered()), this, SLOT(addPath()));
+		connect(&removePathAct, 	SIGNAL(triggered()), this, SLOT(removePath()));
+		connect(&clearAllPathAct, 	SIGNAL(triggered()), this, SLOT(clearAll()));
+
+		menuBar.addAction(&addPathAct);
+		menuBar.addAction(&removePathAct);
+		menuBar.addAction(&clearAllPathAct);
+
+		data.setSelectionMode(QAbstractItemView::ExtendedSelection);
+		data.setAlternatingRowColors(true);
+
+		QFont font;
+		font.setFamily("Monospace");
+		font.setFixedPitch(true);
+		data.setFont(font);
+
+		layout.addWidget(&menuBar);
+		layout.addWidget(&data);
+
+		clearAll();
+	}
+
+	PathWidget::~PathWidget(void)
+	{
+		clearAll();
+	}
+
+	void PathWidget::addPath(void)
+	{
+		QString directoryName = QFileDialog::getExistingDirectory(this, tr("Add directory to paths"), ".");
+
+		if(!directoryName.isEmpty())
+		{
+			QString slashed = QDir::fromNativeSeparators( directoryName ) + "/";
+		
+			addPath( slashed.toStdString() );
+		}
+	}
+
+	void PathWidget::removePath(void)
+	{
+		QList<QListWidgetItem*> selectedItems = data.selectedItems();
+		
+		if( !selectedItems.isEmpty() )
+		{
+			for(int k=0; k<selectedItems.count(); k++)
+			{
+				int p = data.row(selectedItems[k]);
+
+				if(p>0)
+				{
+					paths.erase( paths.begin() + p );
+					QListWidgetItem* item = data.takeItem(p);
+					delete item;
+				}
+			}
+		}
+	}
+
+	void PathWidget::clearAll(void)
+	{
+		paths.clear();
+
+		// Clean the list : 
+		while(data.count()>0)
+		{
+			QListWidgetItem* item = data.takeItem(0);
+			delete item;
+		}
+
+		// Add : 
+		addPath("./");
+	}
+
+	void PathWidget::addPath(const std::string& newPath)
+	{
+		// Find if a double exists : 
+		std::vector<std::string>::iterator it = std::find(paths.begin(), paths.end(), newPath);
+
+		if(it==paths.end())
+		{
+			paths.push_back( newPath );
+			data.addItem( newPath.c_str() );
+		}
+	}
+	
+	const std::vector<std::string>& PathWidget::getPaths(void) const
+	{
+		return paths;
+	}
+
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), widgets(this),
-	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), openAct(tr("&Open In New Tab"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this)
+	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), openAct(tr("&Open In New Tab"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Show paths"),this), pathWidget(this)
 	{
 		// Add the actions : 
 		newTabAct.setShortcuts(QKeySequence::New);
@@ -480,6 +575,9 @@
 		closeTabAct.setStatusTip(tr("Close tab"));
 		connect(&closeTabAct, SIGNAL(triggered()), this, SLOT(closeTab()));
 
+		showPathWidget.setStatusTip(tr("Show paths"));
+		connect(&showPathWidget, SIGNAL(triggered()), this, SLOT(switchPathWidget()));
+
 		// Movable : 	
 		widgets.setMovable(true);
 
@@ -490,12 +588,17 @@
 		menuBar.addAction(&saveAsAct);
 		menuBar.addAction(&refreshAct);
 		menuBar.addAction(&closeTabAct);
+		menuBar.addAction(&showPathWidget);
 
 		// Add the first tab : 
 		newTab();
 
+		// Hide paths : 
+		pathWidget.hide();
+
 		layout.addWidget(&menuBar);	
 		layout.addWidget(&widgets);
+		layout.addWidget(&pathWidget);
 	}
 
 	CodeEditorsPannel::~CodeEditorsPannel(void)
@@ -542,6 +645,13 @@
 		
 				if(!tabs[c]->openFile(filenames[k]))
 					closeTab();
+				else
+				{
+					// Append the path : 
+					QFileInfo path(filenames[k]);
+					QString str = path.path() + "/";
+					pathWidget.addPath(str.toStdString());
+				}
 			}
 		}
 	}
@@ -586,6 +696,20 @@
 		}
 	}
 
+	void CodeEditorsPannel::switchPathWidget(void)
+	{
+		if(pathWidget.isVisible())
+		{
+			pathWidget.hide();
+			showPathWidget.setText("Show paths");			
+		}
+		else
+		{
+			pathWidget.show();
+			showPathWidget.setText("Hide paths");
+		}
+	}
+
 	void CodeEditorsPannel::updateTitles(void)
 	{
 		for(int k=0; k<tabs.size(); k++)
@@ -604,16 +728,17 @@
 			return "";	
 	}
 
-	std::string CodeEditorsPannel::getCodePath(void) const
+	const std::vector<std::string>& CodeEditorsPannel::getPaths(void)
 	{
+		// Make sure the list of path contains the one of the current pipeline :
 		if(widgets.count() > 0)
 		{
 			int c = widgets.currentIndex();
 
-			return tabs[c]->getPath();
+			pathWidget.addPath( tabs[c]->getPath() );
 		}
-		else
-			return "";	
+
+		return pathWidget.getPaths();
 	}
 
 	bool CodeEditorsPannel::canBeClosed(void)

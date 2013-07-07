@@ -48,7 +48,7 @@
 
 	void MainWindow::refreshPipeline(void)
 	{
-		libraryInterface.compile( codeEditors.getCurrentCode(), codeEditors.getCodePath() );
+		libraryInterface.compile( codeEditors.getCurrentCode(), codeEditors.getPaths() );
 	}
 
 	void MainWindow::updateOutput(void)
