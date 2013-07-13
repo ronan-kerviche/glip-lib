@@ -50,7 +50,7 @@
 	__ReadOnly_PipelineLayout::__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c)
 	 : __ReadOnly_ComponentLayout(c)
 	{
-		// Copy of the whole vectors : 
+		// Copy of the whole vectors :
 		elementsKind   	= c.elementsKind;
 		elementsName	= c.elementsName;
 		elementsID     	= c.elementsID;
@@ -89,7 +89,7 @@
 					throw Exception("__ReadOnly_PipelineLayout::~__ReadOnly_PipelineLayout - Unknown type for delete for element in " + getFullName(), __FILE__, __LINE__);
 			}
 		}
-		
+
 		connections.clear();
 		elementsKind.clear();
 		elementsName.clear();
@@ -97,7 +97,7 @@
 	}
 
 	/**
-	\fn int __ReadOnly_PipelineLayout::getElementID(int i)
+	\fn int __ReadOnly_PipelineLayout::getElementID(int i) const
 	\brief Get element ID in global structure.
 	\param i The ID of the element in the local pipeline layout.
 	\return The ID of the element in the global structure or raise an exception if any errors occur.
@@ -113,7 +113,7 @@
 	}
 
 	/**
-	\fn int __ReadOnly_PipelineLayout::getElementID(const std::string& name)
+	\fn int __ReadOnly_PipelineLayout::getElementID(const std::string& name) const
 	\brief Get element ID in global structure.
 	\param name The ID of the element in the local pipeline layout.
 	\return The ID of the element in the global structure or raise an exception if any errors occur.
@@ -252,12 +252,12 @@
 				return false;
 
 			int id = ptr->getElementIndex(*it);
-			
+
 			if(ptr->getElementKind(id)!=PIPELINE)
 				return false;
 
 			ptr = &ptr->pipelineLayout(*it);
-		}		
+		}
 
 		return true;
 	}
@@ -388,7 +388,7 @@
 
 		for(std::vector<std::string>::const_iterator it=path.begin(); it!=path.end(); it++)
 			ptr = &ptr->pipelineLayout(*it);
-		
+
 		return *ptr;
 	}
 
@@ -905,6 +905,10 @@
 	}
 
 // Pipeline
+	/**
+	\fn Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
+	\brief NODESC.
+	**/
 	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
 	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, "(Intermediate : " + name + ")"), perfsMonitoring(false), queryObject(0)
 	{ }
@@ -971,16 +975,16 @@
 		const int thisPipelineIdx = currentIdx;
 		currentIdx++;
 
-		// Extract and build elements, get the connections done too : 
+		// Extract and build elements, get the connections done too :
 		try
 		{
-			// First, test the basic connections : 
+			// First, test the basic connections :
 			check(true);
 
 			std::vector<int> 	localToGlobalIdx;
 			std::vector<Connection> localConnections;
 
-			// First extract the elements : 
+			// First extract the elements :
 			for(int k=0; k<getNumElements(); k++)
 			{
 				ComponentKind currentElKind = getElementKind(k);
@@ -993,11 +997,11 @@
 					originalLayout.setElementID(k, currentIdx);
 					localToGlobalIdx.push_back(currentIdx);
 
-					filters.push_back(new Filter(filterLayout(k), getElementName(k)));	
+					filters.push_back(new Filter(filterLayout(k), getElementName(k)));
 
-					// Save the link to the global ID : 
-					filtersGlobalID[currentIdx] = filters.size()-1;	
-					
+					// Save the link to the global ID :
+					filtersGlobalID[currentIdx] = filters.size()-1;
+
 					currentIdx++;
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 						std::cout << "    Adding : " << filters.back()->getFullName() << std::endl;
@@ -1008,11 +1012,11 @@
 				{
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 							std::cout << "    Adding a new Pipeline" << std::endl;
-					#endif					
+					#endif
 					originalLayout.setElementID(k, currentIdx);
 					localToGlobalIdx.push_back(currentIdx);
 
-					// Create a sub-pipeline : 
+					// Create a sub-pipeline :
 					Pipeline tmpPipeline( pipelineLayout(k), getElementName(k), false);
 					tmpPipeline.build(currentIdx, filters, filtersGlobalID, localConnections, pipelineLayout(k));
 
@@ -1026,15 +1030,15 @@
 					throw Exception("Unknown exception kind.", __FILE__, __LINE__);
 			}
 
-			// Then change the connections : 
+			// Then change the connections :
 			// The main rule is : each pipeline scale MUST untangle and shorten all of ITS connection before passing to the upper level.
 			std::vector<Connection> innerOutputConnections;
 			for(int k=0; k<getNumConnections(); k++)
 			{
 				bool saveConnection = true;
 				Connection c = getConnection(k);
-	
-				// If the output is this pipeline : 
+
+				// If the output is this pipeline :
 				if(c.idOut==THIS_PIPELINE)
 					c.idOut = thisPipelineIdx;
 				else if(getElementKind(c.idOut)==PIPELINE) // or is a pipeline...
@@ -1070,7 +1074,7 @@
 						}
 					}
 
-					// Manage a possible error : 
+					// Manage a possible error :
 					if(idx<0)
 						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getFullName() + ", port : " + to_string(c.portOut) + ".", __FILE__, __LINE__);
 
@@ -1081,14 +1085,14 @@
 				else // otherwise...
 					c.idOut = localToGlobalIdx[c.idOut];
 
-				// If the input is this pipeline : 
+				// If the input is this pipeline :
 				if(c.idIn==THIS_PIPELINE)
 					c.idIn = thisPipelineIdx;
 				else if(getElementKind(c.idIn)==PIPELINE) // or is a pipeline...
 				{
 					const int elIdx = localToGlobalIdx[c.idIn];
 
-					// Shorten paths : 
+					// Shorten paths :
 					for(int l=0; l<localConnections.size(); l++)
 					{
 						if(localConnections[l].idOut==elIdx && localConnections[l].portOut==c.portIn) // If the connections correspond to the other end.
@@ -1100,15 +1104,15 @@
 
 					saveConnection = false;
 				}
-				else // otherwise... 
+				else // otherwise...
 					c.idIn = localToGlobalIdx[c.idIn];
 
-				// Save connection : 
+				// Save connection :
 				if(saveConnection)
 					connections.push_back(c);
 			}
 
-			// Finally, append to the connections list : 
+			// Finally, append to the connections list :
 			connections.insert(connections.end(), localConnections.begin(), localConnections.end());
 		}
 		catch(Exception& e)
@@ -1142,13 +1146,13 @@
 			std::vector<ActionHub>		tmpActions;				// The temporary actions list.
 			bool allProcessed = false;
 
-			// Initialize the outputs : 
+			// Initialize the outputs :
 			OutputHub blankOutput;
 			blankOutput.bufferIdx = -1;
 			blankOutput.outputIdx = -1;
 			outputsList.assign( getNumOutputPort(), blankOutput );
 
-			// Setup the requirements counters : 
+			// Setup the requirements counters :
 			for(int k=0; k<filtersList.size(); k++)
 			{
 				ActionHub hub;
@@ -1160,29 +1164,29 @@
 
 				tmpActions.push_back(hub);
 
-				// Set the number of inputs not satisfied to be equal to the number of inputs : 
+				// Set the number of inputs not satisfied to be equal to the number of inputs :
 				requestedInputConnections.push_back( filtersList[k]->getNumInputPort() );
 			}
 
-			// Initialize by decrementing the connections to this pipeline inputs : 
+			// Initialize by decrementing the connections to this pipeline inputs :
 			for(int k=0; k<remainingConnections.size(); k++)
 			{
 				if(remainingConnections[k].idOut==THIS_PIPELINE)
 				{
-					// Set up the links : 
+					// Set up the links :
 					const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
 
 					tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= THIS_PIPELINE;
 					tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
 					requestedInputConnections[fid]--;
 
-					// Remove : 
+					// Remove :
 					remainingConnections.erase( remainingConnections.begin() + k );
 					k--;
 				}
 			}
 
-			// Generate the final actions list and buffers : 
+			// Generate the final actions list and buffers :
 			do
 			{
 
@@ -1206,7 +1210,7 @@
 				if(candidatesIdx.empty())
 					throw Exception("No available filter matches input conditions.", __FILE__, __LINE__);
 
-				// Find best candidate along the priority order (from highest to lowest) : 
+				// Find best candidate along the priority order (from highest to lowest) :
 				// 1 - A filter that has exactly the same format as a buffer which is currently unused, this buffer must as large as possible.
 				// 2 - A filter that has the largest format which is not allocated yet.
 				// 3 - A filter that has the smallest format already allocated (but not available).
@@ -1220,19 +1224,19 @@
 
 				for(int k=0; k<candidatesIdx.size(); k++)
 				{
-					// Try to find a match in the buffers : 
+					// Try to find a match in the buffers :
 					bool noMatch = true;
 					for(int l=0; l<buffersList.size(); l++)
 					{
-						// If this buffer is a match : 
+						// If this buffer is a match :
 						if( *filtersList[ candidatesIdx[k] ] == *buffersList[l] )
 						{
 							noMatch = false;
 
-							// If this buffer is free : 
+							// If this buffer is free :
 							if(bufferOccupancy[l]==0)
 							{
-								// If the current choice is lower in priority or larger in buffer size : 
+								// If the current choice is lower in priority or larger in buffer size :
 								if( currentDecision>1 || ((currentDecision==1) && fmt.getSize()<buffersList[l]->getSize()) )
 								{
 									fIdx = candidatesIdx[k];
@@ -1243,7 +1247,7 @@
 							}
 							else // The buffer is not free :
 							{
-								// If no other choices were made : 
+								// If no other choices were made :
 								if(currentDecision>3 || ( (currentDecision==3) && (fmt.getSize()<buffersList[l]->getSize()) ) )
 								{
 									fIdx = candidatesIdx[k];
@@ -1273,40 +1277,40 @@
 				if(currentDecision>=5)
 					throw Exception("No correct decision was made.", __FILE__, __LINE__);
 
-				// Create the action : 
+				// Create the action :
 				if(currentDecision==1)
 				{
 					tmpActions[ fIdx ].bufferIdx = bIdx;
 
-					// Push : 
+					// Push :
 					actionsList.push_back( tmpActions[ fIdx ] );
 				}
 				else if(currentDecision==2 || currentDecision==3)
 				{
-					// Create a new buffer : 
+					// Create a new buffer :
 					buffersList.push_back( new HdlFBO(fmt, filtersList[ fIdx ]->getNumOutputPort() ) );
 					bufferOccupancy.push_back(0);
 
 					bIdx = buffersList.size()-1;
 					tmpActions[ fIdx ].bufferIdx = bIdx;
-					
-					// Push : 
+
+					// Push :
 					actionsList.push_back( tmpActions[ fIdx ] );
 				}
 				else
 					throw Exception("Internal error : Unkown action decision (" + to_string(currentDecision) + ").", __FILE__, __LINE__);
 
-				// Find all the buffers read by the current actions and decrease their occupancy : 
+				// Find all the buffers read by the current actions and decrease their occupancy :
 				for(int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
 				{
 					if( actionsList.back().inputBufferIdx[k]!=THIS_PIPELINE )
 						bufferOccupancy[ actionsList.back().inputBufferIdx[k] ]--;
 				}
 
-				// Lock down this filter as "done" : 
+				// Lock down this filter as "done" :
 				requestedInputConnections[fIdx] = -1;
 
-				// Update the buffer occupancy to the new number of output and at the same time decrease the number of requests : 
+				// Update the buffer occupancy to the new number of output and at the same time decrease the number of requests :
 				for(int k=0; k<remainingConnections.size(); k++)
 				{
 					if(filtersGlobalIDsList[remainingConnections[k].idOut]==fIdx)
@@ -1315,19 +1319,19 @@
 						{
 							outputsList[ remainingConnections[k].portIn ].bufferIdx 	= bIdx;
 							outputsList[ remainingConnections[k].portIn ].outputIdx		= remainingConnections[k].portOut;
-							
+
 							bufferOccupancy[bIdx] = std::numeric_limits<int>::max();
 						}
 						else
 						{
-							// Set up the links : 
+							// Set up the links :
 							const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
-					
+
 							tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= bIdx;
 							tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
 							requestedInputConnections[fid]--;
 
-							// Remove : 
+							// Remove :
 							remainingConnections.erase( remainingConnections.begin() + k );
 							k--;
 
@@ -1336,7 +1340,7 @@
 					}
 				}
 
-				// Test if all were processed : 
+				// Test if all were processed :
 				allProcessed 	= true;
 				bool noNextStep = true;
 				for(int k=0; k<requestedInputConnections.size(); k++)
@@ -1352,7 +1356,7 @@
 			}
 			while(!allProcessed);
 
-			// Final tests : 
+			// Final tests :
 			if(filtersList.size()!=actionsList.size())
 				throw Exception("Some filters were omitted because their connections scheme does not allow usage.", __FILE__, __LINE__);
 
@@ -1385,7 +1389,7 @@
 	}
 
 	/**
-	\fn int Pipeline::getSize(void)
+	\fn int Pipeline::getSize(bool askDriver)
 	\brief Get the size in bytes of the elements on the GPU for this pipeline.
 	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return Size in bytes.
@@ -1669,7 +1673,7 @@
 	}
 
 	/**
-	\fn double Pipeline::getTiming(int id)
+	\fn double Pipeline::getTiming(int filterID)
 	\brief Get last result of performance monitoring IF it is still enabled.
 	\param filterID The ID of the filter.
 	\return Time in milliseconds needed to apply the filter (not counting binding operation).

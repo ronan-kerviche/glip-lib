@@ -49,13 +49,13 @@
 		lineOffset		= ss.lineOffset;
 	}
 
-	/**
-	\fn    ShaderSource::ShaderSource(const char** src, bool eol, int lines)
-	\brief ShaderSource Construtor.
-	\param src Pointer to table of lines.
-	\param eol Set to true if the code contains End Of Line delimiters.
-	\param lines Number of lines to consider.
-	**/
+	/*
+	fn    ShaderSource::ShaderSource(const char** src, bool eol, int lines)
+	brief ShaderSource Construtor.
+	param src Pointer to table of lines.
+	param eol Set to true if the code contains End Of Line delimiters.
+	param lines Number of lines to consider.
+	*/
 	/*ShaderSource::ShaderSource(const char** src, bool eol, int lines)
 	 : compatibilityRequest(false), versionNumber(0)
 	{
@@ -190,7 +190,7 @@
 		}
 		else
 		{
-			size_t 	s = std::string::npos, 
+			size_t 	s = std::string::npos,
 				e = std::string::npos;
 			int 	level = 0;
 			bool 	madeIt = false;
@@ -220,7 +220,7 @@
 				return true;
 			}
 			else
-				return false;		
+				return false;
 		}
 	}
 
@@ -266,7 +266,7 @@
 
 	GLenum ShaderSource::parseUniformTypeCode(const std::string& str, const std::string& cpl)
 	{
-		// Compare typename to known types : 
+		// Compare typename to known types :
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
 		if(	str	== "float")				typeCode = GL_FLOAT;
@@ -297,14 +297,14 @@
 		else if(str	== "sampler2D")				typeCode = GL_SAMPLER_2D;
 		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
  		else
-			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__); 
+			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__);
 
 		return typeCode;
 	}
 
 	GLenum ShaderSource::parseOutTypeCode(const std::string& str, const std::string& cpl)
 	{
-		// Compare typename to known types : 
+		// Compare typename to known types :
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
 		if(	str	== "float")				typeCode = GL_FLOAT;
@@ -328,7 +328,7 @@
 		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
 		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
 		else
-			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + str + "\".", __FILE__, __LINE__); 
+			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + str + "\".", __FILE__, __LINE__);
 
 		return typeCode;
 	}
@@ -345,16 +345,16 @@
 		uniformVarsType.clear();
 		outFragments.clear();
 
-		// Test compatibility needed : 
+		// Test compatibility needed :
 		bool hasGl_FragColor = line.find("gl_FragColor");
 
-		// Clean the code :  
+		// Clean the code :
 		while( removeBloc(line, "//", "\n", false) ) ;
 		while( removeBloc(line, "/*", "*/", false) ) ;
 		while( removeBloc(line, "{", "}", true) ) ;
 		while( removeBloc(line, "(", ")", true) ) ;
 
-		// Clean what remains of the code : 
+		// Clean what remains of the code :
 		std::vector<std::string> split;
 		wordSplit(line, split);
 
@@ -362,7 +362,7 @@
 		const std::string 	versionKeyword 	= "#version",
 					uniformKeyword 	= "uniform",
 					outKeyword 	= "out";
-		
+
 		bool 	previousWasVersion 	= false,
 			previousWasUniform 	= false,
 			previousWasOut		= false,
@@ -482,7 +482,7 @@
 
 			str << "    " << line << std::endl;
 
-			// Get the corresponding line : 
+			// Get the corresponding line :
 			buggyLine.clear();
 			switch(v)
 			{
@@ -510,14 +510,14 @@
 					break;
 			}
 
-			// Print log : 
+			// Print log :
 			if(!buggyLine.empty())
 			{
 				str << "        At line ";
 				if(lineOffset>=0)
 					str << lineOffset + incriminatedLine;
-				else 
-					str << incriminatedLine; 
+				else
+					str << incriminatedLine;
 
 				str << " : \"" << buggyLine << "\"" << std::endl;
 			}

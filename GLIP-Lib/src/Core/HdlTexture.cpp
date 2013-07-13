@@ -182,7 +182,7 @@ using namespace Glip::CoreGL;
 	\return A constatnt reference to the descriptor of the current mode.
 	**/
 	const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
-	{	
+	{
 		return HdlTextureFormatDescriptorsList::get(getGLMode());
 	}
 
@@ -292,7 +292,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    static int __ReadOnly_HdlTextureFormat::getMaxSize(void) const
+	\fn    static int __ReadOnly_HdlTextureFormat::getMaxSize(void)
 	\brief Returns the maximum size for a texture.
 	\return The size, in pixels.
 	**/
@@ -427,7 +427,7 @@ using namespace Glip::CoreGL;
 		if(isCompressed())
 			NEED_EXTENSION(GLEW_ARB_texture_compression);
 
-		// Test : 
+		// Test :
 		if(getBaseLevel()>getMaxLevel())
 			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + to_string(getBaseLevel()) + ") is greater than maximum mipmap level (" + to_string(getMaxLevel()) + ").", __FILE__, __LINE__);
 
@@ -492,7 +492,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn void HdlTexture::getSizeOnGPU(void) const
+	\fn void HdlTexture::getSizeOnGPU(int m)
 	\brief Returns the size of the texture in bytes for mipmap m, this function returns the same value as __ReadOnly_HdlTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
 	\param m The target mipmap level.
 	\return Returns the size of the texture in bytes.

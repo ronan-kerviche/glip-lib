@@ -37,11 +37,11 @@
 	using namespace Glip::Modules;
 
 	/**
-	\fn ProceduralInput::ProceduralInput(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt, ShaderSource& fragment)
+	\fn ProceduralInput::ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name)
 	\brief ProceduralInput constructor.
-	\param name Name of the component.
 	\param fmt Format ot the output.
 	\param fragment Source of the fragment to be used.
+	\param name Name of this Component instance.
 	**/
 	ProceduralInput::ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name)
 	 : __ReadOnly_ComponentLayout(getLayout(fragment)), InputDevice(getLayout(fragment), name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)

@@ -65,8 +65,9 @@ using namespace Glip::CoreGL;
 				else
 				    vendor = vd_UNKNOWN;
 
-				// Create a standard quad :
-				standardQuad = HdlVBO::generate2DStandardQuad();
+				// OLD : Create a standard quad :
+				// NOW : See Geometries.
+				//standardQuad = HdlVBO::generate2DStandardQuad();
 
 				instance = this;
 			}
@@ -78,7 +79,8 @@ using namespace Glip::CoreGL;
 		{
 			if(instance==this)
 			{
-				delete standardQuad;
+				//OLD : delete standardQuad;
+				instance = NULL;
 			}
 		}
 
@@ -167,15 +169,15 @@ using namespace Glip::CoreGL;
 				return std::string("<Error : OpenGL version is less than 2.0>");
 		}
 
-		/**
-		\fn HdlVBO& HandleOpenGL::standardQuadVBO(void)
-		\brief Grab access to the standard quad VBO (a quad between points (-1;-1), (1;-1), (1;1), (-1;1), with texel coordinates (0;0), (0;1), (1;1), (1;0). WARNING: this function does not perform initialization test.
-		\return A reference to this geometry.
-		**/
-		HdlVBO& HandleOpenGL::standardQuadVBO(void)
+		/*
+		fn HdlVBO& HandleOpenGL::standardQuadVBO(void)
+		brief Grab access to the standard quad VBO (a quad between points (-1;-1), (1;-1), (1;1), (-1;1), with texel coordinates (0;0), (0;1), (1;1), (1;0). WARNING: this function does not perform initialization test.
+		return A reference to this geometry.
+		*/
+		/*HdlVBO& HandleOpenGL::standardQuadVBO(void)
 		{
 			return *(instance->standardQuad);
-		}
+		}*/
 
 // Errors Monitoring
 	/**
@@ -470,7 +472,7 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_UNSIGNED_INT_10_10_10_2 )
 		KEYWORD_PAIR( GL_UNSIGNED_INT_2_10_10_10_REV )
 
-		// GLSL Types : 
+		// GLSL Types :
 		KEYWORD_PAIR( GL_FLOAT_VEC2 )
 		KEYWORD_PAIR( GL_FLOAT_VEC3 )
 		KEYWORD_PAIR( GL_FLOAT_VEC4 )

@@ -29,28 +29,40 @@
     using namespace Glip::CorePipeline;
 
 // InputDeviceLayout
+	/**
+	\fn InputDevice::InputDeviceLayout::InputDeviceLayout(const std::string& _typeName)
+	\brief InputDeviceLayout constructor.
+	\param _typeName The type name of the object.
+	**/
 	InputDevice::InputDeviceLayout::InputDeviceLayout(const std::string& _typeName)
 	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
 	{ }
 
+	/**
+	\fn InputDevice::InputDeviceLayout::InputDeviceLayout(const InputDeviceLayout& c)
+	\brief InputDeviceLayout copy constructor.
+	\param c The layout to copy.
+	**/
 	InputDevice::InputDeviceLayout::InputDeviceLayout(const InputDeviceLayout& c)
 	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
 	{ }
 
+	/**
+	\fn int InputDevice::InputDeviceLayout::addOutputPort(const std::string& name)
+	\brief Add an output port to the layout.
+	\param name The name of the new output port.
+	\return The ID of the newly created port.
+	**/
 	int InputDevice::InputDeviceLayout::addOutputPort(const std::string& name)
 	{
 		return ComponentLayout::addOutputPort(name);
 	}
 
-	int InputDevice::InputDeviceLayout::addInputPort(const std::string& name)
-	{
-		return ComponentLayout::addInputPort(name);
-	}
-
 // InputDevice
 	/**
-	\fn InputDevice::InputDevice(const std::string& name)
+	\fn InputDevice::InputDevice(const InputDeviceLayout& layout, const std::string& name)
 	\brief InputDevice constructor.
+	\param layout The component layout.
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const InputDeviceLayout& layout, const std::string& name)
@@ -274,19 +286,30 @@
 	}
 
 // OutputDeviceLayout
+	/**
+	\fn OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const std::string& _typeName)
+	\brief OutputDeviceLayout constructor.
+	\param _typeName The type name of the object.
+	**/
 	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const std::string& _typeName)
 	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
 	{ }
 
+	/**
+	\fn OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const OutputDeviceLayout& c)
+	\brief OutputDeviceLayout copy constructor.
+	\param c The layout to copy.
+	**/
 	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const OutputDeviceLayout& c)
 	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
 	{ }
 
-	int OutputDevice::OutputDeviceLayout::addOutputPort(const std::string& name)
-	{
-		return ComponentLayout::addOutputPort(name);
-	}
-
+	/**
+	\fn int OutputDevice::OutputDeviceLayout::addInputPort(const std::string& name)
+	\brief Add an input port to the layout.
+	\param name The name of the new output port.
+	\return The ID of the newly created port.
+	**/
 	int OutputDevice::OutputDeviceLayout::addInputPort(const std::string& name)
 	{
 		return ComponentLayout::addInputPort(name);
@@ -294,8 +317,9 @@
 
 // OutputDevice
 	/**
-	\fn OutputDevice::OutputDevice(const std::string& name)
+	\fn OutputDevice::OutputDevice(const OutputDeviceLayout& layout, const std::string& name)
 	\brief OutputDevice constructor.
+	\param layout The component layout.
 	\param name The name of the component.
 	**/
 	OutputDevice::OutputDevice(const OutputDeviceLayout& layout, const std::string& name)

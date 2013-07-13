@@ -38,7 +38,6 @@
 	/**
 	\fn std::string getStandardVertexSource(int versionNumber=0)
 	\brief Build the standard vertex shader.
-	\param nUnits Number of texturing units to be used.
 	\param versionNumber The targeted version as an integer. It won't be included by default (0).
 	\return Standard string containing the GLSL code.
 	**/
@@ -59,7 +58,7 @@
 		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";*/
 
 		str << "    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;" << std::endl;
-		str << "    gl_Position = ftransform();" << std::endl; 
+		str << "    gl_Position = ftransform();" << std::endl;
 		str << "}" << std::endl;
 
 		return std::string(str.str());
@@ -164,12 +163,13 @@
 
 	// FilterLayout
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex)
+	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryFormat* geometry)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
 	\param fragment The ShaderSource of the fragement shader.
-	\param vertex [Optional] The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
+	\param vertex The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
+	\param geometry The geometry to use in this filter (if left to NULL, the standard quad will be used).
 	**/
 	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryFormat* geometry)
 	 : __ReadOnly_HdlTextureFormat(fout), __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout)
@@ -229,9 +229,10 @@
 
 // Filter
 	/**
-	\fn Filter::Filter(const __ReadOnly_FilterLayout& c)
+	\fn Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
 	\brief Filter constructor.
 	\param c Filter layout.
+	\param name The instance name.
 	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
 	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), geometry(NULL) /*vbo(NULL)*/
@@ -292,7 +293,7 @@
 			throw m+e;
 		}
 
-		// Build the geometry : 
+		// Build the geometry :
 		geometry = new GeometryInstance( getGeometryFormat(), GL_STATIC_DRAW_ARB );
 	}
 
@@ -415,11 +416,11 @@
 		return *program;
 	}
 
-	/**
-	\fn void Filter::setGeometry(HdlVBO* v)
-	\brief Push different geometry rendering, the Filter object will take care of deleting the data when needed. The object will take care to free previously used memory.
-	\param v Pointer to the new geometry to use. If set to NULL it will use the standard quad from HandleOpenGL::standardQuadVBO().
-	**/
+	/*
+	fn void Filter::setGeometry(HdlVBO* v)
+	brief Push different geometry rendering, the Filter object will take care of deleting the data when needed. The object will take care to free previously used memory.
+	param v Pointer to the new geometry to use. If set to NULL it will use the standard quad from HandleOpenGL::standardQuadVBO().
+	*/
 	/*void Filter::setGeometry(HdlVBO* v)
 	{
 		if(vbo!=NULL)
@@ -427,4 +428,3 @@
 
 		vbo = v;
 	}*/
-

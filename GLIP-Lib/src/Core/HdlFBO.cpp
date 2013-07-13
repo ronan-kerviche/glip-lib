@@ -247,7 +247,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn     int HdlFBO::getSize(void)
+	\fn     int HdlFBO::getSize(bool askDriver)
 	\brief  Gets the size of the FBO in bytes.
 	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return The size in byte of the multiple targets.

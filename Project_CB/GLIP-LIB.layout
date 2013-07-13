@@ -4,8 +4,8 @@
 	<File name="../GLIP-Lib/include/Core/Component.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="4094" topLine="57" />
 	</File>
-	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="2186" topLine="18" />
+	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="1" top="1" tabpos="1">
+		<Cursor position="3269" topLine="30" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Exception.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="2096" topLine="44" />
@@ -41,7 +41,7 @@
 		<Cursor position="2496" topLine="109" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/OglInclude.hpp" open="0" top="0" tabpos="0">
-		<Cursor position="3132" topLine="70" />
+		<Cursor position="3683" topLine="77" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Pipeline.hpp" open="0" top="0" tabpos="2">
 		<Cursor position="10416" topLine="224" />
@@ -58,8 +58,8 @@
 	<File name="../GLIP-Lib/include/Core/wglew.h" open="0" top="0" tabpos="0">
 		<Cursor position="0" topLine="45" />
 	</File>
-	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="1" top="1" tabpos="0">
-		<Cursor position="1857" topLine="0" />
+	<File name="../GLIP-Lib/include/GLIPLib.hpp" open="0" top="0" tabpos="0">
+		<Cursor position="1857" topLine="27" />
 	</File>
 	<File name="../GLIP-Lib/include/Modules/FFT1D.hpp" open="0" top="0" tabpos="2">
 		<Cursor position="2555" topLine="0" />
@@ -83,10 +83,10 @@
 		<Cursor position="1960" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Component.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="5211" topLine="215" />
+		<Cursor position="13101" topLine="318" />
 	</File>
-	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="5028" topLine="110" />
+	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="1" top="0" tabpos="2">
+		<Cursor position="10136" topLine="290" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Exception.cpp" open="0" top="0" tabpos="6">
 		<Cursor position="5248" topLine="145" />
@@ -122,7 +122,7 @@
 		<Cursor position="6646" topLine="147" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/OglTools.cpp" open="0" top="0" tabpos="0">
-		<Cursor position="19895" topLine="519" />
+		<Cursor position="23920" topLine="649" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Pipeline.cpp" open="0" top="0" tabpos="1">
 		<Cursor position="62210" topLine="1657" />

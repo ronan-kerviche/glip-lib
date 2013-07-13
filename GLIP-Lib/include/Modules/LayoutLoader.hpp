@@ -248,16 +248,16 @@ Loading Example :
 				std::map<std::string, FilterLayout> 	filterList;
 				std::map<std::string, PipelineLayout> 	pipelineList;
 
-				// Static : 
+				// Static :
 				std::vector<std::string>		staticPaths;
 				std::map<std::string,HdlTextureFormat>	requiredFormatList;
 				std::map<std::string,PipelineLayout>	requiredPipelineList;
 
-				// Tools : 
+				// Tools :
 				LayoutLoaderKeyword getKeyword(const std::string& str);
 
-				void 	clean(void);			
-				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& keywords);
+				void 	clean(void);
+				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords);
 				bool	fileExists(const std::string& filename);
 				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
 				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
@@ -278,7 +278,7 @@ Loading Example :
 			public :
 				LayoutLoader(void);
 				~LayoutLoader(void);
-				
+
 				const std::vector<std::string>& paths(void) const;
 				void clearPaths(void);
 				void addToPaths(const std::string& p);
@@ -287,7 +287,7 @@ Loading Example :
 
 				__ReadOnly_PipelineLayout operator()(const std::string& source); //can be a file or directly the source
 				Pipeline* operator()(const std::string& source, std::string pipelineName);
-				
+
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
 				int  clearRequiredElements(const std::string& name = "");
@@ -296,7 +296,7 @@ Loading Example :
 		/*class LayoutWriter
 		{
 			private :
-				
+
 				void 	writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name);
 				void 	writeSourceCode(const ShaderSource& source, std::string name);
 				void 	writeFilterCode(const __ReadOnly_FilterLayout& fLayout);

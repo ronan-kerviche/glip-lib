@@ -38,6 +38,13 @@
 	 : typeName(_typeName)
 	{ }
 
+	/**
+	\fn __ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
+	\brief __ReadOnly_ComponentLayout constructor.
+	\param _typeName The typename of the object.
+	\param _inputPorts The list of the names of the input ports.
+	\param _outputPorts The list of the names of the input ports.
+	**/
 	__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
 	 : typeName(_typeName), inputPorts(_inputPorts), outputPorts(_outputPorts)
 	{ }
@@ -64,7 +71,7 @@
 
 	__ReadOnly_ComponentLayout::~__ReadOnly_ComponentLayout(void)
 	{ }
-	
+
 	/**
 	\fn std::string __ReadOnly_ComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
@@ -245,7 +252,7 @@
 	/**
 	\fn ComponentLayout::ComponentLayout(const std::string& _typeName)
 	\brief ComponentLayout constructor.
-	\param type Typename of the component.
+	\param _typeName Typename of the component.
 	**/
 	ComponentLayout::ComponentLayout(const std::string& _typeName)
 	 : __ReadOnly_ComponentLayout(_typeName)
@@ -300,6 +307,14 @@
 	}
 
 // Component :
+	/**
+	\fn Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
+	\brief Component constructor.
+	\param _typeName The typename of the object.
+	\param _inputPorts The list of the names of the input ports.
+	\param _outputPorts The list of the names of the input ports.
+	\param _instanceName The name of the component.
+	**/
 	Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
 	 : __ReadOnly_ComponentLayout(_typeName, _inputPorts, _outputPorts), instanceName(_instanceName)
 	{ }
@@ -308,7 +323,7 @@
 	\fn Component::Component(const __ReadOnly_ComponentLayout& c, const std::string& _instanceName)
 	\brief Component constructor.
 	\param c The component layout.
-	\param name The name of the component.
+	\param _instanceName The name of the component.
 	**/
 	Component::Component(const __ReadOnly_ComponentLayout& c, const std::string& _instanceName)
 	 : __ReadOnly_ComponentLayout(c), instanceName(_instanceName)
@@ -336,4 +351,3 @@
 	{
 		return instanceName;
 	}
-

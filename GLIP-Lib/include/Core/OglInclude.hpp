@@ -92,7 +92,8 @@
 					static HandleOpenGL		*instance;
 					static SupportedVendor 		vendor;
 					static const KeywordPair 	glKeywords[];
-					HdlVBO				*standardQuad;
+					//HdlVBO			*standardQuad;
+
 				public :
 					HandleOpenGL(void);
 					~HandleOpenGL(void);
@@ -104,7 +105,7 @@
 					static std::string 	getRendererName(void);
 					static std::string 	getVersion(void);
 					static std::string 	getGLSLVersion(void);
-					static HdlVBO&	   	standardQuadVBO(void);
+					//static HdlVBO&	   	standardQuadVBO(void);
 
 					// Friend functions :
 					friend std::string glParamName(GLenum);

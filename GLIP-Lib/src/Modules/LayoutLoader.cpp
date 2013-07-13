@@ -69,7 +69,7 @@
 										"ELEMENT",
 										"ADD_PATH"
 								};
-	
+
 // LayoutLoader
 	LayoutLoader::LayoutLoader(void)
 	 : isSubLoader(false)
@@ -79,17 +79,17 @@
 
 	LayoutLoader::~LayoutLoader(void)
 	{
-		// Dynamic : 
+		// Dynamic :
 		clean();
 
-		// And static : 
+		// And static :
 		requiredFormatList.clear();
 		requiredPipelineList.clear();
 	}
 
 	void LayoutLoader::clean(void)
 	{
-		// Dynamic only : 
+		// Dynamic only :
 		currentPath.clear();
 		dynamicPaths.clear();
 		associatedKeyword.clear();
@@ -125,10 +125,10 @@
 
 	void LayoutLoader::loadFile(const std::string& filename, std::string& content, std::string& usedPath)
 	{
-		// New version : check all path : 
+		// New version : check all path :
 		std::vector<std::string> possiblePaths;
 
-		// Blank : 
+		// Blank :
 		if( fileExists( filename ) )
 			possiblePaths.push_back("");
 
@@ -142,7 +142,7 @@
 		if(possiblePaths.empty())
 		{
 			std::string msg = "Unable to load file \"" + filename + "\" from the following locations : ";
-			
+
 			for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 				msg  += "\n-> " + *it;
 
@@ -151,7 +151,7 @@
 		else if(possiblePaths.size()>1)
 		{
 			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations : ";
-			
+
 			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
 				msg  += "\n-> " + *it;
 
@@ -162,7 +162,7 @@
 		usedPath = possiblePaths.front();
 		std::string realFilename = usedPath + filename;
 
-		// Else, open the file : 
+		// Else, open the file :
 		std::fstream file;
 		file.open(realFilename.c_str());
 
@@ -183,18 +183,18 @@
 
 	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
 	{
-		// xxxProperty : 
+		// xxxProperty :
 		//	1  : Must have.
 		//	0  : Indiferent.
 		//	-1 : Must not have.
 
-		// Generate help : 
+		// Generate help :
 		std::string nameDecorator;
-		
+
 		if(!e.name.empty())
 			nameDecorator = ", with name \"" + e.name + "\",";
 
-		// Tests : 
+		// Tests :
 		if((e.noName || e.name.empty()) && nameProperty>0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + " does not have a name.", __FILE__, __LINE__);
 		else if((!e.noName || !e.name.empty()) && nameProperty<0)
@@ -245,7 +245,7 @@
 				}
 			}
 
-			// Possible errors : 
+			// Possible errors :
 			if(k>=str.size())
 				throw Exception("Missing ':' after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
 
@@ -253,25 +253,25 @@
 
 			if(begin==std::string::npos)
 				throw Exception("Missing name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
-			
+
 			size_t 	end	= str.find_first_of(endSpacers, begin);
-				
+
 			if(begin==std::string::npos)
 				throw Exception("Missing end to name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
 
-			// Extract name : 
+			// Extract name :
 			std::string sharedCodeName = str.substr(begin+1, end-begin-1);
 
-			// Find it in the base : 
+			// Find it in the base :
 			std::map<std::string,std::string>::iterator it = sharedCodeList.find(sharedCodeName);
 
 			if(it==sharedCodeList.end())
 				throw Exception("SharedCode object \"" + sharedCodeName + "\" is not reference in the current database.", __FILE__, __LINE__);
 
-			// Replace : 
+			// Replace :
 			str.replace(str.begin() + pos, str.begin() + end, it->second.begin(), it->second.end());
 
-			// Search next occurence : 
+			// Search next occurence :
 			pos = str.find(keyword);
 		}
 
@@ -281,7 +281,7 @@
 
 	void LayoutLoader::append(LayoutLoader& subLoader)
 	{
-		// Test for doubles : 
+		// Test for doubles :
 		#define TEST_FOR_DOUBLES( varName, typeName, type... ) \
 			for( type::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
 			{ \
@@ -289,23 +289,23 @@
 					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current pipeline.", __FILE__, __LINE__); \
 			} \
 
-			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::map<std::string, std::string>) 
+			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::map<std::string, std::string>)
 			TEST_FOR_DOUBLES( formatList,		"Format", 		std::map<std::string, HdlTextureFormat>)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	std::map<std::string, ShaderSource>)
 			TEST_FOR_DOUBLES( geometryList,		"Geometry",		std::map<std::string, GeometryFormat>)
 			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	std::map<std::string, FilterLayout>)
 			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	std::map<std::string, PipelineLayout>)
-		
+
 		#undef TEST_FOR_DOUBLES
 
 		// Append :
-		#define INSERTION( item ) item.insert( subLoader.item.begin(), subLoader.item.end() )  
-		
+		#define INSERTION( item ) item.insert( subLoader.item.begin(), subLoader.item.end() )
+
 			INSERTION( sharedCodeList );
 			INSERTION( formatList );
 			INSERTION( sourceList );
 			INSERTION( geometryList );
-			INSERTION( filterList ); 
+			INSERTION( filterList );
 			INSERTION( pipelineList );
 
 		#undef INSERTION
@@ -323,7 +323,7 @@
 		if( resultingPath[resultingPath.size()-1]!='/' )
 			throw Exception("From line " + to_string(e.startLine) + " : Path should be ended by delimiter '/' (current : \"" + e.arguments[0] + "\").", __FILE__, __LINE__);
 
-		// Test if it is already in the dynamic path list : 
+		// Test if it is already in the dynamic path list :
 		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
 
 		if(it==dynamicPaths.end())
@@ -332,7 +332,7 @@
 
 	void LayoutLoader::includeFile(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, -1, 1, 1, -1, "IncludeFile");
 
 		if(e.arguments[0].find('\n')!=std::string::npos)
@@ -350,7 +350,7 @@
 		// Copy this path to the inner version :
 		subLoader.dynamicPaths = dynamicPaths;
 
-		// Load the file : 
+		// Load the file :
 		std::string content;
 
 		loadFile(e.arguments[0], content, subLoader.currentPath);
@@ -361,7 +361,7 @@
 			std::string dummyMainPipelineName;
 			subLoader.process(content, dummyMainPipelineName);
 
-			// Append : 
+			// Append :
 			append(subLoader);
 		}
 		catch(Exception& ex)
@@ -381,28 +381,28 @@
 
 	void LayoutLoader::buildRequiredFormat(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 1, 10, -1, "RequiredFormat");
 
-		// Identify the target : 
+		// Identify the target :
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(e.arguments[0]);
-		
+
 		if(it==requiredFormatList.end())
 		{
-			// Try in the current format list also : 
+			// Try in the current format list also :
 			it = formatList.find(e.arguments[0]);
 
 			if(it==formatList.end())
 				throw Exception("From line " + to_string(e.startLine) + " : The required format \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
-		}		
+		}
 
 		std::map<std::string,HdlTextureFormat>::iterator it2 = formatList.find(e.name);
-		
+
 		if(it2!=formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A Format Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
-		
-		// Check for possible arguments, to modify the texture : 
-		// Get the data : 
+
+		// Check for possible arguments, to modify the texture :
+		// Get the data :
 		int w, h, mipmap = 0;
 		GLenum mode, depth, minFilter, magFilter, sWrap, tWrap;
 
@@ -453,7 +453,7 @@
 			else
 				minFilter = glFromString(e.arguments[5]);
 		}
-		else 
+		else
 			minFilter = it->second.getMinFilter();
 
 		if(e.arguments.size()>6)
@@ -463,7 +463,7 @@
 			else
 				magFilter = glFromString(e.arguments[6]);
 		}
-		else 
+		else
 			magFilter = it->second.getMagFilter();
 
 		if(e.arguments.size()>7)
@@ -473,9 +473,9 @@
 			else
 				sWrap = glFromString(e.arguments[7]);
 		}
-		else 
+		else
 			sWrap = it->second.getSWrapping();
-		
+
 		if(e.arguments.size()>8)
 		{
 			if(e.arguments[8]=="*")
@@ -483,7 +483,7 @@
 			else
 				tWrap = glFromString(e.arguments[8]);
 		}
-		else 
+		else
 			tWrap = it->second.getTWrapping();
 
 		if(e.arguments.size()>9)
@@ -518,17 +518,17 @@
 
 	void LayoutLoader::buildRequiredPipeline(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredPipeline");
 
-		// Identify the target : 
+		// Identify the target :
 		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(e.arguments[0]);
-		
+
 		if(it==requiredPipelineList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : The required pipeline \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
-		
+
 		std::map<std::string,PipelineLayout>::iterator it2 = pipelineList.find(e.name);
-		
+
 		if(it2!=pipelineList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A PipelineLayout Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 		else
@@ -537,9 +537,9 @@
 
 	void LayoutLoader::buildSharedCode(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 0, 0, 1, "SharedCode");
-		
+
 		if(sharedCodeList.find(e.name)!=sharedCodeList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A SharedCode Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
@@ -548,10 +548,10 @@
 
 	void LayoutLoader::buildFormat(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 4, 9, -1, "Format");
-	
-		// Get the data : 
+
+		// Get the data :
 		int w, h, mipmap = 0;
 		GLenum mode, depth, minFilter, magFilter, sWrap, tWrap;
 
@@ -566,7 +566,7 @@
 
 		if(e.arguments.size()>4)
 			minFilter = glFromString(e.arguments[4]);
-		else 
+		else
 			minFilter = GL_NEAREST;
 
 		if(e.arguments.size()>5)
@@ -583,7 +583,7 @@
 			tWrap = glFromString(e.arguments[7]);
 		else
 			tWrap = GL_CLAMP;
-	
+
 		if(e.arguments.size()>8)
 		{
 			if(!from_string(e.arguments[8], mipmap))
@@ -617,10 +617,10 @@
 
 	void LayoutLoader::buildShaderSource(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 0, 1, 0, "ShaderSource");
 
-		// Complementary tests : 
+		// Complementary tests :
 		if(e.arguments.size()>0 && !e.noBody)
 			throw Exception("From line " + to_string(e.startLine) + " : ShaderSource \"" + e.name + "\" cannot have both argument(s) and a body.", __FILE__, __LINE__);
 		if(e.arguments.empty() && e.noBody)
@@ -629,7 +629,7 @@
 		if(formatList.find(e.name)!=formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A ShaderSource Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
-		// Load data : 
+		// Load data :
 		if(e.noBody)
 		{
 			std::string usedPath;
@@ -638,7 +638,7 @@
 			{
 				std::string content;
 
-				// Custom load : 				
+				// Custom load :
 				loadFile(e.arguments[0], content, usedPath);
 
 				enhanceShaderSource(content);
@@ -671,14 +671,14 @@
 
 	void LayoutLoader::buildGeometry(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 1, 4, 0, "Geometry");
 
-		// Test for duplicata : 
+		// Test for duplicata :
 		if(geometryList.find(e.name)!=geometryList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A Geometry Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
-		// Find the first argument : 
+		// Find the first argument :
 		if(e.arguments[0]==keywordsLayoutLoader[STANDARD_QUAD])
 		{
 			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, StandardQuadGeometry() ) );
@@ -722,17 +722,17 @@
 
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
 	{
-		// Preliminary tests : 
+		// Preliminary tests :
 		preliminaryTests(e, 1, 2, 6, -1, "FilterLayout");
 
-		// Find the format : 
+		// Find the format :
 		std::map<std::string,HdlTextureFormat>::iterator 	format		 = formatList.find(e.arguments[0]);
 		std::map<std::string,ShaderSource>::iterator 		fragmentSource	 = sourceList.find(e.arguments[1]),
 							 		vertexSource;
 		std::map<std::string, GeometryFormat>::iterator		geometry;
 		ShaderSource						*vertexSourcePtr = NULL;
 		GeometryFormat						*geometryPtr	 = NULL;
-		
+
 		if(format==formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
 		if(fragmentSource==sourceList.end())
@@ -762,7 +762,7 @@
 				geometryPtr = &geometry->second;
 			}
 		}
-		
+
 		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second, vertexSourcePtr, geometryPtr) ) );
 
 		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
@@ -792,18 +792,18 @@
 	{
 		try
 		{
-			// Preliminary tests : 
+			// Preliminary tests :
 			preliminaryTests(e, 1, 0, 0, 1, "PipelineLayout");
 
-			// Load the content of the body : 
+			// Load the content of the body :
 			VanillaParser parser(e.body, e.bodyLine);
 
-			// Classify the new data : 
+			// Classify the new data :
 			std::vector<LayoutLoaderKeyword> associatedKeywords;
 
 			classify(parser.elements, associatedKeywords);
 
-			// Test for possible external elements : 
+			// Test for possible external elements :
 			int 	inputPorts = -1,
 				outputPorts = -1,
 				components = 0;
@@ -811,7 +811,7 @@
 			{
 				switch(associatedKeywords[k])
 				{
-					case INPUT_PORTS : 
+					case INPUT_PORTS :
 						if(inputPorts>=0)
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
@@ -823,13 +823,13 @@
 						else
 							outputPorts = k;
 						break;
-					case FILTER_INSTANCE : 
-					case PIPELINE_INSTANCE : 
+					case FILTER_INSTANCE :
+					case PIPELINE_INSTANCE :
 						components++;
 						break;
-					case CONNECTION : 
+					case CONNECTION :
 						break; //OK
-					default : 
+					default :
 						if( associatedKeywords[k]<NumKeywords )
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
@@ -847,10 +847,10 @@
 			if(components==0)
 				throw Exception("From line " + to_string(e.startLine) + " : The PipelineLayout \"" + e.name + "\" does not contain any sub-component (such as Filters or sub-Pipelines).", __FILE__, __LINE__);
 
-			// Create the object : 
+			// Create the object :
 			PipelineLayout layout(e.name);
 
-			// Add the inputs : 
+			// Add the inputs :
 			preliminaryTests(parser.elements[inputPorts], -1, 1, 256, -1, "InputPorts");
 
 			for(int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
@@ -860,9 +860,9 @@
 			preliminaryTests(parser.elements[outputPorts], -1, 1, 256, -1, "OutputPorts");
 
 			for(int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
-				layout.addOutput(parser.elements[outputPorts].arguments[k]); 
+				layout.addOutput(parser.elements[outputPorts].arguments[k]);
 
-			// Parse and add the Objects for the PipelineLayout : 
+			// Parse and add the Objects for the PipelineLayout :
 			std::map<std::string,FilterLayout>::iterator	filter;
 			std::map<std::string,PipelineLayout>::iterator	pipeline;
 
@@ -870,7 +870,7 @@
 			{
 				switch(associatedKeywords[k])
 				{
-					case FILTER_INSTANCE : 
+					case FILTER_INSTANCE :
 						preliminaryTests(parser.elements[k], 1, 1, 1, -1, "FilterInstance");
 						filter = filterList.find(parser.elements[k].arguments[0]);
 
@@ -890,12 +890,12 @@
 							layout.add(pipeline->second, parser.elements[k].name);
 						break;
 
-					default : 
+					default :
 						break;
 				}
 			}
 
-			// Install the connections : 
+			// Install the connections :
 			bool makeAutoConnect = true;
 			for(int k=0; k<associatedKeywords.size(); k++)
 			{
@@ -905,7 +905,7 @@
 
 					preliminaryTests(parser.elements[k], -1, 4, 4, -1, "Connection");
 
-					// Test the nature of the connection : 
+					// Test the nature of the connection :
 					if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE] && parser.elements[k].arguments[1]==keywordsLayoutLoader[THIS_PIPELINE])
 						throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Direct connections between input and output are not allowed.", __FILE__, __LINE__);
 					else if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE])
@@ -917,11 +917,11 @@
 				}
 			}
 
-			// If no connection was installed, try to autoConnect : 
+			// If no connection was installed, try to autoConnect :
 			if(makeAutoConnect)
 				layout.autoConnect();
 
-			// Save : 
+			// Save :
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, layout) );
 		}
 		catch(Exception& ex)
@@ -940,7 +940,7 @@
 
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
-		
+
 			// Process
 			for(int k=0; k<associatedKeyword.size(); k++)
 			{
@@ -952,13 +952,13 @@
 					case INCLUDE_FILE :
 						includeFile(rootParser.elements[k]);
 						break;
-					case SHARED_SOURCE : 
+					case SHARED_SOURCE :
 						buildSharedCode(rootParser.elements[k]);
 						break;
 					case REQUIRED_FORMAT :
 						buildRequiredFormat(rootParser.elements[k]);
 						break;
-					case REQUIRED_PIPELINE : 
+					case REQUIRED_PIPELINE :
 						buildRequiredPipeline(rootParser.elements[k]);
 						break;
 					case FORMAT_LAYOUT :
@@ -973,22 +973,22 @@
 					case FILTER_LAYOUT :
 						buildFilter(rootParser.elements[k]);
 						break;
-					case PIPELINE_MAIN : 
+					case PIPELINE_MAIN :
 						if(!isSubLoader)
 							mainPipelineName = rootParser.elements[k].name;
-					case PIPELINE_LAYOUT : 
+					case PIPELINE_LAYOUT :
 						buildPipeline(rootParser.elements[k]);
 						break;
-					default : 
+					default :
 						if(associatedKeyword[k]<NumKeywords)
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
-						else 
+						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;
 				}
 			}
 
-			// Check Errors : 
+			// Check Errors :
 			if(mainPipelineName.empty() && !isSubLoader)
 				throw Exception("No main pipeline (\"" + std::string(keywordsLayoutLoader[PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
 		}
@@ -1062,18 +1062,18 @@
 		// Is it a filename or the content :
 		if(source.find('\n')==std::string::npos)
 		{
-			// Split : 
+			// Split :
 			size_t section = source.find_last_of("/");
 			std::string filename = source.substr(section+1);
 			currentPath = source.substr(0, section+1);
 
-			// Add to the path : 
+			// Add to the path :
 			if(!currentPath.empty())
 				dynamicPaths.push_back(currentPath);
 
 			loadFile(filename, content, currentPath);
 			isAFile = true;
-		}		
+		}
 		else
 			content = source;
 
@@ -1082,7 +1082,7 @@
 			std::string mainPipelineName;
 			process(content, mainPipelineName);
 
-			// Get the mainPipeline : 
+			// Get the mainPipeline :
 			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
 
 			return __ReadOnly_PipelineLayout(it->second);
@@ -1099,7 +1099,7 @@
 				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", __FILE__, __LINE__);
 				throw m+e;
 			}
-			else 
+			else
 			{
 				Exception m("Exception caught while processing string : ", __FILE__, __LINE__);
 				throw m+e;
@@ -1110,7 +1110,7 @@
 	}
 
 	/**
-	\fn Pipeline* LayoutLoader::operator()(const std::string& source, const std::string& pipelineName)
+	\fn Pipeline* LayoutLoader::operator()(const std::string& source, std::string pipelineName)
 	\brief Loads a pipeline from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param pipelineName The name of the unique instance created (or take the type name if left empty).

@@ -47,18 +47,29 @@ class MyInputDevice : public InputDevice
 {
 	public :
 		MyInputDevice(...)
-		 : __ReadOnly_ComponentLayout("MyInputMethod"), InputDevice("MyInputMethod")
+		 : InputDevice(declareLayout(...), "instanceName"), ...
 		{
-			// You must add output ports here :
-			addOutputPort("output1");
-
-			//...
+			// Your init here...
 
 			// Set the texture links :
 			setTextureLink(texture1,0);
+
+			// ...
 		}
 
 	private :
+		InputDevice::InputDeviceLayout declareLayout(...)
+		{
+			// Create a layout here, from some arguments...
+			InputDevice::InputDeviceLayout tmp("SomeTypeOfInputDevice");
+
+			// Add output ports :
+			tmp.addOutputPort("somePortName");
+			// ...
+
+			return tmp;
+		}
+
 		void someMethodToAddImage(void)
 		{
 			// Prepare a new image...
@@ -81,15 +92,19 @@ class MyInputDevice : public InputDevice
 					std::vector<int>         	imagesMissedCount;
 
 				protected :
-					// Sub structure : 
+					// Sub structure :
+/**
+\class InputDeviceLayout
+\brief InputDevice layout structure.
+**/
 					class InputDeviceLayout : public ComponentLayout
 					{
-						public : 
+						public :
 							InputDeviceLayout(const std::string& _typeName);
 							InputDeviceLayout(const InputDeviceLayout& c);
 
 							int addOutputPort(const std::string& name);
-							int addInputPort(const std::string& name);
+							//int addInputPort(const std::string& name);
 					};
 
 					// Tools
@@ -121,19 +136,28 @@ class MyInputDevice : public InputDevice
 
 Using output device :
 \code
-class MyOutputDevice : public InputDevice
+class MyOutputDevice : public OutputDevice
 {
 	public :
 		MyOutputDevice(...)
-		 : __ReadOnly_ComponentLayout("MyOutputMethod"), OutputDevice("MyOutputMethod")
+		 : OutputDevice( declareLayout(...), "instanceName"), ....
 		{
-			// You must add input ports here :
-			addInputPort("input1");
-
-			//...
+			// Your init code here...
 		}
 
 	private :
+		OutputDevice::OutputDeviceLayout declareLayout(...)
+		{
+			// Create a layout here, from some arguments...
+			OutputDevice::OutputDeviceLayout tmp("SomeTypeOfOutputDevice");
+
+			// Add input ports :
+			tmp.addInputPort("somePortName");
+			// ...
+
+			return tmp;
+		}
+
 		void process(void)
 		{
 			// Process argument lists with :
@@ -165,14 +189,18 @@ class MyOutputDevice : public InputDevice
 					void clearArgList(void);
 
 				protected :
-					// Sub structure : 
+					// Sub structure :
+/**
+\class OutputDeviceLayout
+\brief OutputDevice layout structure.
+**/
 					class OutputDeviceLayout : public ComponentLayout
 					{
-						public : 
+						public :
 							OutputDeviceLayout(const std::string& _typeName);
 							OutputDeviceLayout(const OutputDeviceLayout& c);
 
-							int addOutputPort(const std::string& name);
+							//int addOutputPort(const std::string& name);
 							int addInputPort(const std::string& name);
 					};
 
