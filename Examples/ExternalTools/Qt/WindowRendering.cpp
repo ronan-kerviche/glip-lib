@@ -27,7 +27,8 @@
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.2f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
 	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f),
-	   originalOrientationBeforeRightClick(0.0f)
+	   originalOrientationBeforeRightClick(0.0f),
+	   quad(NULL)
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -74,10 +75,13 @@
 
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 		setMinimumSize(QSize(256,256));
+
+		quad = new GeometryInstance( GeometryPrimitives::StandardQuadGeometry(), GL_STATIC_DRAW_ARB );
 	}
 
 	WindowRenderer::~WindowRenderer(void)
 	{
+		delete quad;
 		this->hide();
 		HandleOpenGL::deinit();
 	}
@@ -456,7 +460,7 @@
 		in().bind();
 
 		// Draw surface :
-		HandleOpenGL::standardQuadVBO().draw();
+		quad->draw();
 
 		HdlTexture::unbind();
 

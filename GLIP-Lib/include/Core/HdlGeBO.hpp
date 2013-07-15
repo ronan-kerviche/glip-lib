@@ -65,8 +65,8 @@
 					GLenum       	getUsage(void);
 					void        	bind(GLenum target = GL_NONE);
 					void*        	map(GLenum access = GL_NONE, GLenum target = GL_NONE);
-					void		write(void* data);
-					void		subWrite(void* data, int size, int offset);
+					void		write(const void* data);
+					void		subWrite(const void* data, int size, int offset);
 
 					// Static tools
 					static void     unbind(GLenum target);

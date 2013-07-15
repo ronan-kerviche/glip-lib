@@ -83,9 +83,9 @@
 					const GLfloat& z(int i) const;
 					const GLfloat& u(int i) const;
 					const GLfloat& v(int i) const;
-					bool operator==(const GeometryFormat& fmt);
+					bool operator==(const GeometryFormat& fmt) const;
 
-					HdlVBO* getVBO(GLenum freq);
+					HdlVBO* getVBO(GLenum freq) const;
 			};
 
 			/**
@@ -104,7 +104,7 @@
 					int id;
 
 				public :
-					GeometryInstance(GeometryFormat& fmt, GLenum freq);
+					GeometryInstance(const GeometryFormat& fmt, GLenum freq);
 					GeometryInstance(const GeometryInstance& instance);
 					~GeometryInstance(void);
 

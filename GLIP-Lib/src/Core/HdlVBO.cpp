@@ -30,7 +30,7 @@ using namespace Glip::CoreGL;
 
 // Tools
 	/**
-	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
+	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, int _dimTexCoords, const GLfloat* _texcoords)
 	\brief HdlVBO constructor.
 	\param _nVert Number of vertices.
 	\param _dim Dimension of the space containing the vertices (2 or 3).
@@ -43,7 +43,7 @@ using namespace Glip::CoreGL;
 	\param _dimTexCoords Dimension per texel (2 or 3).
 	\param _texcoords Pointer to the texel coordiantes data.
 	**/
-	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements, int _nIndPerElement, GLuint* _elements, GLenum _type, int _dimTexCoords, GLfloat* _texcoords)
+	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, int _dimTexCoords, const GLfloat* _texcoords)
 	 : nVert(_nVert), nElements(_nElements), dim(_dim), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL), type(_type)
 	{
 		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glVertexPointer, glVertexPointerEXT)

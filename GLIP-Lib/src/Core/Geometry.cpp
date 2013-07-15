@@ -264,12 +264,12 @@
 	}
 
 	/**
-	\fn bool GeometryFormat::operator==(const GeometryFormat& fmt)
+	\fn bool GeometryFormat::operator==(const GeometryFormat& fmt) const
 	\brief Test if two formats are identical.
 	\param fmt The reference format.
 	\return true if the two formats are identical.
 	**/
-	bool GeometryFormat::operator==(const GeometryFormat& fmt)
+	bool GeometryFormat::operator==(const GeometryFormat& fmt) const
 	{
 		return 		(hasTexCoord==fmt.hasTexCoord)
 			&&	(dim==fmt.dim)
@@ -281,12 +281,12 @@
 	}
 
 	/**
-	\fn HdlVBO* GeometryFormat::getVBO(GLenum freq)
+	\fn HdlVBO* GeometryFormat::getVBO(GLenum freq) const
 	\brief Get the VBO corresponding to this format. It is not recommended to use directly the VBO but, instead, use a GeometryInstance object.
 	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	\return A pointer to the newly created VBO. It is of the responsability of the user to call delete on this object.
 	**/
-	HdlVBO* GeometryFormat::getVBO(GLenum freq)
+	HdlVBO* GeometryFormat::getVBO(GLenum freq) const
 	{
 		if(pos.empty())
 			throw Exception("GeometryFormat::getVBO - Empty vertices list.", __FILE__, __LINE__);
@@ -295,8 +295,8 @@
 				localNumVerticesPerEl = 0,
 				localNumDimTexCoord = 0;
 
-		GLuint* 	elementsPtr = NULL;
-		GLfloat*	texPtr = NULL;
+		const GLuint* 	elementsPtr = NULL;
+		const GLfloat*	texPtr = NULL;
 
 		if(!elements.empty())
 		{
@@ -325,7 +325,7 @@
 	\param fmt The original format to use.
 	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
- 	GeometryInstance::GeometryInstance(GeometryFormat& fmt, GLenum freq)
+ 	GeometryInstance::GeometryInstance(const GeometryFormat& fmt, GLenum freq)
 	 : id(-1)
 	{
 		// Find if a similar format exist :

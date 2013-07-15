@@ -127,6 +127,9 @@
 				clearColorBlue,
 				keyPressIncr;
 
+			// Geometry : 
+			GeometryInstance* quad;
+
 			// Find correspondance Key / Action :
 			KeyAction corresponding(const Qt::Key& k) const;
 

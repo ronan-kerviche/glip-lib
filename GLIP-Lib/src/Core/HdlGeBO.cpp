@@ -21,8 +21,9 @@
  * \date    February 6th 2011
 */
 
+#include "Exception.hpp"
 #include "HdlGeBO.hpp"
-#include "GLIPLib.hpp"
+#include "OglInclude.hpp"
 
 using namespace Glip::CoreGL;
 
@@ -42,9 +43,9 @@ using namespace Glip::CoreGL;
 	HdlGeBO::HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage)
 	 : size(_size)
 	{
+		NEED_EXTENSION(GLEW_VERSION_1_5)
 		NEED_EXTENSION(GLEW_ARB_pixel_buffer_object)
 		NEED_EXTENSION(GLEW_ARB_vertex_buffer_object)
-		NEED_EXTENSION(GLEW_VERSION_1_5)
 		FIX_MISSING_GLEW_CALL(glGenBuffers, glGenBuffersARB)
 		FIX_MISSING_GLEW_CALL(glBindBuffer, glBindBufferARB)
 		FIX_MISSING_GLEW_CALL(glBufferData, glBufferDataARB)
@@ -228,11 +229,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlGeBO::write(void* data)
+	\fn    void HdlGeBO::write(const void* data)
 	\brief Write data to a Buffer Object with classical glBufferData method.
 	\param data The data to write (must be the same size than the GeBO).
 	**/
-	void HdlGeBO::write(void* data)
+	void HdlGeBO::write(const void* data)
 	{
 		bind();
 
@@ -244,13 +245,13 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlGeBO::subWrite(void* data, int size, int offset)
+	\fn    void HdlGeBO::subWrite(const void* data, int size, int offset)
 	\brief Write data to a Buffer Object with classical glBufferSubData method.
 	\param data The data to write.
 	\param size Size, in bytes, of the subset.
 	\param offset Offset to apply, in bytes, before writting.
 	**/
-	void HdlGeBO::subWrite(void* data, int size, int offset)
+	void HdlGeBO::subWrite(const void* data, int size, int offset)
 	{
 		bind();
 

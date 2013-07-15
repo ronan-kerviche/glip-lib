@@ -46,7 +46,7 @@
 					GLenum type;
 				public :
 					// Tools
-					HdlVBO(int _nVert, int _dim, GLenum freq, GLfloat* _vertices, int _nElements=0, int _nIndPerElement=0, GLuint* _elements=NULL, GLenum _type=GL_POINTS, int _dimTexCoords=0, GLfloat* _texcoords=NULL);
+					HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements=0, int _nIndPerElement=0, const GLuint* _elements=NULL, GLenum _type=GL_POINTS, int _dimTexCoords=0, const GLfloat* _texcoords=NULL);
 					// Type among {GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_QUAD_STRIP, GL_QUADS, }GL_POLYGON
 					~HdlVBO(void);
 
