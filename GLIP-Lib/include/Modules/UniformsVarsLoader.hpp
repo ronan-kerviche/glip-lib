@@ -15,7 +15,7 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    UniformVarsLoader.hpp 
+ * \file    UniformVarsLoader.hpp
  * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
  * \date    June 8th 2013
@@ -70,9 +70,13 @@ namespace Glip
 
 		extern const char* keywordsUniformsVarsLoader[UL_NumKeywords];
 
+		/**
+		\class UniformsVarsLoader
+		\brief Loads and writes a set of uniforms variables values from a file or a string.
+		**/
 		class UniformsVarsLoader
 		{
-			private : 
+			private :
 				struct Ressource
 				{
 					std::string name;
@@ -82,7 +86,7 @@ namespace Glip
 					Ressource(void);
 					Ressource(const Ressource& cpy);
 					~Ressource(void);
-	
+
 					void build(const VanillaParserSpace::Element& e);
 					void build(const std::string& varName, GLenum t, HdlProgram& prgm);
 					void apply(Filter& filter);
@@ -92,19 +96,19 @@ namespace Glip
 				struct RessourceNode
 				{
 					std::string name;
-					
+
 					std::vector<RessourceNode> 	subNodes;
 					std::vector<Ressource>		ressources;
 
 					int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
-				};			
+				};
 
 				std::vector<RessourceNode> ressources;
 
-				void processNode(std::string body, RessourceNode& root);			
-				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);		
+				void processNode(std::string body, RessourceNode& root);
+				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);
 				VanillaParserSpace::Element getNodeCode(RessourceNode& node);
-			public : 
+			public :
 				UniformsVarsLoader(void);
 				~UniformsVarsLoader(void);
 

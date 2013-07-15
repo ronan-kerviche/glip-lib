@@ -71,6 +71,10 @@
 								};
 
 // LayoutLoader
+	/**
+	\fn LayoutLoader::LayoutLoader(void)
+	\brief LayoutLoader constructor.
+	**/
 	LayoutLoader::LayoutLoader(void)
 	 : isSubLoader(false)
 	{
@@ -681,7 +685,7 @@
 		// Find the first argument :
 		if(e.arguments[0]==keywordsLayoutLoader[STANDARD_QUAD])
 		{
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, StandardQuadGeometry() ) );
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::StandardQuadGeometry() ) );
 		}
 		else if(e.arguments[0]==keywordsLayoutLoader[GRID_2D])
 		{
@@ -696,7 +700,7 @@
 			if(!from_string(e.arguments[2], h))
 				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
 
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid2DGeometry(w,h) ) );
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::PointsGrid2DGeometry(w,h) ) );
 		}
 		else if(e.arguments[0]==keywordsLayoutLoader[GRID_3D])
 		{
@@ -714,7 +718,7 @@
 			if(!from_string(e.arguments[3], z))
 				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, PointsGrid3DGeometry(w,h,z)) );
+			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::PointsGrid3DGeometry(w,h,z)) );
 		}
 		else
 			throw Exception("From line " + to_string(e.startLine) + " : Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", __FILE__, __LINE__);
@@ -999,17 +1003,31 @@
 		}
 	}
 
+	/**
+	\fn const std::vector<std::string>& LayoutLoader::paths(void) const
+	\brief Access the list of paths.
+	\return A read-only access to the list of paths.
+	**/
 	const std::vector<std::string>& LayoutLoader::paths(void) const
 	{
 		return staticPaths;
 	}
 
+	/**
+	\fn void LayoutLoader::clearPaths(void)
+	\brief Clear the list of paths.
+	**/
 	void LayoutLoader::clearPaths(void)
 	{
 		staticPaths.clear();
 		staticPaths.push_back("./");
 	}
 
+	/**
+	\fn void LayoutLoader::addToPaths(const std::string& p)
+	\brief Add a path.
+	\param p The path (might be invalid, avoid input of non-canonical paths which might results in ambiguous links errors).
+	**/
 	void LayoutLoader::addToPaths(const std::string& p)
 	{
 		if(!p.empty())
@@ -1019,12 +1037,23 @@
 		}
 	}
 
+	/**
+	\fn void LayoutLoader::addToPaths(const std::vector<std::string>& paths)
+	\brief Add several paths.
+	\param paths The list of paths to add (might be invalid, avoid input of non-canonical paths which might results in ambiguous links errors).
+	**/
 	void LayoutLoader::addToPaths(const std::vector<std::string>& paths)
 	{
 		for(std::vector<std::string>::const_iterator it = paths.begin(); it!=paths.end(); it++)
 			addToPaths(*it);
 	}
 
+	/**
+	\fn bool LayoutLoader::removeFromPaths(const std::string& p)
+	\brief Remove an entity from the paths.
+	\param p The path to remove.
+	\return True if a path was remove; false otherwise.
+	**/
 	bool LayoutLoader::removeFromPaths(const std::string& p)
 	{
 		std::vector<std::string>::iterator it = std::find(staticPaths.begin(), staticPaths.end(), p);
@@ -1037,11 +1066,6 @@
 		else
 			return false;
 	}
-
-	/*void LayoutLoader::setPath(const std::string& _path)
-	{
-		path = _path;
-	}*/
 
 	/**
 	\fn __ReadOnly_PipelineLayout LayoutLoader::operator()(const std::string& source)

@@ -65,6 +65,7 @@
 		<Unit filename="../GLIP-Lib/include/Core/Devices.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/Exception.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/Filter.hpp" />
+		<Unit filename="../GLIP-Lib/include/Core/Geometry.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlFBO.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlGeBO.hpp" />
 		<Unit filename="../GLIP-Lib/include/Core/HdlInfo.hpp" />
@@ -87,11 +88,14 @@
 		<Unit filename="../GLIP-Lib/include/Modules/Modules.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/ProceduralInput.hpp" />
 		<Unit filename="../GLIP-Lib/include/Modules/TextureReader.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/UniformsVarsLoader.hpp" />
+		<Unit filename="../GLIP-Lib/include/Modules/VanillaParser.hpp" />
 		<Unit filename="../GLIP-Lib/include/devDebugTools.hpp" />
 		<Unit filename="../GLIP-Lib/src/Core/Component.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/Devices.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/Exception.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/Filter.cpp" />
+		<Unit filename="../GLIP-Lib/src/Core/Geometry.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlFBO.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlGeBO.cpp" />
 		<Unit filename="../GLIP-Lib/src/Core/HdlInfo.cpp" />
@@ -112,6 +116,8 @@
 		<Unit filename="../GLIP-Lib/src/Modules/LayoutLoader.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/ProceduralInput.cpp" />
 		<Unit filename="../GLIP-Lib/src/Modules/TextureReader.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/UniformsVarsLoader.cpp" />
+		<Unit filename="../GLIP-Lib/src/Modules/VanillaParser.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

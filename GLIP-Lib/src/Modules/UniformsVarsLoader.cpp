@@ -15,13 +15,13 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    UniformVarsLoader.cpp 
+ * \file    UniformVarsLoader.cpp
  * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
  * \date    June 8th 2013
 **/
 
-	// Includes : 
+	// Includes :
 	#include <cstring>
 	#include "Exception.hpp"
 	#include "UniformsVarsLoader.hpp"
@@ -61,7 +61,7 @@
 											"GL_FLOAT_MAT4"
 										};
 
-// Nodes : 
+// Nodes :
 	UniformsVarsLoader::Ressource::Ressource(void)
 	 : type(GL_NONE), data(NULL)
 	{ }
@@ -119,7 +119,7 @@
 					cType* tmp = reinterpret_cast< cType* >( data ); \
 					data = NULL; \
 					delete[] tmp; \
-				} 
+				}
 
 				DELETE_DATA( GL_FLOAT, 			float)
 			else	DELETE_DATA( GL_FLOAT_VEC2, 		float)
@@ -159,7 +159,7 @@
 		if(!e.noBody)
 			throw Exception("From line " + to_string(e.startLine) + " : Element \"" + e.name + "\" should not have a body.", __FILE__, __LINE__);
 
-		// Set the name : 
+		// Set the name :
 		name = e.name;
 
 		#define READ_ELEMENT( glType, cType, narg ) \
@@ -179,8 +179,8 @@
 				\
 				data = reinterpret_cast<void*>(tmp); \
 			}
-			
-		// Load the data : 
+
+		// Load the data :
 			READ_ELEMENT( GL_FLOAT, 		float, 		1 )
 		else	READ_ELEMENT( GL_FLOAT_VEC2, 		float,		2 )
 		else	READ_ELEMENT( GL_FLOAT_VEC3, 		float, 		3 )
@@ -347,9 +347,9 @@
 		{
 			if(!current.doesElementExist(subNodes[k].name))
 				throw Exception("Missing element \"" + subNodes[k].name + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
-			
+
 			int id = current.getElementIndex(subNodes[k].name);
-			
+
 			if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::PIPELINE )
 				c += subNodes[k].apply( pipeline, current.pipelineLayout(id) );
 			else if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::FILTER )
@@ -365,26 +365,36 @@
 				{
 					ressources[l].apply(filter);
 				}
-	
+
 				c += ressources.size();
 			}
 			else
 				throw Exception("Unknown component kind for element \"" + subNodes[k].name + "\".", __FILE__, __LINE__);
 		}
-		
+
 		return c;
 	}
 
 // UniformsVarsLoader
+	/**
+	\fn UniformsVarsLoader::UniformsVarsLoader(void)
+	\brief UniformsVarsLoader constructor.
+	**/
 	UniformsVarsLoader::UniformsVarsLoader(void)
 	{ }
 
 	UniformsVarsLoader::~UniformsVarsLoader(void)
 	{
-		// Clear : 
+		// Clear :
 		ressources.clear();
 	}
 
+	/**
+	\fn void UniformsVarsLoader::load(std::string source, bool replace)
+	\brief Loads a set of uniforms variables for one, or multiple, pipelines.
+	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\n').
+	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
+	**/
 	void UniformsVarsLoader::load(std::string source, bool replace)
 	{
 		std::string filename;
@@ -394,7 +404,7 @@
 		{
 			filename = source;
 
-			// Load the file : 
+			// Load the file :
 			std::fstream file;
 			file.open(filename.c_str());
 
@@ -415,11 +425,11 @@
 				source += "\n";
 			}
 
-			file.close();	
+			file.close();
 		}
 		// else : "already loaded"
 
-		// Do the first parse operation : 
+		// Do the first parse operation :
 		try
 		{
 			VanillaParser parser(source);
@@ -428,16 +438,16 @@
 			{
 				if(parser.elements[k].strKeyword!=keywordsUniformsVarsLoader[KW_UL_PIPELINE])
 					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must be of type \"" + keywordsUniformsVarsLoader[KW_UL_PIPELINE] + "\" (current : \"" + parser.elements[k].strKeyword + "\").", __FILE__, __LINE__);
-				
+
 				if( parser.elements[k].noName || parser.elements[k].name.empty() )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__); 
+					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
 
 				if( parser.elements[k].noBody )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__); 
+					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__);
 
 				RessourceNode* ptr = NULL;
-				
-				// Try to find a duplicate : 
+
+				// Try to find a duplicate :
 				for(int l=0; l<ressources.size(); l++)
 				{
 					if(ressources[l].name==parser.elements[k].name)
@@ -461,7 +471,7 @@
 
 				ptr->name = parser.elements[k].name;
 				processNode(parser.elements[k].body, *ptr);
-			} 
+			}
 		}
 		catch(Exception& e)
 		{
@@ -478,12 +488,18 @@
 		}
 	}
 
+	/**
+	\fn void UniformsVarsLoader::load(Pipeline& pipeline, bool replace)
+	\brief Load the set of uniforms variables from a pipeline.
+	\param pipeline The pipeline to extract the data from.
+	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
+	**/
 	void UniformsVarsLoader::load(Pipeline& pipeline, bool replace)
 	{
-		// Try to find a duplicate : 
+		// Try to find a duplicate :
 		RessourceNode* ptr = NULL;
-				
-		// Try to find a duplicate : 
+
+		// Try to find a duplicate :
 		for(int l=0; l<ressources.size(); l++)
 		{
 			if(ressources[l].name==pipeline.getName())
@@ -508,7 +524,7 @@
 
 		ptr->name = pipeline.getName();
 
-		// Load the structure : 
+		// Load the structure :
 		processNode(pipeline, pipeline, *ptr);
 	}
 
@@ -521,24 +537,24 @@
 			if(parser.elements[k].strKeyword==keywordsUniformsVarsLoader[KW_UL_PIPELINE] || parser.elements[k].strKeyword==keywordsUniformsVarsLoader[KW_UL_FILTER])
 			{
 				if( parser.elements[k].noName || parser.elements[k].name.empty() )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__); 
+					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
 
 				if( parser.elements[k].noBody )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__); 
+					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__);
 
 				root.subNodes.push_back( RessourceNode() );
 				root.subNodes.back().name = parser.elements[k].name;
 
 				processNode(parser.elements[k].body, root.subNodes.back());
 			}
-			else // It must be a ressource : 
+			else // It must be a ressource :
 			{
 				root.ressources.push_back( Ressource() );
 				root.ressources.back().build( parser.elements[k] );
 			}
-		} 
+		}
 
-		// Separate filters from pipelines : 
+		// Separate filters from pipelines :
 		if( !root.ressources.empty() && !root.subNodes.empty())
 			throw Exception("Found sub-elements AND ressources in node \"" + root.name + "\".", __FILE__, __LINE__);
 	}
@@ -552,7 +568,7 @@
 				// Add node :
 				root.subNodes.push_back( RessourceNode() );
 				root.subNodes.back().name = current.getElementName(k);
-				
+
 				processNode(pipeline, current.pipelineLayout(k), root.subNodes.back());
 			}
 			else if(current.getElementKind(k)==__ReadOnly_PipelineLayout::FILTER)
@@ -590,13 +606,13 @@
 
 		if(node.subNodes.empty())
 		{
-			// Filter : 
+			// Filter :
 			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_FILTER];
 			e.name		= node.name;
 			e.noName	= false;
 			e.arguments.clear();
 			e.noArgument	= true;
-			
+
 			for(int k=0; k<node.ressources.size(); k++)
 			{
 				VanillaParserSpace::Element es = node.ressources[k].getCode();
@@ -608,7 +624,7 @@
 		}
 		else
 		{
-			// Pipeline : 
+			// Pipeline :
 			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_PIPELINE];
 			e.name		= node.name;
 			e.noName	= false;
@@ -619,11 +635,11 @@
 			{
 				VanillaParserSpace::Element es = getNodeCode(node.subNodes[k]);
 
-				// Don't show empty elements : 
+				// Don't show empty elements :
 				if(!es.body.empty())
 				{
 					e.body += es.getCode();
-	
+
 					if(k<node.subNodes.size()-1)
 						e.body += "\n\n";
 				}
@@ -633,13 +649,18 @@
 		return e;
 	}
 
+	/**
+	\fn void UniformsVarsLoader::clear(const std::string& name)
+	\brief Clear the full set of data (all pipelines) by default. If name is provided then only the pipeline values with the corresponding name are erased.
+	\param name The name of the pipeline to be erased (leave empty for a complete clear).
+	**/
 	void UniformsVarsLoader::clear(const std::string& name)
-	{	
+	{
 		if(name.empty())
 			ressources.clear();
 		else
 		{
-			// Find element : 
+			// Find element :
 			for(int k=0; k<ressources.size(); k++)
 			{
 				if(ressources[k].name==name)
@@ -648,6 +669,12 @@
 		}
 	}
 
+	/**
+	\fn bool UniformsVarsLoader::hasPipeline(const std::string& name) const
+	\brief Test if a pipeline has values attached in this UniformsVarsLoader object (knowing its name).
+	\param name The name of the pipeline to test.
+	\return True if a pipeline with the correct name has values loaded in this UniformsVarsLoader object.
+	**/
 	bool UniformsVarsLoader::hasPipeline(const std::string& name) const
 	{
 		for(int k=0; k<ressources.size(); k++)
@@ -655,22 +682,33 @@
 			if(ressources[k].name==name)
 				return true;
 		}
-		
+
 		return false;
 	}
 
+	/**
+	\fn bool UniformsVarsLoader::empty(void) const
+	\brief Test if this object has some data loaded.
+	\return True if there is data loaded.
+	**/
 	bool UniformsVarsLoader::empty(void) const
 	{
 		return ressources.empty();
 	}
 
+	/**
+	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline)
+	\brief Copy the possibly loaded set of uniforms variables to a pipeline (for the corresponding name of the Pipeline instance).
+	\param pipeline The pipeline to which the data has to be copied (if relevant).
+	\return The total number of uniforms variables copied.
+	**/
 	int UniformsVarsLoader::applyTo(Pipeline& pipeline)
 	{
 		int c = 0;
 
 		try
 		{
-			// Scan the current ressources to find a corresponding name : 
+			// Scan the current ressources to find a corresponding name :
 			for(int k=0; k<ressources.size(); k++)
 			{
 				if(ressources[k].name==pipeline.getName())
@@ -686,6 +724,11 @@
 		return c;
 	}
 
+	/**
+	\fn std::string UniformsVarsLoader::getCode(void)
+	\brief Return the corresponding code for the current set of variables, for one, or multiple, pipelines. The format is human-readable.
+	\return A standard string containing the structured data.
+	**/
 	std::string UniformsVarsLoader::getCode(void)
 	{
 		std::string res;
@@ -699,6 +742,11 @@
 		return res;
 	}
 
+	/**
+	\fn void UniformsVarsLoader::writeToFile(const std::string& filename)
+	\brief Write the corresponding code for the current set of variables, for one, or multiple, pipelines to a file. The format is human-readable. Note : inorder to append, you must load the original first.
+	\param filename The filename of the file to write to.
+	**/
 	void UniformsVarsLoader::writeToFile(const std::string& filename)
 	{
 		std::fstream file;
@@ -712,4 +760,3 @@
 
 		file.close();
 	}
-

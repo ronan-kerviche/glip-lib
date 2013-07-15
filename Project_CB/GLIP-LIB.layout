@@ -4,8 +4,8 @@
 	<File name="../GLIP-Lib/include/Core/Component.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="4094" topLine="57" />
 	</File>
-	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="1" top="1" tabpos="1">
-		<Cursor position="3269" topLine="30" />
+	<File name="../GLIP-Lib/include/Core/Devices.hpp" open="0" top="0" tabpos="1">
+		<Cursor position="3269" topLine="0" />
 	</File>
 	<File name="../GLIP-Lib/include/Core/Exception.hpp" open="0" top="0" tabpos="0">
 		<Cursor position="2096" topLine="44" />
@@ -85,7 +85,7 @@
 	<File name="../GLIP-Lib/src/Core/Component.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="13101" topLine="318" />
 	</File>
-	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="1" top="0" tabpos="2">
+	<File name="../GLIP-Lib/src/Core/Devices.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="10136" topLine="290" />
 	</File>
 	<File name="../GLIP-Lib/src/Core/Exception.cpp" open="0" top="0" tabpos="6">

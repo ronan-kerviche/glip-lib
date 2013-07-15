@@ -41,28 +41,22 @@
 
 		namespace CorePipeline
 		{
-			enum GeometryPrimitive
-			{
-				GeometryQuad,
-				GeometryPointsGrid,
-				GeometryCube,
-				// Insert new formats before this line.
-				GeometryNum,
-				GeometryUnknown
-			};
-
+			/**
+			\class GeometryFormat
+			\brief Geometry stored on the host.
+			**/
 			class GeometryFormat
 			{
-				private : 
+				private :
 					std::vector<GLfloat> 	pos,
 								tex;
 
-				protected : 
-					// Data : 
+				protected :
+					// Data :
 					std::vector<GLuint>	elements;
-					
-					// Tools : 
-					GeometryFormat(const GeometryPrimitive& _primitive, const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord);
+
+					// Tools :
+					GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord);
 
 					int addVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
 					int addVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
@@ -72,9 +66,8 @@
 					GLfloat& u(int i);
 					GLfloat& v(int i);
 
-				public : 
+				public :
 					const bool		hasTexCoord;
-					const GeometryPrimitive primitive;
 					const int		dim,
 								numVerticesPerEl;
 					const GLenum 		primitiveGL;
@@ -95,45 +88,64 @@
 					HdlVBO* getVBO(GLenum freq);
 			};
 
+			/**
+			\class GeometryInstance
+			\brief Instance of the GeometryFormat. Stored on GPU (VBO).
+			**/
 			class GeometryInstance
 			{
-				private : 
-					// Static memory part : 
+				private :
+					// Static memory bank :
 					static std::vector<HdlVBO*> 		vbos;
 					static std::vector<GeometryFormat*>	formats;
 					static std::vector<int>			counters;
 
-					// Current : 
+					// Current :
 					int id;
 
-				public : 
+				public :
 					GeometryInstance(GeometryFormat& fmt, GLenum freq);
 					GeometryInstance(const GeometryInstance& instance);
 					~GeometryInstance(void);
 
 					const GeometryFormat& format(void) const;
+					const HdlVBO& vbo(void) const;
 					void draw(void);
 			};
 
-			// Geometries : 
+			// Geometries :
+			namespace GeometryPrimitives
+			{
+				/**
+				\class StandardQuadGeometry
+				\brief Geometry : the standard quad.
+				**/
 				class StandardQuadGeometry : public GeometryFormat
 				{
 					public :
 						StandardQuadGeometry(void);
 				};
 
+				/**
+				\class PointsGrid2DGeometry
+				\brief Geometry : a 2D grid of points.
+				**/
 				class PointsGrid2DGeometry : public GeometryFormat
 				{
 					public :
 						PointsGrid2DGeometry(int w, int h);
 				};
 
+				/**
+				\class PointsGrid3DGeometry
+				\brief Geometry : a 3D grid of points.
+				**/
 				class PointsGrid3DGeometry : public GeometryFormat
 				{
 					public :
-						PointsGrid3DGeometry(int w, int h, int z);
+						PointsGrid3DGeometry(int w, int h, int d);
 				};
-
+			}
 		}
 	}
 

@@ -30,15 +30,28 @@
     using namespace Glip::CorePipeline;
 
 // GeometryFormat
-	GeometryFormat::GeometryFormat(const GeometryPrimitive& _primitive, const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
-	 : primitive(_primitive), dim(_dim), numVerticesPerEl(_numVerticesPerEl), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
+	/**
+	\fn GeometryFormat::GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
+	\brief Geometry format constructor.
+	\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
+	\param _numVerticesPerEl The number of vertices per elements.
+	\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_QUAD, GL_TRIANGLES, etc.)
+	\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
+	**/
+	GeometryFormat::GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
+	 : dim(_dim), numVerticesPerEl(_numVerticesPerEl), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
 	{
 		if(dim!=2 && dim!=3)
 			throw Exception("GeometryFormat::GeometryFormat - Dimension must be either 2 or 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
 	}
 
+	/**
+	\fn GeometryFormat::GeometryFormat(const GeometryFormat& fmt)
+	\brief GeometryFormat copy constructor.
+	\param fmt The source format.
+	**/
 	GeometryFormat::GeometryFormat(const GeometryFormat& fmt)
-	 : pos(fmt.pos), tex(fmt.tex), dim(fmt.dim), numVerticesPerEl(fmt.numVerticesPerEl), primitiveGL(fmt.primitiveGL), elements(fmt.elements), primitive(fmt.primitive), hasTexCoord(fmt.hasTexCoord)
+	 : pos(fmt.pos), tex(fmt.tex), dim(fmt.dim), numVerticesPerEl(fmt.numVerticesPerEl), primitiveGL(fmt.primitiveGL), elements(fmt.elements), hasTexCoord(fmt.hasTexCoord)
 	{ }
 
 	GeometryFormat::~GeometryFormat(void)
@@ -48,6 +61,15 @@
 		elements.clear();
 	}
 
+	/**
+	\fn int GeometryFormat::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a two dimensions space (GeometryFormat::dim must be equal to 2). If GeometryFormat::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\param x The X coordinate.
+	\param y The Y coordinate.
+	\param u The U coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\return The index of the newly created vertex.
+	**/
 	int GeometryFormat::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=2)
@@ -65,6 +87,16 @@
 		return getNumVertices() - 1;
 	}
 
+	/**
+	\fn int GeometryFormat::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a three dimensions space (GeometryFormat::dim must be equal to 3). If GeometryFormat::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\param x The X coordinate.
+	\param y The Y coordinate.
+	\param z The Z coordinate.
+	\param u The U coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\return The index of the newly created vertex.
+	**/
 	int GeometryFormat::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=3)
@@ -73,7 +105,7 @@
 		pos.push_back(x);
 		pos.push_back(y);
 		pos.push_back(z);
-		
+
 		if(hasTexCoord)
 		{
 			tex.push_back(u);
@@ -83,16 +115,34 @@
 		return getNumVertices() - 1;
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::x(int i)
+	\brief Access the X coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable.
+	**/
 	GLfloat& GeometryFormat::x(int i)
 	{
 		return pos[i*dim+0];
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::y(int i)
+	\brief Access the Y coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable.
+	**/
 	GLfloat& GeometryFormat::y(int i)
 	{
 		return pos[i*dim+1];
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::z(int i)
+	\brief Access the Z coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::dim is smaller than 3.
+	**/
 	GLfloat& GeometryFormat::z(int i)
 	{
 		if(dim<3)
@@ -101,6 +151,12 @@
 		return pos[i*dim+2];
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::u(int i)
+	\brief Access the U coordinate of the texel at given index.
+	\param i The vertex/texel index.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	**/
 	GLfloat& GeometryFormat::u(int i)
 	{
 		if(!hasTexCoord)
@@ -109,6 +165,12 @@
 		return tex[i*2+0];
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::v(int i)
+	\brief Access the V coordinate of the texel at given index.
+	\param i The vertex/texel index.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	**/
 	GLfloat& GeometryFormat::v(int i)
 	{
 		if(!hasTexCoord)
@@ -117,16 +179,34 @@
 		return tex[i*2+1];
 	}
 
+	/**
+	\fn const GLfloat& GeometryFormat::x(int i) const
+	\brief Read the X coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable.
+	**/
 	const GLfloat& GeometryFormat::x(int i) const
 	{
 		return pos[i*dim+0];
 	}
 
+	/**
+	\fn const GLfloat& GeometryFormat::y(int i) const
+	\brief Read the Y coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable.
+	**/
 	const GLfloat& GeometryFormat::y(int i) const
 	{
 		return pos[i*dim+1];
 	}
 
+	/**
+	\fn const GLfloat& GeometryFormat::z(int i) const
+	\brief Read the Z coordinate of the vertex at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable. Will raise an exception if GeometryFormat::dim is smaller than 3.
+	**/
 	const GLfloat& GeometryFormat::z(int i) const
 	{
 		if(dim<3)
@@ -135,6 +215,12 @@
 		return pos[i*dim+2];
 	}
 
+	/**
+	\fn const GLfloat& GeometryFormat::u(int i) const
+	\brief Access the U coordinate of the texel at given index.
+	\param i The vertex/texel index.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	**/
 	const GLfloat& GeometryFormat::u(int i) const
 	{
 		if(!hasTexCoord)
@@ -143,6 +229,12 @@
 		return tex[i*2+0];
 	}
 
+	/**
+	\fn GLfloat& GeometryFormat::v(int i) const
+	\brief Access the V coordinate of the texel at given index.
+	\param i The vertex/texel index.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	**/
 	const GLfloat& GeometryFormat::v(int i) const
 	{
 		if(!hasTexCoord)
@@ -151,20 +243,35 @@
 		return tex[i*2+1];
 	}
 
+	/**
+	\fn int GeometryFormat::getNumVertices(void) const
+	\brief Get the number of vertices.
+	\return The current number of vertices registered for this format.
+	**/
 	int GeometryFormat::getNumVertices(void) const
 	{
 		return pos.size() / dim;
 	}
 
+	/**
+	\fn int GeometryFormat::getNumElements(void) const
+	\brief Get the number of GL primitives (elements).
+	\return The current number of GL primitives (element).
+	**/
 	int GeometryFormat::getNumElements(void) const
 	{
 		return elements.size() / numVerticesPerEl;
 	}
 
+	/**
+	\fn bool GeometryFormat::operator==(const GeometryFormat& fmt)
+	\brief Test if two formats are identical.
+	\param fmt The reference format.
+	\return true if the two formats are identical.
+	**/
 	bool GeometryFormat::operator==(const GeometryFormat& fmt)
 	{
-		return 		(primitive==fmt.primitive)
-			&&	(hasTexCoord==fmt.hasTexCoord)
+		return 		(hasTexCoord==fmt.hasTexCoord)
 			&&	(dim==fmt.dim)
 			&&	(numVerticesPerEl==fmt.numVerticesPerEl)
 			&&	(primitiveGL==fmt.primitiveGL)
@@ -173,6 +280,12 @@
 			&&	(std::equal(elements.begin(), elements.end(), fmt.elements.begin()));
 	}
 
+	/**
+	\fn HdlVBO* GeometryFormat::getVBO(GLenum freq)
+	\brief Get the VBO corresponding to this format. It is not recommended to use directly the VBO but, instead, use a GeometryInstance object.
+	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	\return A pointer to the newly created VBO. It is of the responsability of the user to call delete on this object.
+	**/
 	HdlVBO* GeometryFormat::getVBO(GLenum freq)
 	{
 		if(pos.empty())
@@ -181,7 +294,7 @@
 		int 		localNumElements = 0,
 				localNumVerticesPerEl = 0,
 				localNumDimTexCoord = 0;
-		
+
 		GLuint* 	elementsPtr = NULL;
 		GLfloat*	texPtr = NULL;
 
@@ -201,15 +314,21 @@
 		return new HdlVBO(getNumVertices(), dim, freq, &pos[0], localNumElements, localNumVerticesPerEl, elementsPtr, primitiveGL, localNumDimTexCoord, texPtr);
 	}
 
-// GeometryInstance 
+// GeometryInstance
 	std::vector<HdlVBO*> 		GeometryInstance::vbos;
 	std::vector<GeometryFormat*>	GeometryInstance::formats;
 	std::vector<int>		GeometryInstance::counters;
 
+	/**
+	\fn GeometryInstance::GeometryInstance(GeometryFormat& fmt, GLenum freq)
+	\brief GeometryInstance constructor.
+	\param fmt The original format to use.
+	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	**/
  	GeometryInstance::GeometryInstance(GeometryFormat& fmt, GLenum freq)
 	 : id(-1)
 	{
-		// Find if a similar format exist : 
+		// Find if a similar format exist :
 		int 	k	= 0,
 			kNull 	= -1;
 		for(; k<formats.size(); k++)
@@ -223,10 +342,10 @@
 				kNull = k;
 		}
 
-		// If one was found : 
+		// If one was found :
 		if(k<formats.size())
 		{
-			// Set the id and increase the counter : 
+			// Set the id and increase the counter :
 			id = k;
 			counters[id]++;
 		}
@@ -241,7 +360,7 @@
 				counters.push_back(0);
 			}
 
-			// Create : 
+			// Create :
 			vbos[kNull] 	= fmt.getVBO(freq);
 			formats[kNull]	= new GeometryFormat(fmt);
 			counters[kNull]	= 1;
@@ -250,8 +369,13 @@
 		}
 	}
 
+	/**
+	\fn GeometryInstance::GeometryInstance(const GeometryInstance& instance)
+	\brief GeometryInstance copy constructor.
+	\param instance The source format.
+	**/
 	GeometryInstance::GeometryInstance(const GeometryInstance& instance)
-	 : id(instance.id)	
+	 : id(instance.id)
 	{
 		counters[id]++;
 	}
@@ -260,7 +384,7 @@
 	{
 		counters[id]--;
 
-		// If no more reference : 
+		// If there is no reference anymore :
 		if(counters[id]<=0)
 		{
 			delete vbos[id];
@@ -270,22 +394,47 @@
 		}
 	}
 
+	/**
+	\fn const GeometryFormat& GeometryInstance::format(void) const
+	\brief Access to the format of this instance.
+	\return A read-only access to the GeometryFormat object.
+	**/
 	const GeometryFormat& GeometryInstance::format(void) const
 	{
 		return (*formats[id]);
 	}
 
+	/**
+	\fn const HdlVBO& GeometryInstance::vbo(void) const
+	\brief Access to the VBO of this instance.
+	\return A read-only access to the HdlVBO object.
+	**/
+	const HdlVBO& GeometryInstance::vbo(void) const
+	{
+		return (*vbos[id]);
+	}
+
+	/**
+	\fn void GeometryInstance::draw(void)
+	\brief Draw this instance.
+	**/
 	void GeometryInstance::draw(void)
 	{
 		vbos[id]->draw();
 	}
 
-// Geometries : 
-	// Standard quad : 
+// Geometries :
+	using namespace GeometryPrimitives;
+
+	// Standard quad :
+		/**
+		\fn StandardQuadGeometry::StandardQuadGeometry(void)
+		\brief StandardQuadGeometry constructor.
+		**/
 		StandardQuadGeometry::StandardQuadGeometry(void)
-		 : GeometryFormat(GeometryQuad, 2, 4, GL_QUADS, true)
+		 : GeometryFormat(2, 4, GL_QUADS, true)
 		{
-			// Create the geometry : 
+			// Create the geometry :
 			addVertex2D(-1.0,  1.0, 0.0, 1.0);
 			addVertex2D(-1.0, -1.0, 0.0, 0.0);
 			addVertex2D( 1.0,  1.0, 1.0, 1.0);
@@ -297,8 +446,15 @@
 			elements.push_back(2);
 		}
 
+	// 2D Grid of points
+		/**
+		\fn PointsGrid2DGeometry::PointsGrid2DGeometry(int w, int h)
+		\brief PointsGrid2DGeometry constructor.
+		\param w Number of points along the X dimension.
+		\param h Number of points along the Y dimension.
+		**/
 		PointsGrid2DGeometry::PointsGrid2DGeometry(int w, int h)
-		 : GeometryFormat(GeometryPointsGrid, 2, 1, GL_POINTS, false)
+		 : GeometryFormat(2, 1, GL_POINTS, false)
 		{
 			for(int i=0; i<h; i++)
 			{
@@ -309,10 +465,18 @@
 			}
 		}
 
-		PointsGrid3DGeometry::PointsGrid3DGeometry(int w, int h, int z)
-		 : GeometryFormat(GeometryPointsGrid, 3, 1, GL_POINTS, false)
+	// 3D Grid of points
+		/**
+		\fn PointsGrid3DGeometry::PointsGrid3DGeometry(int w, int h, int d)
+		\brief PointsGrid2DGeometry constructor.
+		\param w Number of points along the X dimension.
+		\param h Number of points along the Y dimension.
+		\param d Number of points along the Z dimension.
+		**/
+		PointsGrid3DGeometry::PointsGrid3DGeometry(int w, int h, int d)
+		 : GeometryFormat(3, 1, GL_POINTS, false)
 		{
-			for(int k=0; k<z; k++)
+			for(int k=0; k<d; k++)
 			{
 				for(int i=0; i<h; i++)
 				{
@@ -323,4 +487,3 @@
 				}
 			}
 		}
-

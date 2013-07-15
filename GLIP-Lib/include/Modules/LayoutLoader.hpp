@@ -94,6 +94,11 @@ The script must be structured with the following commands (but no special order 
 If the format is not found in the required element, it is searched in the known formats. You can also use character '*' to keep or replace some of the parameters. <BR>
 <b>REQUIRED_FORMAT</b>:<i>format_name</i>(<i>required_format_name</i> [, <i>integer width / *</i>, <i>integer height / *</i>, <i>GLEnum mode / *</i>, <i>GLEnum depth / *</i>, <i>GLEnum minFiltering / *</i>, <i>GLEnum maxFiltering / *</i>, <i>GLEnum sWrapping / *</i>, <i>GLEnum TWrapping / *</i>, <i>integer maximum_mipmap_level / *</i>])
 
+- Geometry : <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GeometryType</i>, <i>param1</i>, ... <i>paramN</i>) <BR>
+Examples : <b>GEOMETRY</b>:<i>some2DGrid</i>(<i>GRID_2D</i>, <i>640</i>, <i>480</i>) <BR>
+<b>GEOMETRY</b>:<i>some3DGrid</i>(<i>GRID_3D</i>, <i>640</i>, <i>480</i>, <i>3</i>) <BR>
+
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>
 {
@@ -134,6 +139,9 @@ If the format is not found in the required element, it is searched in the known 
 
 - Main pipeline layout (the layout at the end of the loading stage) : <BR>
 <i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b>.
+
+- Add to the search path : <BR>
+<b>ADD_PATH</b>(/some/path/) <BR>
 
 - Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
 <b>INCLUDE_FILE</b>(<i>string filename</i>);

@@ -94,7 +94,7 @@
 		InputDeviceLayout l("ProceduralInput");
 
 		if(varsOut.size()==0)
-			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have at least one output (" + to_string(varsOut.size()) + " were found).", __FILE__, __LINE__);
+			throw Exception("ProceduralInput::ProceduralInput - The Fragment shader must have at least one output (none found).", __FILE__, __LINE__);
 
 		for(int i=0; i<varsOut.size(); i++)
 			l.addOutputPort(varsOut[i]);

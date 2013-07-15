@@ -182,7 +182,7 @@
 		if(geometry!=NULL)
 			geometryFormat = new GeometryFormat(*geometry);
 		else
-			geometryFormat = new StandardQuadGeometry;
+			geometryFormat = new GeometryPrimitives::StandardQuadGeometry;
 
 		// Analyze sources to get the variables and the outputs
 		std::vector<std::string> varsIn  = fragmentSource->getInputVars();
