@@ -36,7 +36,7 @@
 
 			bool hasOutput(void) const;
 			HdlTexture& currentOutput(void);
-			void compile(const std::string& code, const std::vector<std::string>& paths);
+			void compile(const std::string& pathToCode, const std::vector<std::string>& paths);
 			
 		signals : 
 			void requireRedraw(void);

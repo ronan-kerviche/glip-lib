@@ -42,54 +42,48 @@
 			Highlighter(QTextDocument *parent = 0);
 	};
 
-	class CodeEditor : public QPlainTextEdit
+	class CodeEditor : public QPlainTextEdit 
 	{
 		Q_OBJECT
-
-		private:
+		
+		private : 
+			bool		firstModification,
+					documentModified;
 			QString 	currentFilename;
-			QFont 		font;
+			QFont		font;
 			Highlighter 	*highLighter;
 			QWidget 	*lineNumberArea;
-			bool 		modified;
 
-			bool maybeSave(void);
-			bool loadFile(const QString& fileName);
-			bool saveFile(const QString& fileName);
-			void setCurrentFile(const QString &fileName);
-			void ensureOneLine(void);
-
-		protected:
+		protected :
 			void resizeEvent(QResizeEvent *event);
+			void keyPressEvent(QKeyEvent* e);
 
-			private slots:
+		private slots:
 			void updateLineNumberAreaWidth(int newBlockCount);
 			void highlightCurrentLine();
 			void updateLineNumberArea(const QRect &, int);
-
-		private slots :
 			void documentWasModified(void);
-
-		public slots:
-			bool open(void);
-			bool save(void);
-			bool saveAs(void);
-
-		public:
+			
+		public :
 			CodeEditor(QWidget *parent = 0);
 			~CodeEditor(void);
 
-			void lineNumberAreaPaintEvent(QPaintEvent *event);
-			int lineNumberAreaWidth();
-
-			bool canBeClosed(void);
+			int lineNumberAreaWidth(void) const;
+			bool empty(void) const;
+			const QString& filename(void) const;
+			QString path(void) const;
 			QString getTitle(void) const;
-			std::string getCode(void) const;
-			std::string getPath(void) const;
-			bool openFile(const QString& filename);
+			bool isModified(void) const;
+			bool canBeClosed(void);
+			void setFilename(const QString& newFilename);
+			bool load(void);
+			bool save(void);
+			void insert(const QString& text);
 
-		signals : 
-			void titleChanged(void);
+			void lineNumberAreaPaintEvent(QPaintEvent *event);
+
+		signals :
+			void titleChanged(void); 
 	};
 
 	class LineNumberArea : public QWidget
@@ -129,8 +123,61 @@
 			PathWidget(QWidget* parent=NULL);
 			~PathWidget(void);
 
-			void addPath(const std::string&);
+			void addPath(std::string);
 			const std::vector<std::string>& getPaths(void) const;
+	};
+
+	class TemplateMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			enum CodeTemplates
+			{
+				tplAddPath,
+				tplIncludeFile,
+				tplRequiredFormat,
+				tplRequiredPipeline,
+				tplTextureFormat,
+				tplSharedSource,
+				tplShaderSource,
+				tplShaderSourceGLSL,
+				tplIncludeSharedSource,
+				tplLinkShader,
+				tplFilterLayout,
+				tplPipelineLayout,
+				tplMainPipelineLayout,
+				tplInputPorts, 
+				tplOutputPorts,
+				tplFilterInstance,
+				tplPipelineInstance, 
+				tplConnection,
+				tplFullPipeline,
+				tplFullMainPipeline,	
+				numTemplates,
+				tplUnknown
+			};
+	
+			static const char* templatesName[numTemplates];
+			static const char* templatesCode[numTemplates];
+			static const char* templatesCodeWithHelp[numTemplates];
+
+			CodeTemplates lastInsertionID;
+			QSignalMapper signalMapper;
+			QAction addComments;
+			QAction* templatesActions[numTemplates];
+
+		private slots :
+			void insertTemplateCalled(int k);
+
+		public : 
+			TemplateMenu(QWidget* parent=NULL);
+			~TemplateMenu(void);
+
+			QString getTemplateCode(void);
+
+		signals : 
+			void insertTemplate(void);
 	};
 
 	class CodeEditorsPannel : public QWidget
@@ -141,12 +188,16 @@
 			QVBoxLayout		layout;
 			QTabWidget		widgets;
 			QMenuBar 		menuBar;
+			QMenu			fileMenu;
+			TemplateMenu		templateMenu;
 			QAction 		newTabAct,
 						saveAct,
 						saveAsAct,
+						saveAllAct,
 						openAct,
 						refreshAct,
 						closeTabAct,
+						closeAllAct,
 						showPathWidget;
 			PathWidget		pathWidget;
 			QVector<CodeEditor*>	tabs;
@@ -156,16 +207,19 @@
 			void open(void);
 			void save(void);
 			void saveAs(void);
+			void saveAll(void);
 			void refresh(void);
 			void closeTab(void);
+			void closeAll(void);
 			void switchPathWidget(void);
 			void updateTitles(void);
+			void insertTemplate(void);
 
 		public :
 			CodeEditorsPannel(QWidget* parent);
 			~CodeEditorsPannel(void);
 
-			std::string getCurrentCode(void) const;
+			std::string getCurrentFilename(void) const;
 			const std::vector<std::string>& getPaths(void);
 			bool canBeClosed(void);
 

@@ -116,9 +116,9 @@
 			throw Exception("LibraryInterface::currentOutput - Internal error : no currently associated texture.", __FILE__, __LINE__);
 	}
 
-	void LibraryInterface::compile(const std::string& code, const std::vector<std::string>& paths)
+	void LibraryInterface::compile(const std::string& pathToCode, const std::vector<std::string>& paths)
 	{
-		if(code.empty())
+		if(pathToCode.empty())
 			return ; //Nothing to do...
 
 		bool success = true;
@@ -136,7 +136,7 @@
 			ressourceTab.appendFormats(pipelineLoader);
 			
 			// Load : 
-			mainPipeline = pipelineLoader(code, "");
+			mainPipeline = pipelineLoader(pathToCode, "");
 		}
 		catch(Exception& e)
 		{

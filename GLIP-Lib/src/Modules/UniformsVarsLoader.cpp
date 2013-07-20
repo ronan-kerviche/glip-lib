@@ -392,7 +392,7 @@
 	/**
 	\fn void UniformsVarsLoader::load(std::string source, bool replace)
 	\brief Loads a set of uniforms variables for one, or multiple, pipelines.
-	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\n').
+	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\\n').
 	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
 	**/
 	void UniformsVarsLoader::load(std::string source, bool replace)

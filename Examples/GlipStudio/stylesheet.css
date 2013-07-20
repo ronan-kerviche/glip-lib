@@ -49,17 +49,29 @@
 	}
 
 /* MENU */
-	/*QMenu::item
+	QMenu::item
 	{
-		background: #333333;
-		color: #FFFFFF;
+		background: #313131;
+		color: #CCCCCC;
 	}
 
-	QMenu:hover
+	QMenu::item:disabled
 	{
-		background: #444444;
+		background: #313131;
+		color: #111111;
+	}
+
+	QMenu::item:selected:disabled
+	{
+		background: #484848;
+		color: #222222;
+	}
+
+	QMenu::item:selected
+	{
+		background: #484848;
 		color: #FFFFFF;
-	}*/
+	}
 
 /* PLAIN TEXT EDIT */
 	QPlainTextEdit

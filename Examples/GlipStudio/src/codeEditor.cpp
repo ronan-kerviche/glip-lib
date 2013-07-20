@@ -83,10 +83,10 @@
 			multiLineCommentFormat.setForeground(QColor(51,153,255));
 
 		// Quotation ; 
-			quotationFormat.setForeground(QColor(51,255,51));
+			/*quotationFormat.setForeground(QColor(51,255,51));
 			rule.pattern = QRegExp("\".*\"");
 			rule.format = quotationFormat;
-			highlightingRules.append(rule);
+			highlightingRules.append(rule);*/
 
 		// function : 
 			/*functionFormat.setFontItalic(true);
@@ -138,14 +138,14 @@
 
 // CodeEditor
 	CodeEditor::CodeEditor(QWidget *parent)
-	 : QPlainTextEdit(parent), modified(false)
+	 : QPlainTextEdit(parent), currentFilename(""), firstModification(true), documentModified(false)
 	{
 		lineNumberArea = new LineNumberArea(this);
 
-		connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
+		connect(this, SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
 		connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
-		connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));		
-		connect(document(), SIGNAL(contentsChanged()), this, SLOT(documentWasModified()));
+		connect(this, SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
+		connect(document(), SIGNAL(contentsChanged()), 	this, SLOT(documentWasModified()));
 
 		updateLineNumberAreaWidth(0);
 
@@ -169,7 +169,7 @@
 		delete highLighter;
 	}
 
-	int CodeEditor::lineNumberAreaWidth()
+	int CodeEditor::lineNumberAreaWidth(void) const
 	{
 		int digits = std::floor( std::log10( qMax(1, blockCount()) ) ) + 1;
 
@@ -178,7 +178,7 @@
 		return space;
 	}
 
-	void CodeEditor::updateLineNumberAreaWidth(int /* newBlockCount */)
+	void CodeEditor::updateLineNumberAreaWidth(int newBlockCount)
 	{
 		setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 	}
@@ -194,12 +194,68 @@
 			updateLineNumberAreaWidth(0);
 	}
 
+	void CodeEditor::documentWasModified(void)
+	{
+		if(firstModification)
+			firstModification = false;
+		else if(!documentModified)
+		{
+			documentModified = true;
+			emit titleChanged();
+		}
+	}
+	
 	void CodeEditor::resizeEvent(QResizeEvent *e)
 	{
 		QPlainTextEdit::resizeEvent(e);
 
 		QRect cr = contentsRect();
 		lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+	}
+
+	void CodeEditor::keyPressEvent(QKeyEvent* e)
+	{
+		// Ensure multi-line tabulations : 
+		if(e->key()==Qt::Key_Tab || e->key()==Qt::Key_Backtab)
+		{
+			// Grab all the current selection : 
+			QString selectedText = textCursor().selectedText();
+
+			// Replace unicode : 
+			selectedText.replace(QString::fromWCharArray(L"\u2029"), "\n");
+
+			QTextCursor cursor = textCursor();
+
+			int start = cursor.selectionStart();
+			int end = cursor.selectionEnd();
+
+			cursor.setPosition(end, QTextCursor::KeepAnchor);
+			QTextBlock endBlock = cursor.block();
+
+			cursor.setPosition(start, QTextCursor::KeepAnchor);
+			QTextBlock block = cursor.block();
+
+			for(; block.isValid() && !(endBlock < block); block = block.next())
+			{
+				if (!block.isValid())
+					continue;
+
+				cursor.movePosition(QTextCursor::StartOfLine);
+				cursor.clearSelection();
+
+				if(e->key()==Qt::Key_Tab)
+					cursor.insertText("\t");
+				else
+				{
+					cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+					cursor.insertText( cursor.selectedText().replace("\t","") );
+				}
+				
+				cursor.movePosition(QTextCursor::NextBlock);
+			}
+		}
+		else // Otherwise, propagate : 
+			QPlainTextEdit::keyPressEvent(e);
 	}
 
 	void CodeEditor::highlightCurrentLine()
@@ -252,108 +308,121 @@
 			bottom = top + (int) blockBoundingRect(block).height();
 			++blockNumber;
 		}
-	}	
+	}
 
-	bool CodeEditor::open(void)
+	bool CodeEditor::empty(void) const
 	{
-		maybeSave();
+		return document()->isEmpty();
+	}
 
-		QString fileName = QFileDialog::getOpenFileName(this, tr("Open Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
-		
-		if(!fileName.isEmpty())
-			return loadFile(fileName);
+	const QString& CodeEditor::filename(void) const
+	{
+		return currentFilename;
+	}
+
+	QString CodeEditor::path(void) const
+	{
+		if(filename().isEmpty())
+			return "";
 		else
-			return false;
-	}
-
-	bool CodeEditor::save(void)
-	{
-		if(currentFilename.isEmpty())
-			return saveAs();
-		else
-			return saveFile(currentFilename);
-	}
-
-	bool CodeEditor::saveAs(void)
-	{
-		QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), QString(getPath().c_str()), tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
-		if (fileName.isEmpty())
-			return false;
-
-		return saveFile(fileName);
-	}
-
-	void CodeEditor::documentWasModified(void)
-	{
-		if(!modified && document()->isModified())
 		{
-			modified = true;
-			emit titleChanged(); // append !
+			QFileInfo path(filename());
+			return path.path() + "/";
 		}
 	}
 
-	bool CodeEditor::maybeSave(void)
+	QString CodeEditor::getTitle(void) const
 	{
-		if(modified)
+		QFileInfo path(filename());
+		QString fileName;
+		
+		if(path.exists())
+			fileName = path.fileName();
+		else
+			fileName = "Unnamed.ppl";
+
+		if( documentModified )
+			return fileName + " *";
+		else
+			return fileName;
+	}
+
+	bool CodeEditor::isModified(void) const
+	{
+		return documentModified;
+	}
+
+	bool CodeEditor::canBeClosed(void)
+	{
+		if(!documentModified)
+			return true;
+		else
 		{
 			QMessageBox::StandardButton ret;
-			ret = QMessageBox::warning(this, tr("Warning!"), tr("The document has been modified.\n Do you want to save your changes?"), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+			if(filename().isEmpty())
+				ret = QMessageBox::warning(this, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), QMessageBox::Discard | QMessageBox::Cancel);
+			else
+				ret = QMessageBox::warning(this, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(filename()), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
 			if (ret == QMessageBox::Save)
 				return save();
 			else if (ret == QMessageBox::Cancel)
 				return false;
+			else
+				return true;
 		}
-
-		return true;
 	}
 
-	void CodeEditor::ensureOneLine(void)
+	void CodeEditor::setFilename(const QString& newFilename)
 	{
-		// Make sure there is at least one '\n' :
-		if(!toPlainText().contains('\n'))
-			setPlainText(toPlainText()+"\n ");
+		currentFilename = newFilename;
 	}
 
-	bool CodeEditor::loadFile(const QString& fileName)
+	bool CodeEditor::load(void)
 	{
-		QFile file(fileName);
-
-		if (!file.open(QFile::ReadOnly | QFile::Text))
-		{
-			QMessageBox::warning(this, tr("Application"), tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()));
+		if(filename().isEmpty())
 			return false;
+		else
+		{
+			QFile file(filename());
+
+			if (!file.open(QFile::ReadOnly | QFile::Text))
+			{
+				QMessageBox::warning(this, tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(filename()).arg(file.errorString()));
+				return false;
+			}
+
+			QTextStream in(&file);
+			#ifndef QT_NO_CURSOR
+				QApplication::setOverrideCursor(Qt::WaitCursor);
+			#endif
+
+			// Prevent to understand a real modification :
+			bool prevState = this->blockSignals(true);
+
+			setPlainText(in.readAll());
+
+			this->blockSignals(prevState);
+
+			#ifndef QT_NO_CURSOR
+				QApplication::restoreOverrideCursor();
+			#endif
+
+			documentModified = false;
+			emit titleChanged();
+
+			return true;
 		}
-
-		QTextStream in(&file);
-		#ifndef QT_NO_CURSOR
-			QApplication::setOverrideCursor(Qt::WaitCursor);
-		#endif
-
-		// Prevent to understand a real modification :
-		modified = true;
-
-		setPlainText(in.readAll());
-
-		modified = false;
-
-		#ifndef QT_NO_CURSOR
-			QApplication::restoreOverrideCursor();
-		#endif
-
-		setCurrentFile(fileName);
-
-		return true;
 	}
 
-	bool CodeEditor::saveFile(const QString& fileName)
+	bool CodeEditor::save(void)
 	{
-		ensureOneLine();
-
-		QFile file(fileName);
+		QFile file(filename());
 
 		if (!file.open(QFile::WriteOnly | QFile::Text))
 		{
-			QMessageBox::warning(this, tr("CodeEditorDecorated::saveFile"),tr("Cannot write file %1:\n%2.").arg(fileName).arg(file.errorString()));
+			QMessageBox::warning(this, tr("Error : "),tr("Cannot write file %1 :\n%2.").arg(filename()).arg(file.errorString()));
 			return false;
 		}
 
@@ -369,68 +438,16 @@
 			QApplication::restoreOverrideCursor();
 		#endif
 
-		setCurrentFile(fileName);
-		modified = false;
+		documentModified = false;
 
 		emit titleChanged();
 
 		return true;
 	}
 
-	void CodeEditor::setCurrentFile(const QString &fileName)
+	void CodeEditor::insert(const QString& text)
 	{
-		currentFilename = fileName;
-		emit titleChanged();
-	}
-
-	bool CodeEditor::canBeClosed(void)
-	{
-		return maybeSave();
-	}
-
-	QString CodeEditor::getTitle(void) const
-	{
-		QFileInfo path(currentFilename);
-		QString fileName;
-		
-		if(path.exists())
-			fileName = path.fileName();
-		else
-			fileName = "Unnamed.ppl";
-
-		if( modified )
-			return fileName + " !";
-		else
-			return fileName;
-	}
-
-	std::string CodeEditor::getCode(void) const
-	{
-		return toPlainText().toStdString();
-	}
-
-	std::string CodeEditor::getPath(void) const
-	{
-		if(currentFilename.isEmpty())
-			return ".";
-		else
-		{
-			QFileInfo path(currentFilename);
-			QString str = path.path() + "/";
-
-			return str.toStdString();
-		}
-	}
-
-	bool CodeEditor::openFile(const QString& filename)
-	{
-		if(!filename.isEmpty())
-		{
-			maybeSave();
-			return loadFile(filename);
-		}
-		else
-			return false;
+		textCursor().insertText(text);
 	}
 
 // LineNumberArea 
@@ -471,11 +488,44 @@
 		layout.addWidget(&menuBar);
 		layout.addWidget(&data);
 
-		clearAll();
+		// Load path : 
+		std::fstream file;
+		file.open("./paths.txt", std::fstream::in);
+		
+		if(file.is_open() && file.good() && !file.fail())
+		{
+			addPath("./");
+
+			std::string 	line;
+
+			file.seekg(0, std::ios::beg);
+
+			while(std::getline(file,line))
+			{
+				// Insert the path : 
+				addPath(line);
+			}
+
+			file.close();
+		}
+		else
+			clearAll();
 	}
 
 	PathWidget::~PathWidget(void)
 	{
+		if(paths.size()>1)
+		{
+			// Write to file : 
+			std::fstream file;
+			file.open("./paths.txt", std::fstream::out | std::fstream::trunc);
+
+			for(int k=1; k<paths.size(); k++)
+				file << paths[k] << "\n";
+
+			file.close();
+		}
+
 		clearAll();
 	}
 
@@ -526,8 +576,20 @@
 		addPath("./");
 	}
 
-	void PathWidget::addPath(const std::string& newPath)
+	void PathWidget::addPath(std::string newPath)
 	{
+		if(newPath.empty())
+			return ;
+
+		// Cut : 
+		size_t p = newPath.find_last_not_of(" \t\r\n");
+		
+		if(p!=std::string::npos)
+			newPath = newPath.substr(0, p+1);
+
+		if(newPath[newPath.size()-1]!='/')
+			newPath += '/';
+
 		// Find if a double exists : 
 		std::vector<std::string>::iterator it = std::find(paths.begin(), paths.end(), newPath);
 
@@ -543,33 +605,155 @@
 		return paths;
 	}
 
+// TemplateMenu : 
+	const char* TemplateMenu::templatesName[numTemplates]		= { 	"Add path",
+										"Include file",
+										"Required format", 
+										"Required pipeline", 
+										"Texture format",
+										"Shared source", 
+										"Shader source",
+										"Shader source + GLSL fragment",
+										"Include shared source",
+										"Include shader",
+										"Filter layout", 
+										"Pipeline layout", 
+										"Main pipeline layout",
+										"Input ports", 
+										"Output ports", 
+										"Filter instance",
+										"Pipeline instance", 
+										"Connection",
+										"Full Pipeline structure",
+										"Full MainPipeline structure"
+									};
+
+	const char* TemplateMenu::templatesCode[numTemplates]		= {	"ADD_PATH( )\n",
+										"INCLUDE_FILE( )\n",
+										"REQUIRED_FORMAT: ( )\n",
+										"REQUIRED_PIPELINE: ( )\n",
+										"TEXTURE_FORMAT: ( , , GL_RGB, GL_UNSIGNED_BYTE)\n",
+										"SHARED_SOURCE: \n{\n\t\n}\n",
+										"SHADER_SOURCE: \n{\n\t\n}\n",
+										"SHADER_SOURCE: \n{\n\t#version 130\n\t\n\tuniform sampler2D ;\n\tout vec4 ;\n\t\n\tvoid main()\n\t{\n\t\tvec2 pos = gl_TexCoord[0].st;\n\t\tvec4 col = textureLod( , pos, 0);\n\t\n\t\t = col;\n\t}\n}\n",
+										"INCLUDE_SHARED_SOURCE:\n",
+										"SHADER_SOURCE: ()\n",
+										"FILTER_LAYOUT: ( , )\n",
+										"PIPELINE_LAYOUT: \n{\n\t\n}\n",
+										"PIPELINE_MAIN: \n{\n\t\n}\n",
+										"INPUT_PORTS( )\n",
+										"OUTPUT_PORTS( )\n",
+										"FILTER_INSTANCE: ( )\n",
+										"PIPELINE_INSTANCE: ( )\n",
+										"CONNECTION( , , , )\n",
+										"PIPELINE_LAYOUT: \n{\n\tINPUT_PORTS( )\n\tOUTPUT_PORTS( )\n\n\tFILTER_INSTANCE: ( )\n\n\tCONNECTION( , , , )\n\tCONNECTION( , , , )\n}\n",
+										"PIPELINE_MAIN: \n{\n\tINPUT_PORTS( )\n\tOUTPUT_PORTS( )\n\n\tFILTER_INSTANCE: ( )\n\n\tCONNECTION( , , , )\n\tCONNECTION( , , , )\n}\n"
+									};
+
+	const char* TemplateMenu::templatesCodeWithHelp[numTemplates]	= {	"ADD_PATH( /* path */ )\n",
+										"INCLUDE_FILE( /* filename */ )\n",
+										"REQUIRED_FORMAT: /* name to use */( /* required format name */ )\n",
+										"REQUIRED_PIPELINE: /* name to use */ ( /* required pipeline name */ )\n",
+										"TEXTURE_FORMAT: /* name */ ( /* width */, /* height */, GL_RGB, GL_UNSIGNED_BYTE)\n",
+										"SHARED_SOURCE: /* name */\n{\n\t/* Code */\n}\n",
+										"SHADER_SOURCE: /* name */\n{\n\t/* Code */\n}\n",
+										"SHADER_SOURCE: \n{\n\t#version 130\n\t\n\tuniform sampler2D /* input texture name */;\n\tout vec4 /* output texture name */;\n\t\n\t// uniform vec3 someVariableYouWantToModify = vec3(0.0, 0.0, 0.0);\n\t\n\tvoid main()\n\t{\n\t\t// The current fragment position : \n\t\tvec2 pos = gl_TexCoord[0].st;\n\t\t// Read the base level of the texture at the current position : \n\t\tvec4 col = textureLod(/* input texture name */, pos, 0);\n\t\n\t\t/* output texture name */ = col;\n\t}\n}\n",
+										"INCLUDE_SHARED_SOURCE:/* shared source name */\n",
+										"SHADER_SOURCE: /* name */( /* filename */ )\n",
+										"FILTER_LAYOUT: ( /* output texture format name */, /* shader name */)\n",
+										"PIPELINE_LAYOUT: /* name */\n{\n\t/* structure code */\n}\n",
+										"PIPELINE_MAIN: /* name */\n{\n\t/* structure code */\n}\n",
+										"INPUT_PORTS( /* ports names list */ )\n",
+										"OUTPUT_PORTS( /* ports names list */ )\n",
+										"FILTER_INSTANCE: /* instance name */ ( /* filter layout name */ )\n",
+										"PIPELINE_INSTANCE: /* instance name */ ( /* pipeline layout name */ )\n",
+										"CONNECTION( /* source instance name or THIS (for input port) */, /* port name */, /* source instance name or THIS (for output port) */, /* port name */)\n",
+										"PIPELINE_LAYOUT: /* name */\n{\n\tINPUT_PORTS( /* list of ports names */ )\n\tOUTPUT_PORTS( /* list of ports names */ )\n\n\tFILTER_INSTANCE: /* instance name */ ( /* layout name */ )\n\n\t// Note that in the case that your connections names are not ambiguous, you are allowed to not declare any CONNETION. Connections will be made automatically.\n\tCONNECTION( /* source instance name or THIS (for input ports) */, /* port name */, /* source instance name or THIS (for output ports) */, /* port name */ )\n\tCONNECTION( /* source instance name or THIS (for input port) */, /* port name */, /* source instance name or THIS (for output port) */, /* port name */ )\n}\n",
+										"PIPELINE_MAIN: /* name */\n{\n\tINPUT_PORTS( /* list of ports names */ )\n\tOUTPUT_PORTS( /* list of ports names */ )\n\n\tFILTER_INSTANCE: /* instance name */ ( /* layout name */ )\n\n\t// Note that in the case that your connections names are not ambiguous, you are allowed to not declare any CONNETION. Connections will be made automatically.\n\tCONNECTION( /* source instance name or THIS (for input ports) */, /* port name */, /* source instance name or THIS (for output ports) */, /* port name */ )\n\tCONNECTION( /* source instance name or THIS (for input port) */, /* port name */, /* source instance name or THIS (for output port) */, /* port name */ )\n}\n"
+									};
+
+	TemplateMenu::TemplateMenu(QWidget* parent)
+	 : QMenu("Insert Template", parent), signalMapper(this),  addComments("Option : insert comments", this), lastInsertionID(tplUnknown)
+	{
+		addComments.setCheckable(true);
+		addAction(&addComments);
+
+		// Init : 
+		for(int k=0; k<numTemplates; k++)
+		{
+			templatesActions[k] = new QAction( QString(templatesName[k]), this );
+			addAction(templatesActions[k]);
+			signalMapper.setMapping(templatesActions[k], k);
+
+			connect(templatesActions[k], SIGNAL(triggered()), &signalMapper, SLOT(map()));
+		}
+
+		connect(&signalMapper, SIGNAL(mapped(int)), this, SLOT(insertTemplateCalled(int)));
+
+		addComments.setChecked(true);
+	}
+
+	TemplateMenu::~TemplateMenu(void) 
+	{
+		for(int k=0; k<numTemplates; k++)
+			delete templatesActions[k];
+	}
+
+	void TemplateMenu::insertTemplateCalled(int k)
+	{
+		lastInsertionID = static_cast<CodeTemplates>(k);
+		emit insertTemplate();
+	}
+
+	QString TemplateMenu::getTemplateCode(void)
+	{
+		if(lastInsertionID>=0 && lastInsertionID<numTemplates)
+		{
+			QString res;
+
+			if(addComments.isChecked())
+				res = templatesCodeWithHelp[lastInsertionID];
+			else
+				res = templatesCode[lastInsertionID];
+
+			lastInsertionID = tplUnknown;
+			return res;
+		}
+		else
+		{
+			lastInsertionID = tplUnknown;
+			return "";
+		}
+	}
+
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), widgets(this),
-	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), openAct(tr("&Open In New Tab"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Show paths"),this), pathWidget(this)
+	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), templateMenu(this), 
+	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this)
 	{
 		// Add the actions : 
 		newTabAct.setShortcuts(QKeySequence::New);
-		newTabAct.setStatusTip(tr("Open new tab ..."));
 		connect(&newTabAct, SIGNAL(triggered()), this, SLOT(newTab()));
 
 		openAct.setShortcuts(QKeySequence::Open);
-		openAct.setStatusTip(tr("Open file ..."));
 		connect(&openAct, SIGNAL(triggered()), this, SLOT(open()));
 
 		saveAct.setShortcuts(QKeySequence::Save);
-		saveAct.setStatusTip(tr("Save file ..."));
 		connect(&saveAct, SIGNAL(triggered()), this, SLOT(save()));
 
 		saveAsAct.setShortcuts(QKeySequence::SaveAs);
-		saveAsAct.setStatusTip(tr("Save file to ..."));
 		connect(&saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
+
+		connect(&saveAllAct, SIGNAL(triggered()), this, SLOT(saveAll()));
+
+		connect(&closeAllAct, SIGNAL(triggered()), this, SLOT(closeAll()));
+
+		connect(&templateMenu, SIGNAL(insertTemplate()), this, SLOT(insertTemplate()));
 
 		QList<QKeySequence> refreshShortcuts;
 		refreshShortcuts.push_back(QKeySequence(tr("Ctrl+r")));
 		refreshShortcuts.push_back(QKeySequence(tr("F5")));
 		refreshAct.setShortcuts(refreshShortcuts);
-		refreshAct.setStatusTip(tr("Refresh"));
 		connect(&refreshAct, SIGNAL(triggered()), this, SLOT(refresh()));
 
 		closeTabAct.setStatusTip(tr("Close tab"));
@@ -582,12 +766,17 @@
 		widgets.setMovable(true);
 
 		// Menus :
-		menuBar.addAction(&newTabAct);
-		menuBar.addAction(&openAct);
-		menuBar.addAction(&saveAct);
-		menuBar.addAction(&saveAsAct);
+		fileMenu.addAction(&newTabAct);
+		fileMenu.addAction(&openAct);
+		fileMenu.addAction(&saveAct);
+		fileMenu.addAction(&saveAsAct);
+		fileMenu.addAction(&saveAllAct);
+		fileMenu.addAction(&closeTabAct);
+		fileMenu.addAction(&closeAllAct);
+	
+		menuBar.addMenu(&fileMenu);
+		menuBar.addMenu(&templateMenu);
 		menuBar.addAction(&refreshAct);
-		menuBar.addAction(&closeTabAct);
 		menuBar.addAction(&showPathWidget);
 
 		// Add the first tab : 
@@ -628,8 +817,7 @@
 		if(widgets.count()>0)
 		{
 			int c = widgets.currentIndex();
-			currentPath = tabs[c]->getPath().c_str();
-			currentPath += "/";
+			currentPath = tabs[c]->path();
 		}
 		else
 			currentPath = "./";
@@ -640,17 +828,24 @@
 		{
 			if(!filenames[k].isEmpty())
 			{
-				newTab();
+				if(widgets.count() > 0)
+				{
+					int c = widgets.currentIndex();
+					if(!tabs[c]->empty())
+						newTab();
+				}
+				else
+					newTab();
+
 				int c = widgets.currentIndex();
 		
-				if(!tabs[c]->openFile(filenames[k]))
+				tabs[c]->setFilename( filenames[k] );
+				if(!tabs[c]->load())
 					closeTab();
 				else
 				{
 					// Append the path : 
-					QFileInfo path(filenames[k]);
-					QString str = path.path() + "/";
-					pathWidget.addPath(str.toStdString());
+					pathWidget.addPath(tabs[c]->path().toStdString());
 				}
 			}
 		}
@@ -661,6 +856,19 @@
 		if(widgets.count() > 0)
 		{
 			int c = widgets.currentIndex();
+
+			if(tabs[c]->filename().isEmpty())
+			{
+				QString currentPath = tabs[c]->path();
+
+				QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
+
+				if(fileName.isEmpty())
+					return ;
+				else
+					tabs[c]->setFilename(fileName);
+			}
+
 			tabs[c]->save();
 		}
 	}
@@ -670,8 +878,48 @@
 		if(widgets.count() > 0)
 		{
 			int c = widgets.currentIndex();
-			tabs[c]->saveAs();
+		
+			QString currentPath = tabs[c]->path();
+	
+			QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
+		
+			if(!fileName.isEmpty())
+			{
+				tabs[c]->setFilename(fileName);
+				tabs[c]->save();
+			}
 		}
+	}
+
+	void CodeEditorsPannel::saveAll(void)
+	{
+		int original = widgets.currentIndex();
+
+		for(int k=0; k<tabs.size(); k++)
+		{
+			if(tabs[k]->filename().isEmpty())
+			{
+				widgets.setCurrentIndex(k);
+
+				QString currentPath = tabs[k]->path();
+
+				QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
+
+				if(!fileName.isEmpty())
+				{
+					tabs[k]->setFilename(fileName);
+					tabs[k]->save();
+				}
+			}
+			else
+			{
+				tabs[k]->save();
+				widgets.setCurrentIndex(k);
+			}
+		}
+
+		if(!tabs.empty())
+			widgets.setCurrentIndex(original);
 	}
 
 	void CodeEditorsPannel::refresh(void)
@@ -696,12 +944,28 @@
 		}
 	}
 
+	void CodeEditorsPannel::closeAll(void)
+	{
+		for(int k=0; k<tabs.size(); k++)
+		{
+			widgets.setCurrentIndex(k);
+
+			if(tabs[k]->canBeClosed())
+			{
+				widgets.removeTab(k);
+				delete tabs[k];
+
+				tabs.erase(tabs.begin() + k);
+			}
+		}
+	}
+
 	void CodeEditorsPannel::switchPathWidget(void)
 	{
 		if(pathWidget.isVisible())
 		{
 			pathWidget.hide();
-			showPathWidget.setText("Show paths");			
+			showPathWidget.setText("Paths");			
 		}
 		else
 		{
@@ -716,13 +980,26 @@
 			widgets.setTabText(k, tabs[k]->getTitle());
 	}
 
-	std::string CodeEditorsPannel::getCurrentCode(void) const
+	void CodeEditorsPannel::insertTemplate(void)
 	{
 		if(widgets.count() > 0)
 		{
 			int c = widgets.currentIndex();
 
-			return tabs[c]->getCode();
+			tabs[c]->insert( templateMenu.getTemplateCode() );
+		}
+	}
+
+	std::string CodeEditorsPannel::getCurrentFilename(void) const
+	{
+		if(widgets.count() > 0)
+		{
+			int c = widgets.currentIndex();
+
+			if(!tabs[c]->empty())
+				return tabs[c]->filename().toStdString();
+			else 
+				return "";
 		}
 		else
 			return "";	
@@ -735,7 +1012,7 @@
 		{
 			int c = widgets.currentIndex();
 
-			pathWidget.addPath( tabs[c]->getPath() );
+			pathWidget.addPath( tabs[c]->path().toStdString() );
 		}
 
 		return pathWidget.getPaths();
@@ -746,7 +1023,10 @@
 		bool test = true;
 
 		for(int i=0; i<tabs.size() && test; i++)
-			test = test && tabs[i]->canBeClosed();
+		{
+			widgets.setCurrentIndex(i);
+			test = test && tabs[i]->canBeClosed();	
+		}
 
 		return test;
 	}

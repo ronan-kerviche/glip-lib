@@ -121,26 +121,62 @@
 			associatedKeywords.push_back( getKeyword( (*it).strKeyword ) );
 	}
 
-	bool LayoutLoader::fileExists(const std::string& filename)
+	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool test)
 	{
-		std::ifstream tmp(filename.c_str());
-		return tmp.good();
+		std::ifstream file;
+	
+		file.open(filename.c_str());
+
+		if(file.is_open() && file.good() && !file.fail())
+		{
+			std::string 	buffer,	
+					line;
+
+			file.seekg(0, std::ios::beg);
+
+			while(std::getline(file,line))
+			{
+				buffer += line;
+				buffer += "\n";
+			}
+
+			file.close();
+
+			if(test)
+				return source!=buffer;
+			else
+			{
+				source = buffer;
+				return true;
+			}
+		}
+		else
+			return false;
 	}
 
 	void LayoutLoader::loadFile(const std::string& filename, std::string& content, std::string& usedPath)
 	{
-		// New version : check all path :
+		bool oneLoaded = false;
+		std::string source;
+
+		// Check all path :
 		std::vector<std::string> possiblePaths;
 
 		// Blank :
-		if( fileExists( filename ) )
+		if( fileExists( filename, source, oneLoaded ) )
+		{
 			possiblePaths.push_back("");
+			oneLoaded = true;
+		}
 
 		// From dynamic path :
 		for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 		{
-			if( fileExists( *it + filename ) )
+			if( fileExists( *it + filename, source, oneLoaded ) )
+			{
 				possiblePaths.push_back( *it );
+				oneLoaded = true;
+			}
 		}
 
 		if(possiblePaths.empty())
@@ -154,7 +190,7 @@
 		}
 		else if(possiblePaths.size()>1)
 		{
-			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations : ";
+			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ";
 
 			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
 				msg  += "\n-> " + *it;
@@ -164,25 +200,10 @@
 		//else
 
 		usedPath = possiblePaths.front();
-		std::string realFilename = usedPath + filename;
-
-		// Else, open the file :
-		std::fstream file;
-		file.open(realFilename.c_str());
-
+		//std::string realFilename = usedPath + filename;
+		
 		content.clear();
-
-		// Set starting position
-		file.seekg(0, std::ios::beg);
-
-		std::string line;
-		while(std::getline(file,line))
-		{
-			content += line;
-			content += "\n";
-		}
-
-		file.close();
+		content = source;
 	}
 
 	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
@@ -1020,7 +1041,7 @@
 	void LayoutLoader::clearPaths(void)
 	{
 		staticPaths.clear();
-		staticPaths.push_back("./");
+		//staticPaths.push_back("./");
 	}
 
 	/**
@@ -1030,7 +1051,7 @@
 	**/
 	void LayoutLoader::addToPaths(const std::string& p)
 	{
-		if(!p.empty())
+		if(!p.empty() && p!="./")
 		{
 			removeFromPaths(p);
 			staticPaths.push_back(p);
@@ -1076,6 +1097,9 @@
 	__ReadOnly_PipelineLayout LayoutLoader::operator()(const std::string& source)
 	{
 		clean();
+
+		if(source.empty())
+			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__);
 
 		bool isAFile = false;
 		std::string content;

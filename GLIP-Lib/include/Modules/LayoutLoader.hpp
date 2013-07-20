@@ -266,7 +266,7 @@ Loading Example :
 
 				void 	clean(void);
 				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords);
-				bool	fileExists(const std::string& filename);
+				bool	fileExists(const std::string& filename, std::string& source, const bool test=false);
 				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
 				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
 				void	enhanceShaderSource(std::string& str);

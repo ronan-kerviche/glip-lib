@@ -1,5 +1,16 @@
 // Colors library : 
 
+/*
+		const float XD65 = 95.02;
+		const float YD65 = 100.00;
+		const float ZD65 = 108.82;
+		const float xD65 = 0.31271;
+		const float yD65 = 0.32902;
+		const float zD65 = 0.35827;
+		const float UPD65 = 0.19783;
+		const float VPD65 = 0.46833;
+*/
+
 SHARED_SOURCE:ColorPrimitives
 {
 	void RGBToHSV( in vec3 rgb, out vec3 hsv )
@@ -66,80 +77,63 @@ SHARED_SOURCE:ColorPrimitives
 	}
 
 	// From XYZ to ...
-	void XYZToxyz(double& v0, double& v1, double& v2)
+	void XYZToxyz(inout vec3 col)
 	{
-		double 	X = v0,
-			Y = v1,
-			Z = v2;
-		double	x = 0.0,
-			y = 0.0,
-			z = 0.0;
-		double  s = X+Y+Z;
+		float  s = col.x + col.y + col.z;
 
 		if(s!=0.0)
 		{
-			x = X/s;
-			y = Y/s;
-			z = Z/s;
+			col.x = col.x/s;
+			col.y = col.y/s;
+			col.z = col.z/s;
 		}
-		// else x = y = z = 0.0;
-
-		v0 = x;
-		v1 = y;
-		v2 = z;
+		else
+			col = vec3(0.0, 0.0, 0.0);
 	}
 
-	void XYZToLsUsVs(double& v0, double& v1, double& v2)
+	void XYZToLsUsVs(inout vec3 col)
 	{
-		double	X = v0,
-			Y = v1,
-			Z = v2;
-		double 	Ls = 0.0,
-			Us = 0.0,
-			Vs = 0.0;
+		const float YD65 = 100.00;
+		const float UPD65 = 0.19783;
+		const float VPD65 = 0.46833;
+
+		vec3 original = col;
+		col = vec3(0.0, 0.0, 0.0);
 
 		// Ls
-		if(Y/YD65 < 0.008856)
-			Ls = 903.3 * Y/YD65;
+		if(original.y/YD65 < 0.008856)
+			col.x = 903.3 * original.y/YD65;
 		else
-			Ls = 116.0 * pow(Y/YD65,1.0/3.0) - 16.0;
+			col.x = 116.0 * pow(original.y/YD65,1.0/3.0) - 16.0;
 
 		// Us
-			Us = 13.0 * Ls * ( 4.0*X/(X+15.0*Y+3.0*Z) - UPD65);
+			col.y = 13.0 * col.x * ( 4.0*original.x/(original.x+15.0*original.y+3.0*original.z) - UPD65);
 		// Vs
-			Vs = 13.0 * Ls * ( 9.0*Y/(X+15.0*Y+3.0*Z) - VPD65);
-
-		v0 = Ls;
-		v1 = Us;
-		v2 = Vs;
+			col.z = 13.0 * col.x * ( 9.0*original.y/(original.x+15.0*original.y+3.0*original.z) - VPD65);
 	}
 
 	void XYZToLAB(double& v0, double& v1, double& v2)
 	{
-		double	X = v0,
-			Y = v1,
-			Z = v2;
-		double 	L = 0.0,
-			a = 0.0,
-			b = 0.0;
+		const float XD65 = 95.02;
+		const float YD65 = 100.00;
+		const float ZD65 = 108.82;
+		
+		vec3 original = col;
+		col = vec3(0.0, 0.0, 0.0);
 
-		L = 100.0*sqrt(Y/YD65);
-		a = 172.30*(X/XD65-Y/YD65)/sqrt(Y/YD65);
-		b = 67.20*(Y/YD65-Z/ZD65)/sqrt(Y/YD65);
-
-		v0 = L;
-		v1 = a;
-		v2 = b;
+		col.x = 100.0*sqrt(original.y/YD65);
+		col.y = 172.30*(original.x/XD65-original.y/YD65)/sqrt(original.y/YD65);
+		col.z = 67.20*(original.y/YD65-original.z/ZD65)/sqrt(original.y/YD65);
 	}
 
-	void XYZToLsAsBs(double& v0, double& v1, double& v2)
+	/*void XYZToLsAsBs(double& v0, double& v1, double& v2)
 	{
-		double	X = v0,
-			Y = v1,
-			Z = v2;
-		double 	Ls = 0.0,
-			As = 0.0,
-			Bs = 0.0;
+		const float XD65 = 95.02;
+		const float YD65 = 100.00;
+		const float ZD65 = 108.82;
+		
+		vec3 original = col;
+		col = vec3(0.0, 0.0, 0.0);
 
 		Ls = 116.0*fLsAsBs(Y/YD65) - 16.0;
 		As = 500.0*(fLsAsBs(X/XD65)-fLsAsBs(Y/YD65));
@@ -148,38 +142,35 @@ SHARED_SOURCE:ColorPrimitives
 		v0 = Ls;
 		v1 = As;
 		v2 = Bs;
+	}*/
+
+	void XYZToRGB(inout col)
+	{
+		const float YD65 = 100.00;
+		col = col/YD65;		
+
+		const mat3 T = mat3(	0.41846, 	-0.09117,	0.00092,
+					-0.15860,	0.25243,	-0.00255,
+					-0.08283,	0.01571,	0.17860);
+
+		col = T*col;
 	}
 
-	void XYZToRGB(double& v0, double& v1, double& v2)
+	void XYZTosRGB(inout vec3 col)
 	{
-		double	X = v0/YD65,
-			Y = v1/YD65,
-			Z = v2/YD65;
-		double 	R = 0.0,
-			G = 0.0,
-			B = 0.0;
+		const float YD65 = 100.00;
+		col = col/YD65;	
 
-		R =  0.41846*X - 0.15860*Y - 0.08283*Z;
-		G = -0.09117*X + 0.25243*Y + 0.01571*Z;
-		B =  0.00092*X - 0.00255*Y + 0.17860*Z;
+		const mat3 T = mat3(	3.2406,		-0.9689,	0.0557,
+					-1.5372,	1.8758,		-0.2040,
+					-0.4986,	0.0415,		1.0570);
 
-		v0 = R;
-		v1 = G;
-		v2 = B;
-	}
+		col = T * col;
 
-	void XYZTosRGB(double& v0, double& v1, double& v2)
-	{
-		double	X = v0/YD65,
-			Y = v1/YD65,
-			Z = v2/YD65;
-		double 	R = 0.0,
-			G = 0.0,
-			B = 0.0;
-
-		R =  3.2406*X - 1.5372*Y - 0.4986*Z;
-		G = -0.9689*X + 1.8758*Y + 0.0415*Z;
-		B =  0.0557*X - 0.2040*Y + 1.0570*Z;
+		if( x<= 0.0031308 )
+			return 12.92*x;
+		else
+			return 1.055*pow(x,1.0/2.4) - 0.055; 
 
 		v0 = fSRGB(R);
 		v1 = fSRGB(G);
