@@ -4,6 +4,7 @@
 	#include "GLIPLib.hpp"
 	#include <QtGui>
 
+	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
@@ -28,7 +29,8 @@
 
 			QTextCharFormat glslkeywordFormat,
 					glslfunctionFormat,
-					glipkeywordFormat,
+					glipLayoutLoaderKeywordFormat,
+					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
 					multiLineCommentFormat,
 					quotationFormat;
@@ -180,6 +182,58 @@
 			void insertTemplate(void);
 	};
 
+	class NotificationsBar : public QWidget
+	{
+		Q_OBJECT
+
+		public :
+			enum Notification
+			{
+				Warning_SomeFilesAreNotSaved,
+				Warning_SomeFilesAreNotOnDisk,
+				Error_CurrentFileIsNotSaved,
+				Error_CurrentFileIsNotOnDisk,
+				Error_CurrentIsEmpty,
+				AllRight_EverythingIsOk,
+				NumNotifications,
+				NoNotification
+			};
+
+		private : 
+			enum NotificationClass
+			{
+				NotificationError,
+				NotificationWarning,
+				NotificationMessage,
+				NotificationAllRight,
+				NumNotificationClasses
+			};
+
+			static const bool		canbeHidden[NumNotificationClasses];
+			static const char*		notificationClassesColors[NumNotificationClasses];
+			static const char*		notificationMessages[NumNotifications];
+			static const NotificationClass	notificationClasses[NumNotifications];
+			bool				isHidden[NumNotifications];
+
+			QHBoxLayout			layout;
+			QCheckBox			hideCheckBox;
+			QLabel 				notification,
+							hideNotification;
+
+			Notification			lastNotification;
+
+		private slots :
+			void turnDownCurrentNotification(void);
+
+		public :
+			NotificationsBar(QWidget* parent=NULL);
+
+			void declare(const Notification& n = NoNotification);
+
+		signals :
+			void showMe(bool);
+	};
+
 	class CodeEditorsPannel : public QWidget
 	{
 		Q_OBJECT
@@ -199,6 +253,7 @@
 						closeTabAct,
 						closeAllAct,
 						showPathWidget;
+			NotificationsBar	notificationBar;
 			PathWidget		pathWidget;
 			QVector<CodeEditor*>	tabs;
 
@@ -212,6 +267,7 @@
 			void closeTab(void);
 			void closeAll(void);
 			void switchPathWidget(void);
+			void switchNotification(bool t);
 			void updateTitles(void);
 			void insertTemplate(void);
 
@@ -219,7 +275,7 @@
 			CodeEditorsPannel(QWidget* parent);
 			~CodeEditorsPannel(void);
 
-			std::string getCurrentFilename(void) const;
+			std::string getCurrentFilename(void);
 			const std::vector<std::string>& getPaths(void);
 			bool canBeClosed(void);
 

@@ -36,7 +36,7 @@
 	using namespace Glip::Modules::VanillaParserSpace;
 
 	// Static variables :
-	const char* Glip::Modules::keywordsLayoutLoader[NumKeywords] =  {	"TEXTURE_FORMAT",
+	const char* Glip::Modules::keywordsLayoutLoader[LL_NumKeywords] =  {	"TEXTURE_FORMAT",
 										"SHADER_SOURCE",
 										"FILTER_LAYOUT",
 										"PIPELINE_LAYOUT",
@@ -68,7 +68,7 @@
 										"POINT",
 										"ELEMENT",
 										"ADD_PATH"
-								};
+									};
 
 // LayoutLoader
 	/**
@@ -107,10 +107,10 @@
 
 	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
 	{
-		for(int i=0; i<NumKeywords; i++)
+		for(int i=0; i<LL_NumKeywords; i++)
 			if(keywordsLayoutLoader[i]==str) return static_cast<LayoutLoaderKeyword>(i);
 
-		return UnknownKeyword;
+		return LL_UnknownKeyword;
 	}
 
 	void LayoutLoader::classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords)
@@ -250,7 +250,7 @@
 	{
 		const std::string 	spacers 	= " \t\r\n\f\v",
 					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
-					keyword 	= keywordsLayoutLoader[INCLUDE_SHARED_SOURCE];
+					keyword 	= keywordsLayoutLoader[KW_LL_INCLUDE_SHARED_SOURCE];
 
 		size_t pos = str.find(keyword);
 
@@ -704,14 +704,14 @@
 			throw Exception("From line " + to_string(e.startLine) + " : A Geometry Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
 		// Find the first argument :
-		if(e.arguments[0]==keywordsLayoutLoader[STANDARD_QUAD])
+		if(e.arguments[0]==keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
 		{
 			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::StandardQuadGeometry() ) );
 		}
-		else if(e.arguments[0]==keywordsLayoutLoader[GRID_2D])
+		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_2D])
 		{
 			if(e.arguments.size()!=3)
-				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h;
 
@@ -723,10 +723,10 @@
 
 			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::PointsGrid2DGeometry(w,h) ) );
 		}
-		else if(e.arguments[0]==keywordsLayoutLoader[GRID_3D])
+		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_3D])
 		{
 			if(e.arguments.size()!=4)
-				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h, z;
 
@@ -767,7 +767,7 @@
 
 		if(e.arguments.size()>2)
 		{
-			if(e.arguments[2]!=keywordsLayoutLoader[DEFAULT_VERTEX_SHADER])
+			if(e.arguments[2]!=keywordsLayoutLoader[KW_LL_DEFAULT_VERTEX_SHADER])
 			{
 				vertexSource = sourceList.find(e.arguments[2]);
 
@@ -777,7 +777,7 @@
 				vertexSourcePtr = &vertexSource->second;
 			}
 
-			if(e.arguments[5]!=keywordsLayoutLoader[STANDARD_QUAD])
+			if(e.arguments[5]!=keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
 			{
 				geometry = geometryList.find(e.arguments[5]);
 
@@ -794,22 +794,22 @@
 
 		if(e.arguments.size()>3)
 		{
-			if(e.arguments[3]==keywordsLayoutLoader[CLEARING_ON])
+			if(e.arguments[3]==keywordsLayoutLoader[KW_LL_CLEARING_ON])
 				filterLayout->second.enableClearing();
-			else if(e.arguments[3]==keywordsLayoutLoader[CLEARING_OFF])
+			else if(e.arguments[3]==keywordsLayoutLoader[KW_LL_CLEARING_OFF])
 				filterLayout->second.disableClearing();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[CLEARING_ON] + "\" or \"" + keywordsLayoutLoader[CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[KW_LL_CLEARING_ON] + "\" or \"" + keywordsLayoutLoader[KW_LL_CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 		}
 
 		if(e.arguments.size()>4)
 		{
-			if(e.arguments[4]==keywordsLayoutLoader[BLENDING_ON])
+			if(e.arguments[4]==keywordsLayoutLoader[KW_LL_BLENDING_ON])
 				filterLayout->second.enableBlending();
-			else if(e.arguments[4]==keywordsLayoutLoader[BLENDING_OFF])
+			else if(e.arguments[4]==keywordsLayoutLoader[KW_LL_BLENDING_OFF])
 				filterLayout->second.disableBlending();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[BLENDING_ON] + "\" or \"" + keywordsLayoutLoader[BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[KW_LL_BLENDING_ON] + "\" or \"" + keywordsLayoutLoader[KW_LL_BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
 		}
 	}
 
@@ -836,26 +836,26 @@
 			{
 				switch(associatedKeywords[k])
 				{
-					case INPUT_PORTS :
+					case KW_LL_INPUT_PORTS :
 						if(inputPorts>=0)
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							inputPorts = k;
 						break;
-					case OUTPUT_PORTS :
+					case KW_LL_OUTPUT_PORTS :
 						if(outputPorts>=0)
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							outputPorts = k;
 						break;
-					case FILTER_INSTANCE :
-					case PIPELINE_INSTANCE :
+					case KW_LL_FILTER_INSTANCE :
+					case KW_LL_PIPELINE_INSTANCE :
 						components++;
 						break;
-					case CONNECTION :
+					case KW_LL_CONNECTION :
 						break; //OK
 					default :
-						if( associatedKeywords[k]<NumKeywords )
+						if( associatedKeywords[k]<LL_NumKeywords )
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
@@ -895,7 +895,7 @@
 			{
 				switch(associatedKeywords[k])
 				{
-					case FILTER_INSTANCE :
+					case KW_LL_FILTER_INSTANCE :
 						preliminaryTests(parser.elements[k], 1, 1, 1, -1, "FilterInstance");
 						filter = filterList.find(parser.elements[k].arguments[0]);
 
@@ -905,7 +905,7 @@
 							layout.add(filter->second, parser.elements[k].name);
 						break;
 
-					case PIPELINE_INSTANCE :
+					case KW_LL_PIPELINE_INSTANCE :
 						preliminaryTests(parser.elements[k], 1, 1, 1, -1, "PipelineInstance");
 						pipeline = pipelineList.find(parser.elements[k].arguments[0]);
 
@@ -924,18 +924,18 @@
 			bool makeAutoConnect = true;
 			for(int k=0; k<associatedKeywords.size(); k++)
 			{
-				if(associatedKeywords[k]==CONNECTION)
+				if(associatedKeywords[k]==KW_LL_CONNECTION)
 				{
 					makeAutoConnect = false;
 
 					preliminaryTests(parser.elements[k], -1, 4, 4, -1, "Connection");
 
 					// Test the nature of the connection :
-					if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE] && parser.elements[k].arguments[1]==keywordsLayoutLoader[THIS_PIPELINE])
+					if(parser.elements[k].arguments[0]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE] && parser.elements[k].arguments[1]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
 						throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Direct connections between input and output are not allowed.", __FILE__, __LINE__);
-					else if(parser.elements[k].arguments[0]==keywordsLayoutLoader[THIS_PIPELINE])
+					else if(parser.elements[k].arguments[0]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
 						layout.connectToInput(parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
-					else if(parser.elements[k].arguments[2]==keywordsLayoutLoader[THIS_PIPELINE])
+					else if(parser.elements[k].arguments[2]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
 						layout.connectToOutput(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[3]);
 					else
 						layout.connect(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
@@ -971,41 +971,41 @@
 			{
 				switch(associatedKeyword[k])
 				{
-					case ADD_PATH :
+					case KW_LL_ADD_PATH :
 						appendPath(rootParser.elements[k]);
 						break;
-					case INCLUDE_FILE :
+					case KW_LL_INCLUDE_FILE :
 						includeFile(rootParser.elements[k]);
 						break;
-					case SHARED_SOURCE :
+					case KW_LL_SHARED_SOURCE :
 						buildSharedCode(rootParser.elements[k]);
 						break;
-					case REQUIRED_FORMAT :
+					case KW_LL_REQUIRED_FORMAT :
 						buildRequiredFormat(rootParser.elements[k]);
 						break;
-					case REQUIRED_PIPELINE :
+					case KW_LL_REQUIRED_PIPELINE :
 						buildRequiredPipeline(rootParser.elements[k]);
 						break;
-					case FORMAT_LAYOUT :
+					case KW_LL_FORMAT_LAYOUT :
 						buildFormat(rootParser.elements[k]);
 						break;
-					case SHADER_SOURCE :
+					case KW_LL_SHADER_SOURCE :
 						buildShaderSource(rootParser.elements[k]);
 						break;
-					case GEOMETRY :
+					case KW_LL_GEOMETRY :
 						buildGeometry(rootParser.elements[k]);
 						break;
-					case FILTER_LAYOUT :
+					case KW_LL_FILTER_LAYOUT :
 						buildFilter(rootParser.elements[k]);
 						break;
-					case PIPELINE_MAIN :
+					case KW_LL_PIPELINE_MAIN :
 						if(!isSubLoader)
 							mainPipelineName = rootParser.elements[k].name;
-					case PIPELINE_LAYOUT :
+					case KW_LL_PIPELINE_LAYOUT :
 						buildPipeline(rootParser.elements[k]);
 						break;
 					default :
-						if(associatedKeyword[k]<NumKeywords)
+						if(associatedKeyword[k]<LL_NumKeywords)
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
@@ -1015,7 +1015,7 @@
 
 			// Check Errors :
 			if(mainPipelineName.empty() && !isSubLoader)
-				throw Exception("No main pipeline (\"" + std::string(keywordsLayoutLoader[PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
+				throw Exception("No main pipeline (\"" + std::string(keywordsLayoutLoader[KW_LL_PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
 		}
 		catch(Exception& ex)
 		{

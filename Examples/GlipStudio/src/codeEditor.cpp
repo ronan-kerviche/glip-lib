@@ -48,21 +48,39 @@
 				highlightingRules.append(rule);
 			}
 
-		// GLIP Keywords : 
-			glipkeywordFormat.setForeground(QColor(255, 51, 255));
-			glipkeywordFormat.setFontWeight(QFont::Bold);
-			QStringList glipkeywordPatterns;
+		// GLIP LayoutLoader Keywords : 
+			glipLayoutLoaderKeywordFormat.setForeground(QColor(255, 51, 255));
+			glipLayoutLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			QStringList glipllkeywordPatterns;
 
-			for(int i=0; i<Glip::Modules::NumKeywords; i++)
+			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
 			{
 				std::string str = std::string("\\b") + Glip::Modules::keywordsLayoutLoader[i] + "\\b";
-				glipkeywordPatterns << str.c_str();
+				glipllkeywordPatterns << str.c_str();
 			}
 
-			foreach (const QString& pattern, glipkeywordPatterns)
+			foreach (const QString& pattern, glipllkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
-				rule.format = glipkeywordFormat;
+				rule.format = glipLayoutLoaderKeywordFormat;
+				highlightingRules.append(rule);
+			}
+
+		// GLIP Uniform Loader Keywords : 
+			glipUniformLoaderKeywordFormat.setForeground(QColor(51, 255, 255));
+			glipUniformLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			QStringList glipulkeywordPatterns;
+
+			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
+			{
+				std::string str = std::string("\\b") + Glip::Modules::keywordsUniformsVarsLoader[i] + "\\b";
+				glipulkeywordPatterns << str.c_str();
+			}
+
+			foreach (const QString& pattern, glipulkeywordPatterns)
+			{
+				rule.pattern = QRegExp(pattern);
+				rule.format = glipUniformLoaderKeywordFormat;
 				highlightingRules.append(rule);
 			}
 
@@ -403,6 +421,9 @@
 
 			setPlainText(in.readAll());
 
+			// Force the size of the margin :
+			setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+
 			this->blockSignals(prevState);
 
 			#ifndef QT_NO_CURSOR
@@ -726,10 +747,99 @@
 		}
 	}
 
+// NotificationsBar
+	const char* NotificationsBar::notificationClassesColors[NumNotificationClasses]				= {	"#EE3333",
+															"#BB7722",
+															"#333333",
+															"#33BB33"};
+	const bool NotificationsBar::canbeHidden[NumNotificationClasses]					= {	false,
+															true,
+															true,
+															true};
+
+	const char* NotificationsBar::notificationMessages[NumNotifications]					= {	"Some files are modified but not saved.",
+															"Some files are not saved to the disk.",
+															"Current file is modified but not saved.",
+															"Current file is not saved to the disk.",	
+															"Current file is empty.",
+															"Everything is all right."};
+	const NotificationsBar::NotificationClass NotificationsBar::notificationClasses[NumNotifications]	= {	NotificationWarning,
+															NotificationWarning,
+															NotificationError,
+															NotificationError,
+															NotificationError,
+															NotificationAllRight};
+	
+	NotificationsBar::NotificationsBar(QWidget* parent)
+	 : QWidget(parent), layout(this), notification(this), hideNotification(this), hideCheckBox(this), lastNotification(NoNotification)
+	{
+		notification.setText("No notification");
+		hideNotification.setText("<i>Hide future similar notifications :</i>");
+		hideCheckBox.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+		hideNotification.setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+		layout.addWidget(&notification);
+		layout.addWidget(&hideNotification);
+		layout.addWidget(&hideCheckBox);		
+
+		for(int k=0; k<NumNotifications; k++)
+			isHidden[k] = false;
+
+		connect(&hideCheckBox, SIGNAL(stateChanged(int)), this, SLOT(turnDownCurrentNotification(void)));
+	}
+
+	void NotificationsBar::turnDownCurrentNotification(void)
+	{	
+		// Lock : 
+		bool previousState = this->blockSignals(true);
+		hideCheckBox.setChecked(false);
+		this->blockSignals(previousState);
+	
+		if(lastNotification>=0 && lastNotification<NoNotification)
+		{
+			if( canbeHidden[ notificationClasses[ lastNotification ] ] )
+			{
+				isHidden[lastNotification] = true;
+				emit showMe(false);
+			}
+		}
+	}
+
+	void NotificationsBar::declare(const Notification& n)
+	{
+		if(n>=0 && n<NoNotification)
+		{
+			if(!isHidden[n])
+			{
+				// Put the message :
+				notification.setText( tr("  %1").arg( notificationMessages[n]) );
+				notification.setStyleSheet(tr("QLabel { font: bold; background-color : qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 %1, stop: 1 #333333); color : white; }").arg( notificationClassesColors[notificationClasses[n]] ) );
+
+				notification.show();
+				hideNotification.show();
+				hideCheckBox.show();
+
+				if( canbeHidden[ notificationClasses[n] ] )
+					hideCheckBox.setDisabled(false);
+				else
+					hideCheckBox.setDisabled(true);
+
+				lastNotification = n;
+
+				emit showMe(true);
+			}
+			else
+				emit showMe(false);
+		}
+		else if(n==NoNotification)
+			emit showMe(false);
+		else
+			throw Exception("Internal error : notification ID out of range.", __FILE__, __LINE__);
+	}
+
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), templateMenu(this), 
-	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this)
+	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this), notificationBar(this)
 	{
 		// Add the actions : 
 		newTabAct.setShortcuts(QKeySequence::New);
@@ -759,6 +869,8 @@
 		closeTabAct.setStatusTip(tr("Close tab"));
 		connect(&closeTabAct, SIGNAL(triggered()), this, SLOT(closeTab()));
 
+		connect(&notificationBar, SIGNAL(showMe(bool)), this, SLOT(switchNotification(bool)));
+
 		showPathWidget.setStatusTip(tr("Show paths"));
 		connect(&showPathWidget, SIGNAL(triggered()), this, SLOT(switchPathWidget()));
 
@@ -785,9 +897,12 @@
 		// Hide paths : 
 		pathWidget.hide();
 
-		layout.addWidget(&menuBar);	
+		layout.addWidget(&menuBar);
+		layout.addWidget(&notificationBar);	
 		layout.addWidget(&widgets);
 		layout.addWidget(&pathWidget);
+
+		notificationBar.hide();
 	}
 
 	CodeEditorsPannel::~CodeEditorsPannel(void)
@@ -974,6 +1089,14 @@
 		}
 	}
 
+	void CodeEditorsPannel::switchNotification(bool t)
+	{
+		if(t)
+			notificationBar.show();
+		else
+			notificationBar.hide();
+	}
+
 	void CodeEditorsPannel::updateTitles(void)
 	{
 		for(int k=0; k<tabs.size(); k++)
@@ -990,16 +1113,55 @@
 		}
 	}
 
-	std::string CodeEditorsPannel::getCurrentFilename(void) const
+	std::string CodeEditorsPannel::getCurrentFilename(void)
 	{
 		if(widgets.count() > 0)
 		{
 			int c = widgets.currentIndex();
 
-			if(!tabs[c]->empty())
-				return tabs[c]->filename().toStdString();
-			else 
+			if(tabs[c]->empty())
+			{
+				notificationBar.declare(NotificationsBar::Error_CurrentIsEmpty);
 				return "";
+			}
+
+			bool 	atLeastOneModified 	= false,
+				atLeastOneNotOnDisk	= false,
+				mainNotSaved		= false,
+				mainNotOnDisk		= false;
+
+			for(int k=0; k<tabs.size(); k++)
+			{
+				if(k!=c && tabs[k]->filename().isEmpty() && !tabs[k]->empty())
+					atLeastOneNotOnDisk = true;
+				else if(k!=c && tabs[k]->isModified() && !tabs[k]->empty())
+					atLeastOneNotOnDisk = true;
+				else if(k==c && tabs[k]->filename().isEmpty())
+					mainNotOnDisk = true;
+				else if(k==c && tabs[k]->isModified())
+					mainNotSaved = true;
+
+			}
+
+			if(mainNotOnDisk)
+			{
+				notificationBar.declare(NotificationsBar::Error_CurrentFileIsNotOnDisk);
+				return "";
+			}
+			else if(mainNotSaved)
+			{
+				notificationBar.declare(NotificationsBar::Error_CurrentFileIsNotSaved);
+				return "";
+			}
+			else if(atLeastOneModified)
+				notificationBar.declare(NotificationsBar::Warning_SomeFilesAreNotSaved);
+			else if(atLeastOneNotOnDisk)
+				notificationBar.declare(NotificationsBar::Warning_SomeFilesAreNotOnDisk);
+			else
+				notificationBar.declare();
+					
+
+			return tabs[c]->filename().toStdString();
 		}
 		else
 			return "";	
