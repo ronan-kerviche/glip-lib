@@ -383,6 +383,11 @@
 		}
 	}
 
+	int FilterElement::varsCount(void) const
+	{
+		return objects.size();
+	}
+
 // PipelineElement
 	PipelineElement::PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& name, const std::string& pathStr, const std::vector<std::string>& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot)
 	 : item(NULL)
@@ -469,6 +474,19 @@
 
 		for(int k=0; k<pipelineObjects.size(); k++)
 			pipelineObjects[k]->update(pipeline);
+	}
+
+	int PipelineElement::varsCount(void) const
+	{
+		int c = 0;
+
+		for(int k=0; k<filterObjects.size(); k++)
+			c += filterObjects[k]->varsCount();
+
+		for(int k=0; k<pipelineObjects.size(); k++)
+			c += pipelineObjects[k]->varsCount();
+
+		return c;
 	}
 
 // Settings
@@ -582,12 +600,191 @@
 		box.setSingleStep( stepDoubleBox.value() );
 	}
 
+// MainUniformLibrary
+	MainUniformLibrary::MainUniformLibrary(QWidget* parent)
+	 : QMenu("Main Library", parent), mainLibraryFilename("./mainLibrary.uvd"), infoAct("> No information available", this), loadAct("Load variables", this), storeAct("Store variables", this), removeAct("Remove variables", this), syncToDiskAct(tr("Save to disk : %1").arg(mainLibraryFilename.c_str()), this), actionToProcess(NoAct), showInfo(true)
+	{
+		// Add : 
+		addAction(&infoAct);
+		addAction(&loadAct);
+		addAction(&storeAct);
+		addAction(&removeAct);
+		addAction(&syncToDiskAct);
+
+		//infoAct.setDisabled(true);
+		//setStyleSheet("QMenu::item:disabled{background: #313131;color: #111111;} QMenu::item:selected:disabled{background: #484848;color: #FFFFFF;}");
+
+		loadAct.setDisabled(true);
+		storeAct.setDisabled(true);
+		removeAct.setDisabled(true);
+		syncToDiskAct.setDisabled(true);
+
+		// Connect :
+		connect(&loadAct, 	SIGNAL(triggered()), this, SLOT(loadFromLibrary()));
+		connect(&storeAct, 	SIGNAL(triggered()), this, SLOT(saveFromLibrary()));
+		connect(&removeAct, 	SIGNAL(triggered()), this, SLOT(removeFromLibrary()));
+		connect(&syncToDiskAct,	SIGNAL(triggered()), this, SLOT(syncLibraryToDisk()));
+
+		// Check if the file exists : 
+		if( QFile::exists( mainLibraryFilename.c_str() ) )
+		{
+			// Load : 
+			try
+			{
+				mainLibrary.load(mainLibraryFilename, true);
+			}
+			catch(Exception& e)
+			{
+				std::cerr << "MainUniformLibrary::MainUniformLibrary - Exception : " << std::endl;
+				std::cerr << e.what();
+
+				// Clear current library : 
+				mainLibrary.clear();
+
+				// Find a suitable filename :
+				int k=0;
+				std::string newFileName;
+
+				for(k=0; k<9; k++)
+				{
+					newFileName = "./mainLibrary_backup_" + to_string(k) + ".uvd";
+					QFile newBackupFile( newFileName.c_str() );
+					if( !newBackupFile.exists() )
+						break;
+				}
+
+				// Move : 
+				newFileName = "./mainLibrary_backup_" + to_string(k) + ".uvd";
+				QFile mainLibraryFile( mainLibraryFilename.c_str() );
+				mainLibraryFile.rename( newFileName.c_str() );
+
+				// Warning :
+				QMessageBox messageBox(QMessageBox::Warning, "Warning", tr("The Main Uniforms Variables Library stored in file \"%1\" cannot be read. The current content was backed up in the file \"%2\" and a new library is started with this session.").arg(mainLibraryFilename.c_str()).arg(newFileName.c_str()), QMessageBox::Ok, this);
+
+				messageBox.setDetailedText(e.what());
+				messageBox.exec();
+			}
+		}
+	}
+
+	MainUniformLibrary::~MainUniformLibrary(void)
+	{
+		mainLibrary.writeToFile(mainLibraryFilename);
+	}
+
+	void MainUniformLibrary::loadFromLibrary(void)
+	{
+		actionToProcess = Apply;
+		emit requireProcessing();
+	}
+
+	void MainUniformLibrary::saveFromLibrary(void)
+	{
+		actionToProcess = Save;
+		emit requireProcessing();
+	}
+	
+	void MainUniformLibrary::removeFromLibrary(void)
+	{
+		actionToProcess = Remove;
+		emit requireProcessing();
+	}
+
+	void MainUniformLibrary::syncLibraryToDisk(void)
+	{
+		syncToDiskAct.setDisabled(true);
+
+		// Save : 
+		mainLibrary.writeToFile(mainLibraryFilename);
+	}
+
+	void MainUniformLibrary::update(void)
+	{
+		infoAct.setText("No information available");
+		actionToProcess = NoAct;
+		loadAct.setDisabled(true);
+		storeAct.setDisabled(true);
+		removeAct.setDisabled(true);
+	}
+
+	void MainUniformLibrary::update(Pipeline& pipeline)
+	{
+		if(mainLibrary.hasPipeline(pipeline.getName()))
+		{
+			int c = mainLibrary.getNumVariables(pipeline.getName());
+			infoAct.setText(tr("> %1 has %2 variables registered").arg(pipeline.getName().c_str()).arg(c));
+
+			loadAct.setDisabled(false);
+			removeAct.setDisabled(false);
+		}
+		else
+		{
+			infoAct.setText(tr("> %1 has no registered variables").arg(pipeline.getName().c_str()));
+			loadAct.setDisabled(true);
+			removeAct.setDisabled(true);
+		}
+
+		storeAct.setDisabled(false);
+		
+		actionToProcess = NoAct;
+	}
+
+	bool MainUniformLibrary::process(Pipeline& pipeline)
+	{
+		int c=0;
+
+		LibAction act = actionToProcess;
+		actionToProcess = NoAct;
+
+		switch(act)
+		{
+			case Apply :
+				try
+				{
+					c = mainLibrary.applyTo(pipeline);
+				}
+				catch(Exception& e)
+				{
+					QMessageBox::warning(this, "Variables loading failed", e.what());
+					std::cerr << "MainUniformLibrary::process - Exception : " << std::endl;
+					std::cerr << e.what();
+				}
+
+				if(showInfo)
+				{
+					QMessageBox messageBox;
+					messageBox.setText(tr("%1 variables loaded successfully.").arg(c));
+
+					messageBox.addButton(QMessageBox::Ok);
+					QPushButton *doNotShowAgain = messageBox.addButton("Do not show again", QMessageBox::NoRole);
+
+					messageBox.exec();
+
+					if(messageBox.clickedButton() == doNotShowAgain)
+						showInfo = false;
+				}
+				return true;
+			case Save :
+				mainLibrary.load(pipeline, true);
+				syncToDiskAct.setDisabled(false);
+				return false;
+			case Remove : 
+				mainLibrary.clear(pipeline.getName());
+				syncToDiskAct.setDisabled(false);
+				return false;
+			case NoAct :
+			default :
+				return false;
+		}
+	}
+
 // UniformsTab
 	UniformsTab::UniformsTab(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./")
+	 : QWidget(parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./"), dontAskForSave(false), modified(false), mainLibraryMenu(this)
 	{
 		menuBar.addAction(&loadUniforms);
 		menuBar.addAction(&saveUniforms);
+		menuBar.addMenu(&mainLibraryMenu);
 		menuBar.addAction(&showSettings);
 
 		layout.addWidget(&menuBar);
@@ -604,10 +801,12 @@
 		listLabels.push_back("Data");
 		tree.setHeaderLabels( listLabels );
 
-		QObject::connect(&showSettings,	SIGNAL(triggered()),		this, 	SLOT(switchSettings()));
-		QObject::connect(&loadUniforms,	SIGNAL(triggered()),		this, 	SIGNAL(requestDataLoad()));
-		QObject::connect(&saveUniforms,	SIGNAL(triggered()),		this, 	SIGNAL(requestDataSave()));
-		QObject::connect(&settings,	SIGNAL(settingsChanged()),	this,	SLOT(settingsChanged()));
+		QObject::connect(&showSettings,		SIGNAL(triggered()),		this, 	SLOT(switchSettings()));
+		QObject::connect(&loadUniforms,		SIGNAL(triggered()),		this, 	SIGNAL(requestDataLoad()));
+		QObject::connect(&saveUniforms,		SIGNAL(triggered()),		this, 	SIGNAL(requestDataSave()));
+		QObject::connect(&settings,		SIGNAL(settingsChanged()),	this,	SLOT(settingsChanged()));
+		QObject::connect(this, 			SIGNAL(requestDataUpdate()),	this,	SLOT(dataWasModified()));
+		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),	this, 	SIGNAL(requestPipeline()));
 	}
 
 	UniformsTab::~UniformsTab(void)
@@ -659,9 +858,18 @@
 		emit propagateSettings(settings);
 	}
 
+	void UniformsTab::dataWasModified(void)
+	{
+		modified = true;
+	}
+
 	void UniformsTab::updatePipeline(void)
 	{
 		clear();
+
+		mainLibraryMenu.update();
+
+		modified = false;
 	}
 
 	void UniformsTab::updatePipeline(Pipeline& pipeline)	
@@ -679,10 +887,14 @@
 		settingsChanged();
 
 		HdlProgram::stopProgram();
+
+		mainLibraryMenu.update(pipeline);
+
+		modified = false;
 	
 		// Test : 
 		/*std::cout << "=======> TEST" << std::endl;
-		Modules::UniformsVarsLoader u;
+		UniformsVarsLoader u;
 		u.load(pipeline);
 		std::cout << "Code : " << std::endl;
 		std::cout << u.getCode();
@@ -706,7 +918,7 @@
 		if(filenames.empty())
 			return false;
 
-		Modules::UniformsVarsLoader uLoader;
+		UniformsVarsLoader uLoader;
 
 		try
 		{
@@ -775,7 +987,7 @@
 		updateData(pipeline);
 
 		// Load and save : 
-		Modules::UniformsVarsLoader uWriter;
+		UniformsVarsLoader uWriter;
 
 		uWriter.load(pipeline);
 
@@ -796,4 +1008,50 @@
 
 		HdlProgram::stopProgram();
 	}
+
+	void UniformsTab::takePipeline(Pipeline& pipeline)
+	{
+		if( mainLibraryMenu.process(pipeline) )
+			emit requestDataUpdate();	// Pipeline must be updated.
+
+		// Update values : 
+		updatePipeline(pipeline);
+	}
+
+	bool UniformsTab::prepareUpdate(Pipeline* pipeline)
+	{
+		if(!dontAskForSave && pipeline!=NULL && mainPipeline!=NULL && modified)
+		{
+			if(mainPipeline->varsCount()==0)
+				return true;
+
+			QMessageBox 	message;
+			message.setText("The Uniforms Variables were modified manually, do you want to save them?");
+
+			QPushButton 	*saveButton		= message.addButton(tr("Save"), QMessageBox::AcceptRole),
+					*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
+					*discardHideButton	= message.addButton(tr("Discard and hide future requests"), QMessageBox::NoRole),
+					*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+			message.exec();
+
+			if(message.clickedButton() == saveButton)
+			{
+				saveData(*pipeline);
+				return true;
+			}
+			else if(message.clickedButton() == discardHideButton)
+			{			
+				dontAskForSave = true;
+				return true;
+			}
+			else if(message.clickedButton() == discardButton)
+				return true;		
+			else //if(message.clickedButton() == cancelButton)
+				return false;
+		}
+		else
+			return true;
+	}
+
 

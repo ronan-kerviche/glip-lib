@@ -14,14 +14,17 @@
 	class TextureObject
 	{
 		private : 
+			bool		virtualFile;
 			QString 	filename;
 			HdlTexture*	textureData;
 
 		public : 
 			TextureObject(const QString& _filename, int maxLevel=0);
+			TextureObject(HdlTexture& texture, const QString& _filename);
 			~TextureObject(void);
 		
 			bool isValid(void) const;
+			bool isVirtual(void) const;
 			void reload(int maxLevel=0);
 			const QString& getFileName(void) const;
 			QString getName(void) const;
@@ -48,6 +51,7 @@
 		Q_OBJECT
 
 		private : 
+			QList<QString>		portsNames;
 			QList<QAction *>	currentActions;
 			QSignalMapper		mapper;
 
@@ -55,7 +59,7 @@
 			ConnectionMenu(QWidget* parent=NULL);
 			~ConnectionMenu(void);
 
-			void activate(bool state);
+			void activate(bool state, int numConnections=1);
 			void update(void);
 			void update(const __ReadOnly_PipelineLayout& layout);			
 
@@ -210,12 +214,14 @@
 			QMenu			imageMenu;
 			QAction			loadImage,
 						freeImage,
-						saveOutputAs;
+						saveOutputAs,
+						copyAsNewRessource;
 
 			QString			pipelineName;
 			RessourceCategory	currentOutputCategory;
 			int			currentOutputID;
 			bool			infoLastComputeSucceeded;
+			QString			currentOutputPath;
 
 			// Tools : 
 			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
@@ -225,14 +231,16 @@
 			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
 			void updateRessourceAlternateColors(QTreeWidgetItem* root);
 			TextureObject* getCorrespondingTexture(QTreeWidgetItem* item);
+			TextureObject* getCorrespondingTexture(const QString& name);
 			FormatObject* getCorrespondingFormat(QTreeWidgetItem* item);
+			void appendNewImage(HdlTexture& texture, const QString& filename);
 
 			// Update sections : 
 			void rebuildImageList(void);
 			void updateImageListDisplay(void);
 			void updateFormatListDisplay(void);
 			void updateInputConnectionDisplay(void);
-			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL, QAction* saveOutAs=NULL);
+			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL, QAction* saveOutAs=NULL, QAction* copyOutAs=NULL);
 
 		private slots :
 			void fetchLoadedImages(void);
@@ -243,6 +251,7 @@
 			void freeSelectedImages(void);
 			void applyConnection(int idInput);
 			void startRequestSaveImage(void);
+			void requestCopyAsNewRessource(void);
 
 		public : 
 			RessourcesTab(QWidget* parent=NULL);
@@ -261,12 +270,14 @@
 			void updatePipelineInfos(void);
 			void updatePipelineInfos(Pipeline* pipeline);	
 			void saveOutputToFile(HdlTexture& output);
+			void copyOutputAsNewRessource(HdlTexture& output);
 			void updateLastComputingStatus(bool succeeded);
 	
 		signals : 
 			void outputChanged(void);
 			void updatePipelineRequest(void);
 			void saveOutput(int i);
+			void copyOutputAsNewRessource(int i);
 	};
 
 #endif

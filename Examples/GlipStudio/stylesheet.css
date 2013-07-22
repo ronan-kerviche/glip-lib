@@ -307,4 +307,14 @@
 		color: #FFFFFF;
 	}
 
+/* */
+	QLineEdit
+	{
+		color: #FFFFFF;
+		background-color: #333333;
+		border-style: solid;
+		border-width: 2px;
+		border-radius: 5px;
+		border-color: #777777;
+	}
 

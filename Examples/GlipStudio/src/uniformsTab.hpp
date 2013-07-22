@@ -8,6 +8,7 @@
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
+	using namespace Glip::Modules;
 
 	enum NodesType
 	{
@@ -137,6 +138,7 @@
 
 			QTreeWidgetItem* treeItem(void) const;
 			void update(Pipeline& pipeline);
+			int varsCount(void) const;
 
 		signals :
 			void updated(void);
@@ -158,6 +160,7 @@
 
 			QTreeWidgetItem* treeItem(void) const;
 			void update(Pipeline& pipeline);
+			int varsCount(void) const;
 
 		signals :
 			void updated(void);
@@ -189,20 +192,65 @@
 			void settingsChanged(void);
 	};
 
+	class MainUniformLibrary : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			enum LibAction
+			{
+				NoAct,
+				Apply,
+				Save,
+				Remove
+			};
+
+			const std::string	mainLibraryFilename;
+			UniformsVarsLoader	mainLibrary;
+			
+			LibAction		actionToProcess;
+			QAction			infoAct,
+						loadAct,
+						storeAct,
+						removeAct,
+						syncToDiskAct;
+			bool			showInfo;
+
+		private slots : 
+			void loadFromLibrary(void);
+			void saveFromLibrary(void);
+			void removeFromLibrary(void);
+			void syncLibraryToDisk(void);
+
+		public : 
+			MainUniformLibrary(QWidget* parent);
+			~MainUniformLibrary(void);
+
+			void update(void);
+			void update(Pipeline& pipeline);
+			bool process(Pipeline& pipeline);
+
+		signals : 
+			void requireProcessing(void);
+	};
+
 	class UniformsTab : public QWidget
 	{
 		Q_OBJECT
 
 		private : 
+			bool			dontAskForSave,
+						modified;
 			QVBoxLayout		layout;
 			QMenuBar		menuBar;
+			MainUniformLibrary	mainLibraryMenu;
 			QAction			showSettings,
 						loadUniforms,
 						saveUniforms;
 			BoxesSettings		settings;
 			QTreeWidget		tree;
 			QString			currentPath;
-
+			
 			PipelineElement*	mainPipeline;
 
 			void clear(void);
@@ -210,6 +258,7 @@
 		private slots :
 			void switchSettings(void);
 			void settingsChanged(void);
+			void dataWasModified(void);
 
 		public : 
 			UniformsTab(QWidget* parent=NULL);
@@ -219,12 +268,15 @@
 			void updatePipeline(Pipeline& pipeline);			
 			void updateData(Pipeline& pipeline);
 			bool loadData(Pipeline& pipeline);	
-			void saveData(Pipeline& pipeline);	
+			void saveData(Pipeline& pipeline);
+			void takePipeline(Pipeline& pipeline);
+			bool prepareUpdate(Pipeline* pipeline);
 
 		signals :
 			void requestDataUpdate(void);
 			void requestDataLoad(void);
 			void requestDataSave(void);
+			void requestPipeline(void);
 			void propagateSettings(BoxesSettings&);
 	};
 

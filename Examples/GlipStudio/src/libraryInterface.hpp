@@ -28,7 +28,9 @@
 			void updateUniforms(void);
 			void loadUniforms(void);
 			void saveUniforms(void);
+			void needPipeline(void);
 			void saveOutput(int id);
+			void copyOutputToRessources(int id);
 					
 		public : 
 			LibraryInterface(QWidget *parent=NULL);

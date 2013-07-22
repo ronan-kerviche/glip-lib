@@ -375,6 +375,18 @@
 		return c;
 	}
 
+	int UniformsVarsLoader::RessourceNode::getNumVariables(void) const
+	{
+		int c = 0;
+
+		for(int k=0; k<subNodes.size(); k++)
+			c += subNodes[k].getNumVariables();
+
+		c += ressources.size();
+
+		return c;
+	}
+
 // UniformsVarsLoader
 	/**
 	\fn UniformsVarsLoader::UniformsVarsLoader(void)
@@ -650,28 +662,32 @@
 	}
 
 	/**
+	\fn void UniformsVarsLoader::clear(void)
+	\brief Clear the full set of data.
+	**/
+	void UniformsVarsLoader::clear(void)
+	{
+		ressources.clear();
+	}
+
+	/**
 	\fn void UniformsVarsLoader::clear(const std::string& name)
-	\brief Clear the full set of data (all pipelines) by default. If name is provided then only the pipeline values with the corresponding name are erased.
-	\param name The name of the pipeline to be erased (leave empty for a complete clear).
+	\brief Clear the pipeline with the corresponding name.
+	\param name The name of the pipeline to be erased.
 	**/
 	void UniformsVarsLoader::clear(const std::string& name)
 	{
-		if(name.empty())
-			ressources.clear();
-		else
+		// Find element :
+		for(int k=0; k<ressources.size(); k++)
 		{
-			// Find element :
-			for(int k=0; k<ressources.size(); k++)
-			{
-				if(ressources[k].name==name)
-					ressources.erase( ressources.begin() + k );
-			}
+			if(ressources[k].name==name)
+				ressources.erase( ressources.begin() + k );
 		}
 	}
 
 	/**
 	\fn bool UniformsVarsLoader::hasPipeline(const std::string& name) const
-	\brief Test if a pipeline has values attached in this UniformsVarsLoader object (knowing its name).
+	\brief Test if a pipeline has values attached in this UniformsVarsLoader object (knowing its name, see Component::getName()).
 	\param name The name of the pipeline to test.
 	\return True if a pipeline with the correct name has values loaded in this UniformsVarsLoader object.
 	**/
@@ -694,6 +710,39 @@
 	bool UniformsVarsLoader::empty(void) const
 	{
 		return ressources.empty();
+	}
+
+	/**
+	\fn int UniformsVarsLoader::getNumVariables(void) const
+	\brief Get the total number of variables (scalar, vector, matrices, etc.) available in this object.
+	\return The total number of uniforms variables currently stored in this object.
+	**/
+	int UniformsVarsLoader::getNumVariables(void) const
+	{
+		int c = 0;
+
+		for(int k=0; k<ressources.size(); k++)
+			c += ressources[k].getNumVariables();
+		
+		return c;
+	}
+
+	/**
+	\fn int getNumVariables(const std::string& name) const
+	\brief Get the number of variables (scalar, vector, matrices, etc.) available for the pipeline of the given name (see Component::getName()).
+	\return The number of uniforms variables currently stored in this object for the pipeline of the corresponding name.
+	**/
+	int UniformsVarsLoader::getNumVariables(const std::string& name) const
+	{
+		int c = 0;	
+
+		for(int k=0; k<ressources.size(); k++)
+		{
+			if(ressources[k].name==name)
+				c += ressources[k].getNumVariables();
+		}
+
+		return c;
 	}
 
 	/**
@@ -744,7 +793,7 @@
 
 	/**
 	\fn void UniformsVarsLoader::writeToFile(const std::string& filename)
-	\brief Write the corresponding code for the current set of variables, for one, or multiple, pipelines to a file. The format is human-readable. Note : inorder to append, you must load the original first.
+	\brief Write the corresponding code for the current set of variables, for one, or multiple, pipelines to a file. The format is human-readable. Note : in order to append, you must load the original first.
 	\param filename The filename of the file to write to.
 	**/
 	void UniformsVarsLoader::writeToFile(const std::string& filename)
@@ -760,3 +809,4 @@
 
 		file.close();
 	}
+

@@ -1210,9 +1210,27 @@
 	}
 
 	/**
+	\fn int LayoutLoader::clearRequiredElements(void)
+	\brief Remove all the elements.
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredElements(void)
+	{
+		int numElemErased = 0;
+
+		numElemErased += requiredFormatList.size();
+		numElemErased += requiredPipelineList.size();
+
+		requiredFormatList.clear();
+		requiredPipelineList.clear();
+
+		return numElemErased;
+	}
+
+	/**
 	\fn int LayoutLoader::clearRequiredElements(const std::string& name)
-	\brief Remove all the elements by default, or all the elements having the given name.
-	\param name The name of the targeted element, all elements by default.
+	\brief Remove the elements having the given name.
+	\param name The name of the targeted element.
 	\return The number of elements removed.
 	**/
 	int LayoutLoader::clearRequiredElements(const std::string& name)
@@ -1221,32 +1239,21 @@
 		std::map<std::string,PipelineLayout>::iterator it2;
 		int numElemErased = 0;
 
-		if(name!="")
+		it1 = requiredFormatList.find(name);
+		it2 = requiredPipelineList.find(name);
+
+		if(it1!=requiredFormatList.end())
 		{
-			it1 = requiredFormatList.find(name);
-			it2 = requiredPipelineList.find(name);
-
-			if(it1!=requiredFormatList.end())
-			{
-				requiredFormatList.erase(it1);
-				numElemErased++;
-			}
-
-			if(it2!=requiredPipelineList.end())
-			{
-				requiredPipelineList.erase(it2);
-				numElemErased++;
-			}
-		}
-		else
-		{
-			numElemErased += requiredFormatList.size();
-			numElemErased += requiredPipelineList.size();
-
-			requiredFormatList.clear();
-			requiredPipelineList.clear();
+			requiredFormatList.erase(it1);
+			numElemErased++;
 		}
 
+		if(it2!=requiredPipelineList.end())
+		{
+			requiredPipelineList.erase(it2);
+			numElemErased++;
+		}
+	
 		return numElemErased;
 	}
 

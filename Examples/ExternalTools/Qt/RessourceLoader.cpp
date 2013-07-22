@@ -39,7 +39,7 @@
 
 	int ImageLoader::loadFiles(GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel, QWidget* parent)
 	{
-		QStringList filenames = QFileDialog::getOpenFileNames(parent, QObject::tr("Open images..."), ".", "*.jpg *.JPG *.png *.png *.bmp *.pgm *.ppm");
+		QStringList filenames = QFileDialog::getOpenFileNames(parent, QObject::tr("Open images..."), ".", "Images (*.jpg *.JPG *.jpeg *.png *.bmp)");
 
 		if(filenames.empty())
 			return -1; // no selection
@@ -113,6 +113,19 @@
 
 		if (!filename.isEmpty())
 		{
+			QImage image = ImageLoader::createImage(texture);
+
+
+			if(!image.save(filename))
+				throw Exception("Error while writing file " + filename.toStdString() + ".", __FILE__, __LINE__);
+			else
+				return true;
+		}
+		else
+			return false;
+
+		/*if (!filename.isEmpty())
+		{
 			try
 			{
 				#ifndef __USE_PBO__
@@ -182,7 +195,7 @@
 			return true;
 		}
 		else
-			return false;
+			return false;*/
 	}
 
 	HdlTexture* ImageLoader::createTexture(const QImage& image, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
@@ -267,6 +280,70 @@
 		#endif
 
 		return texture;
+	}
+
+	QImage ImageLoader::createImage(HdlTexture& texture)
+	{
+		QImage image(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
+
+		try
+		{
+			#ifndef __USE_PBO__
+				TextureReader reader("reader",texture.format());
+				//reader.yFlip = true;
+
+				reader << texture << OutputDevice::Process;
+
+				QRgb value;
+				double r, g, b;
+				for(int y=0; y<reader.getHeight(); y++)
+				{
+					for(int x=0; x<reader.getWidth(); x++)
+					{
+						r = static_cast<unsigned char>(reader(x,y,0)*255.0);
+						g = static_cast<unsigned char>(reader(x,y,1)*255.0);
+						b = static_cast<unsigned char>(reader(x,y,2)*255.0);
+						value = qRgb(r, g, b);
+						image.setPixel(x, y, value);
+					}
+				}
+			#else
+				// Create the reader on the right format (inheritance of the texture object)
+				PBOTextureReader reader("reader", texture.format(), GL_STREAM_READ_ARB);
+
+				// Start copy to PBO :
+				reader << texture << OutputDevice::Process;
+
+				// Get access to memory :
+				unsigned char* ptr = reinterpret_cast<unsigned char*>(reader.startReadingMemory());;
+
+				QRgb value;
+				double r, g, b;
+				int p = 0;
+				for(int y=reader.getHeight()-1; y>=0; y--)
+				{
+					for(int x=0; x<reader.getWidth(); x++)
+					{
+						r = ptr[p+0];
+						g = ptr[p+1];
+						b = ptr[p+2];
+						value = qRgb(r, g, b);
+						image.setPixel(x, y, value);
+						p += 3;
+					}
+				}
+
+				// Close access to memory :
+				reader.endReadingMemory();
+			#endif
+		}
+		catch(Exception& e)
+		{
+			Exception m("Error while creating QImage: ", __FILE__, __LINE__);
+			throw m+e;
+		}
+
+		return image;
 	}
 
 	ImageLoaderOptions::ImageLoaderOptions(QWidget* parent, GLenum defMinFilter, GLenum defMagFilter, GLenum defSWrapping, GLenum defTWrapping, int defMaxLevel)

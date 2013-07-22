@@ -198,6 +198,16 @@ Example :
 	copier << someTexture << OutputDevice::Process;
 
 	// Now you can use copier.texture() which will be a perfect copy of someTexture.
+
+	// You can also specify another target :
+	TextureCopier copier("Copier2",fmt,fmt,false); // false = custom target, do not make allocation for copy target
+	copier.provideTexture(&someTargetTexture);
+
+	// Copy :
+	copier << someTexture << OutputDevice::Process;
+
+	// Use : 
+	somePipeline << someTargetTexture << ... ;
 \endcode
 **/
 		class TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat

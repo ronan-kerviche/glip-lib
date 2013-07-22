@@ -298,7 +298,8 @@ Loading Example :
 
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
-				int  clearRequiredElements(const std::string& name = "");
+				int  clearRequiredElements(void);
+				int  clearRequiredElements(const std::string& name);
 		};
 
 		/*class LayoutWriter

@@ -1,5 +1,5 @@
-TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
-//REQUIRED_FORMAT:format(FormatIn_0)
+//TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE)
+REQUIRED_FORMAT:format(FormatIn_0)
 
 SHADER_SOURCE:HelloWorld()
 {
@@ -36,7 +36,7 @@ FILTER_LAYOUT:helloFilter(format,HelloWorld)
 
 PIPELINE_MAIN:pMainGradient()
 {
-	// Declare some input and output ports for this pipeline ::
+	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(texInput)
 	OUTPUT_PORTS(texOutput)
 

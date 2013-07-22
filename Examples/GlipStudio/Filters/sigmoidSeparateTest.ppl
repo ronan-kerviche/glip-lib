@@ -23,7 +23,7 @@ SHADER_SOURCE:sigmoidShader
 
 FILTER_LAYOUT:sigmoidFilter(mainFmt, sigmoidShader)
 
-PIPELINE_MAIN:sigmoidPipeline
+PIPELINE_MAIN:sigmoidSeparatePipeline
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(outputTexture, histogramBins, histogramShow)

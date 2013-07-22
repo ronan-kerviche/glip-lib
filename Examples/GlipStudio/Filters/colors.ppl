@@ -1,423 +1,328 @@
 // Colors library : 
 
 /*
-		const float XD65 = 95.02;
-		const float YD65 = 100.00;
-		const float ZD65 = 108.82;
-		const float xD65 = 0.31271;
-		const float yD65 = 0.32902;
-		const float zD65 = 0.35827;
-		const float UPD65 = 0.19783;
-		const float VPD65 = 0.46833;
+        const float XD65 = 95.02;
+        const float YD65 = 100.00;
+        const float ZD65 = 108.82;
+        const float xD65 = 0.31271;
+        const float yD65 = 0.32902;
+        const float zD65 = 0.35827;
+        const float UPD65 = 0.19783;
+        const float VPD65 = 0.46833;
 */
 
 SHARED_SOURCE:ColorPrimitives
 {
 	void RGBToHSV( in vec3 rgb, out vec3 hsv )
-	{
-		float mn, mx, delta;
+        {
+                float mn, mx, delta;
 
-		mn = min( min(rgb.r, rgb.g), rgb.b );
-		mx = max( max(rgb.r, rgb.g), rgb.b );
-		hsv.z = mx;
+                mn = min( min(rgb.r, rgb.g), rgb.b );
+                mx = max( max(rgb.r, rgb.g), rgb.b );
+                hsv.z = mx;
 
-		delta = mx - mn;
+                delta = mx - mn;
 
-		if( mx != 0.0 )
-		{
-			hsv.y = delta / mx;
+                if( mx != 0.0 )
+                {
+                        hsv.y = delta / mx;
 
-			if( rgb.r == mx )
-				hsv.x = ( rgb.g - rgb.b ) / delta;
-			else if( rgb.g == mx )
-				hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
-			else
-				hsv.x = 4 + ( rgb.r - rgb.g ) / delta;	
+                        if( rgb.r == mx )
+                                hsv.x = ( rgb.g - rgb.b ) / delta;
+                        else if( rgb.g == mx )
+                                hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
+                        else
+                                hsv.x = 4 + ( rgb.r - rgb.g ) / delta;
 
-			hsv.x = hsv.x * 60.0;
-			if( hsv.x < 0 )
-				hsv.x = hsv.x + 360.0;
-		}
-		else
-		{
-			hsv.y = 0;
-			hsv.x = -1;
-		}
-	}
+                        hsv.x = hsv.x * 60.0;
+                        if( hsv.x < 0 )
+                                hsv.x = hsv.x + 360.0;
+                }
+                else
+                {
+                        hsv.y = 0;
+                        hsv.x = -1;
+                }
+        }
 
 	void HSVToRGB( in vec3 hsv, out vec3 rgb )
-	{
-		int i;
-		float f, p, q, t;
+        {
+                int i;
+                float f, p, q, t;
 
-		if( hsv.y == 0 ) 
-			rgb = hsv.zzz;
-		else
-		{
-			hsv.x = hsv.x / 60;
-			i = int( floor( hsv.x ) );
-			f = hsv.x - i;
-			p = hsv.z * ( 1 - hsv.y );
-			q = hsv.z * ( 1 - hsv.y * f );
-			t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
+                if( hsv.y == 0 ) 
+                        rgb = hsv.zzz;
+                else
+                {
+                        hsv.x = hsv.x / 60;
+                        i = int( floor( hsv.x ) );
+                        f = hsv.x - i;
+                        p = hsv.z * ( 1 - hsv.y );
+                        q = hsv.z * ( 1 - hsv.y * f );
+                        t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
 
-			if( i==0 )
-				rgb = vec3(hsv.z, t, p);
-			else if( i==1 )
-				rgb = vec3(q, hsv.z, p);
-			else if( i==2 )
-				rgb = vec3(p, hsv.z, t);
-			else if( i==3 )
-				rgb = vec3(p, q, hsv.z);
-			else if( i==4 )
-				rgb = vec3(t, p, hsv.z);
-			else
-				rgb = vec3(hsv.z, p, q);
-		}
-	}
+                        if( i==0 )
+                                rgb = vec3(hsv.z, t, p);
+                        else if( i==1 )
+                                rgb = vec3(q, hsv.z, p);
+                        else if( i==2 )
+                                rgb = vec3(p, hsv.z, t);
+                        else if( i==3 )
+                                rgb = vec3(p, q, hsv.z);
+                        else if( i==4 )
+                                rgb = vec3(t, p, hsv.z);
+                        else
+                                rgb = vec3(hsv.z, p, q);
+                }
+        }
 
 	// From XYZ to ...
-	void XYZToxyz(inout vec3 col)
-	{
-		float  s = col.x + col.y + col.z;
+        void XYZToxyz(inout vec3 col)
+        {
+                float s = col.x + col.y + col.z;
 
-		if(s!=0.0)
-		{
-			col.x = col.x/s;
-			col.y = col.y/s;
-			col.z = col.z/s;
-		}
-		else
-			col = vec3(0.0, 0.0, 0.0);
-	}
+                if(s!=0.0)
+                        col = col / s;
+                else
+                        col = vec3(0.0, 0.0, 0.0);
+        }
 
-	void XYZToLsUsVs(inout vec3 col)
-	{
-		const float YD65 = 100.00;
-		const float UPD65 = 0.19783;
-		const float VPD65 = 0.46833;
+        void XYZToLsUsVs(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                const float UPD65 = 0.19783;
+                const float VPD65 = 0.46833;
+                const vec3 orig = col;
 
-		vec3 original = col;
-		col = vec3(0.0, 0.0, 0.0);
+                // Ls
+                if(orig.y/YD65 < 0.008856)
+                        col.x = 903.3 * Y/YD65;
+                else
+                        col.x = 116.0 * pow(Y/YD65,1.0/3.0) - 16.0;
 
-		// Ls
-		if(original.y/YD65 < 0.008856)
-			col.x = 903.3 * original.y/YD65;
-		else
-			col.x = 116.0 * pow(original.y/YD65,1.0/3.0) - 16.0;
+                // Us
+                        col.y = 13.0 * col.x * ( 4.0*orig.x/(orig.x+15.0*orig.y+3.0*orig.z) - UPD65);
+                // Vs
+                        col.z = 13.0 * col.x * ( 9.0*orig.y/(orig.x+15.0*orig.y+3.0*orig.z) - VPD65);
+        }
 
-		// Us
-			col.y = 13.0 * col.x * ( 4.0*original.x/(original.x+15.0*original.y+3.0*original.z) - UPD65);
-		// Vs
-			col.z = 13.0 * col.x * ( 9.0*original.y/(original.x+15.0*original.y+3.0*original.z) - VPD65);
-	}
+        void XYZToLAB(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                const vec3 orig = col;
 
-	void XYZToLAB(double& v0, double& v1, double& v2)
-	{
-		const float XD65 = 95.02;
-		const float YD65 = 100.00;
-		const float ZD65 = 108.82;
-		
-		vec3 original = col;
-		col = vec3(0.0, 0.0, 0.0);
+                col.x = 100.0*sqrt(orig.y/YD65);
+                col.y = 172.30*(orig.x/XD65-orig.y/YD65)/sqrt(orig.y/YD65);
+                col.z = 67.20*(orig.y/YD65-orig.z/ZD65)/sqrt(orig.y/YD65);
+        }
 
-		col.x = 100.0*sqrt(original.y/YD65);
-		col.y = 172.30*(original.x/XD65-original.y/YD65)/sqrt(original.y/YD65);
-		col.z = 67.20*(original.y/YD65-original.z/ZD65)/sqrt(original.y/YD65);
-	}
+	void XYZToLsAsBs(intout vec3 col)
+        {
+                const float XD65 = 95.02;
+                const float YD65 = 100.00;
+                const float ZD65 = 108.82;
 
-	/*void XYZToLsAsBs(double& v0, double& v1, double& v2)
-	{
-		const float XD65 = 95.02;
-		const float YD65 = 100.00;
-		const float ZD65 = 108.82;
-		
-		vec3 original = col;
-		col = vec3(0.0, 0.0, 0.0);
+                const vec3 orig = col;
 
-		Ls = 116.0*fLsAsBs(Y/YD65) - 16.0;
-		As = 500.0*(fLsAsBs(X/XD65)-fLsAsBs(Y/YD65));
-		Bs = 200.0*(fLsAsBs(Y/YD65)-fLsAsBs(Z/ZD65));
+                col.x = 116.0*fLsAsBs(orig.y/YD65) - 16.0;
+                col.y = 500.0*(fLsAsBs(orig.x/XD65)-fLsAsBs(orig.y/YD65));
+                col.z = 200.0*(fLsAsBs(orig.y/YD65)-fLsAsBs(orig.z/ZD65));
+        }
 
-		v0 = Ls;
-		v1 = As;
-		v2 = Bs;
-	}*/
+        void XYZToRGB(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                col = col / YD65;
 
-	void XYZToRGB(inout col)
-	{
-		const float YD65 = 100.00;
-		col = col/YD65;		
+                const mat3 T = mat3(     0.41846, -0.09117,  0.00092,
+                                        -0.15860,  0.25243, -0.00255,
+                                        -0.08283,  0.01571,  0.17860);
 
-		const mat3 T = mat3(	0.41846, 	-0.09117,	0.00092,
-					-0.15860,	0.25243,	-0.00255,
-					-0.08283,	0.01571,	0.17860);
+                col = T * col;
+        }
 
-		col = T*col;
-	}
+        void XYZTosRGB(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                col = col / YD65;
 
-	void XYZTosRGB(inout vec3 col)
-	{
-		const float YD65 = 100.00;
-		col = col/YD65;	
+                const mat3 T = mat3(     3.2406, -0.9689,  0.0557,
+                                        -1.5372,  1.8758, -0.2040,
+                                        -0.4986,  0.0415,  1.0570);
 
-		const mat3 T = mat3(	3.2406,		-0.9689,	0.0557,
-					-1.5372,	1.8758,		-0.2040,
-					-0.4986,	0.0415,		1.0570);
+                col = T * col;
 
-		col = T * col;
+                v0 = fSRGB(R);
+                v1 = fSRGB(G);
+                v2 = fSRGB(B);
+        }
 
-		if( x<= 0.0031308 )
-			return 12.92*x;
-		else
-			return 1.055*pow(x,1.0/2.4) - 0.055; 
+	void XYZToYIQ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                col = col / YD65;
 
-		v0 = fSRGB(R);
-		v1 = fSRGB(G);
-		v2 = fSRGB(B);
-	}
+                const mat3 T = mat3(     0.0131,  0.1264,  0.0365,
+                                         0.3325, -0.1310, -0.0921,
+                                         0.0729, -0.0866,  0.0565);
 
-	void XYZToYIQ(double& v0, double& v1, double& v2)
-	{
-		double	X = v0/YD65,
-			Y = v1/YD65,
-			Z = v2/YD65;
-		double 	Y2 = 0.0,
-			I2 = 0.0,
-			Q2 = 0.0;
+                col = T * col;
+        }
 
-		Y2 = 0.0131*X + 0.3325*Y + 0.0729*Z;
-		I2 = 0.1264*X - 0.1310*Y - 0.0866*Z;
-		Q2 = 0.0365*X - 0.0921*Y + 0.0565*Z;
+        void XYZToYpUV(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                col = col / YD65;
 
-		v0=Y2;
-		v1=I2;
-		v2=Q2;
-	}
+                const mat3 T = mat3(     0.0975, -0.0547,  0.1105,
+                                         0.3341, -0.1345, -0.0907,
+                                         0.1251, -0.1220, -0.0166);
 
-	void XYZToYpUV(double& v0, double& v1, double& v2)
-	{
-		double	X = v0/YD65,
-			Y = v1/YD65,
-			Z = v2/YD65;
-		double 	Yp = 0.0,
-			U  = 0.0,
-			V  = 0.0;
+                col = T * col;
+        }
 
-		Yp =  0.0975*X + 0.3341*Y + 0.1251*Z;
-		U  = -0.0547*X - 0.1345*Y - 0.1220*Z;
-		V  =  0.1105*X - 0.0907*Y - 0.0166*Z;
+        void XYZToAdobeRGB(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                col = col / YD65;
 
-		v0=Yp;
-		v1=U;
-		v2=V;
-	}
+                const mat3 T = mat3(     2.04159, -0.96924,  0.01344,
+                                        -0.56501,  1.87597, -0.11836,
+                                        -0.34473,  0.04156,  1.01517);
 
-	void XYZToAdobeRGB(double& v0, double& v1, double& v2)
-	{
-		double	X = v0/YD65,
-			Y = v1/YD65,
-			Z = v2/YD65;
-		double 	R = 0.0,
-			G = 0.0,
-			B = 0.0;
+                col = T * col;
 
-		R =  2.04159*X - 0.56501*Y - 0.34473*Z;
-		G = -0.96924*X + 1.87597*Y + 0.04156*Z;
-		B =  0.01344*X - 0.11836*Y + 1.01517*Z;
-
-		R = pow(R,1.0/2.2);
-		G = pow(G,1.0/2.2);
-		B = pow(B,1.0/2.2);
-
-		v0 = R;
-		v1 = G;
-		v2 = B;
-	}
+                col = pow(col, 1.0/2/2);
+        }
 
 	// From ... to XYZ
-	void xyzToXYZ(double& v0, double& v1, double& v2)
-	{
-		double 	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double	x = v0,
-			y = v1,
-			z = v2;
-		double  a = MAX(MAX(x,y),z); // Normalization to the max
+        void xyzToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                float  a = max(col.x, max(col.y, col.z)); // Normalization to the max
 
-		if(a!=0.0)
-		{
-			X = x/a;
-			Y = y/a;
-			Z = z/a;
-		}
-		// else X = Y = Z = 0.0;
+                if(a!=0.0)
+                        col = col / a;
+                else
+                        col = vec3(0.0, 0.0, 0.0);
 
-		v0 = X*YD65;
-		v1 = Y*YD65;
-		v2 = Z*YD65;
-	}
+                col = col * YD65;
+        }
 
-	void LsUsVsToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	Ls = v0,
-			Us = v1,
-			Vs = v2;
+        void LsUsVsToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                const float UPD65 = 0.19783;
+                const float VPD65 = 0.46833;
+                const vec3 orig = col;
 
-		// Y
-		if(Ls <= 8.0)
-			Y = YD65 * Ls * 9.0 / 841.0;
-		else
-			Y = YD65 * pow((Ls+16.0)/116.0,3.0);
+                // Y
+                if(orig.x <= 8.0)
+                        col.y = YD65 * orig.x  * 9.0 / 841.0;
+                else
+                        col.y = YD65 * pow((orig.x+16.0)/116.0,3.0);
 
-		double up = Us/(13.0*Ls) + UPD65;
-		double vp = Vs/(13.0*Ls) + VPD65;
+                float up = orig.y/(13.0*orig.x) + UPD65;
+                float vp = orig.z/(13.0*orig.x) + VPD65;
 
-		// X
-			X = Y * (9.0*up)/(4.0*vp);
-		// Z
-			Z = Y * (12.0-3.0*up-20.0*vp)/(4.0*vp);
+                // X
+                        col.x = col.y * (9.0*up)/(4.0*vp);
+                // Z
+                        col.z = col.y * (12.0-3.0*up-20.0*vp)/(4.0*vp);
+        }
 
-		v0 = X;
-		v1 = Y;
-		v2 = Z;
-	}
+	void LABToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
+                const vec3 orig = col;
 
-	void LABToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	L = v0,
-			a = v1,
-			b = v2;
+                col.y = pow(col.x/100.0, 2.0)*YD65;
+                col.x = col.y/YD65 + orig.y/172.30*sqrt(col.y/YD65);
+                col.z = col.y/YD65 - orig.z/67.20*sqrt(col.y/YD65);
+        }
 
-		Y = pow(L/100.0, 2.0)*YD65;
-		X = Y/YD65 + a/172.30*sqrt(Y/YD65);
-		Z = Y/YD65 - b/67.20*sqrt(Y/YD65);
+        void LsAsBsToXYZ(inout vec3 col)
+        {
+                const float XD65 = 95.02;
+                const float YD65 = 100.00;
+                const float ZD65 = 108.82;
 
-		v0 = X;
-		v1 = Y;
-		v2 = Z;
-	}
+                const vec3 orig = col;
 
-	void LsAsBsToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	Ls = v0,
-			As = v1,
-			Bs = v2;
+                col.x = XD65 * gLsAsBs((orig.x+16.0)/116.0);
+                col.y = YD65 * gLsAsBs((orig.x+16.0)/116.0 + orig.y/500.0);
+                col.z = ZD65 * gLsAsBs((orig.x+16.0)/116.0 - orig.z/200.0);
+        }
 
-		X = XD65 * gLsAsBs((Ls+16.0)/116.0);
-		Y = YD65 * gLsAsBs((Ls+16.0)/116.0 + As/500.0);
-		Z = ZD65 * gLsAsBs((Ls+16.0)/116.0 - Bs/200.0);
+        void RGBToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
 
-		v0 = X;
-		v1 = Y;
-		v2 = Z;
-	}
+                const mat3 T = mat3(    2.76888, 1.0,     0.0,
+                                        1.75175, 4.59070, 0.05651, 
+                                        1.13016, 0.06010, 5.59427);
 
-	void RGBToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	R = v0,
-			G = v1,
-			B = v2;
+                col = T * col;
 
-		X = 2.76888*R + 1.75175*G + 1.13016*B;
-		Y =         R + 4.59070*G + 0.06010*B;
-		Z =             0.05651*G + 5.59427*B;
+                col = col * YD65;
+        }
 
-		v0 = X*YD65;
-		v1 = Y*YD65;
-		v2 = Z*YD65;
-	}
+	void sRGBToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
 
-	void sRGBToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	R = v0,
-			G = v1,
-			B = v2;
+                col.r = gSRGB(col.r);
+                col.g = gSRGB(col.g);
+                col.b = gSRGB(col.b);
 
-		R = gSRGB(R);
-		G = gSRGB(G);
-		B = gSRGB(B);
+                const mat3 T = mat3(     0.4124,  0.2126,  0.0193,
+                                         0.3576,  0.7152,  0.1192,
+                                         0.1805,  0.0722,  0.9505);
 
-		X = 0.4124*R + 0.3576*G + 0.1805*B;
-		Y = 0.2126*R + 0.7152*G + 0.0722*B;
-		Z = 0.0193*R + 0.1192*G + 0.9505*B;
+                col = T * col;
+                col = col * YD65;
+        }
 
-		v0 = X*YD65;
-		v1 = Y*YD65;
-		v2 = Z*YD65;
-	}
+        void YIQToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
 
-	void YIQToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	Y2 = v0,
-			I2 = v1,
-			Q2 = v2;
+                const mat3 T = mat3(     3.7250,  2.4966,  1.6618,
+                                         6.1758,  0.4652, -3.2343,
+                                         4.6615, -2.5078, 10.5995);
 
-		X = 3.7250*Y2 + 6.1758*I2 + 4.6615*Q2;
-		Y = 2.4966*Y2 + 0.4652*I2 - 2.5078*Q2;
-		Z = 1.6618*Y2 - 3.2342*I2 + 10.5995*Q2;
+                col = T * col;
+                col = col * YD65;
 
-		v0=X*YD65;
-		v1=Y*YD65;
-		v2=Z*YD65;
-	}
+                v0=X*YD65;
+                v1=Y*YD65;
+                v2=Z*YD65;
+        }
 
-	void YpUVToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	Yp = v0,
-			U  = v1,
-			V  = v2;
+	void YpUVToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
 
-		X = 2.7687*Yp + 1.8154*U  + 7.5062*V;
-		Y = 2.3741*Yp - 0.0934*U  - 2.1416*V;
-		Z = 4.8008*Yp + 11.0791*U + 1.2519*V;
+                const mat3 T = mat3(     2.7687,  2.3741,  4.8008,
+                                         1.8154, -0.0934, 11.0791,
+                                         7.5062, -2.1416,  1.2519);
 
-		v0=X*YD65;
-		v1=Y*YD65;
-		v2=Z*YD65;
-	}
+                col = T * col;
+                col = col * YD65;
+        }
 
-	void AdobeRGBToXYZ(double& v0, double& v1, double& v2)
-	{
-		double	X = 0.0,
-			Y = 0.0,
-			Z = 0.0;
-		double 	R = v0,
-			G = v1,
-			B = v2;
+        void AdobeRGBToXYZ(inout vec3 col)
+        {
+                const float YD65 = 100.00;
 
-		R = pow(R,2.2);
-		G = pow(G,2.2);
-		B = pow(B,2.2);
+                col = pow(col, 2.2);
 
-		X = 0.57667*R + 0.18556*G + 0.18823*B;
-		Y = 0.29734*R + 0.62736*G + 0.07529*B;
-		Z = 0.02703*R + 0.07069*G + 0.99134*B;
+                const mat3 T = mat3(     0.57667,  0.29734,  0.02703,
+                                         0.18556,  0.62736,  0.07069,
+                                         0.18823,  0.07529,  0.99134);
 
-		v0 = X*YD65;
-		v1 = Y*YD65;
-		v2 = Z*YD65;
-	}
+                col = T * col;
+                col = col * YD65;
+        }
 }
+

@@ -765,7 +765,7 @@
 															"Everything is all right."};
 	const NotificationsBar::NotificationClass NotificationsBar::notificationClasses[NumNotifications]	= {	NotificationWarning,
 															NotificationWarning,
-															NotificationError,
+															NotificationWarning,
 															NotificationError,
 															NotificationError,
 															NotificationAllRight};
@@ -839,7 +839,7 @@
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), templateMenu(this), 
-	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh", this), closeTabAct(tr("&Close Tab"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this), notificationBar(this)
+	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh | Compile", this), closeTabAct(tr("&Close"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this), notificationBar(this), aboutAct(tr("About"), this)
 	{
 		// Add the actions : 
 		newTabAct.setShortcuts(QKeySequence::New);
@@ -866,13 +866,16 @@
 		refreshAct.setShortcuts(refreshShortcuts);
 		connect(&refreshAct, SIGNAL(triggered()), this, SLOT(refresh()));
 
-		closeTabAct.setStatusTip(tr("Close tab"));
+		closeTabAct.setStatusTip(tr("Close"));
+		closeTabAct.setShortcuts(QKeySequence::Close);
 		connect(&closeTabAct, SIGNAL(triggered()), this, SLOT(closeTab()));
 
 		connect(&notificationBar, SIGNAL(showMe(bool)), this, SLOT(switchNotification(bool)));
 
 		showPathWidget.setStatusTip(tr("Show paths"));
 		connect(&showPathWidget, SIGNAL(triggered()), this, SLOT(switchPathWidget()));
+
+		connect(&aboutAct, SIGNAL(triggered()), this, SLOT(aboutMessage()));
 
 		// Movable : 	
 		widgets.setMovable(true);
@@ -890,6 +893,7 @@
 		menuBar.addMenu(&templateMenu);
 		menuBar.addAction(&refreshAct);
 		menuBar.addAction(&showPathWidget);
+		menuBar.addAction(&aboutAct);
 
 		// Add the first tab : 
 		newTab();
@@ -1051,6 +1055,8 @@
 
 			if(tabs[c]->canBeClosed())
 			{
+				switchNotification(false);
+
 				widgets.removeTab(c);
 				delete tabs[c];
 
@@ -1061,6 +1067,8 @@
 
 	void CodeEditorsPannel::closeAll(void)
 	{
+		switchNotification(false);
+
 		for(int k=0; k<tabs.size(); k++)
 		{
 			widgets.setCurrentIndex(k);
@@ -1111,6 +1119,11 @@
 
 			tabs[c]->insert( templateMenu.getTemplateCode() );
 		}
+	}
+
+	void CodeEditorsPannel::aboutMessage(void)
+	{
+		QMessageBox::about(this, "GlipStudio", "<center><p style=\"font-family: times, serif; font-size:25pt; font-style:bold\">GlipStudio</p></center><p>GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library). Find more information, documentation and example at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p><center><p style=\"font-size:12pt; font-style:italic\">Copyright &copy; 2013, Ronan Kerviche, MIT License</p></center><p style=\"font-size:12pt;\"> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: <BR> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. <BR> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>");
 	}
 
 	std::string CodeEditorsPannel::getCurrentFilename(void)

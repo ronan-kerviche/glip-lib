@@ -61,6 +61,7 @@
 
 			static bool 		saveTexture(HdlTexture& texture, QWidget* parent=NULL);
 			static HdlTexture* 	createTexture(const QImage& image, GLenum minFilter=GL_NEAREST, GLenum magFilter=GL_NEAREST, GLenum sWrapping=GL_CLAMP, GLenum tWrapping=GL_CLAMP, int maxLevel=0);
+			static QImage		createImage(HdlTexture& texture);
 	};
 
 	class ImageLoaderOptions : public QGridLayout

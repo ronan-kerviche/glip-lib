@@ -370,11 +370,12 @@
 			if(!customTexture)
 				throw Exception("TextureCopier::process - Internal error : texture wasn't properly created for " + getFullName() + ".", __FILE__, __LINE__);
 			else
-				throw Exception("TextureCopier::process - A custom texture was declared bu not given for " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("TextureCopier::process - A custom texture was declared but not given to " + getFullName() + " (use TextureCopier::provideTexture).", __FILE__, __LINE__);
 
 		int tsize = texture.getSizeOnGPU();
 		GLint inputMode = texture.getInternalMode();
 
+		// In the case of a compressed format, we had to wait for the first texture to build up the PBO : 
 		if(pbo==NULL)
 			pbo = new HdlPBO(texture.getWidth(), texture.getHeight(), texture.getNumChannels(), texture.getChannelDepth(), GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_COPY_ARB, tsize);
 
@@ -388,15 +389,24 @@
 		else
 			glGetTexImage(GL_TEXTURE_2D, 0, texture.getGLMode(), texture.getGLDepth(), 0);
 
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("TextureCopier::process", "glGetTexImage()");
+		#endif
+
 		HdlPBO::unbind(GL_PIXEL_PACK_BUFFER);
 
 		pbo->bindAsUnpack();
+
 		targetTexture->bind();
 
 		if(texture.isCompressed())
 			glCompressedTexImage2D(GL_TEXTURE_2D, 0, inputMode, getWidth(), getHeight(), 0, tsize, 0);
 		else
 			glTexImage2D(GL_TEXTURE_2D, 0, targetTexture->getGLMode(), texture.getWidth(), texture.getHeight(), 0, texture.getGLMode(), texture.getGLDepth(), 0);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("TextureCopier::process", "glGetTexImage() (2)");
+		#endif
 
 		HdlTexture::unbind();
 
@@ -420,7 +430,7 @@
 	**/
 	void TextureCopier::provideTexture(HdlTexture* texture)
 	{
-		if(!targetTexture->isCompatibleWith(*this))
+		if(!texture->isCompatibleWith(*this))
 			throw Exception("TextureCopier::process - The texture given to " + getFullName() + " as an incompatible format.", __FILE__, __LINE__);
 
 		if(!customTexture)

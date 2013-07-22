@@ -18,9 +18,11 @@
 			QObject::connect(&ressourceTab,		SIGNAL(outputChanged(void)),		this,	SIGNAL(requireRedraw(void)));
 			QObject::connect(&ressourceTab,		SIGNAL(updatePipelineRequest(void)),	this,	SLOT(compute(void)));
 			QObject::connect(&ressourceTab,		SIGNAL(saveOutput(int)),		this,	SLOT(saveOutput(int)));
+			QObject::connect(&ressourceTab,		SIGNAL(copyOutputAsNewRessource(int)),	this,	SLOT(copyOutputToRessources(int)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataUpdate(void)),	this,	SLOT(updateUniforms(void)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataLoad()),		this,	SLOT(loadUniforms(void)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataSave()),		this,	SLOT(saveUniforms(void)));
+			QObject::connect(&uniformsTab,		SIGNAL(requestPipeline()),		this,	SLOT(needPipeline(void)));
 	}
 
 	LibraryInterface::~LibraryInterface(void)
@@ -87,6 +89,12 @@
 			uniformsTab.saveData(*mainPipeline);
 	}
 
+	void LibraryInterface::needPipeline(void)
+	{
+		if(mainPipeline!=NULL)
+			uniformsTab.takePipeline(*mainPipeline);
+	}
+
 	void LibraryInterface::saveOutput(int id)
 	{
 		if(mainPipeline!=NULL)
@@ -94,8 +102,21 @@
 			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
 			{
 				// Save output with ressources : 
-				std::cout << "Save output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
+				//std::cout << "Save output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
 				ressourceTab.saveOutputToFile( mainPipeline->out(id) );
+			}
+		}
+	}
+
+	void LibraryInterface::copyOutputToRessources(int id)
+	{
+		if(mainPipeline!=NULL)
+		{
+			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
+			{
+				// Save output with ressources : 
+				//std::cout << "Copy output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
+				ressourceTab.copyOutputAsNewRessource( mainPipeline->out(id) );
 			}
 		}
 	}
@@ -118,6 +139,9 @@
 
 	void LibraryInterface::compile(const std::string& pathToCode, const std::vector<std::string>& paths)
 	{
+		if( !uniformsTab.prepareUpdate(mainPipeline) )
+			return ; // Refresh rejected ...
+
 		if(pathToCode.empty())
 			return ; //Nothing to do...
 

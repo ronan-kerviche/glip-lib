@@ -101,6 +101,7 @@ namespace Glip
 					std::vector<Ressource>		ressources;
 
 					int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
+					int getNumVariables(void) const;
 				};
 
 				std::vector<RessourceNode> ressources;
@@ -114,9 +115,12 @@ namespace Glip
 
 				void load(std::string source, bool replace=false);
 				void load(Pipeline& pipeline, bool replace=false);
-				void clear(const std::string& name="");
+				void clear(void);
+				void clear(const std::string& name);
 				bool hasPipeline(const std::string& name) const;
 				bool empty(void) const;
+				int getNumVariables(void) const;
+				int getNumVariables(const std::string& name) const;
 				int applyTo(Pipeline& pipeline);
 				std::string getCode(void);
 				void writeToFile(const std::string& filename);

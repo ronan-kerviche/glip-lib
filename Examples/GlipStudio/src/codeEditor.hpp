@@ -252,7 +252,8 @@
 						refreshAct,
 						closeTabAct,
 						closeAllAct,
-						showPathWidget;
+						showPathWidget,
+						aboutAct;
 			NotificationsBar	notificationBar;
 			PathWidget		pathWidget;
 			QVector<CodeEditor*>	tabs;
@@ -270,6 +271,7 @@
 			void switchNotification(bool t);
 			void updateTitles(void);
 			void insertTemplate(void);
+			void aboutMessage(void);
 
 		public :
 			CodeEditorsPannel(QWidget* parent);

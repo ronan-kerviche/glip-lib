@@ -36,15 +36,12 @@ namespace Glip
 			/*
 				Script general specification : 
 				
-					// Comment
+					// Comment (or on multiple lines, C/C++ style).
 					KEYWORD:NAME(arg1, arg2, ..., argN)
 					{
 						BODY
 					}
-					/* Comment ...
-					   On Multiple lines ...
-					*/
-			/* */
+			*/
 
 			// Layout
 			struct Element
