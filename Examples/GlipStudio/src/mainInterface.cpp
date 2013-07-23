@@ -53,8 +53,6 @@
 
 	void MainWindow::updateOutput(void)
 	{
-		static bool initBackground = true;
-
 		if(libraryInterface.hasOutput())
 		{
 			display.renderer().setImageAspectRatio(libraryInterface.currentOutput());

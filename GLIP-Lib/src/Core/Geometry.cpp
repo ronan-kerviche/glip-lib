@@ -320,7 +320,7 @@
 	std::vector<int>		GeometryInstance::counters;
 
 	/**
-	\fn GeometryInstance::GeometryInstance(GeometryFormat& fmt, GLenum freq)
+	\fn GeometryInstance::GeometryInstance(const GeometryFormat& fmt, GLenum freq)
 	\brief GeometryInstance constructor.
 	\param fmt The original format to use.
 	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).

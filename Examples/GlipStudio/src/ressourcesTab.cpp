@@ -1,4 +1,5 @@
 #include "ressourcesTab.hpp"
+#include "netpbm.hpp"
 #include <algorithm>
 
 // TextureObject
@@ -43,15 +44,36 @@
 			delete textureData;
 			textureData = NULL;
 
-			QImage image(filename);
+			QFileInfo file(filename);
+			
+			if(file.completeSuffix()=="ppm" || file.completeSuffix()=="pgm")
+			{
+				NetPBM::Image img(filename.toStdString());
 
-			if(image.isNull())
-				QMessageBox::information(NULL, QObject::tr("TextureObject"), QObject::tr("Cannot load image %1.").arg(filename));
+				textureData = img.createTexture();
+			}
 			else
-				textureData = ImageLoader::createTexture(image, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP, maxLevel);
+			{
+				QImage image(filename);
+
+				if(image.isNull())
+					QMessageBox::information(NULL, QObject::tr("TextureObject"), QObject::tr("Cannot load image %1.").arg(filename));
+				else
+					textureData = ImageLoader::createTexture(image, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP, maxLevel);
+			}
 		}
 		catch(Exception& e)
 		{
+			std::cout << "TextureObject::reload - Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
+			QMessageBox::information(NULL, QObject::tr("TextureObject"), QObject::tr("Cannot load image %1.").arg(filename));
+			delete textureData;
+			textureData = NULL;
+		}
+		catch(std::exception& e)
+		{
+			std::cout << "TextureObject::reload - Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
 			QMessageBox::information(NULL, QObject::tr("TextureObject"), QObject::tr("Cannot load image %1.").arg(filename));
 			delete textureData;
 			textureData = NULL;

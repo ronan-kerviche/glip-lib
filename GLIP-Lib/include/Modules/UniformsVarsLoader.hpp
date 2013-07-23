@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : UniformVarsLoader.hpp                                                                     */
+/*     File          : UniformsVarsLoader.hpp                                                                     */
 /*     Original Date : June 8th 2013                                                                             */
 /*                                                                                                               */
 /*     Description   : Uniforms variables save/load.                                                             */
@@ -15,7 +15,7 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    UniformVarsLoader.hpp
+ * \file    UniformsVarsLoader.hpp
  * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
  * \date    June 8th 2013

@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : UniformVarsLoader.cpp                                                                     */
+/*     File          : UniformsVarsLoader.cpp                                                                     */
 /*     Original Date : June 8th 2013                                                                             */
 /*                                                                                                               */
 /*     Description   : Uniforms variables save/load.                                                             */
@@ -15,7 +15,7 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    UniformVarsLoader.cpp
+ * \file    UniformsVarsLoader.cpp
  * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
  * \date    June 8th 2013
@@ -687,8 +687,8 @@
 
 	/**
 	\fn bool UniformsVarsLoader::hasPipeline(const std::string& name) const
-	\brief Test if a pipeline has values attached in this UniformsVarsLoader object (knowing its name, see Component::getName()).
-	\param name The name of the pipeline to test.
+	\brief Test if a pipeline has values attached in this UniformsVarsLoader object (knowing its name).
+	\param name The name of the pipeline to test (see Component::getName()).
 	\return True if a pipeline with the correct name has values loaded in this UniformsVarsLoader object.
 	**/
 	bool UniformsVarsLoader::hasPipeline(const std::string& name) const
@@ -728,8 +728,9 @@
 	}
 
 	/**
-	\fn int getNumVariables(const std::string& name) const
-	\brief Get the number of variables (scalar, vector, matrices, etc.) available for the pipeline of the given name (see Component::getName()).
+	\fn int UniformsVarsLoader::getNumVariables(const std::string& name) const
+	\brief Get the number of variables (scalar, vector, matrices, etc.) available for the pipeline of the given name.
+	\param name The name of the target pipeline (see Component::getName()).
 	\return The number of uniforms variables currently stored in this object for the pipeline of the corresponding name.
 	**/
 	int UniformsVarsLoader::getNumVariables(const std::string& name) const

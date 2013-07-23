@@ -5,7 +5,8 @@
 // Avoid blow : ../../tmpDCRAW/dcraw -v -d -w -H 1 *.CR2
 //TEXTURE_FORMAT:original(2856, 4290, GL_RGB, GL_UNSIGNED_BYTE)
 //TEXTURE_FORMAT:original(4290, 2856, GL_RGB, GL_UNSIGNED_BYTE)
-REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+//REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB16, GL_UNSIGNED_SHORT)
 
 /*
 	White balance points : 

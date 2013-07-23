@@ -906,7 +906,7 @@
 
 // Pipeline
 	/**
-	\fn Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
+	\fn Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
 	\brief NODESC.
 	**/
 	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
@@ -914,7 +914,7 @@
 	{ }
 
 	/**
-	\fn Pipeline::Pipeline(__ReadOnly_PipelineLayout& p, const std::string& name)
+	\fn Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name)
 	\brief Pipeline constructor.
 	\param p Pipeline layout.
 	\param name Name of the pipeline.

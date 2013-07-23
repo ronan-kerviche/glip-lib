@@ -103,6 +103,8 @@ Example of how to use TextureReader :
 				~TextureReader(void);
 
 				double operator()(int x, int y, int c);
+				const void* buffer(void) const;
+				void copy(void* ptr) const;
 		};
 
 /**

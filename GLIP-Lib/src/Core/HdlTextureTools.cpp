@@ -227,3 +227,4 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 				throw Exception("HdlTextureFormatDescriptorsList::getTypeDepth - cannot recognize color channel type " + glParamName(depth), __FILE__, __LINE__);
 		}
 	}
+

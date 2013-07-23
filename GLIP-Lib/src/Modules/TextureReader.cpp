@@ -21,7 +21,8 @@
  * \date    October 17th 2010
 **/
 
-	#include<limits>
+	#include <limits>
+	#include <cstring>
 	#include "TextureReader.hpp"
 	#include "../Core/Exception.hpp"
 
@@ -37,7 +38,7 @@
 	\param format Format expected.
 	**/
 	TextureReader::TextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format)
-	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(format), xFlip(false), yFlip(false)
+	 : __ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), name), __ReadOnly_HdlTextureFormat(format), xFlip(false), yFlip(false), originalPointer(NULL), data(NULL)
 	{
 		if(isCompressed())
 			throw Exception("TextureReader::TextureReader - Can not read directly compressed textures with TextureReader (for " + getFullName() + ").", __FILE__, __LINE__);
@@ -52,6 +53,7 @@
 	TextureReader::~TextureReader(void)
 	{
 		delete[] originalPointer;
+		originalPointer = NULL;
 		data = NULL;
 	}
 
@@ -156,6 +158,26 @@
 		}
 
 		return res;
+	}
+
+	/**
+	\fn const void* TextureReader::buffer(void) const
+	\brief Access the buffer memory.
+	\return A pointer to the beginning of the buffer (of size __ReadOnly_HdlTextureFormat::getSize() bytes).
+	**/
+	const void* TextureReader::buffer(void) const
+	{
+		return data;
+	}
+
+	/**
+	\fn void TextureReader::copy(void* ptr) const
+	\brief Copy data.
+	\param ptr The destinatination buffer (its size must be at least __ReadOnly_HdlTextureFormat::getSize() bytes, no test performed).
+	**/
+	void TextureReader::copy(void* ptr) const
+	{
+		std::memcpy(ptr, data, getSize());
 	}
 
 // PBOTextureReader
