@@ -1,6 +1,6 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
-TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
-//REQUIRED_FORMAT:format(FormatLargest)
+//TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+REQUIRED_FORMAT:format(FormatIn_0)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
 SHADER_SOURCE:mixTwoImagesShader
@@ -8,11 +8,13 @@ SHADER_SOURCE:mixTwoImagesShader
 	#version 130
 
 	uniform sampler2D	texture1, texture2;
-	out     vec4 		texout1, texout2;
+	out     vec4 		texout1;
+
+	uniform float		lim = 0.5f;
 
 	void main()
 	{
-		float alpha = 0.1f;
+		/*float alpha = 0.1f;
 
 		// Get the input data :
 		vec2 d = (gl_TexCoord[0].st - vec2(0.5,0.5))*0.75 + vec2(0.5,0.5);
@@ -22,7 +24,15 @@ SHADER_SOURCE:mixTwoImagesShader
 		// Write the output data :
 		col1.rgb = (col1.rrr + col1.ggg + col1.bbb)/3.0;
 		texout1 = col1*alpha + col2*(1-alpha);
-		texout2 = col1*(1-alpha) + col2*alpha;
+		texout2 = col1*(1-alpha) + col2*alpha;*/
+
+		vec4	col1  = textureLod(texture1, gl_TexCoord[0].st, 0.0),
+			col2 = textureLod(texture2, gl_TexCoord[0].st, 0.0);
+
+		if( 1.0 - gl_TexCoord[0].s > gl_TexCoord[0].t ) 
+			texout1 = col1;
+		else
+			texout1 = col2;
 	}
 }
 
@@ -35,7 +45,7 @@ PIPELINE_MAIN:pMainMixTwoImages()
 {
 	// Declare some input and output ports for this pipeline ::
 	INPUT_PORTS(texture1, texture2)
-	OUTPUT_PORTS(texout1, texout2)
+	OUTPUT_PORTS(texout1)
 
 	FILTER_INSTANCE:instHello(mixFilter)
 

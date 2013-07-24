@@ -244,13 +244,26 @@
 
 			QTextCursor cursor = textCursor();
 
-			int start = cursor.selectionStart();
-			int end = cursor.selectionEnd();
+			int	startSel = cursor.selectionStart(), 
+				endSel = cursor.selectionEnd();
 
-			cursor.setPosition(end, QTextCursor::KeepAnchor);
+			// If no selection, process the tab / backtab as usual : 
+			if(endSel-startSel<=0 && e->key()==Qt::Key_Tab)
+			{
+				QPlainTextEdit::keyPressEvent(e);
+				return ;
+			}
+			else if(endSel-startSel<=0 && e->key()==Qt::Key_Backtab)
+			{
+				cursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
+				cursor.insertText( cursor.selectedText().replace("\t","") );
+				return ;
+			}
+
+			cursor.setPosition(endSel, QTextCursor::KeepAnchor);
 			QTextBlock endBlock = cursor.block();
 
-			cursor.setPosition(start, QTextCursor::KeepAnchor);
+			cursor.setPosition(startSel, QTextCursor::KeepAnchor);
 			QTextBlock block = cursor.block();
 
 			for(; block.isValid() && !(endBlock < block); block = block.next())
