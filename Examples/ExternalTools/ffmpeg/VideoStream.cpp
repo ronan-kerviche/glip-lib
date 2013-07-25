@@ -18,7 +18,7 @@
 #include <cstring>
 
 	VideoStream::VideoStream(const std::string& filename, unsigned int numFrameBuffered, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
-	 : __ReadOnly_ComponentLayout("VideoStream"), InputDevice("VideoStream"), idVideoStream(0), readFrameCount(0), timeStampFrameRate(1.0f), timeStampOffset(0), timeStampOfLastFrameRead(0), endReached(false),
+	 : __ReadOnly_ComponentLayout(declareLayout(numFrameBuffered)), InputDevice(declareLayout(numFrameBuffered), "Reader"), idVideoStream(0), readFrameCount(0), timeStampFrameRate(1.0f), timeStampOffset(0), timeStampOfLastFrameRead(0), endReached(false),
 	   pFormatCtx(NULL), pCodecCtx(NULL), pCodec(NULL), pFrame(NULL), pFrameRGB(NULL), buffer(NULL), pSWSCtx(NULL), idCurrentBufferForWritting(0)
 	{
 		#ifdef __USE_PBO__
@@ -120,7 +120,7 @@
 		// Create the texture :
 		for(unsigned int i=0; i<numFrameBuffered; i++)
 		{
-			addOutputPort("output" + to_string(i));
+			//old : addOutputPort("output" + to_string(i));
 			textureBuffers.push_back( new HdlTexture(frameFormat) );
 
 			// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
@@ -166,6 +166,17 @@
 
 		// Close the video file
 		avformat_close_input(&pFormatCtx);
+	}
+
+	InputDevice::InputDeviceLayout VideoStream::declareLayout(int numFrameBuffered)
+	{
+		 InputDevice::InputDeviceLayout tmp("VideoStream");
+
+		// Add output ports :
+		for(unsigned int i=0; i<numFrameBuffered; i++)
+			tmp.addOutputPort("output" + to_string(i));
+
+		return tmp;
 	}
 
 	int VideoStream::getReadFrameCount(void) const

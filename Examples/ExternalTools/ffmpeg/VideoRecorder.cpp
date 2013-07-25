@@ -19,7 +19,7 @@
 
 	// Find options for argument pixFormat at http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
 	VideoRecorder::VideoRecorder(const std::string& filename, const __ReadOnly_HdlTextureFormat &format, int _frameRate, int videoBitRate_BitPerSec, PixelFormat pixFormat)
-	 : __ReadOnly_ComponentLayout("VideoRecorder"), OutputDevice("VideoRecorder"), numEncodedFrame(0), frameRate(_frameRate),
+	 : __ReadOnly_ComponentLayout(declareLayout()), OutputDevice(declareLayout(), "VideoRecorder"), numEncodedFrame(0), frameRate(_frameRate),
 	   oc(NULL), fmt(NULL), video_codec(NULL), video_stream(NULL), frame(NULL), buffer(NULL), swsContext(NULL), c(NULL),
 	   #ifndef __USE_PBO__
 		textureReader("VideoRecorder_TextureReader", format)
@@ -27,8 +27,6 @@
 		textureReader("VideoRecorder_PBOTextureReader", format, GL_STREAM_READ_ARB)
 	   #endif
 	{
-		addInputPort("input");
-
 		int retCode = 0;
 
 		if(format.getWidth()%2!=0 || format.getHeight()%2!=0)
@@ -251,6 +249,18 @@
 		// Remain :
 		//AVCodec		*video_codec; // Not destroyed in the example
 	}
+
+	 OutputDevice::OutputDeviceLayout VideoRecorder::declareLayout(void)
+	{
+		// Create a layout here, from some arguments...
+		OutputDevice::OutputDeviceLayout tmp("Recorder");
+
+		// Add input ports :
+		tmp.addInputPort("input");
+
+		return tmp;
+	}
+
 
 	const __ReadOnly_HdlTextureFormat& VideoRecorder::format(void)
 	{

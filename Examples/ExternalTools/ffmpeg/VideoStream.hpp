@@ -63,6 +63,8 @@
 							timeStampOffset,
 							timeStampOfLastFrameRead;
 
+			InputDevice::InputDeviceLayout declareLayout(int numFrameBuffered);
+
 		public :
 			VideoStream(const std::string& filename, unsigned int numFrameBuffered = 1, GLenum minFilter=GL_NEAREST, GLenum magFilter=GL_NEAREST, GLenum sWrapping=GL_CLAMP, GLenum tWrapping=GL_CLAMP, int maxLevel=0);
 			~VideoStream(void);

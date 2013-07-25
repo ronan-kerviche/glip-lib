@@ -64,6 +64,8 @@
 				PBOTextureReader	textureReader;
 			#endif
 
+			 OutputDevice::OutputDeviceLayout declareLayout(void);
+		
 			// Inherited from OutputDevice :
 			void process(void);
 

@@ -9,8 +9,8 @@ SHADER_SOURCE:sigmoidShader
 	uniform sampler2D inputTexture;
 	out vec4 outputTexture;
 
-	uniform vec3 	center 	= vec3(0.5f, 0.29f, 0.5f), 
-			scale 	= vec3(1.0f, 3.0f, 1.0f);
+	uniform vec3 	center 	= vec3(0.5f, 0.5f, 0.5f), 
+			scale 	= vec3(0.1f, 0.1f, 0.1f);
 
 	void main()
 	{

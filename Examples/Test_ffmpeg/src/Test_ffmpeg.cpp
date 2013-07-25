@@ -134,7 +134,7 @@
 		else if(!pipelineLoaderInterface.isPipelineValid())
 			QMessageBox::information(NULL, tr("TestFFMPEGInterface::aboutToStartRecording"), "No valid pipeline for processing.");
 		else
-			videoRecorderControls.startRecording(id, pipelineLoaderInterface.pipeline().getOutputPortNameExtended(id), pipelineLoaderInterface.pipeline().out(id).format());
+			videoRecorderControls.startRecording(id, pipelineLoaderInterface.pipeline().getOutputPortName(id), pipelineLoaderInterface.pipeline().out(id).format());
 	}
 
 // Application :
