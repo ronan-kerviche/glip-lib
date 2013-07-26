@@ -1,0 +1,55 @@
+REQUIRED_FORMAT:fmt( FormatIn_0 )
+
+INCLUDE_FILE(maths.ppl)
+
+SHADER_SOURCE:bilateralShader
+{
+	#version 130
+	
+	uniform sampler2D inputBilateral;
+	out vec4 outputBilateral;
+	
+	uniform float 	rI = 0.270,
+			rL = 1.71;
+	uniform int	windowSize = 5;
+	
+	INCLUDE_SHARED_SOURCE:maths
+
+	void main()
+	{
+		int nWindow = windowSize / 2;
+		ivec2 sz = textureSize(inputBilateral, 0);
+		float sx = 1.0/(float(sz.s));
+		float sy = 1.0/(float(sz.t));
+
+		vec4 	outCol = vec4(0.0, 0.0, 0.0, 0.0),
+			refCol = textureLod(inputBilateral, gl_TexCoord[0].st, 0.0);
+
+		float nrm = 0.0;
+
+		for(int i=-nWindow; i<=nWindow; i++)
+		{
+			for(int j=-nWindow; j<=nWindow; j++)
+			{
+				vec4 	col 	= textureLod(inputBilateral, gl_TexCoord[0].st + vec2(j*sx, i*sy), 0.0);
+				float 	a 	= gaussian( distance(col, refCol), rI ),
+					b	= gaussian( length(vec2(j, i)), rL );
+				outCol += col * a * b;
+				nrm += a * b;
+			}
+		}
+
+		outputBilateral = outCol / nrm;
+	}
+}
+
+FILTER_LAYOUT:bilateralFilter(fmt,bilateralShader)
+
+
+PIPELINE_MAIN:bilateralPipeline
+{
+	INPUT_PORTS(inputBilateral)
+	OUTPUT_PORTS(outputBilateral)
+
+	FILTER_INSTANCE:bilateralFilterInstance(bilateralFilter)
+}
