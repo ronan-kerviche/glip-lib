@@ -19,21 +19,21 @@
 	#include "WindowRendering.hpp"
 
 // Defines :
-	#ifdef _Win32
-		#define M_PI 3.141592653589
+	#if !defined(M_PI)
+		#define M_PI (3.141592653589)
 	#endif
 
 // WindowRenderer
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
 	 : __ReadOnly_ComponentLayout(getLayout()), QGLWidget(_parent), parent(_parent), OutputDevice(getLayout(), "QtDisplay"), mouseMovementsEnabled(false), keyboardMovementsEnabled(false),
 	   doubleLeftClick(false), doubleRightClick(false), leftClick(false), rightClick(false), mouseWheelTurned(false), wheelSteps(0), deltaX(0), deltaY(0), lastPosX(-1), lastPosY(-1),
-	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0), lastWasClear(true),
+	   deltaWheelSteps(0), wheelRotationAtX(0), wheelRotationAtY(0),
 	   fullscreenModeEnabled(false), currentCenterX(0.0f), currentCenterY(0.0f), currentRotationDegrees(0.0f), currentRotationCos(1.0f), currentRotationSin(0.0f), currentScale(1.0f),
 	   currentStepRotationDegrees(180.0f), currentStepScale(1.2f), keyPressIncr(0.04f),
 	   currentPixelAspectRatio(1.0f), currentImageAspectRatio(1.0f), currentWindowAspectRatio(1.0f),
 	   clearColorRed(0.1f), clearColorGreen(0.1f), clearColorBlue(0.1f),
 	   originalOrientationBeforeRightClick(0.0f),
-	   quad(NULL)
+	   quad(NULL), target(NULL)
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -260,7 +260,7 @@
 				keyJustPressed[static_cast<int>(a)] = true;
 				keyJustReleased[static_cast<int>(a)] = false;
 
-				emit actionReceived();
+				paintGL(); //emit actionReceived();
 			}
 			else
 				std::cerr << "WindowRenderer::keyPressEvent - Warning : Key not associated" << std::endl;
@@ -270,7 +270,7 @@
 			WindowRenderer::KeyAction a = corresponding(static_cast<Qt::Key>(event->key()));
 
 			if(a!=NoAction)
-				emit actionReceived();
+				paintGL(); //emit actionReceived();
 		}
 	}
 
@@ -290,7 +290,7 @@
 				keyJustPressed[static_cast<int>(a)] = false;
 				keyJustReleased[static_cast<int>(a)] = true;
 
-				emit actionReceived();
+				paintGL(); //emit actionReceived();
 			}
 			else
 				std::cerr << "WindowRenderer::keyReleaseEvent - Warning : Key not associated" << std::endl;
@@ -312,7 +312,7 @@
 		lastPosX = event->x();
 		lastPosY = event->y();
 
-		emit actionReceived();
+		paintGL(); //emit actionReceived();
 	}
 
 	void WindowRenderer::wheelEvent(QWheelEvent *event)
@@ -332,7 +332,7 @@
 		wheelRotationAtX = event->x();
 		wheelRotationAtY = event->y();
 
-		emit actionReceived();
+		paintGL(); //emit actionReceived();
 
 		// wheelSteps 	> 0 : away of the user
 		// 		< 0 : toward the user
@@ -355,7 +355,7 @@
 		lastPosX = -1;
 		lastPosY = -1;
 
-		emit actionReceived();
+		paintGL(); //emit actionReceived();
 	}
 
 	void WindowRenderer::mouseReleaseEvent(QMouseEvent *event)
@@ -372,7 +372,7 @@
 		lastPosX = -1;
 		lastPosY = -1;
 
-		emit actionReceived();
+		paintGL(); //emit actionReceived();
 	}
 
 	void WindowRenderer::mouseDoubleClickEvent(QMouseEvent * event)
@@ -386,7 +386,7 @@
 		else if(event->buttons() & Qt::RightButton)
 			doubleRightClick = true;
 
-		emit actionReceived();
+		paintGL(); //emit actionReceived();
 	}
 
 	void WindowRenderer::resizeGL(int width, int height)
@@ -397,10 +397,7 @@
 
 		glViewport(0, 0, width, height);
 
-		//currentWindowAspectRatio = static_cast<float>(QWidget::width())/static_cast<float>(QWidget::height());
 		currentWindowAspectRatio = static_cast<float>(width)/static_cast<float>(height);
-
-		//emit resized();
 	}
 
 	void WindowRenderer::setPixelAspectRatio(float ratio)
@@ -428,6 +425,33 @@
 
 	void WindowRenderer::clearWindow(bool swapNow)
 	{
+		target = NULL;
+		
+		if(swapNow)
+		{
+			makeCurrent();
+
+			// Check keys :
+			updateActions();
+
+			// Clear screen :
+			glClearColor( clearColorRed, clearColorGreen, clearColorBlue, 1.0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glLoadIdentity();
+
+			swapBuffers();
+		}
+	}
+
+	void WindowRenderer::process(void)
+	{
+		target = &in(0);
+
+		paintGL();
+	}
+
+	void WindowRenderer::paintGL(void)
+	{
 		makeCurrent();
 
 		// Check keys :
@@ -438,62 +462,45 @@
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
 
-		if(swapNow)
+		if(target!=NULL)
 		{
-			swapBuffers();
-			lastWasClear = true;
+			float 	scaleForCurrentWindowAspectRatioX,
+				scaleForCurrentWindowAspectRatioY,
+				scaleForCurrentSurfaceAspectRatioX,
+				scaleForCurrentSurfaceAspectRatioY,
+				scaleFitting;
+
+			getScalingCoefficients(scaleForCurrentWindowAspectRatioX, scaleForCurrentWindowAspectRatioY,scaleForCurrentSurfaceAspectRatioX,scaleForCurrentSurfaceAspectRatioY, scaleFitting);
+
+			glScalef( currentScale*scaleForCurrentWindowAspectRatioX, currentScale*scaleForCurrentWindowAspectRatioY, 1.0f);
+
+			glRotatef( -currentRotationDegrees, 0.0f, 0.0f, 1.0f);
+
+			glTranslatef( currentCenterX, -currentCenterY, 0.0);
+
+			glScalef( scaleForCurrentSurfaceAspectRatioX/scaleFitting, -scaleForCurrentSurfaceAspectRatioY/scaleFitting, 1.0f);
+
+			// Bind texture to surface :
+			target->bind();
+
+			// Draw surface :
+			quad->draw();
+
+			HdlTexture::unbind();
+
+			// Show axis :
+			/*glBegin(GL_LINES);
+				glColor3f(1.0f,1.0f,0.0f);
+				glVertex2f(0.0f,0.0f);
+				glVertex2f(1.0f,0.0f);
+				glColor3f(1.0f,0.0f,1.0f);
+				glVertex2f(0.0f,0.0f);
+				glVertex2f(0.0f,1.0f);
+			glEnd();*/
 		}
-	}
-
-	void WindowRenderer::process(void)
-	{
-		clearWindow(false); // false = don't swap now
-		
-		float 	scaleForCurrentWindowAspectRatioX,
-			scaleForCurrentWindowAspectRatioY,
-			scaleForCurrentSurfaceAspectRatioX,
-			scaleForCurrentSurfaceAspectRatioY,
-			scaleFitting;
-
-		getScalingCoefficients(scaleForCurrentWindowAspectRatioX, scaleForCurrentWindowAspectRatioY,scaleForCurrentSurfaceAspectRatioX,scaleForCurrentSurfaceAspectRatioY, scaleFitting);
-
-		glScalef( currentScale*scaleForCurrentWindowAspectRatioX, currentScale*scaleForCurrentWindowAspectRatioY, 1.0f);
-
-		glRotatef( -currentRotationDegrees, 0.0f, 0.0f, 1.0f);
-
-		glTranslatef( currentCenterX, -currentCenterY, 0.0);
-
-		glScalef( scaleForCurrentSurfaceAspectRatioX/scaleFitting, -scaleForCurrentSurfaceAspectRatioY/scaleFitting, 1.0f);
-
-		// Bind texture to surface :
-		in().bind();
-
-		// Draw surface :
-		quad->draw();
-
-		HdlTexture::unbind();
-
-		// Show axis :
-		/*glBegin(GL_LINES);
-			glColor3f(1.0f,1.0f,0.0f);
-			glVertex2f(0.0f,0.0f);
-			glVertex2f(1.0f,0.0f);
-			glColor3f(1.0f,0.0f,1.0f);
-			glVertex2f(0.0f,0.0f);
-			glVertex2f(0.0f,1.0f);
-		glEnd();*/
 
 		// Done!
 		swapBuffers();
-		lastWasClear = false;
-	}
-
-	void WindowRenderer::paintGL(void)
-	{
-		if(lastWasClear)
-			clearWindow(true);
-		else
-			emit actionReceived();
 	}
 
 	bool WindowRenderer::isKeyboardActionsEnabled(void) const
@@ -590,7 +597,7 @@
 
 	void WindowRenderer::setFullscreenMode(bool enabled)
 	{
-		if(enabled!=fullscreenModeEnabled && !lastWasClear) // Do not toggle (or save toggle) if empty
+		if(enabled!=fullscreenModeEnabled && (target!=NULL || !enabled)) // Do not toggle (or save toggle) if empty
 		{
 			makeCurrent();
 

@@ -25,12 +25,12 @@
 #define __LAYOUT_LOADER_INCLUDE__
 
 	#include <map>
-	#include "../Core/HdlTexture.hpp"
-	#include "../Core/Geometry.hpp"
-	#include "../Core/ShaderSource.hpp"
-	#include "../Core/Filter.hpp"
-	#include "../Core/Pipeline.hpp"
-	#include "./VanillaParser.hpp"
+	#include "Core/HdlTexture.hpp"
+	#include "Core/Geometry.hpp"
+	#include "Core/ShaderSource.hpp"
+	#include "Core/Filter.hpp"
+	#include "Core/Pipeline.hpp"
+	#include "VanillaParser.hpp"
 
 namespace Glip
 {
@@ -285,7 +285,7 @@ Loading Example :
 
 			public :
 				LayoutLoader(void);
-				~LayoutLoader(void);
+				virtual ~LayoutLoader(void);
 
 				const std::vector<std::string>& paths(void) const;
 				void clearPaths(void);
@@ -302,18 +302,27 @@ Loading Example :
 				int  clearRequiredElements(const std::string& name);
 		};
 
-		/*class LayoutWriter
+/**
+\class LayoutWriter
+\brief Get equivalent pipeline code from a pipeline layout.
+**/
+		class LayoutWriter
 		{
 			private :
+				VanillaParserSpace::Element write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name);
+				VanillaParserSpace::Element write(const ShaderSource& source, const std::string& name);
+				VanillaParserSpace::Element write(const __ReadOnly_FilterLayout& fLayout);
+				VanillaParserSpace::Element write(const __ReadOnly_PipelineLayout& pLayout, bool isMain=false);
 
-				void 	writeFormatCode(const __ReadOnly_HdlTextureFormat& hLayout, std::string name);
-				void 	writeSourceCode(const ShaderSource& source, std::string name);
-				void 	writeFilterCode(const __ReadOnly_FilterLayout& fLayout);
-				void 	writePipelineCode(const __ReadOnly_PipelineLayout& pLayout, bool main=false);
+				std::string code;
 
 			public :
-				std::string write(const __ReadOnly_PipelineLayout& pLayout, std::string filename="");
-		};*/
+				LayoutWriter(void);
+				virtual ~LayoutWriter(void);
+
+				std::string operator()(const __ReadOnly_PipelineLayout& pipelineLayout);
+				void writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename);
+		};
 	}
 }
 

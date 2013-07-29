@@ -25,9 +25,9 @@
 #define __UNIFORMS_VARS_LOADER_INCLUDE__
 
 	#include <map>
-	#include "../Core/HdlTexture.hpp"
-	#include "../Core/HdlShader.hpp"
-	#include "../Core/Pipeline.hpp"
+	#include "Core/HdlTexture.hpp"
+	#include "Core/HdlShader.hpp"
+	#include "Core/Pipeline.hpp"
 	#include "VanillaParser.hpp"
 
 namespace Glip
@@ -90,7 +90,7 @@ namespace Glip
 					void build(const VanillaParserSpace::Element& e);
 					void build(const std::string& varName, GLenum t, HdlProgram& prgm);
 					void apply(Filter& filter);
-					VanillaParserSpace::Element getCode(void);
+					VanillaParserSpace::Element getCode(void) const;
 				};
 
 				struct RessourceNode
@@ -108,7 +108,7 @@ namespace Glip
 
 				void processNode(std::string body, RessourceNode& root);
 				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);
-				VanillaParserSpace::Element getNodeCode(RessourceNode& node);
+				VanillaParserSpace::Element getNodeCode(const RessourceNode& node) const;
 			public :
 				UniformsVarsLoader(void);
 				~UniformsVarsLoader(void);
@@ -118,12 +118,14 @@ namespace Glip
 				void clear(void);
 				void clear(const std::string& name);
 				bool hasPipeline(const std::string& name) const;
+				std::vector<std::string> getPipelinesTypeNames(void) const;
 				bool empty(void) const;
 				int getNumVariables(void) const;
 				int getNumVariables(const std::string& name) const;
 				int applyTo(Pipeline& pipeline);
-				std::string getCode(void);
-				void writeToFile(const std::string& filename);
+				std::string getCode(void) const;
+				std::string getCode(const std::string& name) const;
+				void writeToFile(const std::string& filename) const;
 		};
 	}
 }

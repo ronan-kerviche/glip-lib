@@ -550,7 +550,7 @@
 				if(getConnectionDestinations(i,j).empty())
 				{
 					res += '\n';
-					res += "Element " + tmp.getFullName() + " output port " +  tmp.getOutputPortName(i) + " is not connected.";
+					res += "Element " + tmp.getFullName() + " output port \"" +  tmp.getOutputPortName(i) + "\" is not connected.";
 				}
 			}
 		}
@@ -573,7 +573,7 @@
 			if(getConnectionDestinations(THIS_PIPELINE,i).empty())
 			{
 				res += '\n';
-				res += "Input port " + getInputPortName(i) + " is not connected inside the pipeline.";
+				res += "Input port \"" + getInputPortName(i) + "\" is not connected inside the pipeline.";
 			}
 		}
 

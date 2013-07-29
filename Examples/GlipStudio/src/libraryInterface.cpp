@@ -9,9 +9,9 @@
 	 : QWidget(parent), layout(this), tabs(this), ressourceTab(this), compilationTab(this), uniformsTab(this), mainPipeline(NULL), lastComputeSucceeded(false)
 	{
 		// Layout : 
-		tabs.addTab(&ressourceTab, 	"Ressources");
-		tabs.addTab(&compilationTab,	"Compilation");
-		tabs.addTab(&uniformsTab, 	"Uniforms");
+		tabs.addTab(&ressourceTab, 	"   Ressources   ");
+		tabs.addTab(&compilationTab,	"   Compilation   ");
+		tabs.addTab(&uniformsTab, 	"   Uniforms   ");
 		layout.addWidget(&tabs);
 
 		// Connections : 

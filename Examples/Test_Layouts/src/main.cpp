@@ -25,7 +25,7 @@ int main(int argc, char** argv)
         ShaderSource src("./Filters/gradient2.glsl");
         FilterLayout fl("TestFilterLayout", fmt, src);
 
-        std::cout << "Type : " << fl.getType() << std::endl;
+        std::cout << "Type : " << fl.getTypeName() << std::endl;
         std::cout << "Input ports : " << std::endl;
         for(int i=0; i<fl.getNumInputPort(); i++)
             std::cout << "    <" << fl.getInputPortName(i) << '>' << std::endl;
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
         // Create a pipeline layout :
         PipelineLayout pl("PipelineTest");
-        std::cout << "Name : " << pl.getNameExtended() << std::endl;
+        std::cout << "Name : " << pl.getFullName() << std::endl;
         pl.addInput("Input1");
         pl.addInput("Input2");
         pl.addOutput("Output1");
@@ -44,8 +44,8 @@ int main(int argc, char** argv)
         std::cout << "Adding Test1" << std::endl;
         pl.add(fl, "Test1");
         std::cout << "Its name : " << std::endl;
-        std::cout << pl.filterLayout(0).getNameExtended() << std::endl;
-        std::cout << pl.componentLayout(0).getNameExtended() << std::endl;
+        std::cout << pl.filterLayout(0).getFullName() << std::endl;
+        std::cout << pl.componentLayout(0).getFullName() << std::endl;
         std::cout << "Name written" << std::endl;
         pl.add(fl, "Test2");
         std::cout << "Connection à l'entrée" << std::endl;
@@ -58,12 +58,12 @@ int main(int argc, char** argv)
         //pl.connectToOutput("Test1", "red", "Output2"); Exception OK
         pl.connectToOutput("Test1", "green", "Output3");
 
-        std::cout << "Pipeline name : " << pl.getType() << std::endl;
+        std::cout << "Pipeline name : " << pl.getTypeName() << std::endl;
         std::cout << "Checking Pipeline Layout : " << std::endl;
         pl.check();
         std::cout << "Done... (*)" << std::endl;
 
-        std::cout << "Nom (test) : " << pl.componentLayout(0).getNameExtended() << std::endl;
+        std::cout << "Nom (test) : " << pl.componentLayout(0).getFullName() << std::endl;
 
         std::cout << "OK!" << std::endl;
 

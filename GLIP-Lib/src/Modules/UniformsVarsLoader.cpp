@@ -289,7 +289,7 @@
 		#undef APPLY
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCode(void)
+	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCode(void) const
 	{
 		#define GET_CODE( glType, cType, narg ) \
 			if( type == glType ) \
@@ -612,7 +612,7 @@
 		}
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(RessourceNode& node)
+	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(const RessourceNode& node) const
 	{
 		VanillaParserSpace::Element e;
 
@@ -703,6 +703,21 @@
 	}
 
 	/**
+	\fn std::vector<std::string> UniformsVarsLoader::getPipelinesTypeNames(void) const
+	\brief Get the typenames of all the pipelines which have data loaded.
+	\return A vector of strings, each one is a known pipeline typename (see __ReadOnly_ComponentLayout::getTypeName()).
+	**/
+	std::vector<std::string> UniformsVarsLoader::getPipelinesTypeNames(void) const
+	{
+		std::vector<std::string> typeNames;
+
+		for(int k=0; k<ressources.size(); k++)
+			typeNames.push_back( ressources[k].name );
+
+		return typeNames;
+	}
+
+	/**
 	\fn bool UniformsVarsLoader::empty(void) const
 	\brief Test if this object has some data loaded.
 	\return True if there is data loaded.
@@ -775,11 +790,11 @@
 	}
 
 	/**
-	\fn std::string UniformsVarsLoader::getCode(void)
+	\fn std::string UniformsVarsLoader::getCode(void) const
 	\brief Return the corresponding code for the current set of variables, for one, or multiple, pipelines. The format is human-readable.
 	\return A standard string containing the structured data.
 	**/
-	std::string UniformsVarsLoader::getCode(void)
+	std::string UniformsVarsLoader::getCode(void) const
 	{
 		std::string res;
 
@@ -793,11 +808,31 @@
 	}
 
 	/**
-	\fn void UniformsVarsLoader::writeToFile(const std::string& filename)
+	\fn std::string UniformsVarsLoader::getCode(const std::string& name) const
+	\brief Return the corresponding code of the corresponding pipeline. The format is human-readable.
+	\param name The name of the pipeline to target.
+	\return A standard string containing the structured data. Raise an Exception if no pipeline is found.
+	**/
+	std::string UniformsVarsLoader::getCode(const std::string& name) const
+	{
+		for(int k=0; k<ressources.size(); k++)
+		{
+			if(ressources[k].name==name)
+			{
+				VanillaParserSpace::Element e = getNodeCode(ressources[k]);
+				return e.getCode();
+			}
+		}
+
+		throw Exception("UniformsVarsLoader::getCode - Unable to find element \"" + name + "\".", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn void UniformsVarsLoader::writeToFile(const std::string& filename) const
 	\brief Write the corresponding code for the current set of variables, for one, or multiple, pipelines to a file. The format is human-readable. Note : in order to append, you must load the original first.
 	\param filename The filename of the file to write to.
 	**/
-	void UniformsVarsLoader::writeToFile(const std::string& filename)
+	void UniformsVarsLoader::writeToFile(const std::string& filename) const
 	{
 		std::fstream file;
 

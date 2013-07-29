@@ -25,8 +25,8 @@
 #define __FFT1D_INCLUDE__
 
 	// Include :
-	#include "../Core/OglInclude.hpp"
-	#include "../Core/Pipeline.hpp"
+	#include "Core/OglInclude.hpp"
+	#include "Core/Pipeline.hpp"
 
 namespace Glip
 {

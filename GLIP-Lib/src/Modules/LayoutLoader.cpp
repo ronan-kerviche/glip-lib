@@ -1257,3 +1257,243 @@
 		return numElemErased;
 	}
 
+// LayoutWriter 
+	/**
+	\fn LayoutWriter::LayoutWriter(void)
+	\brief LayoutWriter constructor.
+	**/
+	LayoutWriter::LayoutWriter(void)
+	{ }
+
+	LayoutWriter::~LayoutWriter(void)
+	{
+		code.clear();
+	}
+
+	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name)
+	{
+		if(name.empty())
+			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
+		if(hLayout.getBaseLevel()!=0)
+			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ]) + " : base level cannot be different than 0 (current : " + to_string(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__);
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword	= keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ];
+		e.name		= name;
+		e.body.clear();
+		e.noBody 	= true;
+
+		e.arguments.push_back( to_string( hLayout.getWidth() ) );
+		e.arguments.push_back( to_string( hLayout.getHeight() ) );
+		e.arguments.push_back( glParamName( hLayout.getGLMode() ) );
+		e.arguments.push_back( glParamName( hLayout.getGLDepth() ) );
+		e.arguments.push_back( glParamName( hLayout.getMinFilter() ) );
+		e.arguments.push_back( glParamName( hLayout.getMagFilter() ) );
+		e.arguments.push_back( glParamName( hLayout.getSWrapping() ) );
+		e.arguments.push_back( glParamName( hLayout.getTWrapping() ) );
+		e.arguments.push_back( to_string( hLayout.getMaxLevel() ) );
+
+		return e;
+	}
+ 
+	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
+	{
+		if(name.empty())
+			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_SHADER_SOURCE ]) + " : name cannot be empty.", __FILE__, __LINE__);
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword	= keywordsLayoutLoader[ KW_LL_SHADER_SOURCE ];
+		e.name		= name;
+		e.body		= source.getSource();
+		e.arguments.clear();
+		e.noArgument	= true;
+
+		return e;
+	}
+
+	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_FilterLayout& fLayout)
+	{
+		//if(name.empty())
+		//	throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
+
+		const std::string 	fmtName 	= "Format_" + fLayout.getTypeName(),
+					fragName	= "Fragment_" + fLayout.getTypeName();
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword	= keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ];
+		e.name		= fLayout.getTypeName();
+		e.body.clear();
+		e.noBody	= true;
+		e.arguments.clear();
+		e.arguments.push_back( fmtName );
+		e.arguments.push_back( fragName );
+
+		VanillaParserSpace::Element e1 = LayoutWriter::write(fLayout, fmtName);
+		code += e1.getCode() + "\n\n";
+		
+		VanillaParserSpace::Element e2 = LayoutWriter::write(fLayout.getFragmentSource(), fragName);
+		code += e2.getCode() + "\n\n";
+
+		Exception w("LayoutWriter::write - MISSING : GEOMETRY AND VERTEX TEST", __FILE__, __LINE__);
+		std::cerr << w.what() << std::endl;
+
+		return e;
+	}
+
+	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_PipelineLayout& pLayout, bool isMain)
+	{
+		std::string keyword;
+
+		if(isMain)
+			keyword = keywordsLayoutLoader[ KW_LL_PIPELINE_MAIN ];
+		else
+			keyword = keywordsLayoutLoader[ KW_LL_PIPELINE_LAYOUT ];
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword	= keyword;
+		e.name		= pLayout.getTypeName();
+		e.arguments.clear();
+		e.noArgument	= true;
+		e.body.clear();
+
+		// Declare all ports : 
+		VanillaParserSpace::Element inPorts;
+		inPorts.strKeyword = keywordsLayoutLoader[ KW_LL_INPUT_PORTS ];
+		inPorts.name.clear();
+		inPorts.noName = true;
+		inPorts.body.clear();
+		inPorts.noBody = true;
+		
+		for(int k=0; k<pLayout.getNumInputPort(); k++)
+			inPorts.arguments.push_back( pLayout.getInputPortName(k) );
+
+		e.body += inPorts.getCode() + "\n";
+
+		VanillaParserSpace::Element outPorts;
+		outPorts.strKeyword = keywordsLayoutLoader[ KW_LL_OUTPUT_PORTS ];
+		outPorts.name.clear();
+		outPorts.noName = true;
+		outPorts.body.clear();
+		outPorts.noBody = true;
+
+		for(int k=0; k<pLayout.getNumOutputPort(); k++)
+			outPorts.arguments.push_back( pLayout.getOutputPortName(k) );
+		
+		e.body += outPorts.getCode() + "\n";
+
+		e.body += "\n";
+
+		// Declare all sub-elements :
+		for(int k=0; k<pLayout.getNumElements(); k++)
+		{
+			VanillaParserSpace::Element c, d;
+
+			// Element to push in the body :
+			d.name = pLayout.getElementName(k);
+			
+
+			switch(pLayout.getElementKind(k))
+			{
+				case __ReadOnly_PipelineLayout::FILTER :
+					c 		= write( pLayout.filterLayout(k) );
+					d.strKeyword	= keywordsLayoutLoader[ KW_LL_FILTER_INSTANCE ];
+					break;
+				case __ReadOnly_PipelineLayout::PIPELINE :
+					c = write( pLayout.pipelineLayout(k) );
+					d.strKeyword	= keywordsLayoutLoader[ KW_LL_PIPELINE_INSTANCE ];
+					break;
+				default :
+					throw Exception("LayoutWriter::write - Internal error : unknown element type.", __FILE__, __LINE__);
+			}
+
+			// Element to push outside the body :
+			code += c.getCode() + "\n\n";
+
+			// Element to push inside the body :
+			d.arguments.push_back( c.name );
+			e.body += d.getCode() + "\n";
+		}
+
+		e.body += "\n";
+
+		// Add Connections :  
+		VanillaParserSpace::Element c;
+		c.strKeyword	= keywordsLayoutLoader[ KW_LL_CONNECTION ];
+		c.name.clear();
+		c.noName = true;
+		c.body.clear();
+		c.noBody = true;
+
+		for(int k=0; k<pLayout.getNumConnections(); k++)
+		{
+			__ReadOnly_PipelineLayout::Connection x = pLayout.getConnection(k);
+
+			c.arguments.clear();
+
+			if(x.idOut==__ReadOnly_PipelineLayout::THIS_PIPELINE)
+			{
+				c.arguments.push_back( keywordsLayoutLoader[ KW_LL_THIS_PIPELINE] );
+				c.arguments.push_back( pLayout.getInputPortName(x.portOut) );
+			}
+			else
+			{
+				c.arguments.push_back( pLayout.getElementName(x.idOut) );
+				c.arguments.push_back( pLayout.componentLayout(x.idOut).getOutputPortName(x.portOut) );
+			}
+			
+			if(x.idIn==__ReadOnly_PipelineLayout::THIS_PIPELINE)
+			{
+				c.arguments.push_back( keywordsLayoutLoader[ KW_LL_THIS_PIPELINE] );
+				c.arguments.push_back( pLayout.getOutputPortName(x.portIn) );
+			}
+			else
+			{
+				c.arguments.push_back( pLayout.getElementName(x.idIn) );
+				c.arguments.push_back( pLayout.componentLayout(x.idIn).getInputPortName(x.portIn) );
+			}
+
+			e.body += c.getCode() + "\n";
+		}
+
+		return e;
+	}
+
+	/**
+	\fn std::string LayoutWriter::operator()(const __ReadOnly_PipelineLayout& pipelineLayout)
+	\brief Build the human-readable code for the given __ReadOnly_PipelineLayout object.
+	\param pipelineLayout The pipeline layout to convert.
+	\return A standard string containing the full pipeline layout description. 
+	**/
+	std::string LayoutWriter::operator()(const __ReadOnly_PipelineLayout& pipelineLayout)
+	{
+		code.clear();
+
+		VanillaParserSpace::Element e = write(pipelineLayout, true);
+
+		code += e.getCode() + "\n";
+
+		return code;
+	}
+
+	/**
+	\fn void LayoutWriter::writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename)
+	\brief Build the human-readable code for the given __ReadOnly_PipelineLayout object and write it to a file. WARNING : it will discard all previous content.
+	\param pipelineLayout The pipeline layout to convert.
+	\param filename The filename to write to (Warning : discard all previous content).
+	**/
+	void LayoutWriter::writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename)
+	{
+		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
+		
+		if(!file.is_open())
+			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getTypeName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__);
+
+		file << (*this)(pipelineLayout);
+
+		file.close();
+	}
+

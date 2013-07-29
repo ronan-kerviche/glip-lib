@@ -25,8 +25,8 @@
 #define __PROCEDURAL_INPUT_INCLUDE__
 
 	// Include :
-	#include "../Core/OglInclude.hpp"
-	#include "../Core/Devices.hpp"
+	#include "Core/OglInclude.hpp"
+	#include "Core/Devices.hpp"
 
 namespace Glip
 {

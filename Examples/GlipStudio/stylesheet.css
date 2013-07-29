@@ -41,11 +41,23 @@
 		color: #FFFFFF;
 	}
 
+	QMenuBar::item:disabled
+	{
+		background: #333333;
+		color: #111111;
+	}
+
 	QMenuBar::item:pressed
 	{
 		background: #484848;
 		color: #EEEEEE;
 		font: bold;
+	}
+
+	QMenuBar::item:disabled:pressed
+	{
+		background: #333333;
+		color: #222222;
 	}
 
 /* MENU */

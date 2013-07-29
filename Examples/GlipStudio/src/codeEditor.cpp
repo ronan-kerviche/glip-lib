@@ -184,8 +184,16 @@
 
 	CodeEditor::~CodeEditor(void)
 	{
-		delete lineNumberArea;
-		delete highLighter;
+		blockSignals(true);
+
+		Highlighter 	*tmp1 = highLighter;
+		QWidget 	*tmp2 = lineNumberArea;
+
+		highLighter	= NULL;
+		lineNumberArea	= NULL;
+
+		delete tmp1;
+		delete tmp2;
 	}
 
 	int CodeEditor::lineNumberAreaWidth(void) const
@@ -205,6 +213,9 @@
 
 	void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
 	{
+		if(lineNumberArea==NULL)
+			return ;
+
 		if(dy)
 			lineNumberArea->scroll(0, dy);
 		else
@@ -291,7 +302,7 @@
 			QPlainTextEdit::keyPressEvent(e);
 	}
 
-	void CodeEditor::highlightCurrentLine()
+	void CodeEditor::highlightCurrentLine(void)
 	{
 		QList<QTextEdit::ExtraSelection> extraSelections;
 
@@ -942,6 +953,8 @@
 		widgets.setCurrentIndex( widgets.count() - 1);
 
 		connect(tabs.back(), SIGNAL(titleChanged()), this, SLOT(updateTitles()));
+
+		switchNotification(false);
 	}
 
 	void CodeEditorsPannel::open(void)
@@ -983,6 +996,8 @@
 				}
 			}
 		}
+		
+		switchNotification(false);
 	}
 
 	void CodeEditorsPannel::save(void)
@@ -1004,6 +1019,8 @@
 			}
 
 			tabs[c]->save();
+
+			switchNotification(false);
 		}
 	}
 
@@ -1021,6 +1038,8 @@
 			{
 				tabs[c]->setFilename(fileName);
 				tabs[c]->save();
+	
+				switchNotification(false);
 			}
 		}
 	}
@@ -1043,6 +1062,8 @@
 				{
 					tabs[k]->setFilename(fileName);
 					tabs[k]->save();
+
+					switchNotification(false);
 				}
 			}
 			else
@@ -1138,7 +1159,9 @@
 
 	void CodeEditorsPannel::aboutMessage(void)
 	{
-		QMessageBox::about(this, "GlipStudio", "<center><p style=\"font-family: times, serif; font-size:25pt; font-style:bold\">GlipStudio</p></center><p>GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library). Find more information, documentation and example at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p><center><p style=\"font-size:12pt; font-style:italic\">Copyright &copy; 2013, Ronan Kerviche, MIT License</p></center><p style=\"font-size:12pt;\"> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: <BR> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. <BR> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>");
+		int pointSize = font().pointSize();
+
+		QMessageBox::about(this, "GlipStudio", tr("<center><p style=\"font-family: times, serif; font-size:%2pt; font-style:bold\">GlipStudio</p></center><p style=\"font-family: times, serif; font-size:%1pt; font-style:bold\">GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library). Find more information, documentation and examples at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p><center><p style=\"font-size:%3pt; font-style:italic\">Copyright &copy; 2013, Ronan Kerviche, MIT License</p></center><p style=\"font-size:%4pt;\"> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: <BR> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. <BR> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p><table><tr><td><b><i>Binary build date</i></b> : </td><td>%5; %6</td></tr><tr><td><b><i>Hardware vendor : </i></b></td><td>%7</td></tr><tr><td><b><i>Renderer : </i></b></td><td>%8</td></tr><tr><td><b><i>OpenGL version : </i></b></td><td>%9</td></tr><tr><td><b><i>GLSL version : </i></b></td><td>%10</td></tr></table>").arg(pointSize).arg(pointSize+4).arg(pointSize+1).arg(pointSize-2).arg(__DATE__).arg(__TIME__).arg(HandleOpenGL::getVendorName().c_str()).arg(HandleOpenGL::getRendererName().c_str()).arg(HandleOpenGL::getVersion().c_str()).arg(HandleOpenGL::getGLSLVersion().c_str()));
 	}
 
 	std::string CodeEditorsPannel::getCurrentFilename(void)

@@ -1,7 +1,7 @@
 #include "netpbm.hpp"
 #include <cstring>
 
-	int16_t changeEndianness16(int16_t val)
+	unsigned short changeEndianness16(unsigned short val)
 	{
 		return 	 (val << 8) |          // left-shift always fills with zeros
 			((val >> 8) & 0x00ff); // right-shift sign-extends, so force to zero

@@ -1,4 +1,5 @@
 #include "uniformsTab.hpp"
+#include "codeEditor.hpp"
 #include <limits>
 
 // UniformObject	
@@ -610,7 +611,7 @@
 
 // MainUniformLibrary
 	MainUniformLibrary::MainUniformLibrary(QWidget* parent)
-	 : QMenu("Main Library", parent), mainLibraryFilename("./mainLibrary.uvd"), infoAct("> No information available", this), loadAct("Load variables", this), storeAct("Store variables", this), removeAct("Remove variables", this), syncToDiskAct(tr("Save to disk : %1").arg(mainLibraryFilename.c_str()), this), actionToProcess(NoAct), showInfo(true)
+	 : QMenu("Main Library", parent), mainLibraryFilename("./mainLibrary.uvd"), infoAct("> No information available", this), loadAct("Load variables", this), storeAct("Store variables", this), removeAct("Remove variables", this), syncToDiskAct(tr("Save to disk : %1").arg(mainLibraryFilename.c_str()), this), actionToProcess(NoAct), availablePipelines("Available data", this), showInfo(true)
 	{
 		// Add : 
 		addAction(&infoAct);
@@ -618,16 +619,16 @@
 		addAction(&storeAct);
 		addAction(&removeAct);
 		addAction(&syncToDiskAct);
+		addMenu(&availablePipelines);
 
-		//infoAct.setDisabled(true);
-		//setStyleSheet("QMenu::item:disabled{background: #313131;color: #111111;} QMenu::item:selected:disabled{background: #484848;color: #FFFFFF;}");
-
+		infoAct.setDisabled(true);
 		loadAct.setDisabled(true);
 		storeAct.setDisabled(true);
 		removeAct.setDisabled(true);
 		syncToDiskAct.setDisabled(true);
 
 		// Connect :
+		connect(&infoAct,	SIGNAL(triggered()), this, SLOT(showCode()));
 		connect(&loadAct, 	SIGNAL(triggered()), this, SLOT(loadFromLibrary()));
 		connect(&storeAct, 	SIGNAL(triggered()), this, SLOT(saveFromLibrary()));
 		connect(&removeAct, 	SIGNAL(triggered()), this, SLOT(removeFromLibrary()));
@@ -673,11 +674,72 @@
 				messageBox.exec();
 			}
 		}
+
+		updateMenu();
 	}
 
 	MainUniformLibrary::~MainUniformLibrary(void)
 	{
 		mainLibrary.writeToFile(mainLibraryFilename);
+		currentCode.clear();
+	}
+
+	void MainUniformLibrary::showDialogCode(const QString& title, const QString& code)
+	{
+		QDialog dialogBox(this);
+	 
+		// Dialog : 
+		QGridLayout gridLayout(&dialogBox);
+
+		// Label : 
+		QLabel label(title, &dialogBox);
+
+		gridLayout.addWidget(&label, 0, 0, 1, 1);
+
+		// Code editor : 
+		CodeEditor codeEditor(&dialogBox);
+		
+		codeEditor.setReadOnly(true);
+		codeEditor.setFixedSize(512, 256);
+
+		gridLayout.addWidget(&codeEditor, 1, 0, 1, 1);
+	
+		QDialogButtonBox buttonBox;
+
+		buttonBox.setOrientation(Qt::Horizontal);
+		buttonBox.setStandardButtons(QDialogButtonBox::Ok);
+		gridLayout.addWidget(&buttonBox, 2, 0, 1, 1);
+
+		connect(&buttonBox,	SIGNAL(accepted()),	&dialogBox,	SLOT(accept()));
+
+		dialogBox.setSizeGripEnabled(false);
+		dialogBox.setFixedSize( dialogBox.sizeHint() );	
+
+		codeEditor.insert(code);
+
+		dialogBox.exec();
+	}
+
+	void MainUniformLibrary::showCode(void)
+	{
+		if(currentCode.isEmpty())
+		{
+			QMessageBox messageBox(QMessageBox::NoIcon, tr("MainLibrary content"), infoAct.text(), QMessageBox::Ok, this);
+			messageBox.exec();
+		}
+		else
+			showDialogCode(infoAct.text(), currentCode);
+	}
+
+	void MainUniformLibrary::showStoredCode(void)
+	{
+		// Get name : 
+		QAction* sender = reinterpret_cast<QAction*>(QObject::sender());
+		std::string typeName = sender->statusTip().toStdString();
+
+		QString str = tr("%1 (%2 variable/s)").arg(typeName.c_str()).arg(mainLibrary.getNumVariables(typeName));
+
+		showDialogCode(str, mainLibrary.getCode(typeName).c_str());
 	}
 
 	void MainUniformLibrary::loadFromLibrary(void)
@@ -706,10 +768,36 @@
 		mainLibrary.writeToFile(mainLibraryFilename);
 	}
 
+	void MainUniformLibrary::updateMenu(void)
+	{
+		// Clear : 
+		availablePipelines.clear();
+
+		// Get : 
+		std::vector<std::string> els = mainLibrary.getPipelinesTypeNames();
+		
+		if(els.empty())
+		{
+			QAction* tmp = availablePipelines.addAction( "(None)" );
+			tmp->setDisabled(true);
+		}
+		else
+		{
+			for(int k = 0; k<els.size(); k++)
+			{
+				QString str = tr("%1 (%2 variable/s)").arg(els[k].c_str()).arg(mainLibrary.getNumVariables(els[k]));
+				QAction* tmp = availablePipelines.addAction( str, this, SLOT(showStoredCode()));
+				tmp->setStatusTip( els[k].c_str() );
+			}
+		}
+	}
+
 	void MainUniformLibrary::update(void)
 	{
 		infoAct.setText("No information available");
+		currentCode.clear();
 		actionToProcess = NoAct;
+		infoAct.setDisabled(true);
 		loadAct.setDisabled(true);
 		storeAct.setDisabled(true);
 		removeAct.setDisabled(true);
@@ -721,13 +809,18 @@
 		{
 			int c = mainLibrary.getNumVariables(pipeline.getName());
 			infoAct.setText(tr("> %1 has %2 variables registered").arg(pipeline.getName().c_str()).arg(c));
+			currentCode = mainLibrary.getCode(pipeline.getName()).c_str();
 
+			infoAct.setDisabled(false);
 			loadAct.setDisabled(false);
 			removeAct.setDisabled(false);
 		}
 		else
 		{
 			infoAct.setText(tr("> %1 has no registered variables").arg(pipeline.getName().c_str()));
+			currentCode.clear();
+			
+			infoAct.setDisabled(true);
 			loadAct.setDisabled(true);
 			removeAct.setDisabled(true);
 		}
@@ -775,10 +868,12 @@
 			case Save :
 				mainLibrary.load(pipeline, true);
 				syncToDiskAct.setDisabled(false);
+				updateMenu();
 				return false;
 			case Remove : 
 				mainLibrary.clear(pipeline.getName());
-				syncToDiskAct.setDisabled(false);
+				syncToDiskAct.setDisabled(false);	
+				updateMenu();
 				return false;
 			case NoAct :
 			default :
@@ -794,6 +889,9 @@
 		menuBar.addAction(&saveUniforms);
 		menuBar.addMenu(&mainLibraryMenu);
 		menuBar.addAction(&showSettings);
+
+		loadUniforms.setDisabled(true);
+		saveUniforms.setDisabled(true);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&tree);
@@ -881,6 +979,9 @@
 		mainLibraryMenu.update();
 
 		modified = false;
+
+		loadUniforms.setDisabled(true);
+		saveUniforms.setDisabled(true);
 	}
 
 	void UniformsTab::updatePipeline(Pipeline& pipeline)	
@@ -902,6 +1003,9 @@
 		mainLibraryMenu.update(pipeline);
 
 		modified = false;
+
+		loadUniforms.setDisabled(false);
+		saveUniforms.setDisabled(false);
 	
 		// Test : 
 		/*std::cout << "=======> TEST" << std::endl;
@@ -1043,6 +1147,8 @@
 					*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
 					*discardHideButton	= message.addButton(tr("Discard and hide future requests"), QMessageBox::NoRole),
 					*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+			message.setDefaultButton(discardButton);
 
 			message.exec();
 

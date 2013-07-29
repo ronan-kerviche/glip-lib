@@ -1,15 +1,21 @@
-CONFIG 		+= 	qt release
+CONFIG 		+= 	qt
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 QT           	+= 	opengl
 INCLUDEPATH  	+= 	/usr/local/lib \
 			../ExternalTools/Qt \
 			../ExternalTools/ffmpeg \
 			../../GLIP-Lib/include
-LIBS        	+= 	-lavutil \
+unix: LIBS        += 	-lavutil \
 			-lavformat \
 			-lavcodec \
 			-lavutil \
 			-lswscale \
 			../../GLIP-Lib/lib/libglip.a
+
+win32: LIBS	+=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
+
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/Qt/RessourceLoader.hpp \
 			../ExternalTools/Qt/VideoControls.hpp \

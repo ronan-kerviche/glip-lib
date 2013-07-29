@@ -30,10 +30,10 @@
 	*/
 
 	// Include :
-	#include "../Core/OglInclude.hpp"
-	#include "../Core/HdlTexture.hpp"
-	#include "../Core/Devices.hpp"
-	#include "../Core/HdlPBO.hpp"
+	#include "Core/OglInclude.hpp"
+	#include "Core/HdlTexture.hpp"
+	#include "Core/Devices.hpp"
+	#include "Core/HdlPBO.hpp"
 
 namespace Glip
 {

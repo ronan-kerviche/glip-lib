@@ -108,8 +108,7 @@
 				keyJustReleased[NumActionKey];
 
 			// OpenGL Positions and window status :
-			bool 	lastWasClear,
-				fullscreenModeEnabled;
+			bool 	fullscreenModeEnabled;
 			float 	currentCenterX,
 				currentCenterY,
 				currentRotationDegrees,
@@ -129,6 +128,9 @@
 
 			// Geometry : 
 			GeometryInstance* quad;
+
+			// Texture : 
+			HdlTexture* target;
 
 			// Find correspondance Key / Action :
 			KeyAction corresponding(const Qt::Key& k) const;

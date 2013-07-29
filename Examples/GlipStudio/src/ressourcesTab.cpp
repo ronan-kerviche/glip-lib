@@ -587,27 +587,28 @@
 			listLabels.push_back("Mipmap");
 			tree.setHeaderLabels( listLabels );
 
-			int currentFontSize = static_cast<int>( static_cast<double>(font().pointSize() * 1.1) ); 
+			int currentFontSize = static_cast<int>( static_cast<double>(font().pointSize() * 1.2) );
+            		QFont headerFont("", currentFontSize);
 
 			tree.addTopLevelItem(new QTreeWidgetItem(RessourceImages));
 			tree.topLevelItem(RessourceImages)->setText(0, "Images (0)");
 			tree.topLevelItem(RessourceImages)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceImages)->setFont(0, QFont("", currentFontSize));			
+			tree.topLevelItem(RessourceImages)->setFont(0, headerFont);			
 			
 			tree.addTopLevelItem(new QTreeWidgetItem(RessourceFormats));
 			tree.topLevelItem(RessourceFormats)->setText(0, "Formats (0)");
 			tree.topLevelItem(RessourceFormats)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceFormats)->setFont(0, QFont("", currentFontSize));
+			tree.topLevelItem(RessourceFormats)->setFont(0, headerFont);
 
 			tree.addTopLevelItem(new QTreeWidgetItem(RessourceInputs));
 			tree.topLevelItem(RessourceInputs)->setText(0, "Inputs (0)");
 			tree.topLevelItem(RessourceInputs)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceInputs)->setFont(0, QFont("", currentFontSize));
+			tree.topLevelItem(RessourceInputs)->setFont(0, headerFont);
 
 			tree.addTopLevelItem(new QTreeWidgetItem(RessourceOutputs));
 			tree.topLevelItem(RessourceOutputs)->setText(0, "Outputs (0)");
 			tree.topLevelItem(RessourceOutputs)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceOutputs)->setFont(0, QFont("", currentFontSize));
+			tree.topLevelItem(RessourceOutputs)->setFont(0, headerFont);
 
 		// Build layout : 
 		layout.addWidget(&menuBar);

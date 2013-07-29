@@ -108,11 +108,11 @@ int main(int argc, char** argv)
 	file.close();
 
 	// Parse : 
-	Glip::Modules::LayoutLoaderParser::VanillaParser parser(source);
+	Glip::Modules::VanillaParserSpace::VanillaParser parser(source);
 
 	// Show : 
 	std::cout << "Elements : " << std::endl;
-	for(std::vector<Glip::Modules::LayoutLoaderParser::Element>::iterator p=parser.elements.begin(); p!=parser.elements.end(); p++)
+	for(std::vector<Glip::Modules::VanillaParserSpace::Element>::iterator p=parser.elements.begin(); p!=parser.elements.end(); p++)
 	{
 		std::cout << "Element      : " << std::endl;
 		std::cout << "   Keyword   : " << (*p).strKeyword << std::endl;

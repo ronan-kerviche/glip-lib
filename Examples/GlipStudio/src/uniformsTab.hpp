@@ -227,19 +227,26 @@
 			const std::string	mainLibraryFilename;
 			UniformsVarsLoader	mainLibrary;
 			
+			QString			currentCode;
 			LibAction		actionToProcess;
 			QAction			infoAct,
 						loadAct,
 						storeAct,
 						removeAct,
 						syncToDiskAct;
+			QMenu			availablePipelines;
 			bool			showInfo;
 
+			void showDialogCode(const QString& title, const QString& code);
+
 		private slots : 
+			void showCode(void);
+			void showStoredCode(void);
 			void loadFromLibrary(void);
 			void saveFromLibrary(void);
 			void removeFromLibrary(void);
 			void syncLibraryToDisk(void);
+			void updateMenu(void);
 
 		public : 
 			MainUniformLibrary(QWidget* parent);

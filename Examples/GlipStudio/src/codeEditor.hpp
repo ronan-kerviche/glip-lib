@@ -81,7 +81,7 @@
 
 		private slots:
 			void updateLineNumberAreaWidth(int newBlockCount);
-			void highlightCurrentLine();
+			void highlightCurrentLine(void);
 			void updateLineNumberArea(const QRect &, int);
 			void documentWasModified(void);
 			

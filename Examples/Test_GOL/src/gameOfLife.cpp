@@ -80,7 +80,7 @@
 			#else
 				// Create another random (mathematical) point :
 				ShaderSource inputSrc("./Filters/gameInput.glsl");
-				inp = new ProceduralInput("InputPattern", fmt, inputSrc);
+				inp = new ProceduralInput(fmt, inputSrc, "InputPattern");
 
 				// Test : print available uniform variables along their type, in stdout :
 				std::cout << "Uniforms samplers : " << std::endl;
