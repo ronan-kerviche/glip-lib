@@ -307,19 +307,19 @@
 	void LayoutLoader::append(LayoutLoader& subLoader)
 	{
 		// Test for doubles :
-		#define TEST_FOR_DOUBLES( varName, typeName, type... ) \
-			for( type::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
+		#define TEST_FOR_DOUBLES( varName, typeName, type) \
+			for( std::map<std::string, type >::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
 			{ \
 				if( varName.find( it->first ) != varName.end() ) \
 					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current pipeline.", __FILE__, __LINE__); \
 			} \
 
-			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::map<std::string, std::string>)
-			TEST_FOR_DOUBLES( formatList,		"Format", 		std::map<std::string, HdlTextureFormat>)
-			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	std::map<std::string, ShaderSource>)
-			TEST_FOR_DOUBLES( geometryList,		"Geometry",		std::map<std::string, GeometryFormat>)
-			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	std::map<std::string, FilterLayout>)
-			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	std::map<std::string, PipelineLayout>)
+			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::string)
+			TEST_FOR_DOUBLES( formatList,		"Format", 		HdlTextureFormat)
+			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	ShaderSource)
+			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryFormat)
+			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	FilterLayout)
+			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	PipelineLayout)
 
 		#undef TEST_FOR_DOUBLES
 

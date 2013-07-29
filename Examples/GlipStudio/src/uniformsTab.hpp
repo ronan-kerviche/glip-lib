@@ -2,8 +2,27 @@
 #define __GLIPSTUDIO_UNIFORMSTAB__
 
 	#include "GLIPLib.hpp"
+
+	#include <QtGlobal>
+	#if QT_VERSION >= 0x050000
+		#include <QtWidgets>
+	#else
+		#include <QtGui>
+	#endif
+
 	#include <QObject>
-	#include <QtGui>
+	#include <QTreeWidgetItem>
+	#include <QVBoxLayout>
+	#include <QLabel>
+	#include <QGridLayout>
+	#include <QList>
+	#include <QSpinBox>
+	#include <QDoubleSpinBox>
+	#include <QMenu>
+	#include <QMenuBar>
+	#include <QAction>
+	#include <QString>
+	#include <QTreeWidget>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;

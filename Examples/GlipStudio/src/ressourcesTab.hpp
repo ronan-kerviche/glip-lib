@@ -3,8 +3,30 @@
 
 	#include "GLIPLib.hpp"
 	#include "RessourceLoader.hpp"
-	#include <QtGui>
-	#include <unistd.h>
+
+	#include <QtGlobal>
+	#if QT_VERSION >= 0x050000
+		#include <QtWidgets>
+	#else
+		#include <QtGui>
+	#endif
+
+	#include <QString>
+	#include <QMenu>
+	#include <QAction>
+	#include <QHBoxLayout>
+	#include <QPushButton>
+	#include <QProgressBar>
+	#include <QStringList>
+	#include <QVBoxLayout>
+	#include <QMenuBar>
+	#include <QTreeWidget>
+	#include <QSignalMapper>
+	#include <QFileInfo>
+	#include <QMessageBox>
+	#include <QFileDialog>
+	#include <QInputDialog>
+	//#include <unistd.h>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;

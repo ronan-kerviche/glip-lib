@@ -52,6 +52,8 @@
 		noBody		= cpy.noBody;
 		startLine	= cpy.startLine;
 		bodyLine	= cpy.bodyLine;
+
+		return (*this);
 	}
 
 	void Element::clear(void)
@@ -343,5 +345,7 @@
 	{
 		elements.insert(elements.end(), subParser.elements.begin(), subParser.elements.end());
 		subParser.elements.clear();
+
+		return (*this);
 	}
 

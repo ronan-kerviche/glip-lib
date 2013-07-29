@@ -15,8 +15,13 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-// Includes
+// Includes :
 	#include "WindowRendering.hpp"
+
+// Defines :
+	#ifdef _Win32
+		#define M_PI 3.141592653589
+	#endif
 
 // WindowRenderer
 	WindowRenderer::WindowRenderer(QWidget* _parent, int w, int h)
@@ -81,6 +86,7 @@
 
 	WindowRenderer::~WindowRenderer(void)
 	{
+		makeCurrent();
 		delete quad;
 		this->hide();
 		HandleOpenGL::deinit();
@@ -97,6 +103,7 @@
 
 	void WindowRenderer::initializeGL(void)
 	{
+		makeCurrent();
 		currentWindowAspectRatio = static_cast<float>(width())/static_cast<float>(height());
 		glViewport(0, 0, width(), height());
 	}
@@ -421,6 +428,8 @@
 
 	void WindowRenderer::clearWindow(bool swapNow)
 	{
+		makeCurrent();
+
 		// Check keys :
 		updateActions();
 
@@ -583,6 +592,8 @@
 	{
 		if(enabled!=fullscreenModeEnabled && !lastWasClear) // Do not toggle (or save toggle) if empty
 		{
+			makeCurrent();
+
 			if(enabled)
 			{
 				parent = parentWidget();

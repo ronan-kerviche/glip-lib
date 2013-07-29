@@ -5,7 +5,13 @@
 	#include "ressourcesTab.hpp"
 	#include "compilationTab.hpp"
 	#include "uniformsTab.hpp"
-	#include <QtGui>
+	
+	#include <QtGlobal>
+	#if QT_VERSION >= 0x050000
+		#include <QtWidgets>
+	#else
+		#include <QtGui>
+	#endif
 
 	class LibraryInterface : public QWidget
 	{

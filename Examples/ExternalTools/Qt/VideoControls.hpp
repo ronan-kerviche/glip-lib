@@ -21,8 +21,14 @@
 	#include "VideoStream.hpp"
 	#include "VideoRecorder.hpp"
 	#include "RessourceLoader.hpp"
+	#include <QPushButton>
+	#include <QLabel>
+	#include <QSpinBox>
 	#include <QTimer>
 	#include <QSlider>
+	#include <QLineEdit>
+	#include <QGridLayout>
+	#include <QComboBox>
 
 	class VideoOptionsDialog : public QDialog
 	{

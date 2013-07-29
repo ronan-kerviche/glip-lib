@@ -2,7 +2,26 @@
 #define __GLIPSTUDIO_CODE_EDITOR__
 
 	#include "GLIPLib.hpp"
-	#include <QtGui>
+	#include <QPlainTextEdit>
+	#include <QVector>
+	#include <QSyntaxHighlighter>
+	#include <QRegExp>
+	#include <QTextCharFormat>
+	#include <QString>
+	#include <QFont>
+	
+	#include <QtGlobal>
+	#if QT_VERSION >= 0x050000
+		#include <QtWidgets>
+	#else
+		#include <QtGui>
+	#endif
+
+	#include <QMenu>
+	#include <QAction>
+	#include <QMenuBar>
+	#include <QVBoxLayout>
+	#include <QTabWidget>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;

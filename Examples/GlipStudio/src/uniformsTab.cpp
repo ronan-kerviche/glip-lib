@@ -50,7 +50,7 @@
 	UniformUnknown::UniformUnknown(const std::string& name, const QString& message)
 	 : UniformObject(name), layout(this), label(message, this)
 	{
-		std::cout << "UniformUnknown::UniformUnknown : " << this << std::endl;
+		//std::cout << "UniformUnknown::UniformUnknown : " << this << std::endl;
 		item = new QTreeWidgetItem(NodeVarInteger);
 
 		layout.addWidget(&label);
@@ -60,7 +60,7 @@
 
 	UniformUnknown::~UniformUnknown(void)
 	{
-		std::cout << "UniformUnknown::~UniformUnknown : " << this << std::endl;
+		//std::cout << "UniformUnknown::~UniformUnknown : " << this << std::endl;
 	}
 
 	void UniformUnknown::applyUpdate(HdlProgram& prgm)
@@ -81,7 +81,7 @@
 	UniformInteger::UniformInteger(const std::string& name, GLenum _type, int n, int m, bool _un)
 	 : UniformObject(name), un(_un), item(NULL), layout(this), type(_type)
 	{
-		std::cout << "UniformInteger::UniformInteger : " << this << std::endl;
+		//std::cout << "UniformInteger::UniformInteger : " << this << std::endl;
 
 		for(int i=0; i<n; i++)
 		{
@@ -115,7 +115,7 @@
 
 	UniformInteger::~UniformInteger(void)
 	{
-		std::cout << "UniformInteger::~UniformInteger : " << this << std::endl;
+		//std::cout << "UniformInteger::~UniformInteger : " << this << std::endl;
 
 		item = NULL;	
 
@@ -192,7 +192,7 @@
 	UniformFloat::UniformFloat(const std::string& name, GLenum _type, int n, int m)
 	 : UniformObject(name), item(NULL), layout(this), type(_type)
 	{
-		std::cout << "UniformFloat::UniformFloat : " << this << std::endl;
+		//std::cout << "UniformFloat::UniformFloat : " << this << std::endl;
 
 		for(int i=0; i<n; i++)
 		{
@@ -221,7 +221,7 @@
 
 	UniformFloat::~UniformFloat(void)
 	{
-		std::cout << "UniformFloat::~UniformFloat : " << this << std::endl;
+		//std::cout << "UniformFloat::~UniformFloat : " << this << std::endl;
 
 		item = NULL;	
 
@@ -453,12 +453,20 @@
 
 		item = NULL;
 
-		for(int k=0; k<filterObjects.size(); k++)
+		/*for(int k=0; k<filterObjects.size(); k++)
 			filterObjects[k]->deleteLater();
 		filterObjects.clear();
 
 		for(int k=0; k<pipelineObjects.size(); k++)
 			pipelineObjects[k]->deleteLater();
+		pipelineObjects.clear();*/
+
+		for(int k=0; k<filterObjects.size(); k++)
+			delete filterObjects[k];
+		filterObjects.clear();
+
+		for(int k=0; k<pipelineObjects.size(); k++)
+			delete pipelineObjects[k];
 		pipelineObjects.clear();
 	}
 
@@ -822,7 +830,7 @@
 		// Disconnect : 
 		tree.blockSignals(true);
 
-		QTreeWidgetItem* root = tree.takeTopLevelItem(0);
+		/*QTreeWidgetItem* root = tree.takeTopLevelItem(0);
 
 		while(root->childCount()>0)
 		{
@@ -830,12 +838,15 @@
 			delete ptr;
 		}
 
-		delete root;
+		delete root;*/
+
+		QTreeWidgetItem* root = tree.takeTopLevelItem(0);
+		delete mainPipeline;
 
 		// reconnect : 
 		tree.blockSignals(false);
 
-		mainPipeline->deleteLater();
+		//mainPipeline->deleteLater();
 		mainPipeline = NULL;
 	}
 

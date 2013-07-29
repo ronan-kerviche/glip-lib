@@ -29,6 +29,7 @@
 
 	#ifdef _WIN32
 		#define WINDOWS_LEAN_AND_MEAN
+		#define NOMINMAX		
 		#include <windows.h>
 		#define GLEW_STATIC
 		#include "glew.h"
@@ -45,9 +46,6 @@
 	{
 		namespace CoreGL
 		{
-			// Prototype :
-				class HdlVBO;
-
 			// Macros
 			#define NEED_EXTENSION(ext) 				if(!ext) \
 											throw Exception("OpenGL Extension " #ext " is required but not available on Hardware or Driver (updating the driver might help).",__FILE__,__LINE__);
@@ -105,7 +103,6 @@
 					static std::string 	getRendererName(void);
 					static std::string 	getVersion(void);
 					static std::string 	getGLSLVersion(void);
-					//static HdlVBO&	   	standardQuadVBO(void);
 
 					// Friend functions :
 					friend std::string glParamName(GLenum);

@@ -1,10 +1,16 @@
 CONFIG 		+= 	qt
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 QT           	+= 	opengl
 INCLUDEPATH  	+= 	/usr/local/lib \
 			../ExternalTools/Qt \
 			../ExternalTools/NetPBM \
 			../../GLIP-Lib/include
-LIBS        	+= 	../../GLIP-Lib/lib/libglip.a
+
+unix: LIBS      += 	../../GLIP-Lib/lib/libglip.a
+win32: LIBS	+=	#Put some here.
+
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/Qt/RessourceLoader.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \

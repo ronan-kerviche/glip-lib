@@ -168,9 +168,10 @@
 		updateLineNumberAreaWidth(0);
 
 		// Set the font : 
+		int currentFontSize = document()->defaultFont().pointSize(); 
 		font.setFamily("Monospace");
 		font.setFixedPitch(true);
-		font.setPointSize(11);
+		font.setPointSize(currentFontSize);
 		setFont(font);	
 
 		// Set the tabulation length :
@@ -191,14 +192,15 @@
 	{
 		int digits = std::floor( std::log10( qMax(1, blockCount()) ) ) + 1;
 
-		int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+		//int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+		int space = 3 + fontMetrics().width( '0' ) * digits;
 
 		return space;
 	}
 
 	void CodeEditor::updateLineNumberAreaWidth(int newBlockCount)
 	{
-		setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+		this->setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 	}
 
 	void CodeEditor::updateLineNumberArea(const QRect &rect, int dy)
@@ -331,7 +333,7 @@
 				QString number = QString::number(blockNumber + 1);
 				painter.setPen(ed);
 				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
-				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight, number);
+				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
 			}
 
 			block = block.next();

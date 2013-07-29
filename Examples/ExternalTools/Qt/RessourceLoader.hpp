@@ -27,9 +27,11 @@
 
 	#include "GLIPLib.hpp"
 	#include <vector>
+	#include <QString>
 	#include <QGLWidget>
 	#include <QLabel>
 	#include <QVBoxLayout>
+	#include <QHBoxLayout>
 	#include <QGridLayout>
 	#include <QPushButton>
 	#include <QSpinBox>

@@ -169,16 +169,6 @@ using namespace Glip::CoreGL;
 				return std::string("<Error : OpenGL version is less than 2.0>");
 		}
 
-		/*
-		fn HdlVBO& HandleOpenGL::standardQuadVBO(void)
-		brief Grab access to the standard quad VBO (a quad between points (-1;-1), (1;-1), (1;1), (-1;1), with texel coordinates (0;0), (0;1), (1;1), (1;0). WARNING: this function does not perform initialization test.
-		return A reference to this geometry.
-		*/
-		/*HdlVBO& HandleOpenGL::standardQuadVBO(void)
-		{
-			return *(instance->standardQuad);
-		}*/
-
 // Errors Monitoring
 	/**
 	\fn std::string Glip::CoreGL::glErrorToString(bool* caughtError = NULL)

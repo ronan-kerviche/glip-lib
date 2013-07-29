@@ -83,7 +83,8 @@
 /* SCROLL BAR */
 	QScrollBar:vertical
 	{               
-		border: 1px solid #555555;
+		/*border: 1px solid #555555;*/
+		border: none;
 		background: #444444;
 		width: 10px;
 		margin: 0px 0px 0px 0px;
@@ -91,7 +92,8 @@
 
 	QScrollBar:horizontal
 	{               
-		border: 1px solid #555555;
+		/*border: 1px solid #555555;*/
+		border: none;
 		background: #444444;
 		height: 10px;
 		margin: 0px 0px 0px 0px;
@@ -139,6 +141,18 @@
 		height: 5px;
 		subcontrol-position: left;
 		subcontrol-origin: margin;
+	}
+
+	QScrollBar::up-arrow:vertical,
+	QScrollBar::down-arrow:vertical
+	{
+		background: none;
+	}
+
+	QScrollBar:left-arrow:horizontal,
+	QScrollBar::right-arrow:horizontal
+	{
+		background: none;
 	}
 
 	QScrollBar::add-page:vertical, 
@@ -307,7 +321,7 @@
 		color: #FFFFFF;
 	}
 
-/* */
+/* QLINEDIT */
 	QLineEdit
 	{
 		color: #FFFFFF;
@@ -317,4 +331,25 @@
 		border-radius: 5px;
 		border-color: #777777;
 	}
+
+/* QMESSAGEBOX */
+	QMessageBox
+	{ }
+
+/* QPUSHBUTTON */
+	/*QPushButton
+	{
+		color: #DDDDDD;
+		border: 1px solid #777777;
+		border-radius: 2px;
+		background-color: #333333;
+		min-width: 80px;
+		margin:5px
+	}
+
+	QPushButton:hover
+	{
+		color: #FFFFFF;
+		background-color: #222222;
+	}*/
 

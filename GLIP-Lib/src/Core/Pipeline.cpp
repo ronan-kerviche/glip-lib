@@ -838,7 +838,7 @@
 		{
 			// Check for previous existing connections
 			if(getNumConnections()!=0)
-				throw Exception("PipelineLayout::autoConnect - Layout for " + getFullName() + " has already connections and thus is not eligible to auto-connect.", __FILE__, __LINE__);
+				throw Exception("PipelineLayout::autoConnect - Layout for " + getFullName() + " has already connections and, thus, it is not eligible to auto-connect.", __FILE__, __LINE__);
 
 			// Check for double names in outputs :
 			std::map<std::string,int> outputNames;
@@ -859,7 +859,7 @@
 					// Check for doubles :
 					std::map<std::string,int>::iterator it = outputNames.find(name);
 					if(it!=outputNames.end())
-						throw Exception("PipelineLayout::autoConnect - Found another output having the same name (" + name + " for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+						throw Exception("PipelineLayout::autoConnect - Found another output having the same name \"" + name + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
 					else
 						outputNames[name] = i;
 				}
@@ -874,7 +874,7 @@
 					std::map<std::string,int>::iterator it = outputNames.find(cp.getInputPortName(j));
 
 					if(it==outputNames.end())
-						throw Exception("PipelineLayout::autoConnect - No elements were found having an output named " + cp.getInputPortName(j) + " for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+						throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" + cp.getInputPortName(j) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
 
 					if(it->second!=THIS_PIPELINE)
 						connect(getElementName(it->second), it->first, getElementName(i), cp.getInputPortName(j));
@@ -889,7 +889,7 @@
 				std::map<std::string,int>::iterator it = outputNames.find(getOutputPortName(i));
 
 				if(it==outputNames.end())
-					throw Exception("PipelineLayout::autoConnect - No elements were found having an output named " +getOutputPortName(i) + " for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" +getOutputPortName(i) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
 
 				if(it->second!=THIS_PIPELINE)
 					connectToOutput(getElementName(it->second), it->first, getOutputPortName(i));

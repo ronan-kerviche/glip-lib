@@ -52,7 +52,6 @@
 			// Pipeline Tools
 			#include "Core/Filter.hpp"
 			#include "Core/Pipeline.hpp"
-			#include "Core/HdlInfo.hpp"
 			#include "Core/Devices.hpp"
 
 			// Modules
