@@ -295,7 +295,7 @@
 			void updateData(Pipeline& pipeline);
 			bool loadData(Pipeline& pipeline);	
 			void saveData(Pipeline& pipeline);
-			void takePipeline(Pipeline& pipeline);
+			bool takePipeline(Pipeline& pipeline);
 			bool prepareUpdate(Pipeline* pipeline);
 
 		signals :

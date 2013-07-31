@@ -92,7 +92,8 @@
 	void LibraryInterface::needPipeline(void)
 	{
 		if(mainPipeline!=NULL)
-			uniformsTab.takePipeline(*mainPipeline);
+			if( uniformsTab.takePipeline(*mainPipeline) )
+				compute();
 	}
 
 	void LibraryInterface::saveOutput(int id)

@@ -825,7 +825,12 @@
 			removeAct.setDisabled(true);
 		}
 
-		storeAct.setDisabled(false);
+		int 	numFilters		= 0,
+			numPipelines		= 0,
+			numUniformVariables	= 0;
+
+		pipeline.getInfoElements(numFilters, numPipelines, numUniformVariables );
+		storeAct.setDisabled( numUniformVariables==0 );
 		
 		actionToProcess = NoAct;
 	}
@@ -846,12 +851,16 @@
 				}
 				catch(Exception& e)
 				{
-					QMessageBox::warning(this, "Variables loading failed", e.what());
+					QMessageBox warning(QMessageBox::Warning, "Warning", tr("Failed to load variables for %1.").arg(pipeline.getFullName().c_str()), QMessageBox::Ok, this);
+					warning.setDetailedText( e.what() );
+
 					std::cerr << "MainUniformLibrary::process - Exception : " << std::endl;
 					std::cerr << e.what();
+
+					warning.exec();
 				}
 
-				if(showInfo)
+				if(showInfo && c>0)
 				{
 					QMessageBox messageBox;
 					messageBox.setText(tr("%1 variables loaded successfully.").arg(c));
@@ -864,14 +873,16 @@
 					if(messageBox.clickedButton() == doNotShowAgain)
 						showInfo = false;
 				}
-				return true;
+				return c>0;
 			case Save :
 				mainLibrary.load(pipeline, true);
+				currentCode = mainLibrary.getCode(pipeline.getName()).c_str();
 				syncToDiskAct.setDisabled(false);
 				updateMenu();
 				return false;
 			case Remove : 
 				mainLibrary.clear(pipeline.getName());
+				currentCode.clear();
 				syncToDiskAct.setDisabled(false);	
 				updateMenu();
 				return false;
@@ -1124,13 +1135,15 @@
 		HdlProgram::stopProgram();
 	}
 
-	void UniformsTab::takePipeline(Pipeline& pipeline)
+	bool UniformsTab::takePipeline(Pipeline& pipeline)
 	{
 		if( mainLibraryMenu.process(pipeline) )
-			emit requestDataUpdate();	// Pipeline must be updated.
-
-		// Update values : 
-		updatePipeline(pipeline);
+		{
+			updatePipeline(pipeline);
+			return true;
+		}
+		else 
+			return false;
 	}
 
 	bool UniformsTab::prepareUpdate(Pipeline* pipeline)

@@ -862,9 +862,92 @@
 			throw Exception("Internal error : notification ID out of range.", __FILE__, __LINE__);
 	}
 
+// RecentFileMenu
+	RecentFileMenu::RecentFileMenu(QWidget* parent)
+	 : QMenu("Recent file", parent), isEmpty(true), maxLinks(15), filenameDatabase("./recentFiles.txt")
+	{
+		// Try to open the file : 
+		QFile file(filenameDatabase);
+		if( file.open(QIODevice::ReadOnly | QIODevice::Text) )
+		{
+			QTextStream in(&file);
+			while (!in.atEnd())
+				append( in.readLine() );
+		}
+
+		// Update menu : 
+		updateMenu();
+	}
+
+	RecentFileMenu::~RecentFileMenu(void)
+	{
+		// Write all to disk : 
+		if(!isEmpty && !filenames.isEmpty())
+		{
+			QFile file(filenameDatabase);
+
+			if( file.open(QIODevice::WriteOnly | QIODevice::Text) )
+			{
+				QTextStream out(&file);
+
+				for(int k=filenames.count()-1; k>=0; k--)
+					out << filenames[k] << "\n";
+			
+				file.close();		
+			}
+		}
+	}
+
+	void RecentFileMenu::updateMenu(void)
+	{
+		this->clear();
+
+		if(!isEmpty && !filenames.isEmpty())
+		{
+			for(int k=0; k<filenames.count(); k++)
+			{
+				QFileInfo info( filenames[k] );
+				QAction* tmp = addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
+				tmp->setToolTip( filenames[k] );
+				tmp->setStatusTip( filenames[k] );
+			}
+		}
+		else
+		{
+			QAction* tmp = addAction( "(none)" );
+			tmp->setDisabled(true);
+		}
+	}
+
+	void RecentFileMenu::requestOpenAction(void)
+	{
+		QAction* sender = reinterpret_cast<QAction*>(QObject::sender());
+		emit openFile(sender->statusTip());
+	}
+
+	void RecentFileMenu::append(const QString& filename)
+	{
+		filenames.removeAll(filename);
+
+		if(!filename.isEmpty())
+		{
+			QFileInfo info(filename);
+			
+			if(info.exists())
+			{
+				filenames.push_front( filename );
+				isEmpty = false;
+				updateMenu();
+			}
+		}
+
+		while(filenames.count()>maxLinks)
+			filenames.removeLast();
+	}
+
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), templateMenu(this), 
+	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), recentFilesMenu(this), templateMenu(this), 
 	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh | Compile", this), closeTabAct(tr("&Close"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this), notificationBar(this), aboutAct(tr("About"), this)
 	{
 		// Add the actions : 
@@ -903,12 +986,15 @@
 
 		connect(&aboutAct, SIGNAL(triggered()), this, SLOT(aboutMessage()));
 
+		connect(&recentFilesMenu, SIGNAL(openFile(QString)), this, SLOT(openFile(QString)));
+
 		// Movable : 	
 		widgets.setMovable(true);
 
 		// Menus :
 		fileMenu.addAction(&newTabAct);
 		fileMenu.addAction(&openAct);
+		fileMenu.addMenu(&recentFilesMenu);
 		fileMenu.addAction(&saveAct);
 		fileMenu.addAction(&saveAsAct);
 		fileMenu.addAction(&saveAllAct);
@@ -973,7 +1059,9 @@
 
 		for(int k=0; k<filenames.count(); k++)
 		{
-			if(!filenames[k].isEmpty())
+			openFile( filenames[k] );
+
+			/*if(!filenames[k].isEmpty())
 			{
 				if(widgets.count() > 0)
 				{
@@ -993,8 +1081,11 @@
 				{
 					// Append the path : 
 					pathWidget.addPath(tabs[c]->path().toStdString());
+
+					// Save as new file : 
+					recentFilesMenu.append( filenames[k] );
 				}
-			}
+			}*/
 		}
 		
 		switchNotification(false);
@@ -1015,7 +1106,10 @@
 				if(fileName.isEmpty())
 					return ;
 				else
+				{
 					tabs[c]->setFilename(fileName);
+					recentFilesMenu.append( fileName );
+				}
 			}
 
 			tabs[c]->save();
@@ -1039,6 +1133,8 @@
 				tabs[c]->setFilename(fileName);
 				tabs[c]->save();
 	
+				recentFilesMenu.append( fileName );
+
 				switchNotification(false);
 			}
 		}
@@ -1243,4 +1339,36 @@
 
 		return test;
 	}
+
+	void CodeEditorsPannel::openFile(QString filename)
+	{
+		QFileInfo info( filename );
+
+		if(info.exists())
+		{
+			if(widgets.count() > 0)
+			{
+				int c = widgets.currentIndex();
+				if(!tabs[c]->empty())
+					newTab();
+			}
+			else
+				newTab();
+
+			int c = widgets.currentIndex();
+	
+			tabs[c]->setFilename( filename );
+			if(!tabs[c]->load())
+				closeTab();
+			else
+			{
+				// Append the path : 
+				pathWidget.addPath( tabs[c]->path().toStdString() );
+
+				// Save as new file : 
+				recentFilesMenu.append( filename );
+			}
+		}
+	}
+
 

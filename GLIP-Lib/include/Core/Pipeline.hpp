@@ -119,7 +119,7 @@
 					void 				checkElement(int i) const;
 					int  				getNumElements(void) const;
 					int  				getNumConnections(void) const;
-					void				getInfoElements(int& numFilters, int& numPipelines);
+					void				getInfoElements(int& numFilters, int& numPipelines, int& numUniformVariables);
 					int  				getElementIndex(const std::string& name) const;
 					bool				doesElementExist(const std::string& name) const;
 					bool				doesElementExist(const std::vector<std::string>& path) const;

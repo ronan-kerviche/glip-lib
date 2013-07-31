@@ -253,6 +253,30 @@
 			void showMe(bool);
 	};
 
+	class RecentFileMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			bool isEmpty;
+			const int maxLinks;			
+			QList<QString> filenames;
+			const QString filenameDatabase;
+
+		private slots : 
+			void updateMenu(void);
+			void requestOpenAction(void);
+
+		public : 
+			RecentFileMenu(QWidget* parent=NULL);
+			~RecentFileMenu(void);
+
+			void append(const QString& filename);
+
+		signals : 
+			void openFile(QString filename);
+	};
+
 	class CodeEditorsPannel : public QWidget
 	{
 		Q_OBJECT
@@ -262,6 +286,7 @@
 			QTabWidget		widgets;
 			QMenuBar 		menuBar;
 			QMenu			fileMenu;
+			RecentFileMenu		recentFilesMenu;
 			TemplateMenu		templateMenu;
 			QAction 		newTabAct,
 						saveAct,
@@ -299,6 +324,9 @@
 			std::string getCurrentFilename(void);
 			const std::vector<std::string>& getPaths(void);
 			bool canBeClosed(void);
+
+		public slots : 
+			void openFile(QString filename);
 
 		signals : 
 			void requireRefresh(void);

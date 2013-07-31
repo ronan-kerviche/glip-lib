@@ -79,7 +79,7 @@
 	**/
 	std::string __ReadOnly_ComponentLayout::getFullName(void) const
 	{
-		return "Component Layout (type : \"" + getTypeName() + "\")";
+		return "<ComponentLayout> (type : \"" + getTypeName() + "\")";
 	}
 
 	/**

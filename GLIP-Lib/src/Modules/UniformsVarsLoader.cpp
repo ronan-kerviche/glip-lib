@@ -612,11 +612,11 @@
 		}
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(const RessourceNode& node) const
+	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(const RessourceNode& node, const bool isRoot) const
 	{
 		VanillaParserSpace::Element e;
 
-		if(node.subNodes.empty())
+		if(node.subNodes.empty() && !node.ressources.empty())
 		{
 			// Filter :
 			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_FILTER];
@@ -624,6 +624,7 @@
 			e.noName	= false;
 			e.arguments.clear();
 			e.noArgument	= true;
+			e.noBody	= false;
 
 			for(int k=0; k<node.ressources.size(); k++)
 			{
@@ -634,7 +635,7 @@
 					e.body += "\n";
 			}
 		}
-		else
+		else if(!node.subNodes.empty() || isRoot)
 		{
 			// Pipeline :
 			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_PIPELINE];
@@ -642,6 +643,7 @@
 			e.noName	= false;
 			e.arguments.clear();
 			e.noArgument	= true;
+			e.noBody	= false;
 
 			for(int k=0; k<node.subNodes.size(); k++)
 			{
@@ -779,6 +781,8 @@
 				if(ressources[k].name==pipeline.getName())
 					c += ressources[k].apply(pipeline, pipeline);
 			}
+
+			HdlProgram::stopProgram();
 		}
 		catch(Exception& e)
 		{
@@ -800,7 +804,7 @@
 
 		for(int k=0; k<ressources.size(); k++)
 		{
-			VanillaParserSpace::Element e = getNodeCode(ressources[k]);
+			VanillaParserSpace::Element e = getNodeCode(ressources[k], true);
 			res += e.getCode() + "\n";
 		}
 
@@ -819,7 +823,7 @@
 		{
 			if(ressources[k].name==name)
 			{
-				VanillaParserSpace::Element e = getNodeCode(ressources[k]);
+				VanillaParserSpace::Element e = getNodeCode(ressources[k], true);
 				return e.getCode();
 			}
 		}

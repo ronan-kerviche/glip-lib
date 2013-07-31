@@ -40,6 +40,7 @@ namespace Glip
 		\class FFT1D
 		\brief Compute the 1D FFT for a gray level image (real or complex) in single precision.
 
+		Warning : this module might be deprecated in future version and replaced by a different interface.
 		This module might return erroneous result given that the driver will perform blind optimization.
 		Thus results might be affected by lower accuracy and being fetched to a close value.
 		**/

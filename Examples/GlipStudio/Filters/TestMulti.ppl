@@ -24,4 +24,4 @@ PIPELINE_MAIN:testMulti
 	CONNECTION(mixTwo, 	texout1, 	THIS, 	texout1)
 	CONNECTION(mixTwo, 	texout2, 	THIS, 	texout2)
 	CONNECTION(mixTwo, 	outSplitted, 	THIS, 	outSplitted)
-}
+} 

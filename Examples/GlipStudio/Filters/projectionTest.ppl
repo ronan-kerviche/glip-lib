@@ -1,7 +1,7 @@
 //TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE)
 REQUIRED_FORMAT:format(FormatIn_0)
 
-SHADER_SOURCE:HelloWorld()
+SHADER_SOURCE:projectionShader()
 {
 	#version 130
 
@@ -32,13 +32,13 @@ SHADER_SOURCE:HelloWorld()
 }
 
 // Declare the filter layout :
-FILTER_LAYOUT:helloFilter(format,HelloWorld)
+FILTER_LAYOUT:projectionFilter(format, projectionShader)
 
-PIPELINE_MAIN:pMainGradient()
+PIPELINE_MAIN:pipelineProjection()
 {
 	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(texInput)
 	OUTPUT_PORTS(texOutput)
 
-	FILTER_INSTANCE:instHello(helloFilter)
+	FILTER_INSTANCE:projectionFilter(projectionFilter)
 }

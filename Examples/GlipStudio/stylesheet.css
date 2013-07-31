@@ -92,6 +92,12 @@
 		background: #222222;
 	}
 
+	QTextEdit
+	{
+		color: #FFFFFF;
+		background: #222222;
+	}
+
 /* SCROLL BAR */
 	QScrollBar:vertical
 	{               

@@ -52,4 +52,7 @@ PIPELINE_MAIN:bilateralPipeline
 	OUTPUT_PORTS(outputBilateral)
 
 	FILTER_INSTANCE:bilateralFilterInstance(bilateralFilter)
+
+	CONNECTION(THIS, inputBilateral, bilateralFilterInstance, inputBilateral)
+	CONNECTION(bilateralFilterInstance, outputBilateral, THIS, outputBilateral)
 }

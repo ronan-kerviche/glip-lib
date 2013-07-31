@@ -108,7 +108,7 @@ namespace Glip
 
 				void processNode(std::string body, RessourceNode& root);
 				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);
-				VanillaParserSpace::Element getNodeCode(const RessourceNode& node) const;
+				VanillaParserSpace::Element getNodeCode(const RessourceNode& node, const bool isRoot = false) const;
 			public :
 				UniformsVarsLoader(void);
 				~UniformsVarsLoader(void);

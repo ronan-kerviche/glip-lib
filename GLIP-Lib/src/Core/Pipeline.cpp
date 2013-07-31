@@ -27,6 +27,7 @@
 #include "Pipeline.hpp"
 #include "Component.hpp"
 #include "HdlFBO.hpp"
+#include "ShaderSource.hpp"
 #include "devDebugTools.hpp"
 
 	using namespace Glip::CoreGL;
@@ -180,17 +181,19 @@
 	}
 
 	/**
-	\fn void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines)
+	\fn void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines, int& numUniformVariables)
 	\brief Get the total number of Filters and Pipelines contained by this pipeline.
 	\param numFilters The total number of filters.
 	\param numPipelines The total number of pipelines (including this one).
+	\param numUniformVariables APPROXIMATION to the total number of uniform variables : in some cases, the number might be larger than the actual number of uniform variables (this is because a variable can appear in both the vertex and fragment shader).
 	**/
-	void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines)
+	void __ReadOnly_PipelineLayout::getInfoElements(int& numFilters, int& numPipelines, int& numUniformVariables)
 	{
-		int a, b;
-		__ReadOnly_PipelineLayout* tmp = NULL;
-		numFilters  	= 0;
-		numPipelines	= 0;
+		int a, b, c;
+		//__ReadOnly_PipelineLayout* tmp = NULL;
+		numFilters  		= 0;
+		numPipelines		= 0;
+		numUniformVariables 	= 0;
 
 		for(int i=0; i<elementsLayout.size(); i++)
 		{
@@ -198,12 +201,14 @@
 			{
 				case FILTER:
 					numFilters++;
+					numUniformVariables += filterLayout(i).getFragmentSource().getUniformVars().size() + filterLayout(i).getVertexSource().getUniformVars().size();
 					break;
 				case PIPELINE:
-					tmp = reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
-					tmp->getInfoElements(a,b);
-					numFilters   += a;
-					numPipelines += b+1;
+					//tmp = reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
+					pipelineLayout(i).getInfoElements(a,b,c);
+					numFilters   		+= a;
+					numPipelines 		+= b+1;
+					numUniformVariables 	+= c;
 					break;
 				default:
 					throw Exception("__ReadOnly_PipelineLayout::getInfoElements - Unknown type for element in " + getFullName(), __FILE__, __LINE__);
@@ -348,7 +353,7 @@
 		//std::cout << "ACCESSING FILTER (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element " + name + " exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element \"" + name + "\" exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[index]);
 	}
 
@@ -378,7 +383,8 @@
 		//std::cout << "ACCESSING PIPELINE (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element " + name + " exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element \"" + name + "\" exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[index]);
 	}
 
@@ -443,10 +449,10 @@
 		if(id!=THIS_PIPELINE)
 		{
 			__ReadOnly_ComponentLayout& src = componentLayout(id);
-			throw Exception("Element " + src.getFullName() + " has no source on output port " + src.getInputPortName(p) + " in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + to_string(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__);
 		}
 		else
-			throw Exception("This Pipeline " + getFullName() + " has no source on output port " + getOutputPortName(p) + ".", __FILE__, __LINE__);
+			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + to_string(p) + ").", __FILE__, __LINE__);
 	}
 
 	/**
@@ -532,6 +538,7 @@
 		for(int i=0; i<elementsLayout.size(); i++)
 		{
 			__ReadOnly_ComponentLayout& tmp = componentLayout(i);
+
 			for(int j=0; j<tmp.getNumInputPort(); j++)
 			{
 				try
@@ -550,7 +557,7 @@
 				if(getConnectionDestinations(i,j).empty())
 				{
 					res += '\n';
-					res += "Element " + tmp.getFullName() + " output port \"" +  tmp.getOutputPortName(i) + "\" is not connected.";
+					res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getTypeName() + "\") output port \"" + tmp.getOutputPortName(i) + "\" is not connected.";
 				}
 			}
 		}
