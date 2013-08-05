@@ -23,8 +23,8 @@
 
 	// Includes :
 	#include <cstring>
-	#include "Exception.hpp"
-	#include "UniformsVarsLoader.hpp"
+	#include "Core/Exception.hpp"
+	#include "Modules/UniformsVarsLoader.hpp"
 
 	// Namespaces :
 	using namespace Glip;

@@ -21,9 +21,8 @@
  * \date    August 18th 2012
 **/
 
-#include "HdlTextureTools.hpp"
-#include "Exception.hpp"
-#include "../include/GLIPLib.hpp"
+#include "Core/HdlTextureTools.hpp"
+#include "Core/Exception.hpp"
 
 using namespace Glip::CoreGL;
 

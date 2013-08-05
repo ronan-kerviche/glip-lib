@@ -25,7 +25,7 @@
 #define __HDLGEBO_INCLUDE__
 
 	// GL include
-        #include "OglInclude.hpp"
+        #include "Core/OglInclude.hpp"
 
 	namespace Glip
 	{

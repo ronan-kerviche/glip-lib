@@ -25,9 +25,9 @@
 #define __GLIP_DEVICES__
 
     // Includes
-        #include "Component.hpp"
-        #include "HdlTexture.hpp"
-        #include "Pipeline.hpp"
+        #include "Core/Component.hpp"
+        #include "Core/HdlTexture.hpp"
+        #include "Core/Pipeline.hpp"
 
 	namespace Glip
 	{

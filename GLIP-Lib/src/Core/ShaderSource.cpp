@@ -21,10 +21,10 @@
  * \date    August 15th 2011
 **/
 
-#include "ShaderSource.hpp"
-#include "Exception.hpp"
+#include "Core/ShaderSource.hpp"
+#include "Core/Exception.hpp"
 #include "devDebugTools.hpp"
-#include "OglInclude.hpp"
+#include "Core/OglInclude.hpp"
 
     using namespace Glip::CoreGL;
 

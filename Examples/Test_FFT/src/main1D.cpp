@@ -103,6 +103,9 @@
 			fft1D.enablePerfsMonitoring();
 			ifft1D.enablePerfsMonitoring();
 
+			// Geometry : 
+			GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
+
 			// Main loop
 			while( running )
 			{
@@ -126,7 +129,7 @@
 				visualization << input.out() << fft1D.output() << ifft1D.output() << Pipeline::Process;
 				visualization.out().bind();
 
-				HandleOpenGL::standardQuadVBO().draw();
+				quad.draw();
 
 				i++;
 

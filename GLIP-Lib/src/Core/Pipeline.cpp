@@ -23,11 +23,11 @@
 
 #include <limits>
 #include <map>
-#include "Exception.hpp"
-#include "Pipeline.hpp"
-#include "Component.hpp"
-#include "HdlFBO.hpp"
-#include "ShaderSource.hpp"
+#include "Core/Exception.hpp"
+#include "Core/Pipeline.hpp"
+#include "Core/Component.hpp"
+#include "Core/HdlFBO.hpp"
+#include "Core/ShaderSource.hpp"
 #include "devDebugTools.hpp"
 
 	using namespace Glip::CoreGL;

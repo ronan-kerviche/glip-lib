@@ -3,7 +3,8 @@
 	#include "WindowRendering.hpp"
 
 // Class
-	WindowRenderer::WindowRenderer(int w, int h, double _fmtImg) : QGLWidget()
+	WindowRenderer::WindowRenderer(int w, int h, double _fmtImg)
+	 : QGLWidget(), geometry(NULL)
 	{
 		QWidget::setGeometry(10,10,w,h);
 
@@ -19,9 +20,9 @@
 
 		try
 		{
-			vbo = HdlVBO::generate2DGrid(50, 35, 1.0, 1.0, 0.0, 0.0);
+			//vbo = HdlVBO::generate2DGrid(50, 35, 1.0, 1.0, 0.0, 0.0);
 			//vbo = HdlVBO::generate2DStandardQuad();
-			std::cout << "VBO : "; glErrors(true, false);
+			geometry = new GeometryInstance( GeometryPrimitives::PointsGrid2D(50, 35), GL_STATIC_DRAW_ARB );
 		}
 		catch(std::exception& e)
 		{
@@ -71,7 +72,7 @@
 	WindowRenderer::~WindowRenderer(void)
 	{
 		this->hide();
-		delete vbo;
+		delete geometry;
 	}
 
 	void WindowRenderer::resizeGL(int width, int height)
@@ -138,7 +139,7 @@
 		else
 		{
 			std::cout << "Before VBO : "; glErrors(true,false);
-			vbo->draw();
+			geometry->draw();
 		}
 
 		swapBuffers();

@@ -22,8 +22,8 @@
 **/
 
 	// Includes : 
-	#include "VanillaParser.hpp"
-	#include "Exception.hpp"
+	#include "Modules/VanillaParser.hpp"
+	#include "Core/Exception.hpp"
 
 	// Namespaces :
 	using namespace Glip;

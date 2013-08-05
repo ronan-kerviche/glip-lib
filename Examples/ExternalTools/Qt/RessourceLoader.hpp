@@ -161,6 +161,7 @@
 					refreshButton;
 			QLineEdit	pipelineName;
 			QComboBox	outputChoice;
+			LayoutLoader	layoutLoader;
 
 		public :
 			PipelineLoaderInterface(void);
@@ -172,6 +173,7 @@
 			Pipeline& pipeline(void);
 			HdlTexture& currentOutput(HdlTexture& original);
 			HdlTexture& output(HdlTexture& original, int id);
+			LayoutLoader& loader(void);
 
 		public slots:
 			void loadPipelineDialog(void);

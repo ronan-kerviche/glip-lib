@@ -23,11 +23,11 @@
 
 	// Includes
 	#include <cmath>
-	#include "Exception.hpp"
-	#include "FFT2D.hpp"
+	#include "Core/Exception.hpp"
+	#include "Modules/FFT2D.hpp"
 	#include "devDebugTools.hpp"
-	#include "ShaderSource.hpp"
-	#include "HdlShader.hpp"
+	#include "Core/ShaderSource.hpp"
+	#include "Core/HdlShader.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;

@@ -558,18 +558,23 @@
 			maxDoubleLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 			stepDoubleLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		
-			minDoubleBox.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+			/*minDoubleBox.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
 			maxDoubleBox.setRange(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
 			stepDoubleBox.setRange(0.0, std::numeric_limits<double>::max());
+			stepDoubleBox.setSingleStep(1e-6);*/
+			minDoubleBox.setRange(-1e6, 1e6);
+			maxDoubleBox.setRange(-1e6, 1e6);
+			stepDoubleBox.setRange(0.0, 1e6);
+			minDoubleBox.setSingleStep(1e-6);
+			maxDoubleBox.setSingleStep(1e-6);
 			stepDoubleBox.setSingleStep(1e-6);
 
 			minDoubleBox.setDecimals(6);
 			maxDoubleBox.setDecimals(6);
 			stepDoubleBox.setDecimals(6);
-			
 		
-			minDoubleBox.setValue(-1e3);
-			maxDoubleBox.setValue(1e3);
+			minDoubleBox.setValue(-8192.0);
+			maxDoubleBox.setValue(8192.0);
 			stepDoubleBox.setValue(0.01);
 		
 			layout.addWidget(&doubleLabel,2,0);
@@ -878,12 +883,14 @@
 				mainLibrary.load(pipeline, true);
 				currentCode = mainLibrary.getCode(pipeline.getName()).c_str();
 				syncToDiskAct.setDisabled(false);
+				update(pipeline);
 				updateMenu();
 				return false;
 			case Remove : 
 				mainLibrary.clear(pipeline.getName());
 				currentCode.clear();
-				syncToDiskAct.setDisabled(false);	
+				syncToDiskAct.setDisabled(false);
+				update(pipeline);	
 				updateMenu();
 				return false;
 			case NoAct :

@@ -26,8 +26,8 @@
 
 	// Includes
 	#include "devDebugTools.hpp"
-	#include "OglInclude.hpp"
-	#include "HdlVBO.hpp"
+	#include "Core/OglInclude.hpp"
+	#include "Core/HdlVBO.hpp"
 
 	namespace Glip
 	{
@@ -42,73 +42,97 @@
 		namespace CorePipeline
 		{
 			/**
-			\class GeometryFormat
+			\class GeometryModel
 			\brief Geometry stored on the host.
 			**/
-			class GeometryFormat
+			class GeometryModel
 			{
+				public : 
+					enum GeometryType 
+					{
+						CustomModel,
+						StandardQuad,
+						PointsGrid2D,
+						PointsGrid3D,
+						Unknown
+					};
+
 				private :
 					std::vector<GLfloat> 	pos,
 								tex;
-
-				protected :
-					// Data :
 					std::vector<GLuint>	elements;
 
+				protected :
 					// Tools :
-					GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord);
+					GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord);
 
-					int addVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
-					int addVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
-					GLfloat& x(int i);
-					GLfloat& y(int i);
-					GLfloat& z(int i);
-					GLfloat& u(int i);
-					GLfloat& v(int i);
+					GLuint addVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+					GLuint addVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+					GLuint addElement(GLuint a);
+					GLuint addElement(GLuint a, GLuint b);
+					GLuint addElement(GLuint a, GLuint b, GLuint c);
+					GLuint addElement(GLuint a, GLuint b, GLuint c, GLuint d);
+					GLuint addElement(const std::vector<GLuint>& indices);
+					GLfloat& x(GLuint i);
+					GLfloat& y(GLuint i);
+					GLfloat& z(GLuint i);
+					GLfloat& u(GLuint i);
+					GLfloat& v(GLuint i);
+					GLuint& a(GLuint i);
+					GLuint& b(GLuint i);
+					GLuint& c(GLuint i);
+					GLuint& d(GLuint i);
 
 				public :
+					const GeometryType	type;
 					const bool		hasTexCoord;
 					const int		dim,
 								numVerticesPerEl;
 					const GLenum 		primitiveGL;
 
-					GeometryFormat(const GeometryFormat& fmt);
-					virtual ~GeometryFormat(void);
+					GeometryModel(const GeometryModel& mdl);
+					virtual ~GeometryModel(void);
 
-					int getNumVertices(void) const;
-					int getNumElements(void) const;
+					GLuint getNumVertices(void) const;
+					GLuint getNumElements(void) const;
 					const GLenum& getGLPrimitive(void) const;
-					const GLfloat& x(int i) const;
-					const GLfloat& y(int i) const;
-					const GLfloat& z(int i) const;
-					const GLfloat& u(int i) const;
-					const GLfloat& v(int i) const;
-					bool operator==(const GeometryFormat& fmt) const;
+					const GLfloat& x(GLuint i) const;
+					const GLfloat& y(GLuint i) const;
+					const GLfloat& z(GLuint i) const;
+					const GLfloat& u(GLuint i) const;
+					const GLfloat& v(GLuint i) const;
+					const GLuint& a(GLuint i) const;
+					const GLuint& b(GLuint i) const;
+					const GLuint& c(GLuint i) const;
+					const GLuint& d(GLuint i) const;
+					bool operator==(const GeometryModel& mdl) const;
 
 					HdlVBO* getVBO(GLenum freq) const;
+
+					static int getNumVerticesFromPrimitive(const GLenum& _primitiveGL);
 			};
 
 			/**
 			\class GeometryInstance
-			\brief Instance of the GeometryFormat. Stored on GPU (VBO).
+			\brief Instance of the GeometryModel. Stored on GPU (VBO).
 			**/
 			class GeometryInstance
 			{
 				private :
 					// Static memory bank :
 					static std::vector<HdlVBO*> 		vbos;
-					static std::vector<GeometryFormat*>	formats;
+					static std::vector<GeometryModel*>	models;
 					static std::vector<int>			counters;
 
 					// Current :
 					int id;
 
 				public :
-					GeometryInstance(const GeometryFormat& fmt, GLenum freq);
+					GeometryInstance(const GeometryModel& mdl, GLenum freq);
 					GeometryInstance(const GeometryInstance& instance);
 					~GeometryInstance(void);
 
-					const GeometryFormat& format(void) const;
+					const GeometryModel& model(void) const;
 					const HdlVBO& vbo(void) const;
 					void draw(void);
 			};
@@ -117,33 +141,51 @@
 			namespace GeometryPrimitives
 			{
 				/**
-				\class StandardQuadGeometry
+				\class StandardQuad
 				\brief Geometry : the standard quad.
 				**/
-				class StandardQuadGeometry : public GeometryFormat
+				class StandardQuad : public GeometryModel
 				{
 					public :
-						StandardQuadGeometry(void);
+						StandardQuad(void);
 				};
 
 				/**
-				\class PointsGrid2DGeometry
+				\class PointsGrid2D
 				\brief Geometry : a 2D grid of points.
 				**/
-				class PointsGrid2DGeometry : public GeometryFormat
+				class PointsGrid2D : public GeometryModel
 				{
 					public :
-						PointsGrid2DGeometry(int w, int h);
+						PointsGrid2D(int w, int h);
 				};
 
 				/**
-				\class PointsGrid3DGeometry
+				\class PointsGrid3D
 				\brief Geometry : a 3D grid of points.
 				**/
-				class PointsGrid3DGeometry : public GeometryFormat
+				class PointsGrid3D : public GeometryModel
 				{
 					public :
-						PointsGrid3DGeometry(int w, int h, int d);
+						PointsGrid3D(int w, int h, int d);
+				};
+
+				/**
+				\class CustomModel
+				\brief Geometry : build a model.
+				**/
+				class CustomModel : public GeometryModel
+				{
+					public :
+						CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord);
+
+						GLuint newVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+						GLuint newVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+						GLuint newElement(GLuint a);
+						GLuint newElement(GLuint a, GLuint b);
+						GLuint newElement(GLuint a, GLuint b, GLuint c);
+						GLuint newElement(GLuint a, GLuint b, GLuint c, GLuint d);
+						GLuint newElement(const std::vector<GLuint>& indices);
 				};
 			}
 		}

@@ -22,39 +22,39 @@
 **/
 
 #include <algorithm>
-#include "Exception.hpp"
-#include "HdlVBO.hpp"
-#include "Geometry.hpp"
+#include "Core/Exception.hpp"
+#include "Core/HdlVBO.hpp"
+#include "Core/Geometry.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
 
-// GeometryFormat
+// GeometryModel
 	/**
-	\fn GeometryFormat::GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
-	\brief Geometry format constructor.
+	\fn GeometryModel::GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
+	\brief Geometry model constructor.
+	\param _type The type of the geometry (MUST BE GeometryModel::CustomModel for all user defined models).
 	\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
-	\param _numVerticesPerEl The number of vertices per elements.
-	\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_QUAD, GL_TRIANGLES, etc.)
+	\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)
 	\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
 	**/
-	GeometryFormat::GeometryFormat(const int& _dim, const int& _numVerticesPerEl, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
-	 : dim(_dim), numVerticesPerEl(_numVerticesPerEl), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
+	GeometryModel::GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
+	 : type(_type), dim(_dim), numVerticesPerEl(getNumVerticesFromPrimitive(_primitiveGL)), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
 	{
 		if(dim!=2 && dim!=3)
-			throw Exception("GeometryFormat::GeometryFormat - Dimension must be either 2 or 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::GeometryModel - Dimension must be either 2 or 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
 	}
 
 	/**
-	\fn GeometryFormat::GeometryFormat(const GeometryFormat& fmt)
-	\brief GeometryFormat copy constructor.
-	\param fmt The source format.
+	\fn GeometryModel::GeometryModel(const GeometryModel& mdl)
+	\brief GeometryModel copy constructor.
+	\param mdl The source model.
 	**/
-	GeometryFormat::GeometryFormat(const GeometryFormat& fmt)
-	 : pos(fmt.pos), tex(fmt.tex), dim(fmt.dim), numVerticesPerEl(fmt.numVerticesPerEl), primitiveGL(fmt.primitiveGL), elements(fmt.elements), hasTexCoord(fmt.hasTexCoord)
+	GeometryModel::GeometryModel(const GeometryModel& mdl)
+	 : type(mdl.type), pos(mdl.pos), tex(mdl.tex), dim(mdl.dim), numVerticesPerEl(mdl.numVerticesPerEl), primitiveGL(mdl.primitiveGL), elements(mdl.elements), hasTexCoord(mdl.hasTexCoord)
 	{ }
 
-	GeometryFormat::~GeometryFormat(void)
+	GeometryModel::~GeometryModel(void)
 	{
 		pos.clear();
 		tex.clear();
@@ -62,18 +62,18 @@
 	}
 
 	/**
-	\fn int GeometryFormat::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
-	\brief Add a vertex in a two dimensions space (GeometryFormat::dim must be equal to 2). If GeometryFormat::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\fn GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
 	\param x The X coordinate.
 	\param y The Y coordinate.
-	\param u The U coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
-	\param v The V coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
 	\return The index of the newly created vertex.
 	**/
-	int GeometryFormat::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+	GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=2)
-			throw Exception("GeometryFormat::addVertex2D - Dimensions should be equal to 2 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
 
 		pos.push_back(x);
 		pos.push_back(y);
@@ -88,19 +88,19 @@
 	}
 
 	/**
-	\fn int GeometryFormat::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
-	\brief Add a vertex in a three dimensions space (GeometryFormat::dim must be equal to 3). If GeometryFormat::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\fn GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
 	\param x The X coordinate.
 	\param y The Y coordinate.
 	\param z The Z coordinate.
-	\param u The U coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
-	\param v The V coordinate for the texel (ignored if GeometryFormat::hasTexCoord is set to false).
+	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
 	\return The index of the newly created vertex.
 	**/
-	int GeometryFormat::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+	GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=3)
-			throw Exception("GeometryFormat::addVertex3D - Dimensions should be equal to 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
 
 		pos.push_back(x);
 		pos.push_back(y);
@@ -116,182 +116,415 @@
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::x(int i)
+	\fn GLuint GeometryModel::addElement(GLuint a)
+	\brief Add a primitive element to the model.
+	\param a Index of the first vertex.
+	\return The index of the newly created element.
+	**/
+	GLuint GeometryModel::addElement(GLuint a)
+	{
+		const int expectedNumberOfVertices = 1;
+
+		if(numVerticesPerEl!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+		{
+			elements.push_back(a);
+			return getNumElements() - 1;
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addElement(GLuint a, GLuint b)
+	\brief Add a primitive element to the model.
+	\param a Index of the first vertex.
+	\param b Index of the second vertex.
+	\return The index of the newly created element.
+	**/
+	GLuint GeometryModel::addElement(GLuint a, GLuint b)
+	{
+		const int expectedNumberOfVertices = 2;
+
+		if(numVerticesPerEl!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+		{
+			elements.push_back(a);
+			elements.push_back(b);
+			return getNumElements() - 1;
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c)
+	\brief Add a primitive element to the model.
+	\param a Index of the first vertex.
+	\param b Index of the second vertex.
+	\param c Index of the third vertex.
+	\return The index of the newly created element.
+	**/
+	GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c)
+	{
+		const int expectedNumberOfVertices = 3;
+
+		if(numVerticesPerEl!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+		{
+			elements.push_back(a);
+			elements.push_back(b);
+			elements.push_back(c);
+			return getNumElements() - 1;
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c, GLuint d)
+	\brief Add a primitive element to the model.
+	\param a Index of the first vertex.
+	\param b Index of the second vertex.
+	\param c Index of the third vertex.
+	\param d Index of the fourth vertex.
+	\return The index of the newly created element.
+	**/
+	GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c, GLuint d)
+	{
+		const int expectedNumberOfVertices = 4;
+
+		if(numVerticesPerEl!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+		{
+			elements.push_back(a);
+			elements.push_back(b);
+			elements.push_back(c);
+			elements.push_back(d);
+			return getNumElements() - 1;
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
+	\brief Add a primitive element to the model.
+	\param indices A vector containing the indices of all the vertices used.
+	\return The index of the newly created element.
+	**/
+	GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
+	{
+		if(numVerticesPerEl!=indices.size())
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(indices.size()) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+		{
+			elements.insert(elements.end(), indices.begin(), indices.end());
+			return getNumElements() - 1;
+		}
+	}
+
+	/**
+	\fn GLfloat& GeometryModel::x(GLuint i)
 	\brief Access the X coordinate of the vertex at given index.
 	\param i The vertex index.
 	\return Read/write access to corresponding variable.
 	**/
-	GLfloat& GeometryFormat::x(int i)
+	GLfloat& GeometryModel::x(GLuint i)
 	{
 		return pos[i*dim+0];
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::y(int i)
+	\fn GLfloat& GeometryModel::y(GLuint i)
 	\brief Access the Y coordinate of the vertex at given index.
 	\param i The vertex index.
 	\return Read/write access to corresponding variable.
 	**/
-	GLfloat& GeometryFormat::y(int i)
+	GLfloat& GeometryModel::y(GLuint i)
 	{
 		return pos[i*dim+1];
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::z(int i)
+	\fn GLfloat& GeometryModel::z(GLuint i)
 	\brief Access the Z coordinate of the vertex at given index.
 	\param i The vertex index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::dim is smaller than 3.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
 	**/
-	GLfloat& GeometryFormat::z(int i)
+	GLfloat& GeometryModel::z(GLuint i)
 	{
 		if(dim<3)
-			throw Exception("GeometryFormat::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
 
 		return pos[i*dim+2];
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::u(int i)
+	\fn GLfloat& GeometryModel::u(GLuint i)
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
 	**/
-	GLfloat& GeometryFormat::u(int i)
+	GLfloat& GeometryModel::u(GLuint i)
 	{
 		if(!hasTexCoord)
-			throw Exception("GeometryFormat::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
 
 		return tex[i*2+0];
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::v(int i)
+	\fn GLfloat& GeometryModel::v(GLuint i)
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
 	**/
-	GLfloat& GeometryFormat::v(int i)
+	GLfloat& GeometryModel::v(GLuint i)
 	{
 		if(!hasTexCoord)
-			throw Exception("GeometryFormat::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
 
 		return tex[i*2+1];
 	}
 
 	/**
-	\fn const GLfloat& GeometryFormat::x(int i) const
+	\fn GLuint& GeometryModel::a(GLuint i)
+	\brief Access the index of the first vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the first vertex of the element.
+	**/
+	GLuint& GeometryModel::a(GLuint i)
+	{
+		const GLuint expectedNumberOfVertices = 1;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 0];
+	}
+
+	/**
+	\fn GLuint& GeometryModel::b(GLuint i)
+	\brief Access the index of the second vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the second vertex of the element.
+	**/
+	GLuint& GeometryModel::b(GLuint i)
+	{
+		const GLuint expectedNumberOfVertices = 2;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 1];
+	}
+
+	/**
+	\fn GLuint& GeometryModel::c(GLuint i)
+	\brief Access the index of the third vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the third vertex of the element.
+	**/
+	GLuint& GeometryModel::c(GLuint i)
+	{
+		const GLuint expectedNumberOfVertices = 3;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 2];
+	}
+
+	/**
+	\fn GLuint& GeometryModel::a(GLuint i)
+	\brief Access the index of the fourth vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the fourth vertex of the element.
+	**/
+	GLuint& GeometryModel::d(GLuint i)
+	{
+		const GLuint expectedNumberOfVertices = 4;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 3];
+	}
+	
+	/**
+	\fn const GLfloat& GeometryModel::x(GLuint i) const
 	\brief Read the X coordinate of the vertex at given index.
 	\param i The vertex index.
 	\return Read access to corresponding variable.
 	**/
-	const GLfloat& GeometryFormat::x(int i) const
+	const GLfloat& GeometryModel::x(GLuint i) const
 	{
 		return pos[i*dim+0];
 	}
 
 	/**
-	\fn const GLfloat& GeometryFormat::y(int i) const
+	\fn const GLfloat& GeometryModel::y(GLuint i) const
 	\brief Read the Y coordinate of the vertex at given index.
 	\param i The vertex index.
 	\return Read access to corresponding variable.
 	**/
-	const GLfloat& GeometryFormat::y(int i) const
+	const GLfloat& GeometryModel::y(GLuint i) const
 	{
 		return pos[i*dim+1];
 	}
 
 	/**
-	\fn const GLfloat& GeometryFormat::z(int i) const
+	\fn const GLfloat& GeometryModel::z(GLuint i) const
 	\brief Read the Z coordinate of the vertex at given index.
 	\param i The vertex index.
-	\return Read access to corresponding variable. Will raise an exception if GeometryFormat::dim is smaller than 3.
+	\return Read access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
 	**/
-	const GLfloat& GeometryFormat::z(int i) const
+	const GLfloat& GeometryModel::z(GLuint i) const
 	{
 		if(dim<3)
-			throw Exception("GeometryFormat::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
 
 		return pos[i*dim+2];
 	}
 
 	/**
-	\fn const GLfloat& GeometryFormat::u(int i) const
+	\fn const GLfloat& GeometryModel::u(GLuint i) const
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
 	**/
-	const GLfloat& GeometryFormat::u(int i) const
+	const GLfloat& GeometryModel::u(GLuint i) const
 	{
 		if(!hasTexCoord)
-			throw Exception("GeometryFormat::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
 
 		return tex[i*2+0];
 	}
 
 	/**
-	\fn GLfloat& GeometryFormat::v(int i) const
+	\fn GLfloat& GeometryModel::v(GLuint i) const
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryFormat::hasTexCoord is set to false.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
 	**/
-	const GLfloat& GeometryFormat::v(int i) const
+	const GLfloat& GeometryModel::v(GLuint i) const
 	{
 		if(!hasTexCoord)
-			throw Exception("GeometryFormat::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__);
 
 		return tex[i*2+1];
 	}
 
 	/**
-	\fn int GeometryFormat::getNumVertices(void) const
-	\brief Get the number of vertices.
-	\return The current number of vertices registered for this format.
+	\fn const GLuint& GeometryModel::a(GLuint i) const
+	\brief Access the index of the first vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the first vertex of the element.
 	**/
-	int GeometryFormat::getNumVertices(void) const
+	const GLuint& GeometryModel::a(GLuint i) const
+	{
+		const int expectedNumberOfVertices = 1;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 0];
+	}
+
+	/**
+	\fn const GLuint& GeometryModel::b(GLuint i) const
+	\brief Access the index of the second vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the second vertex of the element.
+	**/
+	const GLuint& GeometryModel::b(GLuint i) const
+	{
+		const int expectedNumberOfVertices = 2;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 1];
+	}
+
+	/**
+	\fn const GLuint& GeometryModel::c(GLuint i) const
+	\brief Access the index of the third vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the third vertex of the element.
+	**/
+	const GLuint& GeometryModel::c(GLuint i) const
+	{
+		const int expectedNumberOfVertices = 3;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 2];
+	}
+
+	/**
+	\fn const GLuint& GeometryModel::a(GLuint i) const
+	\brief Access the index of the fourth vertex of the element at given index.
+	\param i The element index.
+	\return Read/write access to the index of the fourth vertex of the element.
+	**/
+	const GLuint& GeometryModel::d(GLuint i) const
+	{
+		const int expectedNumberOfVertices = 4;
+
+		if(numVerticesPerEl<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+		else
+			return elements[i * numVerticesPerEl + 3];
+	}
+
+	/**
+	\fn GLuint GeometryModel::getNumVertices(void) const
+	\brief Get the number of vertices.
+	\return The current number of vertices registered for this model.
+	**/
+	GLuint GeometryModel::getNumVertices(void) const
 	{
 		return pos.size() / dim;
 	}
 
 	/**
-	\fn int GeometryFormat::getNumElements(void) const
+	\fn GLuint GeometryModel::getNumElements(void) const
 	\brief Get the number of GL primitives (elements).
 	\return The current number of GL primitives (element).
 	**/
-	int GeometryFormat::getNumElements(void) const
+	GLuint GeometryModel::getNumElements(void) const
 	{
 		return elements.size() / numVerticesPerEl;
 	}
 
 	/**
-	\fn bool GeometryFormat::operator==(const GeometryFormat& fmt) const
-	\brief Test if two formats are identical.
-	\param fmt The reference format.
-	\return true if the two formats are identical.
+	\fn bool GeometryModel::operator==(const GeometryModel& mdl) const
+	\brief Test if two models are identical.
+	\param mdl The reference model.
+	\return true if the two models are identical.
 	**/
-	bool GeometryFormat::operator==(const GeometryFormat& fmt) const
+	bool GeometryModel::operator==(const GeometryModel& mdl) const
 	{
-		return 		(hasTexCoord==fmt.hasTexCoord)
-			&&	(dim==fmt.dim)
-			&&	(numVerticesPerEl==fmt.numVerticesPerEl)
-			&&	(primitiveGL==fmt.primitiveGL)
-			&& 	(std::equal(pos.begin(), pos.end(), fmt.pos.begin()))
-			&&	(std::equal(tex.begin(), tex.end(), fmt.tex.begin()))
-			&&	(std::equal(elements.begin(), elements.end(), fmt.elements.begin()));
+		return 		(hasTexCoord==mdl.hasTexCoord)
+			&&	(dim==mdl.dim)
+			&&	(numVerticesPerEl==mdl.numVerticesPerEl)
+			&&	(primitiveGL==mdl.primitiveGL)
+			&& 	(std::equal(pos.begin(), pos.end(), mdl.pos.begin()))
+			&&	(std::equal(tex.begin(), tex.end(), mdl.tex.begin()))
+			&&	(std::equal(elements.begin(), elements.end(), mdl.elements.begin()));
 	}
 
 	/**
-	\fn HdlVBO* GeometryFormat::getVBO(GLenum freq) const
-	\brief Get the VBO corresponding to this format. It is not recommended to use directly the VBO but, instead, use a GeometryInstance object.
+	\fn HdlVBO* GeometryModel::getVBO(GLenum freq) const
+	\brief Get the VBO corresponding to this model. It is not recommended to use directly the VBO but, instead, use a GeometryInstance object.
 	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	\return A pointer to the newly created VBO. It is of the responsability of the user to call delete on this object.
 	**/
-	HdlVBO* GeometryFormat::getVBO(GLenum freq) const
+	HdlVBO* GeometryModel::getVBO(GLenum freq) const
 	{
 		if(pos.empty())
-			throw Exception("GeometryFormat::getVBO - Empty vertices list.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::getVBO - Empty vertices list.", __FILE__, __LINE__);
 
-		int 		localNumElements = 0,
+		GLuint 		localNumElements = 0,
 				localNumVerticesPerEl = 0,
 				localNumDimTexCoord = 0;
 
@@ -313,29 +546,59 @@
 
 		return new HdlVBO(getNumVertices(), dim, freq, &pos[0], localNumElements, localNumVerticesPerEl, elementsPtr, primitiveGL, localNumDimTexCoord, texPtr);
 	}
+	
+	/**
+	\fn int GeometryModel::getNumVerticesFromPrimitive(const GLenum& _primitiveGL)
+	\brief Get the number of vertices per element for the given primitive.
+	\param _primitiveGL The GL primitive (accepted are :  GL_POINTS​, GL_LINES​, GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLES​, GL_QUADS).
+	\return The number of elements per primitive.
+	**/
+	int GeometryModel::getNumVerticesFromPrimitive(const GLenum& _primitiveGL)
+	{
+		switch(_primitiveGL)
+		{
+			case GL_POINTS :			return 1;
+			case GL_LINES :				return 2;
+			case GL_LINE_LOOP :			return 1;
+			case GL_LINE_STRIP : 			return 1;
+			case GL_TRIANGLES : 			return 3;
+			case GL_QUADS : 			return 4;
+			case GL_TRIANGLE_STRIP : 
+			case GL_TRIANGLE_FAN : 
+			case GL_LINES_ADJACENCY : 
+			case GL_LINE_STRIP_ADJACENCY : 
+			case GL_TRIANGLES_ADJACENCY : 
+			case GL_TRIANGLE_STRIP_ADJACENCY : 
+			case GL_QUAD_STRIP :
+			case GL_POLYGON :
+				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unsupported primitive type : \"" + glParamName(_primitiveGL) + "\".", __FILE__, __LINE__);
+			default : 
+				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unknown primitive type : \"" + glParamName(_primitiveGL) + "\".", __FILE__, __LINE__);
+		}
+	}
 
 // GeometryInstance
 	std::vector<HdlVBO*> 		GeometryInstance::vbos;
-	std::vector<GeometryFormat*>	GeometryInstance::formats;
+	std::vector<GeometryModel*>	GeometryInstance::models;
 	std::vector<int>		GeometryInstance::counters;
 
 	/**
-	\fn GeometryInstance::GeometryInstance(const GeometryFormat& fmt, GLenum freq)
+	\fn GeometryInstance::GeometryInstance(const GeometryModel& mdl, GLenum freq)
 	\brief GeometryInstance constructor.
-	\param fmt The original format to use.
+	\param mdl The original model to use.
 	\param freq The GL frequency of read/write operations (among : GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
- 	GeometryInstance::GeometryInstance(const GeometryFormat& fmt, GLenum freq)
+ 	GeometryInstance::GeometryInstance(const GeometryModel& mdl, GLenum freq)
 	 : id(-1)
 	{
-		// Find if a similar format exist :
+		// Find if a similar model exist :
 		int 	k	= 0,
 			kNull 	= -1;
-		for(; k<formats.size(); k++)
+		for(; k<models.size(); k++)
 		{
-			if(formats[k]!=NULL)
+			if(models[k]!=NULL)
 			{
-				if( (*formats[k])==fmt )
+				if( (*models[k])==mdl )
 					break;
 			}
 			else
@@ -343,7 +606,7 @@
 		}
 
 		// If one was found :
-		if(k<formats.size())
+		if(k<models.size())
 		{
 			// Set the id and increase the counter :
 			id = k;
@@ -356,13 +619,13 @@
 			{
 				kNull = vbos.size();
 				vbos.push_back(NULL);
-				formats.push_back(NULL);
+				models.push_back(NULL);
 				counters.push_back(0);
 			}
 
 			// Create :
-			vbos[kNull] 	= fmt.getVBO(freq);
-			formats[kNull]	= new GeometryFormat(fmt);
+			vbos[kNull] 	= mdl.getVBO(freq);
+			models[kNull]	= new GeometryModel(mdl);
 			counters[kNull]	= 1;
 
 			id = kNull;
@@ -372,7 +635,7 @@
 	/**
 	\fn GeometryInstance::GeometryInstance(const GeometryInstance& instance)
 	\brief GeometryInstance copy constructor.
-	\param instance The source format.
+	\param instance The source model.
 	**/
 	GeometryInstance::GeometryInstance(const GeometryInstance& instance)
 	 : id(instance.id)
@@ -389,19 +652,19 @@
 		{
 			delete vbos[id];
 			vbos[id] = NULL;
-			delete formats[id];
-			formats[id] = NULL;
+			delete models[id];
+			models[id] = NULL;
 		}
 	}
 
 	/**
-	\fn const GeometryFormat& GeometryInstance::format(void) const
-	\brief Access to the format of this instance.
-	\return A read-only access to the GeometryFormat object.
+	\fn const GeometryModel& GeometryInstance::model(void) const
+	\brief Access to the model of this instance.
+	\return A read-only access to the GeometryModel object.
 	**/
-	const GeometryFormat& GeometryInstance::format(void) const
+	const GeometryModel& GeometryInstance::model(void) const
 	{
-		return (*formats[id]);
+		return (*models[id]);
 	}
 
 	/**
@@ -428,13 +691,22 @@
 
 	// Standard quad :
 		/**
-		\fn StandardQuadGeometry::StandardQuadGeometry(void)
-		\brief StandardQuadGeometry constructor.
+		\fn StandardQuad::StandardQuad(void)
+		\brief StandardQuad constructor.
 		**/
-		StandardQuadGeometry::StandardQuadGeometry(void)
-		 : GeometryFormat(2, 4, GL_QUADS, true)
+		StandardQuad::StandardQuad(void)
+		 : GeometryModel(GeometryModel::StandardQuad, 2, GL_TRIANGLES, true)
 		{
 			// Create the geometry :
+			addVertex2D(-1.0, -1.0, 0.0, 0.0);
+			addVertex2D(-1.0,  1.0, 0.0, 1.0);
+			addVertex2D( 1.0,  1.0, 1.0, 1.0);
+			addVertex2D( 1.0, -1.0, 1.0, 0.0);
+
+			addElement(0, 1, 3);
+			addElement(1, 2, 3);
+
+			/* OLD : GL_QUAD
 			addVertex2D(-1.0,  1.0, 0.0, 1.0);
 			addVertex2D(-1.0, -1.0, 0.0, 0.0);
 			addVertex2D( 1.0,  1.0, 1.0, 1.0);
@@ -443,18 +715,18 @@
 			elements.push_back(0);
 			elements.push_back(1);
 			elements.push_back(3);
-			elements.push_back(2);
+			elements.push_back(2);*/
 		}
 
 	// 2D Grid of points
 		/**
-		\fn PointsGrid2DGeometry::PointsGrid2DGeometry(int w, int h)
-		\brief PointsGrid2DGeometry constructor.
+		\fn PointsGrid2D::PointsGrid2D(int w, int h)
+		\brief PointsGrid2D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
 		**/
-		PointsGrid2DGeometry::PointsGrid2DGeometry(int w, int h)
-		 : GeometryFormat(2, 1, GL_POINTS, false)
+		PointsGrid2D::PointsGrid2D(int w, int h)
+		 : GeometryModel(GeometryModel::PointsGrid2D, 2, GL_POINTS, false)
 		{
 			for(int i=0; i<h; i++)
 			{
@@ -467,14 +739,14 @@
 
 	// 3D Grid of points
 		/**
-		\fn PointsGrid3DGeometry::PointsGrid3DGeometry(int w, int h, int d)
-		\brief PointsGrid2DGeometry constructor.
+		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d)
+		\brief PointsGrid3D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
 		\param d Number of points along the Z dimension.
 		**/
-		PointsGrid3DGeometry::PointsGrid3DGeometry(int w, int h, int d)
-		 : GeometryFormat(3, 1, GL_POINTS, false)
+		PointsGrid3D::PointsGrid3D(int w, int h, int d)
+		 : GeometryModel(GeometryModel::PointsGrid3D, 3, GL_POINTS, false)
 		{
 			for(int k=0; k<d; k++)
 			{
@@ -487,3 +759,106 @@
 				}
 			}
 		}
+
+	// Custom model : 
+		/**
+		\fn CustomModel::CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord)
+		\brief CustomModel constructor.
+		\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
+		\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)
+		\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
+		**/
+		CustomModel::CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord)
+		 : GeometryModel( GeometryModel::CustomModel, _dim, _primitiveGL, _hasTexCoord)
+		{ }
+
+		/**
+		\fn GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+		\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+		\param x The X coordinate.
+		\param y The Y coordinate.
+		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+		\return The index of the newly created vertex.
+		**/
+		GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+		{
+			return 	addVertex2D(x, y, u, v);
+		}
+
+		/**
+		\fn GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+		\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+		\param x The X coordinate.
+		\param y The Y coordinate.
+		\param z The Z coordinate.
+		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+		\return The index of the newly created vertex.
+		**/
+		GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+		{
+			return 	addVertex3D(x, y, z, u, v);
+		}
+
+		/**
+		\fn GLuint CustomModel::newElement(GLuint a)
+		\brief Add a primitive element to the model.
+		\param a Index of the first vertex.
+		\return The index of the newly created element.
+		**/
+		GLuint CustomModel::newElement(GLuint a)
+		{
+			return addElement(a);
+		}
+
+		/**
+		\fn GLuint CustomModel::newElement(GLuint a, GLuint b)
+		\brief Add a primitive element to the model.
+		\param a Index of the first vertex.
+		\param b Index of the second vertex.
+		\return The index of the newly created element.
+		**/
+		GLuint CustomModel::newElement(GLuint a, GLuint b)
+		{
+			return addElement(a, b);
+		}
+
+		/**
+		\fn GLuint CustomModel::newElement(GLuint a, GLuint b, GLuint c)
+		\brief Add a primitive element to the model.
+		\param a Index of the first vertex.
+		\param b Index of the second vertex.
+		\param c Index of the third vertex.
+		\return The index of the newly created element.
+		**/
+		GLuint CustomModel::newElement(GLuint a, GLuint b, GLuint c)
+		{
+			return addElement(a, b, c);
+		}
+
+		/**
+		\fn GLuint CustomModel::newElement(GLuint a, GLuint b, GLuint c, GLuint d)
+		\brief Add a primitive element to the model.
+		\param a Index of the first vertex.
+		\param b Index of the second vertex.
+		\param c Index of the third vertex.
+		\param d Index of the fourth vertex.
+		\return The index of the newly created element.
+		**/
+		GLuint CustomModel::newElement(GLuint a, GLuint b, GLuint c, GLuint d)
+		{
+			return addElement(a, b, c, d);
+		}
+
+		/**
+		\fn GLuint CustomModel::newElement(const std::vector<GLuint>& indices)
+		\brief Add a primitive element to the model.
+		\param indices A vector containing the indices of all the vertices used.
+		\return The index of the newly created element.
+		**/
+		GLuint CustomModel::newElement(const std::vector<GLuint>& indices)
+		{
+			return addElement(indices);
+		}
+

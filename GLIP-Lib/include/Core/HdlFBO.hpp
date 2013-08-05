@@ -26,8 +26,8 @@
 
 	// Includes
         #include <vector>
-        #include "./HdlTexture.hpp"
-        #include "OglInclude.hpp"
+        #include "Core/HdlTexture.hpp"
+        #include "Core/OglInclude.hpp"
 
 	namespace Glip
 	{

@@ -22,14 +22,14 @@
 **/
 
 #include <algorithm>
-#include "Exception.hpp"
-#include "Filter.hpp"
-#include "HdlTexture.hpp"
-#include "HdlShader.hpp"
-#include "HdlVBO.hpp"
-#include "HdlFBO.hpp"
+#include "Core/Exception.hpp"
+#include "Core/Filter.hpp"
+#include "Core/HdlTexture.hpp"
+#include "Core/HdlShader.hpp"
+#include "Core/HdlVBO.hpp"
+#include "Core/HdlFBO.hpp"
 #include "devDebugTools.hpp"
-#include "Geometry.hpp"
+#include "Core/Geometry.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;
@@ -72,7 +72,7 @@
 	\param f The texture format associated to all outputs of the filter.
 	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryFormat(NULL), blending(false), clearing(true)
+	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(false), clearing(true), isStandardVertex(true), isStandardGeometry(true)
 	{ }
 
 	/**
@@ -81,7 +81,7 @@
 	\param c Copy.
 	**/
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryFormat(NULL), blending(c.blending), clearing(c.clearing)
+	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(c.blending), clearing(c.clearing), isStandardVertex(c.isStandardVertex), isStandardGeometry(c.isStandardGeometry)
 	{
 		if(c.vertexSource!=NULL)
 			vertexSource   = new ShaderSource(*c.vertexSource);
@@ -93,17 +93,17 @@
 		else
 			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
-		if(c.geometryFormat!=NULL)
-			geometryFormat = new GeometryFormat(*c.geometryFormat);
+		if(c.geometryModel!=NULL)
+			geometryModel = new GeometryModel(*c.geometryModel);
 		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryFormat is NULL for " + getFullName(), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
 	}
 
 	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
 	{
 		delete vertexSource;
 		delete fragmentSource;
-		delete geometryFormat;
+		delete geometryModel;
 	}
 
 	/**
@@ -132,12 +132,17 @@
 		return *fragmentSource;
 	}
 
-	GeometryFormat& __ReadOnly_FilterLayout::getGeometryFormat(void) const
+	/**
+	\fn GeometryModel& __ReadOnly_FilterLayout::getGeometryModel(void) const
+	\brief Get the GeometryModel used by the filter.
+	\return GeometryModel object reference.
+	**/
+	GeometryModel& __ReadOnly_FilterLayout::getGeometryModel(void) const
 	{
-		if(geometryFormat==NULL)
-			throw Exception("FilterLayout::getGeometryFormat - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__);
+		if(geometryModel==NULL)
+			throw Exception("FilterLayout::getGeometryModel - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__);
 
-		return *geometryFormat;
+		return *geometryModel;
 	}
 
 	/**
@@ -161,17 +166,26 @@
 	void __ReadOnly_FilterLayout::enableClearing(void)   		{ clearing = true;  }
 	void __ReadOnly_FilterLayout::disableClearing(void)  		{ clearing = false; }
 
+	/**
+	\fn bool __ReadOnly_FilterLayout::isStandardVertexSource(void) const
+	\return true if the filter will be using a standard vertex program.
+	\fn bool __ReadOnly_FilterLayout::isStandardGeometryModel(void) const
+	\return true if the filter will be using a standard quad as geometry.
+	**/
+	bool __ReadOnly_FilterLayout::isStandardVertexSource(void) const	{ return isStandardVertex; }
+	bool __ReadOnly_FilterLayout::isStandardGeometryModel(void) const	{ return isStandardGeometry; }
+
 	// FilterLayout
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryFormat* geometry)
+	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
 	\param fragment The ShaderSource of the fragement shader.
 	\param vertex The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
-	\param geometry The geometry to use in this filter (if left to NULL, the standard quad will be used).
+	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryFormat* geometry)
+	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
 	 : __ReadOnly_HdlTextureFormat(fout), __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout)
 	{
 		fragmentSource = new ShaderSource(fragment);
@@ -180,9 +194,15 @@
 			vertexSource = new ShaderSource(*vertex);
 
 		if(geometry!=NULL)
-			geometryFormat = new GeometryFormat(*geometry);
+		{
+			geometryModel = new GeometryModel(*geometry);
+			isStandardGeometry = false;
+		}
 		else
-			geometryFormat = new GeometryPrimitives::StandardQuadGeometry;
+		{
+			geometryModel = new GeometryPrimitives::StandardQuad;
+			isStandardGeometry = true;
+		}
 
 		// Analyze sources to get the variables and the outputs
 		std::vector<std::string> varsIn  = fragmentSource->getInputVars();
@@ -223,8 +243,13 @@
 				std::cout << "FilterLayout::FilterLayout - Using for vertex shader : " << std::endl;
 				std::cout << getStandardVertexSource(fragmentSource->getVersion()) << std::endl;
 			#endif
+
 			vertexSource = new ShaderSource(getStandardVertexSource(fragmentSource->getVersion()));
+
+			isStandardVertex = true;
 		}
+		else
+			isStandardVertex = false;
 	}
 
 // Filter
@@ -235,7 +260,7 @@
 	\param name The instance name.
 	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
-	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), geometry(NULL) /*vbo(NULL)*/
+	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), geometry(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
@@ -294,7 +319,7 @@
 		}
 
 		// Build the geometry :
-		geometry = new GeometryInstance( getGeometryFormat(), GL_STATIC_DRAW_ARB );
+		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW_ARB );
 	}
 
 	Filter::~Filter(void)

@@ -849,15 +849,12 @@
 				int 	idLargest 	= formats.size() - 2,
 					idSmallest	= formats.size() - 1;
 
-				for(int k=1; k<formats.size(); k++)
+				for(int k=1; k<(formats.size()-2); k++)
 				{
-					if(textures[k]!=NULL)
-					{
-						if(formats[idLargest].getNumPixels() < formats[k].getNumPixels())
-							formats[idLargest].setFormat( formats[k] );
-						if(formats[idSmallest].getNumPixels() > formats[k].getNumPixels())
-							formats[idSmallest].setFormat( formats[k] );
-					}
+					if(formats[idLargest].getNumPixels() < formats[k].getNumPixels())
+						formats[idLargest].setFormat( formats[k] );
+					if(formats[idSmallest].getNumPixels() > formats[k].getNumPixels())
+						formats[idSmallest].setFormat( formats[k] );
 				}
 			}
 

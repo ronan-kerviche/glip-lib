@@ -29,8 +29,8 @@
 	#include <algorithm>
 	#include <map>
 	#include <limits>
-        #include "Component.hpp"
-        #include "Filter.hpp"
+        #include "Core/Component.hpp"
+        #include "Core/Filter.hpp"
 
 	namespace Glip
 	{

@@ -25,8 +25,8 @@
 #define __HDLSHADER_INCLUDE__
 
 	// GL include
-        #include "OglInclude.hpp"
-        #include "ShaderSource.hpp"
+        #include "Core/OglInclude.hpp"
+        #include "Core/ShaderSource.hpp"
 	#include <string>
         #include <fstream>
 

@@ -217,7 +217,7 @@
 /* TREE WIDGET */
 	QTreeWidget
 	{
-		alternate-background-color: 303030;
+		alternate-background-color: #303030;
 		background: #222222;
 		color: #FFFFFF;
 	}
@@ -240,6 +240,12 @@
 	{
 		color: #FFFFFF;
 		font: bold;
+	}
+
+	QTreeWidget::item:hover:!selected
+	{
+		background: #303030;
+		color: #DDDDDD;
 	}
 
 	QTreeView::branch

@@ -22,9 +22,8 @@
 */
 
 #include <cstring>
-#include "HdlVBO.hpp"
-#include "../include/GLIPLib.hpp"
-
+#include "Core/HdlVBO.hpp"
+#include "Core/Exception.hpp"
 
 using namespace Glip::CoreGL;
 
@@ -157,12 +156,12 @@ using namespace Glip::CoreGL;
 	}
 
 // Static tools
-	/**
+	/*
 	\fn HdlVBO* HdlVBO::generate2DStandardQuad(void)
 	\brief Build a VBO containing a single quad between (-1.0,  1.0); (-1.0, -1.0); (1.0,  1.0); (1.0, -1.0) and adequate texcoords.
 	\return A pointer to a VBO, you have reponsability of freeing it.
-	**/
-	HdlVBO* HdlVBO::generate2DStandardQuad(void)
+	*/
+	/*HdlVBO* HdlVBO::generate2DStandardQuad(void)
 	{
 		GLfloat vertices[]  = {	-1.0,  1.0,
 					-1.0, -1.0,
@@ -174,9 +173,9 @@ using namespace Glip::CoreGL;
 					1.0,  1.0,
 					1.0,  0.0};
 		return new HdlVBO(4, 2, GL_STATIC_DRAW_ARB, vertices, 1, 4, elements, GL_QUADS, 2, texcoords);
-	}
+	}*/
 
-	/**
+	/*
 	\fn HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
 	\brief Build a VBO containing a grid of points.
 	\param w The number of dots in the X direction.
@@ -186,8 +185,8 @@ using namespace Glip::CoreGL;
 	\param cX The center of the grid in the X direction.
 	\param cY The center of the grid in the Y direction.
 	\return A pointer to a VBO, you have reponsability of freeing it.
-	**/
-	HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
+	*/
+	/*HdlVBO* HdlVBO::generate2DGrid(int w, int h, GLfloat appW, GLfloat appH, GLfloat cX, GLfloat cY)
 	{
 		if(w<=0 || h<=0)
 			throw Exception("HdlVBO::generate2DGrid : cannot create negative sized grid",__FILE__, __LINE__);
@@ -217,9 +216,9 @@ using namespace Glip::CoreGL;
 		delete[] tex;
 
 		return result;
-	}
+	}*/
 
-	/**
+	/*
 	\fn HdlVBO* HdlVBO::generate3DGrid(int w, int h, int d, GLfloat appW, GLfloat appH, GLfloat appD, GLfloat cX, GLfloat cY, GLfloat cZ)
 	\brief Build a VBO containing a grid of points. This function will not create texel coordinates for the VBO.
 	\param w The number of dots in the X direction.
@@ -232,8 +231,8 @@ using namespace Glip::CoreGL;
 	\param cY The center of the grid in the Y direction.
 	\param cZ The center of the grid in the Z direction.
 	\return A pointer to a VBO, you have reponsability of freeing it.
-	**/
-	HdlVBO* HdlVBO::generate3DGrid(int w, int h, int d, GLfloat appW, GLfloat appH, GLfloat appD, GLfloat cX, GLfloat cY, GLfloat cZ)
+	*/
+	/*HdlVBO* HdlVBO::generate3DGrid(int w, int h, int d, GLfloat appW, GLfloat appH, GLfloat appD, GLfloat cX, GLfloat cY, GLfloat cZ)
 	{
 		if(w<=0 || h<=0 || d<=0)
 			throw Exception("HdlVBO::generate3DGrid : cannot create negative sized grid",__FILE__, __LINE__);
@@ -267,7 +266,7 @@ using namespace Glip::CoreGL;
 		delete[] data;
 
 		return result;
-	}
+	}*/
 
 	// Static tools
 	/**

@@ -24,7 +24,7 @@
 #ifndef __HDLTEXTURETOOLS_INCLUDE__
 #define __HDLTEXTURETOOLS_INCLUDE__
 
-	#include "OglInclude.hpp"
+	#include "Core/OglInclude.hpp"
 
 	namespace Glip
 	{

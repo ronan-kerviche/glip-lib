@@ -22,10 +22,8 @@
 **/
 
 #include <cstring>
-#include "HdlTexture.hpp"
-#include "Exception.hpp"
-#include "../include/GLIPLib.hpp"
-
+#include "Core/HdlTexture.hpp"
+#include "Core/Exception.hpp"
 
 using namespace Glip::CoreGL;
 

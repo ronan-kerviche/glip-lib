@@ -658,9 +658,13 @@
 										"Required format", 
 										"Required pipeline", 
 										"Texture format",
+										"Geometry + StandardQuad",
+										"Geometry + Grid2D",
+										"Geometry + Grid3D",
+										"Geometry + Custom Model",
 										"Shared source", 
-										"Shader source",
 										"Shader source + GLSL fragment",
+										"Shader source + GLSL vertex",
 										"Include shared source",
 										"Include shader",
 										"Filter layout", 
@@ -680,9 +684,13 @@
 										"REQUIRED_FORMAT: ( )\n",
 										"REQUIRED_PIPELINE: ( )\n",
 										"TEXTURE_FORMAT: ( , , GL_RGB, GL_UNSIGNED_BYTE)\n",
+										"GEOMETRY: (STANDARD_QUAD)\n",
+										"GEOMETRY: (GRID_2D, , )\n",
+										"GEOMETRY: (GRID_3D, , , )\n",
+										"GEOMETRY: (CUSTOM_MODEL, , )\n{\n\tVERTEX( x, y, z, u, v)\n\t\n\tELEMENT(a, b, c, d)\n}\n",
 										"SHARED_SOURCE: \n{\n\t\n}\n",
-										"SHADER_SOURCE: \n{\n\t\n}\n",
 										"SHADER_SOURCE: \n{\n\t#version 130\n\t\n\tuniform sampler2D ;\n\tout vec4 ;\n\t\n\tvoid main()\n\t{\n\t\tvec2 pos = gl_TexCoord[0].st;\n\t\tvec4 col = textureLod( , pos, 0);\n\t\n\t\t = col;\n\t}\n}\n",
+										"SHADER_SOURCE: \n{\n\t#version 130\n\t\n\tvoid main()\n\t{\n\t\tgl_FrontColor = gl_Color;\n\n\t\tgl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;\n\t\tgl_Position = ftransform();\n\t}\n}\n",
 										"INCLUDE_SHARED_SOURCE:\n",
 										"SHADER_SOURCE: ()\n",
 										"FILTER_LAYOUT: ( , )\n",
@@ -702,9 +710,13 @@
 										"REQUIRED_FORMAT: /* name to use */( /* required format name */ )\n",
 										"REQUIRED_PIPELINE: /* name to use */ ( /* required pipeline name */ )\n",
 										"TEXTURE_FORMAT: /* name */ ( /* width */, /* height */, GL_RGB, GL_UNSIGNED_BYTE)\n",
-										"SHARED_SOURCE: /* name */\n{\n\t/* Code */\n}\n",
+										"GEOMETRY: /* name */ (STANDARD_QUAD)\n",
+										"GEOMETRY: /* name */ (GRID_2D, /* interger : width */, /* interger : height */)\n",
+										"GEOMETRY: /* name */ (GRID_3D, /* interger : width */, /* interger : height */, /* interger : depth */)\n",
+										"GEOMETRY: /* name */ (CUSTOM_MODEL, /* GL primitive (GL_POINTS, GL_LINES, GL_TRIANGLES, etc.) */, /* It has texcoord embedded? true or false */)\n{\n\tVERTEX( x, y, z, u, v) /* depending on the model format */\n\t\n\tELEMENT(a, b, c, d) /* depending on the model format */\n}\n",
 										"SHADER_SOURCE: /* name */\n{\n\t/* Code */\n}\n",
 										"SHADER_SOURCE: /* name */\n{\n\t#version 130\n\t\n\tuniform sampler2D /* input texture name */;\n\tout vec4 /* output texture name */;\n\t\n\t// uniform vec3 someVariableYouWantToModify = vec3(0.0, 0.0, 0.0);\n\t\n\tvoid main()\n\t{\n\t\t// The current fragment position : \n\t\tvec2 pos = gl_TexCoord[0].st;\n\t\t// Read the base level of the texture at the current position : \n\t\tvec4 col = textureLod(/* input texture name */, pos, 0);\n\t\n\t\t/* output texture name */ = col;\n\t}\n}\n",
+										"SHADER_SOURCE: /* name */\n{\n\t#version 130\n\t\n\tvoid main()\n\t{\n\t\tgl_FrontColor = gl_Color;\n\n\t\tgl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;\n\t\tgl_Position = ftransform();\n\t}\n}\n",
 										"INCLUDE_SHARED_SOURCE:/* shared source name */\n",
 										"SHADER_SOURCE: /* name */( /* filename */ )\n",
 										"FILTER_LAYOUT: ( /* output texture format name */, /* shader name */)\n",
@@ -1240,7 +1252,7 @@
 	void CodeEditorsPannel::updateTitles(void)
 	{
 		for(int k=0; k<tabs.size(); k++)
-			widgets.setTabText(k, tabs[k]->getTitle());
+			widgets.setTabText(k, tr("   %1   ").arg(tabs[k]->getTitle()));
 	}
 
 	void CodeEditorsPannel::insertTemplate(void)

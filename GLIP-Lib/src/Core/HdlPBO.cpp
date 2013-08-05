@@ -21,8 +21,8 @@
  * \date    August 7th 2010
 */
 
-#include "HdlPBO.hpp"
-#include "../include/GLIPLib.hpp"
+#include "Core/Exception.hpp"
+#include "Core/HdlPBO.hpp"
 
 using namespace Glip::CoreGL;
 

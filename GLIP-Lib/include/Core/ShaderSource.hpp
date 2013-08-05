@@ -25,7 +25,7 @@
 #define __GLIP_SHADERSOURCE__
 
 	// Includes
-	#include "OglInclude.hpp"
+	#include "Core/OglInclude.hpp"
         #include <string>
         #include <vector>
         #include <fstream>

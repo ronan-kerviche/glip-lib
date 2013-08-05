@@ -26,8 +26,8 @@
 
 	// Includes
 	#include "devDebugTools.hpp"
-        #include "Component.hpp"
-        #include "HdlTexture.hpp"
+        #include "Core/Component.hpp"
+        #include "Core/HdlTexture.hpp"
 
 	namespace Glip
 	{
@@ -46,7 +46,7 @@
 			// Prototypes
 			class Pipeline;
 			class FilterLayout;
-			class GeometryFormat;
+			class GeometryModel;
 			class GeometryInstance;
 
 			// Objects
@@ -60,8 +60,9 @@
 					// Data
 					ShaderSource 	*vertexSource,
 							*fragmentSource;
-					GeometryFormat	*geometryFormat;
+					GeometryModel	*geometryModel;
 					bool blending, clearing;
+					bool isStandardVertex, isStandardGeometry;
 
 					// Friends
 					friend class FilterLayout;
@@ -76,7 +77,7 @@
 					virtual ~__ReadOnly_FilterLayout(void);
 					ShaderSource& getVertexSource(void) const;
 					ShaderSource& getFragmentSource(void) const;
-					GeometryFormat& getGeometryFormat(void) const;
+					GeometryModel& getGeometryModel(void) const;
 
 					bool isBlendingEnabled(void) const;
 					void enableBlending(void);
@@ -84,6 +85,9 @@
 					bool isClearingEnabled(void) const;
 					void enableClearing(void);
 					void disableClearing(void);
+
+					bool isStandardVertexSource(void) const;
+					bool isStandardGeometryModel(void) const;
 			};
 
 			/**
@@ -94,7 +98,7 @@
 			{
 				public :
 					// Tools
-					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryFormat* geometry = NULL);
+					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryModel* geometry = NULL);
 			};
 
 			/**

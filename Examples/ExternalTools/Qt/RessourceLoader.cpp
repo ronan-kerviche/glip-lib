@@ -577,6 +577,11 @@
 			return loadedPipeline->out(port-1);
 	}
 
+	LayoutLoader& PipelineLoaderInterface::loader(void)
+	{
+		return layoutLoader;
+	}
+
 	void PipelineLoaderInterface::loadPipelineDialog(void)
 	{
 		QString filename = QFileDialog::getOpenFileName(NULL, tr("Load a Pipeline"), ".", "*.ppl");
@@ -594,11 +599,10 @@
 		if(!filename.isEmpty())
 		{
 			PipelineLayout* model 	= NULL;
-			LayoutLoader	loader;
 
 			try
 			{
-				model = new PipelineLayout( loader(filename.toStdString()) );
+				model = new PipelineLayout( loader()(filename.toStdString()) );
 			}
 			catch(Exception& e)
 			{

@@ -22,14 +22,9 @@
 **/
 
 	// Includes
-	#include "Exception.hpp"
-	#include "ProceduralInput.hpp"
+	#include "Core/Exception.hpp"
+	#include "Modules/ProceduralInput.hpp"
 	#include "devDebugTools.hpp"
-	#include "HdlTexture.hpp"
-	#include "HdlVBO.hpp"
-	#include "HdlFBO.hpp"
-	#include "HdlShader.hpp"
-	#include "Filter.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -44,7 +39,7 @@
 	\param name Name of this Component instance.
 	**/
 	ProceduralInput::ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name)
-	 : __ReadOnly_ComponentLayout(getLayout(fragment)), InputDevice(getLayout(fragment), name), fragmentShader(NULL), vertexShader(NULL), program(NULL), vbo(NULL), renderer(NULL)
+	 : __ReadOnly_ComponentLayout(getLayout(fragment)), InputDevice(getLayout(fragment), name), fragmentShader(NULL), vertexShader(NULL), quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB), program(NULL), renderer(NULL)
 	{
 		ShaderSource* vertex=NULL;
 
@@ -65,9 +60,6 @@
 			if(!fragmentShader->requiresCompatibility())
 				program->setFragmentLocation(varsOut[0], 0);
 
-			// Create a basic geometry :
-			vbo = HdlVBO::generate2DStandardQuad();
-
 			// Create a buffer :
 			renderer	= new HdlFBO(fmt, varsOut.size());
 
@@ -85,6 +77,13 @@
 			Exception m("ProceduralInput::ProceduralInput - Caught an exception while creating the shaders for " + name + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
+	}
+
+	ProceduralInput::~ProceduralInput(void)
+	{
+		delete fragmentShader;
+		delete vertexShader;
+		delete program;
 	}
 
 	InputDevice::InputDeviceLayout ProceduralInput::getLayout(const ShaderSource& fragment)
@@ -122,7 +121,7 @@
 			program->use();
 
 		// Draw
-			vbo->draw();
+			quad.draw();
 
 		// Stop using the shader
 			HdlProgram::stopProgram();

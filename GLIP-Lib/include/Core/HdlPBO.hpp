@@ -32,8 +32,9 @@
 #define __HDLPBO_INCLUDE__
 
 	// GL include
-        #include "OglInclude.hpp"
-	#include "HdlGeBO.hpp"
+        #include "Core/OglInclude.hpp"
+	#include "Core/HdlGeBO.hpp"
+	#include "Core/HdlTexture.hpp"
 
 	namespace Glip
 	{
@@ -41,8 +42,6 @@
 		{
 
 			// prototypes :
-			class __ReadOnly_HdlTextureFormat;
-			class HdlTexture;
 			class HdlFBO;
 
 			// Pixel Buffer Object Handle

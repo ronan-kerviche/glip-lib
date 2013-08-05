@@ -27,25 +27,15 @@
 	// Include :
 	#include "Core/OglInclude.hpp"
 	#include "Core/Devices.hpp"
+	#include "Core/HdlTexture.hpp"
+	#include "Core/HdlVBO.hpp"
+	#include "Core/HdlFBO.hpp"
+	#include "Core/HdlShader.hpp"
+	#include "Core/Filter.hpp"
+	#include "Core/Geometry.hpp"
 
 namespace Glip
 {
-	// Prototypes
-	namespace CoreGL
-	{
-		class __ReadOnly_HdlTextureFormat;
-		class HdlVBO;
-		class HdlFBO;
-		class ShaderSource;
-		class HdlShader;
-		class HdlProgram;
-	}
-
-	namespace CorePipeline
-	{
-		class OutputDevice;
-	}
-
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
@@ -60,16 +50,17 @@ namespace Glip
 		{
 			private :
 				// Data :
-				HdlShader*	fragmentShader;
-				HdlShader*	vertexShader;
-				HdlProgram*	program;
-				HdlVBO*		vbo;
-				HdlFBO*		renderer;
+				HdlShader*		fragmentShader;
+				HdlShader*		vertexShader;
+				HdlProgram*		program;
+				GeometryInstance 	quad;
+				HdlFBO*			renderer;
 
 				static InputDeviceLayout getLayout(const ShaderSource& fragment);
 
 			public :
 				ProceduralInput(const __ReadOnly_HdlTextureFormat& fmt, const ShaderSource& fragment, const std::string& name);
+				virtual ~ProceduralInput(void);
 
 				// Tools :
 				void generateNewFrame(void);

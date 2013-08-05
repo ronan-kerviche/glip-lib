@@ -22,8 +22,8 @@
 **/
 
 #include <iostream>
-#include "Devices.hpp"
-#include "Exception.hpp"
+#include "Core/Devices.hpp"
+#include "Core/Exception.hpp"
 
     using namespace Glip::CoreGL;
     using namespace Glip::CorePipeline;

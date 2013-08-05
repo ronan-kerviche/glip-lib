@@ -183,6 +183,10 @@
 			ressourceTab.updatePipelineInfos(mainPipeline);
 			uniformsTab.updatePipeline(*mainPipeline);
 			compute();
+
+			// Test : 
+			LayoutWriter writer;
+			writer.writeToFile(*mainPipeline, "dump.ppl");
 		}
 		else
 		{

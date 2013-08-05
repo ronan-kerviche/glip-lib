@@ -22,8 +22,8 @@
 **/
 
 #include <algorithm>
-#include "Exception.hpp"
-#include "Component.hpp"
+#include "Core/Exception.hpp"
+#include "Core/Component.hpp"
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;

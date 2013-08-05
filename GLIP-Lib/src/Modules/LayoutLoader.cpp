@@ -24,8 +24,8 @@
 	// Includes :
 	#include <sstream>
 	#include <algorithm>
-	#include "Exception.hpp"
-	#include "LayoutLoader.hpp"
+	#include "Core/Exception.hpp"
+	#include "Modules/LayoutLoader.hpp"
 	#include "devDebugTools.hpp"
 
 	// Namespaces :
@@ -60,12 +60,10 @@
 										"GEOMETRY",
 										"GRID_2D",
 										"GRID_3D",
-										"CUSTOM_GEOMETRY",
+										"CUSTOM_MODEL",
 										"GEOMETRY_FROM_FILE",
 										"STANDARD_QUAD",
-										"QUAD",
-										"TRIANGLE",
-										"POINT",
+										"VERTEX",
 										"ELEMENT",
 										"ADD_PATH"
 									};
@@ -317,7 +315,7 @@
 			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::string)
 			TEST_FOR_DOUBLES( formatList,		"Format", 		HdlTextureFormat)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	ShaderSource)
-			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryFormat)
+			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryModel)
 			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	FilterLayout)
 			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	PipelineLayout)
 
@@ -706,12 +704,12 @@
 		// Find the first argument :
 		if(e.arguments[0]==keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
 		{
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::StandardQuadGeometry() ) );
+			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::StandardQuad() ) );
 		}
 		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_2D])
 		{
 			if(e.arguments.size()!=3)
-				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h;
 
@@ -721,12 +719,12 @@
 			if(!from_string(e.arguments[2], h))
 				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
 
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::PointsGrid2DGeometry(w,h) ) );
+			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid2D(w,h) ) );
 		}
 		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_3D])
 		{
 			if(e.arguments.size()!=4)
-				throw Exception("From line " + to_string(e.startLine) + " : The format \"" + keywordsLayoutLoader[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h, z;
 
@@ -739,7 +737,147 @@
 			if(!from_string(e.arguments[3], z))
 				throw Exception("From line " + to_string(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 
-			geometryList.insert( std::pair<std::string, GeometryFormat>( e.name, GeometryPrimitives::PointsGrid3DGeometry(w,h,z)) );
+			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid3D(w,h,z)) );
+		}
+		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_CUSTOM_MODEL])
+		{
+			if(e.arguments.size()!=2 && e.arguments.size()!=3)
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_CUSTOM_MODEL] + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+
+			if(e.body.empty() || e.noBody)
+				throw Exception("From line " + to_string(e.startLine) + " : The custom model \"" + e.name + "\" does not have a body.", __FILE__, __LINE__);
+
+			try
+			{
+				GLenum primitive;
+
+				primitive = glFromString(e.arguments[1]);
+
+				bool hasTexCoord = false;
+
+				if(e.arguments.size()>2)
+				{
+					if(e.arguments[2]=="true" || e.arguments[2]=="True" || e.arguments[2]=="TRUE")
+						hasTexCoord = true;
+				}
+
+				GeometryPrimitives::CustomModel* g = NULL;
+
+				// Parse the text : 
+				VanillaParser parser(e.body, e.bodyLine);
+
+				// Classify the new data :
+				std::vector<LayoutLoaderKeyword> associatedKeywords;
+
+				classify(parser.elements, associatedKeywords);
+
+				// First pass is only for vertices : 
+				GLfloat 	x = 0.0f, 
+						y = 0.0f, 
+						z = 0.0f, 
+						u = 0.0f, 
+						v = 0.0f;
+				int 		pArg = 0;				
+				for(int k=0; k<associatedKeywords.size(); k++)
+				{
+					// Test :
+					if(associatedKeywords[k]==KW_LL_VERTEX)
+					{
+						if(g==NULL)
+						{
+							preliminaryTests(parser.elements[k], -1, 2, 5, -1, "Vertex (sub-parsing Geometry)");
+
+							int dim = parser.elements[k].arguments.size();
+							dim = (hasTexCoord ? dim-2 : dim);
+							g = new GeometryPrimitives::CustomModel(dim, primitive, hasTexCoord);
+						}
+						else
+						{
+							const int n = g->hasTexCoord ? (g->dim + 2) : g->dim;
+							preliminaryTests(parser.elements[k], -1, n, n, -1, "Vertex (sub-parsing Geometry)");
+						}
+	
+						pArg = 0;
+
+						if(!from_string(parser.elements[k].arguments[pArg], x))
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read X for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+
+						pArg++;
+
+						if(!from_string(parser.elements[k].arguments[pArg], y))
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read Y for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+
+						pArg++;
+
+						if(g->dim>=3)
+						{
+							if(!from_string(parser.elements[k].arguments[pArg], z))
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read Z for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+							pArg++;
+						}
+
+						if(g->hasTexCoord)
+						{
+							if(!from_string(parser.elements[k].arguments[pArg], u))
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read U for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+							
+							pArg++;
+
+							if(!from_string(parser.elements[k].arguments[pArg], v))
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read V for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+							
+							pArg++;
+						}
+
+						
+						if(g->dim==2)
+							g->newVertex2D(x, y, u, v);
+						else if(g->dim==3)
+							g->newVertex3D(x, y, z, u, v);
+						else
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Internal error - unsupported number of dimensions.", __FILE__, __LINE__);
+					}
+					else if(associatedKeywords[k]!=KW_LL_ELEMENT)
+					{
+							if( associatedKeywords[k]<LL_NumKeywords )
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
+							else
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
+					}
+				}
+
+				if(g==NULL)
+					throw Exception("From line " + to_string(e.startLine) + " : The custom model \"" + e.name + "\" does not have any vertex declared.", __FILE__, __LINE__);
+
+				// Second pass for elements : 
+				std::vector<GLuint> indices(g->numVerticesPerEl);
+				for(int k=0; k<associatedKeywords.size(); k++)
+				{
+					if(associatedKeywords[k]==KW_LL_ELEMENT)
+					{
+						preliminaryTests(parser.elements[k], -1, g->numVerticesPerEl, g->numVerticesPerEl, -1, "Element (sub-parsing Geometry)");
+
+						// Load all the indices : 
+						for(int pArg=0; pArg<g->numVerticesPerEl; pArg++)
+						{
+							if(!from_string(parser.elements[k].arguments[pArg], indices[pArg]))
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Cannot read vertex index " + to_string(pArg) + " for primitive element. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+						}
+
+						// Add it : 
+						g->newElement(indices);
+					}
+				}
+
+				geometryList.insert( std::pair<std::string, GeometryModel>( e.name, *g) );
+
+				delete g;
+			}
+			catch(Exception& ex)
+			{
+				Exception m("From line " + to_string(e.startLine) + " : Exception caught while building Geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw m + ex;
+			}
 		}
 		else
 			throw Exception("From line " + to_string(e.startLine) + " : Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", __FILE__, __LINE__);
@@ -754,9 +892,9 @@
 		std::map<std::string,HdlTextureFormat>::iterator 	format		 = formatList.find(e.arguments[0]);
 		std::map<std::string,ShaderSource>::iterator 		fragmentSource	 = sourceList.find(e.arguments[1]),
 							 		vertexSource;
-		std::map<std::string, GeometryFormat>::iterator		geometry;
+		std::map<std::string, GeometryModel>::iterator		geometry;
 		ShaderSource						*vertexSourcePtr = NULL;
-		GeometryFormat						*geometryPtr	 = NULL;
+		GeometryModel						*geometryPtr	 = NULL;
 
 		if(format==formatList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
@@ -776,7 +914,10 @@
 
 				vertexSourcePtr = &vertexSource->second;
 			}
+		}
 
+		if(e.arguments.size()>5)
+		{
 			if(e.arguments[5]!=keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
 			{
 				geometry = geometryList.find(e.arguments[5]);
@@ -1313,13 +1454,119 @@
 		return e;
 	}
 
+	VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
+	{
+		if(name.empty())
+			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_GEOMETRY ]) + " : name cannot be empty.", __FILE__, __LINE__);
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword	= keywordsLayoutLoader[ KW_LL_GEOMETRY ];
+		e.name		= name;
+
+		if(mdl.type==GeometryModel::StandardQuad)	
+		{
+			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_STANDARD_QUAD ] );
+			e.noBody	= true;
+		}
+		else if(mdl.type==GeometryModel::PointsGrid2D)
+		{
+			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_GRID_2D ] );
+
+			// Find grid size :
+			GLfloat x = 0.0, y = 0.0; 
+			for(int k=0; k<mdl.getNumVertices(); k++)
+			{
+				x = std::max(x, mdl.x(k));
+				y = std::max(y, mdl.y(k));
+			}
+
+			e.arguments.push_back( to_string(x+1) );
+			e.arguments.push_back( to_string(y+1) );
+		}	
+		else if(mdl.type==GeometryModel::PointsGrid3D)
+		{
+			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_GRID_3D ] );
+
+			// Find grid size : 
+			GLfloat x = 0.0, y = 0.0, z = 0.0; 
+			for(int k=0; k<mdl.getNumVertices(); k++)
+			{
+				x = std::max(x, mdl.x(k));
+				y = std::max(y, mdl.y(k));
+				z = std::max(z, mdl.z(k));
+			}
+
+			e.arguments.push_back( to_string(x+1) );
+			e.arguments.push_back( to_string(y+1) );
+			e.arguments.push_back( to_string(z+1) );
+		}
+		else if(mdl.type==GeometryModel::CustomModel)
+		{
+			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_CUSTOM_MODEL ] );
+			e.arguments.push_back( glParamName(mdl.primitiveGL) );
+
+			if( mdl.hasTexCoord )
+				e.arguments.push_back( "true" );
+
+			// Write model : 
+			VanillaParserSpace::Element v;
+			v.strKeyword	= keywordsLayoutLoader[ KW_LL_VERTEX ];
+			v.noName 	= true;
+			v.noBody 	= true;
+			for(int k=0; k<mdl.getNumVertices(); k++)
+			{
+				v.arguments.clear();
+
+				v.arguments.push_back( to_string(mdl.x(k)) );
+				v.arguments.push_back( to_string(mdl.y(k)) );
+
+				if(mdl.dim>2)
+					v.arguments.push_back( to_string(mdl.z(k)) );
+				else if(mdl.dim!=2 && mdl.dim!=3)
+					throw Exception("LayoutWriter::write - Geometry : internal error, unsupported number of dimensions.", __FILE__, __LINE__);
+
+				if(mdl.hasTexCoord)
+				{
+					v.arguments.push_back( to_string(mdl.u(k)) );
+					v.arguments.push_back( to_string(mdl.v(k)) );
+				}
+
+				// Push : 
+				e.body += v.getCode() + "\n";
+			}
+
+			VanillaParserSpace::Element p;
+			p.strKeyword	= keywordsLayoutLoader[ KW_LL_ELEMENT ];
+			p.noName 	= true;
+			p.noBody 	= true;
+			e.body += "\n";
+			for(int k=0; k<mdl.getNumElements(); k++)
+			{
+				p.arguments.clear();
+
+				if(mdl.numVerticesPerEl>=1) p.arguments.push_back( to_string(mdl.a(k)) );
+				if(mdl.numVerticesPerEl>=2) p.arguments.push_back( to_string(mdl.b(k)) );
+				if(mdl.numVerticesPerEl>=3) p.arguments.push_back( to_string(mdl.c(k)) );
+				if(mdl.numVerticesPerEl>=4) p.arguments.push_back( to_string(mdl.d(k)) );
+
+				// Push : 
+				e.body += p.getCode() + "\n";
+			}
+		}
+
+		return e;
+	}
+
 	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_FilterLayout& fLayout)
 	{
 		//if(name.empty())
 		//	throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
 
 		const std::string 	fmtName 	= "Format_" + fLayout.getTypeName(),
-					fragName	= "Fragment_" + fLayout.getTypeName();
+					fragName	= "Fragment_" + fLayout.getTypeName(),
+					vertName	= "Vertex_" + fLayout.getTypeName(),
+					mdlName		= "Model_" + fLayout.getTypeName();
 
 		VanillaParserSpace::Element e;
 
@@ -1337,8 +1584,35 @@
 		VanillaParserSpace::Element e2 = LayoutWriter::write(fLayout.getFragmentSource(), fragName);
 		code += e2.getCode() + "\n\n";
 
-		Exception w("LayoutWriter::write - MISSING : GEOMETRY AND VERTEX TEST", __FILE__, __LINE__);
-		std::cerr << w.what() << std::endl;
+		if(!fLayout.isStandardVertexSource())
+		{
+			VanillaParserSpace::Element e3 = LayoutWriter::write(fLayout.getVertexSource(), vertName);
+			code += e3.getCode() + "\n\n";
+
+			e.arguments.push_back( vertName );
+		}
+		else
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_DEFAULT_VERTEX_SHADER] );
+
+		if(fLayout.isClearingEnabled())
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_CLEARING_ON] );
+		else
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_CLEARING_OFF] );
+
+		if(fLayout.isBlendingEnabled())
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_BLENDING_ON] );
+		else
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_BLENDING_OFF] );
+
+		if(!fLayout.isStandardGeometryModel())
+		{
+			VanillaParserSpace::Element e4 = LayoutWriter::write(fLayout.getGeometryModel(), mdlName);
+			code += e4.getCode() + "\n\n";
+
+			e.arguments.push_back( mdlName );
+		}
+		else
+			e.arguments.push_back( keywordsLayoutLoader[KW_LL_STANDARD_QUAD] );
 
 		return e;
 	}

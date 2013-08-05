@@ -21,9 +21,8 @@
  * \date    February 6th 2011
 */
 
-#include "Exception.hpp"
-#include "HdlGeBO.hpp"
-#include "OglInclude.hpp"
+#include "Core/Exception.hpp"
+#include "Core/HdlGeBO.hpp"
 
 using namespace Glip::CoreGL;
 

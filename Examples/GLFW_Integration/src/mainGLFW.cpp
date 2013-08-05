@@ -40,13 +40,13 @@
 	{
 		bool running = true;
 
-		// Initialize GLFW
+		// Initialize GLFW :
 		if( !glfwInit() )
 		{
 			exit( EXIT_FAILURE );
 		}
 
-		// Open an OpenGL window
+		// Open an OpenGL window :
 		if( !glfwOpenWindow( 300,300, 0,0,0,0,0,0, GLFW_WINDOW ) )
 		{
 			glfwTerminate();
@@ -58,13 +58,13 @@
 
 		int i=0;
 
-		// Initialize GLIP-LIB
+		// Initialize GLIP-LIB :
 		HandleOpenGL::init();
 
-		// Create a Quad inside a VBO for display
-		HdlVBO* vbo = HdlVBO::generate2DStandardQuad();
+		// Create a Quad inside a VBO for display :
+		GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
 
-		// Create a format for the filters
+		// Create a format for the filters :
 		HdlTextureFormat fmt(640, 480, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
 		fmt.setSWrapping(GL_REPEAT);
 		fmt.setTWrapping(GL_REPEAT);
@@ -114,7 +114,7 @@
 		(*p1) << start << Pipeline::Process;
 		(*p2) << start << Pipeline::Process;
 
-		// Main loop
+		// Main loop :
 		while( running )
 		{
 			glClear( GL_COLOR_BUFFER_BIT );
@@ -125,21 +125,21 @@
 				// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
 				(*p1) << p2->out(0) << Pipeline::Process;
 				p1->out(0).bind();
-				vbo->draw();
+				quad.draw();
 			}
 			else
 			{
 				(*p2) << p1->out(0) << Pipeline::Process;
 				p2->out(0).bind();
-				vbo->draw();
+				quad.draw();
 			}
 
 			i++;
 
-			// Swap front and back rendering buffers
+			// Swap front and back rendering buffers :
 			glfwSwapBuffers();
 
-			// Check if ESC key was pressed or window was closed
+			// Check if ESC key was pressed or window was closed :
 			running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 
 			glfwSleep(0.03);
@@ -147,13 +147,12 @@
 
 		delete p1;
 		delete p2;
-		delete vbo;
 
 		HandleOpenGL::deinit();
 
-		// Close window and terminate GLFW
+		// Close window and terminate GLFW :
 		glfwTerminate();
 
-		// Exit program
+		// Exit program :
 		exit( EXIT_SUCCESS );
 	}

@@ -28,7 +28,7 @@
 	#include "Core/HdlTexture.hpp"
 	#include "Core/HdlShader.hpp"
 	#include "Core/Pipeline.hpp"
-	#include "VanillaParser.hpp"
+	#include "Modules/VanillaParser.hpp"
 
 namespace Glip
 {

@@ -25,8 +25,8 @@
 #define __HDLTEXTURE_INCLUDE__
 
 	// Include
-	#include "OglInclude.hpp"
-	#include "HdlTextureTools.hpp"
+	#include "Core/OglInclude.hpp"
+	#include "Core/HdlTextureTools.hpp"
 
 	namespace Glip
 	{

@@ -64,6 +64,10 @@
 
 	void TestFFMPEGInterface::resetProcessTest(void)
 	{
+		// Update size first : 
+		pipelineLoaderInterface.loader().clearRequiredElements("FormatIn_0");
+		pipelineLoaderInterface.loader().addRequiredElement("FormatIn_0", videoControls.videoStream().out().format());
+
 		if(videoControls.videoStreamIsValid() && pipelineLoaderInterface.isPipelineValid())
 		{
 			if(pipelineLoaderInterface.pipeline().getNumInputPort() >  videoControls.videoStream().getNumOutputPort())

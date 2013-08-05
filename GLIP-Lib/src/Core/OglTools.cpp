@@ -21,10 +21,10 @@
  * \date    October 17th 2010
 **/
 
-#include "OglInclude.hpp"
-#include "HdlTexture.hpp"
-#include "Exception.hpp"
-#include "HdlVBO.hpp"
+#include "Core/OglInclude.hpp"
+#include "Core/HdlTexture.hpp"
+#include "Core/Exception.hpp"
+#include "Core/HdlVBO.hpp"
 #include <string>
 
 using namespace Glip;
@@ -307,6 +307,10 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_QUADS )
 		KEYWORD_PAIR( GL_QUAD_STRIP )
 		KEYWORD_PAIR( GL_POLYGON )
+		KEYWORD_PAIR( GL_LINES_ADJACENCY )
+		KEYWORD_PAIR( GL_LINE_STRIP_ADJACENCY )
+		KEYWORD_PAIR( GL_TRIANGLES_ADJACENCY )
+		KEYWORD_PAIR( GL_TRIANGLE_STRIP_ADJACENCY )
 
 		// Texture Mode
 		KEYWORD_PAIR( GL_TEXTURE_1D )

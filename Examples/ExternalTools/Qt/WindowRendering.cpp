@@ -38,6 +38,7 @@
 		QWidget::setGeometry(10,10,w,h);
 
 		makeCurrent();
+		setAutoBufferSwap(false);
 
 		try
 		{
@@ -81,7 +82,7 @@
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 		setMinimumSize(QSize(256,256));
 
-		quad = new GeometryInstance( GeometryPrimitives::StandardQuadGeometry(), GL_STATIC_DRAW_ARB );
+		quad = new GeometryInstance( GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB );
 	}
 
 	WindowRenderer::~WindowRenderer(void)

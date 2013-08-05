@@ -30,7 +30,7 @@
 	#include "Core/ShaderSource.hpp"
 	#include "Core/Filter.hpp"
 	#include "Core/Pipeline.hpp"
-	#include "VanillaParser.hpp"
+	#include "Modules/VanillaParser.hpp"
 
 namespace Glip
 {
@@ -65,12 +65,10 @@ namespace Glip
 			KW_LL_GEOMETRY,
 			KW_LL_GRID_2D,
 			KW_LL_GRID_3D,
-			KW_LL_CUSTOM_GEOMETRY,
+			KW_LL_CUSTOM_MODEL,
 			KW_LL_GEOMETRY_FROM_FILE,
 			KW_LL_STANDARD_QUAD,
-			KW_LL_QUAD,
-			KW_LL_TRIANGLE,
-			KW_LL_POINT,
+			KW_LL_VERTEX,
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
 			LL_NumKeywords,
@@ -88,16 +86,24 @@ The LayoutLoader module enables you to use dynamic pipeline saved in a file or a
 The script must be structured with the following commands (but no special order is needed except standard declaration order) :
 
 - Format for the texture : <BR>
-<b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i> [, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ])
+<b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, [ <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i>, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ])
 
 - Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement() : <BR>
-If the format is not found in the required element, it is searched in the known formats. You can also use character '*' to keep or replace some of the parameters. <BR>
+If the format is not found in the required element, it is searched in the known formats. You can also use character '*' to keep some of the parameters or replace them by specifying a new value. <BR>
 <b>REQUIRED_FORMAT</b>:<i>format_name</i>(<i>required_format_name</i> [, <i>integer width / *</i>, <i>integer height / *</i>, <i>GLEnum mode / *</i>, <i>GLEnum depth / *</i>, <i>GLEnum minFiltering / *</i>, <i>GLEnum maxFiltering / *</i>, <i>GLEnum sWrapping / *</i>, <i>GLEnum TWrapping / *</i>, <i>integer maximum_mipmap_level / *</i>])
 
 - Geometry : <BR>
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>GeometryType</i>, <i>param1</i>, ... <i>paramN</i>) <BR>
-Examples : <b>GEOMETRY</b>:<i>some2DGrid</i>(<i>GRID_2D</i>, <i>640</i>, <i>480</i>) <BR>
-<b>GEOMETRY</b>:<i>some3DGrid</i>(<i>GRID_3D</i>, <i>640</i>, <i>480</i>, <i>3</i>) <BR>
+Examples : <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_2D</i>, <i>integer : width</i>, <i>integer : height</i>) <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>640</i>, <i>integer : width</i>, <i>integer : height</i>, <i>interger : depth</i>) <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>CUSTOM_MODEL</i>, <i>GL Primitive (GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)</i>, [<i>true (if it has texcoord definition embedded)</i>]) <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a vertex (depending on the format) :</i> <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>VERTEX</b>( <i>x</i>, <i>y</i>, [<i>z</i>], [<i>u</i>, <i>v</i>]) <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a primitive element (depending on the format) :</i> <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>ELEMENT</b>( <i>a</i>, [<i>b</i>], [<i>c</i>], [<i>d</i>]) <BR>
+} <BR>
 
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>
@@ -131,7 +137,7 @@ Examples : <b>GEOMETRY</b>:<i>some2DGrid</i>(<i>GRID_2D</i>, <i>640</i>, <i>480<
 &nbsp;&nbsp;&nbsp;&nbsp; <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(<i>element_name</i>,<i>e_port_name</i>,THIS,<i>this_port_name</i>) // Connection to output. <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements by himself using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements automatically using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
 }
 
 - Required pipeline layout to be provided by the application (for decorators). See LayoutLoader::addRequiredElement() : <BR>
@@ -144,7 +150,7 @@ Examples : <b>GEOMETRY</b>:<i>some2DGrid</i>(<i>GRID_2D</i>, <i>640</i>, <i>480<
 <b>ADD_PATH</b>(/some/path/) <BR>
 
 - Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
-<b>INCLUDE_FILE</b>(<i>string filename</i>);
+<b>INCLUDE_FILE</b>(<i>string filename</i>)
 
 - Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT_SHARED_CODE marker : <BR>
 <b>SHARED_SOURCE:shared_segment_name</b> <BR>
@@ -152,7 +158,7 @@ Examples : <b>GEOMETRY</b>:<i>some2DGrid</i>(<i>GRID_2D</i>, <i>640</i>, <i>480<
 &nbsp;&nbsp;&nbsp;&nbsp; <i>// shared code goes here...</i> <BR>
 } <BR>
 &nbsp;&nbsp; Then use : <BR>
-<b>SHADER_SOURCE</b>:<i>source_name</i>() <BR>
+<b>SHADER_SOURCE</b>:<i>source_name</i> <BR>
 { <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>INCLUDE_SHARED_SOURCE:shared_segment_name</b> // The shared code will be inserted here... <BR>
 } <BR>
@@ -252,7 +258,7 @@ Loading Example :
 				std::map<std::string, std::string>	sharedCodeList;
 				std::map<std::string, HdlTextureFormat> formatList;
 				std::map<std::string, ShaderSource> 	sourceList;
-				std::map<std::string, GeometryFormat>	geometryList;
+				std::map<std::string, GeometryModel>	geometryList;
 				std::map<std::string, FilterLayout> 	filterList;
 				std::map<std::string, PipelineLayout> 	pipelineList;
 
@@ -311,6 +317,7 @@ Loading Example :
 			private :
 				VanillaParserSpace::Element write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name);
 				VanillaParserSpace::Element write(const ShaderSource& source, const std::string& name);
+				VanillaParserSpace::Element write(const GeometryModel& mdl, const std::string& name);
 				VanillaParserSpace::Element write(const __ReadOnly_FilterLayout& fLayout);
 				VanillaParserSpace::Element write(const __ReadOnly_PipelineLayout& pLayout, bool isMain=false);
 

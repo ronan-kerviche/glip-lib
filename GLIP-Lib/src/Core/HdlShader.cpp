@@ -25,9 +25,9 @@
 #include <string>
 #include <sstream>
 #include <cstring>
-#include "Exception.hpp"
-#include "HdlShader.hpp"
-#include "../include/GLIPLib.hpp"
+#include <algorithm>
+#include "Core/Exception.hpp"
+#include "Core/HdlShader.hpp"
 #include "devDebugTools.hpp"
 
 using namespace Glip::CoreGL;

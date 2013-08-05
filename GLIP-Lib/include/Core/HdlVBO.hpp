@@ -25,8 +25,8 @@
 #define __HDLVBO_INCLUDE__
 
 	// GL include
-        #include "OglInclude.hpp"
-	#include "HdlGeBO.hpp"
+        #include "Core/OglInclude.hpp"
+	#include "Core/HdlGeBO.hpp"
 
 	namespace Glip
 	{
@@ -59,9 +59,11 @@
 					// Static Tools
 					static void    unbind(void);
 					static void    unmap(void);
+
+					/* Old tools : 
 					static HdlVBO* generate2DStandardQuad(void);
 					static HdlVBO* generate2DGrid(int w, int h, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat cX=0.0, GLfloat cY=0.0);
-					static HdlVBO* generate3DGrid(int w, int h, int d, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat appD=1.0, GLfloat cX=0.0, GLfloat cY=0.0, GLfloat cZ=0.0);
+					static HdlVBO* generate3DGrid(int w, int h, int d, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat appD=1.0, GLfloat cX=0.0, GLfloat cY=0.0, GLfloat cZ=0.0);*/
 			};
 		}
 	}

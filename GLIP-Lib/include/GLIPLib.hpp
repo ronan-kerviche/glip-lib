@@ -50,6 +50,7 @@
 			#include "Core/HdlVBO.hpp"
 
 			// Pipeline Tools
+			#include "Core/Geometry.hpp"
 			#include "Core/Filter.hpp"
 			#include "Core/Pipeline.hpp"
 			#include "Core/Devices.hpp"

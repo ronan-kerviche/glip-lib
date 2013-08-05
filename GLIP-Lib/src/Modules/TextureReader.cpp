@@ -23,8 +23,8 @@
 
 	#include <limits>
 	#include <cstring>
-	#include "TextureReader.hpp"
-	#include "../Core/Exception.hpp"
+	#include "Modules/TextureReader.hpp"
+	#include "Core/Exception.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;

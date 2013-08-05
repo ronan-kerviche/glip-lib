@@ -24,11 +24,11 @@
 #ifndef __GLIP_LIB_MODULES_LIBRARY_INCLUDE__
 #define __GLIP_LIB_MODULES_LIBRARY_INCLUDE__
 
-	#include "LayoutLoader.hpp"
-	#include "UniformsVarsLoader.hpp"
-	#include "TextureReader.hpp"
-	#include "ProceduralInput.hpp"
-	#include "FFT1D.hpp"
-	#include "FFT2D.hpp"
+	#include "Modules/LayoutLoader.hpp"
+	#include "Modules/UniformsVarsLoader.hpp"
+	#include "Modules/TextureReader.hpp"
+	#include "Modules/ProceduralInput.hpp"
+	#include "Modules/FFT1D.hpp"
+	#include "Modules/FFT2D.hpp"
 
 #endif

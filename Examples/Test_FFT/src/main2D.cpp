@@ -159,6 +159,9 @@
 			fft2D.enablePerfsMonitoring();
 			ifft2D.enablePerfsMonitoring();
 
+			// Geometry : 
+			GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
+
 			// Main loop
 			while( running )
 			{
@@ -206,7 +209,7 @@
 					else
 						p2->out(0).bind();
 
-				HandleOpenGL::standardQuadVBO().draw();
+				quad.draw();
 
 				i++;
 
