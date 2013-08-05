@@ -1162,15 +1162,15 @@ We can improve the previous pipeline construction by building a script which wil
 \section sec_getGlipStudio Get GlipStudio 
 	In order to use GlipStudio, you can get it from the following sources : 
 
-	- <b>Binaries for Windows (64 bits) : URL</b>
+	- <b>Binaries for Windows (64 bits) : http://sourceforge.net/projects/glip-lib/files/GlipStudio_x64_win.zip/download</b>
 	
-	- Get from source (Linux/Windows, (32/64 bits)) : download source at URL or copy git repository at http://sourceforge.net/p/glip-lib/code/ci/master/tree/.
+	- Get from source (Linux/Windows, (32/64 bits)) : clone git repository at http://sourceforge.net/p/glip-lib/code/ci/master/tree/.
 	
 	- On Linux : build library with CMAKE, then make.
 	
-	- On Windows : The Visual Studio project should already contain all settings to build the static x64 library.
+	- On Windows : Follow instructions in README.txt file in the release archive (tested with VS2012).
 	
-	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode 
+	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode.
 
 \section sec_Captures Screenshots
 	<img src="./images/glipstudio_1.png" width="1024" />

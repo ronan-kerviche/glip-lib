@@ -14,7 +14,8 @@ unix: LIBS        += 	-lavutil \
 			-lswscale \
 			../../GLIP-Lib/lib/libglip.a
 
-win32: LIBS	+=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
+win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
+win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/Qt/RessourceLoader.hpp \

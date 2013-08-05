@@ -21,7 +21,7 @@
  * \date    August 7th 2010
 */
 
-#include "HdlFBO.hpp"
+#include "Core/HdlFBO.hpp"
 #include "Core/Exception.hpp"
 
 using namespace Glip::CoreGL;
