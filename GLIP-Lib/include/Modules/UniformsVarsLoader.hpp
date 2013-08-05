@@ -70,10 +70,66 @@ namespace Glip
 
 		extern const char* keywordsUniformsVarsLoader[UL_NumKeywords];
 
-		/**
-		\class UniformsVarsLoader
-		\brief Loads and writes a set of uniforms variables values from a file or a string.
-		**/
+/**
+\class UniformsVarsLoader
+\brief Loads and writes a set of uniforms variables values from a file or a string.
+
+Load, store and manage set of uniforms values for one, or multiple pipelines. The code is set to be human readable : <BR>
+- Variable (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible typenames) : <BR>
+<b><i>TYPENAME</i></b> : <i>name</i>( [<i>values</i>] ); <BR>
+
+- Filter : <BR>
+<b>FILTER</b> : <i>name</i> <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>variables...</i><BR>
+}<BR>
+
+- Filter : <BR>
+<b>PIPELINE</b> : <i>name</i> <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>filters...</i><BR>
+}<BR>
+
+Example : 
+\code
+PIPELINE:myPipeline
+{
+	FILTER:firstFilter
+	{
+		GL_FLOAT:scalar1(1.0)
+		GL_VEC3:vector1(0.0, -2.0, 3.0)
+	}
+}
+\endcode
+
+Processing example : 
+\code
+	UniformsVarsLoader uLoader;
+
+	// Load values from a current Pipeline, replace existing values :
+	uLoader.load(mainPipeline, true);
+
+	// Get the corresponding code :
+	std::string uCode = uLoader.getCode( mainPipeline.getName() );
+
+	// Get the code of all the data saved : 
+	std::string uAllCode = uLoader.getCode();
+
+	// Save to file : 
+	uLoader.writeToFile("./currentData.uvd");
+
+	// Clear all : 
+	uLoader.clear();
+
+	// Reload (no replacement, if an element already exists it will raise an exception) : 
+	uLoader.load("./currentData.uvd");
+
+	// Apply : 
+	int c = uLoader.applyTo(mainPipeline);
+
+	std::cout << c << " variables were loaded." << std::endl;
+\endcode
+**/
 		class UniformsVarsLoader
 		{
 			private :

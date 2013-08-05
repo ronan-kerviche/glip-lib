@@ -54,6 +54,7 @@
 										"BLENDING_ON",
 										"BLENDING_OFF",
 										"REQUIRED_FORMAT",
+										"REQUIRED_GEOMETRY",
 										"REQUIRED_PIPELINE",
 										"SHARED_SOURCE",
 										"INCLUDE_SHARED_SOURCE",
@@ -86,6 +87,7 @@
 
 		// And static :
 		requiredFormatList.clear();
+		requiredGeometryList.clear();
 		requiredPipelineList.clear();
 	}
 
@@ -368,6 +370,7 @@
 		// Set it as a sub-loader :
 		subLoader.isSubLoader = true;
 		subLoader.requiredFormatList = requiredFormatList;
+		subLoader.requiredGeometryList = requiredGeometryList;
 		subLoader.requiredPipelineList = requiredPipelineList;
 
 		// Copy this path to the inner version :
@@ -537,6 +540,31 @@
 
 		// Create and push (note the 0 base mipmap) :
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
+	}
+
+	void LayoutLoader::buildRequiredGeometry(const VanillaParserSpace::Element& e)
+	{
+		// Preliminary tests :
+		preliminaryTests(e, 1, 1, 1, -1, "RequiredGeometry");
+
+		// Identify the target :
+		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(e.arguments[0]);
+
+		if(it==requiredGeometryList.end())
+		{
+			// Try in the current format list also :
+			it = geometryList.find(e.arguments[0]);
+
+			if(it==geometryList.end())
+				throw Exception("From line " + to_string(e.startLine) + " : The required geometry \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
+		}
+
+		std::map<std::string,GeometryModel>::iterator it2 = geometryList.find(e.name);
+
+		if(it2!=geometryList.end())
+			throw Exception("From line " + to_string(e.startLine) + " : A GeometryModel Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+		else
+			geometryList.insert( std::pair<std::string, GeometryModel>(e.name, it->second) );
 	}
 
 	void LayoutLoader::buildRequiredPipeline(const VanillaParserSpace::Element& e)
@@ -1319,7 +1347,7 @@
 
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
-	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:name(); will use this format.
+	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
 	\param name The name of the element.
 	\param fmt The element to be associated.
 	**/
@@ -1331,12 +1359,27 @@
 			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__);
 		else
 			requiredFormatList.insert( std::pair<std::string, HdlTextureFormat>(name, fmt) );
+	}
 
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
+	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
+	\param name The name of the element.
+	\param mdl The element to be associated.
+	**/
+	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
+	{
+		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
+
+		if(it!=requiredGeometryList.end())
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the GeometryModel database.", __FILE__, __LINE__);
+		else
+			requiredGeometryList.insert( std::pair<std::string, GeometryModel>(name, mdl) );
 	}
 
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
-	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:name(); will use this pipeline layout.
+	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
 	\param name The name of the element.
 	\param layout The element to be associated.
 	**/
@@ -1360,9 +1403,11 @@
 		int numElemErased = 0;
 
 		numElemErased += requiredFormatList.size();
+		numElemErased += requiredGeometryList.size();
 		numElemErased += requiredPipelineList.size();
 
 		requiredFormatList.clear();
+		requiredGeometryList.clear();
 		requiredPipelineList.clear();
 
 		return numElemErased;
@@ -1377,11 +1422,13 @@
 	int LayoutLoader::clearRequiredElements(const std::string& name)
 	{
 		std::map<std::string,HdlTextureFormat>::iterator it1;
-		std::map<std::string,PipelineLayout>::iterator it2;
+		std::map<std::string,GeometryModel>::iterator it2;
+		std::map<std::string,PipelineLayout>::iterator it3;
 		int numElemErased = 0;
 
 		it1 = requiredFormatList.find(name);
-		it2 = requiredPipelineList.find(name);
+		it2 = requiredGeometryList.find(name);
+		it3 = requiredPipelineList.find(name);
 
 		if(it1!=requiredFormatList.end())
 		{
@@ -1389,9 +1436,15 @@
 			numElemErased++;
 		}
 
-		if(it2!=requiredPipelineList.end())
+		if(it2!=requiredGeometryList.end())
 		{
-			requiredPipelineList.erase(it2);
+			requiredGeometryList.erase(it2);
+			numElemErased++;
+		}
+
+		if(it3!=requiredPipelineList.end())
+		{
+			requiredPipelineList.erase(it3);
 			numElemErased++;
 		}
 	

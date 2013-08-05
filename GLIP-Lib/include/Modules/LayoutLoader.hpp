@@ -59,6 +59,7 @@ namespace Glip
 			KW_LL_BLENDING_ON,
 			KW_LL_BLENDING_OFF,
 			KW_LL_REQUIRED_FORMAT,
+			KW_LL_REQUIRED_GEOMETRY,
 			KW_LL_REQUIRED_PIPELINE,
 			KW_LL_SHARED_SOURCE,
 			KW_LL_INCLUDE_SHARED_SOURCE,
@@ -104,6 +105,9 @@ Examples : <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a primitive element (depending on the format) :</i> <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>ELEMENT</b>( <i>a</i>, [<i>b</i>], [<i>c</i>], [<i>d</i>]) <BR>
 } <BR>
+
+- Required geometry to be provided by the application (for dynamic geometry models). See LayoutLoader::addRequiredElement() : <BR>
+<b>REQUIRED_FORMAT</b>:<i>geometry_name</i>(<i>required_geometry_name</i>)
 
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>
@@ -265,6 +269,7 @@ Loading Example :
 				// Static :
 				std::vector<std::string>		staticPaths;
 				std::map<std::string,HdlTextureFormat>	requiredFormatList;
+				std::map<std::string,GeometryModel>	requiredGeometryList;
 				std::map<std::string,PipelineLayout>	requiredPipelineList;
 
 				// Tools :
@@ -280,6 +285,7 @@ Loading Example :
 				void 	appendPath(const VanillaParserSpace::Element& e);
 				void	includeFile(const VanillaParserSpace::Element& e);
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
+				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
 				void	buildSharedCode(const VanillaParserSpace::Element& e);
 				void	buildFormat(const VanillaParserSpace::Element& e);
@@ -303,6 +309,7 @@ Loading Example :
 				Pipeline* operator()(const std::string& source, std::string pipelineName);
 
 				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
+				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
 				int  clearRequiredElements(void);
 				int  clearRequiredElements(const std::string& name);
@@ -311,6 +318,16 @@ Loading Example :
 /**
 \class LayoutWriter
 \brief Get equivalent pipeline code from a pipeline layout.
+
+The layout writer enables you to write a pipeline to a Pipeline Script file. Note that the uniforms values might be lost a loading. In order to avoid this problem, you have to use a UniformsVarsLoader to store and then load the correct profile (all the uniforms values).
+\code
+	LayoutWriter writer;
+	
+	std::string code = writer(mainPipeline);
+
+	// Or directly to the disk : 
+	writer.writeToFile(mainPipeline, "./myPipeline.ppl");
+\endcode
 **/
 		class LayoutWriter
 		{

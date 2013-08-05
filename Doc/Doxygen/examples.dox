@@ -9,60 +9,54 @@ We will skip the code for building the window context since it depends on the li
 
 First, we build the shader code for computing the grid evolution. The file <i>game.glsl</i> contains the code for a simple fragment shader (per pixel operation). You can browse documentation on GLSL (<b>OpenGL Shading Language</b>) at this page : http://www.opengl.org/sdk/docs/manglsl/.
 	\code
-	// Game of life : rule B3S23 / John Conway's Game of Life
+	//Game of Life - John Conway - Rule B3S23
 
 	#version 130
+	precision mediump float;
 
-	// The input texture :
-	uniform sampler2D 	inTexture;
+	uniform sampler2D 	inputTexture;	// input sampler
+	out     vec4 		outputTexture;	// output fragment
 
-	// The red channel of inTexture will be the previous computation, the green will be the one before and so on.
-
-	// The output texture :
-	out     vec4 		outTexture;
-
-	// The main program will be called for every written pixel.
-	// This means that you cannot change the output position of a shader.
 	void main()
 	{
-		// Gather the size of the input grid :
-		ivec2 sz 	= textureSize(inTexture, 0);
+		// Get the size of the texture and compute the pixel size in the normalized coordinates : 
+		ivec2 sz 	= textureSize(inputTexture, 0);
 		float sx 	= 1.0/(float(sz.x));
 		float sy 	= 1.0/(float(sz.y));
 
 		// Read all the eight previous and surrounding cells :
-		vec4 a00	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,-sy), 0);
-		vec4 a01	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,0.0), 0);
-		vec4 a02	= textureLod(inTexture, gl_TexCoord[0].st + vec2(-sx,+sy), 0);
-		vec4 a10	= textureLod(inTexture, gl_TexCoord[0].st + vec2(0.0,-sy), 0);
-		vec4 a11	= textureLod(inTexture, gl_TexCoord[0].st, 0);
-		vec4 a12	= textureLod(inTexture, gl_TexCoord[0].st + vec2(0.0,+sy), 0);
-		vec4 a20	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,-sy), 0);
-		vec4 a21	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,0.0), 0);
-		vec4 a22	= textureLod(inTexture, gl_TexCoord[0].st + vec2(+sx,+sy), 0);
+		vec4 a00	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx,-sy)	, 0);
+		vec4 a01	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx,0.0)	, 0);
+		vec4 a02	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx,+sy)	, 0);
+		vec4 a10	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(0.0,-sy)	, 0);
+		vec4 a11	= textureLod(inputTexture, gl_TexCoord[0].st			, 0);
+		vec4 a12	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(0.0,+sy)	, 0);
+		vec4 a20	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(+sx,-sy)	, 0);
+		vec4 a21	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(+sx,0.0)	, 0);
+		vec4 a22	= textureLod(inputTexture, gl_TexCoord[0].st + vec2(+sx,+sy)	, 0);
 
 		// Compute the number of cell alive during last process :
 		float s = a00.r+a01.r+a02.r+a10.r+a12.r+a20.r+a21.r+a22.r;
 
 		// Older cell are shifted in the next channel :
-		outTexture.g = a11.r;
-		outTexture.b = a11.g;
-		outTexture.a = 1.0;	// Set transparency to "opaque".
+		outputTexture.g = a11.r;
+		outputTexture.b = a11.g;
+		outputTexture.a = 1.0; // opaque texture
 
 		// New :
 		if(a11.r==1.0) // The center cell was previously alive
 		{
-			if((s==2.0) || (s==3.0))
-				outTexture.r = 1.0; // It stays alive
+			if((s==2.0) || (s==3.0)) 
+				outputTexture.r = 1.0; // It stays alive
 			else
-				outTexture.r = 0.0; // It dies
+				outputTexture.r = 0.0; // It dies
 		}
 		else
 		{
 			if(s==3.0)
-				outTexture.r = 1.0; // Birth
+				outputTexture.r = 1.0; // Birth
 			else
-				outTexture.r = 0.0; // Stays dead
+				outputTexture.r = 0.0; // Stays dead
 		}
 	}
 	\endcode
@@ -93,8 +87,8 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 		PipelineLayout pl("Main_GameOfLife");
 
 		// Add one input and one output :
-		pl.addInput("inTexture");
-		pl.addOutput("outTexture");
+		pl.addInput("inputTexture");
+		pl.addOutput("outputTexture");
 
 		// Add an instance of the filter fl :
 		pl.add(fl, "GameOfLife");
@@ -104,8 +98,8 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 		pl.autoConnect();
 
 		// This is equivalent to connecting the elements with :
-		//pl.connectToInput("inTexture", "GameOfLife", "inTexture");
-		//pl.connectToOutput("GameOfLife", "outTexture", "outTexture");
+		//pl.connectToInput("inputTexture", "GameOfLife", "inputTexture");
+		//pl.connectToOutput("GameOfLife", "outputTexture", "outputTexture");
 		// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
 
 		// Create two pipeline on this layout, they won't share any further information :
@@ -121,8 +115,13 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 		unsigned char* buffer = new unsigned char[temp.getSize()];
 
 		// Fill with some random patterns :
-		for(int i=0; i<temp->getSize(); i++)
-			buffer[i] = static_cast<char>(rand()*255.0/RAND_MAX);
+		for(int j=0; j<temp->getSize(); j++)
+		{
+			if(rand()>0.8*RAND_MAX)
+				buffer[j] = 255;
+			else
+				buffer[j] = 0;
+		}
 
 		// We write this initialization to the texture :
 		temp->write(buffer);
@@ -133,8 +132,11 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 		(*p2) << (*temp) << Pipeline::Process;
 
 		// Cleaning :
-		delete buffer;
+		delete[] buffer;
 		delete temp;
+
+		// Create a Quad inside a VBO for display :
+		GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
 
 		// Now we will apply and display the computation pipeline :
 		unsigned int i=0;
@@ -161,7 +163,7 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 			}
 
 			// Draw it on a quad :
-			HandleOpenGL::standardQuadVBO().draw();
+			quad.draw();
 
 			// Swap buffer to screen :
 			glSwapBuffers(); //or equivalent method
@@ -178,8 +180,8 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 	catch(Exception& e)
 	{
 		// Show exception :
-		std::cout << "An exception was caught : " << std::endl;
-		std::cout << e.what() << std::endl;
+		std::cerr << "An exception was caught : " << std::endl;
+		std::cerr << e.what() << std::endl;
 	}
 	\endcode
 
@@ -191,28 +193,28 @@ First, we build the shader code for computing the grid evolution. The file <i>ga
 We can improve the previous pipeline construction by building a script which will contain the full description with the advantage of not requiring compilation of the C++ program when modified (the compilation of the GLSL code is made by the display driver). The Glip::Modules::LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::CorePipeline::PipelineLayout or a Glip::CorePipeline::Pipeline that you can use directly or combined with other pipeline structures. Here is an example of script for histogram computation and display. Check Glip::Modules::LayoutLoader documentation page for further information. We can write a file <i>gameOfLiFe.ppl</i> with the following script :
 	\code
 	// Description of the grid format, with the name gridFormat :
-	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
 
 	// Load the shader from file game.glsl
-	SHADER_SOURCE:gameOfLifeShader(game.glsl);
+	SHADER_SOURCE:gameOfLifeShader(game.glsl)
 
 	// Create a filter layout, the output will be a texture of format gridFormat and the fragment shader used will be gameOfLifeShader
-	FILTER_LAYOUT:gameOfLifeFilter(gridFormat, gameOfLifeShader);
+	FILTER_LAYOUT:gameOfLifeFilter(gridFormat, gameOfLifeShader)
 
 	// The pipeline layout to be loaded from this file (the main pipeline) will be :
-	PIPELINE_MAIN:gameOfLifePipeline()
+	PIPELINE_MAIN:gameOfLifePipeline
 	{
 		// Declare the input and output port :
-		INPUT_PORTS(inTexture);
-		OUTPUT_PORTS(outTexture);
+		INPUT_PORTS(inTexture)
+		OUTPUT_PORTS(outTexture)
 
 		// Declare one filter instance :
-		FILTER_INSTANCE:gameOfLifeInstance(gameOfLifeFilter);
+		FILTER_INSTANCE:gameOfLifeInstance(gameOfLifeFilter)
 
 		// As the input and output ports have the same name as the ports of the filter (defined by the variables inside the shader source code) there is no need to make any connection declaration.
 		// This is equivalent to :
-		//CONNECTION(THIS, inTexture, gameOfLifeInstance, inTexture);
-		//CONNECTION(gameOfLifeInstance, outTexture, THIS, outTexture);
+		//CONNECTION(THIS, inTexture, gameOfLifeInstance, inTexture)
+		//CONNECTION(gameOfLifeInstance, outTexture, THIS, outTexture)
 	}
 	\endcode
 
@@ -236,13 +238,13 @@ We can improve the previous pipeline construction by building a script which wil
 	In the previous example, the script is forcing the size of the grid but you might want to decide of this size within the C++ program. In that case, you need to do a few modification both in the scripts and in the C++ code. First in the file <i>gameOfLiFe.ppl</i>, we replace the lines :
 	\code
 	// Description of the grid format, with the name gridFormat :
-	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
 	\endcode
 
 	By :
 	\code
 	// Receive the grid format from the loader :
-	REQUIRED_FORMAT:gridFormat();
+	REQUIRED_FORMAT:gridFormat()
 	\endcode
 
 	And in the C++ code, we must provide this format to the loader object :
@@ -273,6 +275,7 @@ We can improve the previous pipeline construction by building a script which wil
 	out     vec4 	randomTexture;
 
 	// The seed which will be modify upon each call from the C++ code :
+	// (unifom means that you can set the value from outside the shader)
 	uniform int	t;
 
 	// The random generator :
@@ -339,7 +342,7 @@ We can improve the previous pipeline construction by building a script which wil
 		}
 
 		// Draw it on a quad :
-		HandleOpenGL::standardQuadVBO().draw();
+		quad.draw();
 
 		// Swap buffer to screen :
 		glSwapBuffers(); //or equivalent method
@@ -362,7 +365,7 @@ We can improve the previous pipeline construction by building a script which wil
 	First we write a script file <i>convolutionTools.ppl</i> containing :
 	\code
 	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodies loaded.
-	SHARED_CODE()
+	SHARED_CODE:convolutionShared
 	{
 		// Read a 3x3 matrix from the sample s, centered at position pos, use selection to mix the channels :
 		void aggregate(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)
@@ -407,7 +410,7 @@ We can improve the previous pipeline construction by building a script which wil
 	// Format :
 	REQUIRED_FORMAT:sobelOutputFormat();
 
-	SHARED_CODE()
+	SHARED_CODE:sobelShared
 	{
 		// This section will be appended at the end of the SHARED_CODE section from the included file convolutionTools.ppl.
 
@@ -444,8 +447,9 @@ We can improve the previous pipeline construction by building a script which wil
 		uniform sampler2D 	inputTexture;
 		out     vec4 		sobelTexture;
 
-		// Insert the content of SHARED_CODE here :
-		INSERT_SHARED_CODE
+		// Insert the content of the SHARED_CODE sections here :
+		INSERT_SHARED_CODE:convolutionShared
+		INSERT_SHARED_CODE:sobelShared
 
 		void main()
 		{
@@ -458,23 +462,23 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// Filter :
-	FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShader);
+	FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShader)
 
 	PIPELINE_MAIN:sobelPipeline()
 	{
-		INPUT_PORTS(inputTexture);
-		OUTPUT_PORTS(sobelTexture);
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(sobelTexture)
 
-		FILTER_INSTANCE:sobelFilterInstance(sobelFilter);
+		FILTER_INSTANCE:sobelFilterInstance(sobelFilter)
 	}
 	\endcode
 
 	We simply load and use with the usual code :
 	\code
-	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE);
 
 	// Note that we will use a floating point texture on 4 components for the output :
-	HdlTextureFormat sobelFormat(w, h, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+	HdlTextureFormat sobelFormat(w, h, GL_RGBA32F, GL_FLOAT);
 
 	HdlTexture theTexture(imageFormat);
 
@@ -522,7 +526,7 @@ We can improve the previous pipeline construction by building a script which wil
 
 	First, we write a generic shader source file <i>genericReduction.ppl</i> for reduction opertions :
 	\code
-	SHARED_CODE()
+	SHARED_CODE:reductionShared
 	{
 		// This segment requires the use to prepare a function of the following prototype signature :
 		// void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
@@ -550,7 +554,7 @@ We can improve the previous pipeline construction by building a script which wil
 	Now we write the specific reduction function for min, max and sum of the red channel in the file <i>minMaxReduction.ppl</i>, and the pipeline :
 	\code
 	// Declare the function needed :
-	SHARED_CODE()
+	SHARED_CODE:reductionFunctionShared
 	{
 		void reductionFunction(inout vec4 stackResult, in vec4 current, in bool firstCall)
 		{
@@ -568,24 +572,25 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// Include file, the SHARED_CODE section in the file will be appended after the previous section :
-	INCLUDE_FILE(genericReduction.ppl);
+	INCLUDE_FILE(genericReduction.ppl)
 
 	// Intermediate format 1 :
-	TEXTURE_FORMAT:intermediateTexture1(64,64,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:intermediateTexture1(64,64,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 	// Intermediate format 2 :
-	TEXTURE_FORMAT:intermediateTexture2(8,8,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:intermediateTexture2(8,8,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 	// Result format :
-	TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 	// The filter :
-	SHADER_SOURCE:reductionMMSShader()
+	SHADER_SOURCE:reductionMMSShader
 	{
 		#version 130
 
 		// Insert the compiled SHARED_CODE
-		INSERT_SHARED_CODE
+		INSERT_SHARED_CODE:reductionFunctionShared
+		INSERT_SHARED_CODE:reductionShared
 
 		uniform sampler2D 	inputTexture;
 		out vec4		resultTexture;
@@ -599,25 +604,25 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// Declare the 3 filters :
-	FILTER_LAYOUT:reductionMMSFilter1(intermediateTexture1, reductionMMSShader);
-	FILTER_LAYOUT:reductionMMSFilter2(intermediateTexture2, reductionMMSShader);
-	FILTER_LAYOUT:reductionMMSFilter3(resultFormat, reductionMMSShader);
+	FILTER_LAYOUT:reductionMMSFilter1(intermediateTexture1, reductionMMSShader)
+	FILTER_LAYOUT:reductionMMSFilter2(intermediateTexture2, reductionMMSShader)
+	FILTER_LAYOUT:reductionMMSFilter3(resultFormat, reductionMMSShader)
 
 	// Declare the pipeline :
-	PIPELINE_MAIN:reductionMMSPipeline()
+	PIPELINE_MAIN:reductionMMSPipeline
 	{
-		INPUT_PORTS(inputTexture);
-		OUTPUT_PORTS(resultTexture);
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(resultTexture)
 
-                FILTER_INSTANCE:inst1(reductionMMSFilter1);
-                FILTER_INSTANCE:inst2(reductionMMSFilter2);
-                FILTER_INSTANCE:inst3(reductionMMSFilter3);
+                FILTER_INSTANCE:inst1(reductionMMSFilter1)
+                FILTER_INSTANCE:inst2(reductionMMSFilter2)
+                FILTER_INSTANCE:inst3(reductionMMSFilter3)
 
                 // Make the connections :
-                CONNECTION(THIS, inputTexture, inst1, inputTexture);
-		CONNECTION(inst1, resultTexture, inst2, inputTexture);
-		CONNECTION(inst2, resultTexture, inst3, inputTexture);
-		CONNECTION(inst3, resultTexture, THIS, resultTexture);
+                CONNECTION(THIS, inputTexture, inst1, inputTexture)
+		CONNECTION(inst1, resultTexture, inst2, inputTexture)
+		CONNECTION(inst2, resultTexture, inst3, inputTexture)
+		CONNECTION(inst3, resultTexture, THIS, resultTexture)
 	}
 	\endcode
 
@@ -660,15 +665,21 @@ We can improve the previous pipeline construction by building a script which wil
 	end
 	\endcode
 
-	As discussed in the \ref page_GettingStarted page, this is not directly transferable to shader code since fragment shaders are only emitted per written texels. Thus there is no way to chose the destination texel according to input. But, what we can do is generating a geometry which can be controlled by a vertex shader. Remember that a Glip::CorePipeline::Filter is always using a vertex shader and a fragment shader. When the vertex shader is not detailed, the filter uses a generic one. In the case of a RGB image we will use a 3D grid as the geometry with 3 layers and, in each, as much points as pixels in the input image. Each point is associated to the color red, green or blue of one pixel image. In the vertex shader, we can read the value of color of the texture and modify the location of the point dynamically.
+	As discussed in the \ref page_GettingStarted page, this is not directly transferable to shader code since fragment shaders are only emitted per written fragments. Thus there is no way to chose the destination texel according to input. But, what we can do is generating a geometry which can be controlled by a vertex shader. Remember that a Glip::CorePipeline::Filter is always using a vertex shader and a fragment shader. When the vertex shader is not detailed, the filter uses a generic one. In the case of a RGB image we will use a 3D grid as the geometry with 3 layers and, in each, as much points as pixels in the input image (can be lowered in order to improve performances). Each point is associated to one of the color (red, green or blue) of one pixel image. In the vertex shader, we can read the color value of the texture corresponding texel and modify the location of the point dynamically.
 
 	We can write a Pipeline Script <i>histogram.ppl</i> as :
 	\code
 	// The format of the bins :
-	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGB32F,GL_FLOAT)
+
+	// The geometry we will use is a 3D grid of points. In this example, we will use a static grid definition :   
+	GEOMETRY:grid(GRID_3D, 512, 512, 3)
+
+	// Otherwise we could rely on a geometry model provided by the application : 
+	//REQUIRED_GEOMETRY:grid(histogramGrid)
 
 	// The vertex shader, this will be called for every vertex in the geometry :
-	SHADER_SOURCE:histogramVertShader()
+	SHADER_SOURCE:histogramVertShader
 	{
 		#version 130
 
@@ -710,7 +721,7 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// The fragment shader :
-	SHADER_SOURCE:histogramFragShader()
+	SHADER_SOURCE:histogramFragShader
 	{
 		#version 130
 
@@ -730,35 +741,33 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// Now we create the layout :
-	FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON);
+	FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON, grid)
 	// Beyond the vertex shader we also provide two options :
 	//     CLEARING_ON which means that the written texture will be cleared to black before each processing.
 	//     BLENDING_ON which means that we can write several time to a single ouput texture (with special geometry) and that the "colors" will be added.
 
 	// The pipeline layout :
-	PIPELINE_MAIN:pipelineHistogram()
+	PIPELINE_MAIN:pipelineHistogram
 	{
-		INPUT_PORTS(inputTexture);
-		OUTPUT_PORTS(histogramBins);
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(histogramBins)
 
-		FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
+		FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
 	}
 	\endcode
 
-	Now we have to load this pipeline and setup the 3D grid geometry :
+	Now we have to load this pipeline with the usual code :
 	\code
-	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE);
 	HdlTexture theTexture(imageFormat);
 
-	// Create and load the pipeline :
 	Loader loader;
+
+	// If we want a dynamic grid size : 
+	//loader.addRequiredElement("histogramGrid", GeometryPrimitives::PointsGrid3D(imageFormat.getWidth(), imageFormat.getHeight(), 3) );
+
+	// Create and load the pipeline :
 	Pipeline* histogramPipeline = loader("histogram.ppl", "HistogramPipeline");
-
-	// Set the geometry with the name of the filter instance in the pipeline :
-	(*histogramPipeline)["histogramFilterInstance"].setGeometry( HdlVBO::generate3DGrid(imageFormat.getWidth(), imageFormat.getHeight(), 3, 1.0f, 1.0f, 2.0f) );
-	// Will create a 3D grid with 3 planes (at z=-1, z=0 and z=1).
-
-	// ...
 
 	// Write in the texture :
 	theTexture.write(/*...*/);
@@ -778,14 +787,14 @@ We can improve the previous pipeline construction by building a script which wil
 	We write a file <i>prettyHistogram.ppl</i>
 	\code
 	// Include previous file in order to re-use some of the elements :
-	INCLUDE_FILE(histogram.ppl);
+	INCLUDE_FILE(histogram.ppl)
 	// This inclusion will transform the PIPELINE_MAIN:pipelineHistogram of the file to a simple PIPELINE_LAYOUT:pipelineHistogram.
 
 	// Require to have the exact format of the image :
-	REQUIRED_FORMAT:imageFormat();
+	REQUIRED_FORMAT:imageFormat(imageFormat)
 
 	// Make a mixing shader :
-	SHADER_SOURCE:showHistogramShader()
+	SHADER_SOURCE:showHistogramShader
 	{
 		#version 130
 
@@ -822,16 +831,16 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 
 	// Make the filter histogramShowFilter :
-	FILTER_LAYOUT:histogramShowFilter(imageFormat, showHistogramShader);
+	FILTER_LAYOUT:histogramShowFilter(imageFormat, showHistogramShader)
 
 	// Create the pipeline :
-	PIPELINE_MAIN:prettyHistogramPipeline()
+	PIPELINE_MAIN:prettyHistogramPipeline
 	{
-		INPUT_PORTS(inputTexture);
-		OUTPUT_PORTS(histogramBins, outputTexture); // The first port will be the actual histogram and the second will be the enhanced image.
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(histogramBins, outputTexture) // The first port will be the actual histogram and the second will be the enhanced image.
 
-		FILTER_INSTANCE:histogramFilterInstance(histogramFilter);
-		FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter);
+		FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
+		FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
 
 		// Connections will be made automatically as our ports name are matching.
 	}
@@ -839,22 +848,13 @@ We can improve the previous pipeline construction by building a script which wil
 
 	The C++ program will load this with :
 	\code
-	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE);
 	HdlTexture theTexture(imageFormat);
 
 	// Create and load the pipeline :
 	Loader loader;
 	loader.addRequiredElement(imageFormat, "imageFormat");
 	Pipeline* prettyHistogramPipeline = loader("prettyHistogram.ppl", "PrettyHistogramPipeline");
-
-	// Set the geometry with the name of the filter instance in the pipeline :
-	(*prettyHistogramPipeline)["histogramFilterInstance"].setGeometry( HdlVBO::generate3DGrid(imageFormat.getWidth(), imageFormat.getHeight(), 3, 1.0f, 1.0f, 2.0f) );
-	// Will create a 3D grid with 3 planes (at z=-1, z=0 and z=1).
-
-	// Set a nice scale factor :
-	(*prettyHistogramPipeline)["histogramShowFilterInstance"].prgm().modifyVar("scale", GL_FLOAT, 12.0f);
-
-	// ...
 
 	// Write in the texture :
 	theTexture.write(/*...*/);
@@ -876,16 +876,16 @@ We can improve the previous pipeline construction by building a script which wil
 **/
 
 /**
-	\page page_LucasKanade Example : Lucas Kanade optical flow estimator
+	\page page_LucasKanade Example : Simple Lucas Kanade optical flow estimator
 
 	In this example we present a simple approximation to the <a href="http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method">Lucas Kanade Optical Flow Estimator</a>. The goal is to solve the 2x2 system describing the change in intensity by translation. We write the Pipeline Script <i>LucasKanade.ppl</i> which will contain both the algorithm implementation and a representation stage :
 	\code
 	// The different formats needed :
-	TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
-	TEXTURE_FORMAT:visualizationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
-	TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP);
+	TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
+	TEXTURE_FORMAT:visualizationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
+	TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 
-	SHADER_SOURCE:derivativesShader()
+	SHADER_SOURCE:derivativesShader
 	{
 		#version 130
 
@@ -919,7 +919,7 @@ We can improve the previous pipeline construction by building a script which wil
 		}
 	}
 
-	SHADER_SOURCE:opticalFlowShader()
+	SHADER_SOURCE:opticalFlowShader
 	{
 		#version 130
 
@@ -972,7 +972,7 @@ We can improve the previous pipeline construction by building a script which wil
 		}
 	}
 
-	SHADER_SOURCE:visualizationShader()
+	SHADER_SOURCE:visualizationShader
 	{
 		#version 130
 
@@ -1027,7 +1027,7 @@ We can improve the previous pipeline construction by building a script which wil
 		}
 	}
 
-	SHADER_SOURCE:sideBySideShader()
+	SHADER_SOURCE:sideBySideShader
 	{
 		#version 130
 
@@ -1054,20 +1054,20 @@ We can improve the previous pipeline construction by building a script which wil
 		}
 	}
 
-	FILTER_LAYOUT:derivatives(computationFormatFloat,derivativesShader);
-	FILTER_LAYOUT:opticalFlow(computationFormatFloat,opticalFlowShader);
-	FILTER_LAYOUT:visualizationFilter(visualizationFormat,visualizationShader);
-	FILTER_LAYOUT:sideBySideFilter(sideBySideFormat,sideBySideShader);
+	FILTER_LAYOUT:derivatives(computationFormatFloat,derivativesShader)
+	FILTER_LAYOUT:opticalFlow(computationFormatFloat,opticalFlowShader)
+	FILTER_LAYOUT:visualizationFilter(visualizationFormat,visualizationShader)
+	FILTER_LAYOUT:sideBySideFilter(sideBySideFormat,sideBySideShader)
 
-	PIPELINE_MAIN:opticalFlow()
+	PIPELINE_MAIN:opticalFlow
 	{
-		INPUT_PORTS(latest, oldest);
-		OUTPUT_PORTS(grayScale, derivatives, opticalFlow, visualization, sideBySide);
+		INPUT_PORTS(latest, oldest)
+		OUTPUT_PORTS(grayScale, derivatives, opticalFlow, visualization, sideBySide)
 
-		FILTER_INSTANCE:instDerivatives(cDerivatives);
-		FILTER_INSTANCE:instOpticalFlow(cOpticalFlow);
-		FILTER_INSTANCE:instVisualization(cMix);
-		FILTER_INSTANCE:instSideBySide(cSBS);
+		FILTER_INSTANCE:instDerivatives(cDerivatives)
+		FILTER_INSTANCE:instOpticalFlow(cOpticalFlow)
+		FILTER_INSTANCE:instVisualization(cMix)
+		FILTER_INSTANCE:instSideBySide(cSBS)
 
 		// Automatic connection will be performed.
 	}
@@ -1081,3 +1081,105 @@ We can improve the previous pipeline construction by building a script which wil
 	</center><BR>
 	\endhtmlonly
 **/
+
+/**
+	\page page_BilateralFilter Example : Simple small kernel bilateral filter
+	
+	This example shows the implementation of a simple <a href="http://en.wikipedia.org/wiki/Bilateral_filter">bilateral filter</a> (for small kernel size).
+	\code
+	REQUIRED_FORMAT:fmt( FormatIn_0 )
+
+	SHADER_SOURCE:bilateralShader
+	{
+		#version 130
+	
+		uniform sampler2D inputBilateral;
+		out vec4 outputBilateral;
+	
+		uniform float 	rI = 0.270,		// The intensity radius (in pixels).
+				rL = 1.71;		// The geometric radius (in pixels).
+		uniform int	windowSize = 5;		// The window size (in pixels).
+	
+		float gaussian(float l, float r)
+		{
+			return exp(-l*l/(2.0f*r*r));
+		}
+
+		void main()
+		{
+			// Get the sizes : 
+			int nWindow = windowSize / 2;
+			ivec2 sz = textureSize(inputBilateral, 0);
+			float sx = 1.0/(float(sz.s));
+			float sy = 1.0/(float(sz.t));
+
+			vec4 	outCol = vec4(0.0, 0.0, 0.0, 0.0),
+				refCol = textureLod(inputBilateral, gl_TexCoord[0].st, 0.0);
+
+			float nrm = 0.0;
+
+			// Compute the kernel : 
+			for(int i=-nWindow; i<=nWindow; i++)
+			{
+				for(int j=-nWindow; j<=nWindow; j++)
+				{
+					vec4 	col 	= textureLod(inputBilateral, gl_TexCoord[0].st + vec2(j*sx, i*sy), 0.0);
+					float 	a 	= gaussian( distance(col, refCol), rI ),
+						b	= gaussian( length(vec2(j, i)), rL );
+					outCol += col * a * b;
+					nrm += a * b;
+				}
+			}
+
+			outputBilateral = outCol / nrm;
+		}
+	}
+
+	FILTER_LAYOUT:bilateralFilter(fmt,bilateralShader)
+
+	PIPELINE_MAIN:bilateralPipeline
+	{
+		INPUT_PORTS(inputBilateral)
+		OUTPUT_PORTS(outputBilateral)
+
+		FILTER_INSTANCE:bilateralFilterInstance(bilateralFilter)
+	}
+	\endcode
+
+	Output example for 3 stages of 5x5 bilateral filter : 
+	<img src="./images/galaxyBeforeBilateral.png" /> 
+	<div align="center">Before filtering</div>
+	<img src="./images/galaxyAfterBilateral.png" />
+	<div align="center">After filtering</div>
+**/
+
+/**
+	\page page_UseGlipStudio Tool : GlipStudio
+
+\section sec_glipStudioIntro GlipStudio
+	GlipStudio is a small IDE for GLIP-Lib : load images and prototype quickly pipelines, filters and profiles in the editor and the uniform variables manager. Once the pipelines are saved to the disk, you can use them in applications based on GLIP-Lib.
+
+\section sec_getGlipStudio Get GlipStudio 
+	In order to use GlipStudio, you can get it from the following sources : 
+
+	- <b>Binaries for Windows (64 bits) : URL</b>
+	
+	- Get from source (Linux/Windows, (32/64 bits)) : download source at URL or copy git repository at http://sourceforge.net/p/glip-lib/code/ci/master/tree/.
+	
+	- On Linux : build library with CMAKE, then make.
+	
+	- On Windows : The Visual Studio project should already contain all settings to build the static x64 library.
+	
+	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode 
+
+\section sec_Captures Screenshots
+	<img src="./images/glipstudio_1.png" width="1024" />
+	<BR>
+	<img src="./images/glipstudio_2.png" width="1024" />
+	<BR>
+	<img src="./images/glipstudio_3.png" width="1024" />
+	<BR>
+	<img src="./images/glipstudio_4.png" width="1024" />
+	
+**/
+

@@ -24,9 +24,11 @@
 	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.hpp">WindowRendering.hpp</a><BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.cpp">WindowRendering.cpp</a><BR>
+	Other tools in the repository : http://sourceforge.net/p/glip-lib/code/ci/master/tree/Examples/ExternalTools/
 	GLFW "Hello World" - Game of Life :<BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/mainGLFW.cpp">mainGLFW.cpp</a><BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/game.glsl">game.glsl</a><BR>
+	Other samples in the repository : http://sourceforge.net/p/glip-lib/code/ci/master/tree/Examples/
 
 \section sec_contributors Contributors
 	<a href="mailto:ronan-kerviche@users.sf.net">Ronan Kerviche</a> , Corentin Derbois.

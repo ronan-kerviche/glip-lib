@@ -45,14 +45,10 @@ SHADER_SOURCE:bilateralShader
 
 FILTER_LAYOUT:bilateralFilter(fmt,bilateralShader)
 
-
 PIPELINE_MAIN:bilateralPipeline
 {
 	INPUT_PORTS(inputBilateral)
 	OUTPUT_PORTS(outputBilateral)
 
 	FILTER_INSTANCE:bilateralFilterInstance(bilateralFilter)
-
-	CONNECTION(THIS, inputBilateral, bilateralFilterInstance, inputBilateral)
-	CONNECTION(bilateralFilterInstance, outputBilateral, THIS, outputBilateral)
 }

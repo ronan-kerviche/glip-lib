@@ -87,8 +87,8 @@
 		pl.add(fl, "GameOfLife");
 
 		// Connect the elements :
-		pl.connectToInput("Input", "GameOfLife", "inText");
-		pl.connectToOutput("GameOfLife", "outText", "Output");
+		pl.connectToInput("Input", "GameOfLife", "inputTexture");
+		pl.connectToOutput("GameOfLife", "outputTexture", "Output");
 		// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
 
 		// Create two pipeline on this layout, they won't share any further information :
@@ -125,18 +125,17 @@
 				// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
 				(*p1) << p2->out(0) << Pipeline::Process;
 				p1->out(0).bind();
-				quad.draw();
 			}
 			else
 			{
 				(*p2) << p1->out(0) << Pipeline::Process;
 				p2->out(0).bind();
-				quad.draw();
 			}
 
 			i++;
 
 			// Swap front and back rendering buffers :
+			quad.draw();
 			glfwSwapBuffers();
 
 			// Check if ESC key was pressed or window was closed :
