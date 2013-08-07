@@ -76,6 +76,39 @@ SHARED_SOURCE:ColorPrimitives
                 }
         }
 
+	// Tools : 
+	float fLsAsBs(float x)
+	{
+		if( x>0.008856481679 )
+			return pow(x,1.0/3.0);
+		else
+			return 841.0/108.0*x+4.0/29.0;
+	}
+
+	float gLsAsBs(float x)
+	{
+		if( x>0.008856481679 )
+			return pow(x,3.0);
+		else
+			return 108.0/841.0*(x-4.0/29.0);
+	}
+
+	float fSRGB(float x)
+	{
+		if( x<= 0.0031308 )
+			return 12.92*x;
+		else
+			return 1.055*pow(x,1.0/2.4) - 0.055;
+	}
+
+	float gSRGB(float x)
+	{
+		if( x<= 0.04045 )
+			return x/12.92;
+		else
+			return pow((x+0.055)/(1.055), 2.4);
+	} 
+
 	// From XYZ to ...
         void XYZToxyz(inout vec3 col)
         {
@@ -92,13 +125,13 @@ SHARED_SOURCE:ColorPrimitives
                 const float YD65 = 100.00;
                 const float UPD65 = 0.19783;
                 const float VPD65 = 0.46833;
-                const vec3 orig = col;
+                vec3 orig = col;
 
                 // Ls
                 if(orig.y/YD65 < 0.008856)
-                        col.x = 903.3 * Y/YD65;
+                        col.x = 903.3 * orig.y/YD65;
                 else
-                        col.x = 116.0 * pow(Y/YD65,1.0/3.0) - 16.0;
+                        col.x = 116.0 * pow(orig.y/YD65,1.0/3.0) - 16.0;
 
                 // Us
                         col.y = 13.0 * col.x * ( 4.0*orig.x/(orig.x+15.0*orig.y+3.0*orig.z) - UPD65);
@@ -108,21 +141,24 @@ SHARED_SOURCE:ColorPrimitives
 
         void XYZToLAB(inout vec3 col)
         {
+		const float XD65 = 95.02;
                 const float YD65 = 100.00;
-                const vec3 orig = col;
+		const float ZD65 = 108.82;
+	
+                vec3 orig = col;
 
                 col.x = 100.0*sqrt(orig.y/YD65);
                 col.y = 172.30*(orig.x/XD65-orig.y/YD65)/sqrt(orig.y/YD65);
                 col.z = 67.20*(orig.y/YD65-orig.z/ZD65)/sqrt(orig.y/YD65);
         }
 
-	void XYZToLsAsBs(intout vec3 col)
+	void XYZToLsAsBs(inout vec3 col)
         {
                 const float XD65 = 95.02;
                 const float YD65 = 100.00;
                 const float ZD65 = 108.82;
 
-                const vec3 orig = col;
+                vec3 orig = col;
 
                 col.x = 116.0*fLsAsBs(orig.y/YD65) - 16.0;
                 col.y = 500.0*(fLsAsBs(orig.x/XD65)-fLsAsBs(orig.y/YD65));
@@ -152,9 +188,9 @@ SHARED_SOURCE:ColorPrimitives
 
                 col = T * col;
 
-                v0 = fSRGB(R);
-                v1 = fSRGB(G);
-                v2 = fSRGB(B);
+                col.r = fSRGB(col.r);
+                col.g = fSRGB(col.g);
+                col.b = fSRGB(col.b);
         }
 
 	void XYZToYIQ(inout vec3 col)
@@ -192,7 +228,7 @@ SHARED_SOURCE:ColorPrimitives
 
                 col = T * col;
 
-                col = pow(col, 1.0/2/2);
+                col = pow(col, vec3(1.0,1.0,1.0)/2.2);
         }
 
 	// From ... to XYZ
@@ -214,7 +250,7 @@ SHARED_SOURCE:ColorPrimitives
                 const float YD65 = 100.00;
                 const float UPD65 = 0.19783;
                 const float VPD65 = 0.46833;
-                const vec3 orig = col;
+	        vec3 orig = col;
 
                 // Y
                 if(orig.x <= 8.0)
@@ -234,7 +270,7 @@ SHARED_SOURCE:ColorPrimitives
 	void LABToXYZ(inout vec3 col)
         {
                 const float YD65 = 100.00;
-                const vec3 orig = col;
+                vec3 orig = col;
 
                 col.y = pow(col.x/100.0, 2.0)*YD65;
                 col.x = col.y/YD65 + orig.y/172.30*sqrt(col.y/YD65);
@@ -247,7 +283,7 @@ SHARED_SOURCE:ColorPrimitives
                 const float YD65 = 100.00;
                 const float ZD65 = 108.82;
 
-                const vec3 orig = col;
+                vec3 orig = col;
 
                 col.x = XD65 * gLsAsBs((orig.x+16.0)/116.0);
                 col.y = YD65 * gLsAsBs((orig.x+16.0)/116.0 + orig.y/500.0);
@@ -293,10 +329,6 @@ SHARED_SOURCE:ColorPrimitives
 
                 col = T * col;
                 col = col * YD65;
-
-                v0=X*YD65;
-                v1=Y*YD65;
-                v2=Z*YD65;
         }
 
 	void YpUVToXYZ(inout vec3 col)
@@ -315,7 +347,7 @@ SHARED_SOURCE:ColorPrimitives
         {
                 const float YD65 = 100.00;
 
-                col = pow(col, 2.2);
+                col = pow(col, vec3(1.0,1.0,1.0)*2.2);
 
                 const mat3 T = mat3(     0.57667,  0.29734,  0.02703,
                                          0.18556,  0.62736,  0.07069,
