@@ -4,7 +4,7 @@
 	#include <iostream>
 	#include <fstream>
 	#include "WindowRendering.hpp"
-	#include "RessourceLoader.hpp"
+	#include "ResourceLoader.hpp"
 	#include "VideoStream.hpp"
 	#include "VideoControls.hpp"
 	#include "GLIPLib.hpp"

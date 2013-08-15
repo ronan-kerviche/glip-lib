@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : RessourceLoader.cpp                                                                       */
+/*     File          : ResourceLoader.cpp                                                                        */
 /*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
 /*     Description   : Qt interface for loading and writing to images.                                           */
@@ -16,7 +16,7 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#include "RessourceLoader.hpp"
+#include "ResourceLoader.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -25,10 +25,10 @@
 
 	ImageLoader::~ImageLoader(void)
 	{
-		cleanRessources();
+		cleanResources();
 	}
 
-	void ImageLoader::cleanRessources(void)
+	void ImageLoader::cleanResources(void)
 	{
 		for(std::vector<HdlTexture*>::iterator it = textures.begin(); it!=textures.end(); it++)
 			delete *it;
@@ -45,11 +45,11 @@
 			return -1; // no selection
 		else
 		{
-			cleanRessources();
+			cleanResources();
 
 			for(int i=0; i<filenames.length(); i++)
 			{
-				#ifdef __RESSOURCE_LOADER_VERBOSE__
+				#ifdef __RESOURCE_LOADER_VERBOSE__
 					std::cout << "ImageLoader::loadFiles Loading file - " << i+1 << "/" << filenames.length() <<  " : " << filenames.at(i).toStdString() << std::endl;
 				#endif
 
@@ -58,7 +58,7 @@
 				if (image->isNull())
 				{
 					QMessageBox::information(parent, QObject::tr("ImageLoader::loadFiles"), QObject::tr("Cannot load image %1.").arg(filenames.at(i)));
-					#ifdef __RESSOURCE_LOADER_VERBOSE__
+					#ifdef __RESOURCE_LOADER_VERBOSE__
 						std::cout << "ImageLoader::loadFiles - Cannot load : " << filenames.at(i).toUtf8().constData() << std::endl;
 					#endif
 				}

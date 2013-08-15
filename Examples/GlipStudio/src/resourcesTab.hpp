@@ -1,8 +1,8 @@
-#ifndef __GLIPSTUDIO_RESSOURCETAB__
-#define __GLIPSTUDIO_RESSOURCETAB__
+#ifndef __GLIPSTUDIO_RESOURCETAB__
+#define __GLIPSTUDIO_RESOURCETAB__
 
 	#include "GLIPLib.hpp"
-	#include "RessourceLoader.hpp"
+	#include "ResourceLoader.hpp"
 
 	#include <QtGlobal>
 	#if QT_VERSION >= 0x050000
@@ -205,19 +205,19 @@
 			void finished(void);
 	};
 
-// Ressources GUI :
-	class RessourcesTab : public QWidget
+// Resources GUI :
+	class ResourcesTab : public QWidget
 	{
 		Q_OBJECT
 
 		private : 
-			enum RessourceCategory
+			enum ResourceCategory
 			{
-				RessourceImages,
-				RessourceFormats,
-				RessourceInputs,
-				RessourceOutputs,
-				RessourceNumber
+				ResourceImages,
+				ResourceFormats,
+				ResourceInputs,
+				ResourceOutputs,
+				ResourceNumber
 			};
 
 			// Connection hub : 
@@ -237,21 +237,21 @@
 			QAction			loadImage,
 						freeImage,
 						saveOutputAs,
-						copyAsNewRessource;
+						copyAsNewResource;
 
 			QString			pipelineName;
-			RessourceCategory	currentOutputCategory;
+			ResourceCategory	currentOutputCategory;
 			int			currentOutputID;
 			bool			infoLastComputeSucceeded;
 			QString			currentOutputPath;
 
 			// Tools : 
-			QTreeWidgetItem* addItem(RessourceCategory category, QString title, int ressourceID);
+			QTreeWidgetItem* addItem(ResourceCategory category, QString title, int resourceID);
 			void removeAllChildren(QTreeWidgetItem* root);
 			void appendTextureInformation(QTreeWidgetItem* item);
 			void appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& texture, size_t provideSize=0);
 			void appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture);
-			void updateRessourceAlternateColors(QTreeWidgetItem* root);
+			void updateResourceAlternateColors(QTreeWidgetItem* root);
 			TextureObject* getCorrespondingTexture(QTreeWidgetItem* item);
 			TextureObject* getCorrespondingTexture(const QString& name);
 			FormatObject* getCorrespondingFormat(QTreeWidgetItem* item);
@@ -273,11 +273,11 @@
 			void freeSelectedImages(void);
 			void applyConnection(int idInput);
 			void startRequestSaveImage(void);
-			void requestCopyAsNewRessource(void);
+			void requestCopyAsNewResource(void);
 
 		public : 
-			RessourcesTab(QWidget* parent=NULL);
-			~RessourcesTab(void);
+			ResourcesTab(QWidget* parent=NULL);
+			~ResourcesTab(void);
 
 			void appendFormats(LayoutLoader& loader);
 
@@ -292,14 +292,14 @@
 			void updatePipelineInfos(void);
 			void updatePipelineInfos(Pipeline* pipeline);	
 			void saveOutputToFile(HdlTexture& output);
-			void copyOutputAsNewRessource(HdlTexture& output);
+			void copyOutputAsNewResource(HdlTexture& output);
 			void updateLastComputingStatus(bool succeeded);
 	
 		signals : 
 			void outputChanged(void);
 			void updatePipelineRequest(void);
 			void saveOutput(int i);
-			void copyOutputAsNewRessource(int i);
+			void copyOutputAsNewResource(int i);
 	};
 
 #endif

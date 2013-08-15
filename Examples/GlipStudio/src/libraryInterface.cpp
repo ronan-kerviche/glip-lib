@@ -6,19 +6,19 @@
 
 // LibraryInterface :
 	LibraryInterface::LibraryInterface(QWidget *parent)
-	 : QWidget(parent), layout(this), tabs(this), ressourceTab(this), compilationTab(this), uniformsTab(this), mainPipeline(NULL), lastComputeSucceeded(false)
+	 : QWidget(parent), layout(this), tabs(this), resourceTab(this), compilationTab(this), uniformsTab(this), mainPipeline(NULL), lastComputeSucceeded(false)
 	{
 		// Layout : 
-		tabs.addTab(&ressourceTab, 	"   Ressources   ");
+		tabs.addTab(&resourceTab, 	"   Resources   ");
 		tabs.addTab(&compilationTab,	"   Compilation   ");
 		tabs.addTab(&uniformsTab, 	"   Uniforms   ");
 		layout.addWidget(&tabs);
 
 		// Connections : 
-			QObject::connect(&ressourceTab,		SIGNAL(outputChanged(void)),		this,	SIGNAL(requireRedraw(void)));
-			QObject::connect(&ressourceTab,		SIGNAL(updatePipelineRequest(void)),	this,	SLOT(compute(void)));
-			QObject::connect(&ressourceTab,		SIGNAL(saveOutput(int)),		this,	SLOT(saveOutput(int)));
-			QObject::connect(&ressourceTab,		SIGNAL(copyOutputAsNewRessource(int)),	this,	SLOT(copyOutputToRessources(int)));
+			QObject::connect(&resourceTab,		SIGNAL(outputChanged(void)),		this,	SIGNAL(requireRedraw(void)));
+			QObject::connect(&resourceTab,		SIGNAL(updatePipelineRequest(void)),	this,	SLOT(compute(void)));
+			QObject::connect(&resourceTab,		SIGNAL(saveOutput(int)),		this,	SLOT(saveOutput(int)));
+			QObject::connect(&resourceTab,		SIGNAL(copyOutputAsNewResource(int)),	this,	SLOT(copyOutputToResources(int)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataUpdate(void)),	this,	SLOT(updateUniforms(void)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataLoad()),		this,	SLOT(loadUniforms(void)));
 			QObject::connect(&uniformsTab,		SIGNAL(requestDataSave()),		this,	SLOT(saveUniforms(void)));
@@ -34,7 +34,7 @@
 	void LibraryInterface::updateComputeStatus(bool status)
 	{
 		lastComputeSucceeded = status;
-		ressourceTab.updateLastComputingStatus(status);
+		resourceTab.updateLastComputingStatus(status);
 	}
 
 	void LibraryInterface::compute(void)
@@ -46,7 +46,7 @@
 			// Check that all of the input have a connection : 
 			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
 			{
-				if(!ressourceTab.isInputConnected(k))
+				if(!resourceTab.isInputConnected(k))
 				{
 					emit requireRedraw();
 					return ;
@@ -55,7 +55,7 @@
 
 			// Apply : 
 			for(int k=0; k<mainPipeline->getNumInputPort(); k++)
-				(*mainPipeline) << ressourceTab.input(k);
+				(*mainPipeline) << resourceTab.input(k);
 
 			(*mainPipeline) << Pipeline::Process;
 
@@ -102,35 +102,35 @@
 		{
 			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
 			{
-				// Save output with ressources : 
+				// Save output with resources : 
 				//std::cout << "Save output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
-				ressourceTab.saveOutputToFile( mainPipeline->out(id) );
+				resourceTab.saveOutputToFile( mainPipeline->out(id) );
 			}
 		}
 	}
 
-	void LibraryInterface::copyOutputToRessources(int id)
+	void LibraryInterface::copyOutputToResources(int id)
 	{
 		if(mainPipeline!=NULL)
 		{
 			if(id>=0 && id<mainPipeline->getNumOutputPort() && lastComputeSucceeded)
 			{
-				// Save output with ressources : 
+				// Save output with resources : 
 				//std::cout << "Copy output " << id << " : " << mainPipeline->out(id).getWidth() << 'x' << mainPipeline->out(id).getHeight() << std::endl;
-				ressourceTab.copyOutputAsNewRessource( mainPipeline->out(id) );
+				resourceTab.copyOutputAsNewResource( mainPipeline->out(id) );
 			}
 		}
 	}
 
 	bool LibraryInterface::hasOutput(void) const
 	{
-		// Ressourcetab must have an output and either it is not using the pipeline output or it is and the last computation succeeded 
-		return ressourceTab.hasOutput() && (!ressourceTab.outputIsPartOfPipelineOutputs() || lastComputeSucceeded); 
+		// Resourcetab must have an output and either it is not using the pipeline output or it is and the last computation succeeded 
+		return resourceTab.hasOutput() && (!resourceTab.outputIsPartOfPipelineOutputs() || lastComputeSucceeded); 
 	}
 
 	HdlTexture& LibraryInterface::currentOutput(void)
 	{
-		HdlTexture* ptr = ressourceTab.getOutput(mainPipeline);
+		HdlTexture* ptr = resourceTab.getOutput(mainPipeline);
 
 		if(ptr!=NULL)
 			return *ptr;
@@ -158,7 +158,7 @@
 
 			// Put the formats : 
 			pipelineLoader.clearRequiredElements();
-			ressourceTab.appendFormats(pipelineLoader);
+			resourceTab.appendFormats(pipelineLoader);
 			
 			// Load : 
 			mainPipeline = pipelineLoader(pathToCode, "");
@@ -180,7 +180,7 @@
 		if(success)
 		{
 			compilationTab.compilationSucceeded();
-			ressourceTab.updatePipelineInfos(mainPipeline);
+			resourceTab.updatePipelineInfos(mainPipeline);
 			uniformsTab.updatePipeline(*mainPipeline);
 			compute();
 
@@ -190,7 +190,7 @@
 		}
 		else
 		{
-			ressourceTab.updatePipelineInfos();
+			resourceTab.updatePipelineInfos();
 			uniformsTab.updatePipeline();
 			updateComputeStatus(false);
 

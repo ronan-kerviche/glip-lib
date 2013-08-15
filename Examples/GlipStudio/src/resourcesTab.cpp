@@ -1,4 +1,4 @@
-#include "ressourcesTab.hpp"
+#include "resourcesTab.hpp"
 #include "netpbm.hpp"
 #include <algorithm>
 
@@ -159,7 +159,7 @@
 			}
 		}
 		else if(state && numConnections>portsNames.count() && !portsNames.isEmpty())
-			addAction("Too many ressources selected")->setEnabled(false);
+			addAction("Too many resources selected")->setEnabled(false);
 		else if(portsNames.isEmpty())
 			addAction("No input ports defined")->setEnabled(false);
 		else if(!state)
@@ -553,17 +553,17 @@
 		loadedObjects.clear();
 	}
 
-// Ressources GUI :
-	RessourcesTab::RessourcesTab(QWidget* parent)
+// Resources GUI :
+	ResourcesTab::ResourcesTab(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
-	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this), saveOutputAs("Save output as...", this), copyAsNewRessource("Copy as new ressource...", this), 
-	   currentOutputCategory(RessourceImages), currentOutputID(-1), infoLastComputeSucceeded(false), currentOutputPath("./")
+	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this), saveOutputAs("Save output as...", this), copyAsNewResource("Copy as new resource...", this), 
+	   currentOutputCategory(ResourceImages), currentOutputID(-1), infoLastComputeSucceeded(false), currentOutputPath("./")
 	{
 		// Create image menu : 
 		imageMenu.addAction(&loadImage);
 		imageMenu.addAction(&freeImage);
 		imageMenu.addAction(&saveOutputAs);
-		imageMenu.addAction(&copyAsNewRessource);
+		imageMenu.addAction(&copyAsNewResource);
 
 		saveOutputAs.setEnabled(false);
 	
@@ -590,25 +590,25 @@
 			int currentFontSize = static_cast<int>( static_cast<double>(font().pointSize() * 1.2) );
             		QFont headerFont("", currentFontSize);
 
-			tree.addTopLevelItem(new QTreeWidgetItem(RessourceImages));
-			tree.topLevelItem(RessourceImages)->setText(0, "Images (0)");
-			tree.topLevelItem(RessourceImages)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceImages)->setFont(0, headerFont);			
+			tree.addTopLevelItem(new QTreeWidgetItem(ResourceImages));
+			tree.topLevelItem(ResourceImages)->setText(0, "Images (0)");
+			tree.topLevelItem(ResourceImages)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(ResourceImages)->setFont(0, headerFont);			
 			
-			tree.addTopLevelItem(new QTreeWidgetItem(RessourceFormats));
-			tree.topLevelItem(RessourceFormats)->setText(0, "Formats (0)");
-			tree.topLevelItem(RessourceFormats)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceFormats)->setFont(0, headerFont);
+			tree.addTopLevelItem(new QTreeWidgetItem(ResourceFormats));
+			tree.topLevelItem(ResourceFormats)->setText(0, "Formats (0)");
+			tree.topLevelItem(ResourceFormats)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(ResourceFormats)->setFont(0, headerFont);
 
-			tree.addTopLevelItem(new QTreeWidgetItem(RessourceInputs));
-			tree.topLevelItem(RessourceInputs)->setText(0, "Inputs (0)");
-			tree.topLevelItem(RessourceInputs)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceInputs)->setFont(0, headerFont);
+			tree.addTopLevelItem(new QTreeWidgetItem(ResourceInputs));
+			tree.topLevelItem(ResourceInputs)->setText(0, "Inputs (0)");
+			tree.topLevelItem(ResourceInputs)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(ResourceInputs)->setFont(0, headerFont);
 
-			tree.addTopLevelItem(new QTreeWidgetItem(RessourceOutputs));
-			tree.topLevelItem(RessourceOutputs)->setText(0, "Outputs (0)");
-			tree.topLevelItem(RessourceOutputs)->setData(0, Qt::UserRole, QVariant(-1));
-			tree.topLevelItem(RessourceOutputs)->setFont(0, headerFont);
+			tree.addTopLevelItem(new QTreeWidgetItem(ResourceOutputs));
+			tree.topLevelItem(ResourceOutputs)->setText(0, "Outputs (0)");
+			tree.topLevelItem(ResourceOutputs)->setData(0, Qt::UserRole, QVariant(-1));
+			tree.topLevelItem(ResourceOutputs)->setFont(0, headerFont);
 
 		// Build layout : 
 		layout.addWidget(&menuBar);
@@ -618,7 +618,7 @@
 		// Connections : 
 		QObject::connect(&loadImage, 		SIGNAL(triggered()), 					&loadingWidget, SLOT(startLoad()));
 		QObject::connect(&saveOutputAs,		SIGNAL(triggered()),					this,		SLOT(startRequestSaveImage()));
-		QObject::connect(&copyAsNewRessource,	SIGNAL(triggered()),					this,		SLOT(requestCopyAsNewRessource()));
+		QObject::connect(&copyAsNewResource,	SIGNAL(triggered()),					this,		SLOT(requestCopyAsNewResource()));
 		QObject::connect(&loadingWidget, 	SIGNAL(finished()), 					this, 		SLOT(fetchLoadedImages()));
 		QObject::connect(&tree,			SIGNAL(itemSelectionChanged()),				this,		SLOT(selectionChanged()));
 		QObject::connect(&filterMenu,		SIGNAL(changeFilter(GLenum, GLenum)),			this,		SLOT(updateImageFiltering(GLenum, GLenum)));
@@ -631,7 +631,7 @@
 		selectionChanged();
 	}
 
-	RessourcesTab::~RessourcesTab(void)
+	ResourcesTab::~ResourcesTab(void)
 	{
 		loadingWidget.cancel();
 
@@ -645,21 +645,21 @@
 	}
 
 // Tools : 
-	QTreeWidgetItem* RessourcesTab::addItem(RessourceCategory category, QString title, int ressourceID)
+	QTreeWidgetItem* ResourcesTab::addItem(ResourceCategory category, QString title, int resourceID)
 	{
 		QTreeWidgetItem* item = new QTreeWidgetItem(category);
 
 		item->setText(0, title);
 
 		// Set the link to the data : 
-		item->setData(0, Qt::UserRole, QVariant(ressourceID));
+		item->setData(0, Qt::UserRole, QVariant(resourceID));
 
 		tree.topLevelItem(category)->addChild(item);
 	
 		return item;
 	}
 
-	void RessourcesTab::removeAllChildren(QTreeWidgetItem* root)
+	void ResourcesTab::removeAllChildren(QTreeWidgetItem* root)
 	{
 		// Disconnect : 
 		tree.blockSignals(true);
@@ -677,7 +677,7 @@
 		tree.blockSignals(false);
 	}
 
-	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item)
+	void ResourcesTab::appendTextureInformation(QTreeWidgetItem* item)
 	{
 		item->setText(1, "");
 		item->setText(2, "");
@@ -686,7 +686,7 @@
 		item->setText(5, "");
 	}
 
-	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
+	void ResourcesTab::appendTextureInformation(QTreeWidgetItem* item, const __ReadOnly_HdlTextureFormat& fmt, size_t provideSize)
 	{
 		size_t s = fmt.getSize();
 
@@ -707,13 +707,13 @@
 		item->setText(5, tr("%1").arg(fmt.getMaxLevel()));
 	}
 
-	void RessourcesTab::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
+	void ResourcesTab::appendTextureInformation(QTreeWidgetItem* item, HdlTexture& texture)
 	{
 		// First on the format : 
 		appendTextureInformation(item, texture.format(), texture.getSizeOnGPU());
 	}
 	
-	void RessourcesTab::updateRessourceAlternateColors(QTreeWidgetItem* root)
+	void ResourcesTab::updateResourceAlternateColors(QTreeWidgetItem* root)
 	{
 		QBrush 	foreground	= palette().foreground().color(),
 			original 	= palette().background().color(),
@@ -736,11 +736,11 @@
 		}
 	}
 
-	TextureObject* RessourcesTab::getCorrespondingTexture(QTreeWidgetItem* item)
+	TextureObject* ResourcesTab::getCorrespondingTexture(QTreeWidgetItem* item)
 	{
 		if(item==NULL)
 			return NULL;
-		else if(item->type()!=RessourceImages)
+		else if(item->type()!=ResourceImages)
 			return NULL;
 		else if(item->data(0, Qt::UserRole).toInt()<0)
 			return NULL;
@@ -748,7 +748,7 @@
 			return textures[item->data(0, Qt::UserRole).toInt()];
 	}
 
-	TextureObject* RessourcesTab::getCorrespondingTexture(const QString& name)
+	TextureObject* ResourcesTab::getCorrespondingTexture(const QString& name)
 	{
 		if(name.isEmpty())
 			return NULL;
@@ -765,11 +765,11 @@
 		return NULL;
 	}
 
-	FormatObject* RessourcesTab::getCorrespondingFormat(QTreeWidgetItem* item)
+	FormatObject* ResourcesTab::getCorrespondingFormat(QTreeWidgetItem* item)
 	{
 		if(item==NULL)
 			return NULL;
-		else if(item->type()!=RessourceFormats)
+		else if(item->type()!=ResourceFormats)
 			return NULL;
 		else if(item->data(0, Qt::UserRole).toInt()<0)
 			return NULL;
@@ -777,34 +777,34 @@
 			return &formats[item->data(0, Qt::UserRole).toInt()];
 	}
 
-	void RessourcesTab::appendNewImage(HdlTexture& texture, const QString& filename)
+	void ResourcesTab::appendNewImage(HdlTexture& texture, const QString& filename)
 	{
 		textures.push_back( new TextureObject(texture, filename) );
 		rebuildImageList();
 
 		// Open section : 
-		tree.topLevelItem(RessourceImages)->setExpanded(true);
+		tree.topLevelItem(ResourceImages)->setExpanded(true);
 	}
 	
 // Update sections : 
-	void RessourcesTab::rebuildImageList(void)
+	void ResourcesTab::rebuildImageList(void)
 	{
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceImages);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceImages);
 		removeAllChildren(root);
 
 		for(int k=0; k<textures.size(); k++)
 		{
 			if(textures[k]!=NULL)
-				QTreeWidgetItem* item = addItem(RessourceImages, "    -", k);
+				QTreeWidgetItem* item = addItem(ResourceImages, "    -", k);
 		}
 
 		updateImageListDisplay();
 	}
 
-	void RessourcesTab::updateImageListDisplay(void)
+	void ResourcesTab::updateImageListDisplay(void)
 	{
 		int count = 0;
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceImages);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceImages);
 
 		for(int k=0; k<root->childCount(); k++)
 		{
@@ -819,15 +819,15 @@
 		}
 
 		// Update design : 
-		updateRessourceAlternateColors(tree.topLevelItem(RessourceImages));
+		updateResourceAlternateColors(tree.topLevelItem(ResourceImages));
 		
 		// Update the title : 
-		tree.topLevelItem(RessourceImages)->setText(0, tr("Images (%1)").arg(root->childCount()));
+		tree.topLevelItem(ResourceImages)->setText(0, tr("Images (%1)").arg(root->childCount()));
 	}
 
-	void RessourcesTab::updateFormatListDisplay(void)
+	void ResourcesTab::updateFormatListDisplay(void)
 	{
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceFormats);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceFormats);
 		removeAllChildren(root);
 
 		// Rebuild Format list : 
@@ -862,19 +862,19 @@
 		for(int k=0; k<formats.size(); k++)
 		{
 			QString title = tr("    %1").arg(formats[k].getName());
-			QTreeWidgetItem* item = addItem(RessourceFormats, title, k);
+			QTreeWidgetItem* item = addItem(ResourceFormats, title, k);
 
 			appendTextureInformation(item, formats[k]);
 		}	
 
-		updateRessourceAlternateColors(root);
+		updateResourceAlternateColors(root);
 		root->setText(0, tr("Formats (%1)").arg(formats.size()));
 	}
 
-	void RessourcesTab::updateInputConnectionDisplay(void)
+	void ResourcesTab::updateInputConnectionDisplay(void)
 	{
 		int count = 0;
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
 
 		for(int k=0; k<root->childCount(); k++)
 		{
@@ -897,16 +897,16 @@
 		}
 
 		// Update design : 
-		updateRessourceAlternateColors(tree.topLevelItem(RessourceInputs));
+		updateResourceAlternateColors(tree.topLevelItem(ResourceInputs));
 		
 		// Update the title : 
 		if(!pipelineName.isEmpty())
-			tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs of %1 (%2)").arg(pipelineName).arg(root->childCount()));
+			tree.topLevelItem(ResourceInputs)->setText(0, tr("Inputs of %1 (%2)").arg(pipelineName).arg(root->childCount()));
 		else
-			tree.topLevelItem(RessourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
+			tree.topLevelItem(ResourceInputs)->setText(0, tr("Inputs (%1)").arg(root->childCount()));
 	}
 
-	void RessourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage, QAction* saveOutAs, QAction* copyOutAs)
+	void ResourcesTab::updateMenuOnCurrentSelection(ConnectionMenu* connections, FilterMenu* filters, WrappingMenu* wrapping, QAction* removeImage, QAction* saveOutAs, QAction* copyOutAs)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -921,7 +921,7 @@
 				atLeastOneHeader	= atLeastOneHeader || (selectedItems.at(k)->data(0, Qt::UserRole).toInt()>=0);	
 			}
 
-			// If they are all ressources :  
+			// If they are all resources :  
 			if(allImages) 
 			{
 				if(filters!=NULL)	filters->update( getCorrespondingTexture(selectedItems.at(0))->texture() );
@@ -940,7 +940,7 @@
 			else if(connections!=NULL)
 				connections->activate(false, selectedItems.size());
 
-			if(selectedItems.size()==1 && selectedItems.front()->type()==RessourceOutputs && infoLastComputeSucceeded)
+			if(selectedItems.size()==1 && selectedItems.front()->type()==ResourceOutputs && infoLastComputeSucceeded)
 			{
 				if(saveOutAs!=NULL)	saveOutAs->setEnabled(true);
 				if(saveOutAs!=NULL)	copyOutAs->setEnabled(true);
@@ -963,29 +963,29 @@
 	}
 
 // Private Slots :
-	void RessourcesTab::fetchLoadedImages(void)
+	void ResourcesTab::fetchLoadedImages(void)
 	{
 		loadingWidget.insertNewImagesInto(textures);
 		rebuildImageList();
 
 		// Open section : 
-		tree.topLevelItem(RessourceImages)->setExpanded(true);
+		tree.topLevelItem(ResourceImages)->setExpanded(true);
 	}
 
-	void RessourcesTab::selectionChanged(void)
+	void ResourcesTab::selectionChanged(void)
 	{
 		// Update menus : 
-		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu, &freeImage, &saveOutputAs, &copyAsNewRessource);
+		updateMenuOnCurrentSelection(&connectionMenu, &filterMenu, &wrappingMenu, &freeImage, &saveOutputAs, &copyAsNewResource);
 
 		// Update output, maybe : 
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
 		if(selectedItems.size()==1)
 		{
-			RessourceCategory category = static_cast<RessourceCategory>(selectedItems.front()->type());
+			ResourceCategory category = static_cast<ResourceCategory>(selectedItems.front()->type());
 			int id = selectedItems.front()->data(0, Qt::UserRole).toInt();
 
-			if(((category==RessourceImages || category==RessourceOutputs) && id>=0) || (category==RessourceInputs && id>=0 && preferredConnections[id]!=NULL) )
+			if(((category==ResourceImages || category==ResourceOutputs) && id>=0) || (category==ResourceInputs && id>=0 && preferredConnections[id]!=NULL) )
 			{
 				currentOutputCategory 	= category;
 				currentOutputID		= id;
@@ -996,7 +996,7 @@
 		}
 	}
 
-	void RessourcesTab::updateImageFiltering(GLenum minFilter, GLenum magFilter)
+	void ResourcesTab::updateImageFiltering(GLenum minFilter, GLenum magFilter)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1013,7 +1013,7 @@
 				needToUpdatePipeline = needToUpdatePipeline || (std::find(preferredConnections.begin(), preferredConnections.end(), ptr)!=preferredConnections.end());
 
 				// If this is the output : 
-				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==RessourceImages)
+				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==ResourceImages)
 					emit outputChanged();
 			}
 
@@ -1028,7 +1028,7 @@
 		}
 	}
 
-	void RessourcesTab::updateImageWrapping(GLenum sWrapping, GLenum tWrapping)
+	void ResourcesTab::updateImageWrapping(GLenum sWrapping, GLenum tWrapping)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1045,7 +1045,7 @@
 				needToUpdatePipeline = needToUpdatePipeline || (std::find(preferredConnections.begin(), preferredConnections.end(), ptr)!=preferredConnections.end());
 
 				// If this is the output : 
-				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==RessourceImages)
+				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==ResourceImages)
 					emit outputChanged();
 			}
 
@@ -1060,7 +1060,7 @@
 		}
 	}
 
-	void RessourcesTab::showContextMenu(const QPoint& point)
+	void ResourcesTab::showContextMenu(const QPoint& point)
 	{
 		// Get the global position : 
 		QPoint globalPos = tree.viewport()->mapToGlobal(point); 
@@ -1077,7 +1077,7 @@
 
 				menu.addMenu(&connectionMenu);				
 				menu.addAction(&saveOutputAs);
-				menu.addAction(&copyAsNewRessource);
+				menu.addAction(&copyAsNewResource);
 				menu.addAction(&freeImage);
 
 				QAction* action = menu.exec(globalPos);
@@ -1115,7 +1115,7 @@
 		}
 	}
 
-	void RessourcesTab::freeSelectedImages(void)
+	void ResourcesTab::freeSelectedImages(void)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1141,7 +1141,7 @@
 
 				requestRebuild = true;
 
-				if(currentOutputID==id && currentOutputCategory==RessourceImages)
+				if(currentOutputID==id && currentOutputCategory==ResourceImages)
 				{
 					currentOutputID = -1;
 					emit outputChanged();
@@ -1163,7 +1163,7 @@
 		}
 	}
 
-	void RessourcesTab::applyConnection(int idInput)
+	void ResourcesTab::applyConnection(int idInput)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1182,7 +1182,7 @@
 		emit updatePipelineRequest();
 	}
 
-	void RessourcesTab::startRequestSaveImage(void)
+	void ResourcesTab::startRequestSaveImage(void)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1190,12 +1190,12 @@
 		{
 			int id = selectedItems.front()->data(0, Qt::UserRole).toInt();
 
-			if(selectedItems.front()->type()==RessourceOutputs && id>=0 && infoLastComputeSucceeded)
+			if(selectedItems.front()->type()==ResourceOutputs && id>=0 && infoLastComputeSucceeded)
 				emit saveOutput(id);
 		}
 	}
 
-	void RessourcesTab::requestCopyAsNewRessource(void)
+	void ResourcesTab::requestCopyAsNewResource(void)
 	{
 		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
@@ -1203,13 +1203,13 @@
 		{
 			int id = selectedItems.front()->data(0, Qt::UserRole).toInt();
 
-			if(selectedItems.front()->type()==RessourceOutputs && id>=0 && infoLastComputeSucceeded)
-				emit copyOutputAsNewRessource(id);
+			if(selectedItems.front()->type()==ResourceOutputs && id>=0 && infoLastComputeSucceeded)
+				emit copyOutputAsNewResource(id);
 		}
 	}
 
 // Public : 
-	void RessourcesTab::appendFormats(LayoutLoader& loader)
+	void ResourcesTab::appendFormats(LayoutLoader& loader)
 	{
 		if(!formats.empty())
 		{
@@ -1224,7 +1224,7 @@
 		}
 	}
 
-	bool RessourcesTab::isInputConnected(int id) const
+	bool ResourcesTab::isInputConnected(int id) const
 	{
 		if(id<0 || id>=preferredConnections.size())
 			return false;
@@ -1232,36 +1232,36 @@
 			return (preferredConnections[id]!=NULL);
 	}
 
-	HdlTexture& RessourcesTab::input(int id)
+	HdlTexture& ResourcesTab::input(int id)
 	{
 		if(!isInputConnected(id))
-			throw Exception("RessourcesTab::input - Internal error : input " + to_string(id) + " is not connected.", __FILE__, __LINE__);
+			throw Exception("ResourcesTab::input - Internal error : input " + to_string(id) + " is not connected.", __FILE__, __LINE__);
 		else
 			return preferredConnections[id]->texture();
 	}
 
-	bool RessourcesTab::hasOutput(void) const
+	bool ResourcesTab::hasOutput(void) const
 	{
-		return ( (currentOutputCategory==RessourceImages || currentOutputCategory==RessourceInputs || currentOutputCategory==RessourceOutputs) && currentOutputID>=0 );
+		return ( (currentOutputCategory==ResourceImages || currentOutputCategory==ResourceInputs || currentOutputCategory==ResourceOutputs) && currentOutputID>=0 );
 	}
 
-	bool RessourcesTab::outputIsPartOfPipelineOutputs(void) const
+	bool ResourcesTab::outputIsPartOfPipelineOutputs(void) const
 	{
-		return (currentOutputCategory==RessourceOutputs) && currentOutputID>=0;
+		return (currentOutputCategory==ResourceOutputs) && currentOutputID>=0;
 	}
 
-	HdlTexture* RessourcesTab::getOutput(Pipeline* pipeline)
+	HdlTexture* ResourcesTab::getOutput(Pipeline* pipeline)
 	{
 		if(currentOutputID<0)
 			return NULL;
 
 		switch(currentOutputCategory)
 		{
-			case RessourceImages :
+			case ResourceImages :
 				return &textures[currentOutputID]->texture();
-			case RessourceInputs :
+			case ResourceInputs :
 				return &preferredConnections[currentOutputID]->texture();
-			case RessourceOutputs :
+			case ResourceOutputs :
 				if(pipeline==NULL)
 					return NULL;
 				else
@@ -1272,19 +1272,19 @@
 	}
 
 // Public slots : 
-	void RessourcesTab::updatePipelineInfos(void)
+	void ResourcesTab::updatePipelineInfos(void)
 	{
 		pipelineName.clear();
 
 		// update the connection menu : 
 		connectionMenu.update();
 		
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
 		removeAllChildren(root);
 
 		root->setText(0, tr("Inputs (0)"));
 
-		root = tree.topLevelItem(RessourceOutputs);
+		root = tree.topLevelItem(ResourceOutputs);
 		removeAllChildren(root);
 
 		root->setText(0, tr("Outputs (0)"));
@@ -1293,7 +1293,7 @@
 		selectionChanged();
 	}
 
-	void RessourcesTab::updatePipelineInfos(Pipeline* pipeline)
+	void ResourcesTab::updatePipelineInfos(Pipeline* pipeline)
 	{
 		if(pipeline==NULL)
 			updatePipelineInfos();
@@ -1308,14 +1308,14 @@
 		connectionMenu.update(*pipeline);
 
 		// Rebuild input list : 
-		QTreeWidgetItem* root = tree.topLevelItem(RessourceInputs);
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
 		removeAllChildren(root);
 
 		for(int k=0; k<pipeline->getNumInputPort(); k++)
 		{
 			QString title = tr("    %1").arg(pipeline->getInputPortName(k).c_str());
 
-			QTreeWidgetItem* item = addItem(RessourceInputs, title, k);
+			QTreeWidgetItem* item = addItem(ResourceInputs, title, k);
 
 			item->setData(0, Qt::StatusTipRole, QString(pipeline->getInputPortName(k).c_str()));
 		}
@@ -1323,23 +1323,23 @@
 		// Update the list : 
 		updateInputConnectionDisplay();
 
-		tree.topLevelItem(RessourceInputs)->setExpanded(true);
+		tree.topLevelItem(ResourceInputs)->setExpanded(true);
 
 		// Rebuild output list : 
-		root = tree.topLevelItem(RessourceOutputs);
+		root = tree.topLevelItem(ResourceOutputs);
 		removeAllChildren(root);
 
 		for(int k=0; k<pipeline->getNumOutputPort(); k++)
 		{
 			QString title = tr("    %1").arg(pipeline->getOutputPortName(k).c_str());
 
-			QTreeWidgetItem* item = addItem(RessourceOutputs, title, k);
+			QTreeWidgetItem* item = addItem(ResourceOutputs, title, k);
 
 			appendTextureInformation(item, pipeline->out(k));
 		}
 
 		// Update design : 
-		updateRessourceAlternateColors(root);
+		updateResourceAlternateColors(root);
 
 		// Update the title : 
 		if(!pipelineName.isEmpty())
@@ -1347,9 +1347,9 @@
 		else
 			root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
 	
-		tree.topLevelItem(RessourceOutputs)->setExpanded(true);
+		tree.topLevelItem(ResourceOutputs)->setExpanded(true);
 
-		if( (currentOutputCategory==RessourceOutputs && currentOutputID>=pipeline->getNumOutputPort()) || (currentOutputCategory==RessourceInputs && currentOutputID>=pipeline->getNumInputPort()) )
+		if( (currentOutputCategory==ResourceOutputs && currentOutputID>=pipeline->getNumOutputPort()) || (currentOutputCategory==ResourceInputs && currentOutputID>=pipeline->getNumInputPort()) )
 		{
 			currentOutputID = -1;
 			emit outputChanged();
@@ -1359,7 +1359,7 @@
 		selectionChanged();
 	}
 
-	void RessourcesTab::saveOutputToFile(HdlTexture& output)
+	void ResourcesTab::saveOutputToFile(HdlTexture& output)
 	{
 		// Perform save : 
 		//ImageLoader::saveTexture(output, outputPath);
@@ -1381,7 +1381,7 @@
 		}
 	}
 
-	void RessourcesTab::copyOutputAsNewRessource(HdlTexture& output)
+	void ResourcesTab::copyOutputAsNewResource(HdlTexture& output)
 	{
 		bool 	over = false,
 			ok = false;
@@ -1391,9 +1391,9 @@
 		{
 			// Get the new name : 
 			if(getCorrespondingTexture(name)==NULL)
-				name = QInputDialog::getText(this, tr("Copy Output as new Ressource..."), tr("New ressource name : "), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
+				name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("New resource name : "), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
 			else
-				name = QInputDialog::getText(this, tr("Copy Output as new Ressource..."), tr("A resource with the name \"%1\" already exists, choose a different resource name : ").arg(name), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
+				name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("A resource with the name \"%1\" already exists, choose a different resource name : ").arg(name), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
 
 			// Check if the name exits : 
 			over = !ok || (!name.isEmpty() && (getCorrespondingTexture(name)==NULL));
@@ -1405,7 +1405,7 @@
 			appendNewImage(output, name);
 	}
 
-	void RessourcesTab::updateLastComputingStatus(bool succeeded)
+	void ResourcesTab::updateLastComputingStatus(bool succeeded)
 	{
 		infoLastComputeSucceeded = succeeded;
 	}

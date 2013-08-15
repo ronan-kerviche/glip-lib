@@ -2,7 +2,7 @@
 #define __GLIPSTUDIO_LIBRARY_INTERFACE__
 
 	#include "GLIPLib.hpp"
-	#include "ressourcesTab.hpp"
+	#include "resourcesTab.hpp"
 	#include "compilationTab.hpp"
 	#include "uniformsTab.hpp"
 	
@@ -20,7 +20,7 @@
 		private : 
 			QVBoxLayout			layout;
 			QTabWidget			tabs;
-			RessourcesTab			ressourceTab;			
+			ResourcesTab			resourceTab;			
 			CompilationTab			compilationTab;
 			UniformsTab			uniformsTab;
 			
@@ -36,7 +36,7 @@
 			void saveUniforms(void);
 			void needPipeline(void);
 			void saveOutput(int id);
-			void copyOutputToRessources(int id);
+			void copyOutputToResources(int id);
 					
 		public : 
 			LibraryInterface(QWidget *parent=NULL);

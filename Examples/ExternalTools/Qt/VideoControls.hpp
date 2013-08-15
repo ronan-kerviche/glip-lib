@@ -11,7 +11,7 @@
 /*     Original Date : December 31th 2012                                                                        */
 /*                                                                                                               */
 /*     Description   : Qt interface for loading and playing videos with FFMPEG library.                          */
-/*                     Require RessourceLoader.*pp and VideoStream.*pp.					         */
+/*                     Require ResourceLoader.*pp and VideoStream.*pp.					         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
@@ -20,7 +20,7 @@
 
 	#include "VideoStream.hpp"
 	#include "VideoRecorder.hpp"
-	#include "RessourceLoader.hpp"
+	#include "ResourceLoader.hpp"
 	#include <QPushButton>
 	#include <QLabel>
 	#include <QSpinBox>

@@ -12,9 +12,9 @@ win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
-			../ExternalTools/Qt/RessourceLoader.hpp \
+			../ExternalTools/Qt/ResourceLoader.hpp \
 			./src/imageContentInfo.hpp
 SOURCES      	+= 	./src/main.cpp \
 			../ExternalTools/Qt/WindowRendering.cpp \
-			../ExternalTools/Qt/RessourceLoader.cpp \
+			../ExternalTools/Qt/ResourceLoader.cpp \
 			./src/imageContentInfo.cpp

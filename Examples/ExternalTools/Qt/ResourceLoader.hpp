@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : RessourceLoader.hpp                                                                       */
+/*     File          : ResourceLoader.hpp                                                                        */
 /*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
 /*     Description   : Qt interface for loading and writing to images.                                           */
@@ -20,7 +20,7 @@
 #define __GLIPLIB_IMAGE_LOADER__
 
 	// Display messages on std::cout :
-	//#define __RESSOURCE_LOADER_VERBOSE__
+	//#define __RESOURCE_LOADER_VERBOSE__
 
 	// Use PBO or not :
 	//#define __USE_PBO__
@@ -51,7 +51,7 @@
 			std::vector<HdlTexture*> textures;
 			std::vector<std::string> filenamesList;
 
-			void cleanRessources(void);
+			void cleanResources(void);
 		public :
 			ImageLoader(void);
 			~ImageLoader(void);

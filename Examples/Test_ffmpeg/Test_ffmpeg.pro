@@ -18,7 +18,7 @@ win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
-			../ExternalTools/Qt/RessourceLoader.hpp \
+			../ExternalTools/Qt/ResourceLoader.hpp \
 			../ExternalTools/Qt/VideoControls.hpp \
 			../ExternalTools/ffmpeg/InterfaceFFMPEG.hpp \
 			../ExternalTools/ffmpeg/VideoStream.hpp \
@@ -26,7 +26,7 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			./src/Test_ffmpeg.hpp
 SOURCES      	+= 	./src/main.cpp \
 			../ExternalTools/Qt/WindowRendering.cpp \
-			../ExternalTools/Qt/RessourceLoader.cpp \
+			../ExternalTools/Qt/ResourceLoader.cpp \
 			../ExternalTools/Qt/VideoControls.cpp \
 			../ExternalTools/ffmpeg/InterfaceFFMPEG.cpp \
 			../ExternalTools/ffmpeg/VideoStream.cpp \
