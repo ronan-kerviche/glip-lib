@@ -43,9 +43,9 @@
 							/// True if it has a red layer.
 				const bool		hasRedLayer,
 							/// True if it has a green layer.
-							hasBlueLayer,
-							/// True if it has a blue layer.
 							hasGreenLayer,
+							/// True if it has a blue layer.
+							hasBlueLayer,
 							/// True if it has a alpha layer.
 							hasAlphaLayer,
 							/// True if it has a luminance or intensity layer.
@@ -66,9 +66,9 @@
 							pixelSizeInBits,
 							/// Size of the red component for a single pixel, in bits.
 							redDepthInBits,
-							/// Size of the blue component for a single pixel, in bits.
-							greenDepthInBits,
 							/// Size of the green component for a single pixel, in bits.
+							greenDepthInBits,
+							/// Size of the blue component for a single pixel, in bits.
 							blueDepthInBits,
 							/// Size of the alpha component for a single pixel, in bits.
 							alphaDepthInBits,

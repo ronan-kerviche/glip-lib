@@ -6,13 +6,13 @@
 	UniformObject::UniformObject(const std::string& _varName)
 	 : QWidget(NULL), varName(_varName), hasBeenUpdated(false)
 	{
-		std::cout << "UniformObject::UniformObject : " << this << std::endl;
+		//std::cout << "UniformObject::UniformObject : " << this << std::endl;
 		setAutoFillBackground(true);
 	}
 
 	UniformObject::~UniformObject(void)
 	{
-		std::cout << "UniformObject::~UniformObject : " << this << std::endl;
+		//std::cout << "UniformObject::~UniformObject : " << this << std::endl;
 	}
 
 	void UniformObject::declareUpdate(void)
@@ -270,7 +270,7 @@
 	FilterElement::FilterElement(Filter& filter, const std::vector<std::string>& _path, QTreeWidget* tree)
 	 : name(filter.getName()), path(_path), item(NULL)
 	{
-		std::cout << "FilterElement::FilterElement : " << this << std::endl;
+		//std::cout << "FilterElement::FilterElement : " << this << std::endl;
 
 		item = new QTreeWidgetItem(NodeFilter);
 
@@ -353,7 +353,7 @@
 
 	FilterElement::~FilterElement(void)
 	{
-		std::cout << "FilterElement::~FilterElement : " << this << std::endl;
+		//std::cout << "FilterElement::~FilterElement : " << this << std::endl;
 	}
 
 	QTreeWidgetItem* FilterElement::treeItem(void) const
@@ -393,7 +393,7 @@
 	PipelineElement::PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& name, const std::string& pathStr, const std::vector<std::string>& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot)
 	 : item(NULL)
 	{
-		std::cout << "PipelineElement::PipelineElement : " << this << std::endl;
+		//std::cout << "PipelineElement::PipelineElement : " << this << std::endl;
 
 		item = new QTreeWidgetItem(NodeFilter);
 
@@ -450,17 +450,9 @@
 
 	PipelineElement::~PipelineElement(void)
 	{
-		std::cout << "PipelineElement::~PipelineElement : " << this << std::endl;
+		//std::cout << "PipelineElement::~PipelineElement : " << this << std::endl;
 
 		item = NULL;
-
-		/*for(int k=0; k<filterObjects.size(); k++)
-			filterObjects[k]->deleteLater();
-		filterObjects.clear();
-
-		for(int k=0; k<pipelineObjects.size(); k++)
-			pipelineObjects[k]->deleteLater();
-		pipelineObjects.clear();*/
 
 		for(int k=0; k<filterObjects.size(); k++)
 			delete filterObjects[k];

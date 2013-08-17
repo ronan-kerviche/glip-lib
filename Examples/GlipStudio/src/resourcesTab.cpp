@@ -1361,23 +1361,33 @@
 
 	void ResourcesTab::saveOutputToFile(HdlTexture& output)
 	{
-		// Perform save : 
-		//ImageLoader::saveTexture(output, outputPath);
-
-		QString filename = QFileDialog::getSaveFileName(this, "Save Image", currentOutputPath, tr("Image (*.jpg *.jpeg *.png *.bmp)"));
-
-		if(!filename.isEmpty())
+		try
 		{
 			QImage image = ImageLoader::createImage(output);
 
-			if(!image.save(filename))
-				QMessageBox::warning(this, tr("Warning"), tr("Save operation to file \"%1\" failed.").arg(filename));
-			else
+			QString filename = QFileDialog::getSaveFileName(this, "Save Image", currentOutputPath, tr("Image (*.jpg *.jpeg *.png *.bmp)"));
+
+			if(!filename.isEmpty())
 			{
-				// Set the current path : 
-				QFileInfo info(filename);
-				currentOutputPath = info.path();
+				if(!image.save(filename))
+					QMessageBox::warning(this, tr("Warning"), tr("Save operation to file \"%1\" failed.").arg(filename));
+				else
+				{
+					// Set the current path for output : 
+					QFileInfo info(filename);
+					currentOutputPath = info.path();
+				}
 			}
+		}
+		catch(Exception& e)
+		{
+			std::cerr << "ResourcesTab::saveOutputToFile - Exception : " << std::endl;
+			std::cerr << e.what();
+		
+			// Warning :
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Could not save the image. This might be due to the image having an incompatible format."), QMessageBox::Ok, this);
+			messageBox.setDetailedText(e.what());
+			messageBox.exec();
 		}
 	}
 

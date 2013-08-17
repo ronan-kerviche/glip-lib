@@ -152,9 +152,9 @@
 				for(int j=0; j<image.width(); j++)
 				{
 					QRgb col 	= image.pixel(j,i);
-					temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-					temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-					temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+									temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
+					if(descriptor.numComponents>1)	temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+					if(descriptor.numComponents>2)	temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
 
 					if(descriptor.hasAlphaLayer)
 						temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
@@ -184,9 +184,9 @@
 					for(int j=0; j<image.width(); j++)
 					{
 						QRgb col 	= image.pixel(j,i);
-						ptr[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-						ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-						ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+										ptr[t+0] 	= static_cast<unsigned char>( qRed( col ) );
+						if(descriptor.numComponents>1)	ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+						if(descriptor.numComponents>1)	ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
 
 						if(descriptor.hasAlphaLayer)
 							temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
@@ -211,27 +211,66 @@
 
 	QImage ImageLoader::createImage(HdlTexture& texture)
 	{
-		QImage image(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
+		const int 	eUNKN = 0,
+				eLUMI = 1,
+				eRGB8 = 2,
+				eRGBA = 3;
+		QImage* bufferImage = NULL;
 
 		try
 		{
+			int id = eUNKN;
+			const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get( texture.getGLMode() );
+			const int depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( texture.getGLDepth() );
+
+			// Test input image : 
+			if( descriptor.hasLuminanceLayer && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
+			{
+				id = eLUMI;
+				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
+			}
+			else if( descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && !descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+			{
+				id = eRGB8;
+				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
+			}
+			else if(descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+			{
+				id = eRGBA;
+				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_ARGB32);
+			}			
+			else
+				throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+
 			#ifndef __USE_PBO__
 				TextureReader reader("reader",texture.format());
 				//reader.yFlip = true;
 
 				reader << texture << OutputDevice::Process;
 
-				QRgb value;
-				double r, g, b;
+				QColor value;
 				for(int y=0; y<reader.getHeight(); y++)
 				{
 					for(int x=0; x<reader.getWidth(); x++)
 					{
-						r = static_cast<unsigned char>(reader(x,y,0)*255.0);
-						g = static_cast<unsigned char>(reader(x,y,1)*255.0);
-						b = static_cast<unsigned char>(reader(x,y,2)*255.0);
-						value = qRgb(r, g, b);
-						image.setPixel(x, y, value);
+						switch(id)
+						{
+							case eRGBA :
+								value.setAlpha( static_cast<unsigned char>(reader(x,y,4)*255.0) );
+							case eRGB8 :
+								value.setGreen( static_cast<unsigned char>(reader(x,y,1)*255.0) );
+								value.setBlue(  static_cast<unsigned char>(reader(x,y,2)*255.0) );
+								value.setRed(   static_cast<unsigned char>(reader(x,y,0)*255.0) );
+								break;
+							case eLUMI :
+								value.setRed(   static_cast<unsigned char>(reader(x,y,0)*255.0) );
+								value.setGreen( static_cast<unsigned char>(reader(x,y,0)*255.0) );
+								value.setBlue(  static_cast<unsigned char>(reader(x,y,0)*255.0) );
+								break;
+							default : 
+								throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
+						}
+						bufferImage->setPixel(x, y, value.rgba());
 					}
 				}
 			#else
@@ -244,19 +283,31 @@
 				// Get access to memory :
 				unsigned char* ptr = reinterpret_cast<unsigned char*>(reader.startReadingMemory());;
 
-				QRgb value;
-				double r, g, b;
+				QColor value;
 				int p = 0;
 				for(int y=reader.getHeight()-1; y>=0; y--)
 				{
 					for(int x=0; x<reader.getWidth(); x++)
 					{
-						r = ptr[p+0];
-						g = ptr[p+1];
-						b = ptr[p+2];
-						value = qRgb(r, g, b);
-						image.setPixel(x, y, value);
-						p += 3;
+						switch(id)
+						{
+							case eRGBA :
+								value.setAlpha( ptr[p+3] );
+							case eRGB8 :
+								value.setGreen( ptr[p+1] );
+								value.setBlue(  ptr[p+2] );
+								value.setRed(   ptr[p+0] );
+								break;
+							case eLUMI :
+								value.setGreen( ptr[p+0] );
+								value.setBlue(  ptr[p+0] );
+								value.setRed(   ptr[p+0] );
+								break;
+							default : 
+								throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
+						}
+						bufferImage->setPixel(x, y, value.rgba());
+						p += descriptor.numComponents;
 					}
 				}
 
@@ -269,6 +320,9 @@
 			Exception m("Error while creating QImage: ", __FILE__, __LINE__);
 			throw m+e;
 		}
+
+		QImage image(*bufferImage);
+		delete bufferImage;
 
 		return image;
 	}
