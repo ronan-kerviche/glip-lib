@@ -1,9 +1,122 @@
 /**
+\page page_Basics Basics
+
+Glip-Lib provides image processing capabilities through graph-based network. The following graph represents a <b>pipeline</b> containing two <b>fitlers</b>. The pipeline and the filters have <b>input ports</b> and <b>output ports</b>; in this example only the pipeline ports have name. Each of the ports is linked with a <b>connection</b> to one or multiple other ports. An input port can only have one connection, while an output port may have multiple ones.
+
+\htmlonly
+<center><object data="./graphics/examplePipeline1.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+Such structures can also be nested as in the following pipeline : 
+
+\htmlonly
+<center><object data="./graphics/examplePipeline2.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+Each of the filter can process a limited number of input to a limited number of output images. These numbers depends on your hardware and drivers. A filter represents a processing units : it takes a geometry and multiple textures inputs, calls the <b>vertex program</b> for all the vertices in the geometry and finally, calls the <b>fragment program</b> for every pixel actually written in the destinations textures. Image that you can cut the input image (texture) over some random geometry, then stretch this geometry and finally paste it onto the final image while applying a computation at the same time :
+
+\htmlonly
+<center><object data="./graphics/exampleTexture1.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+This was the most general approach to how a filter work : a homographic projection of a 3D scene onto a virtual screen. However, the most used configuration is the particular case when the <b>geometry</b> is a quad covering exactly this screen (note that the <b>fragment program</b> can <i>read</i> from multiple locations but can <i>write</i> only to the assigned position and cannot change this output position) :  
+
+\htmlonly
+<center><object data="./graphics/exampleTexture2.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+It can, of course, read from multipe sources and write to multiple destinations : 
+
+\htmlonly
+<center><object data="./graphics/exampleTexture3.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+We can then summarize transformations with the following pseudo-codes : 
+	\code
+		# For example the transformation which takes the image as a simple matrix,
+		# and which increase the dynamic range occupied by the image (contrast),
+		# (scalar values given for the example) : 
+		newImage = oldImage * 1.1 - 0.2; 
+
+		# This formulation is adapted to higher level programming languages.
+		# The following code is adapted to lower level  programming languages : 
+		For each Pixel new_p in newImage :
+			old_p = read corresponding pixel in oldImage
+			new_p = old_p * 1.1 - 0.2
+		endFor
+
+		# This is the generic version, with a generic function : 
+		function applyTransformationToCurrentPosition( input oldImage )
+		{
+			old_p = read corresponding pixel in oldImage
+			return Pixel( old_p * 1.1 - 0.2 )
+		}
+
+		For each Pixel new_p in newImage :
+			p = applyTransformationToCurrentPosition( oldImage )
+		endFor
+		# This generic function is close to what the Fragment program is : a function called for every output pixel.
+	\endcode
+
+The <i>"Hello World"</i> fragment shader, which is reproducing the input to the output is written in the GLSL language : 
+	\code
+		#version 130
+	
+		uniform sampler2D inputTexture;
+		out vec4 outputTexure;
+	
+		void main()
+		{
+			// The current fragment position : 
+			vec2 pos = gl_TexCoord[0].st;
+
+			// Read the base level of the texture at the current position : 
+			vec4 col = textureLod( inputTexture, pos, 0);
+
+			// Put it in the output fragment as-is : 
+			outputTexure = col;
+		}
+	\endcode
+
+The code for the previous example fragment shader is simply : 
+	\code
+		#version 130
+	
+		uniform sampler2D inputTexture;
+		out vec4 outputTexure;
+	
+		void main()
+		{
+			// The current fragment position : 
+			vec2 pos = gl_TexCoord[0].st;
+
+			// Read the base level of the texture at the current position : 
+			vec4 col = textureLod( inputTexture, pos, 0);
+
+			// Put it in the output fragment after transforming it : 
+			outputTexure = 1.1 * col - 0.2;
+		}
+	\endcode
+
+Note that in Glip-Lib, a <i>Filter</i> cannot exists outside a <i>Pipeline</i>.
+**/
+
+/**
 \page page_GettingStarted Getting Started
 
 \section sec_startGOL First example of computation with GLIP-LIB : John Conway's Game of Life
 
 This page will present you basic use of the library. We will build a simple cellular automaton based on <a href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">John Conway's Game of Life</a>. The main idea is that this engine will perform operations from a grid at a time <i>t</i> to a grid at a time <i>t+1</i>. The grid (in 2D) contains cells which can be either <i>alive</i> or <i>dead</i>. Consider a 3x3 patch within this grid, if the center cell is dead at time <i>t</i> and surrounded by exactly three neighbours alive, then it will be alive at time <i>t+1</i> or will remain dead otherwise. If the center cell is alive at time <i>t</i> and surrounded by either two or three neighbours alive, then it will stay alive at time <i>t+1</i>, or it will die otherwise.
+
+The filter will read a local 3x3 window over the current location :
+\htmlonly
+<center><object data="./graphics/exampleTexture3x3.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+We will create two pipelines in order to ping-pong the outputs : 
+\htmlonly
+<center><object data="./graphics/exampleGOLPipelines.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
 
 We will skip the code for building the window context since it depends on the library you will be using (GLUT, GLFW, Qt, etc.). However, you can find a full example with GLFW on the main project page.
 
@@ -360,9 +473,17 @@ We can improve the previous pipeline construction by building a script which wil
 /**
 	\page page_SobelExample Example : Sobel Filter
 
-	The Sobel filter is basically computing the local derivates of the intensity map. In this example we will show how to use the SHARED_CODE tag accross files.
+The Sobel filter is basically computing the local derivates of the intensity map. In this example we will show how to use the SHARED_CODE tag accross files. The following illustrations shows how the Sobel filter works : it reads a local 3x3 pixels window over the current location, multiplying (element-wise) the value by two 3x3 matrices : 
 
-	First we write a script file <i>convolutionTools.ppl</i> containing :
+\htmlonly
+<center><object data="./graphics/exampleTexture3x3.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+The matrices are : 
+
+	\f$ M_x = \left( \begin{array}{ccc} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{array} \right) \quad \quad \mbox{and} \quad \quad M_y = \left( \begin{array}{ccc} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{array} \right) \f$
+
+First we write a script file <i>convolutionTools.ppl</i> containing :
 	\code
 	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodies loaded.
 	SHARED_CODE:convolutionShared
@@ -402,7 +523,7 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 	\endcode
 
-	Then we write a second script <i>sobel.ppl</i> :
+Then we write a second script <i>sobel.ppl</i> :
 	\code
 	// Include previous file :
 	INCLUDE_FILE(convolutionTools.ppl);
@@ -504,27 +625,31 @@ We can improve the previous pipeline construction by building a script which wil
 	delete sobelPipeline;
 	\endcode
 
-	Output example, only L1 magnitude :
+Output example, only L1 magnitude :
 	<img src="./images/sobelIntensity.png" />
 **/
 
 /**
 	\page page_MinMaxMean Example : Reduction operation (min, max, sum, ...)
 
-	Finding the minimum or maximum instensity in an image, or computing the sum of a function over an image : \f$s = \sum_i \sum_j f(M_{i,j})\f$ is an interesting task which is naturally written on a sequential processor in pseudocode as :
+Finding the minimum or maximum instensity in an image, or computing the sum of a function over an image : \f$s = \sum_i \sum_j f(M_{i,j})\f$ is an interesting task which is naturally written on a sequential processor in pseudocode as :
 	\code
 	s = 0;
 
-	for each pixel in the image
-		s = s + f(current pixel value)
-	end
+	for each Pixel in the image
+		s = s + f(current Pixel value)
+	endFor
 	\endcode
 
-	This operation cannot ported directly to a parallel architecture since the access to variable s should be made from all the threads/shaders and that would be a huge bottleneck for the algorithm. We can note that the <b>order of operation does not matter</b> and <b>for every pixel processed, the result does not depend on previous value of s</b>. The key to port this algorithm to GPU is to use a simple <i>divide and conquer</i> type of algorithm.
+This operation cannot ported directly to a parallel architecture since the access to variable s should be made from all the threads/shaders and that would be a huge bottleneck for the algorithm. We can note that the <b>order of operation does not matter</b> and <b>for every pixel processed, the result does not depend on previous value of s</b>. The key to port this algorithm to GPU is to use a simple <i>divide and conquer</i> type of algorithm.
 
-	For example, we consider the <i>max</i> operator over a texture of dimensions 512x512 (an image of 512x512 pixels and only one channel). We will use a first intermediate texture of 64x64 pixels and a second of 8x8 pixels. The first step is that the shaders are called on the first intermediate texture. Each of the 64x64 = 4096 shaders created will apply the <i>max</i> operator in a small window of 8x8 pixels of the original image. They will store their result in the intermediate 64x64 texture. Then we start back the same process but using the 64x64 texture as input and 8x8 pixels as output. At last, we can use a texture made of a single pixel and repeat the process with the intermediate 8x8 texture. Each step of the process perform a parallel (fast) reduction over a 8x8 window and give, as final result, a single pixel texture.
+For example, we consider the <i>max</i> operator over a texture of dimensions 512x512 (an image of 512x512 pixels and only one channel). We will use a first intermediate texture of 64x64 pixels and a second of 8x8 pixels. The first step is that the shaders are called on the first intermediate texture. Each of the 64x64 = 4096 shaders created will apply the <i>max</i> operator in a small window of 8x8 pixels of the original image. They will store their result in the intermediate 64x64 texture. Then we start back the same process but using the 64x64 texture as input and 8x8 pixels as output. At last, we can use a texture made of a single pixel and repeat the process with the intermediate 8x8 texture. Each step of the process perform a parallel (fast) reduction over a 8x8 window and give, as final result, a single pixel texture.
 
-	First, we write a generic shader source file <i>genericReduction.ppl</i> for reduction opertions :
+\htmlonly
+<center><object data="./graphics/exampleReduction.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+First, we write a generic shader source file <i>genericReduction.ppl</i> for reduction opertions :
 	\code
 	SHARED_CODE:reductionShared
 	{
@@ -551,7 +676,7 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 	\endcode
 
-	Now we write the specific reduction function for min, max and sum of the red channel in the file <i>minMaxReduction.ppl</i>, and the pipeline :
+Now we write the specific reduction function for min, max and sum of the red channel in the file <i>minMaxReduction.ppl</i>, and the pipeline :
 	\code
 	// Declare the function needed :
 	SHARED_CODE:reductionFunctionShared
@@ -626,7 +751,7 @@ We can improve the previous pipeline construction by building a script which wil
 	}
 	\endcode
 
-	We use the ususal code to load and use this pipeline :
+We use the ususal code to load and use this pipeline :
 	\code
 	// Load the pipeline :
 	Loader loader;
@@ -650,9 +775,9 @@ We can improve the previous pipeline construction by building a script which wil
 
 	\page page_HistogramExample Example : Histogram Processing
 
-	On this page, we will describe how to build a specific class of algorithm to be suitable with GPU architecture. We will use the example of the histogram computation to illustrate the possibilities offered by Vertex Texture Fetching.
+On this page, we will describe how to build a specific class of algorithm to be suitable with GPU architecture. We will use the example of the histogram computation to illustrate the possibilities offered by Vertex Texture Fetching.
 
-	The histogram algorithm can be simply written in pseudocode as :
+The histogram algorithm can be simply written in pseudocode as :
 	\code
 	set table redBins to 0
 	set table greenBins to 0
@@ -665,9 +790,13 @@ We can improve the previous pipeline construction by building a script which wil
 	end
 	\endcode
 
-	As discussed in the \ref page_GettingStarted page, this is not directly transferable to shader code since fragment shaders are only emitted per written fragments. Thus there is no way to chose the destination texel according to input. But, what we can do is generating a geometry which can be controlled by a vertex shader. Remember that a Glip::CorePipeline::Filter is always using a vertex shader and a fragment shader. When the vertex shader is not detailed, the filter uses a generic one. In the case of a RGB image we will use a 3D grid as the geometry with 3 layers and, in each, as much points as pixels in the input image (can be lowered in order to improve performances). Each point is associated to one of the color (red, green or blue) of one pixel image. In the vertex shader, we can read the color value of the texture corresponding texel and modify the location of the point dynamically.
+As discussed in the \ref page_GettingStarted page, this is not directly transferable to shader code since fragment shaders are only emitted per written fragments. Thus there is no way to chose the destination texel according to input. But, what we can do is generate a geometry which can be controlled by a vertex shader. Remember that a Glip::CorePipeline::Filter is always using a vertex shader and a fragment shader. When the vertex shader is not detailed, the filter uses a generic one. In the case of a RGB image we will use a 3D grid as the geometry with 3 layers and, in each, as much points as pixels in the input image (can be lowered in order to improve performances). Each point is associated to one of the color (red, green or blue) of one pixel image. In the vertex shader, we can read the color value of the texture corresponding texel and modify the location of the point dynamically.
 
-	We can write a Pipeline Script <i>histogram.ppl</i> as :
+\htmlonly
+<center><object data="./graphics/exampleTextureVTF.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+We can write a Pipeline Script <i>histogram.ppl</i> as :
 	\code
 	// The format of the bins :
 	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGB32F,GL_FLOAT)
@@ -782,7 +911,7 @@ We can improve the previous pipeline construction by building a script which wil
 	delete histogramPipeline;
 	\endcode
 
-	This will write into the 1D texture the density (normalized sum) of rescpectively, the red, the green and the blue components. We can ellaborate something a little bit more complicated in order to super-impose the histogram on top of the image from which it was generated.
+	This will write into the 1D texture the density (normalized sum) of rescpectively, the red, the green and the blue components. We can elaborate something a little bit more sophisticated in order to super-impose the histogram on top of the image from which it was generated.
 
 	We write a file <i>prettyHistogram.ppl</i>
 	\code
@@ -802,7 +931,7 @@ We can improve the previous pipeline construction by building a script which wil
 		uniform sampler2D histogramBins, inputTexture;
 		out vec4 outputTexture;
 
-		// A stretching factor which can be modified from teh C++ code, default is 1.0 :
+		// A stretching factor which can be modified from the C++ code, default is 1.0 :
 		uniform float scale = 1.0;
 
 		void main()
@@ -870,7 +999,7 @@ We can improve the previous pipeline construction by building a script which wil
 	delete prettyHistogramPipeline;
 	\endcode
 
-	An example of output :
+An example of output :
 	<img src="./images/histogram.png" />
 	<div align="center"><i>Original Image Credit & Copyright: <a href="http://www.luisargerich.com/about.html">Luis Argerich</a></i></div>
 **/
@@ -878,7 +1007,12 @@ We can improve the previous pipeline construction by building a script which wil
 /**
 	\page page_LucasKanade Example : Simple Lucas Kanade optical flow estimator
 
-	In this example we present a simple approximation to the <a href="http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method">Lucas Kanade Optical Flow Estimator</a>. The goal is to solve the 2x2 system describing the change in intensity by translation. We write the Pipeline Script <i>LucasKanade.ppl</i> which will contain both the algorithm implementation and a representation stage :
+In this example we present a simple approximation to the <a href="http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method">Lucas Kanade Optical Flow Estimator</a>. The goal is to solve the 2x2 system describing the change in intensity by translation. We write the Pipeline Script <i>LucasKanade.ppl</i> which will contain both the algorithm implementation and a representation stage :
+
+\htmlonly
+<center><object data="./graphics/exampleOpticalFlow.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
 	\code
 	// The different formats needed :
 	TEXTURE_FORMAT:computationFormatFloat(512, 512,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
@@ -1170,7 +1304,7 @@ We can improve the previous pipeline construction by building a script which wil
 	
 	- On Windows : Follow instructions in README.txt file in the release archive (tested with VS2012).
 	
-	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode.
+	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode
 
 \section sec_Captures Screenshots
 	<img src="./images/glipstudio_1.png" width="1024" />

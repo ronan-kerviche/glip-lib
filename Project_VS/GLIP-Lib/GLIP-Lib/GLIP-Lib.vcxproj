@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AD9053D6-6283-4E1E-9F26-FEFF90EFFD8B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>GLIPLib</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\..\..\GLIP-Lib\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Component.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Devices.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Exception.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Filter.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Geometry.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\glew.h" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\glxew.h" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlFBO.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlGeBO.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlPBO.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlShader.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlTexture.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlTextureTools.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlVBO.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\OglInclude.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Pipeline.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\ShaderSource.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\wglew.h" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\devDebugTools.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\GLIPLib.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT1D.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT2D.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoader.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\Modules.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ProceduralInput.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\TextureReader.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\UniformsVarsLoader.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\VanillaParser.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Component.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Devices.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Exception.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Filter.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Geometry.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\glew.c" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlFBO.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlGeBO.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlPBO.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlShader.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlTexture.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlTextureTools.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlVBO.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\OglTools.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Pipeline.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\ShaderSource.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT1D.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT2D.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoader.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ProceduralInput.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\TextureReader.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\UniformsVarsLoader.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\VanillaParser.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

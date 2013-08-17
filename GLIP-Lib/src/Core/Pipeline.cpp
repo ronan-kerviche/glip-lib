@@ -1620,7 +1620,7 @@
 	/**
 	\fn Filter& Pipeline::operator[](int filterID)
 	\brief Access to the filter of described index.
-	\param filterID The index of the filter, obtained with __ReadOnly_PipelineLayout::getFilterID.
+	\param filterID The index of the filter, obtained with __ReadOnly_PipelineLayout::getElementID.
 	\return The index or raise an exception if any errors occur.
 	**/
 	Filter& Pipeline::operator[](int filterID)

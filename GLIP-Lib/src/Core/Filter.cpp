@@ -47,10 +47,12 @@
 
 		if(versionNumber>0)
 			str << "#version " << versionNumber << std::endl;
+		else if(versionNumber>130)
+			str << "in vec3 vertex;" << std::endl;
 
 		str << "void main()" << std::endl;
 		str << "{" << std::endl;
-		str << "    gl_FrontColor = gl_Color;" << std::endl;
+		//str << "    gl_FrontColor = gl_Color;" << std::endl;
 
 		/*for(int i=0; i<nUnits; i++)
 			str << "    gl_TexCoord[" << i << "] = gl_TextureMatrix[" << i << "] * gl_MultiTexCoord" << i << "; \n";
@@ -58,7 +60,12 @@
 		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";*/
 
 		str << "    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;" << std::endl;
-		str << "    gl_Position = ftransform();" << std::endl;
+
+		if(versionNumber<=130)
+			str << "    gl_Position = ftransform();" << std::endl;
+		else
+			str << "    gl_Position = vertex;" << std::endl;
+
 		str << "}" << std::endl;
 
 		return std::string(str.str());
@@ -223,8 +230,6 @@
 					#endif
 				}
 			}
-
-			//TODO Verify that variables names in vertex and fragment are different.
 		}
 		std::vector<std::string> varsOut = fragmentSource->getOutputVars();
 

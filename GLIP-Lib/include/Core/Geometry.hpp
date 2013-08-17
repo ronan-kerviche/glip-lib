@@ -48,12 +48,18 @@
 			class GeometryModel
 			{
 				public : 
+					/// Description of the type of geometry (automatic).
 					enum GeometryType 
 					{
+						/// Custom model.
 						CustomModel,
+						/// Standard quad, covering the area between (-1,-1) and (1,1).
 						StandardQuad,
+						/// 2D grid of dots.
 						PointsGrid2D,
+						/// 3D grid of dots.
 						PointsGrid3D,
+						/// Unknown geometry type.
 						Unknown
 					};
 
@@ -84,10 +90,15 @@
 					GLuint& d(GLuint i);
 
 				public :
+								/// Geometry Type.
 					const GeometryType	type;
+								/// True if it has texture coordinates attached.
 					const bool		hasTexCoord;
+								/// Dimension of the geometry (either 2 or 3).
 					const int		dim,
+								/// Number of vertices per elements of the geometry.
 								numVerticesPerEl;
+								/// ID of the primitive for GL.
 					const GLenum 		primitiveGL;
 
 					GeometryModel(const GeometryModel& mdl);
@@ -142,7 +153,7 @@
 			{
 				/**
 				\class StandardQuad
-				\brief Geometry : the standard quad.
+				\brief Geometry : the standard quad, covering the area between (-1,-1) and (1,1).
 				**/
 				class StandardQuad : public GeometryModel
 				{

@@ -17,10 +17,13 @@
 
 	The news feed is at : https://sourceforge.net/news/?group_id=363201
 
-\section sec_f_example Sample code
-	See the \ref page_GettingStarted page for a quick start guide. More generally, you will find examples in the <a href="./pages.html">related pages</a>.
+\section sec_f_example Introduction and Examples
+	See the <a href="./pages.html">related pages</a> to find an introduction to GLIP-Lib and examples.
 
-\section sec_examples Examples and demos
+\section sec_GlipStudio Glip-Studio
+	Prototype processing pipelines for images faster with Glip-Studio, the IDE for GLIP-Lib (\ref page_UseGlipStudio).
+
+\section sec_examples Demos
 	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.hpp">WindowRendering.hpp</a><BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.cpp">WindowRendering.cpp</a><BR>

@@ -336,6 +336,12 @@
 		color: #FFFFFF;
 	}
 
+	QSpinBox::up-arrow
+	{ }
+
+	QSpinBox::down-arrow
+	{ }
+
 	QDoubleSpinBox
 	{
 		padding-left: 5px;

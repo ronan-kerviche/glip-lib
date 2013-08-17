@@ -218,6 +218,15 @@ How to process the inputs :
 
 	outputDevice << myPipeline.out(0);
 \endcode
+
+How to access and modify a uniform variable in a filter : 
+\code
+	// Find the global ID of the targeted filter : 
+	int id = myPipeline.pipelineLayout("SubPipeline1").pipelineLayout("SubPipeline2").getElementID("Filter");
+
+	// Access the filter and modify the variable : 
+	myPipeline[id].prgm().modifyVar("variable", GL_FLOAT, 3.1415);
+\endcode
 **/
 			class Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
