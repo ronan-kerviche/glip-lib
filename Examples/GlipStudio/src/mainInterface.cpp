@@ -1,4 +1,5 @@
 #include "mainInterface.hpp"
+#include <QDateTime>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -98,7 +99,28 @@
 		} 
 		catch(std::exception& e) 
 		{
-			qDebug() << "Exception caught :" << e.what();
+			std::cerr << "Exception caught :" << std::endl;
+			std::cout << e.what() << std::endl;
+
+			// Save : 
+			QFile file("exceptions.txt");
+
+			if( file.open(QIODevice::WriteOnly | QIODevice::Text) )
+			{
+				QTextStream out(&file);
+
+				QDateTime dateTime = QDateTime::currentDateTime();
+
+				out << "On " << dateTime.toString() << ", the following exception was caught : \n";
+				out << e.what() << "\n";
+			
+				file.close();		
+			}
+
+			// Warning :
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught. However, you might be able to continue execution."), QMessageBox::Ok);
+			messageBox.setDetailedText(e.what());
+			messageBox.exec();
 		}
 
 		return false;

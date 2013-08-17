@@ -99,6 +99,8 @@ namespace Glip
 				void getVar(const std::string& varName, unsigned int* ptr);
 				void getVar(const std::string& varName, float* ptr);				
 
+				bool isValid(const std::string& varName);
+	
 				// Static tools :
 				static int maxVaryingVar(void);
 				static void stopProgram(void);

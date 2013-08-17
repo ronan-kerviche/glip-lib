@@ -630,6 +630,18 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
 	}
 
+	/**
+	\fn    bool HdlProgram::isValid(const std::string& varName)
+	\brief Check if a variable name is valid.
+
+	\param varName The name of the uniform variable to read from.
+	\return True if the name is valid (see glGetUniformLocation at http://www.opengl.org/sdk/docs/man/xhtml/glGetUniformLocation.xml) or false otherwise.
+	**/
+	bool HdlProgram::isValid(const std::string& varName)
+	{
+		return glGetUniformLocation(program, varName.c_str()) != -1;
+	}
+
 	HdlProgram::~HdlProgram(void)
 	{
 		glDetachShader(program, attachedFragmentShader);
