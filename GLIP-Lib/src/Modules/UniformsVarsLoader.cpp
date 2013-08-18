@@ -600,7 +600,7 @@
 
 				for(int l=0; l<vars.size(); l++)
 				{
-					if( vars[l]!="gl_ModelViewMatrix" && vars[l]!="gl_TextureMatrix[0]" && vars[l]!="gl_ModelViewProjectionMatrixTranspose")
+					if( filter.prgm().isValid(vars[l]) )
 					{
 						r.ressources.push_back( Ressource() );
 						r.ressources.back().build( vars[l], type[l], filter.prgm() );
