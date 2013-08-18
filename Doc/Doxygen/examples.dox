@@ -471,6 +471,182 @@ We can improve the previous pipeline construction by building a script which wil
 **/
 
 /**
+	\page page_ColorExample Example : Per pixel operations, color modification in HSV space and mixing images
+
+The simplest operations to think about are per-pixel operations on images. They are also the fastest as they benefit from raw parallelism. In this example, we show how to change image color in HSV space and mix two images in a single pipeline. The pipeline layout can be represented as : 
+\htmlonly
+<center><object data="./graphics/exampleColorChange.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+The code of the pipeline is : 
+	\code
+	// The input format : 
+	REQUIRED_FORMAT:fmt(FormatIn_0)
+
+	// The shader for color change : 
+	SHADER_SOURCE:changeColorShader
+	{
+		#version 130
+	
+		uniform sampler2D 	inputTexture;
+		out vec4 		outputTexture;
+	
+		// These variables can be modified while executing the pipeline :
+		uniform float 	saturationScal = 1.0f,	// Change in saturation.
+				intensityScal = 1.0f;	// Change in intensity.
+
+		// Conversion from RGB to HSV color space : 
+		void RGBToHSV( in vec3 rgb, out vec3 hsv )
+		{
+		        float mn, mx, delta;
+
+		        mn = min( min(rgb.r, rgb.g), rgb.b );
+		        mx = max( max(rgb.r, rgb.g), rgb.b );
+		        hsv.z = mx;
+
+		        delta = mx - mn;
+
+		        if( mx != 0.0 )
+		        {
+		                hsv.y = delta / mx;
+
+		                if( rgb.r == mx )
+		                        hsv.x = ( rgb.g - rgb.b ) / delta;
+		                else if( rgb.g == mx )
+		                        hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
+		                else
+		                        hsv.x = 4 + ( rgb.r - rgb.g ) / delta;
+
+		                hsv.x = hsv.x * 60.0;
+		                if( hsv.x < 0 )
+		                        hsv.x = hsv.x + 360.0;
+		        }
+		        else
+		        {
+		                hsv.y = 0;
+		                hsv.x = -1;
+		        }
+		}
+
+		// Conversion from HSV to RGB color space : 
+		void HSVToRGB( in vec3 hsv, out vec3 rgb )
+		{
+		        int i;
+		        float f, p, q, t;
+
+		        if( hsv.y == 0 ) 
+		                rgb = hsv.zzz;
+		        else
+		        {
+		                hsv.x = hsv.x / 60;
+		                i = int( floor( hsv.x ) );
+		                f = hsv.x - i;
+		                p = hsv.z * ( 1 - hsv.y );
+		                q = hsv.z * ( 1 - hsv.y * f );
+		                t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
+
+		                if( i==0 )
+		                        rgb = vec3(hsv.z, t, p);
+		                else if( i==1 )
+		                        rgb = vec3(q, hsv.z, p);
+		                else if( i==2 )
+		                        rgb = vec3(p, hsv.z, t);
+		                else if( i==3 )
+		                        rgb = vec3(p, q, hsv.z);
+		                else if( i==4 )
+		                        rgb = vec3(t, p, hsv.z);
+		                else
+		                        rgb = vec3(hsv.z, p, q);
+		        }
+		}
+	
+		void main()
+		{
+			// The current fragment position : 
+			vec2 pos = gl_TexCoord[0].st;
+
+			// Read the base level of the texture at the current position : 
+			vec4 col = textureLod( inputTexture, pos, 0);
+	
+			vec3 hsv;
+
+			// Transfer to HSV : 
+			RGBToHSV( col.rgb, hsv );
+
+			// Correction :
+			hsv.y *= saturationScal;
+			hsv.z *= intensityScal;
+		
+			// Transfer back to RGB : 
+			HSVToRGB( hsv, col.rgb );
+
+			// Write output :
+			outputTexture = col;
+		}
+	}
+
+	// Mix shader : 
+	SHADER_SOURCE:mixTwoImagesShader
+	{
+		#version 130
+
+		uniform sampler2D	texture1, texture2;
+		out     vec4 		mixTexture;
+
+		void main()
+		{
+			// Read the color of the two input textures : 
+			vec4	col1  = textureLod(texture1, gl_TexCoord[0].st, 0.0),
+				col2 = textureLod(texture2, gl_TexCoord[0].st, 0.0);
+
+			// Test if the current fragment is part of the upper or lower part of the image (the sepration is the secondary diagonal) :
+			if( 1.0 - gl_TexCoord[0].s > gl_TexCoord[0].t ) 
+				mixTexture = col1; // Write color from first input.
+			else
+				mixTexture = col2; // Write color from second input.
+		}
+	}
+
+	FILTER_LAYOUT: changeColorFilter ( fmt, changeColorShader)
+	FILTER_LAYOUT: mixTwoImagesFilter ( fmt, mixTwoImagesShader)
+
+	PIPELINE_MAIN: changeColorPipeline
+	{
+		INPUT_PORTS( inputTexture )
+		OUTPUT_PORTS( outputTexture, mixTexture )
+
+		FILTER_INSTANCE: changeColorFilter ( changeColorFilter )
+		FILTER_INSTANCE: mixTwoImagesFilter ( mixTwoImagesFilter )
+
+		CONNECTION( THIS, inputTexture, changeColorFilter, inputTexture)
+		CONNECTION( THIS, inputTexture, mixTwoImagesFilter, texture1)
+
+		CONNECTION( changeColorFilter, outputTexture, mixTwoImagesFilter, texture2)
+
+		CONNECTION( changeColorFilter, outputTexture, THIS, outputTexture )
+		CONNECTION( mixTwoImagesFilter, mixTexture, THIS, mixTexture )
+	}
+	\endcode
+
+Profile code for the uniform variables (see Glip::Modules::UniformsVarsLoader) : 
+	\code
+	PIPELINE:changeColorPipeline
+	{
+		FILTER:changeColorFilter
+		{
+			GL_FLOAT:intensityScal(4)
+			GL_FLOAT:saturationScal(1.5)
+		}
+	}
+	\endcode
+
+Output example, on <i>mixTexture</i> :
+\htmlonly
+<center><a href="./images/colorChange.png"> <img src="./images/colorChange_small.png" /></a></center>
+\endhtmlonly
+**/
+
+/**
 	\page page_SobelExample Example : Sobel Filter
 
 The Sobel filter is basically computing the local derivates of the intensity map. In this example we will show how to use the SHARED_CODE tag accross files. The following illustrations shows how the Sobel filter works : it reads a local 3x3 pixels window over the current location, multiplying (element-wise) the value by two 3x3 matrices : 
@@ -1298,13 +1474,53 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 
 	- <b>Binaries for Windows (64 bits) : http://sourceforge.net/projects/glip-lib/files/GlipStudio_x64_win.zip/download</b>
 	
-	- Get from source (Linux/Windows, (32/64 bits)) : clone git repository at http://sourceforge.net/p/glip-lib/code/ci/master/tree/.
+	- Get from source (Linux/Windows, (32/64 bits)) : clone git repository at http://sourceforge.net/p/glip-lib/code/ci/master/tree/ (for Windows user, you can use this tool : http://git-scm.com/downloads).
 	
-	- On Linux : build library with CMAKE, then make.
+	Building the code, what is needed : 
 	
-	- On Windows : Follow instructions in README.txt file in the release archive (tested with VS2012).
+	- Linux : GCC 4.6+, CMake, Qt SDK.
+
+	- Windows : Visual Studio (Express) 2012, Qt SDK (with OpenGL support <i>"Qt 5.1.0 for Windows (VS 2012, OpenGL)"</i>, can be downloaded at http://qt-project.org/downloads).
+
+	<b>Build steps on Linux :</b> 
+
+	- In directory <i>GLIP-Lib/</i>, run script file <i>compile.sh</i> or CMake generation :
+		\code cmake . -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \endcode
+
+	- In directory <i>Examples/GlipStudio/</i>, run usual build procedure for Qt application : 
+		\code qmake && make -j \endcode
 	
-	- Compile GlipStudio via QtCreator by importing the project file <i>GlipStudio.pro</i> or from the command line : \code qmake && make \endcode
+	<b>Build steps on Windows :</b>
+
+	- Open project file in <i>Project_VS/GLIP-Lib/</i> with Visual Studio. Include 'GLIP-Lib/include/' in search path and choose the target compilation (32/64 bits, release). Build the project.
+
+	- With Qt Creator, open project file in <i>Examples/GlipStudio/</i> (<i>Examples/GlipStudio/GlipStudio.pro</i>). Set the target to release and build the project.
+
+\section sec_UsingGlipStudio Using Glip Studio
+
+How to use <b>GlipStudio</b> : 
+	- <b>Load images</b> : in the lower pane, in the <b>Resources</b> tab, click the <b>Image</b> menu, then <b>Load image...</b>. Choose the images to load in the dialog box. Once loaded they appear in the <b>Images</b> section with their names, resolutions, GL modes, and filtering. Click on a line to display the corresponding image in the <b>Display Window</b>.
+	- <b>Load a pipeline</b> : in the right pane, in the <b>File</b> menu, choose <b>Open</b>. The application is distributed with several examples in the directory <i>Filters</i> (PPL files). For instance, load pipeline <i>changeHSL_HSV.ppl</i>, its source code will appear in a new tab. Do no modify the code for the moment, and click <b>Refresh | Compile</b> in the menu bar. The pipeline is created and its inputs and outputs are now listed in the Resource manager (<b>Resources</b> tab in the lower pane). In this manager, select one image from the <b>Images</b> section and connect it as the input of the pipeline : click the <b>Connect</b> menu and choose the unique input available. Note that the input size as changed and this particular pipeline must be refreshed every time this happens : click <b>Refresh | Compile</b> in the menu bar of the editor (or press <b><i>F5</i></b> or <b><i>Ctrl+r</i></b> on your keyboard). Select the first output or second output image, they should display almost identical images than the input.
+	- <b>Modify uniform variables</b> : without recompiling the program, you are allowed to modify variables dynamically. Go in the <b>Uniforms</b> tab, and modify the values in the boxes (<u>hint</u> : you can let your mouse over a box a use your mouse wheel or trackpad virtual wheel in order to modify the values more smoothly).
+	- <b>Save uniform variables</b> : if you were to recompile the pipeline after a modification of the code, you would loose the current settings in the <i>uniform</i> variables. In order to avoid this problem, go in the <b>Uniforms</b> tab, and, from here, you can save to a file. This is time costly for numerous modification, so you can use the <b>Main Library</b> menu from which you will be able to quickly save and load one profile per Pipeline.
+	- <b>Save the output</b> : you can save the output of a pipeline either in memory as a duplicate or to the disk. Go in the <b>Resources</b> tab, select the output, click the <b>Image</b> menu and choose <b>Copy as new resource...</b> for a in-memory copy (you will be ask for a name for the new resource) or choose <b>Save output as...</b> to save the image to the disk (in JPEG, PNG, BMP, PPM, etc.).
+
+Visualization commands, select the visualization window (containing the image) by clicking it first : 
+
+Command       					| Designation
+----------------------------------------------- | --------------------------
+Escape 						| Escape fullscreen mode
+Directional arrows  				| Translation
+Return  					| Toggle fullscreen on/off 
+Space 						| Reset transformation
++/- 						| Zoom in / out
+f/d 						| Rotate left / right
+Left click and drag 				| Translation
+Right click and drag 				| Rotation
+Holding Control key + left click and drag 	| Rotation
+Double left click 				| Toggle fullscreen on/off 
+Double right click 				| Reset transformation
+Mouse wheel 					| Zoom in / out
 
 \section sec_Captures Screenshots
 	<img src="./images/glipstudio_1.png" width="1024" />
