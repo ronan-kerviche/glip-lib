@@ -640,7 +640,7 @@ Profile code for the uniform variables (see Glip::Modules::UniformsVarsLoader) :
 	}
 	\endcode
 
-Output example, on <i>mixTexture</i> :
+Output example, on <i>mixTexture</i> (original is on top-left corner) :
 \htmlonly
 <center><a href="./images/colorChange.png"> <img src="./images/colorChange_small.png" /></a></center>
 \endhtmlonly
@@ -1501,12 +1501,12 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 How to use <b>GlipStudio</b> : 
 	- <b>Load images</b> : in the lower pane, in the <b>Resources</b> tab, click the <b>Image</b> menu, then <b>Load image...</b>. Choose the images to load in the dialog box. Once loaded they appear in the <b>Images</b> section with their names, resolutions, GL modes, and filtering. Click on a line to display the corresponding image in the <b>Display Window</b>.
 	- <b>Load a pipeline</b> : in the right pane, in the <b>File</b> menu, choose <b>Open</b>. The application is distributed with several examples in the directory <i>Filters</i> (PPL files). For instance, load pipeline <i>changeHSL_HSV.ppl</i>, its source code will appear in a new tab. Do no modify the code for the moment, and click <b>Refresh | Compile</b> in the menu bar. The pipeline is created and its inputs and outputs are now listed in the Resource manager (<b>Resources</b> tab in the lower pane). In this manager, select one image from the <b>Images</b> section and connect it as the input of the pipeline : click the <b>Connect</b> menu and choose the unique input available. Note that the input size as changed and this particular pipeline must be refreshed every time this happens : click <b>Refresh | Compile</b> in the menu bar of the editor (or press <b><i>F5</i></b> or <b><i>Ctrl+r</i></b> on your keyboard). Select the first output or second output image, they should display almost identical images than the input.
-	- <b>Modify uniform variables</b> : without recompiling the program, you are allowed to modify variables dynamically. Go in the <b>Uniforms</b> tab, and modify the values in the boxes (<u>hint</u> : you can let your mouse over a box a use your mouse wheel or trackpad virtual wheel in order to modify the values more smoothly).
+	- <b>Modify uniform variables</b> : without recompiling the program, you are allowed to modify variables dynamically. Go in the <b>Uniforms</b> tab, and modify the values in the boxes (<b><i>hint</i></b> : you can let your mouse over a box a use your mouse wheel or trackpad virtual wheel in order to modify the values more smoothly).
 	- <b>Save uniform variables</b> : if you were to recompile the pipeline after a modification of the code, you would loose the current settings in the <i>uniform</i> variables. In order to avoid this problem, go in the <b>Uniforms</b> tab, and, from here, you can save to a file. This is time costly for numerous modification, so you can use the <b>Main Library</b> menu from which you will be able to quickly save and load one profile per Pipeline.
 	- <b>Save the output</b> : you can save the output of a pipeline either in memory as a duplicate or to the disk. Go in the <b>Resources</b> tab, select the output, click the <b>Image</b> menu and choose <b>Copy as new resource...</b> for a in-memory copy (you will be ask for a name for the new resource) or choose <b>Save output as...</b> to save the image to the disk (in JPEG, PNG, BMP, PPM, etc.).
 
 Visualization commands, select the visualization window (containing the image) by clicking it first : 
-
+<CENTER>
 Command       					| Designation
 ----------------------------------------------- | --------------------------
 Escape 						| Escape fullscreen mode
@@ -1521,6 +1521,7 @@ Holding Control key + left click and drag 	| Rotation
 Double left click 				| Toggle fullscreen on/off 
 Double right click 				| Reset transformation
 Mouse wheel 					| Zoom in / out
+</CENTER>
 
 \section sec_Captures Screenshots
 	<img src="./images/glipstudio_1.png" width="1024" />

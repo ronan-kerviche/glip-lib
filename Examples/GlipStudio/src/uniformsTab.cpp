@@ -892,8 +892,8 @@
 	}
 
 // UniformsTab
-	UniformsTab::UniformsTab(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./"), dontAskForSave(false), modified(false), mainLibraryMenu(this)
+	UniformsTab::UniformsTab(ControlModule& _masterModule, QWidget* parent)
+	 : Module(_masterModule, parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./"), dontAskForSave(false), modified(false), mainLibraryMenu(this)
 	{
 		menuBar.addAction(&loadUniforms);
 		menuBar.addAction(&saveUniforms);
@@ -918,11 +918,11 @@
 		tree.setHeaderLabels( listLabels );
 
 		QObject::connect(&showSettings,		SIGNAL(triggered()),		this, 	SLOT(switchSettings()));
-		QObject::connect(&loadUniforms,		SIGNAL(triggered()),		this, 	SIGNAL(requestDataLoad()));
-		QObject::connect(&saveUniforms,		SIGNAL(triggered()),		this, 	SIGNAL(requestDataSave()));
+		QObject::connect(&loadUniforms,		SIGNAL(triggered()),		this, 	SLOT(loadData()));
+		QObject::connect(&saveUniforms,		SIGNAL(triggered()),		this, 	SLOT(saveData()));
 		QObject::connect(&settings,		SIGNAL(settingsChanged()),	this,	SLOT(settingsChanged()));
 		QObject::connect(this, 			SIGNAL(requestDataUpdate()),	this,	SLOT(dataWasModified()));
-		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),	this, 	SIGNAL(requestPipeline()));
+		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),	this, 	SLOT(mainLibraryPipelineUpdate()));
 	}
 
 	UniformsTab::~UniformsTab(void)
@@ -982,61 +982,55 @@
 		modified = true;
 	}
 
-	void UniformsTab::updatePipeline(void)
+	bool UniformsTab::prepareUpdate(void)
 	{
-		clear();
-
-		mainLibraryMenu.update();
-
-		modified = false;
-
-		loadUniforms.setDisabled(true);
-		saveUniforms.setDisabled(true);
-	}
-
-	void UniformsTab::updatePipeline(Pipeline& pipeline)	
-	{
-		clear();
-
-		std::vector<std::string> emptyPath;
-		mainPipeline = new PipelineElement(pipeline, pipeline.getName(), "", emptyPath, pipeline, &tree, true);
-		tree.expandAll();
-
-		QObject::connect( mainPipeline, SIGNAL(updated(void)), this, SIGNAL(requestDataUpdate(void)) );
-		QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), mainPipeline, SIGNAL(propagateSettings(BoxesSettings&)));
-
-		// Set up settings : 
-		settingsChanged();
-
-		HdlProgram::stopProgram();
-
-		mainLibraryMenu.update(pipeline);
-
-		modified = false;
-
-		loadUniforms.setDisabled(false);
-		saveUniforms.setDisabled(false);
-	
-		// Test : 
-		/*std::cout << "=======> TEST" << std::endl;
-		UniformsVarsLoader u;
-		u.load(pipeline);
-		std::cout << "Code : " << std::endl;
-		std::cout << u.getCode();
-		
-		std::cout << "=======> END TEST" << std::endl;*/
-	}
-
-	void UniformsTab::updateData(Pipeline& pipeline)
-	{
-		if(mainPipeline!=NULL)
+		if(!dontAskForSave && pipelineExists() && mainPipeline!=NULL && modified)
 		{
-			mainPipeline->update(pipeline);
-			HdlProgram::stopProgram();
+			if(mainPipeline->varsCount()==0)
+				return true;
+
+			QMessageBox 	message;
+			message.setText("The Uniforms Variables were modified manually, do you want to save them?");
+
+			QPushButton 	*saveButton		= message.addButton(tr("Save"), QMessageBox::AcceptRole),
+					*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
+					*discardHideButton	= message.addButton(tr("Discard and hide future requests"), QMessageBox::NoRole),
+					*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+			message.setDefaultButton(discardButton);
+
+			message.exec();
+
+			if(message.clickedButton() == saveButton)
+			{
+				saveData();
+				return true;
+			}
+			else if(message.clickedButton() == discardHideButton)
+			{			
+				dontAskForSave = true;
+				return true;
+			}
+			else if(message.clickedButton() == discardButton)
+				return true;		
+			else //if(message.clickedButton() == cancelButton)
+				return false;
 		}
+		else
+			return true;
 	}
 
-	bool UniformsTab::loadData(Pipeline& pipeline)
+	bool UniformsTab::pipelineCanBeCreated(void)
+	{
+		return prepareUpdate();
+	}
+
+	bool UniformsTab::canBeClosed(void)
+	{
+		return prepareUpdate();
+	}
+
+	bool UniformsTab::loadData(void)
 	{
 		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Uniforms Variables Data Files"), currentPath, tr("Pipeline Script Files (*.uvd)"));
 
@@ -1074,7 +1068,7 @@
 
 			try
 			{
-				c = uLoader.applyTo(pipeline);
+				c = uLoader.applyTo(pipeline());
 
 			}
 			catch(Exception& e)
@@ -1088,7 +1082,7 @@
 
 			if(c==0)
 			{
-				std::string name = pipeline.getFullName();
+				std::string name = pipeline().getFullName();
 				QMessageBox::information(this, tr("Error while loading uniforms data : "), tr("No data was loaded in the pipeline %1.").arg(name.c_str()));
 				return false;
 			}
@@ -1099,22 +1093,26 @@
 			return false;
 
 		// Update GUI : 
-		updatePipeline(pipeline);
+		pipelineWasCreated();
 
 		HdlProgram::stopProgram();
 
 		return true;
 	}
 
-	void UniformsTab::saveData(Pipeline& pipeline)
+	void UniformsTab::saveData(void)
 	{
 		// Sync !
-		updateData(pipeline);
+		if(mainPipeline!=NULL)
+		{
+			mainPipeline->update(pipeline());
+			HdlProgram::stopProgram();
+		}
 
 		// Load and save : 
 		UniformsVarsLoader uWriter;
 
-		uWriter.load(pipeline);
+		uWriter.load(pipeline());
 
 		if(uWriter.empty())
 			return ;
@@ -1134,53 +1132,68 @@
 		HdlProgram::stopProgram();
 	}
 
-	bool UniformsTab::takePipeline(Pipeline& pipeline)
+	void UniformsTab::mainLibraryPipelineUpdate(void)
 	{
-		if( mainLibraryMenu.process(pipeline) )
-		{
-			updatePipeline(pipeline);
-			return true;
-		}
-		else 
-			return false;
+		if( pipelineExists() )
+			if( mainLibraryMenu.process(pipeline()) )
+				pipelineWasCreated();
+	}
+			
+	void UniformsTab::pipelineWasCreated(void)
+	{
+		clear();
+
+		std::vector<std::string> emptyPath;
+		mainPipeline = new PipelineElement(pipeline(), pipeline().getName(), "", emptyPath, pipeline(), &tree, true);
+		tree.expandAll();
+
+		QObject::connect( mainPipeline, SIGNAL(updated(void)), this, SIGNAL(requestDataUpdate(void)) );
+		QObject::connect( this, SIGNAL(propagateSettings(BoxesSettings&)), mainPipeline, SIGNAL(propagateSettings(BoxesSettings&)));
+
+		// Set up settings : 
+		settingsChanged();
+
+		HdlProgram::stopProgram();
+
+		mainLibraryMenu.update(pipeline());
+
+		modified = false;
+
+		loadUniforms.setDisabled(false);
+		saveUniforms.setDisabled(false);
+	
+		// Test : 
+		/*std::cout << "=======> TEST" << std::endl;
+		UniformsVarsLoader u;
+		u.load(pipeline());
+		std::cout << "Code : " << std::endl;
+		std::cout << u.getCode();
+		
+		std::cout << "=======> END TEST" << std::endl;*/
 	}
 
-	bool UniformsTab::prepareUpdate(Pipeline* pipeline)
+	void UniformsTab::pipelineCompilationFailed(Exception& e)
 	{
-		if(!dontAskForSave && pipeline!=NULL && mainPipeline!=NULL && modified)
-		{
-			if(mainPipeline->varsCount()==0)
-				return true;
+		clear();
 
-			QMessageBox 	message;
-			message.setText("The Uniforms Variables were modified manually, do you want to save them?");
+		mainLibraryMenu.update();
 
-			QPushButton 	*saveButton		= message.addButton(tr("Save"), QMessageBox::AcceptRole),
-					*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
-					*discardHideButton	= message.addButton(tr("Discard and hide future requests"), QMessageBox::NoRole),
-					*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole);
+		modified = false;
 
-			message.setDefaultButton(discardButton);
+		loadUniforms.setDisabled(true);
+		saveUniforms.setDisabled(true);
+	}
 
-			message.exec();
+	void UniformsTab::pipelineWasDestroyed(void)
+	{
+		clear();
 
-			if(message.clickedButton() == saveButton)
-			{
-				saveData(*pipeline);
-				return true;
-			}
-			else if(message.clickedButton() == discardHideButton)
-			{			
-				dontAskForSave = true;
-				return true;
-			}
-			else if(message.clickedButton() == discardButton)
-				return true;		
-			else //if(message.clickedButton() == cancelButton)
-				return false;
-		}
-		else
-			return true;
+		mainLibraryMenu.update();
+
+		modified = false;
+
+		loadUniforms.setDisabled(true);
+		saveUniforms.setDisabled(true);
 	}
 
 

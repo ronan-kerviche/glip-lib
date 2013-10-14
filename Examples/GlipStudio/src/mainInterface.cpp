@@ -8,11 +8,8 @@
 
 // MainWindow
 	MainWindow::MainWindow(void)
-	 : mainLayout(this), codeEditors(this), libraryInterface(this), display(this,640,480), mainPipeline(NULL)
+	 : mainLayout(this), codeEditors(*this, this), libraryInterface(*this, this)
 	{
-		QObject::connect(&(display.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateOutput(void)));
-		QObject::connect(&codeEditors, 			SIGNAL(requireRefresh(void)), 		this, SLOT(refreshPipeline(void)));
-		QObject::connect(&libraryInterface,		SIGNAL(requireRedraw(void)),		this, SLOT(updateOutput(void)));
 		
 		// Display tools : 
 		display.renderer().setKeyboardActions(true);
@@ -35,33 +32,17 @@
 
 	MainWindow::~MainWindow(void)
 	{
-		delete mainPipeline;
-		mainPipeline = NULL;
+		// Safe reparenting, we do not want the OpenGL context to be deleted upon deletion of the interface as some ressources can still be handled by higher managers.
+		// Reparting prevent secondarySplitter from deleting its child &display.
+		display.setParent(NULL);
 	}
 
 	void MainWindow::closeEvent(QCloseEvent *event)
 	{
-		if( codeEditors.canBeClosed() )
+		if( requireClose() )
 			event->accept();
 		else
 			event->ignore();
-	}
-
-	void MainWindow::refreshPipeline(void)
-	{
-		libraryInterface.compile( codeEditors.getCurrentFilename(), codeEditors.getPaths() );
-	}
-
-	void MainWindow::updateOutput(void)
-	{
-		if(libraryInterface.hasOutput())
-		{
-			display.renderer().setImageAspectRatio(libraryInterface.currentOutput());
-
-			display.renderer() << libraryInterface.currentOutput() << OutputDevice::Process;
-		}
-		else
-			display.renderer().clearWindow();
 	}
 
 // GlipStudio

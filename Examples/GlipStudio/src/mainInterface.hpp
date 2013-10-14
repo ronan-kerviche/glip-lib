@@ -2,7 +2,7 @@
 #define __GLIPSTUDIO_MAIN_INTERFACE__
 
 	#include "GLIPLib.hpp"
-	#include "WindowRendering.hpp"
+	#include "dataModules.hpp"
 	#include "codeEditor.hpp"
 	#include "libraryInterface.hpp"
 
@@ -18,7 +18,7 @@
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
-	class MainWindow : public QWidget	
+	class MainWindow : public ControlModule
 	{
 		Q_OBJECT
 
@@ -28,18 +28,11 @@
 			QWidget			container;
 			QVBoxLayout		containerLayout;
 			QSplitter		secondarySplitter;
-			WindowRendererContainer display;
+
 			LibraryInterface	libraryInterface;
 			CodeEditorsPannel 	codeEditors;
 
-			LayoutLoader		pipelineLoader;
-			Pipeline*		mainPipeline;
-
 			void closeEvent(QCloseEvent *event);
-
-		private slots :
-			void refreshPipeline(void);
-			void updateOutput(void);
 
 		public : 
 			MainWindow(void);

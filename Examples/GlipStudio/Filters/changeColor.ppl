@@ -27,7 +27,6 @@ SHADER_SOURCE:changeColor
 		hsv.y *= saturationScal;
 		hsv.z *= intensityScal;
 		
-
 		HSVToRGB( hsv, col.rgb );
 
 		outputTexture = col;

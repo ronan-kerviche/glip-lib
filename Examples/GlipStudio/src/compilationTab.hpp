@@ -2,20 +2,14 @@
 #define __GLIPSTUDIO_COMPILATIONTAB__
 
 	#include "GLIPLib.hpp"
+	#include "dataModules.hpp"
 	
-	#include <QtGlobal>
-	#if QT_VERSION >= 0x050000
-		#include <QtWidgets>
-	#else
-		#include <QtGui>
-	#endif
-
 	#include <QListWidget>
 	#include <QVBoxLayout>
 
 	using namespace Glip;
 
-	class CompilationTab : public QWidget
+	class CompilationTab : public Module
 	{
 		Q_OBJECT
 
@@ -24,14 +18,14 @@
 			QListWidget	data;
 
 			void cleanCompilationTab(bool writeNoPipeline=false);
+			
+		private slots : 
+			void pipelineWasCreated(void);
+			void pipelineCompilationFailed(Exception& e);
 
 		public : 
-			CompilationTab(QWidget* parent=NULL);
+			CompilationTab(ControlModule& _masterModule, QWidget* parent=NULL);
 			~CompilationTab(void);
-	
-		public slots : 
-			void compilationSucceeded(void);
-			void compilationFailed(Exception& e);		
 	};
 
 #endif

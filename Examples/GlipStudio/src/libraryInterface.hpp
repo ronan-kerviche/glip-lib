@@ -2,6 +2,7 @@
 #define __GLIPSTUDIO_LIBRARY_INTERFACE__
 
 	#include "GLIPLib.hpp"
+	#include "dataModules.hpp"
 	#include "resourcesTab.hpp"
 	#include "compilationTab.hpp"
 	#include "uniformsTab.hpp"
@@ -13,7 +14,7 @@
 		#include <QtGui>
 	#endif
 
-	class LibraryInterface : public QWidget
+	class LibraryInterface : public Module
 	{
 		Q_OBJECT
 
@@ -23,31 +24,13 @@
 			ResourcesTab			resourceTab;			
 			CompilationTab			compilationTab;
 			UniformsTab			uniformsTab;
-			
-			LayoutLoader			pipelineLoader;
-			Pipeline*			mainPipeline;
-			bool 				lastComputeSucceeded;
 
 		private slots :
-			void updateComputeStatus(bool status);
-			void compute(void);
-			void updateUniforms(void);
-			void loadUniforms(void);
-			void saveUniforms(void);
-			void needPipeline(void);
-			void saveOutput(int id);
-			void copyOutputToResources(int id);
+			void pipelineCompilationFailed(Exception& e);
 					
 		public : 
-			LibraryInterface(QWidget *parent=NULL);
+			LibraryInterface(ControlModule& _masterModule, QWidget *parent);
 			~LibraryInterface(void);
-
-			bool hasOutput(void) const;
-			HdlTexture& currentOutput(void);
-			void compile(const std::string& pathToCode, const std::vector<std::string>& paths);
-			
-		signals : 
-			void requireRedraw(void);
 	};
 
 #endif

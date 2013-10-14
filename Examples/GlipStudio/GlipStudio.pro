@@ -15,6 +15,7 @@ win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/Qt/ResourceLoader.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
+			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
 			./src/keywords.hpp \
 			./src/resourcesTab.hpp \
@@ -26,6 +27,7 @@ SOURCES      	+= 	./src/main.cpp \
 			../ExternalTools/Qt/WindowRendering.cpp \
 			../ExternalTools/Qt/ResourceLoader.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
+			./src/dataModules.cpp \
 			./src/codeEditor.cpp \
 			./src/keywords.cpp \
 			./src/resourcesTab.cpp \

@@ -11,7 +11,7 @@ SHADER_SOURCE:sigmoidShader
 
 	uniform float center = 0.5f, scale = 1.0f;
 
-	voi d main()
+	void main()
 	{
 		vec2 pos 	= gl_TexCoord[0].st;
 		vec4 col	= textureLod(inputTexture,  pos, 0);

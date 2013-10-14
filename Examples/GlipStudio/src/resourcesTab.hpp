@@ -2,14 +2,8 @@
 #define __GLIPSTUDIO_RESOURCETAB__
 
 	#include "GLIPLib.hpp"
+	#include "dataModules.hpp"
 	#include "ResourceLoader.hpp"
-
-	#include <QtGlobal>
-	#if QT_VERSION >= 0x050000
-		#include <QtWidgets>
-	#else
-		#include <QtGui>
-	#endif
 
 	#include <QString>
 	#include <QMenu>
@@ -26,13 +20,67 @@
 	#include <QMessageBox>
 	#include <QFileDialog>
 	#include <QInputDialog>
-	//#include <unistd.h>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-// Texture object :
+
+	class ImageObject
+	{
+		private : 
+			bool virtual;
+			QString filename;
+			unsigned char* image;
+			HdlFormat format;
+			HdlTexture* textureData;
+		public : 
+			ImageObject(const QString& _filename, bool toDevice=true);
+			ImageObject(HdlTexture& texture);
+			~ImageObject(void);
+
+			bool isVirtual(void) const;
+			bool isOnDevice(void) const;
+			void loadToDevice(void) const;
+			const QString& getFilename(void) const;
+			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
+			HdlTexture& texture(void);
+	};
+
+	class ImageCollection : public QWidget
+	{
+		private : 
+			// Constant : 
+			static size_t maxDeviceOccupancy;
+
+			// Images : 
+			std::vector<ImageObject*> images;
+	
+			// Interface : 
+			QTreeWidget tree;
+
+			// Private tools : 
+			size_t currentDeviceOccupancy(void);
+
+		public : 
+			ImageCollection(void);
+			~ImageCollection(void);
+
+			int  getNumImages(void) const
+			bool imageExists(int id) const;
+			HdlTexture& texture(int id) const;
+
+		signals : 
+			void imageLoaded(int);
+	};
+
+	class ResourceTab : public Module 
+	{
+		private : 
+			
+	};
+
+/*// Texture object :
 	class TextureObject
 	{
 		private : 
@@ -206,7 +254,7 @@
 	};
 
 // Resources GUI :
-	class ResourcesTab : public QWidget
+	class ResourcesTab : public Module
 	{
 		Q_OBJECT
 
@@ -264,6 +312,12 @@
 			void updateInputConnectionDisplay(void);
 			void updateMenuOnCurrentSelection(ConnectionMenu* connections=NULL, FilterMenu* filters=NULL, WrappingMenu* wrapping=NULL, QAction* removeImage=NULL, QAction* saveOutAs=NULL, QAction* copyOutAs=NULL);
 
+			void updateDisplay(void);
+			void updateDisplay(WindowRenderer*& display);
+
+			void clearPipelineInfo(void);
+			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
+
 		private slots :
 			void fetchLoadedImages(void);
 			void selectionChanged(void);
@@ -276,7 +330,7 @@
 			void requestCopyAsNewResource(void);
 
 		public : 
-			ResourcesTab(QWidget* parent=NULL);
+			ResourcesTab(ControlModule& _masterModule, QWidget* parent=NULL);
 			~ResourcesTab(void);
 
 			void appendFormats(LayoutLoader& loader);
@@ -286,20 +340,20 @@
 
 			bool hasOutput(void) const;
 			bool outputIsPartOfPipelineOutputs(void) const;
-			HdlTexture* getOutput(Pipeline* pipeline);
+			HdlTexture* getOutput(void);
 
-		public slots :
-			void updatePipelineInfos(void);
-			void updatePipelineInfos(Pipeline* pipeline);	
-			void saveOutputToFile(HdlTexture& output);
-			void copyOutputAsNewResource(HdlTexture& output);
+		private slots :
+			void pipelineWasCreated(void);
+			void pipelineCompilationFailed(Exception& e);
+			void pipelineWasDestroyed(void);
+			void saveOutputToFile(void);
+			void copyOutputAsNewResource(void);
 			void updateLastComputingStatus(bool succeeded);
 	
 		signals : 
-			void outputChanged(void);
 			void updatePipelineRequest(void);
 			void saveOutput(int i);
 			void copyOutputAsNewResource(int i);
-	};
+	};*/
 
 #endif

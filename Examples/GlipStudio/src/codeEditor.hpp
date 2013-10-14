@@ -2,6 +2,7 @@
 #define __GLIPSTUDIO_CODE_EDITOR__
 
 	#include "GLIPLib.hpp"
+	#include "dataModules.hpp"
 	#include <QPlainTextEdit>
 	#include <QVector>
 	#include <QSyntaxHighlighter>
@@ -9,14 +10,6 @@
 	#include <QTextCharFormat>
 	#include <QString>
 	#include <QFont>
-	
-	#include <QtGlobal>
-	#if QT_VERSION >= 0x050000
-		#include <QtWidgets>
-	#else
-		#include <QtGui>
-	#endif
-
 	#include <QMenu>
 	#include <QAction>
 	#include <QMenuBar>
@@ -94,6 +87,7 @@
 			const QString& filename(void) const;
 			QString path(void) const;
 			QString getTitle(void) const;
+			std::string currentContent(void) const;
 			bool isModified(void) const;
 			bool canBeClosed(void);
 			void setFilename(const QString& newFilename);
@@ -281,7 +275,7 @@
 			void openFile(QString filename);
 	};
 
-	class CodeEditorsPannel : public QWidget
+	class CodeEditorsPannel : public Module
 	{
 		Q_OBJECT
  		
@@ -306,6 +300,12 @@
 			PathWidget		pathWidget;
 			QVector<CodeEditor*>	tabs;
 
+			bool canBeClosed(void);
+			std::string getCurrentFilename(void);
+			std::string getCurrentCode(void);
+			const std::vector<std::string>& getPaths(void);
+			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
+
 		private slots : 	
 			void newTab(void);
 			void open(void);
@@ -322,18 +322,11 @@
 			void aboutMessage(void);
 
 		public :
-			CodeEditorsPannel(QWidget* parent);
+			CodeEditorsPannel(ControlModule& _masterModule, QWidget* parent);
 			~CodeEditorsPannel(void);
-
-			std::string getCurrentFilename(void);
-			const std::vector<std::string>& getPaths(void);
-			bool canBeClosed(void);
 
 		public slots : 
 			void openFile(QString filename);
-
-		signals : 
-			void requireRefresh(void);
 	};
 
 #endif

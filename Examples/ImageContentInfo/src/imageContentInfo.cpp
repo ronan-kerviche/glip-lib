@@ -124,6 +124,9 @@
 				float 	imageAspectRatio = static_cast<float>(w)/static_cast<float>(h);
 				window.renderer().setImageAspectRatio(imageAspectRatio);
 
+				pipelineLoaderInterface.loader().clearRequiredElements("InputFormat");
+				pipelineLoaderInterface.loader().addRequiredElement("InputFormat", imageLoaderInterface.currentTexture());
+
 				window.renderer() << pipelineLoaderInterface.currentOutput( imageLoaderInterface.currentTexture() ) << OutputDevice::Process;
 			}
 			catch(std::exception& e)

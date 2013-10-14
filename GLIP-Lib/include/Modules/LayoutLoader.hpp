@@ -31,6 +31,7 @@
 	#include "Core/Filter.hpp"
 	#include "Core/Pipeline.hpp"
 	#include "Modules/VanillaParser.hpp"
+	#include "Modules/LayoutLoaderModules.hpp"
 
 namespace Glip
 {
@@ -72,6 +73,7 @@ namespace Glip
 			KW_LL_VERTEX,
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
+			KW_LL_MODULE_CALL,
 			LL_NumKeywords,
 			LL_UnknownKeyword
 		};
@@ -252,25 +254,56 @@ Loading Example :
 **/
 		class LayoutLoader
 		{
+			public : 
+				/**
+				\struct PipelineScriptElements
+				\brief Contains data about a script, possibly made before the load operation.
+
+				WARNING : It does not explore included files which might to incomplete list of requirements.
+				**/
+				struct PipelineScriptElements
+				{
+					std::vector<std::string> 			addedPaths,		/// Paths added by the script.
+											includedFiles,		/// File included by the script.
+											requiredFormats,	/// Names of the formats required by the script.
+											requiredGeometries,	/// Names of the geometries required by the script.
+											requiredPipelines,	/// Names of the pipelines required by the script.
+											modulesCalls,		/// Names of the modules called by the script.
+											formatsLayout,		/// Names of the formats contained in the script.
+											shaderSources,		/// Names of the shader source code contained in the script.
+											geometries,		/// Names of the geometries contained in the script.
+											filtersLayout,		/// Names of the filter layouts contained in the script.
+											pipelines;		/// Names of the pipelines layout contained in the script.
+
+					std::vector< std::vector<std::string> >		pipelineInputs;		/// List of the input ports for each pipeline contained in the script (same order as pipelines).
+					std::vector< std::vector<std::string> >		pipelineOutputs;	/// List of the output ports for each pipeline contained in the script (same order as pipelines).
+
+					std::string					mainPipeline;		/// Name of the main pipeline contained in the script.
+
+					std::vector<std::string> 			mainPipelineInputs,	/// List of the input ports for the main pipeline contained in the script.
+											mainPipelineOutputs;	/// List of the output ports for the main pipeline contained in the script.
+				};
+
 			private :
-				bool 					isSubLoader;
+				bool 						isSubLoader;
 
 				// Reading dynamic :
-				std::string				currentPath;
-				std::vector<std::string>		dynamicPaths;
-				std::vector<LayoutLoaderKeyword>	associatedKeyword;
-				std::map<std::string, std::string>	sharedCodeList;
-				std::map<std::string, HdlTextureFormat> formatList;
-				std::map<std::string, ShaderSource> 	sourceList;
-				std::map<std::string, GeometryModel>	geometryList;
-				std::map<std::string, FilterLayout> 	filterList;
-				std::map<std::string, PipelineLayout> 	pipelineList;
+				std::string					currentPath;
+				std::vector<std::string>			dynamicPaths;
+				std::vector<LayoutLoaderKeyword>		associatedKeyword;
+				std::map<std::string, std::string>		sharedCodeList;
+				std::map<std::string, HdlTextureFormat> 	formatList;
+				std::map<std::string, ShaderSource> 		sourceList;
+				std::map<std::string, GeometryModel>		geometryList;
+				std::map<std::string, FilterLayout> 		filterList;
+				std::map<std::string, PipelineLayout> 		pipelineList;
 
 				// Static :
-				std::vector<std::string>		staticPaths;
-				std::map<std::string,HdlTextureFormat>	requiredFormatList;
-				std::map<std::string,GeometryModel>	requiredGeometryList;
-				std::map<std::string,PipelineLayout>	requiredPipelineList;
+				std::vector<std::string>			staticPaths;
+				std::map<std::string,HdlTextureFormat>		requiredFormatList;
+				std::map<std::string,GeometryModel>		requiredGeometryList;
+				std::map<std::string,PipelineLayout>		requiredPipelineList;
+				std::map<std::string,LayoutLoaderModule*>	modules;			// Using pointers to avoid conflict between polymorphism and object slicing.
 
 				// Tools :
 				LayoutLoaderKeyword getKeyword(const std::string& str);
@@ -287,6 +320,7 @@ Loading Example :
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
+				void    moduleCall(const VanillaParserSpace::Element& e);
 				void	buildSharedCode(const VanillaParserSpace::Element& e);
 				void	buildFormat(const VanillaParserSpace::Element& e);
 				void	buildShaderSource(const VanillaParserSpace::Element& e);
@@ -294,6 +328,8 @@ Loading Example :
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
 				void	process(const std::string& code, std::string& mainPipelineName);
+
+				void	listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs);
 
 			public :
 				LayoutLoader(void);
@@ -313,6 +349,10 @@ Loading Example :
 				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
 				int  clearRequiredElements(void);
 				int  clearRequiredElements(const std::string& name);
+
+				PipelineScriptElements listElements(const std::string& source);
+
+				void addModule(LayoutLoaderModule* module, bool replace=false);
 		};
 
 /**

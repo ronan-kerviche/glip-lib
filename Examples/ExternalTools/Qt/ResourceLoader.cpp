@@ -586,6 +586,8 @@
 		QObject::connect(&loadButton,		SIGNAL(released(void)), 		this, SLOT(loadPipelineDialog(void)));
 		QObject::connect(&refreshButton,	SIGNAL(released(void)), 		this, SLOT(refreshPipeline(void)));
 		QObject::connect(&outputChoice,		SIGNAL(currentIndexChanged(int)),	this, SIGNAL(outputIndexChanged(void)));
+
+		LayoutLoaderModule::addBasicModules(layoutLoader);
 	}
 
 	PipelineLoaderInterface::~PipelineLoaderInterface(void)

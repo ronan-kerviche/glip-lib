@@ -66,7 +66,8 @@
 										"STANDARD_QUAD",
 										"VERTEX",
 										"ELEMENT",
-										"ADD_PATH"
+										"ADD_PATH",
+										"MODULE_CALL",
 									};
 
 // LayoutLoader
@@ -89,6 +90,11 @@
 		requiredFormatList.clear();
 		requiredGeometryList.clear();
 		requiredPipelineList.clear();
+
+		// Delete all modules : 
+		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+			delete it->second;
+		modules.clear();
 	}
 
 	void LayoutLoader::clean(void)
@@ -210,7 +216,7 @@
 	{
 		// xxxProperty :
 		//	1  : Must have.
-		//	0  : Indiferent.
+		//	0  : Indifferent.
 		//	-1 : Must not have.
 
 		// Generate help :
@@ -231,13 +237,13 @@
 		if(minArguments>0 && e.arguments.empty())
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " argument(s).", __FILE__, __LINE__);
 
-		if(e.arguments.size()!=minArguments && minArguments==maxArguments)
+		if(e.arguments.size()!=minArguments && minArguments==maxArguments && minArguments>=0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have exactly "  + to_string(minArguments) + " argument(s).", __FILE__, __LINE__);
 
-		if(e.arguments.size()<minArguments)
+		if(e.arguments.size()<minArguments && minArguments>=0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + to_string(minArguments) + " argument(s), but it has only " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
-		if(e.arguments.size()>maxArguments)
+		if(e.arguments.size()>maxArguments && maxArguments>=0)
 			throw Exception("From line " + to_string(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + to_string(maxArguments) + " argument(s), but it has " + to_string(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.noBody && bodyProperty>0)
@@ -584,6 +590,56 @@
 			throw Exception("From line " + to_string(e.startLine) + " : A PipelineLayout Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 		else
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
+	}
+
+	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e)
+	{
+		// Find the name of the module : 
+		preliminaryTests(e, 1, -1, -1, 0, "RequiredPipeline");
+
+		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find( e.name );
+
+		if(it==modules.end())
+			throw Exception("From line " + to_string(e.startLine) + " : The module \"" + e.name + "\" was not loaded.", __FILE__, __LINE__);
+
+		std::string manual;
+
+		try
+		{
+			LayoutLoaderModule& module = *(it->second);
+
+			manual = module.getManual();
+
+			// Re - test call : 
+			preliminaryTests(e, 1, module.getMinNumArguments(), module.getMaxNumArguments(), module.bodyPresenceTest(), "Module \"" + module.getName() + "\"");
+
+			// Make the call : 
+			module.apply(e.arguments, e.body,	currentPath, 
+								dynamicPaths,
+								sharedCodeList,
+								formatList, 
+								sourceList,
+								geometryList,
+								filterList,
+								pipelineList,
+								staticPaths,
+								requiredFormatList,
+								requiredGeometryList,
+								requiredPipelineList);
+		}
+		catch(Exception& ex)
+		{
+			Exception m("From line " + to_string(e.startLine) + " : The module \"" + e.name + "\" reported an error : ", __FILE__, __LINE__);
+
+			if(manual.empty())
+				throw m+ex;
+			else
+			{
+				Exception ma("MODULE \"" + e.name + "\" MANUAL : \n" + manual, __FILE__, __LINE__);
+				Exception ey = ex + ma;
+				throw m+ey;
+			}
+		}
 	}
 
 	void LayoutLoader::buildSharedCode(const VanillaParserSpace::Element& e)
@@ -1152,8 +1208,14 @@
 					case KW_LL_REQUIRED_FORMAT :
 						buildRequiredFormat(rootParser.elements[k]);
 						break;
+					case KW_LL_REQUIRED_GEOMETRY :
+						buildRequiredGeometry(rootParser.elements[k]);
+						break;
 					case KW_LL_REQUIRED_PIPELINE :
 						buildRequiredPipeline(rootParser.elements[k]);
+						break;
+					case KW_LL_MODULE_CALL :
+						moduleCall(rootParser.elements[k]);
 						break;
 					case KW_LL_FORMAT_LAYOUT :
 						buildFormat(rootParser.elements[k]);
@@ -1189,6 +1251,57 @@
 		catch(Exception& ex)
 		{
 			Exception m("Exception caught while processing pipeline file : ", __FILE__, __LINE__);
+			throw m + ex;
+		}
+	}
+
+	void LayoutLoader::listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs)
+	{
+		try
+		{
+			// Load the content of the body :
+			VanillaParser parser(e.body, e.bodyLine);
+
+			// Classify the new data :
+			std::vector<LayoutLoaderKeyword> associatedKeywords;
+
+			classify(parser.elements, associatedKeywords);
+
+			// Test for possible external elements :
+			int 	inputPorts = -1,
+				outputPorts = -1;
+			for(int k=0; k<associatedKeywords.size(); k++)
+			{
+				switch(associatedKeywords[k])
+				{
+					case KW_LL_INPUT_PORTS :
+						if(inputPorts>=0)
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+						else
+							inputPorts = k;
+						break;
+					case KW_LL_OUTPUT_PORTS :
+						if(outputPorts>=0)
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+						else
+							outputPorts = k;
+						break;
+				}
+			}
+
+			if(inputPorts<0)
+				throw Exception("From line " + to_string(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+
+			if(outputPorts<0)
+				throw Exception("From line " + to_string(e.startLine) + " : The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+
+			// Set : 
+			inputs  = parser.elements[inputPorts].arguments;
+			outputs = parser.elements[outputPorts].arguments;
+		}
+		catch(Exception& ex)
+		{
+			Exception m("From line " + to_string(e.startLine) + " : Exception caught while building PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
 			throw m + ex;
 		}
 	}
@@ -1449,6 +1562,171 @@
 		}
 	
 		return numElemErased;
+	}
+
+	/**
+	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source)
+	\brief List the resources contained in a script.
+	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
+	\return A LayoutLoader::PipelineScriptElements object containing all informations.
+	**/
+	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source)
+	{
+		PipelineScriptElements result;
+
+		clean();
+
+		if(source.empty())
+			throw Exception("LayoutLoader::listElements - The source is empty.", __FILE__, __LINE__);
+
+		bool isAFile = false;
+		std::string content;
+
+		// Copy the path :
+		dynamicPaths = staticPaths;
+
+		// Is it a filename or the content :
+		if(source.find('\n')==std::string::npos)
+		{
+			// Split :
+			size_t section = source.find_last_of("/");
+			std::string filename = source.substr(section+1);
+			currentPath = source.substr(0, section+1);
+
+			// Add to the path :
+			if(!currentPath.empty())
+				dynamicPaths.push_back(currentPath);
+
+			loadFile(filename, content, currentPath);
+			isAFile = true;
+		}
+		else
+			content = source;
+
+		try
+		{
+			// Parse :
+			VanillaParser rootParser(content);
+
+			// Class the elements :
+			classify(rootParser.elements, associatedKeyword);
+
+			// Process
+			for(int k=0; k<associatedKeyword.size(); k++)
+			{
+				switch(associatedKeyword[k])
+				{
+					case KW_LL_ADD_PATH :
+						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "AppendPath");
+						result.addedPaths.push_back( rootParser.elements[k].arguments[0] );
+						break;
+					case KW_LL_INCLUDE_FILE :
+						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "IncludeFile");
+						result.includedFiles.push_back( rootParser.elements[k].arguments[0] );
+						break;
+					case KW_LL_SHARED_SOURCE :
+						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "SharedCode");
+						result.shaderSources.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_REQUIRED_FORMAT :
+						preliminaryTests(rootParser.elements[k], 1, 1, 10, -1, "RequiredFormat");
+						result.requiredFormats.push_back( rootParser.elements[k].arguments[0] );
+						result.formatsLayout.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_REQUIRED_GEOMETRY :
+						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredGeometry"); 
+						result.requiredGeometries.push_back( rootParser.elements[k].arguments[0] );
+						result.geometries.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_REQUIRED_PIPELINE :
+						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredPipeline");
+						result.requiredPipelines.push_back( rootParser.elements[k].arguments[0] );
+						// WARNING, THE REQUIRED PIPELINE ARE NOT LISTED BECAUSE WE CAN'T KNOW THEIR INPUTS/OUTPUTS AHEAD OF TIME.
+						break;
+					case KW_LL_MODULE_CALL :
+						preliminaryTests(rootParser.elements[k], 1, -1, -1, 0, "ModuleCall");
+						result.modulesCalls.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_FORMAT_LAYOUT :
+						preliminaryTests(rootParser.elements[k], 1, 4, 9, -1, "Format"); 
+						result.formatsLayout.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_SHADER_SOURCE :
+						preliminaryTests(rootParser.elements[k], 1, 0, 1, 0, "ShaderSource");
+						result.shaderSources.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_GEOMETRY :
+						preliminaryTests(rootParser.elements[k], 1, 1, 4, 0, "Geometry");
+						result.geometries.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_FILTER_LAYOUT :
+						preliminaryTests(rootParser.elements[k], 1, 2, 6, -1, "FilterLayout");
+						result.filtersLayout.push_back( rootParser.elements[k].name );
+						break;
+					case KW_LL_PIPELINE_MAIN :
+						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "MainPipelineLayout");
+						result.mainPipeline = rootParser.elements[k].name;
+						listPipelinePorts(rootParser.elements[k], result.mainPipelineInputs, result.mainPipelineOutputs);
+						break;
+					case KW_LL_PIPELINE_LAYOUT :
+						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "PipelineLayout");
+						result.pipelines.push_back( rootParser.elements[k].name );
+						result.pipelineInputs.push_back( std::vector<std::string>() );
+						result.pipelineOutputs.push_back( std::vector<std::string>() );
+						listPipelinePorts(rootParser.elements[k], result.pipelineInputs.back(), result.pipelineOutputs.back());	
+						break;
+					default :
+						if(associatedKeyword[k]<LL_NumKeywords)
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
+						else
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
+						break;
+				}
+			}
+		}
+		catch(Exception& e)
+		{
+			if(isAFile && currentPath.empty())
+			{
+				Exception m("Exception caught while processing file \"" + source + "\" : ", __FILE__, __LINE__);
+				throw m+e;
+			}
+			else if(isAFile)
+			{
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", __FILE__, __LINE__);
+				throw m+e;
+			}
+			else
+			{
+				Exception m("Exception caught while processing string : ", __FILE__, __LINE__);
+				throw m+e;
+			}
+		}
+
+		clean();
+
+		return result;
+	}
+
+	/**
+	\fn void LayoutLoader::addModule(const LayoutLoaderModule& module, bool replace)
+	\brief Add a module which can be called from a script to generate dynamic data.
+	\param module The module to add. See LayoutLoaderModule documentation for more information. The memory will be safely releaed by the destructor of LayoutLoader, the user shall not release it.
+	\param replace Set to true if any module having similar name must be replaced. Raise an exception otherwise.
+	**/
+	void LayoutLoader::addModule(LayoutLoaderModule* module, bool replace)
+	{
+		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(module->getName());
+
+		if(it!=modules.end() && !replace)
+			throw Exception("LayoutLoader::addModule - A module with the name \"" + module->getName() + " already exists.", __FILE__, __LINE__);
+		else
+		{
+			delete it->second;
+			it->second = NULL;
+		}
+
+		modules.insert( std::pair<std::string, LayoutLoaderModule*>( module->getName(), module ) );
 	}
 
 // LayoutWriter 

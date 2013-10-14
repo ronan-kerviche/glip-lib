@@ -2,13 +2,7 @@
 #define __GLIPSTUDIO_UNIFORMSTAB__
 
 	#include "GLIPLib.hpp"
-
-	#include <QtGlobal>
-	#if QT_VERSION >= 0x050000
-		#include <QtWidgets>
-	#else
-		#include <QtGui>
-	#endif
+	#include "dataModules.hpp"
 
 	#include <QObject>
 	#include <QTreeWidgetItem>
@@ -260,7 +254,7 @@
 			void requireProcessing(void);
 	};
 
-	class UniformsTab : public QWidget
+	class UniformsTab : public Module
 	{
 		Q_OBJECT
 
@@ -280,29 +274,31 @@
 			PipelineElement*	mainPipeline;
 
 			void clear(void);
+			bool prepareUpdate(void);
+
+			// Inherited : 
+			bool pipelineCanBeCreated(void);
+			bool canBeClosed(void);
 
 		private slots :
 			void switchSettings(void);
 			void settingsChanged(void);
 			void dataWasModified(void);
+			bool loadData(void);	
+			void saveData(void);
+			void mainLibraryPipelineUpdate(void);
+
+			// Inherited :
+			void pipelineWasCreated(void);
+			void pipelineCompilationFailed(Exception& e);
+			void pipelineWasDestroyed(void);
 
 		public : 
-			UniformsTab(QWidget* parent=NULL);
+			UniformsTab(ControlModule& _masterModule, QWidget* parent=NULL);
 			~UniformsTab(void);
 
-			void updatePipeline(void);
-			void updatePipeline(Pipeline& pipeline);			
-			void updateData(Pipeline& pipeline);
-			bool loadData(Pipeline& pipeline);	
-			void saveData(Pipeline& pipeline);
-			bool takePipeline(Pipeline& pipeline);
-			bool prepareUpdate(Pipeline* pipeline);
-
-		signals :
-			void requestDataUpdate(void);
-			void requestDataLoad(void);
-			void requestDataSave(void);
-			void requestPipeline(void);
+		signals : 
+			void requestDataUpdate(void);			
 			void propagateSettings(BoxesSettings&);
 	};
 

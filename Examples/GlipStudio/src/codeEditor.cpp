@@ -167,11 +167,48 @@
 
 		updateLineNumberAreaWidth(0);
 
+		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+	
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Black.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl; 
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Bold.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Light.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-ExtraLight.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Medium.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Semibold.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		std::cout << "Font list : " << std::endl;
+		foreach(const QString &family, QFontDatabase::applicationFontFamilies(fid))
+		{
+			std::cout << "    " << family.toStdString() << std::endl;
+		}
+	
 		// Set the font : 
 		int currentFontSize = document()->defaultFont().pointSize(); 
-		font.setFamily("Monospace");
+		//font.setFamily("Monospace");
+		//font.setFixedPitch(true);
+		//font.setPointSize(currentFontSize);
+		QFontDatabase db;
+		font = db.font("Source Code Pro", "Regular", currentFontSize);
 		font.setFixedPitch(true);
-		font.setPointSize(currentFontSize);
 		setFont(font);	
 
 		// Set the tabulation length :
@@ -389,6 +426,11 @@
 			return fileName + " *";
 		else
 			return fileName;
+	}
+	
+	std::string CodeEditor::currentContent(void) const
+	{
+		return toPlainText().toStdString();
 	}
 
 	bool CodeEditor::isModified(void) const
@@ -958,8 +1000,8 @@
 	}
 
 // CodeEditorsPannel
-	CodeEditorsPannel::CodeEditorsPannel(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), recentFilesMenu(this), templateMenu(this), 
+	CodeEditorsPannel::CodeEditorsPannel(ControlModule& _masterModule, QWidget* parent)
+	 : Module(_masterModule, parent), layout(this), menuBar(this), widgets(this), fileMenu("File", this), recentFilesMenu(this), templateMenu(this), 
 	   newTabAct(tr("&New tab"), this), saveAct(tr("&Save"), this), saveAsAct(tr("Save as"), this), saveAllAct(tr("Save all"), this), openAct(tr("&Open"), this), refreshAct("&Refresh | Compile", this), closeTabAct(tr("&Close"), this), showPathWidget(tr("Paths"),this), pathWidget(this), closeAllAct(tr("Close all"), this), notificationBar(this), aboutAct(tr("About"), this)
 	{
 		// Add the actions : 
@@ -1188,7 +1230,9 @@
 	void CodeEditorsPannel::refresh(void)
 	{
 		if(widgets.count() > 0)
-			emit requireRefresh();
+		{
+			requirePrepareToPipelineCreation(getCurrentCode() + "\n");
+		}
 	}
 
 	void CodeEditorsPannel::closeTab(void)
@@ -1326,6 +1370,17 @@
 			return "";	
 	}
 
+	std::string CodeEditorsPannel::getCurrentCode(void)
+	{
+		if(widgets.count() > 0)
+		{
+			int c = widgets.currentIndex();
+			return tabs[c]->currentContent();
+		}
+		else
+			return "";
+	}
+
 	const std::vector<std::string>& CodeEditorsPannel::getPaths(void)
 	{
 		// Make sure the list of path contains the one of the current pipeline :
@@ -1337,6 +1392,12 @@
 		}
 
 		return pathWidget.getPaths();
+	}
+
+	void CodeEditorsPannel::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
+	{
+		// Add path : 
+		loader.addToPaths( getPaths() );
 	}
 
 	bool CodeEditorsPannel::canBeClosed(void)
@@ -1382,5 +1443,4 @@
 			}
 		}
 	}
-
 

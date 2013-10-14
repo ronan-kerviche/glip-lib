@@ -1,6 +1,6 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
 //TEXTURE_FORMAT:format(1920,1200,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
-REQUIRED_FORMAT:format(FormatIn_0)
+REQUIRED_FORMAT:format(texInput)
 
 INCLUDE_FILE(colors.ppl)
 

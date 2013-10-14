@@ -1,7 +1,7 @@
 #include "compilationTab.hpp"
 
-	CompilationTab::CompilationTab(QWidget* parent)
-	 : QWidget(parent), layout(this), data(this)
+	CompilationTab::CompilationTab(ControlModule& _masterModule, QWidget* parent)
+	 : Module(_masterModule, parent), layout(this), data(this)
 	{
 		layout.addWidget(&data);
 
@@ -19,7 +19,7 @@
 	{
 		cleanCompilationTab(false);
 	}
-	 
+
 	void CompilationTab::cleanCompilationTab(bool writeNoPipeline)
 	{
 		while(data.count()>0)
@@ -35,7 +35,7 @@
 		}
 	}
 
-	void CompilationTab::compilationSucceeded(void)
+	void CompilationTab::pipelineWasCreated(void)
 	{
 		cleanCompilationTab(false);
 
@@ -44,7 +44,7 @@
 		data.item(0)->setFont(QFont("", -1, -1, true));
 	}
 
-	void CompilationTab::compilationFailed(Exception& e)
+	void CompilationTab::pipelineCompilationFailed(Exception& e)
 	{
 		cleanCompilationTab(false);
 

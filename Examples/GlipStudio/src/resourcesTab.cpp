@@ -2,7 +2,7 @@
 #include "netpbm.hpp"
 #include <algorithm>
 
-// TextureObject
+/*// TextureObject
 	TextureObject::TextureObject(const QString& _filename, int maxLevel)
 	 : virtualFile(false), textureData(NULL), filename(_filename)
 	{
@@ -554,8 +554,8 @@
 	}
 
 // Resources GUI :
-	ResourcesTab::ResourcesTab(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
+	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
+	 : Module(_masterModule, parent), layout(this), menuBar(this), connectionMenu(this), filterMenu(this), wrappingMenu(this), loadingWidget(this),
 	   imageMenu("Image", this), loadImage("Load image...", this), freeImage("Free image", this), saveOutputAs("Save output as...", this), copyAsNewResource("Copy as new resource...", this), 
 	   currentOutputCategory(ResourceImages), currentOutputID(-1), infoLastComputeSucceeded(false), currentOutputPath("./")
 	{
@@ -617,8 +617,8 @@
 
 		// Connections : 
 		QObject::connect(&loadImage, 		SIGNAL(triggered()), 					&loadingWidget, SLOT(startLoad()));
-		QObject::connect(&saveOutputAs,		SIGNAL(triggered()),					this,		SLOT(startRequestSaveImage()));
-		QObject::connect(&copyAsNewResource,	SIGNAL(triggered()),					this,		SLOT(requestCopyAsNewResource()));
+		QObject::connect(&saveOutputAs,		SIGNAL(triggered()),					this,		SLOT(saveOutputToFile()));
+		QObject::connect(&copyAsNewResource,	SIGNAL(triggered()),					this,		SLOT(copyOutputAsNewResource()));
 		QObject::connect(&loadingWidget, 	SIGNAL(finished()), 					this, 		SLOT(fetchLoadedImages()));
 		QObject::connect(&tree,			SIGNAL(itemSelectionChanged()),				this,		SLOT(selectionChanged()));
 		QObject::connect(&filterMenu,		SIGNAL(changeFilter(GLenum, GLenum)),			this,		SLOT(updateImageFiltering(GLenum, GLenum)));
@@ -962,6 +962,69 @@
 		}
 	}
 
+	void ResourcesTab::updateDisplay(void)
+	{
+		WindowRenderer* display = NULL;
+		
+		if( requireDisplay(display) )
+			updateDisplay(display);
+	}
+
+	void ResourcesTab::updateDisplay(WindowRenderer*& display)
+	{
+		HdlTexture* output = getOutput();
+
+		if(output!=NULL)
+		{
+			display->setImageAspectRatio(*output); 
+			(*display) << (*output) << OutputDevice::Process;
+		}
+	}
+
+	void ResourcesTab::clearPipelineInfo(void)
+	{
+		pipelineName.clear();
+
+		// update the connection menu : 
+		connectionMenu.update();
+		
+		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
+		removeAllChildren(root);
+
+		root->setText(0, tr("Inputs (0)"));
+
+		root = tree.topLevelItem(ResourceOutputs);
+		removeAllChildren(root);
+
+		root->setText(0, tr("Outputs (0)"));
+
+		// Update the selection : 
+		selectionChanged();
+	}
+
+	void ResourcesTab::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
+	{
+		//if(!formats.empty())
+		//{
+		//	for(int k=0; k<formats.size(); k++)
+		//		loader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
+		//}
+		//else
+		//{
+		//	// Default, for first time load : 
+		//	for(int k=0; k<infos.requiredFormats; k++)
+		//		loader.addRequiredElement("FormatIn_" + to_string(k), HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE));
+		//}
+
+		for(int k=0; k<infos.requiredFormats.size(); k++)
+		{
+			if(k<formats.size())
+				loader.addRequiredElement(infos.requiredFormats[k], formats[k]);
+			else
+				loader.addRequiredElement(infos.requiredFormats[k], HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE));
+		}
+	}
+
 // Private Slots :
 	void ResourcesTab::fetchLoadedImages(void)
 	{
@@ -991,7 +1054,7 @@
 				currentOutputID		= id;
 
 				// Output changed : 
-				emit outputChanged();
+				updateDisplay();
 			}
 		}
 	}
@@ -1014,7 +1077,7 @@
 
 				// If this is the output : 
 				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==ResourceImages)
-					emit outputChanged();
+					updateDisplay();
 			}
 
 			updateImageListDisplay();
@@ -1046,7 +1109,7 @@
 
 				// If this is the output : 
 				if(currentOutputID==selectedItems.at(k)->data(0, Qt::UserRole).toInt() && currentOutputCategory==ResourceImages)
-					emit outputChanged();
+					updateDisplay();
 			}
 
 			updateImageListDisplay();
@@ -1144,7 +1207,7 @@
 				if(currentOutputID==id && currentOutputCategory==ResourceImages)
 				{
 					currentOutputID = -1;
-					emit outputChanged();
+					updateDisplay();
 				}
 			}
 		}
@@ -1165,21 +1228,24 @@
 
 	void ResourcesTab::applyConnection(int idInput)
 	{
-		QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
-
-		for(int k=0; k<selectedItems.size(); k++)
+		if(requirePrepareToPipelineInputsModification())
 		{
-			if(preferredConnections.size() <= idInput + k)
-				preferredConnections.resize(idInput + k + 1, NULL);
+			QList<QTreeWidgetItem *> selectedItems = tree.selectedItems();
 
-			preferredConnections[idInput + k] = getCorrespondingTexture(selectedItems[k]);
+			for(int k=0; k<selectedItems.size(); k++)
+			{
+				if(preferredConnections.size() <= idInput + k)
+					preferredConnections.resize(idInput + k + 1, NULL);
+
+				preferredConnections[idInput + k] = getCorrespondingTexture(selectedItems[k]);
+			}
+
+			// update : 
+			updateInputConnectionDisplay();
+			updateFormatListDisplay();
+
+			emit pipelineInputsModification();
 		}
-
-		// update : 
-		updateInputConnectionDisplay();
-		updateFormatListDisplay();
-
-		emit updatePipelineRequest();
 	}
 
 	void ResourcesTab::startRequestSaveImage(void)
@@ -1211,17 +1277,7 @@
 // Public : 
 	void ResourcesTab::appendFormats(LayoutLoader& loader)
 	{
-		if(!formats.empty())
-		{
-			for(int k=0; k<formats.size(); k++)
-				loader.addRequiredElement(formats[k].getName().toStdString(), formats[k]);
-		}
-		else
-		{
-			// Default, for first time load : 
-			for(int k=0; k<16; k++)
-				loader.addRequiredElement("FormatIn_" + to_string(k), HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE));
-		}
+		
 	}
 
 	bool ResourcesTab::isInputConnected(int id) const
@@ -1250,7 +1306,7 @@
 		return (currentOutputCategory==ResourceOutputs) && currentOutputID>=0;
 	}
 
-	HdlTexture* ResourcesTab::getOutput(Pipeline* pipeline)
+	HdlTexture* ResourcesTab::getOutput(void)
 	{
 		if(currentOutputID<0)
 			return NULL;
@@ -1262,62 +1318,38 @@
 			case ResourceInputs :
 				return &preferredConnections[currentOutputID]->texture();
 			case ResourceOutputs :
-				if(pipeline==NULL)
-					return NULL;
+				if( pipelineExists() )
+					return &pipeline().out(currentOutputID);
 				else
-					return &pipeline->out(currentOutputID);
+					return NULL;
 			default :
 				return NULL;
 		}
 	}
 
-// Public slots : 
-	void ResourcesTab::updatePipelineInfos(void)
+// Private slots : 
+	void ResourcesTab::pipelineWasCreated(void)
 	{
-		pipelineName.clear();
-
-		// update the connection menu : 
-		connectionMenu.update();
-		
-		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
-		removeAllChildren(root);
-
-		root->setText(0, tr("Inputs (0)"));
-
-		root = tree.topLevelItem(ResourceOutputs);
-		removeAllChildren(root);
-
-		root->setText(0, tr("Outputs (0)"));
-
-		// Update the selection : 
-		selectionChanged();
-	}
-
-	void ResourcesTab::updatePipelineInfos(Pipeline* pipeline)
-	{
-		if(pipeline==NULL)
-			updatePipelineInfos();
-
-		pipelineName = pipeline->getName().c_str();
+		pipelineName = pipeline().getName().c_str();
 
 		// update connection size : 
-		if(pipeline->getNumInputPort()>preferredConnections.size())
-			preferredConnections.resize(pipeline->getNumInputPort(), NULL);
+		if(pipeline().getNumInputPort()>preferredConnections.size())
+			preferredConnections.resize(pipeline().getNumInputPort(), NULL);
 
 		// update the connection menu : 
-		connectionMenu.update(*pipeline);
+		connectionMenu.update(pipeline());
 
 		// Rebuild input list : 
 		QTreeWidgetItem* root = tree.topLevelItem(ResourceInputs);
 		removeAllChildren(root);
 
-		for(int k=0; k<pipeline->getNumInputPort(); k++)
+		for(int k=0; k<pipeline().getNumInputPort(); k++)
 		{
-			QString title = tr("    %1").arg(pipeline->getInputPortName(k).c_str());
+			QString title = tr("    %1").arg(pipeline().getInputPortName(k).c_str());
 
 			QTreeWidgetItem* item = addItem(ResourceInputs, title, k);
 
-			item->setData(0, Qt::StatusTipRole, QString(pipeline->getInputPortName(k).c_str()));
+			item->setData(0, Qt::StatusTipRole, QString(pipeline().getInputPortName(k).c_str()));
 		}
 		
 		// Update the list : 
@@ -1329,13 +1361,13 @@
 		root = tree.topLevelItem(ResourceOutputs);
 		removeAllChildren(root);
 
-		for(int k=0; k<pipeline->getNumOutputPort(); k++)
+		for(int k=0; k<pipeline().getNumOutputPort(); k++)
 		{
-			QString title = tr("    %1").arg(pipeline->getOutputPortName(k).c_str());
+			QString title = tr("    %1").arg(pipeline().getOutputPortName(k).c_str());
 
 			QTreeWidgetItem* item = addItem(ResourceOutputs, title, k);
 
-			appendTextureInformation(item, pipeline->out(k));
+			appendTextureInformation(item, pipeline().out(k));
 		}
 
 		// Update design : 
@@ -1343,39 +1375,54 @@
 
 		// Update the title : 
 		if(!pipelineName.isEmpty())
-			root->setText(0, tr("Outputs of %1 (%2)").arg(pipelineName).arg(pipeline->getNumOutputPort()));
+			root->setText(0, tr("Outputs of %1 (%2)").arg(pipelineName).arg(pipeline().getNumOutputPort()));
 		else
-			root->setText(0, tr("Outputs (%1)").arg(pipeline->getNumOutputPort()));
+			root->setText(0, tr("Outputs (%1)").arg(pipeline().getNumOutputPort()));
 	
 		tree.topLevelItem(ResourceOutputs)->setExpanded(true);
 
-		if( (currentOutputCategory==ResourceOutputs && currentOutputID>=pipeline->getNumOutputPort()) || (currentOutputCategory==ResourceInputs && currentOutputID>=pipeline->getNumInputPort()) )
+		if( (currentOutputCategory==ResourceOutputs && currentOutputID>=pipeline().getNumOutputPort()) || (currentOutputCategory==ResourceInputs && currentOutputID>=pipeline().getNumInputPort()) )
 		{
 			currentOutputID = -1;
-			emit outputChanged();
+			updateDisplay();
 		}
 
 		// Update the selection : 
 		selectionChanged();
 	}
 
-	void ResourcesTab::saveOutputToFile(HdlTexture& output)
+	void ResourcesTab::pipelineCompilationFailed(Exception& e)
+	{
+		clearPipelineInfo();
+	}
+
+	void ResourcesTab::pipelineWasDestroyed(void)
+	{
+		clearPipelineInfo();
+	}
+
+	void ResourcesTab::saveOutputToFile(void)
 	{
 		try
 		{
-			QImage image = ImageLoader::createImage(output);
+			HdlTexture* output = getOutput();
 
-			QString filename = QFileDialog::getSaveFileName(this, "Save Image", currentOutputPath, tr("Image (*.jpg *.jpeg *.png *.bmp)"));
-
-			if(!filename.isEmpty())
+			if(output!=NULL)
 			{
-				if(!image.save(filename))
-					QMessageBox::warning(this, tr("Warning"), tr("Save operation to file \"%1\" failed.").arg(filename));
-				else
+				QImage image = ImageLoader::createImage(*output);
+
+				QString filename = QFileDialog::getSaveFileName(this, "Save Image", currentOutputPath, tr("Image (*.jpg *.jpeg *.png *.bmp)"));
+
+				if(!filename.isEmpty())
 				{
-					// Set the current path for output : 
-					QFileInfo info(filename);
-					currentOutputPath = info.path();
+					if(!image.save(filename))
+						QMessageBox::warning(this, tr("Warning"), tr("Save operation to file \"%1\" failed.").arg(filename));
+					else
+					{
+						// Set the current path for output : 
+						QFileInfo info(filename);
+						currentOutputPath = info.path();
+					}
 				}
 			}
 		}
@@ -1391,32 +1438,37 @@
 		}
 	}
 
-	void ResourcesTab::copyOutputAsNewResource(HdlTexture& output)
+	void ResourcesTab::copyOutputAsNewResource(void)
 	{
 		bool 	over = false,
 			ok = false;
 	    	QString name;
 
-		do
+		HdlTexture* output = getOutput();
+
+		if(output!=NULL)
 		{
-			// Get the new name : 
-			if(getCorrespondingTexture(name)==NULL)
-				name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("New resource name : "), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
-			else
-				name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("A resource with the name \"%1\" already exists, choose a different resource name : ").arg(name), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
+			do
+			{
+				// Get the new name : 
+				if(getCorrespondingTexture(name)==NULL)
+					name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("New resource name : "), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
+				else
+					name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("A resource with the name \"%1\" already exists, choose a different resource name : ").arg(name), QLineEdit::Normal, tr("Resource_%1").arg(textures.size()+1), &ok);
 
-			// Check if the name exits : 
-			over = !ok || (!name.isEmpty() && (getCorrespondingTexture(name)==NULL));
+				// Check if the name exits : 
+				over = !ok || (!name.isEmpty() && (getCorrespondingTexture(name)==NULL));
 
-		} while(!over);
+			} while(!over);
 
-			// Copy : 
-		if(ok)
-			appendNewImage(output, name);
+				// Copy : 
+			if(ok)
+				appendNewImage(*output, name);
+		}
 	}
 
 	void ResourcesTab::updateLastComputingStatus(bool succeeded)
 	{
 		infoLastComputeSucceeded = succeeded;
-	}
+	}*/
 
