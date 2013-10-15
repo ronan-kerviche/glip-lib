@@ -145,6 +145,8 @@
 	 : QWidget(parent), display(this, 640, 480), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
 	{
 		QObject::connect(&(display.renderer()),	SIGNAL(actionReceived(void)), this, SLOT(displayUpdate(void)));
+
+		LayoutLoaderModule::addBasicModule(pipelineLoader);
 	}
 
 	ControlModule::~ControlModule(void)

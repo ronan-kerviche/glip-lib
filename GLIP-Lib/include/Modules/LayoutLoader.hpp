@@ -109,7 +109,13 @@ Examples : <BR>
 } <BR>
 
 - Required geometry to be provided by the application (for dynamic geometry models). See LayoutLoader::addRequiredElement() : <BR>
-<b>REQUIRED_FORMAT</b>:<i>geometry_name</i>(<i>required_geometry_name</i>)
+<b>REQUIRED_GEOMETRY</b>:<i>geometry_name</i>(<i>required_geometry_name</i>)
+
+- Module call, see LayoutLoaderModule for more information : <BR>
+<b>MODULE_CALL</b> : <i>module_name</i> (<i> module_arguments</i>) <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>(Optional)</i> <BR>
+} <BR>
 
 - Shader source code, from the same file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>
