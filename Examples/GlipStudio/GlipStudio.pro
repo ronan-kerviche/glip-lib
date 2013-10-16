@@ -18,6 +18,8 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
 			./src/keywords.hpp \
+			./src/imageObject.hpp \
+			./src/imagesCollection.hpp \
 			./src/resourcesTab.hpp \
 			./src/compilationTab.hpp \
 			./src/uniformsTab.hpp \
@@ -30,6 +32,8 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/dataModules.cpp \
 			./src/codeEditor.cpp \
 			./src/keywords.cpp \
+			./src/imageObject.cpp \
+			./src/imagesCollection.cpp \
 			./src/resourcesTab.cpp \
 			./src/compilationTab.cpp \
 			./src/uniformsTab.cpp \

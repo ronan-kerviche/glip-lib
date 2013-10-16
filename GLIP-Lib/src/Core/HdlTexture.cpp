@@ -45,11 +45,7 @@ using namespace Glip::CoreGL;
 	**/
 	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt)
-	{
-		imgC      = getChannelCount(mode);
-		colSize   = getChannelSize(depth);
-		imgSize   = imgW*imgH*imgC*colSize;
-	}
+	{ }
 
 	/**
 	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy)
@@ -69,10 +65,6 @@ using namespace Glip::CoreGL;
 		maxLevel  = copy.maxLevel;
 		wraps     = copy.wraps;
 		wrapt     = copy.wrapt;
-
-		imgC      = getChannelCount(mode);
-		colSize   = getChannelSize(depth);
-		imgSize   = imgW*imgH*imgC*colSize;
 	}
 
 	__ReadOnly_HdlTextureFormat::~__ReadOnly_HdlTextureFormat(void)
@@ -134,7 +126,7 @@ using namespace Glip::CoreGL;
 	\return The channel size in BYTE.
 	\fn     int __ReadOnly_HdlTextureFormat::getNumElements(void) const
 	\return The texture's number of elements (width x height x channels).
-	\fn     int __ReadOnly_HdlTextureFormat::getSize(void) const
+	\fn     size_t __ReadOnly_HdlTextureFormat::getSize(void) const
 	\return The texture's size in BYTE.
 	\fn     GLenum __ReadOnly_HdlTextureFormat::getGLMode(void) const
 	\return The texture's mode.
@@ -160,10 +152,10 @@ using namespace Glip::CoreGL;
 	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
 	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
 	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return imgH*imgW; }
-	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return imgC; }
+	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getChannelCount(mode); }
 	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
-	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*imgC; }
-	int	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return imgSize; }
+	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*getChannelCount(mode); }
+	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getWidth()) * static_cast<size_t>(getHeight()) * static_cast<size_t>(getNumChannels()) * static_cast<size_t>(getChannelDepth()); }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
 	GLenum	__ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
@@ -191,19 +183,19 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		return  (imgW		== f.imgW)      &&
-			(imgH		== f.imgH)      &&
-			(imgC		== f.imgC)      &&
-			(colSize	== f.colSize)   &&
-			(imgSize	== f.imgSize)   &&
-			(mode		== f.mode)      &&
-			(depth		== f.depth)     &&
-			(minFilter	== f.minFilter) &&
-			(magFilter	== f.magFilter) &&
-			(baseLevel	== f.baseLevel) &&
-			(maxLevel	== f.maxLevel)  &&
-			(wraps		== f.wraps)     &&
-			(wrapt		== f.wrapt);
+		return  (imgW			== f.imgW)		&&
+			(imgH			== f.imgH)		&&
+			(getNumChannels()	== f.getNumChannels())	&&
+			(getChannelDepth()	== f.getChannelDepth())   &&
+			(getSize()		== f.getSize())		&&
+			(mode			== f.mode)		&&
+			(depth			== f.depth)		&&
+			(minFilter		== f.minFilter)		&&
+			(magFilter		== f.magFilter)		&&
+			(baseLevel		== f.baseLevel)		&&
+			(maxLevel		== f.maxLevel)		&&
+			(wraps			== f.wraps)		&&
+			(wrapt			== f.wrapt);
 	}
 
 	/**
@@ -224,15 +216,15 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		return  (imgW		== f.imgW)      &&
-			(imgH		== f.imgH)      &&
-			(imgC		== f.imgC)      &&
-			(colSize	== f.colSize)   &&
-			(imgSize	== f.imgSize)   &&
-			(mode		== f.mode)      &&
-			(depth		== f.depth)     &&
-			(baseLevel	== f.baseLevel) &&
-			(maxLevel	== f.maxLevel);
+		return  (imgW			== f.imgW)		&&
+			(imgH			== f.imgH)		&&
+			(getNumChannels()	== f.getNumChannels())	&&
+			(getChannelDepth()	== f.getChannelDepth())	&&
+			(getSize()		== f.getSize())		&&
+			(mode			== f.mode)		&&
+			(depth			== f.depth)		&&
+			(baseLevel		== f.baseLevel)		&&
+			(maxLevel		== f.maxLevel);
 	}
 
 	/**
@@ -277,14 +269,14 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		bool test = 	(imgW		== f.imgW)      &&
-				(imgH		== f.imgH)      &&
-				(imgC		== f.imgC)      &&
-				(colSize	== f.colSize)   &&
-				(imgSize	== f.imgSize)   &&
-				(depth		== f.depth)     &&
-				(baseLevel	== f.baseLevel) &&
-				(maxLevel	== f.maxLevel);
+		bool test = 	(imgW			== f.imgW)		&&
+				(imgH			== f.imgH)		&&
+				(getNumChannels()	== f.getNumChannels())	&&
+				(getChannelDepth()	== f.getChannelDepth())	&&
+				(getSize()		== f.getSize())		&&
+				(depth			== f.depth)		&&
+				(baseLevel		== f.baseLevel)		&&
+				(maxLevel		== f.maxLevel);
 
 		return test && (f.mode==getCorrespondingCompressedMode(mode));
 	}
@@ -396,10 +388,6 @@ using namespace Glip::CoreGL;
 		maxLevel  = copy.getMaxLevel();
 		wraps     = copy.getSWrapping();
 		wrapt     = copy.getTWrapping();
-
-		imgC      = getChannelCount(mode);
-		colSize   = getChannelSize(depth);
-		imgSize   = imgW*imgH*imgC*colSize;
 
 		return *this;
 	}
@@ -655,6 +643,8 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlTexture::fill - Cannot be called on a compressed texture.", __FILE__, __LINE__);*/
 
 		bind();
+
+		size_t imgSize = getSize();
 
 		char* tmp = new char[imgSize];
 		memset(tmp, dataByte, imgSize);

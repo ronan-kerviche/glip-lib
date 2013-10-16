@@ -43,6 +43,8 @@ namespace NetPBM
 			unsigned int getNumLayers(void) const;
 			unsigned int getSize(void) const;
 			unsigned int getBytePerValue(void) const;
+			void copyTo(unsigned char* dest);	
+			HdlTextureFormat getFormat(void) const;
 
 			template<typename T>
 			T& value(unsigned int x, unsigned int y, int layer=0);

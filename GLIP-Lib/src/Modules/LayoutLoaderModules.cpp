@@ -52,51 +52,51 @@
 		{ }
 
 		/**
-		\fn std::string LayoutLoaderModule::getName(void) const
+		\fn const std::string& LayoutLoaderModule::getName(void) const
 		\brief Get the name of the module.
 		\return A standard string containing the name of the module.
 		**/
-		std::string LayoutLoaderModule::getName(void) const
+		const std::string& LayoutLoaderModule::getName(void) const
 		{
 			return name;
 		}
 
 		/**
-		\fn const int LayoutLoaderModule::getMinNumArguments(void) const
+		\fn const int& LayoutLoaderModule::getMinNumArguments(void) const
 		\brief Get the minimum number of arguments of the module.
 		\return An integer being the  minimum number of arguments of the module.
 		**/
-		const int LayoutLoaderModule::getMinNumArguments(void) const
+		const int& LayoutLoaderModule::getMinNumArguments(void) const
 		{
 			return minNumArguments;
 		}
 
 		/**
-		\fn const int LayoutLoaderModule::getMinNumArguments(void) const
+		\fn const int& LayoutLoaderModule::getMinNumArguments(void) const
 		\brief Get the maximum number of arguments of the module.
 		\return An integer being the  maximum number of arguments of the module.
 		**/
-		const int LayoutLoaderModule::getMaxNumArguments(void) const
+		const int& LayoutLoaderModule::getMaxNumArguments(void) const
 		{
 			return maxNumArguments;
 		}
 
 		/**
-		\fn const char LayoutLoaderModule::bodyPresenceTest(void) const
+		\fn const char& LayoutLoaderModule::bodyPresenceTest(void) const
 		\brief Get the requirement on the body.
 		\return A byte containing the requirement as -1 for no body, 0 for indifferent and 1 for needed.
 		**/
-		const char LayoutLoaderModule::bodyPresenceTest(void) const
+		const char& LayoutLoaderModule::bodyPresenceTest(void) const
 		{
 			return bodyPresence;
 		}
 
 		/**
-		\fn std::string LayoutLoaderModule::getManual(void) const
+		\fn const std::string& LayoutLoaderModule::getManual(void) const
 		\brief Get the manual of the module.
 		\return A standard string containing the manual of the module.
 		**/
-		std::string LayoutLoaderModule::getManual(void) const
+		const std::string& LayoutLoaderModule::getManual(void) const
 		{
 			return manual;
 		}

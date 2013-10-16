@@ -178,7 +178,7 @@ This class is working exacly as TextureReader except that you will access the da
 				CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
 				~CompressedTextureReader(void);
 
-				int	getSize(void) const;
+				size_t	getSize(void) const;
 				char*	getData(void) const;
 				char&	operator[](int i);
 		};

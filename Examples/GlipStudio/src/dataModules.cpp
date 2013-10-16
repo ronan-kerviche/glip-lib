@@ -146,7 +146,7 @@
 	{
 		QObject::connect(&(display.renderer()),	SIGNAL(actionReceived(void)), this, SLOT(displayUpdate(void)));
 
-		LayoutLoaderModule::addBasicModule(pipelineLoader);
+		LayoutLoaderModule::addBasicModules(pipelineLoader);
 	}
 
 	ControlModule::~ControlModule(void)

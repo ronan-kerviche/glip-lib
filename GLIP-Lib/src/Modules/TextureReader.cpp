@@ -301,11 +301,11 @@
 	}
 
 	/**
-	\fn int CompressedTextureReader::getSize(void) const
+	\fn size_t CompressedTextureReader::getSize(void) const
 	\brief Get the size, in bytes, of the texture and the output buffer. You must read a texture at least once before calling this function.
 	\return Size of the buffer in bytes.
 	**/
-	int CompressedTextureReader::getSize(void) const
+	size_t CompressedTextureReader::getSize(void) const
 	{
 		if(data==NULL)
 			throw Exception("CompressedTextureReader::getSize - Read at least one texture before calling this function (for " + getFullName() + ").", __FILE__, __LINE__);

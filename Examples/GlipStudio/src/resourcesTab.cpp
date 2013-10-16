@@ -1,6 +1,15 @@
 #include "resourcesTab.hpp"
-#include "netpbm.hpp"
 #include <algorithm>
+
+// ResourceTab
+	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
+	 : Module(_masterModule, parent), layout(this), collection(this)
+	{
+		layout.addWidget(&collection);
+	}
+
+	ResourcesTab::~ResourcesTab(void)
+	{ }
 
 /*// TextureObject
 	TextureObject::TextureObject(const QString& _filename, int maxLevel)

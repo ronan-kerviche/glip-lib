@@ -42,7 +42,7 @@
 			{
 				protected :
 					// Data
-					int	imgW, imgH, imgC, colSize, imgSize; // Image parameters
+					int	imgW, imgH; // Image parameters
 					GLenum	mode, depth, minFilter, magFilter;  // Image format and texture filtering
 					int	baseLevel, maxLevel;                // MipMap information
 					GLint	wraps, wrapt;                       // Wrapping modes
@@ -66,7 +66,7 @@
 					int	getNumPixels	(void) const;
 					int	getNumChannels  (void) const;
 					int	getNumElements	(void) const;
-				virtual int	getSize     	(void) const;
+				virtual size_t	getSize     	(void) const;
 					int	getChannelDepth (void) const;
 					GLenum	getGLMode   	(void) const;
 					GLenum	getGLDepth  	(void) const;

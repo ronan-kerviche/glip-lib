@@ -3,7 +3,7 @@
 
 	#include "GLIPLib.hpp"
 	#include "dataModules.hpp"
-	#include "ResourceLoader.hpp"
+	#include "imagesCollection.hpp"
 
 	#include <QString>
 	#include <QMenu>
@@ -25,59 +25,15 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-
-	class ImageObject
+	class ResourcesTab : public Module 
 	{
 		private : 
-			bool virtual;
-			QString filename;
-			unsigned char* image;
-			HdlFormat format;
-			HdlTexture* textureData;
-		public : 
-			ImageObject(const QString& _filename, bool toDevice=true);
-			ImageObject(HdlTexture& texture);
-			~ImageObject(void);
+			QVBoxLayout		layout;
+			ImagesCollection	collection;
 
-			bool isVirtual(void) const;
-			bool isOnDevice(void) const;
-			void loadToDevice(void) const;
-			const QString& getFilename(void) const;
-			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
-			HdlTexture& texture(void);
-	};
-
-	class ImageCollection : public QWidget
-	{
-		private : 
-			// Constant : 
-			static size_t maxDeviceOccupancy;
-
-			// Images : 
-			std::vector<ImageObject*> images;
-	
-			// Interface : 
-			QTreeWidget tree;
-
-			// Private tools : 
-			size_t currentDeviceOccupancy(void);
-
-		public : 
-			ImageCollection(void);
-			~ImageCollection(void);
-
-			int  getNumImages(void) const
-			bool imageExists(int id) const;
-			HdlTexture& texture(int id) const;
-
-		signals : 
-			void imageLoaded(int);
-	};
-
-	class ResourceTab : public Module 
-	{
-		private : 
-			
+		public :
+			ResourcesTab(ControlModule& _masterModule, QWidget* parent=NULL);
+			~ResourcesTab(void);
 	};
 
 /*// Texture object :
@@ -135,86 +91,6 @@
 
 		signals :
 			void connectToInput(int i);
-	};
-
-	class FilterMenu : public QMenu
-	{
-		// GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR
-
-		Q_OBJECT
-
-		private : 
-			// Sub menus : 
-			QMenu 	minFilter,
-				magFilter;
-
-			// Actions list : 
-			QAction bothNearest,
-				bothLinear,
-				minNearest,
-				minLinear,
-				minNearestMipmapNearest,
-				minNearestMipmapLinear,
-				minLinerarMipmapNearest,
-				minLinearMipmapLinear,
-				magNearest,
-				magLinear;
-
-		private slots : 
-			void processAction(QAction* action);
-
-		public : 
-			FilterMenu(QWidget* parent=NULL);
-
-			void update(void);
-			void update(const __ReadOnly_HdlTextureFormat& fmt);
-			void get(QAction* action, GLenum& dminFilter, GLenum& dmagFilter);
-			bool ask(const QPoint& pos, GLenum& minFilter, GLenum& magFilter);
-
-		signals : 
-			void changeFilter(GLenum minFilter, GLenum magFilter);
-	};
-
-	class WrappingMenu : public QMenu 
-	{
-		// GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT
-
-		Q_OBJECT
-
-		private : 
-			// Sub Menus : 
-			QMenu 	sMenu,
-				tMenu;
-	
-			QAction	bothClamp,
-				bothClampToBorder,
-				bothClampToEdge,
-				bothRepeat,
-				bothMirroredRepeat,
-				sClamp,
-				sClampToBorder,
-				sClampToEdge,
-				sRepeat,
-				sMirroredRepeat,
-				tClamp,
-				tClampToBorder,
-				tClampToEdge,
-				tRepeat,
-				tMirroredRepeat;		
-			
-		private slots : 
-			void processAction(QAction* action);
-
-		public : 
-			WrappingMenu(QWidget* parent=NULL);
-
-			void update(void);
-			void update(const __ReadOnly_HdlTextureFormat& fmt);
-			void get(QAction* action, GLenum& dsWrapping, GLenum& dtWrapping);
-			bool ask(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping);
-			
-		signals : 
-			void changeWrapping(GLenum sWrapping, GLenum tWrapping);
 	};
 
 // Loading widget : 

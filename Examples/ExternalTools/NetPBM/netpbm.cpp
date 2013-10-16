@@ -226,6 +226,52 @@
 		return std::ceil( std::log( static_cast<double>(maxval) ) / (std::log(2.0) * 8.0) );
 	}
 
+	void Image::copyTo(unsigned char* dest)
+	{
+		if(!isValid())
+			throw Exception("NetPBM::Image::copyTo - Object is not valid.", __FILE__, __LINE__);
+
+		std::memcpy(dest, bytes, getSize());
+	}
+
+	HdlTextureFormat Image::getFormat(void) const
+	{
+		if(!isValid())
+			throw Exception("NetPBM::Image::getFormat - Object is not valid.", __FILE__, __LINE__);
+
+		// Format description : 
+		GLenum mode;
+
+		if(numLayers==1)
+			mode = GL_LUMINANCE;
+		else if(numLayers==3)
+			mode = GL_RGB;
+		else
+			throw Exception("NetPBM::Image::createTexture - Unable to create a texture from an image having " + to_string(numLayers) + " layers (only 1 or 3 are accepted).", __FILE__, __LINE__);
+
+		GLenum depth;
+
+		unsigned int b = getBytePerValue();
+
+		if(b<=1)
+			depth = GL_UNSIGNED_BYTE;
+		else if(b<=2)
+		{
+			depth = GL_UNSIGNED_SHORT;
+
+			if(numLayers==1)
+				mode = GL_LUMINANCE16;
+			else if(numLayers==3)
+				mode = GL_RGB16;
+		}
+		else
+			throw Exception("NetPBM::Image::createTexture - Unable to create a texture from an image having " + to_string(b) + " bytes per value (only 1, 2, and 4 bytes are accepted).", __FILE__, __LINE__);
+
+		HdlTextureFormat format(width, height, mode, depth);
+
+		return format;
+	}
+
 	bool Image::writeToFile(const std::string& filename)
 	{
 		if(!isValid())
@@ -282,38 +328,9 @@
 
 	HdlTexture* Image::createTexture(void)
 	{
-		if(!isValid())
-			throw Exception("NetPBM::Image::createTexture - Object is not valid.", __FILE__, __LINE__);
+		HdlTextureFormat format = getFormat();
 
-		// Format description : 
-		GLenum mode;
-
-		if(numLayers==1)
-			mode = GL_LUMINANCE;
-		else if(numLayers==3)
-			mode = GL_RGB;
-		else
-			throw Exception("NetPBM::Image::createTexture - Unable to create a texture from an image having " + to_string(numLayers) + " layers (only 1 or 3 are accepted).", __FILE__, __LINE__);
-
-		GLenum depth;
-
-		unsigned int b = getBytePerValue();
-
-		if(b<=1)
-			depth = GL_UNSIGNED_BYTE;
-		else if(b<=2)
-		{
-			depth = GL_UNSIGNED_SHORT;
-
-			if(numLayers==1)
-				mode = GL_LUMINANCE16;
-			else if(numLayers==3)
-				mode = GL_RGB16;
-		}
-		else
-			throw Exception("NetPBM::Image::createTexture - Unable to create a texture from an image having " + to_string(b) + " bytes per value (only 1, 2, and 4 bytes are accepted).", __FILE__, __LINE__);
-
-		HdlTextureFormat format(width, height, mode, depth);
+		
 	
 		HdlTexture* texture = new HdlTexture(format);
 

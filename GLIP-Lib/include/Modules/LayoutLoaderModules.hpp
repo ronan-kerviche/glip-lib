@@ -83,6 +83,48 @@ Example in a script file :
 	// Create a new format by copying inputFormat and dividing by 2 its size : 
 	MODULE_CALL: FORMAT_SCALE_SIZE (fmt, 0.5, fmt2)
 	\endcode
+
+Example, creating a simple Module :
+	\code 
+		// Declare your module in some header : 
+		LAYOUT_LOADER_MODULE_DEFINITION( MyAdditionModule )
+		// (If your module ought to be more complex, you will have to go through a full description)
+
+		// In the source file (must have 2 arguments and no body) : 
+		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 2, 2, -1, "Increase or decrease the size of a format, save as a new format.\n"
+									"Arguments : nameOriginal, delta, nameNew.")
+		{
+			// Check that the target element exists : 
+			FORMAT_MUST_EXIST( arguments[0] )
+			// Check that the output name is free :
+			FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+			// Get an iterator to the target :
+			CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+
+			// Build the new format : 
+			HdlTextureFormat newFmt = it->second;
+
+			// Read the delta argument : 
+			CAST_ARGUMENT( 1, double, delta)
+
+			// Change the size : 
+			newFmt.setWidth( newFmt.getWidth() + delta );
+			newFmt.setHeight( newFmt.getHeight() + delta );
+
+			// Check the size : 
+			if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
+				throw Exception("The new format is not valid (size : " + to_string(newFmt.getWidth()) + "x" + to_string(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+
+			// Append the new format under the right name :
+			APPEND_NEW_FORMAT( arguments.back(), newFmt )
+		}
+	\endcode
+
+	Use in a script : 
+	\code 
+		MODULE_CALL: MyAdditionModule (someFormat, 128)
+	\endcode
 	
 **/
 		class LayoutLoaderModule
@@ -144,11 +186,11 @@ Example in a script file :
 							const std::map<std::string,PipelineLayout>&	requiredPipelineList,
 							std::string& executionCode) = 0;
 
-				std::string getName(void) const;
-				const int getMinNumArguments(void) const;
-				const int getMaxNumArguments(void) const;
-				const char bodyPresenceTest(void) const;
-				std::string getManual(void) const;
+				const std::string& getName(void) const;
+				const int& getMinNumArguments(void) const;
+				const int& getMaxNumArguments(void) const;
+				const char& bodyPresenceTest(void) const;
+				const std::string& getManual(void) const;
 
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
