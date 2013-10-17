@@ -5,6 +5,9 @@
 	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
 	 : Module(_masterModule, parent), layout(this), collection(this)
 	{
+		collection.addActionsToMenuBar(menuBar);
+
+		layout.addWidget(&menuBar);
 		layout.addWidget(&collection);
 	}
 

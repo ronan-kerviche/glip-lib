@@ -71,6 +71,14 @@ FORMAT_CHANGE_WRAPPING		| Change the wrapping of a format, save as a new format.
 FORMAT_CHANGE_MIPMAP		| Change the mipmap level of a format, save as a new format. Arguments : nameOriginal, mNew, nameNew.
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
 GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
+FORMAT_MINIMUM_WIDTH		| Find the format having the smallest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MAXIMUM_WIDTH		| Find the format having the largest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MINIMUM_HEIGHT		| Find the format having the smallest height, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MAXIMUM_HEIGHT		| Find the format having the largest height, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MINIMUM_PIXELS		| Find the format having the smallest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MAXIMUM_PIXELS		| Find the format having the largest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 </CENTER>
 
 Example in a script file : 
@@ -238,8 +246,8 @@ Example, creating a simple Module :
 
 			#define __ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::iterator iteratorName = varName.find( elementName );
 			#define __CONST_ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::const_iterator iteratorName = varName.find( elementName );
-			#define __ELEMENT_MUST_BE_IN(iteratorName, varName, elementName)	if(iteratorName==varName.end()) throw Exception("Element \"" + elementName + "\" was not found in \"" + #varName + "\".", __FILE__, __LINE__);
-			#define __ELEMENT_MUST_NOT_BE_IN(iteratorName, varName, elementName)	if(iteratorName!=varName.end()) throw Exception("Element \"" + elementName + "\" already exists in \"" + #varName + "\".", __FILE__, __LINE__);
+			#define __ELEMENT_MUST_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName==varName.end()) throw Exception("Element \"" + elementName + "\" was not found in \"" + #varName + "\".", __FILE__, __LINE__); }
+			#define __ELEMENT_MUST_NOT_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName!=varName.end()) throw Exception("Element \"" + elementName + "\" already exists in \"" + #varName + "\".", __FILE__, __LINE__); }
 			#define __APPEND_NEW_ELEMENT(type, varName, elementName, element)	varName.insert( std::pair<std::string, type>( elementName, element ) );
 
 			/** ITERATOR_TO_SHAREDCODE( iteratorName, elementName )			Get an iterator on the Shared Code named elementName. **/
@@ -340,6 +348,14 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_FILTERING )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_WRAPPING )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_MIPMAP )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_WIDTH )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_WIDTH )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_HEIGHT )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_HEIGHT )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_PIXELS )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_PIXELS )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_ELEMENTS )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
 	}

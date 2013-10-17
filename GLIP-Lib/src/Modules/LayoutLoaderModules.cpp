@@ -115,6 +115,14 @@
 			loader.addModule( new FORMAT_CHANGE_FILTERING );
 			loader.addModule( new FORMAT_CHANGE_WRAPPING );
 			loader.addModule( new FORMAT_CHANGE_MIPMAP );
+			loader.addModule( new FORMAT_MINIMUM_WIDTH );
+			loader.addModule( new FORMAT_MAXIMUM_WIDTH );
+			loader.addModule( new FORMAT_MINIMUM_HEIGHT );
+			loader.addModule( new FORMAT_MAXIMUM_HEIGHT );
+			loader.addModule( new FORMAT_MINIMUM_PIXELS );
+			loader.addModule( new FORMAT_MAXIMUM_PIXELS );
+			loader.addModule( new FORMAT_MINIMUM_ELEMENTS );
+			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
 			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
 		}
@@ -258,6 +266,230 @@
 				HdlTextureFormat newFmt = it->second;
 				CAST_ARGUMENT( 1, int, m)
 				newFmt.setMaxLevel(m);
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1, 	"Find the format having the smallest width, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					widthBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getWidth() <= widthBest || k==0 )
+					{
+						kBest 		= k;
+						widthBest 	= it->second.getWidth();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1, 	"Find the format having the largest width, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					widthBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getWidth() >= widthBest || k==0 )
+					{
+						kBest 		= k;
+						widthBest 	= it->second.getWidth();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1, 	"Find the format having the smallest height, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					heightBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getHeight() <= heightBest || k==0 )
+					{
+						kBest 		= k;
+						heightBest 	= it->second.getHeight();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1, 	"Find the format having the largest height, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					heightBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getHeight() >= heightBest || k==0 )
+					{
+						kBest 		= k;
+						heightBest 	= it->second.getHeight();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1, 	"Find the format having the smallest number of pixels, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					sizeBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getNumPixels() <= sizeBest || k==0 )
+					{
+						kBest 		= k;
+						sizeBest 	= it->second.getNumPixels();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1, 	"Find the format having the largest number of pixels, save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					sizeBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getNumPixels() >= sizeBest || k==0 )
+					{
+						kBest 		= k;
+						sizeBest 	= it->second.getNumPixels();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1, "Find the format having the smallest number of elements (pixels times channels count), save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					sizeBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getNumElements() <= sizeBest || k==0 )
+					{
+						kBest 		= k;
+						sizeBest 	= it->second.getNumElements();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
+
+				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1, "Find the format having the largest number of elements (pixels times channels count), save as a new format.\n"
+											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			{
+				int 	kBest 		= 0,
+					sizeBest	= 0;
+
+				for(int k=0; k<arguments.size()-1; k++)
+				{
+					FORMAT_MUST_EXIST( arguments[k] );
+
+					CONST_ITERATOR_TO_FORMAT( it, arguments[k] )
+
+					if( it->second.getNumElements() >= sizeBest || k==0 )
+					{
+						kBest 		= k;
+						sizeBest 	= it->second.getNumElements();
+					}
+				}
+
+				FORMAT_MUST_NOT_EXIST( arguments.back() );
+
+				// New format : 
+				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
+				HdlTextureFormat newFmt = it->second;
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}

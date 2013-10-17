@@ -29,6 +29,7 @@
 	{
 		private : 
 			QVBoxLayout		layout;
+			QMenuBar		menuBar;
 			ImagesCollection	collection;
 
 		public :

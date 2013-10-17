@@ -18,7 +18,7 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
 			./src/keywords.hpp \
-			./src/imageObject.hpp \
+			./src/imageObject.hpp \
 			./src/imagesCollection.hpp \
 			./src/resourcesTab.hpp \
 			./src/compilationTab.hpp \
