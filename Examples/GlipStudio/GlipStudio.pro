@@ -17,10 +17,14 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
 			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
+			./src/codePannel.hpp \
 			./src/keywords.hpp \
 			./src/imageObject.hpp \
+			./src/settingsManager.hpp \
+			./src/openSaveInterface.hpp \
 			./src/imagesCollection.hpp \
 			./src/resourcesTab.hpp \
+			./src/ioTab.hpp \
 			./src/compilationTab.hpp \
 			./src/uniformsTab.hpp \
 			./src/libraryInterface.hpp \
@@ -31,10 +35,14 @@ SOURCES      	+= 	./src/main.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
 			./src/dataModules.cpp \
 			./src/codeEditor.cpp \
+			./src/codePannel.cpp \
 			./src/keywords.cpp \
 			./src/imageObject.cpp \
+			./src/settingsManager.cpp \
+			./src/openSaveInterface.cpp \
 			./src/imagesCollection.cpp \
 			./src/resourcesTab.cpp \
+			./src/ioTab.cpp \
 			./src/compilationTab.cpp \
 			./src/uniformsTab.cpp \
 			./src/libraryInterface.cpp \

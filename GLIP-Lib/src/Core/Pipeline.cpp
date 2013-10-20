@@ -1573,7 +1573,7 @@
 	Pipeline& Pipeline::operator<<(ActionType a)
 	{
 		// Check the number of arguments given :
-		if(inputsList.size()!=getNumInputPort())
+		if(inputsList.size()!=getNumInputPort() && a!=Reset)
 			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
 
 		switch(a)

@@ -3,7 +3,7 @@ INCLUDE_FILE(convolutionTools.ppl)
 
 // Format :
 //TEXTURE_FORMAT:sobelOutputFormat(1920,1200,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
-REQUIRED_FORMAT:sobelOutputFormat(FormatIn_0)
+REQUIRED_FORMAT:sobelOutputFormat(inputTexture)
 
 SHARED_SOURCE:Sobel
 {

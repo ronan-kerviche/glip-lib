@@ -43,16 +43,18 @@
 			virtual bool pipelineCanBeCreated(void);
 			virtual bool pipelineCanBeComputed(void);
 			virtual bool pipelineInputsCanBeModified(void);
+			virtual bool textureInputCanBeReleased(int portID, int recordID);
 			virtual bool pipelineUniformsCanBeModified(void);
 			virtual bool pipelineCanBeDestroyed(void);
 			virtual bool canBeClosed(void);
 
-			// Call these before performing action on the pipeline : 
-			bool requirePrepareToPipelineCreation(const std::string& code);
-			bool requirePrepareToPipelineComputation(void);
-			bool requirePrepareToPipelineInputsModification(void);
+			// Call these in order to perform actions on the pipeline : 
+			bool requirePipelineCreation(const std::string& code);
+			bool requirePipelineComputation(void);
+			bool registerInputTexture(int recordID, int portID);
+			void unregisterInputTexture(int recordID);
 			bool requirePrepareToPipelineUniformsModification(void);
-			bool requirePrepareToPipelineDestruction(void);
+			bool requirePipelineDestruction(void);
 
 			// Special functions : 
 			bool requireDisplay(WindowRenderer*& display);
@@ -60,6 +62,8 @@
 			virtual bool canReleaseDisplay(void);
 
 			virtual void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
+			virtual bool isValidTexture(int recordID);
+			virtual HdlTexture& getTexture(int recordID);
 
 		public : 
 			virtual ~Module(void);
@@ -67,6 +71,8 @@
 			// Generic tools : 
 			bool pipelineExists(void) const;
 			bool lastComputationWasSuccessful(void) const;
+			bool isInputValid(int portID);
+			HdlTexture& inputTexture(int portID);
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
@@ -77,15 +83,15 @@
 			virtual void pipelineWasCreated(void);
 			virtual void pipelineCompilationFailed(Exception& e);
 			virtual void pipelineWasComputed(void);
-			virtual void pipelineInputsWereModified(void);
+			virtual void pipelineComputationFailed(Exception& e);
+			virtual void pipelineInputWasModified(int portID);
+			virtual void pipelineInputWasReleased(int portID);
 			virtual void pipelineUniformsWereModified(void);
 			virtual void pipelineWasDestroyed(void);
 
 		signals : 
 			// These must be called after performing some actions on the pipeline :
 			// (note that for creation and destruction, the operation is automatically carried by the request)
-			void pipelineComputation(bool success);
-			void pipelineInputsModification(void);
 			void pipelineUniformModification(void);
 	};
 
@@ -93,14 +99,22 @@
 	{
 		Q_OBJECT
 
-		private : 
-			bool			lastComputationSucceeded;
-			std::string		pipelineCode;
-			Pipeline*		pipelinePtr;
-			LayoutLoader		pipelineLoader;
+		public :
+			static const int 		maxNumInputs;
 
-			std::vector<Module*>	clients;
-			Module*			displayClient;
+		private : 
+			bool				lastComputationSucceeded;
+			std::string			pipelineCode;
+			Pipeline*			pipelinePtr;
+			LayoutLoader			pipelineLoader;
+
+			std::vector<int>		inputTextureRecordIDs;
+			std::vector<Module*>		inputTextureOwners;
+
+			std::vector<Module*>		clients;
+			Module*				displayClient;
+
+			bool pipelineComputation(void);
 
 		private slots : 
 			void displayUpdate(void);
@@ -121,29 +135,32 @@
 			void releaseDisplayLink(Module* m);
 			bool pipelineExists(void) const;
 			bool lastComputationWasSuccessful(void) const;
+			bool isInputValid(int portID);
+			HdlTexture& inputTexture(int portID);
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
-
+		
 			// Distribution of the requirements : 
-			bool requirePrepareToPipelineCreation(const std::string& code);
-			bool requirePrepareToPipelineComputation(void);
-			bool requirePrepareToPipelineInputsModification(void);
+			bool requirePipelineCreation(const std::string& code);
+			bool requirePipelineComputation(void);
+			bool registerInputTexture(Module* m, int recordID, int portID);
+			void unregisterInputTexture(Module* m, int recordID);
 			bool requirePrepareToPipelineUniformsModification(void);
-			bool requirePrepareToPipelineDestruction(void);
+			bool requirePipelineDestruction(void);
 			bool requireClose(void);
 
 		public slots : 
 			// Receive information of action performed by modules and redistribute to all modules : 
-			void pipelineComputation(bool success);
-			void pipelineInputsModification(void);
 			void pipelineUniformModification(void);
 
 		signals :
 			void pipelineWasCreated(void);
 			void pipelineCompilationFailed(Exception& e);
 			void pipelineWasComputed(void);
-			void pipelineInputsWereModified(void);
+			void pipelineComputationFailed(Exception& e);
+			void pipelineInputWasModified(int portID);
+			void pipelineInputWasReleased(int portID);
 			void pipelineUniformsWereModified(void);
 			void pipelineWasDestroyed(void);
 	};

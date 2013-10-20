@@ -13,35 +13,42 @@
 			masterModule->removeClient(this);
 	}
 	
-	bool Module::pipelineCanBeCreated(void)			{ return true; }
-	bool Module::pipelineCanBeComputed(void)		{ return true; }
-	bool Module::pipelineInputsCanBeModified(void)		{ return true; }
-	bool Module::pipelineUniformsCanBeModified(void)	{ return true; }
-	bool Module::pipelineCanBeDestroyed(void)		{ return true; }
-	bool Module::canBeClosed(void)				{ return true; }
+	bool Module::pipelineCanBeCreated(void)					{ return true; }
+	bool Module::pipelineCanBeComputed(void)				{ return true; }
+	bool Module::pipelineInputsCanBeModified(void)				{ return true; }
+	bool Module::textureInputCanBeReleased(int portID, int recordID)	{ return true; }
+	bool Module::pipelineUniformsCanBeModified(void)			{ return true; }
+	bool Module::pipelineCanBeDestroyed(void)				{ return true; }
+	bool Module::canBeClosed(void)						{ return true; }
 
-	bool Module::requirePrepareToPipelineCreation(const std::string& code)
+	bool Module::requirePipelineCreation(const std::string& code)
 	{
 		if(masterModule==NULL)
 			return false;
 		else
-			return masterModule->requirePrepareToPipelineCreation(code);
+			return masterModule->requirePipelineCreation(code);
 	}
 
-	bool Module::requirePrepareToPipelineComputation(void)
+	bool Module::requirePipelineComputation(void)
 	{
 		if(masterModule==NULL)
 			return false;
 		else
-			return masterModule->requirePrepareToPipelineComputation();
+			return masterModule->requirePipelineComputation();
 	}
 
-	bool Module::requirePrepareToPipelineInputsModification(void)
+	bool Module::registerInputTexture(int recordID, int portID)
 	{
 		if(masterModule==NULL)
 			return false;
 		else
-			return masterModule->requirePrepareToPipelineInputsModification();
+			return masterModule->registerInputTexture(this, recordID, portID);
+	}
+
+	void Module::unregisterInputTexture(int recordID)
+	{
+		if(masterModule!=NULL)
+			masterModule->unregisterInputTexture(this, recordID);
 	}
 
 	bool Module::requirePrepareToPipelineUniformsModification(void)
@@ -52,12 +59,12 @@
 			return masterModule->requirePrepareToPipelineUniformsModification();
 	}
 
-	bool Module::requirePrepareToPipelineDestruction(void)
+	bool Module::requirePipelineDestruction(void)
 	{
 		if(masterModule==NULL)
 			return false;
 		else
-			return masterModule->requirePrepareToPipelineDestruction();
+			return masterModule->requirePipelineDestruction();
 	}
 
 	bool Module::requireDisplay(WindowRenderer*& display)
@@ -83,6 +90,16 @@
 
 	void Module::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{ }
+	
+	bool Module::isValidTexture(int recordID)
+	{
+		return false;
+	}
+
+	HdlTexture& Module::getTexture(int recordID)
+	{
+		throw Exception("Module::getTexture - Module does not have textures.", __FILE__, __LINE__);
+	}
 
 	bool Module::pipelineExists(void) const
 	{
@@ -98,6 +115,22 @@
 			return false;
 		else
 			return masterModule->lastComputationWasSuccessful();
+	}
+
+	bool Module::isInputValid(int portID)
+	{
+		if(masterModule==NULL)
+			return false;
+		else
+			return masterModule->isInputValid(portID);
+	}
+
+	HdlTexture& Module::inputTexture(int portID)
+	{
+		if(masterModule==NULL)
+			throw Exception("Module::inputTexture - No master module (internal error).", __FILE__, __LINE__);
+		else
+			return masterModule->inputTexture(portID);
 	}
 
 	const std::string& Module::getPipelineCode(void) const
@@ -136,17 +169,24 @@
 	void Module::pipelineWasCreated(void)			{}
 	void Module::pipelineCompilationFailed(Exception& e)	{}
 	void Module::pipelineWasComputed(void)			{}
-	void Module::pipelineInputsWereModified(void)		{}
+	void Module::pipelineComputationFailed(Exception& e)	{}
+	void Module::pipelineInputWasModified(int portID)	{}
+	void Module::pipelineInputWasReleased(int portID)	{}
 	void Module::pipelineUniformsWereModified(void)		{}
 	void Module::pipelineWasDestroyed(void)			{}
 
 // ControlModule
+	const int ControlModule::maxNumInputs = 256;
+
 	ControlModule::ControlModule(QWidget* parent)
 	 : QWidget(parent), display(this, 640, 480), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
 	{
 		QObject::connect(&(display.renderer()),	SIGNAL(actionReceived(void)), this, SLOT(displayUpdate(void)));
 
 		LayoutLoaderModule::addBasicModules(pipelineLoader);
+
+		inputTextureRecordIDs.assign(maxNumInputs, -1);
+		inputTextureOwners.assign(maxNumInputs, NULL);
 	}
 
 	ControlModule::~ControlModule(void)
@@ -181,13 +221,13 @@
 		QObject::connect( this, SIGNAL(pipelineWasCreated()), 			m, SLOT(pipelineWasCreated()) );
 		QObject::connect( this, SIGNAL(pipelineCompilationFailed(Exception&)),	m, SLOT(pipelineCompilationFailed(Exception&)) );
 		QObject::connect( this, SIGNAL(pipelineWasComputed()), 			m, SLOT(pipelineWasComputed()) );
-		QObject::connect( this, SIGNAL(pipelineInputsWereModified()), 		m, SLOT(pipelineInputsWereModified()) );
+		QObject::connect( this, SIGNAL(pipelineComputationFailed(Exception&)),	m, SLOT(pipelineComputationFailed(Exception&)) );
+		QObject::connect( this, SIGNAL(pipelineInputWasModified(int)), 		m, SLOT(pipelineInputWasModified(int)) );
+		QObject::connect( this, SIGNAL(pipelineInputWasReleased(int)), 		m, SLOT(pipelineInputWasReleased(int)) );
 		QObject::connect( this, SIGNAL(pipelineUniformsWereModified()), 	m, SLOT(pipelineUniformsWereModified()) );
 		QObject::connect( this, SIGNAL(pipelineWasDestroyed()), 		m, SLOT(pipelineWasDestroyed()) );
 
 		// Connect the inputs :
-		QObject::connect( m, SIGNAL(pipelineComputation(bool)),			this, SLOT(pipelineComputation(bool)) );
-		QObject::connect( m, SIGNAL(pipelineInputsModification()),		this, SLOT(pipelineInputsModification()) );
 		QObject::connect( m, SIGNAL(pipelineUniformModification()),		this, SLOT(pipelineUniformModification()) );
 	}
 
@@ -248,6 +288,24 @@
 	{
 		return pipelineExists() && lastComputationSucceeded;
 	}
+	
+	bool ControlModule::isInputValid(int portID)
+	{
+		if(portID<0 || portID>inputTextureOwners.size())
+			return false;
+		else if(inputTextureOwners[portID]!=NULL)
+			return inputTextureOwners[portID]->isValidTexture( inputTextureRecordIDs[portID] );
+		else
+			return false;
+	}
+
+	HdlTexture& ControlModule::inputTexture(int portID)
+	{
+		if(inputTextureOwners[portID]==NULL)
+			throw Exception("ControlModule::inputTexture - Input texture " + to_string(portID) + " does not have owner (internal error).", __FILE__, __LINE__);
+		else
+			return inputTextureOwners[portID]->getTexture(inputTextureRecordIDs[portID]);
+	}
 
 	const std::string& ControlModule::getPipelineCode(void) const
 	{
@@ -273,12 +331,12 @@
 			throw Exception("ControlModule::pipeline - No pipeline in use.", __FILE__, __LINE__);
 	}
 
-	bool ControlModule::requirePrepareToPipelineCreation(const std::string& code)
+	bool ControlModule::requirePipelineCreation(const std::string& code)
 	{
 		// First, is there a removal : 
 		if(pipelineExists())
 		{
-			if(!requirePrepareToPipelineDestruction())
+			if(!requirePipelineDestruction())
 				return false; // If the previous pipeline destruction was aborted...
 		}
 
@@ -308,6 +366,15 @@
 				for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
 					(*it)->preparePipelineLoading(pipelineLoader, infos);
 
+				// This must also prepare the loader with known formats : 
+				for(int k=0; k<infos.mainPipelineInputs.size(); k++)
+				{
+					if(isInputValid(k))
+						pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], inputTexture(k).format() );
+					else
+						pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE) ); // non blocking
+				}
+
 				// Compile :
 				pipelinePtr = pipelineLoader(pipelineCode, "");
 
@@ -334,24 +401,127 @@
 			return false;
 	}
 
-	bool ControlModule::requirePrepareToPipelineComputation(void)
+	bool ControlModule::pipelineComputation(void)
+	{
+		if(!pipelineExists())
+		{
+			lastComputationSucceeded = false;
+			return false;
+		}
+
+		lastComputationSucceeded = true;
+
+		try
+		{
+			// Clean : 
+			pipeline() << Pipeline::Reset;
+
+			// Check that all inputs are present :
+			bool greenLight = true; 
+			for(int k=0; k<pipeline().getNumInputPort(); k++)
+			{
+				if(!isInputValid(k))
+				{
+					greenLight = false;
+					break;
+				}	
+				else
+					pipeline() << inputTexture(k);
+			}
+
+			if(!greenLight)
+				lastComputationSucceeded = false;
+			else
+			{
+				// Compute : 
+				pipeline() << Pipeline::Process;			
+	
+				// Signals : 
+				emit pipelineWasComputed();
+			}
+		}
+		catch(Exception& e)
+		{
+			emit pipelineComputationFailed(e);
+			lastComputationSucceeded = false;
+		}
+
+		return lastComputationSucceeded;
+	}
+
+	bool ControlModule::requirePipelineComputation(void)
 	{
 		bool poll = true;
 
 		for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
 			poll = poll && (*it)->pipelineCanBeComputed();
 
-		return poll;
+		if(poll)
+			return pipelineComputation();
+		else
+			return false;
 	}
 
-	bool ControlModule::requirePrepareToPipelineInputsModification(void)
+	bool ControlModule::registerInputTexture(Module* m, int recordID, int portID)
 	{
+		if(portID<0 || portID>=maxNumInputs)
+			throw Exception("ControlModule::registerInputTexture - Port ID " + to_string(portID) + "is out of bounds ([0; " + to_string(maxNumInputs-1) + "]).", __FILE__, __LINE__);
+
+		// Check if all modules allow inputs change : 
 		bool poll = true;
 
 		for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
 			poll = poll && (*it)->pipelineInputsCanBeModified();
 
-		return poll;
+		if( poll )
+		{
+			if(inputTextureOwners[portID]!=NULL)
+			{
+				if(!inputTextureOwners[portID]->textureInputCanBeReleased(portID, inputTextureRecordIDs[portID]))
+					return false;
+			}
+		
+			// Else :
+			inputTextureRecordIDs[portID] 	= recordID;
+			inputTextureOwners[portID]	= m;
+
+			emit pipelineInputWasModified(portID);
+
+			if( pipelineExists() )
+				requirePipelineComputation();
+
+			return true;
+		}
+		else 		
+			return false;
+	}
+
+	void ControlModule::unregisterInputTexture(Module* m, int recordID)
+	{
+		int k=0;
+
+		for(k=0; k<inputTextureRecordIDs.size(); k++)
+		{
+			if(inputTextureRecordIDs[k]==recordID && inputTextureOwners[k]==m)
+				break;
+		}
+		
+		if(k<inputTextureRecordIDs.size())
+		{
+			// Check if all modules allow inputs change : 
+			bool poll = true;
+
+			for(std::vector<Module*>::iterator itr=clients.begin(); itr!=clients.end() && poll; itr++)
+				poll = poll && (*itr)->pipelineInputsCanBeModified();
+
+			if( poll )
+			{
+				inputTextureRecordIDs[k]	= -1;
+				inputTextureOwners[k]		= NULL;
+
+				emit pipelineInputWasReleased(k);
+			}
+		}
 	}
 
 	bool ControlModule::requirePrepareToPipelineUniformsModification(void)
@@ -364,7 +534,7 @@
 		return poll;
 	}
 
-	bool ControlModule::requirePrepareToPipelineDestruction(void)
+	bool ControlModule::requirePipelineDestruction(void)
 	{
 		bool poll = true;
 
@@ -377,7 +547,10 @@
 			pipelinePtr 			= NULL;
 			lastComputationSucceeded	= false;
 			pipelineCode.clear();
+			return true;
 		}
+		else
+			return false;
 	}
 
 	bool ControlModule::requireClose(void)
@@ -388,18 +561,6 @@
 			poll = poll && (*it)->canBeClosed();
 
 		return poll;
-	}
-
-	void ControlModule::pipelineComputation(bool success)
-	{
-		lastComputationSucceeded = success;
-
-		emit pipelineWasComputed();
-	}
-
-	void ControlModule::pipelineInputsModification(void)
-	{
-		emit pipelineInputsWereModified();
 	}
 
 	void ControlModule::pipelineUniformModification(void)

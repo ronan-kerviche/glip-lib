@@ -47,7 +47,7 @@
 
 // GlipStudio
 	GlipStudio::GlipStudio(int& argc, char** argv)
-	 : QApplication(argc, argv), mainWindow(NULL)
+	 : QApplication(argc, argv), settingsManager(NULL), mainWindow(NULL)
 	{
 		const QString 	stylesheetFilename = "stylesheet.css";
 		QFile 		stylesheetFile(stylesheetFilename);
@@ -64,12 +64,16 @@
 		// Set style : 
 		QApplication::setStyleSheet(stylesheet);
 
+		// Load settings : 
+		settingsManager = new SettingsManager("settings.vnp");
+
 		mainWindow = new MainWindow();
 	}
 
 	GlipStudio::~GlipStudio(void)
 	{
 		delete mainWindow;
+		delete settingsManager;
 	}
 
 	bool GlipStudio::notify(QObject * receiver, QEvent * event) 

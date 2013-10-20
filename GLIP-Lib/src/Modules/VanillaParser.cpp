@@ -74,6 +74,16 @@
 		return strKeyword.empty() && name.empty() && body.empty() && arguments.empty();
 	}
 
+	std::string Element::getCleanBody(void) const
+	{	
+		const std::string spacers = " \t\r\n\f\v";
+
+		size_t 	pStart 	= body.find_first_not_of(spacers),
+			pEnd 	= body.find_last_not_of(spacers);
+		
+		return body.substr(pStart, pEnd-pStart+1);
+	}
+
 	std::string Element::getCode(void) const
 	{
 		std::string res;

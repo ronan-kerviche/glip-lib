@@ -72,7 +72,7 @@
 		}
 
 		/**
-		\fn const int& LayoutLoaderModule::getMinNumArguments(void) const
+		\fn const int& LayoutLoaderModule::getMaxNumArguments(void) const
 		\brief Get the maximum number of arguments of the module.
 		\return An integer being the  maximum number of arguments of the module.
 		**/

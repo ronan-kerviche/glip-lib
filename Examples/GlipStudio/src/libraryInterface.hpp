@@ -5,6 +5,7 @@
 	#include "dataModules.hpp"
 	#include "resourcesTab.hpp"
 	#include "compilationTab.hpp"
+	#include "ioTab.hpp"
 	#include "uniformsTab.hpp"
 	
 	#include <QtGlobal>
@@ -23,6 +24,7 @@
 			QTabWidget			tabs;
 			ResourcesTab			resourceTab;			
 			CompilationTab			compilationTab;
+			IOTab				ioTab;
 			UniformsTab			uniformsTab;
 
 		private slots :

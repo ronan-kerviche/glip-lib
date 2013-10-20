@@ -25,12 +25,51 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
+	class ConnectionMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			QList<QString>		portsNames;
+			QList<QAction *>	currentActions;
+			QSignalMapper		mapper;
+
+		public : 
+			ConnectionMenu(QWidget* parent=NULL);
+			~ConnectionMenu(void);
+
+			void activate(bool state, int numConnections=1);
+			void update(void);
+			void update(const __ReadOnly_PipelineLayout& layout);			
+
+		signals :
+			void connectToInput(int i);
+	};
+
 	class ResourcesTab : public Module 
 	{
+		Q_OBJECT
+
 		private : 
 			QVBoxLayout		layout;
 			QMenuBar		menuBar;
+			ConnectionMenu		connectionMenu;
 			ImagesCollection	collection;
+			int			onDisplayRecordID;
+
+			void updateDisplay(WindowRenderer& display);
+			bool isValidTexture(int recordID);
+			HdlTexture& getTexture(int recordID);
+			void cleanRecordDependances(int recordID);
+
+		private slots :
+			// These will be called upon external modifications, in order for the module to update itself :
+			void pipelineWasCreated(void);
+			void pipelineWasDestroyed(void);
+			void selectionChanged(void);
+			void connectToInput(int i);
+			void imageUnloadedFromDevice(int recordID);
+			void imageFreed(int recordID);
 
 		public :
 			ResourcesTab(ControlModule& _masterModule, QWidget* parent=NULL);

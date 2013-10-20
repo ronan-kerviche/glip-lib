@@ -60,7 +60,7 @@ Several modules are already created but need to be manually added to any LayoutL
 
 These modules are : 
 <CENTER>
-Module       			| Designation
+Module       			| Description
 ------------------------------- | --------------------------
 FORMAT_CHANGE_SIZE		| Change the size of a format, save as a new format. Arguments : nameOriginal, widthNew, heightNew, nameNew.
 FORMAT_SCALE_SIZE		| Scale a format by a scalar (or two), save as a new format. Arguments : nameOriginal, scaleFactor, nameNew OR nameOriginal, scaleFactorX, scaleFactorY, nameNew.
@@ -69,8 +69,6 @@ FORMAT_CHANGE_DEPTH		| Change the depth of a format, save as a new format. Argum
 FORMAT_CHANGE_FILTERING		| Change the filtering of a format, save as a new format. Arguments : nameOriginal, minNew, magNew, nameNew.
 FORMAT_CHANGE_WRAPPING		| Change the wrapping of a format, save as a new format. Arguments : nameOriginal, sNew, tNew, nameNew.
 FORMAT_CHANGE_MIPMAP		| Change the mipmap level of a format, save as a new format. Arguments : nameOriginal, mNew, nameNew.
-GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
-GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
 FORMAT_MINIMUM_WIDTH		| Find the format having the smallest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MAXIMUM_WIDTH		| Find the format having the largest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MINIMUM_HEIGHT		| Find the format having the smallest height, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
@@ -79,6 +77,8 @@ FORMAT_MINIMUM_PIXELS		| Find the format having the smallest number of pixels, s
 FORMAT_MAXIMUM_PIXELS		| Find the format having the largest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
+GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
 </CENTER>
 
 Example in a script file : 

@@ -2,8 +2,9 @@
 #define __GLIPSTUDIO_MAIN_INTERFACE__
 
 	#include "GLIPLib.hpp"
+	#include "settingsManager.hpp"
 	#include "dataModules.hpp"
-	#include "codeEditor.hpp"
+	#include "codePannel.hpp"
 	#include "libraryInterface.hpp"
 
 	#include <QtGlobal>
@@ -44,6 +45,7 @@
 		Q_OBJECT
 
 		private : 
+			SettingsManager* settingsManager;
 			MainWindow *mainWindow;
 
 		public : 

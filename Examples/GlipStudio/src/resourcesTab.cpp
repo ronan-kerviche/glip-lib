@@ -1,18 +1,193 @@
 #include "resourcesTab.hpp"
 #include <algorithm>
 
+// ConnectionMenu
+	ConnectionMenu::ConnectionMenu(QWidget* parent)
+	 : QMenu("Connect", parent)	
+	{
+		update();
+	
+		QObject::connect(&mapper, SIGNAL(mapped(int)), this, SIGNAL(connectToInput(int))); 
+	}
+
+	ConnectionMenu::~ConnectionMenu(void)
+	{
+		clear();
+		currentActions.clear();
+	}
+
+	void ConnectionMenu::activate(bool state, int numConnections)
+	{
+		clear();
+		currentActions.clear();
+
+		if(state && numConnections==1 && !portsNames.isEmpty())
+		{
+			for(int k=0; k<portsNames.count(); k++)
+			{
+				QAction* action = addAction(tr("To %1").arg(portsNames[k]));
+				currentActions.push_back(action);
+				mapper.setMapping(action, k);
+				QObject::connect(action, SIGNAL(triggered(bool)), &mapper, SLOT(map(void))); 
+			}
+		}
+		else if(state && numConnections>1 && numConnections<=portsNames.count())
+		{
+			for(int k=0; k<portsNames.count()-numConnections+1; k++)
+			{
+				QAction* action = addAction(tr("From %1 to %2").arg(portsNames[k]).arg(portsNames[k + numConnections - 1]));
+				currentActions.push_back(action);
+				mapper.setMapping(action, k);
+				QObject::connect(action, SIGNAL(triggered(bool)), &mapper, SLOT(map(void))); 
+			}
+		}
+		else if(state && numConnections>portsNames.count() && !portsNames.isEmpty())
+			addAction("Too many resources selected")->setEnabled(false);
+		else if(portsNames.isEmpty())
+			addAction("No input ports defined")->setEnabled(false);
+		else if(!state)
+			addAction("No suitable input port")->setEnabled(false);	
+		else
+			addAction("No available input ports")->setEnabled(false);
+	}
+
+	void ConnectionMenu::update(void)
+	{
+		clear();
+		currentActions.clear();
+		addAction("No available input port")->setEnabled(false);
+	}
+
+	void ConnectionMenu::update(const __ReadOnly_PipelineLayout& layout)
+	{
+		clear();
+		currentActions.clear();
+		portsNames.clear();
+
+		for(int k=0; k<layout.getNumInputPort(); k++)
+			portsNames.push_back(layout.getInputPortName(k).c_str());
+	}
+
 // ResourceTab
 	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
-	 : Module(_masterModule, parent), layout(this), collection(this)
+	 : Module(_masterModule, parent), layout(this), collection("ResourcesTab", this), onDisplayRecordID(-1)
 	{
 		collection.addActionsToMenuBar(menuBar);
 
+		menuBar.addMenu(&connectionMenu);
+
 		layout.addWidget(&menuBar);
 		layout.addWidget(&collection);
+
+		connect(&collection, 		SIGNAL(itemSelectionChanged()), 	this, SLOT(selectionChanged()));
+		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
+		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
+		connect(&connectionMenu,	SIGNAL(connectToInput(int)),		this, SLOT(connectToInput(int)));
 	}
 
 	ResourcesTab::~ResourcesTab(void)
 	{ }
+
+	// Private functions : 
+		void ResourcesTab::updateDisplay(WindowRenderer& display)
+		{
+			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
+			
+			if(!selectedRecordsID.empty())
+				onDisplayRecordID = selectedRecordsID.front();
+
+			if(onDisplayRecordID > 0)
+			{
+				// Display : 
+				display.setImageAspectRatio( collection.texture(onDisplayRecordID) );
+				display << collection.texture(onDisplayRecordID) << OutputDevice::Process;
+			}
+			else
+				display.clearWindow();
+		}
+
+		bool ResourcesTab::isValidTexture(int recordID)
+		{
+			return collection.imageExists(recordID);
+		}
+
+		HdlTexture& ResourcesTab::getTexture(int recordID)
+		{
+			return collection.texture(recordID);
+		}
+
+		void ResourcesTab::cleanRecordDependances(int recordID)
+		{
+			if(recordID==onDisplayRecordID)
+			{
+				onDisplayRecordID = -1;
+				
+				WindowRenderer* display = NULL;
+				if(requireDisplay(display))
+					updateDisplay(*display);
+			}
+
+			unregisterInputTexture(recordID);
+		}
+
+	// Private slots : 
+		void ResourcesTab::pipelineWasCreated(void)
+		{
+			// Update connection menu : 
+			connectionMenu.update( pipeline() );
+
+			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
+
+			connectionMenu.activate(!selectedRecordsID.empty(), selectedRecordsID.size());
+		}
+
+		void ResourcesTab::pipelineWasDestroyed(void)
+		{
+			// Update connection menu : 
+			connectionMenu.update();
+
+			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
+
+			connectionMenu.activate(!selectedRecordsID.empty(), selectedRecordsID.size());
+		}
+
+		void ResourcesTab::selectionChanged(void)
+		{
+			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
+		
+			if(selectedRecordsID.empty())
+				connectionMenu.activate(false);
+			else
+			{
+				connectionMenu.activate(true, selectedRecordsID.size());
+
+				// Display : 
+				WindowRenderer* display = NULL;
+				if(requireDisplay(display))
+					updateDisplay(*display);
+			}
+		}
+
+		void ResourcesTab::connectToInput(int i)
+		{
+			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
+
+			for(int k=0; k<selectedRecordsID.size(); k++)
+			{
+				registerInputTexture( selectedRecordsID[k], i + k);
+				collection.lockTextureToDevice( selectedRecordsID[k] );
+			}
+		}
+
+		void ResourcesTab::imageUnloadedFromDevice(int recordID)
+		{
+			cleanRecordDependances(recordID);
+		}
+
+		void ResourcesTab::imageFreed(int recordID)
+		{
+			cleanRecordDependances(recordID);
+		}
 
 /*// TextureObject
 	TextureObject::TextureObject(const QString& _filename, int maxLevel)
@@ -128,73 +303,6 @@
 	void FormatObject::setFormat(const __ReadOnly_HdlTextureFormat& cpy)
 	{
 		HdlTextureFormat::operator=(cpy);
-	}
-
-// ConnectionMenu
-	ConnectionMenu::ConnectionMenu(QWidget* parent)
-	 : QMenu("Connect", parent)	
-	{
-		update();
-	
-		QObject::connect(&mapper, SIGNAL(mapped(int)), this, SIGNAL(connectToInput(int))); 
-	}
-
-	ConnectionMenu::~ConnectionMenu(void)
-	{
-		clear();
-		currentActions.clear();
-	}
-
-	void ConnectionMenu::activate(bool state, int numConnections)
-	{
-		clear();
-		currentActions.clear();
-
-		if(state && numConnections==1 && !portsNames.isEmpty())
-		{
-			for(int k=0; k<portsNames.count(); k++)
-			{
-				QAction* action = addAction(tr("To %1").arg(portsNames[k]));
-				currentActions.push_back(action);
-				mapper.setMapping(action, k);
-				QObject::connect(action, SIGNAL(triggered(bool)), &mapper, SLOT(map(void))); 
-			}
-		}
-		else if(state && numConnections>1 && numConnections<=portsNames.count())
-		{
-			for(int k=0; k<portsNames.count()-numConnections+1; k++)
-			{
-				QAction* action = addAction(tr("From %1 to %2").arg(portsNames[k]).arg(portsNames[k + numConnections - 1]));
-				currentActions.push_back(action);
-				mapper.setMapping(action, k);
-				QObject::connect(action, SIGNAL(triggered(bool)), &mapper, SLOT(map(void))); 
-			}
-		}
-		else if(state && numConnections>portsNames.count() && !portsNames.isEmpty())
-			addAction("Too many resources selected")->setEnabled(false);
-		else if(portsNames.isEmpty())
-			addAction("No input ports defined")->setEnabled(false);
-		else if(!state)
-			addAction("No suitable input port")->setEnabled(false);	
-		else
-			addAction("No available input ports")->setEnabled(false);
-	}
-
-	void ConnectionMenu::update(void)
-	{
-		clear();
-		currentActions.clear();
-		addAction("No available input port")->setEnabled(false);
-	}
-
-	void ConnectionMenu::update(const __ReadOnly_PipelineLayout& layout)
-	{
-		clear();
-		currentActions.clear();
-		portsNames.clear();
-
-		for(int k=0; k<layout.getNumInputPort(); k++)
-			portsNames.push_back(layout.getInputPortName(k).c_str());
 	}
 
 // FilterMenu
