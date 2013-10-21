@@ -60,6 +60,7 @@
 			void updateDisplay(WindowRenderer& display);
 			bool isValidTexture(int recordID);
 			HdlTexture& getTexture(int recordID);
+			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
 
 		private slots :

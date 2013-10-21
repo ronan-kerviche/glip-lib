@@ -14,6 +14,7 @@
 	}
 	
 	bool Module::pipelineCanBeCreated(void)					{ return true; }
+	bool Module::pipelineCanBeCompiled(void)				{ return true; }
 	bool Module::pipelineCanBeComputed(void)				{ return true; }
 	bool Module::pipelineInputsCanBeModified(void)				{ return true; }
 	bool Module::textureInputCanBeReleased(int portID, int recordID)	{ return true; }
@@ -98,7 +99,12 @@
 
 	HdlTexture& Module::getTexture(int recordID)
 	{
-		throw Exception("Module::getTexture - Module does not have textures.", __FILE__, __LINE__);
+		throw Exception("Module::getTexture - This Module does not have textures.", __FILE__, __LINE__);
+	}
+
+	void Module::giveTextureInformation(int recordID, std::string& name)
+	{
+		name = "N.A.";
 	}
 
 	bool Module::pipelineExists(void) const
@@ -131,6 +137,14 @@
 			throw Exception("Module::inputTexture - No master module (internal error).", __FILE__, __LINE__);
 		else
 			return masterModule->inputTexture(portID);
+	}
+
+	void Module::getInputTextureInformation(int portID, std::string& name)
+	{
+		if(masterModule==NULL)
+			name = "N.A.";
+		else
+			masterModule->getInputTextureInformation(portID, name);
 	}
 
 	const std::string& Module::getPipelineCode(void) const
@@ -307,6 +321,14 @@
 			return inputTextureOwners[portID]->getTexture(inputTextureRecordIDs[portID]);
 	}
 
+	void ControlModule::getInputTextureInformation(int portID, std::string& name)
+	{
+		if(!isInputValid(portID))
+			name = "N.A.";
+		else
+			inputTextureOwners[portID]->giveTextureInformation(inputTextureRecordIDs[portID], name);
+	}
+
 	const std::string& ControlModule::getPipelineCode(void) const
 	{
 		if(pipelineExists())
@@ -331,15 +353,74 @@
 			throw Exception("ControlModule::pipeline - No pipeline in use.", __FILE__, __LINE__);
 	}
 
-	bool ControlModule::requirePipelineCreation(const std::string& code)
+	bool ControlModule::pipelineCompilation(void)
 	{
+		bool success = false;
+
 		// First, is there a removal : 
 		if(pipelineExists())
 		{
-			if(!requirePipelineDestruction())
+			if(!requirePipelineDestruction(true)) // Keep the code...
 				return false; // If the previous pipeline destruction was aborted...
 		}
 
+		// Then if anyone object the compilation ;
+		bool poll = true;
+
+		for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
+			poll = poll && (*it)->pipelineCanBeCompiled();
+
+		if(!poll)
+			return false;
+
+		// Create the pipeline from the known code: 
+		try
+		{
+			// First step : get informations.
+			pipelineLoader.clearRequiredElements();
+			LayoutLoader::PipelineScriptElements infos = pipelineLoader.listElements(pipelineCode);	
+
+			// Ask all modules to prepare the loader : 
+			for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end(); it++)
+				(*it)->preparePipelineLoading(pipelineLoader, infos);
+
+			// This must also prepare the loader with known formats : 
+			for(int k=0; k<infos.mainPipelineInputs.size(); k++)
+			{
+				if(isInputValid(k))
+					pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], inputTexture(k).format() );
+				else
+					pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE) ); // non blocking
+			}
+
+			// Compile :
+			pipelinePtr = pipelineLoader(pipelineCode, "");
+
+			// Update the computation : 
+			requirePipelineComputation();
+
+			// Propagate the information : 
+			emit pipelineWasCreated();
+
+			success = true;
+		}
+		catch(Exception& e)
+		{
+			// Manage exception
+			emit pipelineCompilationFailed(e);
+
+			// Clear out : 
+			delete pipelinePtr;
+			pipelinePtr	= NULL;
+		
+			success = false;
+		}
+
+		return success;
+	}
+
+	bool ControlModule::requirePipelineCreation(const std::string& code)
+	{
 		bool poll = true;
 
 		for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
@@ -347,55 +428,10 @@
 	
 		if(poll)
 		{
-			// Create the pipeline : 
-			try
-			{
-				// Delete previous pipeline : 
-				delete pipelinePtr;
-				pipelinePtr			= NULL;
-				lastComputationSucceeded	= false;
-				
-				// Copy the code : 
-				pipelineCode 			= code;
+			// Copy the code : 
+			pipelineCode 	= code;
 
-				// First step : get informations.
-				pipelineLoader.clearRequiredElements();
-				LayoutLoader::PipelineScriptElements infos = pipelineLoader.listElements(pipelineCode);	
-
-				// Ask all modules to prepare the loader : 
-				for(std::vector<Module*>::iterator it=clients.begin(); it!=clients.end() && poll; it++)
-					(*it)->preparePipelineLoading(pipelineLoader, infos);
-
-				// This must also prepare the loader with known formats : 
-				for(int k=0; k<infos.mainPipelineInputs.size(); k++)
-				{
-					if(isInputValid(k))
-						pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], inputTexture(k).format() );
-					else
-						pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE) ); // non blocking
-				}
-
-				// Compile :
-				pipelinePtr = pipelineLoader(pipelineCode, "");
-
-				// Update the bits : 
-				lastComputationSucceeded	= true;
-
-				// Propagate the information : 
-				emit pipelineWasCreated();
-			}
-			catch(Exception& e)
-			{
-				// Manage exception
-				emit pipelineCompilationFailed(e);
-
-				// Clear out : 
-				delete pipelinePtr;
-				pipelinePtr			= NULL;
-				pipelineCode.clear();
-			}
-
-			return true;
+			return pipelineCompilation();
 		}
 		else
 			return false;
@@ -434,7 +470,7 @@
 			else
 			{
 				// Compute : 
-				pipeline() << Pipeline::Process;			
+				pipeline() << Pipeline::Process;		
 	
 				// Signals : 
 				emit pipelineWasComputed();
@@ -475,10 +511,14 @@
 
 		if( poll )
 		{
+			bool needRecompilation = true;
+
 			if(inputTextureOwners[portID]!=NULL)
 			{
 				if(!inputTextureOwners[portID]->textureInputCanBeReleased(portID, inputTextureRecordIDs[portID]))
 					return false;
+				else
+					needRecompilation = !inputTexture(portID).isCompatibleWith( m->getTexture(recordID) );
 			}
 		
 			// Else :
@@ -488,7 +528,15 @@
 			emit pipelineInputWasModified(portID);
 
 			if( pipelineExists() )
+			{
+				if(needRecompilation)
+				{
+					if(!pipelineCompilation())
+						return false;
+				}
+
 				requirePipelineComputation();
+			}
 
 			return true;
 		}
@@ -519,6 +567,12 @@
 				inputTextureRecordIDs[k]	= -1;
 				inputTextureOwners[k]		= NULL;
 
+				if( pipelineExists() )
+				{
+					pipelineCompilation();		// Will update to the right sizes.
+					requirePipelineComputation();
+				}
+
 				emit pipelineInputWasReleased(k);
 			}
 		}
@@ -534,7 +588,7 @@
 		return poll;
 	}
 
-	bool ControlModule::requirePipelineDestruction(void)
+	bool ControlModule::requirePipelineDestruction(bool keepCode)
 	{
 		bool poll = true;
 
@@ -546,7 +600,12 @@
 			delete pipelinePtr;
 			pipelinePtr 			= NULL;
 			lastComputationSucceeded	= false;
-			pipelineCode.clear();
+
+			if(!keepCode)
+				pipelineCode.clear();
+
+			emit pipelineWasDestroyed();
+
 			return true;
 		}
 		else

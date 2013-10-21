@@ -832,12 +832,19 @@
 		actionToProcess = NoAct;
 	}
 
-	bool MainUniformLibrary::process(Pipeline& pipeline)
+	bool MainUniformLibrary::process(Pipeline& pipeline, const LibraryAction& forceAction)
 	{
 		int c=0;
 
-		LibAction act = actionToProcess;
-		actionToProcess = NoAct;
+		LibraryAction act = NoAct;
+
+		if(forceAction!=NoAct)
+			act = forceAction;
+		else
+		{
+			act = actionToProcess;
+			actionToProcess = NoAct;
+		}
 
 		switch(act)
 		{
@@ -980,6 +987,16 @@
 	void UniformsTab::dataWasModified(void)
 	{
 		modified = true;
+
+		// Carry out modification : 
+		if(pipelineExists() && mainPipeline!=NULL)
+		{
+			if(pipelineUniformsCanBeModified())
+			{
+				mainPipeline->update(pipeline());
+				requirePipelineComputation();
+			}
+		}
 	}
 
 	bool UniformsTab::prepareUpdate(void)
@@ -989,10 +1006,11 @@
 			if(mainPipeline->varsCount()==0)
 				return true;
 
-			QMessageBox 	message;
+			QMessageBox 	message(this);
 			message.setText("The Uniforms Variables were modified manually, do you want to save them?");
 
 			QPushButton 	*saveButton		= message.addButton(tr("Save"), QMessageBox::AcceptRole),
+					*storeToMainLibButton	= message.addButton(tr("Store to MainLibrary"), QMessageBox::NoRole),
 					*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
 					*discardHideButton	= message.addButton(tr("Discard and hide future requests"), QMessageBox::NoRole),
 					*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole);
@@ -1004,6 +1022,11 @@
 			if(message.clickedButton() == saveButton)
 			{
 				saveData();
+				return true;
+			}
+			else if(message.clickedButton() == storeToMainLibButton)
+			{
+				mainLibraryMenu.process(pipeline(), MainUniformLibrary::Save);
 				return true;
 			}
 			else if(message.clickedButton() == discardHideButton)
@@ -1020,7 +1043,7 @@
 			return true;
 	}
 
-	bool UniformsTab::pipelineCanBeCreated(void)
+	bool UniformsTab::pipelineCanBeDestroyed(void)
 	{
 		return prepareUpdate();
 	}
@@ -1135,8 +1158,13 @@
 	void UniformsTab::mainLibraryPipelineUpdate(void)
 	{
 		if( pipelineExists() )
+		{
 			if( mainLibraryMenu.process(pipeline()) )
-				pipelineWasCreated();
+			{
+				requirePipelineComputation();
+				pipelineWasCreated();		// Update the states.
+			}
+		}		
 	}
 			
 	void UniformsTab::pipelineWasCreated(void)
@@ -1161,27 +1189,8 @@
 
 		loadUniforms.setDisabled(false);
 		saveUniforms.setDisabled(false);
-	
-		// Test : 
-		/*std::cout << "=======> TEST" << std::endl;
-		UniformsVarsLoader u;
-		u.load(pipeline());
-		std::cout << "Code : " << std::endl;
-		std::cout << u.getCode();
-		
-		std::cout << "=======> END TEST" << std::endl;*/
-	}
 
-	void UniformsTab::pipelineCompilationFailed(Exception& e)
-	{
-		clear();
-
-		mainLibraryMenu.update();
-
-		modified = false;
-
-		loadUniforms.setDisabled(true);
-		saveUniforms.setDisabled(true);
+		tree.resizeColumnToContents(0);
 	}
 
 	void UniformsTab::pipelineWasDestroyed(void)

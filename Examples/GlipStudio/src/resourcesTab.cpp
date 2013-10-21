@@ -75,6 +75,7 @@
 		collection.addActionsToMenuBar(menuBar);
 
 		menuBar.addMenu(&connectionMenu);
+		collection.addToContextMenu(connectionMenu);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&collection);
@@ -114,6 +115,11 @@
 		HdlTexture& ResourcesTab::getTexture(int recordID)
 		{
 			return collection.texture(recordID);
+		}
+
+		void ResourcesTab::giveTextureInformation(int recordID, std::string& name)
+		{
+			name = collection.recordName(recordID);
 		}
 
 		void ResourcesTab::cleanRecordDependances(int recordID)
@@ -176,6 +182,11 @@
 			{
 				registerInputTexture( selectedRecordsID[k], i + k);
 				collection.lockTextureToDevice( selectedRecordsID[k] );
+
+				TextureStatus s = collection.recordStatus( selectedRecordsID[k] );
+				s.connected 	= true;
+				s.portID	= i + k;
+				collection.updateRecordStatus( selectedRecordsID[k], s);
 			}
 		}
 

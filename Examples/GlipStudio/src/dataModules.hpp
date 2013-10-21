@@ -41,6 +41,7 @@
 			// Replace these in order to tune the reaction of the module in preparation of some event : 
 			// e.g. : can the pipeline be destroyed, return true if there the user confirm by saving some data or discard current data.
 			virtual bool pipelineCanBeCreated(void);
+			virtual bool pipelineCanBeCompiled(void);
 			virtual bool pipelineCanBeComputed(void);
 			virtual bool pipelineInputsCanBeModified(void);
 			virtual bool textureInputCanBeReleased(int portID, int recordID);
@@ -64,6 +65,7 @@
 			virtual void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 			virtual bool isValidTexture(int recordID);
 			virtual HdlTexture& getTexture(int recordID);
+			virtual void giveTextureInformation(int recordID, std::string& name);
 
 		public : 
 			virtual ~Module(void);
@@ -73,6 +75,7 @@
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);
 			HdlTexture& inputTexture(int portID);
+			void getInputTextureInformation(int portID, std::string& name);
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
@@ -114,6 +117,7 @@
 			std::vector<Module*>		clients;
 			Module*				displayClient;
 
+			bool pipelineCompilation(void);
 			bool pipelineComputation(void);
 
 		private slots : 
@@ -137,6 +141,7 @@
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);
 			HdlTexture& inputTexture(int portID);
+			void getInputTextureInformation(int portID, std::string& name);
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
@@ -147,7 +152,7 @@
 			bool registerInputTexture(Module* m, int recordID, int portID);
 			void unregisterInputTexture(Module* m, int recordID);
 			bool requirePrepareToPipelineUniformsModification(void);
-			bool requirePipelineDestruction(void);
+			bool requirePipelineDestruction(bool keepCode=false);
 			bool requireClose(void);
 
 		public slots : 

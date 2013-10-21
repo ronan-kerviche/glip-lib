@@ -1,4 +1,4 @@
-REQUIRED_FORMAT:mainFmt(FormatIn_0)
+REQUIRED_FORMAT:mainFmt(inputTexture)
 
 INCLUDE_FILE(histogram.ppl)
 

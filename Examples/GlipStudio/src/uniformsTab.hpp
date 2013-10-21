@@ -209,8 +209,8 @@
 	{
 		Q_OBJECT
 
-		private : 
-			enum LibAction
+		public :
+			enum LibraryAction
 			{
 				NoAct,
 				Apply,
@@ -218,11 +218,12 @@
 				Remove
 			};
 
+		private :
 			const std::string	mainLibraryFilename;
 			UniformsVarsLoader	mainLibrary;
 			
 			QString			currentCode;
-			LibAction		actionToProcess;
+			LibraryAction		actionToProcess;
 			QAction			infoAct,
 						loadAct,
 						storeAct,
@@ -248,7 +249,7 @@
 
 			void update(void);
 			void update(Pipeline& pipeline);
-			bool process(Pipeline& pipeline);
+			bool process(Pipeline& pipeline, const LibraryAction& forceAction=NoAct);
 
 		signals : 
 			void requireProcessing(void);
@@ -277,7 +278,7 @@
 			bool prepareUpdate(void);
 
 			// Inherited : 
-			bool pipelineCanBeCreated(void);
+			bool pipelineCanBeDestroyed(void);
 			bool canBeClosed(void);
 
 		private slots :
@@ -290,7 +291,6 @@
 
 			// Inherited :
 			void pipelineWasCreated(void);
-			void pipelineCompilationFailed(Exception& e);
 			void pipelineWasDestroyed(void);
 
 		public : 
