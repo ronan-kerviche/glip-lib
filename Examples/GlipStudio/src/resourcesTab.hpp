@@ -51,6 +51,8 @@
 		Q_OBJECT
 
 		private : 
+			std::vector<int>	imageRecordIDs;
+
 			QVBoxLayout		layout;
 			QMenuBar		menuBar;
 			ConnectionMenu		connectionMenu;
@@ -62,6 +64,7 @@
 			HdlTexture& getTexture(int recordID);
 			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
+			void updateTexturesLinkInformation(void);
 
 		private slots :
 			// These will be called upon external modifications, in order for the module to update itself :
@@ -69,6 +72,7 @@
 			void pipelineWasDestroyed(void);
 			void selectionChanged(void);
 			void connectToInput(int i);
+			void imageLoaded(int recordID);
 			void imageUnloadedFromDevice(int recordID);
 			void imageFreed(int recordID);
 

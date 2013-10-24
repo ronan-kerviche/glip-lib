@@ -18,7 +18,8 @@
 			QListWidget	data;
 
 			void cleanCompilationTab(bool writeNoPipeline=false);
-			
+			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
+
 		private slots : 
 			void pipelineWasCreated(void);
 			void pipelineCompilationFailed(Exception& e);

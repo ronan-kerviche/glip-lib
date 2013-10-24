@@ -359,6 +359,9 @@ Loading Example :
 				PipelineScriptElements listElements(const std::string& source);
 
 				void addModule(LayoutLoaderModule* module, bool replace=false);
+				std::vector<std::string> listModules(void) const;
+				const LayoutLoaderModule& module(const std::string& name) const;
+				void removeModule(const std::string& name);
 		};
 
 /**

@@ -943,7 +943,7 @@
 		catch(Exception& e)
 		{
 			std::cout << "in Pipeline : " << std::endl << e.what() << std::endl;
-			Exception m("Exception caught while building Pipeline \"" + getFullName() + "\" : ", __FILE__, __LINE__);
+			Exception m("Exception caught while building Pipeline " + getFullName() + " : ", __FILE__, __LINE__);
 			throw m + e;
 		}
 	}

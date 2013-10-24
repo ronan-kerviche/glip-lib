@@ -7,10 +7,17 @@
 
 		data.setAlternatingRowColors(true);
 
-		QFont font;
+		/*QFont font;
 		font.setFamily("Monospace");
 		font.setFixedPitch(true);
-		data.setFont(font);
+		data.setFont(font);*/
+
+		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		QFontDatabase db;
+		data.setFont( db.font("Source Code Pro", "Regular", data.font().pointSize()) );
 
 		cleanCompilationTab(true);
 	}
@@ -33,6 +40,20 @@
 			data.addItem("No Pipeline...");
 			data.item(0)->setFont(QFont("", -1, -1, true));
 		}
+	}
+
+	void CompilationTab::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
+	{
+		/// TODO : update list of modules available in loader...
+		std::vector<std::string> modulesList = loader.listModules();
+
+		std::cout << "List of modules : " << std::endl; 
+		for(int k=0; k<modulesList.size(); k++)
+		{
+			std::cout << "- " << modulesList[k] << std::endl;
+			std::cout <<  loader.module( modulesList[k] ).getManual() << std::endl << std::endl;
+		}
+		std::cout << "End of modules list." << std::endl;
 	}
 
 	void CompilationTab::pipelineWasCreated(void)

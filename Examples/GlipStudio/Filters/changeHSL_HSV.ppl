@@ -76,7 +76,7 @@ SHADER_SOURCE:MeanFilter()
 FILTER_LAYOUT:fchangeHSV(format,ChangeHSV)
 FILTER_LAYOUT:fmean(format,MeanFilter)
 
-PIPELINE_MAIN:pMainGradient
+PIPELINE_MAIN:modifyHSL
 {
 	// Declare some input and output ports for this pipeline ::
 	INPUT_PORTS(texInput)

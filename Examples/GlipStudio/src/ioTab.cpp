@@ -59,9 +59,9 @@
 
 			for(int k=0; k<pipeline().getNumInputPort(); k++)
 			{
-				TextureStatus 	s( TextureStatus::InputPort );
-				s.location 	= TextureStatus::VirtualLink;
-				s.portID	= k;
+				TextureStatus s( TextureStatus::InputPort );
+				s.location 		= TextureStatus::VirtualLink;
+				s.portID		= k;
 
 				inputRecordIDs[k] = inputsList.addRecord( pipeline().getInputPortName(k), s );
 				pipelineInputWasModified(k);
@@ -70,9 +70,9 @@
 			for(int k=0; k<pipeline().getNumOutputPort(); k++)
 			{
 				TextureStatus s( TextureStatus::OutputPort );
-				s.location 	= TextureStatus::OnVRAM;
-				s.connected 	= lastComputationWasSuccessful();
-				s.portID	= k;
+				s.location 		= TextureStatus::OnVRAM;
+				s.connectionStatus 	= lastComputationWasSuccessful() ? TextureStatus::Connected : TextureStatus::NotConnected ;
+				s.portID		= k;
 
 				outputRecordIDs[k] = outputsList.addRecord( pipeline().getOutputPortName(k), pipeline().out(k).format(), s );
 			}
@@ -85,8 +85,8 @@
 				// Update colors : 
 				for(int k=0; k<pipeline().getNumOutputPort(); k++)
 				{
-					TextureStatus s = outputsList.recordStatus( outputRecordIDs[k] );
-					s.connected = true;
+					TextureStatus s 	= outputsList.recordStatus( outputRecordIDs[k] );
+					s.connectionStatus 	= TextureStatus::Connected;
 					outputsList.updateRecordStatus( outputRecordIDs[k], s );
 				}
 
@@ -101,8 +101,8 @@
 			// Update colors : 
 				for(int k=0; k<pipeline().getNumOutputPort(); k++)
 				{
-					TextureStatus s = outputsList.recordStatus( outputRecordIDs[k] );
-					s.connected = false;
+					TextureStatus 	s 	= outputsList.recordStatus( outputRecordIDs[k] );
+					s.connectionStatus	= TextureStatus::NotConnected;
 					outputsList.updateRecordStatus( outputRecordIDs[k], s );
 				}
 		}
@@ -117,8 +117,8 @@
 				inputsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) + " <- " + name );
 				inputsList.updateRecordFormat( inputRecordIDs[portID], inputTexture(portID) );
 
-				TextureStatus s = inputsList.recordStatus( inputRecordIDs[portID] );
-				s.connected = true;
+				TextureStatus s 	= inputsList.recordStatus( inputRecordIDs[portID] );
+				s.connectionStatus 	= TextureStatus::Connected;
 
 				inputsList.updateRecordStatus( inputRecordIDs[portID], s );
 			}
@@ -131,8 +131,8 @@
 				inputsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) );
 				inputsList.updateRecordFormat( inputRecordIDs[portID] );
 
-				TextureStatus s = inputsList.recordStatus( inputRecordIDs[portID] );
-				s.connected = false;
+				TextureStatus s 	= inputsList.recordStatus( inputRecordIDs[portID] );
+				s.connectionStatus	= TextureStatus::NotConnected;
 
 				inputsList.updateRecordStatus( inputRecordIDs[portID], s );
 			}

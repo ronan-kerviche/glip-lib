@@ -66,6 +66,9 @@
 			virtual bool isValidTexture(int recordID);
 			virtual HdlTexture& getTexture(int recordID);
 			virtual void giveTextureInformation(int recordID, std::string& name);
+			bool isListedAsPipelineInput(int recordID, int* portID = NULL) const;
+			bool isUsedAsPipelineInput(int recordID, int* portID = NULL) const;
+			bool isInputPortOwner(int portID, int* recordID = NULL) const;
 
 		public : 
 			virtual ~Module(void);
@@ -142,6 +145,9 @@
 			bool isInputValid(int portID);
 			HdlTexture& inputTexture(int portID);
 			void getInputTextureInformation(int portID, std::string& name);
+			bool isListedAsPipelineInput(const Module* m, int recordID, int* portID = NULL) const;
+			bool isUsedAsPipelineInput(const Module* m, int recordID, int* portID = NULL) const;
+			bool isInputPortOwner(const Module* m, int portID, int* recordID = NULL) const;
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);

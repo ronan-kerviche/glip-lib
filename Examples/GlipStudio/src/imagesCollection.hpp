@@ -38,6 +38,13 @@
 				NoType
 			};
 
+			enum ConnectionStatus
+			{
+				NotConnected,
+				Connected,
+				WaitingLink
+			};
+
 			enum MemLoc
 			{
 				NotLoaded,
@@ -52,10 +59,10 @@
 			Type	type;
 
 		public :
-			int	portID;
-			bool 	connected;
-			bool	lockedToDevice;
-			MemLoc	location;
+			int			portID;
+			ConnectionStatus	connectionStatus;
+			bool			lockedToDevice;
+			MemLoc			location;
 
 			TextureStatus(void);
 			TextureStatus(const TextureStatus& c);

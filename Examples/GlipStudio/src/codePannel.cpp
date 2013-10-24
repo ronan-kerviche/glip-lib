@@ -287,7 +287,7 @@
 		templateMenu(this), 
 	  	newTabAct(tr("&New tab"), this),
 		saveAllAct(tr("Save all"), this),
-		refreshAct("&Refresh | Compile", this),
+		refreshAct("Compile", this),
 		closeTabAct(tr("&Close"), this),
 		showPathWidget(tr("Paths"),this),
 		pathWidget(this),

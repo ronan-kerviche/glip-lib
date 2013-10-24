@@ -147,6 +147,30 @@
 			masterModule->getInputTextureInformation(portID, name);
 	}
 
+	bool Module::isListedAsPipelineInput(int recordID, int* portID) const
+	{
+		if(masterModule==NULL)
+			return false;
+		else
+			return masterModule->isListedAsPipelineInput(this, recordID, portID);
+	}
+
+	bool Module::isUsedAsPipelineInput(int recordID, int* portID) const
+	{
+		if(masterModule==NULL)
+			return false;
+		else
+			return masterModule->isUsedAsPipelineInput(this, recordID, portID);
+	}
+
+	bool Module::isInputPortOwner(int portID, int* recordID) const
+	{
+		if(masterModule==NULL)
+			return false;
+		else
+			return masterModule->isInputPortOwner(this, portID, recordID);
+	}
+
 	const std::string& Module::getPipelineCode(void) const
 	{
 		if(pipelineExists())
@@ -327,6 +351,57 @@
 			name = "N.A.";
 		else
 			inputTextureOwners[portID]->giveTextureInformation(inputTextureRecordIDs[portID], name);
+	}
+
+	bool ControlModule::isListedAsPipelineInput(const Module* m, int recordID, int* portID) const
+	{
+		for(int k=0; k<inputTextureOwners.size(); k++)
+		{
+			if(inputTextureOwners[k]==m && inputTextureRecordIDs[k]==recordID)
+			{
+				if(portID!=NULL)
+					(*portID) = k;
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	bool ControlModule::isUsedAsPipelineInput(const Module* m, int recordID, int* portID) const
+	{
+		int proxyPortID;
+		bool test = isListedAsPipelineInput(m, recordID, &proxyPortID);
+
+		if(test && pipelineExists())
+		{
+			if( proxyPortID < pipeline().getNumInputPort() )
+			{
+				if(portID!=NULL)
+					*portID = proxyPortID;
+		
+				return true;
+			}
+			else 
+				return false;
+		}
+		else 
+			return false;
+	}
+
+	bool ControlModule::isInputPortOwner(const Module* m, int portID, int* recordID) const
+	{
+		if(portID<0 || portID>=inputTextureOwners.size())
+			return false;
+		else
+		{
+			bool test = (inputTextureOwners[portID]==m);
+
+			if(test && recordID!=NULL)
+				*recordID = inputTextureRecordIDs[portID];
+
+			return test;
+		}
 	}
 
 	const std::string& ControlModule::getPipelineCode(void) const

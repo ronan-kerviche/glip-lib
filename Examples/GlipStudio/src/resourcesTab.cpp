@@ -81,6 +81,7 @@
 		layout.addWidget(&collection);
 
 		connect(&collection, 		SIGNAL(itemSelectionChanged()), 	this, SLOT(selectionChanged()));
+		connect(&collection, 		SIGNAL(imageLoaded(int)),		this, SLOT(imageLoaded(int)));
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
 		connect(&connectionMenu,	SIGNAL(connectToInput(int)),		this, SLOT(connectToInput(int)));
@@ -136,9 +137,69 @@
 			unregisterInputTexture(recordID);
 		}
 
+		void ResourcesTab::updateTexturesLinkInformation(void)
+		{
+			std::cout << "Call" << std::endl;
+
+			if(pipelineExists())
+			{
+				for(std::vector<int>::iterator it = imageRecordIDs.begin(); it!=imageRecordIDs.end(); it++)
+				{
+					int portID = 0;
+					TextureStatus s 	= collection.recordStatus( *it );
+
+					if( isListedAsPipelineInput(*it, &portID) )
+					{
+						if( isUsedAsPipelineInput(*it) )
+						{
+							s.connectionStatus 	= TextureStatus::Connected;
+							s.portID		= portID;
+							collection.updateRecordStatus( *it, s);
+						}
+						else 
+						{
+							s.connectionStatus 	= TextureStatus::WaitingLink;
+							s.portID		= portID;
+							collection.updateRecordStatus( *it, s);
+						}
+					}
+					else
+					{
+						s.connectionStatus 	= TextureStatus::NotConnected;
+						s.portID		= 0;
+						collection.updateRecordStatus( *it, s);
+					}
+				}
+			}
+			else
+			{
+				for(std::vector<int>::iterator it = imageRecordIDs.begin(); it!=imageRecordIDs.end(); it++)
+				{
+					int portID = 0;
+
+					if( isListedAsPipelineInput(*it, &portID) )
+					{
+						TextureStatus s 	= collection.recordStatus( *it );
+						s.connectionStatus 	= TextureStatus::WaitingLink;
+						s.portID		= portID;
+						collection.updateRecordStatus( *it, s);
+					}
+					else
+					{
+						TextureStatus s 	= collection.recordStatus( *it );
+						s.connectionStatus 	= TextureStatus::NotConnected;
+						s.portID		= 0;
+						collection.updateRecordStatus( *it, s);
+					}
+				}
+			}
+		}
+
 	// Private slots : 
 		void ResourcesTab::pipelineWasCreated(void)
 		{
+			updateTexturesLinkInformation();
+
 			// Update connection menu : 
 			connectionMenu.update( pipeline() );
 
@@ -149,6 +210,8 @@
 
 		void ResourcesTab::pipelineWasDestroyed(void)
 		{
+			updateTexturesLinkInformation();
+
 			// Update connection menu : 
 			connectionMenu.update();
 
@@ -183,11 +246,17 @@
 				registerInputTexture( selectedRecordsID[k], i + k);
 				collection.lockTextureToDevice( selectedRecordsID[k] );
 
-				TextureStatus s = collection.recordStatus( selectedRecordsID[k] );
-				s.connected 	= true;
-				s.portID	= i + k;
+				TextureStatus s 	= collection.recordStatus( selectedRecordsID[k] );
+				s.connectionStatus 	= TextureStatus::Connected;
+				s.portID		= i + k;
 				collection.updateRecordStatus( selectedRecordsID[k], s);
 			}
+		}
+
+		void ResourcesTab::imageLoaded(int recordID)
+		{
+			std::cout << "Image loaded : " << recordID << std::endl;
+			imageRecordIDs.push_back(recordID);
 		}
 
 		void ResourcesTab::imageUnloadedFromDevice(int recordID)
@@ -198,6 +267,10 @@
 		void ResourcesTab::imageFreed(int recordID)
 		{
 			cleanRecordDependances(recordID);
+
+			std::vector<int>::iterator it = std::find(imageRecordIDs.begin(), imageRecordIDs.end(), recordID);
+	
+			imageRecordIDs.erase( it );
 		}
 
 /*// TextureObject

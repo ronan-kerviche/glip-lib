@@ -5,7 +5,7 @@
 	TextureStatus::TextureStatus(void)
 	 : 	blank(true),
 		portID(-1),
-		connected(false),
+		connectionStatus(NotConnected),
 		lockedToDevice(false),
 		type(NoType),
 		location(NoMemLoc)
@@ -14,7 +14,7 @@
 	TextureStatus::TextureStatus(const TextureStatus& c)
 	 : 	blank(c.blank),
 		portID(c.portID),
-		connected(c.connected),
+		connectionStatus(c.connectionStatus),
 		lockedToDevice(c.lockedToDevice),
 		type(c.type),
 		location(c.location)
@@ -24,7 +24,7 @@
 	 : 	blank(false),
 		type(_type),
 		portID(-1),
-		connected(false),
+		connectionStatus(NotConnected),
 		lockedToDevice(false),
 		location(NoMemLoc)
 	{ }
@@ -41,12 +41,12 @@
 
 	const TextureStatus& TextureStatus::operator=(const TextureStatus& c)
 	{
-		blank		= c.blank;
-		portID		= c.portID;
-		connected	= c.connected;
-		lockedToDevice	= c.lockedToDevice;
-		type		= c.type;
-		location	= c.location;
+		blank			= c.blank;
+		portID			= c.portID;
+		connectionStatus	= c.connectionStatus;
+		lockedToDevice		= c.lockedToDevice;
+		type			= c.type;
+		location		= c.location;
 
 		return (*this);
 	}
@@ -70,20 +70,19 @@
 
 		// size of the columns : 
 		#if QT_VERSION >= 0x050000
-			header()->resizeSection(0, 45);
-			header()->resizeSection(1, 70);
+			resizeColumnToContents(0);
+			resizeColumnToContents(1);
 			header()->setSectionResizeMode(0, QHeaderView::Fixed); 
 			header()->setSectionResizeMode(1, QHeaderView::Stretch);
 			header()->setSectionResizeMode(2, QHeaderView::Fixed);
 		#else
-			header()->resizeSection(0, 45);
-			header()->resizeSection(1, 70);
+			resizeColumnToContents(0);
+			resizeColumnToContents(1);
 			header()->setResizeMode(0, QHeaderView::Fixed); 
 			header()->setResizeMode(1, QHeaderView::Fixed);
 			header()->setResizeMode(2, QHeaderView::Stretch);
 			header()->setResizeMode(3, QHeaderView::Fixed);
-			//header()->resizeSection(2, 50);
-
+			
 			//header()->setResizeMode(0, QHeaderView::Fixed);
 			//header()->resizeSection(1, 400);
 			//header()->setResizeMode(1, QHeaderView::Fixed);
@@ -332,17 +331,22 @@
 
 			if( s.getType()==TextureStatus::Resource )
 			{
-				if( s.connected )
+				if( s.connectionStatus==TextureStatus::Connected )
 				{
 					message = tr("In_%1").arg( s.portID );
 					brush = QBrush(Qt::green);
+				}
+				else if( s.connectionStatus==TextureStatus::WaitingLink )
+				{
+					message = tr("In_%1").arg( s.portID );
+					brush = QBrush(Qt::darkGray);
 				}
 			}
 			else if( s.getType()==TextureStatus::InputPort )
 			{
 				message = tr("In_%1").arg( s.portID );
 
-				if( s.connected )
+				if( s.connectionStatus==TextureStatus::Connected )
 					brush = QBrush(Qt::green);
 				else
 					brush = QBrush(Qt::red);
@@ -351,7 +355,7 @@
 			{
 				message = tr("Out_%1").arg( s.portID );
 
-				if( s.connected )
+				if( s.connectionStatus==TextureStatus::Connected )
 					brush = QBrush(Qt::green);
 				else
 					brush = QBrush(Qt::red);
