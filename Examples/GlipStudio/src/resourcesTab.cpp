@@ -70,11 +70,12 @@
 
 // ResourceTab
 	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
-	 : Module(_masterModule, parent), layout(this), collection("ResourcesTab", this), onDisplayRecordID(-1)
+	 : Module(_masterModule, parent), layout(this), collection("ResourcesTab", this), viewManager(this)
 	{
 		collection.addActionsToMenuBar(menuBar);
 
 		menuBar.addMenu(&connectionMenu);
+		menuBar.addMenu(&viewManager);
 		collection.addToContextMenu(connectionMenu);
 
 		layout.addWidget(&menuBar);
@@ -85,29 +86,13 @@
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
 		connect(&connectionMenu,	SIGNAL(connectToInput(int)),		this, SLOT(connectToInput(int)));
+		connect(&viewManager,		SIGNAL(createNewView()),		this, SLOT(createNewView()));
 	}
 
 	ResourcesTab::~ResourcesTab(void)
 	{ }
 
 	// Private functions : 
-		void ResourcesTab::updateDisplay(WindowRenderer& display)
-		{
-			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
-			
-			if(!selectedRecordsID.empty())
-				onDisplayRecordID = selectedRecordsID.front();
-
-			if(onDisplayRecordID > 0)
-			{
-				// Display : 
-				display.setImageAspectRatio( collection.texture(onDisplayRecordID) );
-				display << collection.texture(onDisplayRecordID) << OutputDevice::Process;
-			}
-			else
-				display.clearWindow();
-		}
-
 		bool ResourcesTab::isValidTexture(int recordID)
 		{
 			return collection.imageExists(recordID);
@@ -125,15 +110,7 @@
 
 		void ResourcesTab::cleanRecordDependances(int recordID)
 		{
-			if(recordID==onDisplayRecordID)
-			{
-				onDisplayRecordID = -1;
-				
-				WindowRenderer* display = NULL;
-				if(requireDisplay(display))
-					updateDisplay(*display);
-			}
-
+			viewManager.removeRecord(recordID);
 			unregisterInputTexture(recordID);
 		}
 
@@ -195,6 +172,12 @@
 			}
 		}
 
+		ViewLink* ResourcesTab::createViewLink(void* obj)
+		{
+			ResourcesTab* obj2 = reinterpret_cast<ResourcesTab*>(obj);
+			return obj2->getViewLink();
+		}
+
 	// Private slots : 
 		void ResourcesTab::pipelineWasCreated(void)
 		{
@@ -225,15 +208,18 @@
 			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
 		
 			if(selectedRecordsID.empty())
+			{
+				viewManager.enableCreationAction(false);
 				connectionMenu.activate(false);
+			}
 			else
 			{
+				viewManager.enableCreationAction(true);
+
 				connectionMenu.activate(true, selectedRecordsID.size());
 
 				// Display : 
-				WindowRenderer* display = NULL;
-				if(requireDisplay(display))
-					updateDisplay(*display);
+				viewManager.show( selectedRecordsID.front(), collection.texture(selectedRecordsID.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink);
 			}
 		}
 
@@ -255,7 +241,6 @@
 
 		void ResourcesTab::imageLoaded(int recordID)
 		{
-			std::cout << "Image loaded : " << recordID << std::endl;
 			imageRecordIDs.push_back(recordID);
 		}
 
@@ -271,6 +256,14 @@
 			std::vector<int>::iterator it = std::find(imageRecordIDs.begin(), imageRecordIDs.end(), recordID);
 	
 			imageRecordIDs.erase( it );
+		}
+
+		void ResourcesTab::createNewView(void)
+		{
+			std::vector<int> selectedRecordIDs = collection.getSelectedRecordIDs();
+
+			if(!selectedRecordIDs.empty())
+				viewManager.show( selectedRecordIDs.front(), collection.texture(selectedRecordIDs.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink, true);
 		}
 
 /*// TextureObject

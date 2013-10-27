@@ -79,6 +79,7 @@ FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of element
 FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
 GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
+ABORT_ERROR			| Return a user defined error. Argument : error description.
 </CENTER>
 
 Example in a script file : 
@@ -98,9 +99,9 @@ Example, creating a simple Module :
 		LAYOUT_LOADER_MODULE_DEFINITION( MyAdditionModule )
 		// (If your module ought to be more complex, you will have to go through a full description)
 
-		// In the source file (must have 2 arguments and no body) : 
-		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 2, 2, -1, "Increase or decrease the size of a format, save as a new format.\n"
-									"Arguments : nameOriginal, delta, nameNew.")
+		// In the source file (must have 2 arguments, no body and show the manual if any errors occur) : 
+		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 2, 2, -1, true, 	"Increase or decrease the size of a format, save as a new format.\n"
+										"Arguments : nameOriginal, delta, nameNew.")
 		{
 			// Check that the target element exists : 
 			FORMAT_MUST_EXIST( arguments[0] )
@@ -143,9 +144,10 @@ Example, creating a simple Module :
 				const int		minNumArguments,
 							maxNumArguments;
 				char 			bodyPresence;
+				bool			showManualOnError;
 
 			protected :
-				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence);
+				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError = true);
 
 			public :
 				LayoutLoaderModule(const LayoutLoaderModule& m);
@@ -198,6 +200,7 @@ Example, creating a simple Module :
 				const int& getMinNumArguments(void) const;
 				const int& getMaxNumArguments(void) const;
 				const char& bodyPresenceTest(void) const;
+				const bool& requiringToShowManualOnError(void) const;
 				const std::string& getManual(void) const;
 
 				// Static tools : 
@@ -227,22 +230,22 @@ Example, creating a simple Module :
 													std::string& executionCode); \
 									};
 
-			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
-															void 	moduleName :: apply(	const std::vector<std::string>& 		arguments,  \
-																			const std::string&				body, \
-																			const std::string&				currentPath, \
-																			std::vector<std::string>&			dynamicPaths, \
-																			std::map<std::string, std::string>&		sharedCodeList, \
-																			std::map<std::string, HdlTextureFormat>& 	formatList, \
-																			std::map<std::string, ShaderSource>& 		sourceList, \
-																			std::map<std::string, GeometryModel>&		geometryList, \
-																			std::map<std::string, FilterLayout>& 		filterList, \
-																			std::map<std::string, PipelineLayout>&		pipelineList, \
-																			const std::vector<std::string>&			staticPaths, \
-																			const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
-																			const std::map<std::string,GeometryModel>&	requiredGeometryList, \
-																			const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
-																			std::string& executionCode)
+			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
+																		void 	moduleName :: apply(	const std::vector<std::string>& 		arguments,  \
+																						const std::string&				body, \
+																						const std::string&				currentPath, \
+																						std::vector<std::string>&			dynamicPaths, \
+																						std::map<std::string, std::string>&		sharedCodeList, \
+																						std::map<std::string, HdlTextureFormat>& 	formatList, \
+																						std::map<std::string, ShaderSource>& 		sourceList, \
+																						std::map<std::string, GeometryModel>&		geometryList, \
+																						std::map<std::string, FilterLayout>& 		filterList, \
+																						std::map<std::string, PipelineLayout>&		pipelineList, \
+																						const std::vector<std::string>&			staticPaths, \
+																						const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
+																						const std::map<std::string,GeometryModel>&	requiredGeometryList, \
+																						const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
+																						std::string& executionCode)
 
 			#define __ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::iterator iteratorName = varName.find( elementName );
 			#define __CONST_ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::const_iterator iteratorName = varName.find( elementName );
@@ -358,6 +361,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
+			LAYOUT_LOADER_MODULE_DEFINITION( ABORT_ERROR )
 	}
 }
 

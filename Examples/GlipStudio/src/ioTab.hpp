@@ -9,7 +9,6 @@
 		Q_OBJECT
 
 		private : 
-			bool			pipelineOutputOnDisplay;
 			QVBoxLayout		layout;
 			QLabel			pipelineStatusLabel;
 			QMenuBar		inputMenuBar,
@@ -19,8 +18,13 @@
 			std::vector<int>	inputRecordIDs,
 						outputRecordIDs;
 
+			ViewManager		inputsViewManager,
+						outputsViewManager;
+
 			int getInputPortIDFromRecordID( int recordID );
 			int getOutputPortIDFromRecordID( int recordID );
+		
+			static ViewLink* createViewLink(void* obj);
 
 		private slots :
 			// Pipeline events : 
@@ -34,6 +38,9 @@
 			// Show inputs and outputs : 
 			void inputSelectionChanged(void);
 			void outputSelectionChanged(void);
+
+			void newInputView(void);
+			void newOutputView(void);
 
 		public :
 			IOTab(ControlModule& _masterModule, QWidget* parent=NULL);

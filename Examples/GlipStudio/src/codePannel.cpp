@@ -18,10 +18,12 @@
 		data.setSelectionMode(QAbstractItemView::ExtendedSelection);
 		data.setAlternatingRowColors(true);
 
-		QFont font;
+		/*QFont font;
 		font.setFamily("Monospace");
 		font.setFixedPitch(true);
-		data.setFont(font);
+		data.setFont(font);*/
+		QFontDatabase db;
+		data.setFont( db.font("Source Code Pro", "Regular", data.font().pointSize()) );
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&data);

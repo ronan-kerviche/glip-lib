@@ -68,25 +68,12 @@
 			return masterModule->requirePipelineDestruction();
 	}
 
-	bool Module::requireDisplay(WindowRenderer*& display)
+	ViewLink* Module::getViewLink(void)
 	{
 		if(masterModule==NULL)
-		{
-			display = NULL;
-			return false;			
-		}
+			return NULL;
 		else
-			return masterModule->linkToDisplay(this, display);
-	}
-
-	void Module::updateDisplay(WindowRenderer& display)
-	{
-		display.clearWindow();
-	}
-
-	bool Module::canReleaseDisplay(void)
-	{
-		return true;
+			return masterModule->getViewLink();
 	}
 
 	void Module::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
@@ -188,13 +175,13 @@
 			throw Exception("Module::pipeline - No pipeline defined.", __FILE__, __LINE__);
 	}
 
-	bool Module::isThisLinkedToDisplay(void) const
+	/*bool Module::isThisLinkedToDisplay(void) const
 	{
 		if(masterModule==NULL)
 			return false;
 		else
 			return masterModule->testLinkToDisplay(this);
-	}
+	}*/
 
 	Pipeline& Module::pipeline(void)
 	{
@@ -217,10 +204,8 @@
 	const int ControlModule::maxNumInputs = 256;
 
 	ControlModule::ControlModule(QWidget* parent)
-	 : QWidget(parent), display(this, 640, 480), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
+	 : QWidget(parent), display(640, 480, this), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
 	{
-		QObject::connect(&(display.renderer()),	SIGNAL(actionReceived(void)), this, SLOT(displayUpdate(void)));
-
 		LayoutLoaderModule::addBasicModules(pipelineLoader);
 
 		inputTextureRecordIDs.assign(maxNumInputs, -1);
@@ -241,13 +226,13 @@
 	}
 
 	// Private slots : 
-	void ControlModule::displayUpdate(void)
+	/*void ControlModule::displayUpdate(void)
 	{
 		if(displayClient==NULL)
 			display.renderer().clearWindow();
 		else
 			displayClient->updateDisplay( display.renderer() );
-	}
+	}*/
 
 	// Tools : 
 	void ControlModule::addClient(Module* m)
@@ -275,11 +260,14 @@
 
 		if(it!=clients.end())
 			clients.erase(it);
-
-		releaseDisplayLink(m);
 	}
 	
-	bool ControlModule::linkToDisplay(Module* m, WindowRenderer*& displayPtr)
+	ViewLink* ControlModule::getViewLink(void)
+	{
+		return display.sceneWidget().createView();
+	}
+
+	/*bool ControlModule::linkToDisplay(Module* m, WindowRenderer*& displayPtr)
 	{
 		if(displayClient!=NULL)
 		{
@@ -315,7 +303,7 @@
 			displayClient = NULL;
 			displayUpdate();
 		}
-	}
+	}*/
 
 	bool ControlModule::pipelineExists(void) const
 	{

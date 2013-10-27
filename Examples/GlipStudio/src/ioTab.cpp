@@ -2,14 +2,18 @@
 
 	IOTab::IOTab(ControlModule& _masterModule, QWidget* parent)
 	 : 	Module(_masterModule, parent),
-		pipelineOutputOnDisplay(false),
 		layout(this),
 		pipelineStatusLabel(this),
 		inputMenuBar(this),
 		outputMenuBar(this),
 		inputsList(this),
-		outputsList(this)
+		outputsList(this),
+		inputsViewManager(this),
+		outputsViewManager(this)
 	{
+		inputMenuBar.addMenu(&inputsViewManager);
+		outputMenuBar.addMenu(&outputsViewManager);
+
 		layout.addWidget(&pipelineStatusLabel);
 		layout.addWidget(&inputMenuBar);
 		layout.addWidget(&inputsList);
@@ -20,8 +24,10 @@
 		pipelineWasDestroyed();
 
 		// Connect : 
-		connect(&inputsList, 	SIGNAL(itemSelectionChanged()), this, SLOT(inputSelectionChanged()));
-		connect(&outputsList, 	SIGNAL(itemSelectionChanged()), this, SLOT(outputSelectionChanged()));
+		connect(&inputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(inputSelectionChanged()));
+		connect(&outputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(outputSelectionChanged()));
+		connect(&inputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newInputView()));
+		connect(&outputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newOutputView()));
 	}
 
 	IOTab::~IOTab(void)
@@ -46,6 +52,12 @@
 				return -1;
 			else
 				return std::distance(outputRecordIDs.begin(), it);
+		}
+
+		ViewLink* IOTab::createViewLink(void* obj)
+		{
+			IOTab* obj2 = reinterpret_cast<IOTab*>(obj);
+			return obj2->getViewLink();
 		}
 
 	// Private slots : 
@@ -80,7 +92,7 @@
 
 		void IOTab::pipelineWasComputed(void)
 		{
-			if(isThisLinkedToDisplay() && pipelineOutputOnDisplay)
+			/*if(isThisLinkedToDisplay() && pipelineOutputOnDisplay)
 			{
 				// Update colors : 
 				for(int k=0; k<pipeline().getNumOutputPort(); k++)
@@ -91,6 +103,12 @@
 				}
 
 				outputSelectionChanged();
+			}*/
+
+			if( outputsViewManager.hasViews() )
+			{
+				for(int k=0; k<pipeline().getNumOutputPort(); k++)
+					outputsViewManager.update( k, pipeline().out(k) );
 			}
 		}
 
@@ -99,12 +117,12 @@
 			pipelineStatusLabel.setText(tr("Computation of Pipeline \"%1\" failed :\n%2").arg(pipeline().getName().c_str()).arg(e.what()));
 
 			// Update colors : 
-				for(int k=0; k<pipeline().getNumOutputPort(); k++)
-				{
-					TextureStatus 	s 	= outputsList.recordStatus( outputRecordIDs[k] );
-					s.connectionStatus	= TextureStatus::NotConnected;
-					outputsList.updateRecordStatus( outputRecordIDs[k], s );
-				}
+			for(int k=0; k<pipeline().getNumOutputPort(); k++)
+			{
+				TextureStatus 	s 	= outputsList.recordStatus( outputRecordIDs[k] );
+				s.connectionStatus	= TextureStatus::NotConnected;
+				outputsList.updateRecordStatus( outputRecordIDs[k], s );
+			}
 		}
 
 		void IOTab::pipelineInputWasModified(int portID)
@@ -151,8 +169,63 @@
 
 		void IOTab::inputSelectionChanged(void)
 		{
-			pipelineOutputOnDisplay = false;
+			std::vector<int> recordIDs = inputsList.getSelectedRecordIDs();
+			
+			if(!recordIDs.empty())
+			{
+				inputsViewManager.enableCreationAction(true);
 
+				int portID = getInputPortIDFromRecordID( recordIDs.back() );
+
+				if(isInputValid(portID))
+				{
+					// Grab the display : 
+					/*WindowRenderer* display = NULL;
+					if(requireDisplay(display))
+					{
+						HdlTexture& input = inputTexture(portID);
+
+						display->setImageAspectRatio( input.format() );
+						(*display) << input << OutputDevice::Process;
+					}*/
+
+					inputsViewManager.show(portID, inputTexture(portID), this, &IOTab::createViewLink);
+				}
+			}
+			else
+				inputsViewManager.enableCreationAction(true);
+		}
+
+		void IOTab::outputSelectionChanged(void)
+		{
+			std::vector<int> recordIDs = outputsList.getSelectedRecordIDs();
+
+			if(!recordIDs.empty() && pipelineExists())
+			{
+				outputsViewManager.enableCreationAction(true);
+
+				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
+
+				if(portID>=0 && portID<pipeline().getNumOutputPort() )
+				{
+					// Grab the display : 
+					/*WindowRenderer* display = NULL;
+					if(requireDisplay(display))
+					{
+						display->setImageAspectRatio( pipeline().out(portID) );
+						(*display) << pipeline().out(portID) << OutputDevice::Process;
+						pipelineOutputOnDisplay = true;
+					}*/
+
+					outputsViewManager.show(portID, pipeline().out(portID), this, &IOTab::createViewLink);
+				}
+			}
+			else
+				outputsViewManager.enableCreationAction(false);
+		}
+
+		void IOTab::newInputView(void)
+		{
 			std::vector<int> recordIDs = inputsList.getSelectedRecordIDs();
 			
 			if(!recordIDs.empty())
@@ -160,24 +233,12 @@
 				int portID = getInputPortIDFromRecordID( recordIDs.back() );
 
 				if(isInputValid(portID))
-				{
-					// Grab the display : 
-					WindowRenderer* display = NULL;
-					if(requireDisplay(display))
-					{
-						HdlTexture& input = inputTexture(portID);
-
-						display->setImageAspectRatio( input.format() );
-						(*display) << input << OutputDevice::Process;
-					}
-				}
+					inputsViewManager.show(portID, inputTexture(portID), this, &IOTab::createViewLink, true);
 			}
 		}
 
-		void IOTab::outputSelectionChanged(void)
+		void IOTab::newOutputView(void)
 		{
-			pipelineOutputOnDisplay = false;
-
 			std::vector<int> recordIDs = outputsList.getSelectedRecordIDs();
 
 			if(!recordIDs.empty() && pipelineExists())
@@ -185,16 +246,7 @@
 				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
 
 				if(portID>=0 && portID<pipeline().getNumOutputPort() )
-				{
-					// Grab the display : 
-					WindowRenderer* display = NULL;
-					if(requireDisplay(display))
-					{
-						display->setImageAspectRatio( pipeline().out(portID) );
-						(*display) << pipeline().out(portID) << OutputDevice::Process;
-						pipelineOutputOnDisplay = true;
-					}
-				}
+					outputsViewManager.show(portID, pipeline().out(portID), this, &IOTab::createViewLink, true);
 			}
 		}
 

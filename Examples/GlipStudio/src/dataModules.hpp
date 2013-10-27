@@ -7,7 +7,7 @@
 
 	// Includes : 
 	#include "GLIPLib.hpp"
-	#include "WindowRendering.hpp"
+	#include "glSceneWidget.hpp"
 	#include <QObject>
 
 	#include <QtGlobal>
@@ -58,9 +58,7 @@
 			bool requirePipelineDestruction(void);
 
 			// Special functions : 
-			bool requireDisplay(WindowRenderer*& display);
-			virtual void updateDisplay(WindowRenderer& display);
-			virtual bool canReleaseDisplay(void);
+			ViewLink* getViewLink(void);
 
 			virtual void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 			virtual bool isValidTexture(int recordID);
@@ -82,7 +80,7 @@
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
-			bool isThisLinkedToDisplay(void) const;
+			//bool isThisLinkedToDisplay(void) const;
 
 		protected slots :
 			// These will be called upon external modifications, in order for the module to update itself :
@@ -123,11 +121,11 @@
 			bool pipelineCompilation(void);
 			bool pipelineComputation(void);
 
-		private slots : 
-			void displayUpdate(void);
+		/*private slots : 
+			void displayUpdate(void);*/
 
 		protected : 
-			WindowRendererContainer display;
+			GLSceneWidgetContainer display;
 
 			ControlModule(QWidget* parent = NULL);
 
@@ -137,9 +135,10 @@
 			// Tools : 
 			void addClient(Module* m);
 			void removeClient(Module* m);
-			bool linkToDisplay(Module* m, WindowRenderer*& displayPtr);
-			bool testLinkToDisplay(const Module* m) const;
-			void releaseDisplayLink(Module* m);
+			ViewLink* getViewLink(void);
+			//bool linkToDisplay(Module* m, WindowRenderer*& displayPtr);
+			//bool testLinkToDisplay(const Module* m) const;
+			//void releaseDisplayLink(Module* m);
 			bool pipelineExists(void) const;
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);

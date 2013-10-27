@@ -605,32 +605,36 @@
 		if(it==modules.end())
 			throw Exception("From line " + to_string(e.startLine) + " : The module \"" + e.name + "\" was not loaded.", __FILE__, __LINE__);
 
+		bool showManual = false;
 		std::string manual;
 
 		try
 		{
 			LayoutLoaderModule& module = *(it->second);
 
-			manual = module.getManual();
+			showManual 	= module.requiringToShowManualOnError();
+			manual 		= module.getManual();
 
 			// Re - test call : 
 			preliminaryTests(e, 1, module.getMinNumArguments(), module.getMaxNumArguments(), module.bodyPresenceTest(), "Module \"" + module.getName() + "\"");
 
 			// Make the call : 
 			std::string subExecution;
-			module.apply(e.arguments, e.body,	currentPath, 
-								dynamicPaths,
-								sharedCodeList,
-								formatList, 
-								sourceList,
-								geometryList,
-								filterList,
-								pipelineList,
-								staticPaths,
-								requiredFormatList,
-								requiredGeometryList,
-								requiredPipelineList,
-								subExecution);
+			module.apply(	e.arguments, 
+					e.getCleanBody(),	
+					currentPath, 
+					dynamicPaths,
+					sharedCodeList,
+					formatList, 
+					sourceList,
+					geometryList,
+					filterList,
+					pipelineList,
+					staticPaths,
+					requiredFormatList,
+					requiredGeometryList,
+					requiredPipelineList,
+					subExecution);
 
 			if(!subExecution.empty())
 			{
@@ -666,7 +670,7 @@
 		{
 			Exception m("From line " + to_string(e.startLine) + " : The module \"" + e.name + "\" reported an error : ", __FILE__, __LINE__);
 
-			if(manual.empty())
+			if(manual.empty() || !showManual)
 				throw m+ex;
 			else
 			{

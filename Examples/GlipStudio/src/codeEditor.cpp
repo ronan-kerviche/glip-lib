@@ -11,9 +11,13 @@
 	{
 		HighlightingRule rule;
 
+		QFontDatabase db;
+		QFont keyFont = db.font("Source Code Pro", "Bold", glslkeywordFormat.font().pointSize());
+
 		// GLSL Keywords :
 			glslkeywordFormat.setForeground(QColor(255,128,0));
-			glslkeywordFormat.setFontWeight(QFont::Bold);
+			//glslkeywordFormat.setFontWeight(QFont::Bold);
+			glslkeywordFormat.setFont(keyFont);
 			QStringList glslkeywordPatterns;
 
 			for(int i=0; i<GLSL_KW_END; i++)
@@ -23,7 +27,7 @@
 			}
 
 
-			foreach (const QString& pattern, glslkeywordPatterns)
+			foreach(const QString& pattern, glslkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
 				rule.format = glslkeywordFormat;
@@ -32,6 +36,7 @@
 
 		// GLSL Functions : 
 			glslfunctionFormat.setForeground(QColor(255,128,0));
+			glslfunctionFormat.setFont(keyFont);
 			QStringList glslfunctionPatterns;
 
 			for(int i=0; i<GLSL_FN_END; i++)
@@ -41,7 +46,7 @@
 			}
 
 
-			foreach (const QString& pattern, glslfunctionPatterns)
+			foreach(const QString& pattern, glslfunctionPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
 				rule.format = glslfunctionFormat;
@@ -50,7 +55,8 @@
 
 		// GLIP LayoutLoader Keywords : 
 			glipLayoutLoaderKeywordFormat.setForeground(QColor(255, 51, 255));
-			glipLayoutLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			//glipLayoutLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipllkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
@@ -59,7 +65,7 @@
 				glipllkeywordPatterns << str.c_str();
 			}
 
-			foreach (const QString& pattern, glipllkeywordPatterns)
+			foreach(const QString& pattern, glipllkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
 				rule.format = glipLayoutLoaderKeywordFormat;
@@ -68,7 +74,8 @@
 
 		// GLIP Uniform Loader Keywords : 
 			glipUniformLoaderKeywordFormat.setForeground(QColor(51, 255, 255));
-			glipUniformLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			//glipUniformLoaderKeywordFormat.setFontWeight(QFont::Bold);
+			glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipulkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
@@ -77,7 +84,7 @@
 				glipulkeywordPatterns << str.c_str();
 			}
 
-			foreach (const QString& pattern, glipulkeywordPatterns)
+			foreach(const QString& pattern, glipulkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
 				rule.format = glipUniformLoaderKeywordFormat;
@@ -120,11 +127,11 @@
 
 	void Highlighter::highlightBlock(const QString &text)
 	{
-		foreach (const HighlightingRule &rule, highlightingRules)
+		foreach(const HighlightingRule &rule, highlightingRules)
 		{
 			QRegExp expression(rule.pattern);
 			int index = expression.indexIn(text);
-			while (index >= 0)
+			while(index >= 0)
 			{
 				int length = expression.matchedLength();
 				setFormat(index, length, rule.format);
@@ -137,11 +144,11 @@
 		if (previousBlockState() != 1)
 			startIndex = commentStartExpression.indexIn(text);
 
-		while (startIndex >= 0)
+		while(startIndex >= 0)
 		{
 			int endIndex = commentEndExpression.indexIn(text, startIndex);
 			int commentLength;
-			if (endIndex == -1)
+			if(endIndex == -1)
 			{
 				setCurrentBlockState(1);
 				commentLength = text.length() - startIndex;
@@ -166,40 +173,6 @@
 		connect(document(), SIGNAL(contentsChanged()), 	this, SLOT(documentWasModified()));
 
 		updateLineNumberAreaWidth(0);
-
-		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-	
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Black.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl; 
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Bold.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Light.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-ExtraLight.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Medium.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Semibold.ttf");
-		if( fid < 0)
-			std::cerr << "Could not locate the font!" << std::endl;
-
-		std::cout << "Font list : " << std::endl;
-		foreach(const QString &family, QFontDatabase::applicationFontFamilies(fid))
-		{
-			std::cout << "    " << family.toStdString() << std::endl;
-		}
 	
 		// Set the font : 
 		int currentFontSize = document()->defaultFont().pointSize(); 

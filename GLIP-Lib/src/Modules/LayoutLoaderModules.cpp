@@ -35,20 +35,21 @@
 
 	// Modules tools : 
 		/**
-		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
+		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError)
 		\brief LayoutLoaderModule constructor. For simple modules you can just use the macro LAYOUT_LOADER_MODULE_APPLY.
 		\param _name Name of the module.
 		\param _manual Manual of the module.
 		\param _minNumArguments Minimum number of arguments of the module.
 		\param _maxNumArguments Maximum number of arguments of the module (-1 for no limitation).
 		\param _bodyPresence Requirement on the body (-1 for no body, 0 for indifferent, 1 for needed).
+		\param _showManualOnError Requiring the LayoutLoader to show the manual if any errors occur.
 		**/
-		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
+		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError)
 		 : name(_name), manual(_manual), minNumArguments(_minNumArguments), maxNumArguments(_maxNumArguments), bodyPresence(_bodyPresence)
 		{ }
 
 		LayoutLoaderModule::LayoutLoaderModule(const LayoutLoaderModule& m)
-		 : name(m.name), manual(m.manual), minNumArguments(m.minNumArguments), maxNumArguments(m.maxNumArguments), bodyPresence(m.bodyPresence)
+		 : name(m.name), manual(m.manual), minNumArguments(m.minNumArguments), maxNumArguments(m.maxNumArguments), bodyPresence(m.bodyPresence), showManualOnError(m.showManualOnError)
 		{ }
 
 		/**
@@ -92,6 +93,16 @@
 		}
 
 		/**
+		\fn const bool& LayoutLoaderModule::requiringToShowManualOnError(void) const
+		\brief Test if the module requires the LayoutLoader object to show this LayoutLoaderModule manual if any errors occur during LayoutLoaderModule::apply.
+		\return A boolean corresponding to the requirement.
+		**/
+		const bool& LayoutLoaderModule::requiringToShowManualOnError(void) const
+		{
+			return showManualOnError;
+		}
+
+		/**
 		\fn const std::string& LayoutLoaderModule::getManual(void) const
 		\brief Get the manual of the module.
 		\return A standard string containing the manual of the module.
@@ -125,10 +136,11 @@
 			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
 			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
+			loader.addModule( new ABORT_ERROR );
 		}
 
 	// Simple modules : 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1, 	"Change the size of a format, save as a new format.\n"
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1, true,	"Change the size of a format, save as a new format.\n"
 											"Arguments : nameOriginal, widthNew, heightNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -151,7 +163,7 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1,	"Scale a format by a scalar (or two), save as a new format.\n"
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1, true,	"Scale a format by a scalar (or two), save as a new format.\n"
 											"Arguments : nameOriginal, scaleFactor, nameNew.\n"
 											"            nameOriginal, scaleFactorX, scaleFactorY, nameNew.")
 		 	{
@@ -192,8 +204,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1, 	"Change the channels of a format, save as a new format.\n"
-											"Arguments : nameOriginal, channelNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1, true,	"Change the channels of a format, save as a new format.\n"
+												"Arguments : nameOriginal, channelNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -207,8 +219,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1, 	"Change the depth of a format, save as a new format.\n"
-											"Arguments : nameOriginal, depthNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1, true,	"Change the depth of a format, save as a new format.\n"
+												"Arguments : nameOriginal, depthNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -222,8 +234,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1, 	"Change the filtering of a format, save as a new format.\n"
-											"Arguments : nameOriginal, minNew, magNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1, true,	"Change the filtering of a format, save as a new format.\n"
+												"Arguments : nameOriginal, minNew, magNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -238,8 +250,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1, 	"Change the wrapping of a format, save as a new format.\n"
-											"Arguments : nameOriginal, sNew, tNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1, true,	"Change the wrapping of a format, save as a new format.\n"
+												"Arguments : nameOriginal, sNew, tNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -254,8 +266,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1, 	"Change the mipmap level of a format, save as a new format.\n"
-											"Arguments : nameOriginal, mNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1, true,	"Change the mipmap level of a format, save as a new format.\n"
+												"Arguments : nameOriginal, mNew, nameNew.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -270,8 +282,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1, 	"Find the format having the smallest width, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the smallest width, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					widthBest	= 0;
@@ -298,8 +310,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1, 	"Find the format having the largest width, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the largest width, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					widthBest	= 0;
@@ -326,8 +338,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1, 	"Find the format having the smallest height, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the smallest height, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					heightBest	= 0;
@@ -354,8 +366,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1, 	"Find the format having the largest height, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the largest height, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					heightBest	= 0;
@@ -382,8 +394,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1, 	"Find the format having the smallest number of pixels, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the smallest number of pixels, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -410,8 +422,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1, 	"Find the format having the largest number of pixels, save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the largest number of pixels, save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -438,8 +450,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1, "Find the format having the smallest number of elements (pixels times channels count), save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the smallest number of elements (pixels times channels count), save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -466,8 +478,8 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1, "Find the format having the largest number of elements (pixels times channels count), save as a new format.\n"
-											"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the largest number of elements (pixels times channels count), save as a new format.\n"
+												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -494,7 +506,7 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 2, -1, 	"Create a 2D grid geometry of the same size as the format in argument.\n"
+			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 2, -1, true,	"Create a 2D grid geometry of the same size as the format in argument.\n"
 												"Arguments : nameFormat, nameNewGeometry.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -506,7 +518,7 @@
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight()) )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 2, -1, 	"Create a 3D grid geometry of the same size as the format in argument.\n"
+			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 2, -1, true,	"Create a 3D grid geometry of the same size as the format in argument.\n"
 												"Arguments : nameFormat, nameNewGeometry.")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -516,5 +528,20 @@
 
 				// Build the new geometry : 
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels()) )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"
+											"Argument    : error description.\n"
+											"Body (opt.) : more complete description of the error.")
+			{
+				Exception m("Error : " + arguments.front(), __FILE__, __LINE__);
+
+				if(body.empty())
+					throw m;
+				else
+				{
+					Exception e(body, __FILE__, __LINE__);
+					throw m + e;
+				}
 			}
 

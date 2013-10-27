@@ -12,7 +12,7 @@ unix: LIBS      += 	../../GLIP-Lib/lib/libglip.a
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
-HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
+HEADERS      	+= 	./src/glSceneWidget.hpp \
 			../ExternalTools/Qt/ResourceLoader.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
 			./src/dataModules.hpp \
@@ -30,7 +30,7 @@ HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
 			./src/libraryInterface.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
-			../ExternalTools/Qt/WindowRendering.cpp \
+			./src/glSceneWidget.cpp \
 			../ExternalTools/Qt/ResourceLoader.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
 			./src/dataModules.cpp \

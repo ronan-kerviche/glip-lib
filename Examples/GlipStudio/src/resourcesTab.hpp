@@ -57,14 +57,17 @@
 			QMenuBar		menuBar;
 			ConnectionMenu		connectionMenu;
 			ImagesCollection	collection;
-			int			onDisplayRecordID;
 
-			void updateDisplay(WindowRenderer& display);
+			ViewManager 		viewManager;
+
+			//void updateDisplay(WindowRenderer& display);
 			bool isValidTexture(int recordID);
 			HdlTexture& getTexture(int recordID);
 			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
 			void updateTexturesLinkInformation(void);
+
+			static ViewLink* createViewLink(void* obj);
 
 		private slots :
 			// These will be called upon external modifications, in order for the module to update itself :
@@ -75,6 +78,7 @@
 			void imageLoaded(int recordID);
 			void imageUnloadedFromDevice(int recordID);
 			void imageFreed(int recordID);
+			void createNewView(void);
 
 		public :
 			ResourcesTab(ControlModule& _masterModule, QWidget* parent=NULL);

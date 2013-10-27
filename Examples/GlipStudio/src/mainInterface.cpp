@@ -10,11 +10,9 @@
 	MainWindow::MainWindow(void)
 	 : mainLayout(this), codeEditors(*this, this), libraryInterface(*this, this)
 	{
-		
 		// Display tools : 
-		display.renderer().setKeyboardActions(true);
-		display.renderer().setMouseActions(true);
-		display.renderer().setPixelAspectRatio(1.0f);
+		display.sceneWidget().setKeyboardActions(true);
+		display.sceneWidget().setMouseActions(true);
 
 		secondarySplitter.setOrientation(Qt::Vertical);
 		secondarySplitter.addWidget(&display);
@@ -49,6 +47,46 @@
 	GlipStudio::GlipStudio(int& argc, char** argv)
 	 : QApplication(argc, argv), settingsManager(NULL), mainWindow(NULL)
 	{
+		// Load fonts : 
+		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+	
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Black.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl; 
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Bold.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Light.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-ExtraLight.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Medium.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Semibold.ttf");
+		if( fid < 0)
+			std::cerr << "Could not locate the font!" << std::endl;
+
+		std::cout << "Font list : " << std::endl;
+		QFontDatabase db;
+		foreach(const QString& family, QFontDatabase::applicationFontFamilies(fid))
+		{
+			std::cout << "    " << family.toStdString() << std::endl;
+			foreach(const QString& style, db.styles(family))
+				std::cout << "      " << style.toStdString() << std::endl;
+		}
+		std::cout << "End font list." << std::endl;
+
+		// Load Stylesheet : 
 		const QString 	stylesheetFilename = "stylesheet.css";
 		QFile 		stylesheetFile(stylesheetFilename);
 			
