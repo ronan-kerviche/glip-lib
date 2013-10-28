@@ -354,22 +354,22 @@
 
 	CodeEditorsPannel::~CodeEditorsPannel(void)
 	{
-		while(widgets.count()>0)
+		/*while(widgets.count()>0)
 			widgets.removeTab(0);
 
 		for(int i=0; i<tabs.size(); i++)
 			delete tabs[i];
 
-		tabs.clear();
+		tabs.clear();*/
 	}
 
 	void CodeEditorsPannel::newTab(void)
 	{
-		tabs.push_back(new CodeEditor(this));
-		widgets.addTab(tabs.back(), tabs.back()->getTitle());
-		widgets.setCurrentIndex( widgets.count() - 1);
+		CodeEditor* newEditor = new CodeEditor(this);
+		widgets.addTab(newEditor, newEditor->getTitle());
+		widgets.setCurrentWidget( newEditor );
 
-		connect(tabs.back(), SIGNAL(titleChanged()), this, SLOT(updateTitles()));
+		connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
 	}
 
 	void CodeEditorsPannel::open(const QStringList& filenames)
@@ -382,10 +382,10 @@
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			tabs[c]->setFilename(filename);
-			tabs[c]->save();
+			e->setFilename(filename);
+			e->save();
 		}
 	}
 
@@ -393,10 +393,10 @@
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			tabs[c]->setFilename(filename);
-			tabs[c]->save();
+			e->setFilename(filename);
+			e->save();
 
 			openSaveInterface.reportSuccessfulSave(filename);
 		}
@@ -404,33 +404,35 @@
 
 	void CodeEditorsPannel::saveAll(void)
 	{
-		int original = widgets.currentIndex();
+		CodeEditor* original = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-		for(int k=0; k<tabs.size(); k++)
+		for(int k=0; k<widgets.count(); k++)
 		{
-			if(tabs[k]->filename().isEmpty())
-			{
-				widgets.setCurrentIndex(k);
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
-				QString currentPath = tabs[k]->path();
+			if(e->filename().isEmpty())
+			{
+				widgets.setCurrentWidget(e);
+
+				QString currentPath = e->path();
 
 				QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
 
 				if(!fileName.isEmpty())
 				{
-					tabs[k]->setFilename(fileName);
-					tabs[k]->save();
+					e->setFilename(fileName);
+					e->save();
 				}
 			}
 			else
 			{
-				tabs[k]->save();
-				widgets.setCurrentIndex(k);
+				e->save();
+				widgets.setCurrentWidget(e);
 			}
 		}
 
-		if(!tabs.empty())
-			widgets.setCurrentIndex(original);
+		if(widgets.count() > 0)
+			widgets.setCurrentWidget(original);
 	}
 
 	void CodeEditorsPannel::refresh(void)
@@ -445,30 +447,26 @@
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			if(tabs[c]->canBeClosed())
+			if(e->canBeClosed())
 			{
-				widgets.removeTab(c);
-				delete tabs[c];
-
-				tabs.erase(tabs.begin() + c);
+				widgets.removeTab(widgets.indexOf(e));
+				delete e;
 			}
 		}
 	}
 
 	void CodeEditorsPannel::closeAll(void)
 	{
-		for(int k=0; k<tabs.size(); k++)
+		for(int k=0; k<widgets.count(); k++)
 		{
-			widgets.setCurrentIndex(k);
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
-			if(tabs[k]->canBeClosed())
+			if(e->canBeClosed())
 			{
-				widgets.removeTab(k);
-				delete tabs[k];
-
-				tabs.erase(tabs.begin() + k);
+				widgets.removeTab(widgets.indexOf(e));
+				delete e;
 			}
 		}
 	}
@@ -487,19 +485,20 @@
 		}
 	}
 
-	void CodeEditorsPannel::updateTitles(void)
+	void CodeEditorsPannel::updateTitle(void)
 	{
-		for(int k=0; k<tabs.size(); k++)
-			widgets.setTabText(k, tr("   %1   ").arg(tabs[k]->getTitle()));
+		CodeEditor* e = reinterpret_cast<CodeEditor*>( QObject::sender() );
+
+		widgets.setTabText( widgets.indexOf(e), tr("   %1   ").arg(e->getTitle()));
 	}
 
 	void CodeEditorsPannel::insertTemplate(void)
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			tabs[c]->insert( templateMenu.getTemplateCode() );
+			e->insert( templateMenu.getTemplateCode() );
 		}
 	}
 
@@ -514,8 +513,10 @@
 	{
 		if(widgets.count() > 0)
 		{
-			openSaveInterface.reportSuccessfulSave( tabs[c]->filename() );
-			openSaveInterface.enableSave( tabs[c]->isModified() );
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(c));
+
+			openSaveInterface.reportSuccessfulSave( e->filename() );
+			openSaveInterface.enableSave( e->isModified() );
 			openSaveInterface.enableSaveAs(true);
 		}
 		else
@@ -529,9 +530,9 @@
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			return tabs[c]->filename().toStdString();
+			return e->filename().toStdString();
 		}
 		else
 			return "";
@@ -541,8 +542,9 @@
 	{
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
-			return tabs[c]->currentContent();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+
+			return e->currentContent();
 		}
 		else
 			return "";
@@ -553,9 +555,9 @@
 		// Make sure the list of path contains the one of the current pipeline :
 		if(widgets.count() > 0)
 		{
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			pathWidget.addPath( tabs[c]->path().toStdString() );
+			pathWidget.addPath( e->path().toStdString() );
 		}
 
 		return pathWidget.getPaths();
@@ -571,10 +573,12 @@
 	{
 		bool test = true;
 
-		for(int i=0; i<tabs.size() && test; i++)
+		for(int k=0; k<widgets.count() && test; k++)
 		{
-			widgets.setCurrentIndex(i);
-			test = test && tabs[i]->canBeClosed();	
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
+
+			widgets.setCurrentWidget(e);
+			test = test && e->canBeClosed();	
 		}
 
 		return test;
@@ -588,22 +592,22 @@
 		{
 			if(widgets.count() > 0)
 			{
-				int c = widgets.currentIndex();
-				if(!tabs[c]->empty())
+				CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+				if(!e->empty())
 					newTab();
 			}
 			else
 				newTab();
 
-			int c = widgets.currentIndex();
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 	
-			tabs[c]->setFilename( filename );
-			if(!tabs[c]->load())
+			e->setFilename( filename );
+			if(!e->load())
 				closeTab();
 			else
 			{
 				// Append the path : 
-				pathWidget.addPath( tabs[c]->path().toStdString() );
+				pathWidget.addPath( e->path().toStdString() );
 
 				// Save as new file : 
 				openSaveInterface.reportSuccessfulLoad( filename );

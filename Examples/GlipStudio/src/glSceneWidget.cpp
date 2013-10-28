@@ -6,13 +6,21 @@
 	using namespace Glip::CorePipeline;
 
 // ViewLink
-	int ViewLink::viewCounter = 1;
+	int 		ViewLink::viewCounter = 1;
+	GLSceneWidget*	ViewLink::quietSceneTarget = NULL;
 
 	ViewLink::ViewLink(GLSceneWidget* _scene)
-	 : 	__ReadOnly_ComponentLayout(getLayout()), OutputDevice(getLayout(), "GLViewLink_" + to_string(viewCounter)), scene(_scene), target(NULL)
+	 : 	__ReadOnly_ComponentLayout(getLayout()), 
+		OutputDevice(getLayout(), "GLViewLink_" + to_string(viewCounter)), 
+		scene(_scene), 
+		target(NULL)
 	{
 		viewCounter++;
 		setHaloColor(1.0f, 1.0f, 1.0f);
+		centerCoords[0] = 0.0f;
+		centerCoords[1] = 0.0f;
+		angleRadians	= 0.0f;
+		scale		= 1.0f;
 	}
 
 	ViewLink::~ViewLink(void)
@@ -59,6 +67,29 @@
 			return *target;
 	}
 
+	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize)
+	{
+		float	width 	= format().getWidth(),
+			height	= format().getHeight();
+
+		if(width>=height)
+		{
+			imageScaling[0] = 1.0f * scale;
+			imageScaling[1] = height / width * scale;
+
+			haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
+			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);
+		}
+		else
+		{
+			imageScaling[0] = width / height * scale;
+			imageScaling[1] = 1.0f * scale;
+
+			haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
+			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);
+		}
+	}
+
 	void ViewLink::setHaloColor(float r, float g, float b)
 	{
 		haloColorRGB[0]	= r;
@@ -78,8 +109,12 @@
 	{
 		if(scene!=NULL)
 		{
-			scene->bringUpView(this);
-			scene->updateScene();
+			if( quietSceneTarget!=scene )
+			{
+				scene->bringUpView(this);
+				scene->updateScene();
+			}
+			// else : wait for ViewLink::endQuietUpdate to push the updates.
 		}
 		else
 			throw Exception("ViewLink::bringUp - This view is closed.", __FILE__, __LINE__);
@@ -104,6 +139,28 @@
 	bool ViewLink::isClosed(void) const
 	{
 		return scene==NULL;
+	}
+
+	void ViewLink::beginQuietUpdate(void)
+	{
+		if(scene!=NULL)
+		{
+			if(quietSceneTarget==NULL)
+				quietSceneTarget = scene;
+			else
+				throw Exception("ViewLink::beginQuietUpdate - Quiet mode already enabled.", __FILE__, __LINE__);
+		}
+	}
+
+	void ViewLink::endQuietUpdate(void)
+	{
+		if(quietSceneTarget!=NULL)
+		{
+			quietSceneTarget->updateScene();
+			quietSceneTarget = NULL;
+		}
+		else
+			throw Exception("ViewLink::endQuietUpdate - Not in quiet mode.", __FILE__, __LINE__);
 	}
 
 // GLSceneWidget
@@ -135,6 +192,12 @@
 		clearColorBlue(0.1f),
 		contextMenu(this)
 	{
+		screenCenter[0]	= 0.0f;
+		screenCenter[1]	= 0.0f;
+		zoomCenter[0]	= 0.0f;
+		zoomCenter[1]	= 0.0f;
+		masterScale	= 1.0f;
+
 		QWidget::setGeometry(10,10,width,height);
 		makeCurrent();
 		setAutoBufferSwap(false);
@@ -189,13 +252,16 @@
 		quad = new GeometryInstance( GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB );
 
 		// Test : 
-		contextMenu.addAction("Hide All", 				this, SLOT(hideAll()));
-		contextMenu.addAction("Show All", 				this, SLOT(showAll()));
-		contextMenu.addAction("Hide selected views", 			this, SLOT(hideCurrentSelection()));
-		contextMenu.addAction("Close selected views", 			this, SLOT(closeSelection()));
+		contextMenu.addAction("Select All", 				this, SLOT(selectAll()));
+		contextMenu.addAction("Select All Visible", 			this, SLOT(selectAllVisible()));
 		contextMenu.addAction("Reset angle of selected views", 		this, SLOT(resetSelectionAngle()));
 		contextMenu.addAction("Reset position of selected views",	this, SLOT(resetSelectionPosition()));
+		contextMenu.addAction("Hide selected views", 			this, SLOT(hideCurrentSelection()));
+		contextMenu.addAction("Close selected views", 			this, SLOT(closeSelection()));
+		contextMenu.addAction("Hide All", 				this, SLOT(hideAll()));
+		contextMenu.addAction("Show All", 				this, SLOT(showAll()));
 	}
+
 
 	GLSceneWidget::~GLSceneWidget(void)
 	{
@@ -468,26 +534,26 @@
 		}
 
 	// Process Action function : 
-		int GLSceneWidget::updateSelection(void)
+		ViewLink* GLSceneWidget::updateSelection(bool dropSelection)
 		{
-			int under = getObjectIDUnder(lastPosX, lastPosY);
+			ViewLink* under = getObjectIDUnder(lastPosX, lastPosY);
 
 			bool test = viewIsSelected(under);
 
-			if(under==-1 && !selectionList.empty() && !pressed(KeyControl))
+			if(under==NULL && !selectionList.empty() && !pressed(KeyControl) && dropSelection)
 				selectionList.clear();
-			else if(under!=-1 && !pressed(KeyControl) && !test)
+			else if(under!=NULL && !pressed(KeyControl) && !test)
 			{
 				selectionList.clear();
 				selectionList.push_back(under);
 			}
-			else if(under!=-1 && pressed(KeyControl) && !test)
+			else if(under!=NULL && pressed(KeyControl) && !test)
 			{
 				selectionList.push_back(under);
 			}
 
-			if(under!=-1)
-				emit links[under]->selected();
+			if(under!=NULL)
+				emit under->selected();
 
 			return under;
 		}
@@ -504,15 +570,20 @@
 			}
 			else if(justLeftClicked())
 			{
-				int id = updateSelection();
-				bringUpView(id);
-				needUpdate = true;
+				ViewLink* under = updateSelection();
+		
+				if(under!=NULL)
+					bringUpView(under);
+					
+				needUpdate = true; // Need update for deselection anymway.
+
+				// TEST, TODO : REMOVE : 
+				float x, y;
+				getGLCoordinatesAbsolute(lastPosX, lastPosY, x, y);
 			}
 			else if(justRightClicked())
 			{
-				int id = updateSelection();
-				bringUpView(id);
-				needUpdate = true;
+				ViewLink* under = updateSelection(false);
 
 				QPoint globalPos = mapToGlobal(QPoint(lastPosX, lastPosY));
 				contextMenu.exec(globalPos);
@@ -524,25 +595,30 @@
 				float	dx = 0.0f, 
 					dy = 0.0f;
 
-				getGLCoordinates(deltaX, deltaY, dx, dy);
+				getGLCoordinatesRelative(deltaX, deltaY, dx, dy);
 
 				if(!pressed(KeyShiftRotate))
 				{
 					// Apply to selection as translation :
 					if(!selectionList.empty())
 					{
-						for(std::vector<int>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
 						{
-							xCoord[*it] += dx;
-							yCoord[*it] += dy;
+							(*it)->centerCoords[0] += dx;
+							(*it)->centerCoords[1] += dy;
 						}
+					}
+					else
+					{
+						screenCenter[0] += dx;
+						screenCenter[1] += dy;
 					}
 				}
 				else
 				{
-					int under = getObjectIDUnder(lastPosX, lastPosY);
+					ViewLink* under = updateSelection(false);
 
-					if(under!=-1)
+					if(under!=NULL)
 					{
 						// Compute angle for current center :
 						float 	ox	= 0.0f,
@@ -551,10 +627,10 @@
 							ny	= 0.0f,
 							dAngle 	= 0.0f;
 
-						getGLCoordinates(lastPosX, lastPosY, ox, oy);
+						getGLCoordinatesRelative(lastPosX, lastPosY, ox, oy);
 
-						ox	= xCoord[under] - ox;
-						oy	= yCoord[under] - oy;
+						ox	= under->centerCoords[0] - ox;
+						oy	= under->centerCoords[1] - oy;
 						nx 	= ox - dx;
 						ny	= oy - dy;
 
@@ -562,8 +638,8 @@
 						dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
 
 						// Apply to selection as rotation :
-						for(std::vector<int>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-							angleRadians[*it] += dAngle;
+						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+							(*it)->angleRadians += dAngle;
 					}
 				}
 
@@ -576,8 +652,19 @@
 			{
 				if(!selectionList.empty())
 				{
-					for(std::vector<int>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-						scale[*it] *= std::pow(1.2f, deltaWheelSteps);
+					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+						(*it)->scale *= std::pow(1.2f, deltaWheelSteps);
+				}
+				else
+				{
+					getGLCoordinatesRelative(lastPosX, lastPosY, zoomCenter[0], zoomCenter[1]);
+					masterScale *= std::pow(1.2f, deltaWheelSteps);
+
+					// Update the new center : 
+					screenCenter[0] += zoomCenter[0] * (masterScale - 1.0f);
+					screenCenter[1] += zoomCenter[1] * (masterScale - 1.0f);
+
+					std::cout << "New master scale : " << masterScale << std::endl;
 				}
 
 				needUpdate 	= true;
@@ -616,7 +703,7 @@
 
 				if(width()>=height())
 				{
-					screenScaling[0] = static_cast<float>(width())/static_cast<float>(height());
+					screenScaling[0] = static_cast<float>(height())/static_cast<float>(width());
 					screenScaling[1] = 1.0f;
 				}
 				else
@@ -625,6 +712,9 @@
 					screenScaling[1] = static_cast<float>(width())/static_cast<float>(height());
 				}
 				placementProgram->modifyVar("screenScaling", GL_FLOAT_VEC2, screenScaling);
+				placementProgram->modifyVar("screenCenter", GL_FLOAT_VEC2, screenCenter);
+				placementProgram->modifyVar("zoomCenter", GL_FLOAT_VEC2, zoomCenter);
+				placementProgram->modifyVar("masterScale", GL_FLOAT, masterScale);
 
 				// Set the mode :
 				if(forSelection)
@@ -633,52 +723,29 @@
 					placementProgram->modifyVar("selectionMode", GL_INT, 0);
 
 				// Go through the list of view in order to draw some of them :
-				for(std::list<int>::iterator it = displayList.begin(); it!=displayList.end(); it++)
+				for(std::list<ViewLink*>::iterator it = displayList.begin(); it!=displayList.end(); it++)
 				{
-					if(links[*it]->preparedToDraw())
+					if((*it)->preparedToDraw())
 					{
 						// Set positions and rotation : 
-						float 	position[2];
-							position[0]	= xCoord[*it];
-							position[1]	= yCoord[*it];
-						float 	angle		= angleRadians[*it];
-
-						placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	position);
-						placementProgram->modifyVar("angle",		GL_FLOAT,	angle);
+						placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	(*it)->centerCoords);
+						placementProgram->modifyVar("angle",		GL_FLOAT,	(*it)->angleRadians);
 
 						// Set screen scaling variable : 
 						float 	imageScaling[2],
 							haloScaling[2];
 
-						float	width 	= links[*it]->format().getWidth(),
-							height	= links[*it]->format().getHeight();
-
-						if(width>=height)
-						{
-							imageScaling[0] = 1.0f / scale[*it];
-							imageScaling[1] = (width / height) / scale[*it];
-
-							haloScaling[0]	= imageScaling[0] * 0.99f;
-							haloScaling[1]	= imageScaling[1] * 0.99f;
-						}
-						else
-						{
-							imageScaling[0] = (height / width) / scale[*it];
-							imageScaling[1] = 1.0f / scale[*it];
-
-							haloScaling[0]	= imageScaling[0] * 0.99f;
-							haloScaling[1]	= imageScaling[1] * 0.99f;
-						}
+						(*it)->getScalingRatios(imageScaling, haloScaling, 0.02f);
 
 						placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
 
 						if(forSelection)
-							placementProgram->modifyVar("objectID", GL_INT, (*it)+1);
+							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);
 						else if(viewIsSelected(*it))
 						{
 							placementProgram->modifyVar("selectionMode", GL_INT, 2);
 							placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, haloScaling);
-							placementProgram->modifyVar("haloColor", GL_FLOAT_VEC3, links[*it]->haloColorRGB);
+							placementProgram->modifyVar("haloColor", GL_FLOAT_VEC3, (*it)->haloColorRGB);
 							
 							quad->draw();
 
@@ -691,6 +758,34 @@
 					}
 				}
 
+				// Axis : 
+				{
+					float centerCoords[2];
+					centerCoords[0] = 0.0f;
+					centerCoords[1] = 0.0f;
+					float imageScaling[2];
+					imageScaling[0] = 1.0f;
+					imageScaling[1] = 1.0f;
+					placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	centerCoords);
+					placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
+
+					placementProgram->modifyVar("selectionMode", GL_INT, 2);
+
+					glBegin(GL_LINES);
+						glColor3f(1.0f,0.0f,0.0f);
+						glVertex2f(0.0f,0.0f);
+						glVertex2f(1.0f,0.0f);
+						glColor3f(1.0f,0.0f,1.0f);
+						glVertex2f(0.05f,0.05f);
+						glVertex2f(0.5f,0.05f);
+						glColor3f(0.0f,1.0f,0.0f);
+						glVertex2f(0.0f,0.0f);
+						glVertex2f(0.0f,1.0f);
+						glColor3f(0.0f,1.0f,1.0f);
+						glVertex2f(0.05f,0.05f);
+						glVertex2f(0.05f,0.5f);
+					glEnd();
+				}
 				// Clean : 
 				HdlTexture::unbind();
 				HdlProgram::stopProgram();
@@ -709,24 +804,50 @@
 			swapBuffers();
 		}
 
-		void GLSceneWidget::getGLCoordinates(float x, float y, float& glX, float& glY)
+		void GLSceneWidget::getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY)
 		{
+			float	w	= width(),
+				h	= height();
+
+			getGLCoordinatesRelative(x, y, glX, glY);
+
+			if(w>=h)
+			{
+				glX -= (w/h) / masterScale;
+				glY += 1.0f / masterScale;
+			}
+			else
+			{
+				glX -= 1.0f / masterScale;
+				glY += h/w / masterScale;
+			}
+
+			// Offset : 
+			glX += screenCenter[0];
+			glY += screenCenter[1];
+
+			std::cout << "Input coordinates : " << x << " x " << y << std::endl;
+			std::cout << "GL coordinates    : " << glX << " x " << glY << std::endl;
+		}
+
+		void GLSceneWidget::getGLCoordinatesRelative(float x, float y, float& glX, float& glY)
+		{	// OK!
 			float	w	= width(),
 				h	= height();
 
 			if(w>=h)
 			{
-				glX = x / h * 2.0f; // X 2 because the OpenGL axis goes from -1 to 1.
-				glY = y / h * 2.0f;
+				glX = x / h * 2.0f / masterScale; // X 2 because the OpenGL axis goes from -1 to 1.
+				glY = -y / h * 2.0f / masterScale; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
 			}
 			else
 			{
-				glX = x / w * 2.0f;
-				glY = y / w * 2.0f;
+				glX = x / w * 2.0f / masterScale;
+				glY = -y / w * 2.0f / masterScale;
 			}
 		}
 
-		int GLSceneWidget::getObjectIDUnder(int x, int y)
+		ViewLink* GLSceneWidget::getObjectIDUnder(int x, int y)
 		{
 			// Clear to black first : 
 			glClearColor( 0.0, 0.0, 0.0, 1.0);
@@ -740,7 +861,7 @@
 
 			unsigned char id = 0;
 
-			// Subtle point here : the frame buffer are verticaly flipped!
+			// Subtle point here : the frame buffer is verticaly flipped!
 			glReadPixels(x, height()-(y+1), 1, 1, GL_RED, GL_UNSIGNED_BYTE, &id);
 
 			int rid = id;
@@ -750,8 +871,10 @@
 				std::cout << "Picking id = " << rid << " under x=" << x << " y=" << y << std::endl;
 			#endif
 
-			// Will return -1 if no object was picked : 
-			return rid;
+			if(rid<0 || rid>=links.size())
+				return NULL;
+			else
+				return links[rid];
 		}
 
 		void GLSceneWidget::setFullscreenMode(bool enabled)
@@ -783,11 +906,23 @@
 		}
 
 	// Actions (for the contextual menu): 
+		void GLSceneWidget::selectAll(void)
+		{
+			selectionList = links;
+		}
+
+		void GLSceneWidget::selectAllVisible(void)
+		{
+			selectionList.clear();
+			for(std::list<ViewLink*>::iterator it=displayList.begin(); it!=displayList.end(); it++)
+				selectionList.push_back(*it);
+		}
+
 		void GLSceneWidget::hideAll(void)
 		{
-			std::list<int> copyDisplayList = displayList;
+			std::list<ViewLink*> copyDisplayList = displayList;
 
-			for(std::list<int>::iterator it=copyDisplayList.begin(); it!=copyDisplayList.end(); ++it)
+			for(std::list<ViewLink*>::iterator it=copyDisplayList.begin(); it!=copyDisplayList.end(); ++it)
 				hideView(*it);
 		}
 
@@ -802,33 +937,28 @@
 
 		void GLSceneWidget::hideCurrentSelection(void)
 		{
-			for(std::vector<int>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
 				hideView(*it);
 		}
 
 		void GLSceneWidget::closeSelection(void)
 		{
-			std::vector<int> copySelection = selectionList;
-
-			for(std::vector<int>::iterator it=copySelection.begin(); it!=copySelection.end(); it++)
-			{
-				emit links[*it]->closed();
-				removeView(*it);
-			}
+			while(!selectionList.empty())
+				removeView( selectionList.back(), true );
 		}
 
 		void GLSceneWidget::resetSelectionAngle(void)
 		{
-			for(std::vector<int>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				angleRadians[*it] = 0.0;
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->angleRadians = 0.0;
 		}
 
 		void GLSceneWidget::resetSelectionPosition(void)
 		{
-			for(std::vector<int>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
 			{
-				xCoord[*it] = 0.0;
-				yCoord[*it] = 0.0;
+				(*it)->centerCoords[0] = 0.0;
+				(*it)->centerCoords[1] = 0.0;
 			}
 		}
 
@@ -844,59 +974,42 @@
 
 			// Lists : 
 			links.push_back(link);
-			xCoord.push_back( 0.0 );
-			yCoord.push_back( 0.0 );
-			angleRadians.push_back( 0.0 );
-			scale.push_back( 1.0 );
-
-			// Lose selections : 
-			selectionList.clear();
 
 			return link;
 		}
 
-		void GLSceneWidget::bringUpView(ViewLink* view)
+		bool GLSceneWidget::viewExists(ViewLink* view, bool throwException)
 		{
 			int id = getViewID(view);
 
-			bringUpView(id);
+			if(id==-1)
+			{
+				if(throwException)
+					throw Exception("GLSceneWidget::viewExists - View does not exist.", __FILE__, __LINE__);
+				else
+					return false;
+			}
+			else
+				return true;
 		}
 
-		void GLSceneWidget::bringUpView(int viewID)
+		void GLSceneWidget::bringUpView(ViewLink* view)
 		{
-			if(viewID>=0 && viewID<links.size())
-			{
-				hideView(viewID);
-				displayList.push_back(viewID);
-			}
+			viewExists(view, true);
+			hideView(view);
+			displayList.push_back(view);
 		}
 
 		void GLSceneWidget::pushBackView(ViewLink* view)
 		{
-			int id = getViewID(view);
-
-			pushBackView(id);
-		}
-
-		void GLSceneWidget::pushBackView(int viewID)
-		{
-			if(viewID>=0 && viewID<links.size())
-			{
-				hideView(viewID);
-				displayList.push_front(viewID);
-			}
+			viewExists(view, true);
+			hideView(view);
+			displayList.push_front(view);
 		}
 
 		void GLSceneWidget::hideView(ViewLink* view)
 		{
-			int id = getViewID(view);
-		
-			hideView(id);
-		}
-
-		void GLSceneWidget::hideView(int viewID)
-		{
-			std::list<int>::iterator it = std::find(displayList.begin(), displayList.end(), viewID);
+			std::list<ViewLink*>::iterator it = std::find(displayList.begin(), displayList.end(), view);
 
 			if(it!=displayList.end())
 				displayList.erase(it);
@@ -904,14 +1017,7 @@
 
 		void GLSceneWidget::unselectView(ViewLink* view)
 		{
-			int id = getViewID(view);
-		
-			unselectView(id);
-		}
-
-		void GLSceneWidget::unselectView(int viewID)
-		{
-			std::vector<int>::iterator it = std::find(selectionList.begin(), selectionList.end(), viewID);
+			std::vector<ViewLink*>::iterator it = std::find(selectionList.begin(), selectionList.end(), view);
 
 			if(it!=selectionList.end())
 				selectionList.erase(it);
@@ -919,57 +1025,33 @@
 
 		bool GLSceneWidget::viewIsVisible(const ViewLink* view) const
 		{
-			int id = getViewID(view);
-
-			return viewIsVisible(id);
-		}
-
-		bool GLSceneWidget::viewIsVisible(int viewID) const
-		{
-			std::list<int>::const_iterator it = std::find(displayList.begin(), displayList.end(), viewID);
-		
+			std::list<ViewLink*>::const_iterator it = std::find(displayList.begin(), displayList.end(), view);
+			
 			return it!=displayList.end();
 		}
 
 		bool GLSceneWidget::viewIsSelected(const ViewLink* view) const
 		{
-			int id = getViewID(view);
-
-			return viewIsSelected(id);
-		}
-
-		bool GLSceneWidget::viewIsSelected(int viewID) const
-		{
-			std::vector<int>::const_iterator it = std::find(selectionList.begin(), selectionList.end(), viewID);
+			std::vector<ViewLink*>::const_iterator it = std::find(selectionList.begin(), selectionList.end(), view);
 
 			return it!=selectionList.end();
 		}
 
-		void GLSceneWidget::removeView(ViewLink* view)
+		void GLSceneWidget::removeView(ViewLink* view, bool sendSignal)
 		{
-			int id = getViewID(view);
+			viewExists(view, true);
 			
-			removeView(id);
-		}
+			unselectView(view);
+			hideView(view);
 
-		void GLSceneWidget::removeView(int viewID)
-		{
-			if(viewID>=0 && viewID<links.size())
-			{
-				hideView(viewID);
-				unselectView(viewID);
+			std::vector<ViewLink*>::iterator it = std::find(links.begin(), links.end(), view);
+			(*it)->scene = NULL;
+			links.erase(it);
 
-				links[viewID]->scene = NULL;
-
-				links.erase(		links.begin() 		+ viewID );
-				xCoord.erase( 		xCoord.begin() 		+ viewID );
-				yCoord.erase( 		yCoord.begin() 		+ viewID );
-				angleRadians.erase( 	angleRadians.begin() 	+ viewID );
-				scale.erase( 		scale.begin() 		+ viewID );
-
-				// Update :
-				paintGL();
-			}
+			if(sendSignal)
+				emit view->closed();
+			else
+				updateScene();		// If this doesn't have to send the signal, it means that the request was external and, thus, it needs to update the display.
 		}
 
 	// Enable/Disable/Set keys :
@@ -1259,4 +1341,17 @@
 			it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
 		}
 	}
+
+	void ViewManager::beginQuietUpdate(void)
+	{
+		if(!viewLinks.empty())
+			viewLinks.front()->beginQuietUpdate();
+	}
+
+	void ViewManager::endQuietUpdate(void)
+	{
+		if(!viewLinks.empty())
+			ViewLink::endQuietUpdate();
+	}
+
 

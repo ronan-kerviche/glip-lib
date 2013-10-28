@@ -24,7 +24,7 @@
 
 		public : 
 			PathWidget(QWidget* parent=NULL);
-			~PathWidget(void);
+			virtual ~PathWidget(void);
 
 			void addPath(std::string);
 			const std::vector<std::string>& getPaths(void) const;
@@ -79,7 +79,7 @@
 
 		public : 
 			TemplateMenu(QWidget* parent=NULL);
-			~TemplateMenu(void);
+			virtual ~TemplateMenu(void);
 
 			QString getTemplateCode(void);
 
@@ -106,7 +106,6 @@
 						showPathWidget,
 						aboutAct;
 			PathWidget		pathWidget;
-			QVector<CodeEditor*>	tabs;
 
 			bool canBeClosed(void);
 			std::string getCurrentFilename(void);
@@ -124,7 +123,7 @@
 			void closeTab(void);
 			void closeAll(void);
 			void switchPathWidget(void);
-			void updateTitles(void);
+			void updateTitle(void);
 			void insertTemplate(void);
 			void aboutMessage(void);
 			void tabChanged(int c);

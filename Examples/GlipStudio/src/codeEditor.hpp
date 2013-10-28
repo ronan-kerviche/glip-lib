@@ -80,7 +80,7 @@
 			
 		public :
 			CodeEditor(QWidget *parent = 0);
-			~CodeEditor(void);
+			virtual ~CodeEditor(void);
 
 			int lineNumberAreaWidth(void) const;
 			bool empty(void) const;

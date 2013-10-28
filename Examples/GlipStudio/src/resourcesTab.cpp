@@ -116,8 +116,6 @@
 
 		void ResourcesTab::updateTexturesLinkInformation(void)
 		{
-			std::cout << "Call" << std::endl;
-
 			if(pipelineExists())
 			{
 				for(std::vector<int>::iterator it = imageRecordIDs.begin(); it!=imageRecordIDs.end(); it++)

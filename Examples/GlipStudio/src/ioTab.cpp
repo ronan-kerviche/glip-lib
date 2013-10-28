@@ -107,8 +107,12 @@
 
 			if( outputsViewManager.hasViews() )
 			{
+				outputsViewManager.beginQuietUpdate();
+
 				for(int k=0; k<pipeline().getNumOutputPort(); k++)
 					outputsViewManager.update( k, pipeline().out(k) );
+
+				outputsViewManager.endQuietUpdate();
 			}
 		}
 

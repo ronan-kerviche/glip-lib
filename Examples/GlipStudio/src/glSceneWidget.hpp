@@ -26,8 +26,10 @@
 		Q_OBJECT
 
 		private :
-			static int 	viewCounter;
-			HdlTexture* 	target;
+			static int 		viewCounter;
+			static GLSceneWidget	*quietSceneTarget;
+
+			HdlTexture		*target;
 
 			OutputDevice::OutputDeviceLayout getLayout(void) const;
 			void process(void);
@@ -35,11 +37,15 @@
 		protected : 
 			GLSceneWidget* 	scene;
 			float		haloColorRGB[3];
+			float		centerCoords[2],
+					angleRadians,
+					scale;
 
 			ViewLink(GLSceneWidget* _scene);
 			
 			bool preparedToDraw(void);
 			const __ReadOnly_HdlTextureFormat& format(void);
+			void getScalingRatios(float* imageScaling, float* haloScaling, float haloSize);
 
 			friend class GLSceneWidget; 
 
@@ -51,7 +57,10 @@
 			void bringUp(void);
 			bool isVisible(void) const;
 			bool isSelected(void) const;
-			bool isClosed(void) const;	
+			bool isClosed(void) const;
+
+			void beginQuietUpdate(void);
+			static void endQuietUpdate(void);
 
 		signals : 
 			void broughtUp(void);
@@ -91,12 +100,8 @@
 			static GLSceneWidget*			masterContext;
 			static std::vector<GLSceneWidget*>	subContext;		
 			std::vector<ViewLink*>			links;
-			std::vector<float>			xCoord,
-								yCoord,
-								angleRadians,
-								scale;
-			std::list<int>				displayList;
-			std::vector<int>			selectionList;
+			std::list<ViewLink*>			displayList;
+			std::vector<ViewLink*>			selectionList;
 
 			// Mouse : 
 			bool 					mouseMovementsEnabled,
@@ -135,6 +140,9 @@
 			float					clearColorRed,
 								clearColorGreen,
 								clearColorBlue;
+			float					screenCenter[2],
+								zoomCenter[2];
+			float					masterScale;
 
 			// Menu : 
 			QMenu					contextMenu;
@@ -162,7 +170,7 @@
 			bool justMouseWheelTurned(void);
 
 			// Event processing function : 
-			int  updateSelection(void);
+			ViewLink* updateSelection(bool dropSelection=true);
 			void processAction(void);
 
 			// QGL Tools : 
@@ -170,13 +178,16 @@
 			void resizeGL(int width, int height);
 			void drawScene(bool forSelection);
 			void paintGL(void);
-			void getGLCoordinates(float x, float y, float& glX, float& glY);
-			int  getObjectIDUnder(int x, int y);
+			void getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY);
+			void getGLCoordinatesRelative(float x, float y, float& glX, float& glY);
+			ViewLink* getObjectIDUnder(int x, int y);
 			void setFullscreenMode(bool enabled);
 			void toggleFullscreenMode(void);
 
 		private slots : 
 			// Actions (for the contextual menu) : 
+			void selectAll(void);
+			void selectAllVisible(void);
 			void hideAll(void);
 			void showAll(void);
 			void hideCurrentSelection(void);
@@ -191,21 +202,15 @@
 			// Main mechanics : 
 			void updateScene(void);
 			ViewLink* createView(void);
+			bool viewExists(ViewLink* view, bool throwException = false);
 			void bringUpView(ViewLink* view);
-			void bringUpView(int viewID);
 			void pushBackView(ViewLink* view);
-			void pushBackView(int viewID);
 			void hideView(ViewLink* view);
-			void hideView(int viewID);
 			void unselectView(ViewLink* view);
-			void unselectView(int viewID);
 			bool viewIsVisible(const ViewLink* view) const;
-			bool viewIsVisible(int viewID) const;
 			bool viewIsSelected(const ViewLink* view) const;
-			bool viewIsSelected(int viewID) const;
-			void removeView(ViewLink* view);
-			void removeView(int viewID);
-
+			void removeView(ViewLink* view, bool sendSignal=false);
+			
 			// Enable/Disable/Set keys :
 			bool isKeyboardActionsEnabled(void) const;
 			void setKeyboardActions(bool enabled);
@@ -272,6 +277,9 @@
 			bool isOnDisplay(int recordID) const;
 			bool hasViews(void) const;
 			void removeRecord(int recordID);
+
+			void beginQuietUpdate(void);
+			void endQuietUpdate(void);
 
 		signals :
 			void createNewView(void);

@@ -45,7 +45,7 @@
 	void CompilationTab::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{
 		/// TODO : update list of modules available in loader...
-		std::vector<std::string> modulesList = loader.listModules();
+		/*std::vector<std::string> modulesList = loader.listModules();
 
 		std::cout << "List of modules : " << std::endl; 
 		for(int k=0; k<modulesList.size(); k++)
@@ -53,7 +53,7 @@
 			std::cout << "- " << modulesList[k] << std::endl;
 			std::cout <<  loader.module( modulesList[k] ).getManual() << std::endl << std::endl;
 		}
-		std::cout << "End of modules list." << std::endl;
+		std::cout << "End of modules list." << std::endl;*/
 	}
 
 	void CompilationTab::pipelineWasCreated(void)

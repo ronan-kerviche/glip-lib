@@ -175,14 +175,6 @@
 			throw Exception("Module::pipeline - No pipeline defined.", __FILE__, __LINE__);
 	}
 
-	/*bool Module::isThisLinkedToDisplay(void) const
-	{
-		if(masterModule==NULL)
-			return false;
-		else
-			return masterModule->testLinkToDisplay(this);
-	}*/
-
 	Pipeline& Module::pipeline(void)
 	{
 		if(pipelineExists())
@@ -225,15 +217,6 @@
 		displayClient = NULL;
 	}
 
-	// Private slots : 
-	/*void ControlModule::displayUpdate(void)
-	{
-		if(displayClient==NULL)
-			display.renderer().clearWindow();
-		else
-			displayClient->updateDisplay( display.renderer() );
-	}*/
-
 	// Tools : 
 	void ControlModule::addClient(Module* m)
 	{
@@ -266,44 +249,6 @@
 	{
 		return display.sceneWidget().createView();
 	}
-
-	/*bool ControlModule::linkToDisplay(Module* m, WindowRenderer*& displayPtr)
-	{
-		if(displayClient!=NULL)
-		{
-			if(displayClient->canReleaseDisplay())
-			{
-				displayClient = m;
-				displayPtr = &display.renderer();
-				return true;
-			}
-			else
-			{
-				displayPtr = NULL;
-				return false;
-			}
-		}
-		else
-		{
-			displayClient = m;
-			displayPtr = &display.renderer();
-			return true;
-		}
-	}
-
-	bool ControlModule::testLinkToDisplay(const Module* m) const
-	{
-		return displayClient==m;
-	}
-
-	void ControlModule::releaseDisplayLink(Module* m)
-	{
-		if(displayClient==m)
-		{
-			displayClient = NULL;
-			displayUpdate();
-		}
-	}*/
 
 	bool ControlModule::pipelineExists(void) const
 	{
