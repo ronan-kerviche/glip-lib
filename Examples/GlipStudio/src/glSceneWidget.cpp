@@ -163,6 +163,77 @@
 			throw Exception("ViewLink::endQuietUpdate - Not in quiet mode.", __FILE__, __LINE__);
 	}
 
+// Special shaders : 
+	const std::string placementVertexShaderSource = 	"#version 130															\n"
+								"																\n"
+								"in vec2 vertexInput;														\n"
+								"																\n"
+								"uniform float 	angle 			= 0.0,											\n"
+								"		homothetieRapport	= 1.0;											\n"
+								"uniform vec2	screenScaling 		= vec2(1.0, 1.0),									\n"
+								"		imageScaling		= vec2(1.0, 1.0),									\n"
+								"		centerCoords		= vec2(0.0, 0.0),									\n"
+								"		screenCenter		= vec2(0.0, 0.0),									\n"
+								"		homothetieCentre	= vec2(0.0, 0.0);									\n"
+								"																\n"
+								"void main()															\n"
+								"{																\n"
+								"	// Generate rotation matrix : 												\n"
+								"	mat2 rot = mat2(cos(angle), 	sin(angle), 										\n"
+								"			-sin(angle), 	cos(angle));										\n"
+								"																\n"
+								"	// Scale : 														\n"
+								"	vec2 tmpVertex	= vertexInput;												\n"
+								"																\n"
+								"	tmpVertex.x	= tmpVertex.x * imageScaling.x;										\n"
+								"	tmpVertex.y	= tmpVertex.y * imageScaling.y;										\n"
+								"	tmpVertex	= rot * tmpVertex;											\n"
+								"	tmpVertex	= tmpVertex + centerCoords;										\n"
+								"																\n"
+								"	tmpVertex	= tmpVertex + screenCenter;										\n"
+								"																\n"
+								"	if(homothetieRapport==0.0f) // Translation										\n"
+								"		tmpVertex	= tmpVertex + homothetieCentre;									\n"
+								"	else // Homothetie													\n"
+								"		tmpVertex	= (tmpVertex - homothetieCentre) * homothetieRapport + homothetieCentre;			\n"
+								"																\n"
+								"	tmpVertex.x	= tmpVertex.x * screenScaling.x;									\n"
+								"	tmpVertex.y	= tmpVertex.y * screenScaling.y;									\n"
+								"																\n"
+								"	// Write : 														\n"
+								"	gl_Position 	= vec4(tmpVertex, 0.0, 1.0);										\n"
+								"																\n"
+								"	gl_TexCoord[0] 	= gl_MultiTexCoord0;											\n"
+								"}																\n";
+
+	const std::string placementFragmentShaderSource = 	"#version 130															\n"
+								"																\n"
+								"uniform sampler2D	viewTexture;												\n"
+								"out     vec4 		displayOutput;												\n"
+								"																\n"
+								"uniform	int		selectionMode	= 0,	// 0 for drawing, 1 for making a selection, 2 for drawing a halo.	\n"	
+								"			objectID	= 0;											\n"
+								"uniform float		sHalo		= 1.0;											\n"
+								"uniform vec3		haloColor	= vec3(1.0, 1.0, 1.0);									\n"
+								"																\n"
+								"void main()															\n"
+								"{																\n"
+								"	if(selectionMode==0)													\n"
+								"	{															\n"
+								"		// Get the input data :												\n"
+								"		vec4 col  = textureLod(viewTexture, vec2(gl_TexCoord[0].s, 1.0f-gl_TexCoord[0].t), 0.0);			\n"
+								"																\n"
+								"		// Write the output data :											\n"
+								"		displayOutput = col;												\n"
+								"	}															\n"
+								"	else if(selectionMode==1)												\n"
+								"		displayOutput = vec4( vec3(1.0f,1.0f,1.0f)*float(objectID)/255.0f, 1.0f);					\n"
+								"	else //if(selectionMode==2)												\n"
+								"	{															\n"
+								"		displayOutput = vec4(haloColor * sHalo, 1.0);									\n"
+								"	}															\n"
+								"}																\n";
+
 // GLSceneWidget
 	GLSceneWidget::GLSceneWidget(int width, int height, QWidget* _parent)
 	 : 	QGLWidget(_parent),
@@ -177,6 +248,8 @@
 		rightClick(false), 
 		mouseJustLeftClicked(false),
 		mouseJustRightClicked(false),
+		mouseJustLeftClickReleased(false),
+		mouseJustRightClickReleased(false),
 		mouseWheelJustTurned(false),
 		wheelSteps(0), 
 		deltaX(0), 
@@ -190,13 +263,14 @@
 		clearColorRed(0.1f),
 		clearColorGreen(0.1f),
 		clearColorBlue(0.1f),
+		handMode(true),
 		contextMenu(this)
 	{
-		screenCenter[0]	= 0.0f;
-		screenCenter[1]	= 0.0f;
-		zoomCenter[0]	= 0.0f;
-		zoomCenter[1]	= 0.0f;
-		masterScale	= 1.0f;
+		screenCenter[0]		= 0.0f;
+		screenCenter[1]		= 0.0f;
+		homothetieCentre[0]	= 0.0f;
+		homothetieCentre[1]	= 0.0f;
+		homothetieRapport	= 1.0f;
 
 		QWidget::setGeometry(10,10,width,height);
 		makeCurrent();
@@ -208,7 +282,15 @@
 			HandleOpenGL::init();
 
 			// Load Placement shader : 
-			reloadPlacementShader();
+			//reloadPlacementShader();
+
+			ShaderSource 		sourceVertex(placementVertexShaderSource),
+						sourcePixel(placementFragmentShaderSource);
+
+			HdlShader 		vertexShader(GL_VERTEX_SHADER, sourceVertex),
+						pixelShader(GL_FRAGMENT_SHADER, sourcePixel);
+
+			placementProgram	= new HdlProgram( vertexShader, pixelShader);
 		}
 		catch(Exception& e)
 		{
@@ -224,6 +306,26 @@
 
 		glViewport(0, 0, width, height);
 
+		// Contextual Menu : 
+		selectAllAction			= contextMenu.addAction("Select All", 				this, SLOT(selectAll()));
+		selectAllVisibleAction		= contextMenu.addAction("Select All Visible", 			this, SLOT(selectAllVisible()));
+		resetSelectedAngleAction	= contextMenu.addAction("Reset angles of selected views", 	this, SLOT(resetSelectionAngle()));
+		resetSelectedScaleAction	= contextMenu.addAction("Reset scales of selected views", 	this, SLOT(resetSelectionAngle()));
+		resetSelectedPositionAction 	= contextMenu.addAction("Reset positions of selected views",	this, SLOT(resetSelectionPosition()));
+		resetSelectionAction		= contextMenu.addAction("Reset selected views", 		this, SLOT(resetSelection()));
+		hideSelectedAction		= contextMenu.addAction("Hide selected views", 			this, SLOT(hideCurrentSelection()));
+		closeSelectedAction		= contextMenu.addAction("Close selected views", 		this, SLOT(closeSelection()));
+		hideAllAction			= contextMenu.addAction("Hide All", 				this, SLOT(hideAll()));
+		showAllAction			= contextMenu.addAction("Show All", 				this, SLOT(showAll()));
+		resetGlobalPositionAction	= contextMenu.addAction("Reset Global Position", 		this, SLOT(resetGlobalPosition()));
+		resetGlobalZoomAction		= contextMenu.addAction("Reset Global Zoom", 			this, SLOT(resetGlobalZoom()));
+		resetGlobalAction		= contextMenu.addAction("Reset Global",				this, SLOT(resetGlobal()));
+		handModeAction 			= contextMenu.addAction("Hand Mode",				this, SLOT(switchSelectionMode()));
+		toggleFullscreenAction		= contextMenu.addAction("Fullscreen",				this, SLOT(toggleFullscreenMode()));
+
+		handModeAction->setCheckable(true);
+		toggleFullscreenAction->setCheckable(true);
+
 		// Init keys :
 		setKeyForAction(KeyUp,				Qt::Key_Up);
 		setKeyForAction(KeyDown,			Qt::Key_Down);
@@ -235,9 +337,12 @@
 		setKeyForAction(KeyRotationCounterClockWise,	Qt::Key_D);
 		setKeyForAction(KeyToggleFullscreen,		Qt::Key_Return);
 		setKeyForAction(KeyExitOnlyFullscreen,		Qt::Key_Escape);
-		setKeyForAction(KeyResetView,			Qt::Key_Space);
+		setKeyForAction(KeyResetView,			Qt::Key_Backspace);
+		setKeyForAction(KeyCloseView,			Qt::Key_Delete);
 		setKeyForAction(KeyControl,			Qt::Key_Control);
 		setKeyForAction(KeyShiftRotate,			Qt::Key_Shift);
+		setKeyForAction(KeyToggleHandMode,		Qt::Key_Space);
+		setKeyForAction(KeySelectAll,			QKeySequence::SelectAll);
 
 		for(int i=0; i<NumActionKey; i++)
 		{
@@ -251,15 +356,8 @@
 
 		quad = new GeometryInstance( GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB );
 
-		// Test : 
-		contextMenu.addAction("Select All", 				this, SLOT(selectAll()));
-		contextMenu.addAction("Select All Visible", 			this, SLOT(selectAllVisible()));
-		contextMenu.addAction("Reset angle of selected views", 		this, SLOT(resetSelectionAngle()));
-		contextMenu.addAction("Reset position of selected views",	this, SLOT(resetSelectionPosition()));
-		contextMenu.addAction("Hide selected views", 			this, SLOT(hideCurrentSelection()));
-		contextMenu.addAction("Close selected views", 			this, SLOT(closeSelection()));
-		contextMenu.addAction("Hide All", 				this, SLOT(hideAll()));
-		contextMenu.addAction("Show All", 				this, SLOT(showAll()));
+		handMode = false;
+		switchSelectionMode(); // Will turn hand mode to true and set the correct initialization.
 	}
 
 
@@ -271,11 +369,28 @@
 	}
 
 	// Tools : 
-		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const Qt::Key& k) const
+		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const QKeySequence& k) const
 		{
 			for(int i=0; i<NumActionKey; i++)
 				if(keyAssociation[i]==k)
 					return static_cast<GLSceneWidget::KeyAction>(i);
+
+			// else
+			return NoAction;
+		}
+
+		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const QKeyEvent& e) const
+		{
+			const int s = (e.key() | e.modifiers());
+
+			for(int i=0; i<NumActionKey; i++)
+			{
+				for(int k=0; k<keyAssociation[i].count(); k++)
+				{
+					if(s==keyAssociation[i][k])
+						return static_cast<GLSceneWidget::KeyAction>(i);
+				}
+			}
 
 			// else
 			return NoAction;
@@ -296,7 +411,7 @@
 		{
 			if(!event->isAutoRepeat())
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(static_cast<Qt::Key>(event->key()));
+				GLSceneWidget::KeyAction a = correspondingAction(event->key());
 
 				#ifdef __VERBOSE__
 					std::cout << "GLSceneWidget::keyPressEvent - Event : Key pressed" << std::endl;
@@ -308,14 +423,14 @@
 					keyJustPressed[static_cast<int>(a)] = true;
 					keyJustReleased[static_cast<int>(a)] = false;
 
-					paintGL(); //emit actionReceived();
+					processAction();
 				}
 				else
 					std::cerr << "GLSceneWidget::keyPressEvent - Warning : Key not associated" << std::endl;
 			}
 			else
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(static_cast<Qt::Key>(event->key()));
+				GLSceneWidget::KeyAction a = correspondingAction(event->key());
 
 				if(a!=NoAction)
 					processAction();
@@ -326,7 +441,7 @@
 		{
 			if(!event->isAutoRepeat())
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(static_cast<Qt::Key>(event->key()));
+				GLSceneWidget::KeyAction a = correspondingAction(event->key());
 
 				#ifdef __VERBOSE__
 					std::cout << "GLSceneWidget::keyReleaseEvent - Event : Key released" << std::endl;
@@ -393,13 +508,15 @@
 
 			if( (event->buttons() & Qt::LeftButton) )
 			{
-				leftClick 		= true;
-				mouseJustLeftClicked	= true;
+				leftClick 			= true;
+				mouseJustLeftClicked		= true;
+				mouseJustLeftClickReleased	= false;
 			}
 			else if( (event->buttons() & Qt::RightButton) )
 			{
-				rightClick 		= true;
-				mouseJustRightClicked	= true;
+				rightClick 			= true;
+				mouseJustRightClicked		= true;
+				mouseJustRightClickReleased	= false;
 			}
 
 			/*if( (event->buttons() & Qt::RightButton) || ((event->buttons() & Qt::LeftButton) && pressed(KeyControl)) )
@@ -419,13 +536,16 @@
 
 			if(!(event->buttons() & Qt::LeftButton))
 			{
-				leftClick 		= false;
-				mouseJustLeftClicked	= false;
+				leftClick 			= false;
+				mouseJustLeftClicked		= false;
+				mouseJustLeftClickReleased	= true;
+		
 			}			
 			else if(!(event->buttons() & Qt::RightButton))
 			{
-				rightClick 		= false;
-				mouseJustRightClicked	= false;
+				rightClick 			= false;
+				mouseJustRightClicked		= false;
+				mouseJustRightClickReleased	= true;
 			}
 
 			lastPosX = event->x();
@@ -488,12 +608,34 @@
 			else
 				return false;
 		}
+
+		bool GLSceneWidget::justLeftClickReleased(void)
+		{
+			if(mouseJustLeftClickReleased)
+			{
+				mouseJustLeftClickReleased = false;
+				return true;
+			}
+			else
+				return false;
+		}
 	
 		bool GLSceneWidget::justRightClicked(void)
 		{
 			if(mouseJustRightClicked)
 			{
 				mouseJustRightClicked = false;
+				return true;
+			}
+			else
+				return false;
+		}
+
+		bool GLSceneWidget::justRightClickReleased(void)
+		{
+			if(mouseJustRightClickReleased)
+			{
+				mouseJustRightClickReleased = false;
 				return true;
 			}
 			else
@@ -562,115 +704,156 @@
 		{
 			bool needUpdate = false;
 
-			if(justDoubleLeftClicked())
-			{
-				toggleFullscreenMode();
-				doubleLeftClick = false;
-				needUpdate = true;
-			}
-			else if(justLeftClicked())
-			{
-				ViewLink* under = updateSelection();
-		
-				if(under!=NULL)
-					bringUpView(under);
-					
-				needUpdate = true; // Need update for deselection anymway.
-
-				// TEST, TODO : REMOVE : 
-				float x, y;
-				getGLCoordinatesAbsolute(lastPosX, lastPosY, x, y);
-			}
-			else if(justRightClicked())
-			{
-				ViewLink* under = updateSelection(false);
-
-				QPoint globalPos = mapToGlobal(QPoint(lastPosX, lastPosY));
-				contextMenu.exec(globalPos);
-			}
-
-			if(deltaX!=0 || deltaY!=0)
-			{
-				// Convert to screen size : 
-				float	dx = 0.0f, 
-					dy = 0.0f;
-
-				getGLCoordinatesRelative(deltaX, deltaY, dx, dy);
-
-				if(!pressed(KeyShiftRotate))
+			// Mouse : 
+				if(justDoubleLeftClicked())
 				{
-					// Apply to selection as translation :
-					if(!selectionList.empty())
+					toggleFullscreenMode();
+					doubleLeftClick = false;
+					needUpdate = true;
+				}
+
+				if(justLeftClicked())
+				{
+					if(handMode)
+						setCursor(Qt::ClosedHandCursor);
+					else
 					{
-						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+						ViewLink* under = updateSelection();
+		
+						if(under!=NULL)
+							bringUpView(under);
+					}
+					
+					needUpdate = true; // Need update for deselection anymway.
+				}
+
+				if(justLeftClickReleased())
+				{
+					if(handMode)
+						setCursor(Qt::OpenHandCursor);
+				}
+
+				if(justRightClicked())
+				{
+					if(!handMode)
+						updateSelection(false);
+
+					QPoint globalPos = mapToGlobal(QPoint(lastPosX, lastPosY));
+
+					updateContextMenu();
+
+					contextMenu.exec(globalPos);
+				}
+
+				if(deltaX!=0 || deltaY!=0)
+				{
+					// Convert to screen size : 
+					float	dx = 0.0f, 
+						dy = 0.0f;
+
+					getGLCoordinatesRelative(deltaX, deltaY, dx, dy);
+
+					if(!pressed(KeyShiftRotate))
+					{
+						// Apply to selection as translation :
+						if(!selectionList.empty() && !handMode)
 						{
-							(*it)->centerCoords[0] += dx;
-							(*it)->centerCoords[1] += dy;
+							for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+							{
+								(*it)->centerCoords[0] += dx;
+								(*it)->centerCoords[1] += dy;
+							}
+						}
+						else if(handMode)
+						{
+							screenCenter[0] += dx;
+							screenCenter[1] += dy;
 						}
 					}
 					else
 					{
-						screenCenter[0] += dx;
-						screenCenter[1] += dy;
-					}
-				}
-				else
-				{
-					ViewLink* under = updateSelection(false);
+						ViewLink* under = updateSelection(false);
 
-					if(under!=NULL)
+						if(under!=NULL)
+						{
+							// Compute angle for current center :
+							float 	ox	= 0.0f,
+								oy	= 0.0f,
+								nx	= 0.0f,
+								ny	= 0.0f,
+								dAngle 	= 0.0f;
+
+							getGLCoordinatesRelative(lastPosX, lastPosY, ox, oy);
+
+							ox	= under->centerCoords[0] - ox;
+							oy	= under->centerCoords[1] - oy;
+							nx 	= ox - dx;
+							ny	= oy - dy;
+
+							//std::cout << "New angle : " << std::atan2(oy, ox) << std::endl;
+							dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
+
+							// Apply to selection as rotation :
+							for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+								(*it)->angleRadians += dAngle;
+						}
+					}
+
+					needUpdate 	= true;
+					deltaX		= 0;
+					deltaY		= 0;
+				}
+
+				if( deltaWheelSteps!=0 )
+				{
+					if(!selectionList.empty() && !handMode)
 					{
-						// Compute angle for current center :
-						float 	ox	= 0.0f,
-							oy	= 0.0f,
-							nx	= 0.0f,
-							ny	= 0.0f,
-							dAngle 	= 0.0f;
-
-						getGLCoordinatesRelative(lastPosX, lastPosY, ox, oy);
-
-						ox	= under->centerCoords[0] - ox;
-						oy	= under->centerCoords[1] - oy;
-						nx 	= ox - dx;
-						ny	= oy - dy;
-
-						//std::cout << "New angle : " << std::atan2(oy, ox) << std::endl;
-						dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
-
-						// Apply to selection as rotation :
 						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-							(*it)->angleRadians += dAngle;
+							(*it)->scale *= std::pow(1.2f, deltaWheelSteps);
 					}
+					else
+					{
+						float xc, yc;
+						getGLCoordinatesAbsoluteRaw(lastPosX, lastPosY, xc, yc);
+						homothetieComposition(xc, yc, static_cast<float>(deltaWheelSteps>0.0f)*2.0f - 1.0f);
+					}
+
+					needUpdate 	= true;
+					deltaWheelSteps = 0;
 				}
 
-				needUpdate 	= true;
-				deltaX		= 0;
-				deltaY		= 0;
-			}
+			// Keyboard : 
+				if( justPressed(KeyToggleHandMode) )
+					switchSelectionMode();
 
-			if( deltaWheelSteps!=0 )
-			{
-				if(!selectionList.empty())
+				if( justPressed(KeyResetView) )
 				{
-					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-						(*it)->scale *= std::pow(1.2f, deltaWheelSteps);
+					if(handMode)
+						resetGlobal();
+					else
+						resetSelection();
+				
+					needUpdate 	= true;
 				}
-				else
+
+				if( justPressed(KeyToggleFullscreen) )
+					toggleFullscreenMode();
+
+				if( justPressed(KeyExitOnlyFullscreen) )
+					setFullscreenMode(false);
+
+				if( justPressed(KeyCloseView) )
 				{
-					getGLCoordinatesRelative(lastPosX, lastPosY, zoomCenter[0], zoomCenter[1]);
-					masterScale *= std::pow(1.2f, deltaWheelSteps);
-
-					// Update the new center : 
-					screenCenter[0] += zoomCenter[0] * (masterScale - 1.0f);
-					screenCenter[1] += zoomCenter[1] * (masterScale - 1.0f);
-
-					std::cout << "New master scale : " << masterScale << std::endl;
+					closeSelection();
+					needUpdate 	= true;
 				}
 
-				needUpdate 	= true;
-				deltaWheelSteps = 0;
-			}
-
+				if( justPressed(KeySelectAll) )
+				{
+					selectAll();
+					needUpdate 	= true;
+				}
+			// Finally : 
 			if(needUpdate)
 				paintGL();
 		}
@@ -688,6 +871,9 @@
 				std::cout <<"GLSceneWidget::resizeGL - Resizing to " << width << "x" << height << std::endl;
 			#endif
 
+			if(height==width)
+				std::cout << "WIDTH == HEIGHT" << std::endl;
+
 			glViewport(0, 0, width, height);
 		}
 
@@ -701,6 +887,7 @@
 				// Set screen scaling variable : 
 				float screenScaling[2];
 
+				// The real ones : 
 				if(width()>=height())
 				{
 					screenScaling[0] = static_cast<float>(height())/static_cast<float>(width());
@@ -711,10 +898,12 @@
 					screenScaling[0] = 1.0f;
 					screenScaling[1] = static_cast<float>(width())/static_cast<float>(height());
 				}
-				placementProgram->modifyVar("screenScaling", GL_FLOAT_VEC2, screenScaling);
+				//std::cout << "Screen scaling : " << screenScaling[0] << " x " << screenScaling[1] << std::endl;
+
 				placementProgram->modifyVar("screenCenter", GL_FLOAT_VEC2, screenCenter);
-				placementProgram->modifyVar("zoomCenter", GL_FLOAT_VEC2, zoomCenter);
-				placementProgram->modifyVar("masterScale", GL_FLOAT, masterScale);
+				placementProgram->modifyVar("screenScaling", GL_FLOAT_VEC2, screenScaling);
+				placementProgram->modifyVar("homothetieCentre", GL_FLOAT_VEC2, homothetieCentre);
+				placementProgram->modifyVar("homothetieRapport", GL_FLOAT, homothetieRapport);
 
 				// Set the mode :
 				if(forSelection)
@@ -759,7 +948,7 @@
 				}
 
 				// Axis : 
-				{
+				/*{
 					float centerCoords[2];
 					centerCoords[0] = 0.0f;
 					centerCoords[1] = 0.0f;
@@ -785,7 +974,7 @@
 						glVertex2f(0.05f,0.05f);
 						glVertex2f(0.05f,0.5f);
 					glEnd();
-				}
+				}*/
 				// Clean : 
 				HdlTexture::unbind();
 				HdlProgram::stopProgram();
@@ -797,11 +986,50 @@
 			// Clear framebuffer : 
 			glClearColor( clearColorRed, clearColorGreen, clearColorBlue, 1.0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glLoadIdentity();
 
 			drawScene(false);
 	
 			// Print on screen : 
 			swapBuffers();
+		}
+
+		void GLSceneWidget::getGLCoordinatesAbsoluteRaw(float x, float y, float& glX, float& glY)
+		{
+			float	w	= width(),
+				h	= height();
+
+			getGLCoordinatesRelativeRaw(x, y, glX, glY);
+
+			if(w>=h)
+			{
+				glX -= (w/h);
+				glY += 1.0f;
+			}
+			else
+			{
+				glX -= 1.0f;
+				glY += h/w;
+			}
+
+			// std::cout << "GL coordinates RAW: " << glX << " x " << glY << "   (pixel size : " << (1.0/ height() * 2.0f / homothetieRapport) << ')' << std::endl;
+		}
+
+		void GLSceneWidget::getGLCoordinatesRelativeRaw(float x, float y, float& glX, float& glY)
+		{
+			float	w	= width(),
+				h	= height();
+
+			if(w>=h)
+			{
+				glX = x / h * 2.0f; // X 2 because the OpenGL axis goes from -1 to 1.
+				glY = -y / h * 2.0f; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
+			}
+			else
+			{
+				glX = x / w * 2.0f;
+				glY = -y / w * 2.0f;
+			}
 		}
 
 		void GLSceneWidget::getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY)
@@ -811,23 +1039,23 @@
 
 			getGLCoordinatesRelative(x, y, glX, glY);
 
+			// To GL center : 
 			if(w>=h)
 			{
-				glX -= (w/h) / masterScale;
-				glY += 1.0f / masterScale;
+				glX -= (w/h) / homothetieRapport;
+				glY += 1.0f / homothetieRapport;
 			}
 			else
 			{
-				glX -= 1.0f / masterScale;
-				glY += h/w / masterScale;
+				glX -= 1.0f / homothetieRapport;
+				glY += h/w / homothetieRapport;
 			}
 
-			// Offset : 
+			// Offset for current zoom : 
 			glX += screenCenter[0];
 			glY += screenCenter[1];
 
-			std::cout << "Input coordinates : " << x << " x " << y << std::endl;
-			std::cout << "GL coordinates    : " << glX << " x " << glY << std::endl;
+			//std::cout << "GL coordinates    : " << glX << " x " << glY << "   (pixel size : " << (1.0/ height() * 2.0f / homothetieRapport) << ')' << std::endl;
 		}
 
 		void GLSceneWidget::getGLCoordinatesRelative(float x, float y, float& glX, float& glY)
@@ -837,14 +1065,43 @@
 
 			if(w>=h)
 			{
-				glX = x / h * 2.0f / masterScale; // X 2 because the OpenGL axis goes from -1 to 1.
-				glY = -y / h * 2.0f / masterScale; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
+				glX = x / h * 2.0f / homothetieRapport; // X 2 because the OpenGL axis goes from -1 to 1.
+				glY = -y / h * 2.0f / homothetieRapport; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
 			}
 			else
 			{
-				glX = x / w * 2.0f / masterScale;
-				glY = -y / w * 2.0f / masterScale;
+				glX = x / w * 2.0f / homothetieRapport;
+				glY = -y / w * 2.0f / homothetieRapport;
 			}
+		}
+
+		void GLSceneWidget::homothetieComposition(float xc, float yc, float zoomDirection)
+		{
+			float 	newRapport	= (zoomDirection>0) ? (1.2f) : (1.0f/1.2f),
+				a		= homothetieRapport * newRapport - newRapport,
+				b		= newRapport - 1.0f,
+				c		= homothetieRapport * newRapport - 1.0f;
+
+			if(c==0.0f) // La composition est une translation
+			{
+				homothetieCentre[0]	= (1.0f - newRapport) * (xc - homothetieCentre[0]);
+				homothetieCentre[1]	= (1.0f - newRapport) * (yc - homothetieCentre[1]);
+				homothetieRapport	= 0.0f;
+			}
+			else if( homothetieRapport==0.0f ) // La composition est entre une translation et une homothetie.
+			{
+				homothetieCentre[0]	= xc - homothetieCentre[0] / (newRapport - 1.0f);
+				homothetieCentre[1]	= yc - homothetieCentre[1] / (newRapport - 1.0f);
+				homothetieRapport	= newRapport;
+			}
+			else // Cas général : 
+			{
+				homothetieCentre[0]	= (a * homothetieCentre[0] + b * xc)/c;
+				homothetieCentre[1]	= (a * homothetieCentre[1] + b * yc)/c;
+				homothetieRapport 	= homothetieRapport * newRapport;
+			}
+
+			//std::cout << "New homothetie Center : " << homothetieCentre[0] << " x " << homothetieCentre[1] << " (Rapport : " << homothetieRapport << ')' << std::endl;
 		}
 
 		ViewLink* GLSceneWidget::getObjectIDUnder(int x, int y)
@@ -852,6 +1109,7 @@
 			// Clear to black first : 
 			glClearColor( 0.0, 0.0, 0.0, 1.0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glLoadIdentity();
 
 			// Draw the scene : 
 			drawScene(true);
@@ -877,35 +1135,65 @@
 				return links[rid];
 		}
 
-		void GLSceneWidget::setFullscreenMode(bool enabled)
-		{
-			if(enabled!=fullscreenModeEnabled && !displayList.empty()) // Do not toggle (or save toggle) if empty
-			{
-				makeCurrent();
-
-				if(enabled)
-				{
-					parent = parentWidget();
-					setParent(NULL);
-					showFullScreen();
-				}
-				else
-				{
-					setParent(parent);
-					showNormal();
-					emit requireContainerCatch();
-				}
-
-				fullscreenModeEnabled = enabled;
-			}
-		}
-
-		void GLSceneWidget::toggleFullscreenMode(void)
-		{
-			setFullscreenMode(!fullscreenModeEnabled);
-		}
-
 	// Actions (for the contextual menu): 
+		void GLSceneWidget::updateContextMenu(void)
+		{
+			// Per actions : 
+			if(links.empty())
+				selectAllAction->setEnabled(false);
+			else
+				selectAllAction->setEnabled(true);
+
+			if(displayList.empty())
+				selectAllVisibleAction->setEnabled(false);
+			else
+				selectAllVisibleAction->setEnabled(true);
+	
+			if(selectionList.empty())
+			{
+				resetSelectedAngleAction->setEnabled(false);
+				resetSelectedScaleAction->setEnabled(false);
+				resetSelectedPositionAction->setEnabled(false);
+				resetSelectionAction->setEnabled(false);
+				hideSelectedAction->setEnabled(false);
+				closeSelectedAction->setEnabled(false);
+			}
+			else
+			{
+				resetSelectedAngleAction->setEnabled(true);
+				resetSelectedScaleAction->setEnabled(true);
+				resetSelectedPositionAction->setEnabled(true);
+				resetSelectionAction->setEnabled(true);
+
+				if(displayList.empty())
+					hideSelectedAction->setEnabled(false);
+				else
+					hideSelectedAction->setEnabled(true);
+
+				closeSelectedAction->setEnabled(true);
+			}
+
+			if(displayList.empty())
+				hideAllAction->setEnabled(false);
+			else
+				hideAllAction->setEnabled(true);
+
+			if(links.size()==displayList.size())
+				showAllAction->setEnabled(false);
+			else
+				showAllAction->setEnabled(true);
+
+			if(handMode)
+				handModeAction->setChecked(true);
+			else
+				handModeAction->setChecked(false);
+
+			if(fullscreenModeEnabled)
+				toggleFullscreenAction->setChecked(true);
+			else
+				toggleFullscreenAction->setChecked(false);
+		}
+
 		void GLSceneWidget::selectAll(void)
 		{
 			selectionList = links;
@@ -953,6 +1241,12 @@
 				(*it)->angleRadians = 0.0;
 		}
 
+		void GLSceneWidget::resetSelectionScale(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->scale = 1.0;
+		}
+
 		void GLSceneWidget::resetSelectionPosition(void)
 		{
 			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
@@ -960,6 +1254,72 @@
 				(*it)->centerCoords[0] = 0.0;
 				(*it)->centerCoords[1] = 0.0;
 			}
+		}
+
+		void GLSceneWidget::resetSelection(void)
+		{
+			resetSelectionAngle();
+			resetSelectionScale();
+			resetSelectionPosition();
+		}
+
+		void GLSceneWidget::resetGlobalPosition(void)
+		{
+			screenCenter[0]		= 0.0f;
+			screenCenter[1]		= 0.0f;
+		}
+
+		void GLSceneWidget::resetGlobalZoom(void)
+		{
+			homothetieCentre[0]	= 0.0f;
+			homothetieCentre[1]	= 0.0f;
+			homothetieRapport	= 1.0f;
+		}
+
+		void GLSceneWidget::resetGlobal(void)
+		{
+			resetGlobalPosition();
+			resetGlobalZoom();
+		}
+
+		void GLSceneWidget::switchSelectionMode(void)
+		{
+			handMode = !handMode;
+
+			if(handMode && leftClick)
+				setCursor(Qt::ClosedHandCursor);
+			else if(handMode)
+				setCursor(Qt::OpenHandCursor);
+			else
+				setCursor(Qt::ArrowCursor);
+		}
+
+		void GLSceneWidget::setFullscreenMode(bool enabled)
+		{
+			if(enabled!=fullscreenModeEnabled && !displayList.empty()) // Do not toggle (or save toggle) if empty
+			{
+				makeCurrent();
+
+				if(enabled)
+				{
+					parent = parentWidget();
+					setParent(NULL);
+					showFullScreen();
+				}
+				else
+				{
+					setParent(parent);
+					showNormal();
+					emit requireContainerCatch();
+				}
+
+				fullscreenModeEnabled = enabled;
+			}
+		}
+
+		void GLSceneWidget::toggleFullscreenMode(void)
+		{
+			setFullscreenMode(!fullscreenModeEnabled);
 		}
 
 	// Main mechanics : 
@@ -1081,17 +1441,30 @@
 			mouseMovementsEnabled = enabled;
 		}
 
-		void GLSceneWidget::setKeyForAction(const GLSceneWidget::KeyAction& action, const Qt::Key& key)
+		void GLSceneWidget::setKeyForAction(const GLSceneWidget::KeyAction& action, const QKeySequence& key)
 		{
 			if(action<0 || action>=NumActionKey)
 				throw Exception("GLSceneWidget::setKeyForAction - Action id = " + to_string(static_cast<int>(action)) + " is out of bounds.", __FILE__, __LINE__);
 			else
+			{
 				keyAssociation[static_cast<int>(action)] = key;
+
+				// Special notifications : 
+				switch(action)
+				{
+					case KeyResetView:		resetGlobalAction->setShortcut( key );		break;
+					case KeyCloseView:		closeSelectedAction->setShortcut( key );	break;
+					case KeySelectAll:		selectAllAction->setShortcut( key );		break;
+					case KeyToggleHandMode:		handModeAction->setShortcut( key );		break;
+					case KeyToggleFullscreen:	toggleFullscreenAction->setShortcut( key );	break;
+					default:									break;
+				}
+			}
 		}
 
 		void GLSceneWidget::removeKeyForAction(const GLSceneWidget::KeyAction& action)
 		{
-			setKeyForAction(action, static_cast<Qt::Key>(0));
+			setKeyForAction(action, QKeySequence());
 		}
 
 	// Other settings : 
@@ -1103,7 +1476,7 @@
 		}
 
 	// Temporary : 
-		void GLSceneWidget::reloadPlacementShader(void)
+		/*void GLSceneWidget::reloadPlacementShader(void)
 		{
 			delete placementProgram;
 			placementProgram = NULL;
@@ -1128,7 +1501,7 @@
 
 				throw e;
 			}
-		}
+		}*/
 
 // GLSceneWidgetContainer
 	GLSceneWidgetContainer::GLSceneWidgetContainer(int width, int height, QWidget* parent)

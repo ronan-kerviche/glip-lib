@@ -89,8 +89,11 @@
 				KeyToggleFullscreen,
 				KeyExitOnlyFullscreen,
 				KeyResetView,
+				KeyCloseView,
 				KeyControl,
 				KeyShiftRotate,
+				KeyToggleHandMode,
+				KeySelectAll,
 				// Add new keys before this line
 				NumActionKey,
 				NoAction
@@ -111,6 +114,8 @@
 								rightClick,
 								mouseJustLeftClicked,
 								mouseJustRightClicked,
+								mouseJustLeftClickReleased,
+								mouseJustRightClickReleased,
 								mouseWheelJustTurned;
 			int 					wheelSteps,
 								deltaWheelSteps,
@@ -122,7 +127,7 @@
 								wheelRotationAtY;
 
 			// Keyboard : 
-			Qt::Key					keyAssociation[NumActionKey];
+			QKeySequence				keyAssociation[NumActionKey];
 			bool 					keyboardMovementsEnabled,
 								keyPressed[NumActionKey],
 								keyJustPressed[NumActionKey],
@@ -141,15 +146,32 @@
 								clearColorGreen,
 								clearColorBlue;
 			float					screenCenter[2],
-								zoomCenter[2];
-			float					masterScale;
+								homothetieCentre[2];
+			float					homothetieRapport;
+			bool					handMode;
 
 			// Menu : 
 			QMenu					contextMenu;
+			QAction					*selectAllAction,
+								*selectAllVisibleAction,
+								*resetSelectedAngleAction,
+								*resetSelectedScaleAction,
+								*resetSelectedPositionAction,
+								*resetSelectionAction,
+								*hideSelectedAction,
+								*closeSelectedAction,
+								*hideAllAction,
+								*showAllAction,
+								*resetGlobalPositionAction,
+								*resetGlobalZoomAction,
+								*resetGlobalAction,
+								*handModeAction,
+								*toggleFullscreenAction;
 
 			// Tools : 
 			int getViewID(const ViewLink* view) const;
-			KeyAction correspondingAction(const Qt::Key& k) const;
+			KeyAction correspondingAction(const QKeySequence& k) const;
+			KeyAction correspondingAction(const QKeyEvent& e) const;
 
 			// Qt Events interception : 
 			void keyPressEvent(QKeyEvent* event);
@@ -164,7 +186,9 @@
 			bool justPressed(const KeyAction& a);
 			bool justReleased(const KeyAction& a);
 			bool justLeftClicked(void);
+			bool justLeftClickReleased(void);
 			bool justRightClicked(void);
+			bool justRightClickReleased(void);
 			bool justDoubleLeftClicked(void);
 			bool justDoubleRightClicked(void);
 			bool justMouseWheelTurned(void);
@@ -178,14 +202,16 @@
 			void resizeGL(int width, int height);
 			void drawScene(bool forSelection);
 			void paintGL(void);
+			void getGLCoordinatesAbsoluteRaw(float x, float y, float& glX, float& glY);
+			void getGLCoordinatesRelativeRaw(float x, float y, float& glX, float& glY);
 			void getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY);
 			void getGLCoordinatesRelative(float x, float y, float& glX, float& glY);
+			void homothetieComposition(float xc, float yc, float zoomDirection);
 			ViewLink* getObjectIDUnder(int x, int y);
-			void setFullscreenMode(bool enabled);
-			void toggleFullscreenMode(void);
 
 		private slots : 
 			// Actions (for the contextual menu) : 
+			void updateContextMenu(void);
 			void selectAll(void);
 			void selectAllVisible(void);
 			void hideAll(void);
@@ -193,7 +219,15 @@
 			void hideCurrentSelection(void);
 			void closeSelection(void);
 			void resetSelectionAngle(void);
+			void resetSelectionScale(void);
 			void resetSelectionPosition(void);
+			void resetSelection(void);
+			void resetGlobalPosition(void);
+			void resetGlobalZoom(void);
+			void resetGlobal(void);
+			void switchSelectionMode(void);
+			void setFullscreenMode(bool enabled);
+			void toggleFullscreenMode(void);
 
 		public : 
 			GLSceneWidget(int width, int height, QWidget* _parent=NULL);
@@ -216,14 +250,14 @@
 			void setKeyboardActions(bool enabled);
 			bool isMouseActionsEnabled(void) const;
 			void setMouseActions(bool enabled);
-			void setKeyForAction(const KeyAction& action, const Qt::Key& key);
+			void setKeyForAction(const KeyAction& action, const QKeySequence& key);
 			void removeKeyForAction(const KeyAction& action);
 
 			// Other settings : 
 			void setClearColor(float red, float green, float blue);
 
 			// Temporary : 
-			void reloadPlacementShader(void);
+			//void reloadPlacementShader(void);
 
 		signals :
 			void requireContainerCatch(void);
