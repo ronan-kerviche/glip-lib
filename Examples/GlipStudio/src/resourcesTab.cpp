@@ -77,6 +77,7 @@
 		menuBar.addMenu(&connectionMenu);
 		menuBar.addMenu(&viewManager);
 		collection.addToContextMenu(connectionMenu);
+		collection.addToContextMenu(viewManager);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&collection);
@@ -261,7 +262,7 @@
 			std::vector<int> selectedRecordIDs = collection.getSelectedRecordIDs();
 
 			if(!selectedRecordIDs.empty())
-				viewManager.show( selectedRecordIDs.front(), collection.texture(selectedRecordIDs.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink, true);
+				viewManager.show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink, true);
 		}
 
 /*// TextureObject

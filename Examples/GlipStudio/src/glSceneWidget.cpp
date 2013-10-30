@@ -67,7 +67,7 @@
 			return *target;
 	}
 
-	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize)
+	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY)
 	{
 		float	width 	= format().getWidth(),
 			height	= format().getHeight();
@@ -77,16 +77,20 @@
 			imageScaling[0] = 1.0f * scale;
 			imageScaling[1] = height / width * scale;
 
-			haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
-			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);
+			/*haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
+			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);*/
+			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
 		}
 		else
 		{
 			imageScaling[0] = width / height * scale;
 			imageScaling[1] = 1.0f * scale;
 
-			haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
-			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);
+			/*haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
+			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);*/
+			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
 		}
 	}
 
@@ -211,9 +215,8 @@
 								"uniform sampler2D	viewTexture;												\n"
 								"out     vec4 		displayOutput;												\n"
 								"																\n"
-								"uniform	int		selectionMode	= 0,	// 0 for drawing, 1 for making a selection, 2 for drawing a halo.	\n"	
+								"uniform int		selectionMode	= 0,	// 0 for drawing, 1 for making a selection, 2 for drawing a halo.		\n"	
 								"			objectID	= 0;											\n"
-								"uniform float		sHalo		= 1.0;											\n"
 								"uniform vec3		haloColor	= vec3(1.0, 1.0, 1.0);									\n"
 								"																\n"
 								"void main()															\n"
@@ -230,7 +233,9 @@
 								"		displayOutput = vec4( vec3(1.0f,1.0f,1.0f)*float(objectID)/255.0f, 1.0f);					\n"
 								"	else //if(selectionMode==2)												\n"
 								"	{															\n"
-								"		displayOutput = vec4(haloColor * sHalo, 1.0);									\n"
+								"		// Compute the transparency : 											\n"
+								"		float a = 5.0f*pow( 1.0f - 2.0f * max( abs(gl_TexCoord[0].s-0.5f), abs(gl_TexCoord[0].t-0.5f) ), 0.7f);		\n"
+								"		displayOutput = vec4(haloColor, a);										\n"
 								"	}															\n"
 								"}																\n";
 
@@ -811,7 +816,7 @@
 						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
 							(*it)->scale *= std::pow(1.2f, deltaWheelSteps);
 					}
-					else
+					else if(handMode)
 					{
 						float xc, yc;
 						getGLCoordinatesAbsoluteRaw(lastPosX, lastPosY, xc, yc);
@@ -887,6 +892,13 @@
 				// Set screen scaling variable : 
 				float screenScaling[2];
 
+				float sPixelX, sPixelY;
+				getGLCoordinatesRelative(1.0, 1.0, sPixelX, sPixelY);
+
+				// Some might be negative due to directions of GL axis : 
+				sPixelX = std::abs(sPixelX);
+				sPixelY = std::abs(sPixelY);
+
 				// The real ones : 
 				if(width()>=height())
 				{
@@ -924,12 +936,10 @@
 						float 	imageScaling[2],
 							haloScaling[2];
 
-						(*it)->getScalingRatios(imageScaling, haloScaling, 0.02f);
-
-						placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
+						(*it)->getScalingRatios(imageScaling, haloScaling, 10.0f, sPixelX, sPixelY); // 4.0 is the border layout in pixels, when selected.
 
 						if(forSelection)
-							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);
+							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);					
 						else if(viewIsSelected(*it))
 						{
 							placementProgram->modifyVar("selectionMode", GL_INT, 2);
@@ -939,10 +949,13 @@
 							quad->draw();
 
 							// Restore : 
-							placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
 							placementProgram->modifyVar("selectionMode", GL_INT, 0);
-						}
+						}	
+						
+						// Scaling of the image : 
+						placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
 				
+						// Draw the image :
 						quad->draw();
 					}
 				}
@@ -988,10 +1001,25 @@
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glLoadIdentity();
 
+			// Allow blending : 
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			drawScene(false);
+
+			// Stop blending : 
+			glDisable(GL_BLEND);
 	
 			// Print on screen : 
 			swapBuffers();
+		}
+
+		float GLSceneWidget::getGlobalScale(void) const
+		{
+			if(homothetieRapport==0.0f)
+				return 1.0f;
+			else
+				return homothetieRapport;
 		}
 
 		void GLSceneWidget::getGLCoordinatesAbsoluteRaw(float x, float y, float& glX, float& glY)
@@ -1035,43 +1063,45 @@
 		void GLSceneWidget::getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY)
 		{
 			float	w	= width(),
-				h	= height();
+				h	= height(),
+				z	= getGlobalScale();
 
 			getGLCoordinatesRelative(x, y, glX, glY);
 
 			// To GL center : 
 			if(w>=h)
 			{
-				glX -= (w/h) / homothetieRapport;
-				glY += 1.0f / homothetieRapport;
+				glX -= (w/h) / z;
+				glY += 1.0f / z;
 			}
 			else
 			{
-				glX -= 1.0f / homothetieRapport;
-				glY += h/w / homothetieRapport;
+				glX -= 1.0f / z;
+				glY += h/w / z;
 			}
 
 			// Offset for current zoom : 
 			glX += screenCenter[0];
 			glY += screenCenter[1];
 
-			//std::cout << "GL coordinates    : " << glX << " x " << glY << "   (pixel size : " << (1.0/ height() * 2.0f / homothetieRapport) << ')' << std::endl;
+			//std::cout << "GL coordinates    : " << glX << " x " << glY << "   (pixel size : " << (1.0/ height() * 2.0f / z) << ')' << std::endl;
 		}
 
 		void GLSceneWidget::getGLCoordinatesRelative(float x, float y, float& glX, float& glY)
 		{	// OK!
 			float	w	= width(),
-				h	= height();
+				h	= height(),
+				z	= getGlobalScale();
 
 			if(w>=h)
 			{
-				glX = x / h * 2.0f / homothetieRapport; // X 2 because the OpenGL axis goes from -1 to 1.
-				glY = -y / h * 2.0f / homothetieRapport; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
+				glX = x / h * 2.0f / z; // X 2 because the OpenGL axis goes from -1 to 1.
+				glY = -y / h * 2.0f / z; // - because the Y axis is upward (respect to the screen) for GL while it is downward for Qt.
 			}
 			else
 			{
-				glX = x / w * 2.0f / homothetieRapport;
-				glY = -y / w * 2.0f / homothetieRapport;
+				glX = x / w * 2.0f / z;
+				glY = -y / w * 2.0f / z;
 			}
 		}
 
@@ -1082,6 +1112,12 @@
 				b		= newRapport - 1.0f,
 				c		= homothetieRapport * newRapport - 1.0f;
 
+			/*std::cout << "Before : " << std::endl;
+			std::cout << "    hx = " << homothetieCentre[0] << "; hy = " << homothetieCentre[1] << std::endl;
+			std::cout << "    r  = " << homothetieRapport << std::endl;
+			std::cout << "    xc = " << xc << "; yc = " << yc << std::endl;
+			std::cout << "    rn = " << newRapport << std::endl;*/
+
 			if(c==0.0f) // La composition est une translation
 			{
 				homothetieCentre[0]	= (1.0f - newRapport) * (xc - homothetieCentre[0]);
@@ -1090,8 +1126,8 @@
 			}
 			else if( homothetieRapport==0.0f ) // La composition est entre une translation et une homothetie.
 			{
-				homothetieCentre[0]	= xc - homothetieCentre[0] / (newRapport - 1.0f);
-				homothetieCentre[1]	= yc - homothetieCentre[1] / (newRapport - 1.0f);
+				homothetieCentre[0]	= (xc * (1.0f - newRapport) + newRapport * homothetieCentre[0]) / (1.0f - newRapport);
+				homothetieCentre[1]	= (yc * (1.0f - newRapport) + newRapport * homothetieCentre[1]) / (1.0f - newRapport);
 				homothetieRapport	= newRapport;
 			}
 			else // Cas général : 
@@ -1101,7 +1137,9 @@
 				homothetieRapport 	= homothetieRapport * newRapport;
 			}
 
-			//std::cout << "New homothetie Center : " << homothetieCentre[0] << " x " << homothetieCentre[1] << " (Rapport : " << homothetieRapport << ')' << std::endl;
+			/*std::cout << "After : " << std::endl;
+			std::cout << "    hx = " << homothetieCentre[0] << "; hy = " << homothetieCentre[1] << std::endl;
+			std::cout << "    r  = " << homothetieRapport << std::endl;*/
 		}
 
 		ViewLink* GLSceneWidget::getObjectIDUnder(int x, int y)
@@ -1535,7 +1573,7 @@
 	ViewManager::ViewManager(QWidget* parent)
 	 : 	QMenu("Views", parent),
 		currentManagerID(managerCount),
-		createNewViewAction("New View", this),
+		createNewViewAction("Display in a new View", this),
 		closeAllViewAction("Close all Views", this)
 	{
 		managerCount++;
@@ -1543,51 +1581,14 @@
 		addAction(&createNewViewAction);
 		addAction(&closeAllViewAction);
 
-		connect(&createNewViewAction, 	SIGNAL(triggered()), this, SIGNAL(createNewView()));
-		connect(&closeAllViewAction,	SIGNAL(triggered()), this, SLOT(closeAllViews()));
+		connect(&createNewViewAction, 			SIGNAL(triggered()), this, SIGNAL(createNewView()));
+		connect(&closeAllViewAction,			SIGNAL(triggered()), this, SLOT(closeAllViews()));
 
 		enableCreationAction(false);
 
 		// Build halo color from manager index : 
-		float	h = currentManagerID * 125.0f;	// The maximum number of groups is given by lcm(delta, 360)/delta (FR : ppcm(delta, 360)/delta)
-			h = static_cast<int>(h) % 360;
-			h /= 60.0f;
-		int 	i = std::floor(h);
-		float	f = h - i;		
-		
-		switch( i )
-		{
-			case 0:
-				r = 1.0f;
-				g = f;
-				b = 0.0f;
-				break;
-			case 1:
-				r = 1.0f - f;
-				g = 1.0f;
-				b = 0.0f;
-				break;
-			case 2:
-				r = 0.0f;
-				g = 1.0f;
-				b = f;
-				break;
-			case 3:
-				r = 0.0f;
-				g = 1.0f - f;
-				b = 1.0f;
-				break;
-			case 4:
-				r = f;
-				g = 0.0f;
-				b = 1.0f;
-				break;
-			default:		// case 5:
-				r = 1.0f;
-				g = 0.0f;
-				b = 1.0f - f;
-				break;
-		}
+		float hue = currentManagerID * 125.0f;	// The maximum number of groups is given by lcm(delta, 360)/delta (FR : ppcm(delta, 360)/delta)
+		genColor(hue, r, g, b);
 	}
 
 	ViewManager::~ViewManager(void)
@@ -1595,6 +1596,48 @@
 		closeAllViews();
 	}
 	
+	void ViewManager::genColor(float hue, float& red, float& green, float& blue)
+	{
+		hue = static_cast<int>(hue) % 360;
+		hue /= 60.0f;
+		int 	i = std::floor(hue);
+		float	f = hue - i;		
+		
+		switch( i )
+		{
+			case 0:
+				red	= 1.0f;
+				green	= f;
+				blue	= 0.0f;
+				break;
+			case 1:
+				red	= 1.0f - f;
+				green	= 1.0f;
+				blue	= 0.0f;
+				break;
+			case 2:
+				red	= 0.0f;
+				green	= 1.0f;
+				blue	= f;
+				break;
+			case 3:
+				red	= 0.0f;
+				green	= 1.0f - f;
+				blue	= 1.0f;
+				break;
+			case 4:
+				red	= f;
+				green	= 0.0f;
+				blue	= 1.0f;
+				break;
+			default:		// case 5:
+				red	= 1.0f;
+				green	= 0.0f;
+				blue	= 1.0f - f;
+				break;
+		}
+	}
+
 	void ViewManager::viewClosed(void)
 	{
 		ViewLink* link = reinterpret_cast<ViewLink*>( QObject::sender() );

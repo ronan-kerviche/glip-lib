@@ -109,7 +109,7 @@
 			int			getRecordIDsUnder(const QPoint& pt);
 
 		//signals :
-			//From QTreeWidget
+			//From QTreeWidget :
 			//void itemSelectionChanged(void);
 			//customContextMenuRequested(const QPoint&)
 	};

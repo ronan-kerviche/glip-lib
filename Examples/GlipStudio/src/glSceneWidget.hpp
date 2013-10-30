@@ -45,7 +45,7 @@
 			
 			bool preparedToDraw(void);
 			const __ReadOnly_HdlTextureFormat& format(void);
-			void getScalingRatios(float* imageScaling, float* haloScaling, float haloSize);
+			void getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY);
 
 			friend class GLSceneWidget; 
 
@@ -202,6 +202,7 @@
 			void resizeGL(int width, int height);
 			void drawScene(bool forSelection);
 			void paintGL(void);
+			float getGlobalScale(void) const;
 			void getGLCoordinatesAbsoluteRaw(float x, float y, float& glX, float& glY);
 			void getGLCoordinatesRelativeRaw(float x, float y, float& glX, float& glY);
 			void getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY);
@@ -295,6 +296,8 @@
 			std::vector<int>	recordIDs;
 			QAction			createNewViewAction,
 						closeAllViewAction;
+
+			void genColor(float hue, float& red, float& green, float& blue); 
 
 		private slots :
 			void viewClosed(void);
