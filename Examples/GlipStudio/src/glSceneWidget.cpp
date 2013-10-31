@@ -167,6 +167,219 @@
 			throw Exception("ViewLink::endQuietUpdate - Not in quiet mode.", __FILE__, __LINE__);
 	}
 
+// View Manager : 
+	int ViewManager::managerCount = 0;
+
+	ViewManager::ViewManager(GLSceneWidget* _scene, QWidget* parent)
+	 : 	QMenu("Views", parent),
+		scene(_scene),
+		currentManagerID(managerCount),
+		createNewViewAction("Display in a new View", this),
+		closeAllViewAction("Close all Views", this)
+	{
+		managerCount++;
+
+		addAction(&createNewViewAction);
+		addAction(&closeAllViewAction);
+
+		connect(&createNewViewAction, 			SIGNAL(triggered()), 	this, SIGNAL(createNewView()));
+		connect(&closeAllViewAction,			SIGNAL(triggered()), 	this, SLOT(closeAllViews()));
+		connect(this,					SIGNAL(closed()),	this, SLOT(closeAllViews()));
+
+		enableCreationAction(false);
+
+		// Build halo color from manager index : 
+		float hue = currentManagerID * 125.0f;	// The maximum number of groups is given by lcm(delta, 360)/delta (FR : ppcm(delta, 360)/delta)
+		genColor(hue, r, g, b);
+	}
+
+	ViewManager::~ViewManager(void)
+	{
+		closeAllViews();
+
+		if(scene!=NULL)
+			scene->removeManager(this);
+	}
+	
+	void ViewManager::genColor(float hue, float& red, float& green, float& blue)
+	{
+		hue = static_cast<int>(hue) % 360;
+		hue /= 60.0f;
+		int 	i = std::floor(hue);
+		float	f = hue - i;		
+		
+		switch( i )
+		{
+			case 0:
+				red	= 1.0f;
+				green	= f;
+				blue	= 0.0f;
+				break;
+			case 1:
+				red	= 1.0f - f;
+				green	= 1.0f;
+				blue	= 0.0f;
+				break;
+			case 2:
+				red	= 0.0f;
+				green	= 1.0f;
+				blue	= f;
+				break;
+			case 3:
+				red	= 0.0f;
+				green	= 1.0f - f;
+				blue	= 1.0f;
+				break;
+			case 4:
+				red	= f;
+				green	= 0.0f;
+				blue	= 1.0f;
+				break;
+			default:		// case 5:
+				red	= 1.0f;
+				green	= 0.0f;
+				blue	= 1.0f - f;
+				break;
+		}
+	}
+
+	void ViewManager::viewClosed(void)
+	{
+		ViewLink* link = reinterpret_cast<ViewLink*>( QObject::sender() );
+
+		std::vector<ViewLink*>::iterator it = std::find(viewLinks.begin(), viewLinks.end(), link);
+		
+		if(it!=viewLinks.end())
+		{
+			int k = std::distance(viewLinks.begin(), it);
+
+			delete (*it);
+			viewLinks.erase(it);
+			recordIDs.erase( recordIDs.begin() + k);
+		}
+	}
+
+	void ViewManager::closeAllViews(void)
+	{
+		while(!viewLinks.empty())
+			removeRecord(recordIDs.back());
+	}
+
+	void ViewManager::enableCreationAction(bool s)
+	{
+		createNewViewAction.setEnabled(s);
+	}
+
+	void ViewManager::show(int recordID, HdlTexture& texture, bool newView)
+	{
+		if( viewLinks.empty() || newView)
+		{
+			if(scene==NULL)
+				return ;
+
+			// Create a new view : 
+			ViewLink* link = scene->createView();
+
+			if(link==NULL)
+				return ;
+
+			viewLinks.push_back( link );
+			recordIDs.push_back(recordID);
+
+			connect(viewLinks.back(), SIGNAL(closed()), this, SLOT(viewClosed()));
+
+			viewLinks.back()->setHaloColor(r, g, b);
+			(*viewLinks.back()) << texture << OutputDevice::Process;
+		}
+		else if(isOnDisplay(recordID))
+			update(recordID, texture);
+		else
+		{
+			// Find the first selected view :	
+			int k;
+			for(k = 0; k<viewLinks.size(); k++)
+			{
+				if(viewLinks[k]->isSelected())
+					break;
+			}
+
+			// ... Or use the last created one otherwise : 
+			if(k>=viewLinks.size())
+				k--;
+		
+			recordIDs[k] = recordID;
+			(*viewLinks[k]) << texture << OutputDevice::Process;
+		}
+	}
+		
+	void ViewManager::update(int recordID, HdlTexture& texture)
+	{
+		for(int k=0; k<recordIDs.size(); k++)
+		{
+			if(recordIDs[k]==recordID)
+				(*viewLinks[k]) << texture << OutputDevice::Process;
+		}
+	}
+
+	bool ViewManager::isLinkedToAView(int recordID) const
+	{
+		std::vector<int>::const_iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
+		
+		return it!=recordIDs.end();
+	}
+
+	bool ViewManager::isOnDisplay(int recordID) const
+	{
+		std::vector<int>::const_iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
+
+		while(it!=recordIDs.end())
+		{
+			int k = std::distance(recordIDs.begin(), it);
+
+			if(viewLinks[k]->isVisible())
+				return true;
+
+			it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
+		}
+
+		return false;
+	}
+
+	bool ViewManager::hasViews(void) const
+	{
+		return !viewLinks.empty();
+	}
+
+	void ViewManager::removeRecord(int recordID)
+	{
+		std::vector<int>::iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
+
+		while(it!=recordIDs.end())
+		{
+			int k = std::distance(recordIDs.begin(), it);	
+
+			// Remove :
+			delete viewLinks[k];
+			viewLinks.erase( viewLinks.begin() + k );
+			recordIDs.erase(it);
+
+			// Next : 
+			it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
+		}
+	}
+
+	void ViewManager::beginQuietUpdate(void)
+	{
+		if(!viewLinks.empty())
+			viewLinks.front()->beginQuietUpdate();
+	}
+
+	void ViewManager::endQuietUpdate(void)
+	{
+		if(!viewLinks.empty())
+			ViewLink::endQuietUpdate();
+	}
+
 // Special shaders : 
 	const std::string placementVertexShaderSource = 	"#version 130															\n"
 								"																\n"
@@ -368,6 +581,12 @@
 
 	GLSceneWidget::~GLSceneWidget(void)
 	{
+		while(!links.empty())
+			removeView(links.back(), true);
+
+		while(!managers.empty())
+			removeManager(managers.back(), true);
+
 		makeCurrent();
 		delete quad;
 		HandleOpenGL::deinit();
@@ -1452,6 +1671,31 @@
 				updateScene();		// If this doesn't have to send the signal, it means that the request was external and, thus, it needs to update the display.
 		}
 
+		ViewManager* GLSceneWidget::createManager(void)
+		{
+			ViewManager* manager = new ViewManager(this);
+
+			// Lists : 
+			managers.push_back(manager);
+
+			return manager;
+		}
+
+		void GLSceneWidget::removeManager(ViewManager* manager, bool sendSignal)
+		{
+			std::vector<ViewManager*>::iterator it = std::find(managers.begin(), managers.end(), manager);
+
+			if(it!=managers.end())
+			{
+				(*it)->scene = NULL;
+
+				managers.erase(it);
+
+				if(sendSignal)
+					emit manager->closed();
+			}
+		}
+
 	// Enable/Disable/Set keys :
 		bool GLSceneWidget::isKeyboardActionsEnabled(void) const
 		{
@@ -1566,208 +1810,4 @@
 		container.removeWidget(&scene);
 		container.addWidget(&scene);
 	}
-
-// View Manager : 
-	int ViewManager::managerCount = 0;
-
-	ViewManager::ViewManager(QWidget* parent)
-	 : 	QMenu("Views", parent),
-		currentManagerID(managerCount),
-		createNewViewAction("Display in a new View", this),
-		closeAllViewAction("Close all Views", this)
-	{
-		managerCount++;
-
-		addAction(&createNewViewAction);
-		addAction(&closeAllViewAction);
-
-		connect(&createNewViewAction, 			SIGNAL(triggered()), this, SIGNAL(createNewView()));
-		connect(&closeAllViewAction,			SIGNAL(triggered()), this, SLOT(closeAllViews()));
-
-		enableCreationAction(false);
-
-		// Build halo color from manager index : 
-		float hue = currentManagerID * 125.0f;	// The maximum number of groups is given by lcm(delta, 360)/delta (FR : ppcm(delta, 360)/delta)
-		genColor(hue, r, g, b);
-	}
-
-	ViewManager::~ViewManager(void)
-	{
-		closeAllViews();
-	}
-	
-	void ViewManager::genColor(float hue, float& red, float& green, float& blue)
-	{
-		hue = static_cast<int>(hue) % 360;
-		hue /= 60.0f;
-		int 	i = std::floor(hue);
-		float	f = hue - i;		
-		
-		switch( i )
-		{
-			case 0:
-				red	= 1.0f;
-				green	= f;
-				blue	= 0.0f;
-				break;
-			case 1:
-				red	= 1.0f - f;
-				green	= 1.0f;
-				blue	= 0.0f;
-				break;
-			case 2:
-				red	= 0.0f;
-				green	= 1.0f;
-				blue	= f;
-				break;
-			case 3:
-				red	= 0.0f;
-				green	= 1.0f - f;
-				blue	= 1.0f;
-				break;
-			case 4:
-				red	= f;
-				green	= 0.0f;
-				blue	= 1.0f;
-				break;
-			default:		// case 5:
-				red	= 1.0f;
-				green	= 0.0f;
-				blue	= 1.0f - f;
-				break;
-		}
-	}
-
-	void ViewManager::viewClosed(void)
-	{
-		ViewLink* link = reinterpret_cast<ViewLink*>( QObject::sender() );
-
-		std::vector<ViewLink*>::iterator it = std::find(viewLinks.begin(), viewLinks.end(), link);
-		
-		if(it!=viewLinks.end())
-		{
-			int k = std::distance(viewLinks.begin(), it);
-
-			delete (*it);
-			viewLinks.erase(it);
-			recordIDs.erase( recordIDs.begin() + k);
-		}
-	}
-
-	void ViewManager::closeAllViews(void)
-	{
-		while(!viewLinks.empty())
-			removeRecord(recordIDs.back());
-	}
-
-	void ViewManager::enableCreationAction(bool s)
-	{
-		createNewViewAction.setEnabled(s);
-	}
-
-	void ViewManager::show(int recordID, HdlTexture& texture, void* obj, ViewLink* (*createViewLink)(void*), bool newView)
-	{
-		if( viewLinks.empty() || newView)
-		{
-			// Create a new view : 
-			ViewLink* link = createViewLink(obj);
-
-			if(link==NULL)
-				return ;
-
-			viewLinks.push_back( link );
-			recordIDs.push_back(recordID);
-
-			connect(viewLinks.back(), SIGNAL(closed()), this, SLOT(viewClosed()));
-
-			viewLinks.back()->setHaloColor(r, g, b);
-			(*viewLinks.back()) << texture << OutputDevice::Process;
-		}
-		else
-		{
-			// Find the first selected view :	
-			int k;
-			for(k = 0; k<viewLinks.size(); k++)
-			{
-				if(viewLinks[k]->isSelected())
-					break;
-			}
-
-			// ... Or use the last created one otherwise : 
-			if(k>=viewLinks.size())
-				k--;
-		
-			recordIDs[k] = recordID;
-			(*viewLinks[k]) << texture << OutputDevice::Process;
-		}
-	}
-		
-	void ViewManager::update(int recordID, HdlTexture& texture)
-	{
-		for(int k=0; k<recordIDs.size(); k++)
-		{
-			if(recordIDs[k]==recordID)
-				(*viewLinks[k]) << texture << OutputDevice::Process;
-		}
-	}
-
-	bool ViewManager::isLinkedToAView(int recordID) const
-	{
-		std::vector<int>::const_iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
-		
-		return it!=recordIDs.end();
-	}
-
-	bool ViewManager::isOnDisplay(int recordID) const
-	{
-		std::vector<int>::const_iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
-
-		while(it!=recordIDs.end())
-		{
-			int k = std::distance(recordIDs.begin(), it);
-
-			if(viewLinks[k]->isVisible())
-				return true;
-
-			it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
-		}
-
-		return false;
-	}
-
-	bool ViewManager::hasViews(void) const
-	{
-		return !viewLinks.empty();
-	}
-
-	void ViewManager::removeRecord(int recordID)
-	{
-		std::vector<int>::iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
-
-		while(it!=recordIDs.end())
-		{
-			int k = std::distance(recordIDs.begin(), it);	
-
-			// Remove :
-			delete viewLinks[k];
-			viewLinks.erase( viewLinks.begin() + k );
-			recordIDs.erase(it);
-
-			// Next : 
-			it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
-		}
-	}
-
-	void ViewManager::beginQuietUpdate(void)
-	{
-		if(!viewLinks.empty())
-			viewLinks.front()->beginQuietUpdate();
-	}
-
-	void ViewManager::endQuietUpdate(void)
-	{
-		if(!viewLinks.empty())
-			ViewLink::endQuietUpdate();
-	}
-
 

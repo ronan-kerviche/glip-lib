@@ -18,13 +18,11 @@
 			std::vector<int>	inputRecordIDs,
 						outputRecordIDs;
 
-			ViewManager		inputsViewManager,
-						outputsViewManager;
+			ViewManager		*inputsViewManager,
+						*outputsViewManager;
 
 			int getInputPortIDFromRecordID( int recordID );
 			int getOutputPortIDFromRecordID( int recordID );
-		
-			static ViewLink* createViewLink(void* obj);
 
 		private slots :
 			// Pipeline events : 

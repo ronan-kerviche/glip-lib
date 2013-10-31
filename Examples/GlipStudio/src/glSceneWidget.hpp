@@ -68,6 +68,52 @@
 			void closed(void);
 	};
 
+	class ViewManager : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			static int 		managerCount;
+			int			currentManagerID;
+			float			r,
+						g, 
+						b;
+			std::vector<ViewLink*> 	viewLinks;
+			std::vector<int>	recordIDs;
+			QAction			createNewViewAction,
+						closeAllViewAction;
+
+			void genColor(float hue, float& red, float& green, float& blue); 
+
+		private slots :
+			void viewClosed(void);
+			void closeAllViews(void);
+
+		protected :
+			GLSceneWidget* 	scene;
+			ViewManager(GLSceneWidget* _scene, QWidget* parent=NULL);
+
+			friend class GLSceneWidget; 
+
+		public :
+			~ViewManager(void);
+
+			void enableCreationAction(bool s);
+			void show(int recordID, HdlTexture& texture, bool newView=false);
+			void update(int recordID, HdlTexture& texture);
+			bool isLinkedToAView(int recordID) const;
+			bool isOnDisplay(int recordID) const;
+			bool hasViews(void) const;
+			void removeRecord(int recordID);
+
+			void beginQuietUpdate(void);
+			void endQuietUpdate(void);
+
+		signals :
+			void closed(void);
+			void createNewView(void);
+	};
+
 	class GLSceneWidget : public QGLWidget
 	{
 		Q_OBJECT 
@@ -103,6 +149,7 @@
 			static GLSceneWidget*			masterContext;
 			static std::vector<GLSceneWidget*>	subContext;		
 			std::vector<ViewLink*>			links;
+			std::vector<ViewManager*>		managers;
 			std::list<ViewLink*>			displayList;
 			std::vector<ViewLink*>			selectionList;
 
@@ -245,6 +292,9 @@
 			bool viewIsVisible(const ViewLink* view) const;
 			bool viewIsSelected(const ViewLink* view) const;
 			void removeView(ViewLink* view, bool sendSignal=false);
+
+			ViewManager* createManager(void);
+			void removeManager(ViewManager* manager, bool sendSignal=false);
 			
 			// Enable/Disable/Set keys :
 			bool isKeyboardActionsEnabled(void) const;
@@ -280,46 +330,6 @@
 			~GLSceneWidgetContainer(void);
 
 			GLSceneWidget& sceneWidget(void);
-	};
-
-	class ViewManager : public QMenu
-	{
-		Q_OBJECT
-
-		private : 
-			static int 		managerCount;
-			int			currentManagerID;
-			float			r,
-						g, 
-						b;
-			std::vector<ViewLink*> 	viewLinks;
-			std::vector<int>	recordIDs;
-			QAction			createNewViewAction,
-						closeAllViewAction;
-
-			void genColor(float hue, float& red, float& green, float& blue); 
-
-		private slots :
-			void viewClosed(void);
-			void closeAllViews(void);
-
-		public :
-			ViewManager(QWidget* parent=NULL);
-			~ViewManager(void);
-
-			void enableCreationAction(bool s);
-			void show(int recordID, HdlTexture& texture, void* obj, ViewLink* (*createViewLink)(void*), bool newView=false);
-			void update(int recordID, HdlTexture& texture);
-			bool isLinkedToAView(int recordID) const;
-			bool isOnDisplay(int recordID) const;
-			bool hasViews(void) const;
-			void removeRecord(int recordID);
-
-			void beginQuietUpdate(void);
-			void endQuietUpdate(void);
-
-		signals :
-			void createNewView(void);
 	};
 
 #endif

@@ -59,6 +59,7 @@
 
 			// Special functions : 
 			ViewLink* getViewLink(void);
+			ViewManager* getViewManager(void);
 
 			virtual void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 			virtual bool isValidTexture(int recordID);
@@ -132,6 +133,7 @@
 			void addClient(Module* m);
 			void removeClient(Module* m);
 			ViewLink* getViewLink(void);
+			ViewManager* getViewManager(void);
 			bool pipelineExists(void) const;
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);

@@ -8,11 +8,21 @@
 		outputMenuBar(this),
 		inputsList(this),
 		outputsList(this),
-		inputsViewManager(this),
-		outputsViewManager(this)
+		inputsViewManager(NULL),
+		outputsViewManager(NULL)
 	{
-		inputMenuBar.addMenu(&inputsViewManager);
-		outputMenuBar.addMenu(&outputsViewManager);
+		inputsViewManager = getViewManager();
+
+		if(inputsViewManager==NULL)
+			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (input).", __FILE__, __LINE__);
+
+		outputsViewManager = getViewManager();
+
+		if(outputsViewManager==NULL)
+			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
+
+		inputMenuBar.addMenu(inputsViewManager);
+		outputMenuBar.addMenu(outputsViewManager);
 
 		layout.addWidget(&pipelineStatusLabel);
 		layout.addWidget(&inputMenuBar);
@@ -26,8 +36,8 @@
 		// Connect : 
 		connect(&inputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(inputSelectionChanged()));
 		connect(&outputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(outputSelectionChanged()));
-		connect(&inputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newInputView()));
-		connect(&outputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newOutputView()));
+		connect(inputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newInputView()));
+		connect(outputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newOutputView()));
 	}
 
 	IOTab::~IOTab(void)
@@ -52,12 +62,6 @@
 				return -1;
 			else
 				return std::distance(outputRecordIDs.begin(), it);
-		}
-
-		ViewLink* IOTab::createViewLink(void* obj)
-		{
-			IOTab* obj2 = reinterpret_cast<IOTab*>(obj);
-			return obj2->getViewLink();
 		}
 
 	// Private slots : 
@@ -105,14 +109,14 @@
 				outputSelectionChanged();
 			}*/
 
-			if( outputsViewManager.hasViews() )
+			if( outputsViewManager->hasViews() )
 			{
-				outputsViewManager.beginQuietUpdate();
+				outputsViewManager->beginQuietUpdate();
 
 				for(int k=0; k<pipeline().getNumOutputPort(); k++)
-					outputsViewManager.update( k, pipeline().out(k) );
+					outputsViewManager->update( k, pipeline().out(k) );
 
-				outputsViewManager.endQuietUpdate();
+				outputsViewManager->endQuietUpdate();
 			}
 		}
 
@@ -177,7 +181,7 @@
 			
 			if(!recordIDs.empty())
 			{
-				inputsViewManager.enableCreationAction(true);
+				inputsViewManager->enableCreationAction(true);
 
 				int portID = getInputPortIDFromRecordID( recordIDs.back() );
 
@@ -193,11 +197,11 @@
 						(*display) << input << OutputDevice::Process;
 					}*/
 
-					inputsViewManager.show(portID, inputTexture(portID), this, &IOTab::createViewLink);
+					inputsViewManager->show(portID, inputTexture(portID));
 				}
 			}
 			else
-				inputsViewManager.enableCreationAction(true);
+				inputsViewManager->enableCreationAction(true);
 		}
 
 		void IOTab::outputSelectionChanged(void)
@@ -206,7 +210,7 @@
 
 			if(!recordIDs.empty() && pipelineExists())
 			{
-				outputsViewManager.enableCreationAction(true);
+				outputsViewManager->enableCreationAction(true);
 
 				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
 
@@ -221,11 +225,11 @@
 						pipelineOutputOnDisplay = true;
 					}*/
 
-					outputsViewManager.show(portID, pipeline().out(portID), this, &IOTab::createViewLink);
+					outputsViewManager->show(portID, pipeline().out(portID));
 				}
 			}
 			else
-				outputsViewManager.enableCreationAction(false);
+				outputsViewManager->enableCreationAction(false);
 		}
 
 		void IOTab::newInputView(void)
@@ -237,7 +241,7 @@
 				int portID = getInputPortIDFromRecordID( recordIDs.back() );
 
 				if(isInputValid(portID))
-					inputsViewManager.show(portID, inputTexture(portID), this, &IOTab::createViewLink, true);
+					inputsViewManager->show(portID, inputTexture(portID), true);
 			}
 		}
 
@@ -250,7 +254,7 @@
 				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
 
 				if(portID>=0 && portID<pipeline().getNumOutputPort() )
-					outputsViewManager.show(portID, pipeline().out(portID), this, &IOTab::createViewLink, true);
+					outputsViewManager->show(portID, pipeline().out(portID), true);
 			}
 		}
 

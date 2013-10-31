@@ -76,6 +76,14 @@
 			return masterModule->getViewLink();
 	}
 
+	ViewManager* Module::getViewManager(void)
+	{
+		if(masterModule==NULL)
+			return NULL;
+		else
+			return masterModule->getViewManager();
+	}
+
 	void Module::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{ }
 	
@@ -248,6 +256,11 @@
 	ViewLink* ControlModule::getViewLink(void)
 	{
 		return display.sceneWidget().createView();
+	}
+
+	ViewManager* ControlModule::getViewManager(void)
+	{
+		return display.sceneWidget().createManager();
 	}
 
 	bool ControlModule::pipelineExists(void) const

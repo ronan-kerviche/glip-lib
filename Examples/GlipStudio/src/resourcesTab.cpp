@@ -70,14 +70,19 @@
 
 // ResourceTab
 	ResourcesTab::ResourcesTab(ControlModule& _masterModule, QWidget* parent)
-	 : Module(_masterModule, parent), layout(this), collection("ResourcesTab", this), viewManager(this)
+	 : Module(_masterModule, parent), layout(this), collection("ResourcesTab", this), viewManager(NULL)
 	{
+		viewManager = getViewManager();
+
+		if(viewManager==NULL)
+			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager.", __FILE__, __LINE__);
+
 		collection.addActionsToMenuBar(menuBar);
 
 		menuBar.addMenu(&connectionMenu);
-		menuBar.addMenu(&viewManager);
+		menuBar.addMenu(viewManager);
 		collection.addToContextMenu(connectionMenu);
-		collection.addToContextMenu(viewManager);
+		collection.addToContextMenu(*viewManager);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&collection);
@@ -87,7 +92,7 @@
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
 		connect(&connectionMenu,	SIGNAL(connectToInput(int)),		this, SLOT(connectToInput(int)));
-		connect(&viewManager,		SIGNAL(createNewView()),		this, SLOT(createNewView()));
+		connect(viewManager,		SIGNAL(createNewView()),		this, SLOT(createNewView()));
 	}
 
 	ResourcesTab::~ResourcesTab(void)
@@ -111,7 +116,7 @@
 
 		void ResourcesTab::cleanRecordDependances(int recordID)
 		{
-			viewManager.removeRecord(recordID);
+			viewManager->removeRecord(recordID);
 			unregisterInputTexture(recordID);
 		}
 
@@ -171,12 +176,6 @@
 			}
 		}
 
-		ViewLink* ResourcesTab::createViewLink(void* obj)
-		{
-			ResourcesTab* obj2 = reinterpret_cast<ResourcesTab*>(obj);
-			return obj2->getViewLink();
-		}
-
 	// Private slots : 
 		void ResourcesTab::pipelineWasCreated(void)
 		{
@@ -208,17 +207,17 @@
 		
 			if(selectedRecordsID.empty())
 			{
-				viewManager.enableCreationAction(false);
+				viewManager->enableCreationAction(false);
 				connectionMenu.activate(false);
 			}
 			else
 			{
-				viewManager.enableCreationAction(true);
+				viewManager->enableCreationAction(true);
 
 				connectionMenu.activate(true, selectedRecordsID.size());
 
 				// Display : 
-				viewManager.show( selectedRecordsID.front(), collection.texture(selectedRecordsID.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink);
+				viewManager->show( selectedRecordsID.front(), collection.texture(selectedRecordsID.front()));
 			}
 		}
 
@@ -262,7 +261,7 @@
 			std::vector<int> selectedRecordIDs = collection.getSelectedRecordIDs();
 
 			if(!selectedRecordIDs.empty())
-				viewManager.show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), reinterpret_cast<void*>(this), &ResourcesTab::createViewLink, true);
+				viewManager->show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), true);
 		}
 
 /*// TextureObject

@@ -58,7 +58,7 @@
 			ConnectionMenu		connectionMenu;
 			ImagesCollection	collection;
 
-			ViewManager 		viewManager;
+			ViewManager* 		viewManager;
 
 			//void updateDisplay(WindowRenderer& display);
 			bool isValidTexture(int recordID);
@@ -66,8 +66,6 @@
 			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
 			void updateTexturesLinkInformation(void);
-
-			static ViewLink* createViewLink(void* obj);
 
 		private slots :
 			// These will be called upon external modifications, in order for the module to update itself :
