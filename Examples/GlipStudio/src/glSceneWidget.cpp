@@ -1007,12 +1007,13 @@
 								ny	= 0.0f,
 								dAngle 	= 0.0f;
 
-							getGLCoordinatesRelative(lastPosX, lastPosY, ox, oy);
+							getGLCoordinatesAbsolute(lastPosX, lastPosY, ox, oy);
+							getGLCoordinatesAbsolute(lastPosX - deltaX, lastPosY - deltaY, nx, ny);
 
 							ox	= under->centerCoords[0] - ox;
 							oy	= under->centerCoords[1] - oy;
-							nx 	= ox - dx;
-							ny	= oy - dy;
+							nx 	= under->centerCoords[0] - nx;
+							ny	= under->centerCoords[1] - ny;
 
 							//std::cout << "New angle : " << std::atan2(oy, ox) << std::endl;
 							dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
@@ -1077,6 +1078,21 @@
 					selectAll();
 					needUpdate 	= true;
 				}
+
+				if( pressed(KeyRotationClockWise) )
+				{
+					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+						(*it)->angleRadians -= 0.05f;
+					needUpdate 	= true;
+				}				
+
+				if( pressed(KeyRotationCounterClockWise) )
+				{
+					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+						(*it)->angleRadians += 0.05f;
+					needUpdate 	= true;
+				}
+
 			// Finally : 
 			if(needUpdate)
 				paintGL();

@@ -234,8 +234,74 @@
 
 	void ImageObject::save(const std::string& filename)
 	{
-		///TODO
-		saved = true;
-		throw Exception("ImageObject::save - Cannot save to \"" + filename + "\".", __FILE__, __LINE__);
+		QImage* bufferImage = NULL;
+
+		try
+		{
+			// Get the mode :
+			const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( textureFormat.getGLMode() );
+			const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( textureFormat.getGLDepth() );
+
+			if( descriptor.hasLuminanceLayer && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
+				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_RGB888);
+			else if( descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && !descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_RGB888);
+			else if(descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_ARGB32);		
+			else
+				throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+
+			// Copy to QImage : 
+			QColor value;
+			for(int y=0; y<textureFormat.getHeight(); y++)
+			{
+				for(int x=0; x<textureFormat.getWidth(); x++)
+				{
+					const int p = (y * textureFormat.getWidth() + x) * descriptor.numComponents;
+					if(descriptor.numComponents>=4)
+						value.setAlpha( static_cast<unsigned char>(image[p+3]*255.0) );
+					if(descriptor.numComponents>=3)
+					{
+						value.setGreen( static_cast<unsigned char>(image[p+1]*255.0) );
+						value.setBlue(  static_cast<unsigned char>(image[p+2]*255.0) );
+						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
+					}
+					else if(descriptor.numComponents==1)
+					{
+						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
+						value.setGreen( static_cast<unsigned char>(image[p+0]*255.0) );
+						value.setBlue(  static_cast<unsigned char>(image[p+0]*255.0) );
+					}
+					else
+						throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
+
+					bufferImage->setPixel(x, y, value.rgba());
+				}
+			}
+
+			// Save file : 
+			if(!bufferImage->save(filename.c_str()))
+				throw Exception("Cannot save image to file \"" + filename + "\".", __FILE__, __LINE__);
+
+			// Clean : 
+			delete bufferImage;
+			saved = true;
+		}
+		catch(Exception& e)
+		{
+			std::cout << "ImageObject::save - Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename.c_str()));
+			delete bufferImage;
+			bufferImage = NULL;
+		}
+		catch(std::exception& e)
+		{
+			std::cout << "ImageObject::save - Exception caught : " << std::endl;
+			std::cout << e.what() << std::endl;
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename.c_str()));
+			delete bufferImage;
+			bufferImage = NULL;
+		}
 	}
 
