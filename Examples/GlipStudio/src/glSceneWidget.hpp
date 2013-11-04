@@ -58,6 +58,7 @@
 			bool isVisible(void) const;
 			bool isSelected(void) const;
 			bool isClosed(void) const;
+			void selectView(bool dropCurrentSelection=true);
 
 			void beginQuietUpdate(void);
 			static void endQuietUpdate(void);
@@ -83,7 +84,7 @@
 			QAction			createNewViewAction,
 						closeAllViewAction;
 
-			void genColor(float hue, float& red, float& green, float& blue); 
+			void genColor(float hue, float& red, float& green, float& blue);
 
 		private slots :
 			void viewClosed(void);
@@ -288,6 +289,7 @@
 			void bringUpView(ViewLink* view);
 			void pushBackView(ViewLink* view);
 			void hideView(ViewLink* view);
+			void selectView(ViewLink* view, bool dropCurrentSelection=true);
 			void unselectView(ViewLink* view);
 			bool viewIsVisible(const ViewLink* view) const;
 			bool viewIsSelected(const ViewLink* view) const;

@@ -145,6 +145,15 @@
 		return scene==NULL;
 	}
 
+	void ViewLink::selectView(bool dropCurrentSelection)
+	{
+		if(scene!=NULL)
+		{
+			scene->selectView(this, dropCurrentSelection);
+			scene->updateScene();
+		}
+	}
+
 	void ViewLink::beginQuietUpdate(void)
 	{
 		if(scene!=NULL)
@@ -272,7 +281,7 @@
 
 	void ViewManager::show(int recordID, HdlTexture& texture, bool newView)
 	{
-		if( viewLinks.empty() || newView)
+		if( viewLinks.empty() || newView )
 		{
 			if(scene==NULL)
 				return ;
@@ -290,9 +299,19 @@
 
 			viewLinks.back()->setHaloColor(r, g, b);
 			(*viewLinks.back()) << texture << OutputDevice::Process;
+			viewLinks.back()->selectView();
 		}
-		else if(isOnDisplay(recordID))
+		else if(isLinkedToAView(recordID))
+		{
 			update(recordID, texture);
+
+			// Force Selection : 
+			for(int k=0; k<recordIDs.size(); k++)
+			{
+				if(recordIDs[k]==recordID)
+					viewLinks[k]->selectView();
+			}
+		}
 		else
 		{
 			// Find the first selected view :	
@@ -309,6 +328,7 @@
 		
 			recordIDs[k] = recordID;
 			(*viewLinks[k]) << texture << OutputDevice::Process;
+			viewLinks[k]->selectView();
 		}
 	}
 		
@@ -1654,6 +1674,18 @@
 
 			if(it!=selectionList.end())
 				selectionList.erase(it);
+		}
+
+		void GLSceneWidget::selectView(ViewLink* view, bool dropCurrentSelection)
+		{
+			viewExists(view, true);
+
+			if(dropCurrentSelection)
+				selectionList.clear();
+			else
+				unselectView(view);
+
+			selectionList.push_back(view);
 		}
 
 		bool GLSceneWidget::viewIsVisible(const ViewLink* view) const
