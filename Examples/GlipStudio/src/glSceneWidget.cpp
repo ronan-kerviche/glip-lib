@@ -1,5 +1,6 @@
 // Includes :
 	#include "glSceneWidget.hpp"
+	#include <limits>
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -1373,7 +1374,7 @@
 			std::cout << "    xc = " << xc << "; yc = " << yc << std::endl;
 			std::cout << "    rn = " << newRapport << std::endl;*/
 
-			if(c==0.0f) // La composition est une translation
+			if(std::abs(c) <= 100.0f * std::numeric_limits<float>::epsilon()) // La composition est une translation
 			{
 				homothetieCentre[0]	= (1.0f - newRapport) * (xc - homothetieCentre[0]);
 				homothetieCentre[1]	= (1.0f - newRapport) * (yc - homothetieCentre[1]);
