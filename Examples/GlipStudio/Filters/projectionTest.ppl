@@ -1,5 +1,5 @@
 //TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE)
-REQUIRED_FORMAT:format(FormatIn_0)
+REQUIRED_FORMAT:format(texInput)
 
 SHADER_SOURCE:projectionShader()
 {

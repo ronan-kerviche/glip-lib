@@ -74,6 +74,16 @@
 							alphaDepthInBits,
 							/// Size of the luminance, or intensity, component for a single pixel, in bits.
 							luminanceDepthInBits;
+							/// Type of the red component (GL_NONE if no type is defined or the layer does not exist).
+				const GLenum		redType,
+							/// Type of the green component (GL_NONE if no type is defined or the layer does not exist).
+							greenType,
+							/// Type of the blue component (GL_NONE if no type is defined or the layer does not exist).
+							blueType,
+							/// Type of the alpha component (GL_NONE if no type is defined or the layer does not exist).
+							alphaType,
+							/// Type of the luminance component (GL_NONE if no type is defined or the layer does not exist).
+							luminanceType;
 			};
 
 			/**

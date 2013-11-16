@@ -42,10 +42,9 @@
 			{
 				protected :
 					// Data
-					int	imgW, imgH; // Image parameters
-					GLenum	mode, depth, minFilter, magFilter;  // Image format and texture filtering
-					int	baseLevel, maxLevel;                // MipMap information
-					GLint	wraps, wrapt;                       // Wrapping modes
+					int	imgW, imgH; 						// Image parameters.
+					GLenum	mode, depth, minFilter, magFilter, wraps, wrapt;  	// Image format, texture filtering and wrapping modes.
+					int	baseLevel, maxLevel;                			// MipMap information.
 
 					// Protected tools :
 					int	getChannelCount(GLenum _mode)				const;
@@ -74,8 +73,8 @@
 					GLenum	getMagFilter	(void) const;
 					int	getBaseLevel	(void) const;
 					int	getMaxLevel	(void) const;
-					GLint	getSWrapping	(void) const;
-					GLint	getTWrapping	(void) const;
+					GLenum	getSWrapping	(void) const;
+					GLenum	getTWrapping	(void) const;
 					bool	isCompressed	(void) const;
 					bool	isFloatingPoint	(void) const;
 
@@ -89,6 +88,8 @@
 					__ReadOnly_HdlTextureFormat getCompressedFormat(void) const;
 					__ReadOnly_HdlTextureFormat getUncompressedFormat(void) const;
 					bool	isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat&) const;
+
+				virtual	unsigned int getSetting(GLenum param) const;
 
 					// Static Tools :
 					static 	int	getMaxSize(void);
@@ -116,10 +117,12 @@
 					void setMagFilter(GLenum mf);
 					void setBaseLevel(int l);
 					void setMaxLevel (int l);
-					void setSWrapping(GLint m);
-					void setTWrapping(GLint m);
+					void setSWrapping(GLenum m);
+					void setTWrapping(GLenum m);
 
 					const __ReadOnly_HdlTextureFormat& operator=(const __ReadOnly_HdlTextureFormat&);
+
+					void setSetting(GLenum param, unsigned int value);
 			};
 
 			// Texture Handle
@@ -152,8 +155,9 @@
 					bool	checkForConsistency(bool verbose = false);
 					void	setMinFilter(GLenum mf);
 					void	setMagFilter(GLenum mf);
-					void	setSWrapping(GLint m);
-					void	setTWrapping(GLint m);
+					void	setSWrapping(GLenum m);
+					void	setTWrapping(GLenum m);
+					void 	setSetting(GLenum param, unsigned int value);
 
 					const __ReadOnly_HdlTextureFormat& format(void) const;
 

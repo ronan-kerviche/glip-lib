@@ -576,11 +576,11 @@
 		setKeyForAction(KeyRotationCounterClockWise,	Qt::Key_D);
 		setKeyForAction(KeyToggleFullscreen,		Qt::Key_Return);
 		setKeyForAction(KeyExitOnlyFullscreen,		Qt::Key_Escape);
-		setKeyForAction(KeyResetView,			Qt::Key_Backspace);
+		setKeyForAction(KeyResetView,			Qt::Key_Space);
 		setKeyForAction(KeyCloseView,			Qt::Key_Delete);
 		setKeyForAction(KeyControl,			Qt::Key_Control);
 		setKeyForAction(KeyShiftRotate,			Qt::Key_Shift);
-		setKeyForAction(KeyToggleHandMode,		Qt::Key_Space);
+		setKeyForAction(KeyToggleHandMode,		Qt::Key_Alt);
 		setKeyForAction(KeySelectAll,			QKeySequence::SelectAll);
 
 		for(int i=0; i<NumActionKey; i++)
@@ -1015,7 +1015,7 @@
 							screenCenter[1] += dy;
 						}
 					}
-					else
+					else if(!handMode) // Rotation is only possible in selection mode
 					{
 						ViewLink* under = updateSelection(false);
 

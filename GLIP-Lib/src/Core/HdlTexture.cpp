@@ -140,9 +140,9 @@ using namespace Glip::CoreGL;
 	\return The texture's base level for mipmaps.
 	\fn     int __ReadOnly_HdlTextureFormat::getMaxLevel (void) const
 	\return The texture's highest level for mipmaps.
-	\fn     GLint __ReadOnly_HdlTextureFormat::getSWrapping(void) const
+	\fn     GLenum __ReadOnly_HdlTextureFormat::getSWrapping(void) const
 	\return The texture's S wrapping parameter.
-	\fn     GLint __ReadOnly_HdlTextureFormat::getTWrapping(void) const
+	\fn     GLenum __ReadOnly_HdlTextureFormat::getTWrapping(void) const
 	\return The texture's T wrapping parameter.
 	\fn     bool __ReadOnly_HdlTextureFormat::isCompressed(void) const
 	\return True if the texture is compressed.
@@ -162,8 +162,8 @@ using namespace Glip::CoreGL;
 	GLenum	__ReadOnly_HdlTextureFormat::getMagFilter	(void) const { return magFilter; }
 	int	__ReadOnly_HdlTextureFormat::getBaseLevel	(void) const { return baseLevel; }
 	int	__ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
-	GLint	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
-	GLint	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
+	GLenum	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
+	GLenum	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
 	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return isCompressedMode(mode); }
 	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return isFloatingPointMode(mode, depth); }
 
@@ -282,6 +282,81 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
+	\fn	unsigned int __ReadOnly_HdlTextureFormat::getSetting(GLenum param) const
+	\brief	Obtain a setting value based on its GL name.
+	\param param The GL name of the setting to be retreived.
+	\return The value of the corresponding setting or raise an Exception if any error occur.
+	
+	Available paramaters : 
+	Parameter       			| Description
+	--------------------------------------- | --------------------------
+	GL_TEXTURE_WIDTH			| Get the width (same as __ReadOnly_HdlTextureFormat::getWidth()).
+	GL_TEXTURE_HEIGHT			| Get the height (same as __ReadOnly_HdlTextureFormat::getHeight()).
+	GL_TEXTURE_RED_SIZE			| Get the depth of the red channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().redDepthInBits).
+	GL_TEXTURE_GREEN_SIZE			| Get the depth of the green channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().greenDepthInBits).
+	GL_TEXTURE_BLUE_SIZE			| Get the depth of the blue channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().blueDepthInBits).
+	GL_TEXTURE_ALPHA_SIZE			| Get the depth of the alpha channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().alphaDepthInBits).
+	GL_TEXTURE_LUMINANCE_SIZE		| Get the depth of the luminance channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().luminanceDepthInBits).
+	GL_TEXTURE_MIN_FILTER			| Get the minification parameter (same as __ReadOnly_HdlTextureFormat::getMinFilter()).
+	GL_TEXTURE_MAG_FILTER			| Get the magnification parameter (same as __ReadOnly_HdlTextureFormat::getMagFilter()).
+	GL_TEXTURE_WRAP_S			| Get the S wrapping parameter (same as __ReadOnly_HdlTextureFormat::getSWrapping()).
+	GL_TEXTURE_WRAP_T			| Get the T wrapping parameter (same as __ReadOnly_HdlTextureFormat::getTWrapping()).
+	GL_TEXTURE_BASE_LEVEL			| Get the base mipmap level (same as __ReadOnly_HdlTextureFormat::getBaseLevel()).
+	GL_TEXTURE_MAX_LEVEL			| Get the base mipmap level (same as __ReadOnly_HdlTextureFormat::getMaxLevel()).
+	GL_GENERATE_MIPMAP			| Return 1 if the mipmap will be generated.
+	GL_TEXTURE_INTERNAL_FORMAT		| Get the mode (same as __ReadOnly_HdlTextureFormat::getGLMode()).
+	GL_TEXTURE_COMPRESSED			| Return 1 if the texture is compressed, 0 otherwise (same as __ReadOnly_HdlTextureFormat::isCompressed()).
+	GL_TEXTURE_COMPRESSED_IMAGE_SIZE	| Will raise an exception as the format cannot communicate with the display driver.
+	GL_TEXTURE_DEPTH			| Get the depth (same as __ReadOnly_HdlTextureFormat::getGLDepth()).
+	GL_TEXTURE_RED_TYPE			| Get the red type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().redType).
+	GL_TEXTURE_GREEN_TYPE			| Get the green type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().greenType).
+	GL_TEXTURE_BLUE_TYPE			| Get the blue type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().blueType).
+	GL_TEXTURE_ALPHA_TYPE			| Get the alpha type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().alphaType).
+	**/
+	unsigned int __ReadOnly_HdlTextureFormat::getSetting(GLenum param) const
+	{
+		#define TEXTURE_CHANNEL_TYPE(bitName, typeName)	if(getFormatDescriptor(). bitName ) \
+								{ \
+									GLenum t = getFormatDescriptor(). typeName ; \
+									if(t!=GL_NONE) \
+										return t; \
+									else \
+										return getGLDepth(); \
+								} \
+								else \
+									return GL_NONE;
+		
+		switch(param)
+		{
+			case GL_TEXTURE_WIDTH :			return getWidth();
+			case GL_TEXTURE_HEIGHT : 		return getHeight();
+			case GL_TEXTURE_RED_SIZE :		return getFormatDescriptor().redDepthInBits;
+			case GL_TEXTURE_GREEN_SIZE :		return getFormatDescriptor().greenDepthInBits;
+			case GL_TEXTURE_BLUE_SIZE :		return getFormatDescriptor().blueDepthInBits;
+			case GL_TEXTURE_ALPHA_SIZE :		return getFormatDescriptor().alphaDepthInBits;
+			case GL_TEXTURE_LUMINANCE_SIZE :	return getFormatDescriptor().luminanceDepthInBits;
+			case GL_TEXTURE_MIN_FILTER :		return getMinFilter();
+			case GL_TEXTURE_MAG_FILTER :		return getMagFilter();
+			case GL_TEXTURE_WRAP_S :		return getSWrapping();
+			case GL_TEXTURE_WRAP_T :		return getTWrapping();
+			case GL_TEXTURE_BASE_LEVEL :		return getBaseLevel();
+			case GL_TEXTURE_MAX_LEVEL :		return getMaxLevel();
+			case GL_GENERATE_MIPMAP :		return getMaxLevel()>0;
+			case GL_TEXTURE_INTERNAL_FORMAT :	return getGLMode();		
+			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
+			case GL_TEXTURE_DEPTH :			return getGLDepth();
+			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedLayer, 	redType )
+			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenLayer, 	greenType )
+			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueLayer, 	blueType )
+			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaLayer, 	alphaType )
+			default : 				throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+		}
+
+		#undef TEXTURE_CHANNEL_TYPE
+	}
+
+	/**
 	\fn    static int __ReadOnly_HdlTextureFormat::getMaxSize(void)
 	\brief Returns the maximum size for a texture.
 	\return The size, in pixels.
@@ -350,31 +425,31 @@ using namespace Glip::CoreGL;
 	\fn    void HdlTextureFormat::setMaxLevel (int l)
 	\brief Sets the texture's highest level for mipmaps.
 	\param l The new highest level (must be greater than 0).
-	\fn    void HdlTextureFormat::setSWrapping(GLint m)
+	\fn    void HdlTextureFormat::setSWrapping(GLenum m)
 	\brief Sets the texture's S wrapping parameter.
 	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
-	\fn    void HdlTextureFormat::setTWrapping(GLint m)
+	\fn    void HdlTextureFormat::setTWrapping(GLenum m)
 	\brief Sets the texture's T wrapping parameter.
 	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	**/
-	void HdlTextureFormat::setWidth    (int w)                   { imgW      = w;  }
-	void HdlTextureFormat::setHeight   (int h)                   { imgH      = h;  }
-	void HdlTextureFormat::setSize     (int w, int h)            { 	imgW     = w;
-									imgH     = h;  }
-	void HdlTextureFormat::setGLMode   (GLenum md)               { mode      = md; }
-	void HdlTextureFormat::setGLDepth  (GLenum dp)               { depth     = dp; }
-	void HdlTextureFormat::setMinFilter(GLenum mf)               { minFilter = mf; }
-	void HdlTextureFormat::setMagFilter(GLenum mf)               { magFilter = mf; }
-	void HdlTextureFormat::setBaseLevel(int l)                   { baseLevel = l;  }
-	void HdlTextureFormat::setMaxLevel (int l)                   { maxLevel  = l;  }
-	void HdlTextureFormat::setSWrapping(GLint m)                 { wraps     = m;  }
-	void HdlTextureFormat::setTWrapping(GLint m)                 { wrapt     = m;  }
+	void HdlTextureFormat::setWidth    (int w)		{ imgW      = w;  }
+	void HdlTextureFormat::setHeight   (int h)		{ imgH      = h;  }
+	void HdlTextureFormat::setSize     (int w, int h)	{ imgW     = w;
+								  imgH     = h;   }
+	void HdlTextureFormat::setGLMode   (GLenum md)		{ mode      = md; }
+	void HdlTextureFormat::setGLDepth  (GLenum dp)		{ depth     = dp; }
+	void HdlTextureFormat::setMinFilter(GLenum mf)		{ minFilter = mf; }
+	void HdlTextureFormat::setMagFilter(GLenum mf)		{ magFilter = mf; }
+	void HdlTextureFormat::setBaseLevel(int l)		{ baseLevel = l;  }
+	void HdlTextureFormat::setMaxLevel (int l)		{ maxLevel  = l;  }
+	void HdlTextureFormat::setSWrapping(GLenum m)		{ wraps     = m;  }
+	void HdlTextureFormat::setTWrapping(GLenum m)		{ wrapt     = m;  }
 
 	/**
 	\fn const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
 	\brief Copy operator.
 	\param copy The format to copy.
-	\return This.
+	\return This object.
 	**/
 	const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
 	{
@@ -390,6 +465,56 @@ using namespace Glip::CoreGL;
 		wrapt     = copy.getTWrapping();
 
 		return *this;
+	}
+
+	/**
+	\fn void HdlTextureFormat::setSetting(GLenum param, unsigned int value)
+	\brief Set parameter, this function will raise an Exception if any errors occur.
+	\param param The GL name of the paramater to set.
+	\param value The value to assign to the parameter.
+	
+	Available paramaters : 
+	Parameter       			| Description
+	--------------------------------------- | --------------------------
+	GL_TEXTURE_WIDTH			| Set the width (same as HdlTextureFormat::setWidth()).
+	GL_TEXTURE_HEIGHT			| Set the height (same as HdlTextureFormat::setHeight()).
+	GL_TEXTURE_MIN_FILTER			| Set the minification parameter (same as HdlTextureFormat::setMinFilter()).
+	GL_TEXTURE_MAG_FILTER			| Set the magnification parameter (same as HdlTextureFormat::setMagFilter()).
+	GL_TEXTURE_WRAP_S			| Set the S wrapping parameter (same as HdlTextureFormat::setSWrapping()).
+	GL_TEXTURE_WRAP_T			| Set the T wrapping parameter (same as HdlTextureFormat::setTWrapping()).
+	GL_TEXTURE_BASE_LEVEL			| Set the base mipmap level (same as HdlTextureFormat::setBaseLevel()).
+	GL_TEXTURE_MAX_LEVEL			| Set the base mipmap level (same as HdlTextureFormat::setMaxLevel()).
+	GL_TEXTURE_INTERNAL_FORMAT		| Set the mode (same as HdlTextureFormat::setGLMode()).
+	GL_TEXTURE_DEPTH			| Set the depth (same as HdlTextureFormat::setGLDepth()).
+	**/
+	void HdlTextureFormat::setSetting(GLenum param, unsigned int value)
+	{
+		switch(param)
+		{
+			case GL_TEXTURE_WIDTH :			setWidth(value);	break;
+			case GL_TEXTURE_HEIGHT : 		setHeight(value);	break;
+			case GL_TEXTURE_MIN_FILTER :		setMinFilter(value);	break;
+			case GL_TEXTURE_MAG_FILTER :		setMagFilter(value);	break;
+			case GL_TEXTURE_WRAP_S :		setSWrapping(value);	break;
+			case GL_TEXTURE_WRAP_T :		setTWrapping(value);	break;
+			case GL_TEXTURE_BASE_LEVEL :		setBaseLevel(value);	break;
+			case GL_TEXTURE_MAX_LEVEL :		setMaxLevel(value);	break;
+			case GL_TEXTURE_INTERNAL_FORMAT :	setGLMode(value);	break;
+			case GL_TEXTURE_DEPTH :			setGLDepth(value);	break;
+			case GL_TEXTURE_RED_SIZE :		
+			case GL_TEXTURE_GREEN_SIZE :		
+			case GL_TEXTURE_BLUE_SIZE :		
+			case GL_TEXTURE_ALPHA_SIZE :		
+			case GL_TEXTURE_LUMINANCE_SIZE :	
+			case GL_GENERATE_MIPMAP :		
+			case GL_TEXTURE_COMPRESSED :		
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :		
+			case GL_TEXTURE_RED_TYPE :		
+			case GL_TEXTURE_GREEN_TYPE :		
+			case GL_TEXTURE_BLUE_TYPE :		
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTextureFormat::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__);
+			default : 				throw Exception("HdlTextureFormat::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+		}
 	}
 
 // HdlTexture - Functions
@@ -542,17 +667,61 @@ using namespace Glip::CoreGL;
 	\fn    void HdlTexture::setMagFilter(GLenum mf)
 	\brief Sets the texture's magnification parameter. WARNING : no error checking is performed within this function.
 	\param mf The new magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
-	\fn    void HdlTexture::setSWrapping(GLint m)
+	\fn    void HdlTexture::setSWrapping(GLenum m)
 	\brief Sets the texture's S wrapping parameter. WARNING : no error checking is performed within this function.
 	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
-	\fn    void HdlTexture::setTWrapping(GLint m)
+	\fn    void HdlTexture::setTWrapping(GLenum m)
 	\brief Sets the texture's T wrapping parameter. WARNING : no error checking is performed within this function.
 	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	**/
 	void HdlTexture::setMinFilter(GLenum mf)	{ minFilter = mf; bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );}
 	void HdlTexture::setMagFilter(GLenum mf)	{ magFilter = mf; bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getMagFilter() );}
-	void HdlTexture::setSWrapping(GLint m)		{ wraps     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     getSWrapping() );}
-	void HdlTexture::setTWrapping(GLint m)		{ wrapt     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     getTWrapping() );}
+	void HdlTexture::setSWrapping(GLenum m)		{ wraps     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     getSWrapping() );}
+	void HdlTexture::setTWrapping(GLenum m)		{ wrapt     = m;  bind(); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     getTWrapping() );}
+
+	/**
+	\fn void HdlTexture::setSetting(GLenum param, unsigned int value)
+	\brief Set parameter, this function will raise an Exception if any errors occur.
+	\param param The GL name of the paramater to set.
+	\param value The value to assign to the parameter.
+	
+	Available paramaters : 
+	Parameter       			| Description
+	--------------------------------------- | --------------------------
+	GL_TEXTURE_MIN_FILTER			| Set the minification parameter (same as HdlTexture::setMinFilter()).
+	GL_TEXTURE_MAG_FILTER			| Set the magnification parameter (same as HdlTexture::setMagFilter()).
+	GL_TEXTURE_WRAP_S			| Set the S wrapping parameter (same as HdlTexture::setSWrapping()).
+	GL_TEXTURE_WRAP_T			| Set the T wrapping parameter (same as HdlTexture::setTWrapping()).
+	**/
+	void HdlTexture::setSetting(GLenum param, unsigned int value)
+	{
+		switch(param)
+		{
+			case GL_TEXTURE_MIN_FILTER :		setMinFilter(value);	break;
+			case GL_TEXTURE_MAG_FILTER :		setMagFilter(value);	break;
+			case GL_TEXTURE_WRAP_S :		setSWrapping(value);	break;
+			case GL_TEXTURE_WRAP_T :		setTWrapping(value);	break;
+			case GL_TEXTURE_WIDTH :	
+			case GL_TEXTURE_HEIGHT :
+			case GL_TEXTURE_BASE_LEVEL :
+			case GL_TEXTURE_MAX_LEVEL :
+			case GL_TEXTURE_INTERNAL_FORMAT :
+			case GL_TEXTURE_DEPTH :
+			case GL_TEXTURE_RED_SIZE :		
+			case GL_TEXTURE_GREEN_SIZE :		
+			case GL_TEXTURE_BLUE_SIZE :		
+			case GL_TEXTURE_ALPHA_SIZE :		
+			case GL_TEXTURE_LUMINANCE_SIZE :	
+			case GL_GENERATE_MIPMAP :		
+			case GL_TEXTURE_COMPRESSED :		
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :		
+			case GL_TEXTURE_RED_TYPE :		
+			case GL_TEXTURE_GREEN_TYPE :		
+			case GL_TEXTURE_BLUE_TYPE :		
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__);
+			default : 				throw Exception("HdlTexture::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+		}
+	}
 
 	/**
 	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
