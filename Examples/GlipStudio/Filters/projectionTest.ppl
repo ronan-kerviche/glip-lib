@@ -11,6 +11,7 @@ SHADER_SOURCE:projectionShader()
 	uniform float rot = 0.0;
 	uniform mat2 trsm 	= mat2(1.0, 0.0, 0.0, 1.0);
 	uniform mat3 projCol 	= mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+	uniform vec3 colorClamp	= vec3(1.0, 1.0, 1.0);
 
 	void main()
 	{
@@ -28,6 +29,10 @@ SHADER_SOURCE:projectionShader()
 		// Write the output data :
 		texOutput.rgb = projCol*col.rgb;
 		texOutput.a = col.a;
+	
+		// Clamp the color (do not write any fragment) :
+		if(texOutput.r>colorClamp.r || texOutput.g>colorClamp.g || texOutput.b>colorClamp.b)
+			discard; 
 	}
 }
 

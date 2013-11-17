@@ -88,6 +88,7 @@
 		layout.addWidget(&collection);
 
 		connect(&collection, 		SIGNAL(itemSelectionChanged()), 	this, SLOT(selectionChanged()));
+		connect(&collection, 		SIGNAL(focusChanged(int)),		this, SLOT(focusChanged(int)));
 		connect(&collection, 		SIGNAL(imageLoaded(int)),		this, SLOT(imageLoaded(int)));
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
@@ -201,6 +202,12 @@
 			connectionMenu.activate(!selectedRecordsID.empty(), selectedRecordsID.size());
 		}
 
+		void ResourcesTab::focusChanged(int recordID)
+		{
+			// Display : 
+			viewManager->show( recordID, collection.texture(recordID));
+		}
+
 		void ResourcesTab::selectionChanged(void)
 		{
 			std::vector<int> selectedRecordsID = collection.getSelectedRecordIDs();
@@ -217,7 +224,7 @@
 				connectionMenu.activate(true, selectedRecordsID.size());
 
 				// Display : 
-				viewManager->show( selectedRecordsID.front(), collection.texture(selectedRecordsID.front()));
+				//viewManager->show( selectedRecordsID.front(), collection.texture(selectedRecordsID.front()));
 			}
 		}
 

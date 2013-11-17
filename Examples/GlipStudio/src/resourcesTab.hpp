@@ -71,6 +71,7 @@
 			// These will be called upon external modifications, in order for the module to update itself :
 			void pipelineWasCreated(void);
 			void pipelineWasDestroyed(void);
+			void focusChanged(int recordID);
 			void selectionChanged(void);
 			void connectToInput(int i);
 			void imageLoaded(int recordID);

@@ -99,7 +99,7 @@ If the format is not found in the required element, it is searched in the known 
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>GeometryType</i>, <i>param1</i>, ... <i>paramN</i>) <BR>
 Examples : <BR>
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_2D</i>, <i>integer : width</i>, <i>integer : height</i>) <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>640</i>, <i>integer : width</i>, <i>integer : height</i>, <i>interger : depth</i>) <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>integer : width</i>, <i>integer : height</i>, <i>interger : depth</i>) <BR>
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>CUSTOM_MODEL</i>, <i>GL Primitive (GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)</i>, [<i>true (if it has texcoord definition embedded)</i>]) <BR>
 { <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a vertex (depending on the format) :</i> <BR>

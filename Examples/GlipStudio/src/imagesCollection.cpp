@@ -68,6 +68,8 @@
 
 		header()->setMovable( false );
 
+		connect(this, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(itemClickedReceiver(QTreeWidgetItem*,int)));
+
 		// size of the columns : 
 		#if QT_VERSION >= 0x050000
 			resizeColumnToContents(0);
@@ -126,6 +128,15 @@
 				topLevelItem(k)->setBackground(l, QBrush(*ptr));
 			}
 		}
+	}
+
+	void TexturesList::itemClickedReceiver(QTreeWidgetItem* item, int column)
+	{
+		// Get the record ID : 
+		int recordID = item->data(2, Qt::UserRole).toInt();
+
+		// Send : 
+		emit focusChanged(recordID);
 	}
 
 	bool TexturesList::recordExists(int recordID, bool throwException) const

@@ -253,6 +253,19 @@
 		}
 	}
 
+	std::vector<ViewLink*> ViewManager::getSelectedViewsList(void) const
+	{
+		std::vector<ViewLink*> selectedViews;
+
+		for(int k = 0; k<viewLinks.size(); k++)
+		{
+			if(viewLinks[k]->isSelected())
+				selectedViews.push_back( viewLinks[k] );
+		}
+
+		return selectedViews;
+	}
+
 	void ViewManager::viewClosed(void)
 	{
 		ViewLink* link = reinterpret_cast<ViewLink*>( QObject::sender() );
@@ -282,7 +295,10 @@
 
 	void ViewManager::show(int recordID, HdlTexture& texture, bool newView)
 	{
-		if( viewLinks.empty() || newView )
+		const bool recordIsLinkedToAView = isLinkedToAView(recordID);
+		std::vector<ViewLink*> selectedViews = getSelectedViewsList();
+
+		if( viewLinks.empty() || newView || (!recordIsLinkedToAView && selectedViews.empty()) )
 		{
 			if(scene==NULL)
 				return ;
@@ -302,7 +318,7 @@
 			(*viewLinks.back()) << texture << OutputDevice::Process;
 			viewLinks.back()->selectView();
 		}
-		else if(isLinkedToAView(recordID))
+		else if(recordIsLinkedToAView)
 		{
 			update(recordID, texture);
 
@@ -316,7 +332,7 @@
 		else
 		{
 			// Find the first selected view :	
-			int k;
+			/*int k;
 			for(k = 0; k<viewLinks.size(); k++)
 			{
 				if(viewLinks[k]->isSelected())
@@ -325,7 +341,9 @@
 
 			// ... Or use the last created one otherwise : 
 			if(k>=viewLinks.size())
-				k--;
+				k--;*/
+
+			int k = std::distance( viewLinks.begin(), std::find(viewLinks.begin(), viewLinks.end(), selectedViews.front()) );
 		
 			recordIDs[k] = recordID;
 			(*viewLinks[k]) << texture << OutputDevice::Process;
@@ -465,11 +483,15 @@
 								"	}															\n"
 								"	else if(selectionMode==1)												\n"
 								"		displayOutput = vec4( vec3(1.0f,1.0f,1.0f)*float(objectID)/255.0f, 1.0f);					\n"
-								"	else //if(selectionMode==2)												\n"
+								"	else if(selectionMode==2)												\n"
 								"	{															\n"
 								"		// Compute the transparency : 											\n"
 								"		float a = 5.0f*pow( 1.0f - 2.0f * max( abs(gl_TexCoord[0].s-0.5f), abs(gl_TexCoord[0].t-0.5f) ), 0.7f);		\n"
 								"		displayOutput = vec4(haloColor, a);										\n"
+								"	}															\n"
+								"	else															\n"
+								"	{															\n"
+								"		displayOutput = vec4(1.0,1.0,1.0,1.0);										\n"
 								"	}															\n"
 								"}																\n";
 
@@ -764,13 +786,17 @@
 				mouseJustRightClickReleased	= false;
 			}
 
-			/*if( (event->buttons() & Qt::RightButton) || ((event->buttons() & Qt::LeftButton) && pressed(KeyControl)) )
-				originalOrientationBeforeRightClick = currentRotationDegrees - atan2( event->y() - height()/2, event->x() - width()/2 ) * 180.0f / M_PI;*/
-
 			lastPosX = event->x();
 			lastPosY = event->y();
 
 			processAction();
+
+			// Test : 
+			float ax, ay, rx, ry;
+			getGLCoordinatesAbsolute(lastPosX, lastPosY, ax, ay);
+			getGLCoordinatesRelative(lastPosX, lastPosY, rx, ry);
+			std::cout << "Absolute : " << ax << 'x' << ay << std::endl;
+			std::cout << "Relative : " << rx << 'x' << ry << std::endl;
 		}
 
 		void GLSceneWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -923,7 +949,8 @@
 	// Process Action function : 
 		ViewLink* GLSceneWidget::updateSelection(bool dropSelection)
 		{
-			ViewLink* under = getObjectIDUnder(lastPosX, lastPosY);
+			unsigned char testRGB[3]; // To be removed?
+			ViewLink* under = getObjectIDUnder(lastPosX, lastPosY, testRGB);
 
 			bool test = viewIsSelected(under);
 
@@ -1132,8 +1159,10 @@
 				std::cout <<"GLSceneWidget::resizeGL - Resizing to " << width << "x" << height << std::endl;
 			#endif
 
-			if(height==width)
+			/*if(height==width)
 				std::cout << "WIDTH == HEIGHT" << std::endl;
+			else
+				std::cout << width << "x" << height << std::endl;*/
 
 			glViewport(0, 0, width, height);
 		}
@@ -1198,14 +1227,14 @@
 							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);					
 						else if(viewIsSelected(*it))
 						{
-							placementProgram->modifyVar("selectionMode", GL_INT, 2);
-							placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, haloScaling);
-							placementProgram->modifyVar("haloColor", GL_FLOAT_VEC3, (*it)->haloColorRGB);
+							placementProgram->modifyVar("selectionMode", 	GL_INT, 	2);
+							placementProgram->modifyVar("imageScaling", 	GL_FLOAT_VEC2, 	haloScaling);
+							placementProgram->modifyVar("haloColor", 	GL_FLOAT_VEC3, 	(*it)->haloColorRGB);
 							
 							quad->draw();
 
 							// Restore : 
-							placementProgram->modifyVar("selectionMode", GL_INT, 0);
+							placementProgram->modifyVar("selectionMode", 	GL_INT, 	0);
 						}	
 						
 						// Scaling of the image : 
@@ -1217,7 +1246,7 @@
 				}
 
 				// Axis : 
-				/*{
+				{
 					float centerCoords[2];
 					centerCoords[0] = 0.0f;
 					centerCoords[1] = 0.0f;
@@ -1225,17 +1254,24 @@
 					imageScaling[0] = 1.0f;
 					imageScaling[1] = 1.0f;
 					placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	centerCoords);
-					placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
-
-					placementProgram->modifyVar("selectionMode", GL_INT, 2);
+					placementProgram->modifyVar("imageScaling", 	GL_FLOAT_VEC2, 	imageScaling);
+					placementProgram->modifyVar("angle",		GL_FLOAT,	0.0f);
+					placementProgram->modifyVar("selectionMode", 	GL_INT, 	3);
 
 					glBegin(GL_LINES);
+						glColor3f(1.0f,0.0f,1.0f);
+						glVertex2f(-0.05f,-0.05f);
+						glVertex2f(5.0f,-0.05f);
 						glColor3f(1.0f,0.0f,0.0f);
 						glVertex2f(0.0f,0.0f);
 						glVertex2f(1.0f,0.0f);
 						glColor3f(1.0f,0.0f,1.0f);
 						glVertex2f(0.05f,0.05f);
 						glVertex2f(0.5f,0.05f);
+
+						glColor3f(0.0f,1.0f,1.0f);
+						glVertex2f(-0.05f,-0.05f);
+						glVertex2f(-0.05f,5.0f);
 						glColor3f(0.0f,1.0f,0.0f);
 						glVertex2f(0.0f,0.0f);
 						glVertex2f(0.0f,1.0f);
@@ -1243,7 +1279,7 @@
 						glVertex2f(0.05f,0.05f);
 						glVertex2f(0.05f,0.5f);
 					glEnd();
-				}*/
+				}
 				// Clean : 
 				HdlTexture::unbind();
 				HdlProgram::stopProgram();
@@ -1324,7 +1360,7 @@
 
 			getGLCoordinatesRelative(x, y, glX, glY);
 
-			// To GL center : 
+			// To GL center (the 0,0 or middle of the window) : 
 			if(w>=h)
 			{
 				glX -= (w/h) / z;
@@ -1337,10 +1373,16 @@
 			}
 
 			// Offset for current zoom : 
-			glX += screenCenter[0];
-			glY += screenCenter[1];
-
-			//std::cout << "GL coordinates    : " << glX << " x " << glY << "   (pixel size : " << (1.0/ height() * 2.0f / z) << ')' << std::endl;
+			if(homothetieRapport==0.0f)
+			{
+				glX -= (screenCenter[0] - homothetieCentre[0]);
+				glY -= (screenCenter[1] - homothetieCentre[1]);
+			}
+			else
+			{
+				glX -= ((screenCenter[0] - homothetieCentre[0]) * z + homothetieCentre[0]) / z;
+				glY -= ((screenCenter[1] - homothetieCentre[1]) * z + homothetieCentre[1]) / z;
+			}
 		}
 
 		void GLSceneWidget::getGLCoordinatesRelative(float x, float y, float& glX, float& glY)
@@ -1398,7 +1440,7 @@
 			std::cout << "    r  = " << homothetieRapport << std::endl;*/
 		}
 
-		ViewLink* GLSceneWidget::getObjectIDUnder(int x, int y)
+		ViewLink* GLSceneWidget::getObjectIDUnder(int x, int y, unsigned char* rgb)
 		{
 			// Clear to black first : 
 			glClearColor( 0.0, 0.0, 0.0, 1.0);
@@ -1426,7 +1468,22 @@
 			if(rid<0 || rid>=links.size())
 				return NULL;
 			else
+			{
+				if(rgb!=NULL)
+				{
+					// Draw the scene to get the color : 
+					drawScene(false);
+			
+					// Set the read buffer : 
+					glReadBuffer( GL_BACK );
+
+					glReadPixels(x, height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+
+					std::cout << "Color picked : " << static_cast<int>(rgb[0]) << ',' << static_cast<int>(rgb[1]) << ',' << static_cast<int>(rgb[2]) << std::endl;
+				}
+
 				return links[rid];
+			}
 		}
 
 	// Actions (for the contextual menu): 

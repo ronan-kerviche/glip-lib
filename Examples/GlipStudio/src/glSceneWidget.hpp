@@ -85,6 +85,7 @@
 						closeAllViewAction;
 
 			void genColor(float hue, float& red, float& green, float& blue);
+			std::vector<ViewLink*>	getSelectedViewsList(void) const;
 
 		private slots :
 			void viewClosed(void);
@@ -256,7 +257,7 @@
 			void getGLCoordinatesAbsolute(float x, float y, float& glX, float& glY);
 			void getGLCoordinatesRelative(float x, float y, float& glX, float& glY);
 			void homothetieComposition(float xc, float yc, float zoomDirection);
-			ViewLink* getObjectIDUnder(int x, int y);
+			ViewLink* getObjectIDUnder(int x, int y, unsigned char* rgb=NULL);
 
 		private slots : 
 			// Actions (for the contextual menu) : 

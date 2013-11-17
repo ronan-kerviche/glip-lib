@@ -88,6 +88,9 @@
 			int getIndexFromRecordID(int recordID) const;
 			void updateAlternateColors(void);
 
+		private slots:
+			void itemClickedReceiver(QTreeWidgetItem* item, int column);
+
 		public :
 			TexturesList(QWidget* parent=NULL);
 			~TexturesList(void);
@@ -108,7 +111,8 @@
 			std::vector<int>	getSelectedRecordIDs(void);
 			int			getRecordIDsUnder(const QPoint& pt);
 
-		//signals :
+		signals :
+			void focusChanged(int recordID);
 			//From QTreeWidget :
 			//void itemSelectionChanged(void);
 			//customContextMenuRequested(const QPoint&)
