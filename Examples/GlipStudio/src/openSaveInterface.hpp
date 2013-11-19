@@ -20,14 +20,17 @@
 			const std::string	moduleName,
 						objectName, 
 						extensionsList;
+			bool			multiFileOpening;
 			QString			currentOpenPath,
 						currentSavePath,
 						lastSaveFilename;
 			QAction			openAction,
 						saveAction,
-						saveAsAction;
+						saveAsAction,
+						clearRecentFilesMenu;
 			QMenu			recentFilesMenu;
 			QList<QString> 		filenames;
+			std::vector<QAction*>	currentActions;
 
 			bool fileExists(const QString& filename);
 
@@ -35,12 +38,13 @@
 			void append(const QString& filename);  			
 			void updateMenu(void);
 			void requestOpenAction(void);
-			void openDialog(void);
+			void open(void);
 			void saveSignal(void);
-			void saveAsDialog(void);
+			void saveAs(void);
+			void clearRecentFilesList(void);
 
 		public : 
-			OpenSaveInterface(const std::string& _moduleName, const std::string& _objectName, const std::string& _extensionsList);
+			OpenSaveInterface(const std::string& _moduleName, const std::string& _objectName, const std::string& _extensionsList, bool _multiFileOpening=true);
 			~OpenSaveInterface(void);
 
 			void enableOpen(bool state);
@@ -55,6 +59,9 @@
 			void reportFailedLoad(const QString& filename);
 			void reportSuccessfulSave(const QString& filename);
 			void clearLastSaveMemory(void);
+
+			QStringList openDialog(void);
+			QString saveAsDialog(void);
 
 		signals : 
 			void openFile(const QStringList& filenames);

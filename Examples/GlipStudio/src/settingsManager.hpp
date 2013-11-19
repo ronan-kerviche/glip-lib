@@ -25,6 +25,7 @@
 			bool		moduleDataExists(const std::string& moduleName, const std::string& propertyName);
 			Element 	getModuleData(const std::string& moduleName, const std::string& propertyName);
 			void		setModuleData(const std::string& moduleName, const std::string& propertyName, Element& data);
+			void 		removeModuleData(const std::string& moduleName, const std::string& propertyName);
 	};
 
 #endif

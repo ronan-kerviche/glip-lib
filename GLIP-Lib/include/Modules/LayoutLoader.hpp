@@ -238,7 +238,7 @@ Loading Example :
 
 		// use it :
 		Pipeline* myPipeline1 = new Pipeline(myLayout,"Pipeline1");
-		Pipeline* myPipeline2 = new Pipeline(myLayout,"Pipeline1");
+		Pipeline* myPipeline2 = new Pipeline(myLayout,"Pipeline2");
 
 		// For a single pipeline :
 		Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");

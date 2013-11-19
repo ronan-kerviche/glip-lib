@@ -900,15 +900,26 @@
 
 // UniformsTab
 	UniformsTab::UniformsTab(ControlModule& _masterModule, QWidget* parent)
-	 : Module(_masterModule, parent), layout(this), menuBar(this), showSettings("Settings", this), loadUniforms("Load Uniforms", this), saveUniforms("Save Uniforms", this), tree(this), settings(this), mainPipeline(NULL), currentPath("./"), dontAskForSave(false), modified(false), mainLibraryMenu(this)
+	 : 	Module(_masterModule, parent),
+		layout(this), menuBar(this),
+		showSettings("Settings", this),
+		tree(this),
+		settings(this),
+		mainPipeline(NULL),
+		dontAskForSave(false),
+		modified(false),
+		mainLibraryMenu(this),
+		fileMenu("File", this),
+		openSaveInterface("UniformsPannel", "File", "*.ppl *.ext *.uvd")
 	{
-		menuBar.addAction(&loadUniforms);
-		menuBar.addAction(&saveUniforms);
+		openSaveInterface.enableOpen(false);
+		openSaveInterface.enableSave(false);
+		openSaveInterface.enableSaveAs(false);
+
+		openSaveInterface.addToMenu(fileMenu);
+		menuBar.addMenu(&fileMenu);
 		menuBar.addMenu(&mainLibraryMenu);
 		menuBar.addAction(&showSettings);
-
-		loadUniforms.setDisabled(true);
-		saveUniforms.setDisabled(true);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&tree);
@@ -924,12 +935,13 @@
 		listLabels.push_back("Data");
 		tree.setHeaderLabels( listLabels );
 
-		QObject::connect(&showSettings,		SIGNAL(triggered()),		this, 	SLOT(switchSettings()));
-		QObject::connect(&loadUniforms,		SIGNAL(triggered()),		this, 	SLOT(loadData()));
-		QObject::connect(&saveUniforms,		SIGNAL(triggered()),		this, 	SLOT(saveData()));
-		QObject::connect(&settings,		SIGNAL(settingsChanged()),	this,	SLOT(settingsChanged()));
-		QObject::connect(this, 			SIGNAL(requestDataUpdate()),	this,	SLOT(dataWasModified()));
-		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),	this, 	SLOT(mainLibraryPipelineUpdate()));
+		QObject::connect(&showSettings,		SIGNAL(triggered()),			this, 	SLOT(switchSettings()));
+		QObject::connect(&openSaveInterface,	SIGNAL(openFile(const QStringList&)),	this,	SLOT(loadData(const QStringList&)));
+		QObject::connect(&openSaveInterface,	SIGNAL(saveFileAs(const QString&)),	this,	SLOT(saveData(const QString&)));
+		QObject::connect(&openSaveInterface,	SIGNAL(saveFile(const QString&)),	this,	SLOT(saveData(const QString&)));
+		QObject::connect(&settings,		SIGNAL(settingsChanged()),		this,	SLOT(settingsChanged()));
+		QObject::connect(this, 			SIGNAL(requestDataUpdate()),		this,	SLOT(dataWasModified()));
+		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),		this, 	SLOT(mainLibraryPipelineUpdate()));
 	}
 
 	UniformsTab::~UniformsTab(void)
@@ -1021,7 +1033,9 @@
 
 			if(message.clickedButton() == saveButton)
 			{
-				saveData();
+				//saveData();
+				QString filename = openSaveInterface.saveAsDialog();
+				saveData(filename);
 				return true;
 			}
 			else if(message.clickedButton() == storeToMainLibButton)
@@ -1053,10 +1067,8 @@
 		return prepareUpdate();
 	}
 
-	bool UniformsTab::loadData(void)
+	bool UniformsTab::loadData(const QStringList& filenames)
 	{
-		QStringList filenames = QFileDialog::getOpenFileNames(this, tr("Open Uniforms Variables Data Files"), currentPath, tr("Pipeline Script Files (*.uvd)"));
-
 		if(filenames.empty())
 			return false;
 
@@ -1069,10 +1081,8 @@
 				if(!filenames[k].isEmpty())
 				{
 					uLoader.load( filenames[k].toStdString() );
-				
-					// Update current path : 
-					QFileInfo path(filenames[k]);
-					currentPath = path.path() + "/";
+
+					openSaveInterface.reportSuccessfulLoad(filenames[k]);
 				}
 			}
 		}
@@ -1123,8 +1133,11 @@
 		return true;
 	}
 
-	void UniformsTab::saveData(void)
+	void UniformsTab::saveData(const QString& filename)
 	{
+		if(filename.isEmpty())
+			return ;
+
 		// Sync !
 		if(mainPipeline!=NULL)
 		{
@@ -1140,17 +1153,11 @@
 		if(uWriter.empty())
 			return ;
 
-		// Get the filename : 
-		QString fileName = QFileDialog::getSaveFileName(this, tr("Save Uniforms Variables Data File"), currentPath, tr("Pipeline Script Files (*.uvd)"));
-		
-		if(fileName.isEmpty())
-			return ;
-
-		uWriter.writeToFile( fileName.toStdString() );
+		uWriter.writeToFile( filename.toStdString() );
 
 		// Update current path : 
-		QFileInfo path(fileName);
-		currentPath = path.path() + "/";
+		openSaveInterface.reportSuccessfulSave(filename);
+		openSaveInterface.enableSave(true);
 
 		HdlProgram::stopProgram();
 	}
@@ -1187,8 +1194,9 @@
 
 		modified = false;
 
-		loadUniforms.setDisabled(false);
-		saveUniforms.setDisabled(false);
+		openSaveInterface.enableOpen(true);
+		openSaveInterface.enableSaveAs(true);
+		openSaveInterface.enableSave(false);
 
 		tree.resizeColumnToContents(0);
 	}
@@ -1201,8 +1209,10 @@
 
 		modified = false;
 
-		loadUniforms.setDisabled(true);
-		saveUniforms.setDisabled(true);
+		openSaveInterface.enableOpen(false);
+		openSaveInterface.enableSaveAs(false);
+		openSaveInterface.enableSave(false);
+		openSaveInterface.clearLastSaveMemory();
 	}
 
 

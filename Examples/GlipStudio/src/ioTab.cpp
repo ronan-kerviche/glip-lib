@@ -21,7 +21,9 @@
 		if(outputsViewManager==NULL)
 			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
 
+		inputMenuBar.addMenu("Inputs");
 		inputMenuBar.addMenu(inputsViewManager);
+		outputMenuBar.addMenu("Outputs");
 		outputMenuBar.addMenu(outputsViewManager);
 
 		layout.addWidget(&pipelineStatusLabel);

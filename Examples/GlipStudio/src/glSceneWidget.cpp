@@ -22,6 +22,8 @@
 		centerCoords[1] = 0.0f;
 		angleRadians	= 0.0f;
 		scale		= 1.0f;
+		fliplr		= false;
+		flipud		= false;
 	}
 
 	ViewLink::~ViewLink(void)
@@ -78,21 +80,44 @@
 			imageScaling[0] = 1.0f * scale;
 			imageScaling[1] = height / width * scale;
 
-			/*haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
-			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);*/
-			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
-			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			if(haloScaling!=NULL)
+			{
+				haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+				haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			}
 		}
 		else
 		{
 			imageScaling[0] = width / height * scale;
 			imageScaling[1] = 1.0f * scale;
 
-			/*haloScaling[0]	= imageScaling[0] * (1.0f + haloSize);
-			haloScaling[1]	= imageScaling[1] * (1.0f + haloSize);*/
-			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
-			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			if(haloScaling!=NULL)
+			{
+				haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+				haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			}
 		}
+
+		if(fliplr)
+			imageScaling[0] = -imageScaling[0];
+
+		if(flipud)
+			imageScaling[1] = -imageScaling[1];
+	}
+
+	void ViewLink::getLocalCoordinates(float x, float y, float& lx, float& ly)
+	{
+		float lrx	= x - centerCoords[0];
+		float lry	= y - centerCoords[1];
+
+		lx		=  cos(angleRadians) * lrx + sin(angleRadians) * lry;
+		ly		= -sin(angleRadians) * lrx + cos(angleRadians) * lry;
+
+		float imageScaling[2];
+		getScalingRatios(imageScaling);
+
+		lx		/= imageScaling[0];
+		ly		/= imageScaling[1];
 	}
 
 	void ViewLink::setHaloColor(float r, float g, float b)
@@ -568,21 +593,29 @@
 		glViewport(0, 0, width, height);
 
 		// Contextual Menu : 
-		selectAllAction			= contextMenu.addAction("Select All", 				this, SLOT(selectAll()));
-		selectAllVisibleAction		= contextMenu.addAction("Select All Visible", 			this, SLOT(selectAllVisible()));
-		resetSelectedAngleAction	= contextMenu.addAction("Reset angles of selected views", 	this, SLOT(resetSelectionAngle()));
-		resetSelectedScaleAction	= contextMenu.addAction("Reset scales of selected views", 	this, SLOT(resetSelectionAngle()));
-		resetSelectedPositionAction 	= contextMenu.addAction("Reset positions of selected views",	this, SLOT(resetSelectionPosition()));
-		resetSelectionAction		= contextMenu.addAction("Reset selected views", 		this, SLOT(resetSelection()));
-		hideSelectedAction		= contextMenu.addAction("Hide selected views", 			this, SLOT(hideCurrentSelection()));
-		closeSelectedAction		= contextMenu.addAction("Close selected views", 		this, SLOT(closeSelection()));
-		hideAllAction			= contextMenu.addAction("Hide All", 				this, SLOT(hideAll()));
-		showAllAction			= contextMenu.addAction("Show All", 				this, SLOT(showAll()));
-		resetGlobalPositionAction	= contextMenu.addAction("Reset Global Position", 		this, SLOT(resetGlobalPosition()));
-		resetGlobalZoomAction		= contextMenu.addAction("Reset Global Zoom", 			this, SLOT(resetGlobalZoom()));
-		resetGlobalAction		= contextMenu.addAction("Reset Global",				this, SLOT(resetGlobal()));
-		handModeAction 			= contextMenu.addAction("Hand Mode",				this, SLOT(switchSelectionMode()));
-		toggleFullscreenAction		= contextMenu.addAction("Fullscreen",				this, SLOT(toggleFullscreenMode()));
+		selectAllAction				= contextMenu.addAction(			"Select All", 				this, SLOT(selectAll()));
+		selectAllVisibleAction			= contextMenu.addAction(			"Select All Visible", 			this, SLOT(selectAllVisible()));
+			// Sub menu : transformations
+			transformationOfSelectionMenu	= contextMenu.addMenu("Transformations");
+			turn0Action			= transformationOfSelectionMenu->addAction(	"Turn 0 degree",			this, SLOT(turn0()));
+			turn90Action			= transformationOfSelectionMenu->addAction(	"Turn 90 degrees",			this, SLOT(turn90()));
+			turn180Action			= transformationOfSelectionMenu->addAction(	"Turn 180 degrees",			this, SLOT(turn180()));
+			turn270Action			= transformationOfSelectionMenu->addAction(	"Turn 270 degrees",			this, SLOT(turn270()));
+			fliplrAction			= transformationOfSelectionMenu->addAction(	"Flip left/right",			this, SLOT(fliplr()));
+			flipudAction			= transformationOfSelectionMenu->addAction(	"Flip up/down",				this, SLOT(flipud()));
+		resetSelectedAngleAction		= contextMenu.addAction(			"Reset angles of selected views", 	this, SLOT(resetSelectionAngle()));
+		resetSelectedScaleAction		= contextMenu.addAction(			"Reset scales of selected views", 	this, SLOT(resetSelectionAngle()));
+		resetSelectedPositionAction 		= contextMenu.addAction(			"Reset positions of selected views",	this, SLOT(resetSelectionPosition()));
+		resetSelectionAction			= contextMenu.addAction(			"Reset selected views", 		this, SLOT(resetSelection()));
+		hideSelectedAction			= contextMenu.addAction(			"Hide selected views", 			this, SLOT(hideCurrentSelection()));
+		closeSelectedAction			= contextMenu.addAction(			"Close selected views", 		this, SLOT(closeSelection()));
+		hideAllAction				= contextMenu.addAction(			"Hide All", 				this, SLOT(hideAll()));
+		showAllAction				= contextMenu.addAction(			"Show All", 				this, SLOT(showAll()));
+		resetGlobalPositionAction		= contextMenu.addAction(			"Reset Global Position", 		this, SLOT(resetGlobalPosition()));
+		resetGlobalZoomAction			= contextMenu.addAction(			"Reset Global Zoom", 			this, SLOT(resetGlobalZoom()));
+		resetGlobalAction			= contextMenu.addAction(			"Reset Global",				this, SLOT(resetGlobal()));
+		handModeAction 				= contextMenu.addAction(			"Hand Mode",				this, SLOT(switchSelectionMode()));
+		toggleFullscreenAction			= contextMenu.addAction(			"Fullscreen",				this, SLOT(toggleFullscreenMode()));
 
 		handModeAction->setCheckable(true);
 		toggleFullscreenAction->setCheckable(true);
@@ -792,11 +825,20 @@
 			processAction();
 
 			// Test : 
-			float ax, ay, rx, ry;
-			getGLCoordinatesAbsolute(lastPosX, lastPosY, ax, ay);
-			getGLCoordinatesRelative(lastPosX, lastPosY, rx, ry);
-			std::cout << "Absolute : " << ax << 'x' << ay << std::endl;
-			std::cout << "Relative : " << rx << 'x' << ry << std::endl;
+			//#ifdef __VERBOSE__
+				float ax, ay, rx, ry;
+				getGLCoordinatesAbsolute(lastPosX, lastPosY, ax, ay);
+				getGLCoordinatesRelative(lastPosX, lastPosY, rx, ry);
+				std::cout << "Absolute : " << ax << 'x' << ay << std::endl;
+				std::cout << "Relative : " << rx << 'x' << ry << std::endl;
+
+				if(!selectionList.empty())
+				{
+					float lx, ly;
+					selectionList.front()->getLocalCoordinates(ax, ay, lx, ly);
+					std::cout << "Local    : " << lx << 'x' << ly << std::endl;
+				}
+			//#endif
 		}
 
 		void GLSceneWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -1246,7 +1288,7 @@
 				}
 
 				// Axis : 
-				{
+				/*{
 					float centerCoords[2];
 					centerCoords[0] = 0.0f;
 					centerCoords[1] = 0.0f;
@@ -1279,7 +1321,7 @@
 						glVertex2f(0.05f,0.05f);
 						glVertex2f(0.05f,0.5f);
 					glEnd();
-				}
+				}*/
 				// Clean : 
 				HdlTexture::unbind();
 				HdlProgram::stopProgram();
@@ -1508,6 +1550,12 @@
 				resetSelectionAction->setEnabled(false);
 				hideSelectedAction->setEnabled(false);
 				closeSelectedAction->setEnabled(false);
+				turn0Action->setEnabled(false);
+				turn90Action->setEnabled(false);
+				turn180Action->setEnabled(false);
+				turn270Action->setEnabled(false);
+				fliplrAction->setEnabled(false);
+				flipudAction->setEnabled(false);
 			}
 			else
 			{
@@ -1515,6 +1563,12 @@
 				resetSelectedScaleAction->setEnabled(true);
 				resetSelectedPositionAction->setEnabled(true);
 				resetSelectionAction->setEnabled(true);
+				turn0Action->setEnabled(true);
+				turn90Action->setEnabled(true);
+				turn180Action->setEnabled(true);
+				turn270Action->setEnabled(true);
+				fliplrAction->setEnabled(true);
+				flipudAction->setEnabled(true);
 
 				if(displayList.empty())
 					hideSelectedAction->setEnabled(false);
@@ -1595,7 +1649,11 @@
 		void GLSceneWidget::resetSelectionScale(void)
 		{
 			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				(*it)->scale = 1.0;
+			{
+				(*it)->scale 	= 1.0;
+				(*it)->fliplr 	= false;
+				(*it)->flipud 	= false;
+			}
 		}
 
 		void GLSceneWidget::resetSelectionPosition(void)
@@ -1671,6 +1729,42 @@
 		void GLSceneWidget::toggleFullscreenMode(void)
 		{
 			setFullscreenMode(!fullscreenModeEnabled);
+		}
+
+		void GLSceneWidget::turn0(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->angleRadians = 0.0f;
+		}
+
+		void GLSceneWidget::turn90(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->angleRadians = -0.5f*M_PI;
+		}
+
+		void GLSceneWidget::turn180(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->angleRadians = -M_PI;
+		}
+
+		void GLSceneWidget::turn270(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->angleRadians = -1.5f*M_PI;
+		}
+
+		void GLSceneWidget::fliplr(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->fliplr = !(*it)->fliplr;
+		}
+
+		void GLSceneWidget::flipud(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				(*it)->flipud = !(*it)->flipud;
 		}
 
 	// Main mechanics : 

@@ -143,3 +143,13 @@
 			parser->elements.push_back(data);
 	}
 
+	void SettingsManager::removeModuleData(const std::string& moduleName, const std::string& propertyName)
+	{
+		checkOpenedSettings();
+
+		std::vector<Element>::iterator it = getModuleIterator(moduleName, propertyName);
+
+		if(it!=parser->elements.end())
+			parser->elements.erase(it);
+	}
+

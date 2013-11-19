@@ -40,12 +40,15 @@
 			float		centerCoords[2],
 					angleRadians,
 					scale;
+			bool		fliplr,
+					flipud;
 
 			ViewLink(GLSceneWidget* _scene);
 			
 			bool preparedToDraw(void);
 			const __ReadOnly_HdlTextureFormat& format(void);
-			void getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY);
+			void getScalingRatios(float* imageScaling, float* haloScaling=NULL, float haloSize=0.0f, float currentPixelX=0.0f, float currentPixelY=0.0f);
+			void getLocalCoordinates(float x, float y, float& lx, float& ly);
 
 			friend class GLSceneWidget; 
 
@@ -216,6 +219,13 @@
 								*resetGlobalAction,
 								*handModeAction,
 								*toggleFullscreenAction;
+			QMenu					*transformationOfSelectionMenu;				
+			QAction					*turn0Action,
+								*turn90Action,
+								*turn180Action,
+								*turn270Action,
+								*fliplrAction,
+								*flipudAction;
 
 			// Tools : 
 			int getViewID(const ViewLink* view) const;
@@ -278,6 +288,12 @@
 			void switchSelectionMode(void);
 			void setFullscreenMode(bool enabled);
 			void toggleFullscreenMode(void);
+			void turn0(void);
+			void turn90(void);
+			void turn180(void);
+			void turn270(void);
+			void fliplr(void);
+			void flipud(void);
 
 		public : 
 			GLSceneWidget(int width, int height, QWidget* _parent=NULL);

@@ -17,6 +17,7 @@
 	#include <QAction>
 	#include <QString>
 	#include <QTreeWidget>
+	#include "openSaveInterface.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -265,12 +266,12 @@
 			QVBoxLayout		layout;
 			QMenuBar		menuBar;
 			MainUniformLibrary	mainLibraryMenu;
-			QAction			showSettings,
-						loadUniforms,
-						saveUniforms;
+			QMenu			fileMenu;
+			OpenSaveInterface	openSaveInterface;
+			QAction			showSettings;
 			BoxesSettings		settings;
 			QTreeWidget		tree;
-			QString			currentPath;
+			//QString		currentPath;
 			
 			PipelineElement*	mainPipeline;
 
@@ -285,8 +286,8 @@
 			void switchSettings(void);
 			void settingsChanged(void);
 			void dataWasModified(void);
-			bool loadData(void);	
-			void saveData(void);
+			bool loadData(const QStringList& filenames);	
+			void saveData(const QString& filename);
 			void mainLibraryPipelineUpdate(void);
 
 			// Inherited :
