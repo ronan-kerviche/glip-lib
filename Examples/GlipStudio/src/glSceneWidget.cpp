@@ -10,7 +10,7 @@
 	int 		ViewLink::viewCounter = 1;
 	GLSceneWidget*	ViewLink::quietSceneTarget = NULL;
 
-	ViewLink::ViewLink(GLSceneWidget* _scene)
+	ViewLink::ViewLink(GLSceneWidget* _scene, float screenWidth, float screenHeight)
 	 : 	__ReadOnly_ComponentLayout(getLayout()), 
 		OutputDevice(getLayout(), "GLViewLink_" + to_string(viewCounter)), 
 		scene(_scene), 
@@ -24,6 +24,8 @@
 		scale		= 1.0f;
 		fliplr		= false;
 		flipud		= false;
+
+		resetOriginalScreenRatio(screenWidth, screenHeight);
 	}
 
 	ViewLink::~ViewLink(void)
@@ -62,6 +64,11 @@
 			return false;
 	}
 
+	void ViewLink::resetOriginalScreenRatio(float screenWidth, float screenHeight)
+	{
+		originalScreenRatio = screenWidth/screenHeight;
+	}
+
 	const __ReadOnly_HdlTextureFormat& ViewLink::format(void)
 	{
 		if(target==NULL)
@@ -70,6 +77,8 @@
 			return *target;
 	}
 
+	/*
+	// Old function, not accounting for the filling of the screen : 
 	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY)
 	{
 		float	width 	= format().getWidth(),
@@ -96,6 +105,60 @@
 				haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
 				haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
 			}
+		}
+
+		if(fliplr)
+			imageScaling[0] = -imageScaling[0];
+
+		if(flipud)
+			imageScaling[1] = -imageScaling[1];
+	}*/
+
+	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY)
+	{
+		float	imageWidth 	= format().getWidth(),
+			imageHeight	= format().getHeight(),
+			imageRatio	= imageWidth/imageHeight;
+
+		if(originalScreenRatio<=1.0f && imageRatio>=1.0f) // imageWidth>=imageHeight
+		{
+			imageScaling[0] = 1.0f;
+			imageScaling[1] = 1.0f / imageRatio;
+		}
+		else if(originalScreenRatio>=1.0f && imageRatio<=1.0f) // imageWidth<=imageHeight
+		{
+			imageScaling[0] = imageRatio;
+			imageScaling[1] = 1.0f;
+		}
+		else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio>=imageRatio)
+		{
+			imageScaling[0]	= imageRatio;
+			imageScaling[1]	= 1.0f;
+		}
+		else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio<=imageRatio)
+		{
+			imageScaling[0]	= originalScreenRatio;
+			imageScaling[1]	= originalScreenRatio / imageRatio;
+		}
+		else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio<=imageRatio)
+		{
+			imageScaling[0]	= 1.0f;
+			imageScaling[1]	= 1.0f / imageRatio;
+		}
+		else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio>=imageRatio)
+		{
+			imageScaling[0]	= imageRatio / originalScreenRatio ;
+			imageScaling[1]	= 1.0f / originalScreenRatio;
+		}
+
+		// User Scale : 
+		imageScaling[0]	*= scale;
+		imageScaling[1]	*= scale;
+
+		if(haloScaling!=NULL)
+		{
+			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
 		}
 
 		if(fliplr)
@@ -1263,7 +1326,7 @@
 						float 	imageScaling[2],
 							haloScaling[2];
 
-						(*it)->getScalingRatios(imageScaling, haloScaling, 10.0f, sPixelX, sPixelY); // 4.0 is the border layout in pixels, when selected.
+						(*it)->getScalingRatios( imageScaling, haloScaling, 10.0f, sPixelX, sPixelY); // 4.0 is the border layout in pixels, when selected.
 
 						if(forSelection)
 							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);					
@@ -1653,6 +1716,7 @@
 				(*it)->scale 	= 1.0;
 				(*it)->fliplr 	= false;
 				(*it)->flipud 	= false;
+				(*it)->resetOriginalScreenRatio(width(), height());
 			}
 		}
 
@@ -1775,7 +1839,7 @@
 
 		ViewLink* GLSceneWidget::createView(void)
 		{
-			ViewLink* link = new ViewLink(this);
+			ViewLink* link = new ViewLink(this, width(), height());
 
 			// Lists : 
 			links.push_back(link);

@@ -1,6 +1,7 @@
 #ifndef __GLIPSTUDIO_IO_TAB__
 #define __GLIPSTUDIO_IO_TAB__
 
+	 #include <QLineEdit>
 	#include "dataModules.hpp"
 	#include "imagesCollection.hpp"
 
@@ -10,11 +11,9 @@
 
 		private : 
 			QVBoxLayout		layout;
-			QLabel			pipelineStatusLabel;
-			QMenuBar		inputMenuBar,
-						outputMenuBar;
-			TexturesList		inputsList,
-						outputsList;
+			QLineEdit		pipelineStatusLabel;
+			QMenuBar		menuBar;
+			TexturesList		portsList;
 			std::vector<int>	inputRecordIDs,
 						outputRecordIDs;
 
@@ -34,8 +33,10 @@
 			void pipelineWasDestroyed(void);
 
 			// Show inputs and outputs : 
-			void inputSelectionChanged(void);
-			void outputSelectionChanged(void);
+			/*void inputSelectionChanged(void);
+			void outputSelectionChanged(void);*/
+			void focusChanged(int recordID);
+			void selectionChanged(void);
 
 			void newInputView(void);
 			void newOutputView(void);

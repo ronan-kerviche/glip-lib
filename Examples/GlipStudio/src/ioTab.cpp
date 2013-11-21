@@ -4,10 +4,8 @@
 	 : 	Module(_masterModule, parent),
 		layout(this),
 		pipelineStatusLabel(this),
-		inputMenuBar(this),
-		outputMenuBar(this),
-		inputsList(this),
-		outputsList(this),
+		menuBar(this),
+		portsList(this),
 		inputsViewManager(NULL),
 		outputsViewManager(NULL)
 	{
@@ -21,23 +19,24 @@
 		if(outputsViewManager==NULL)
 			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
 
-		inputMenuBar.addMenu("Inputs");
-		inputMenuBar.addMenu(inputsViewManager);
-		outputMenuBar.addMenu("Outputs");
-		outputMenuBar.addMenu(outputsViewManager);
+		menuBar.addMenu(inputsViewManager);
+		menuBar.addMenu(outputsViewManager);
 
+		layout.addWidget(&menuBar);
+		layout.addWidget(&portsList);
 		layout.addWidget(&pipelineStatusLabel);
-		layout.addWidget(&inputMenuBar);
-		layout.addWidget(&inputsList);
-		layout.addWidget(&outputMenuBar);
-		layout.addWidget(&outputsList);
+
+		inputsViewManager->setTitle("Inputs Views");
+		outputsViewManager->setTitle("Outputs Views");
+		pipelineStatusLabel.setReadOnly(true);
 
 		// Init : 
 		pipelineWasDestroyed();
 
 		// Connect : 
-		connect(&inputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(inputSelectionChanged()));
-		connect(&outputsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(outputSelectionChanged()));
+		connect(&portsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
+		connect(&portsList, 		SIGNAL(focusChanged(int)),	this, SLOT(focusChanged(int)));
+		connect(&portsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
 		connect(inputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newInputView()));
 		connect(outputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newOutputView()));
 	}
@@ -81,7 +80,7 @@
 				s.location 		= TextureStatus::VirtualLink;
 				s.portID		= k;
 
-				inputRecordIDs[k] = inputsList.addRecord( pipeline().getInputPortName(k), s );
+				inputRecordIDs[k] = portsList.addRecord( pipeline().getInputPortName(k), s );
 				pipelineInputWasModified(k);
 			}
 
@@ -92,25 +91,12 @@
 				s.connectionStatus 	= lastComputationWasSuccessful() ? TextureStatus::Connected : TextureStatus::NotConnected ;
 				s.portID		= k;
 
-				outputRecordIDs[k] = outputsList.addRecord( pipeline().getOutputPortName(k), pipeline().out(k).format(), s );
+				outputRecordIDs[k] = portsList.addRecord( pipeline().getOutputPortName(k), pipeline().out(k).format(), s );
 			}
 		}
 
 		void IOTab::pipelineWasComputed(void)
 		{
-			/*if(isThisLinkedToDisplay() && pipelineOutputOnDisplay)
-			{
-				// Update colors : 
-				for(int k=0; k<pipeline().getNumOutputPort(); k++)
-				{
-					TextureStatus s 	= outputsList.recordStatus( outputRecordIDs[k] );
-					s.connectionStatus 	= TextureStatus::Connected;
-					outputsList.updateRecordStatus( outputRecordIDs[k], s );
-				}
-
-				outputSelectionChanged();
-			}*/
-
 			if( outputsViewManager->hasViews() )
 			{
 				outputsViewManager->beginQuietUpdate();
@@ -129,10 +115,13 @@
 			// Update colors : 
 			for(int k=0; k<pipeline().getNumOutputPort(); k++)
 			{
-				TextureStatus 	s 	= outputsList.recordStatus( outputRecordIDs[k] );
+				TextureStatus 	s 	= portsList.recordStatus( outputRecordIDs[k] );
 				s.connectionStatus	= TextureStatus::NotConnected;
-				outputsList.updateRecordStatus( outputRecordIDs[k], s );
+				portsList.updateRecordStatus( outputRecordIDs[k], s );
 			}
+
+			// Close outputs : 
+			outputsViewManager->closeAllViews();
 		}
 
 		void IOTab::pipelineInputWasModified(int portID)
@@ -142,13 +131,13 @@
 				std::string name;
 				getInputTextureInformation(portID, name);
 
-				inputsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) + " <- " + name );
-				inputsList.updateRecordFormat( inputRecordIDs[portID], inputTexture(portID) );
+				portsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) + " <- " + name );
+				portsList.updateRecordFormat( inputRecordIDs[portID], inputTexture(portID) );
 
-				TextureStatus s 	= inputsList.recordStatus( inputRecordIDs[portID] );
+				TextureStatus s 	= portsList.recordStatus( inputRecordIDs[portID] );
 				s.connectionStatus 	= TextureStatus::Connected;
 
-				inputsList.updateRecordStatus( inputRecordIDs[portID], s );
+				portsList.updateRecordStatus( inputRecordIDs[portID], s );
 			}
 		}
 
@@ -156,13 +145,13 @@
 		{
 			if(pipelineExists())
 			{
-				inputsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) );
-				inputsList.updateRecordFormat( inputRecordIDs[portID] );
+				portsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) );
+				portsList.updateRecordFormat( inputRecordIDs[portID] );
 
-				TextureStatus s 	= inputsList.recordStatus( inputRecordIDs[portID] );
+				TextureStatus s 	= portsList.recordStatus( inputRecordIDs[portID] );
 				s.connectionStatus	= TextureStatus::NotConnected;
 
-				inputsList.updateRecordStatus( inputRecordIDs[portID], s );
+				portsList.updateRecordStatus( inputRecordIDs[portID], s );
 			}
 		}
 
@@ -173,90 +162,70 @@
 			// Clean the lists :
 			inputRecordIDs.clear();
 			outputRecordIDs.clear();
-			inputsList.removeAllRecords();
-			outputsList.removeAllRecords();
+			portsList.removeAllRecords();
+			inputsViewManager->closeAllViews();
+			outputsViewManager->closeAllViews();
+			inputsViewManager->enableCreationAction(false);
+			outputsViewManager->enableCreationAction(false);
 		}
 
-		void IOTab::inputSelectionChanged(void)
+		void IOTab::focusChanged(int recordID)
 		{
-			std::vector<int> recordIDs = inputsList.getSelectedRecordIDs();
-			
-			if(!recordIDs.empty())
+			int 	inputPortID 	= getInputPortIDFromRecordID(recordID),
+				outputPortID 	= -1;
+	
+			if(inputPortID!=-1)
 			{
 				inputsViewManager->enableCreationAction(true);
-
-				int portID = getInputPortIDFromRecordID( recordIDs.back() );
-
-				if(isInputValid(portID))
-				{
-					// Grab the display : 
-					/*WindowRenderer* display = NULL;
-					if(requireDisplay(display))
-					{
-						HdlTexture& input = inputTexture(portID);
-
-						display->setImageAspectRatio( input.format() );
-						(*display) << input << OutputDevice::Process;
-					}*/
-
-					inputsViewManager->show(portID, inputTexture(portID));
-				}
+		
+				if(isInputValid(inputPortID))
+					inputsViewManager->show(inputPortID, inputTexture(inputPortID));
 			}
 			else
-				inputsViewManager->enableCreationAction(true);
-		}
-
-		void IOTab::outputSelectionChanged(void)
-		{
-			std::vector<int> recordIDs = outputsList.getSelectedRecordIDs();
-
-			if(!recordIDs.empty() && pipelineExists())
 			{
+				outputPortID = getOutputPortIDFromRecordID(recordID);
+
 				outputsViewManager->enableCreationAction(true);
 
-				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
-
-				if(portID>=0 && portID<pipeline().getNumOutputPort() )
-				{
-					// Grab the display : 
-					/*WindowRenderer* display = NULL;
-					if(requireDisplay(display))
-					{
-						display->setImageAspectRatio( pipeline().out(portID) );
-						(*display) << pipeline().out(portID) << OutputDevice::Process;
-						pipelineOutputOnDisplay = true;
-					}*/
-
-					outputsViewManager->show(portID, pipeline().out(portID));
-				}
+				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() && lastComputationWasSuccessful())
+					outputsViewManager->show(outputPortID, pipeline().out(outputPortID));
 			}
-			else
+		}
+
+		void IOTab::selectionChanged(void)
+		{
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			if(recordIDs.empty())
+			{
+				inputsViewManager->enableCreationAction(false);
 				outputsViewManager->enableCreationAction(false);
+			}
 		}
 
 		void IOTab::newInputView(void)
 		{
-			std::vector<int> recordIDs = inputsList.getSelectedRecordIDs();
-			
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
 			if(!recordIDs.empty())
 			{
-				int portID = getInputPortIDFromRecordID( recordIDs.back() );
-
-				if(isInputValid(portID))
-					inputsViewManager->show(portID, inputTexture(portID), true);
+				int inputPortID = getInputPortIDFromRecordID(recordIDs.back());
+		
+				if(isInputValid(inputPortID))
+					inputsViewManager->show(inputPortID, inputTexture(inputPortID), true);
 			}
 		}
 
 		void IOTab::newOutputView(void)
 		{
-			std::vector<int> recordIDs = outputsList.getSelectedRecordIDs();
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
 
 			if(!recordIDs.empty() && pipelineExists())
 			{
-				int portID = getOutputPortIDFromRecordID( recordIDs.back() );
-
-				if(portID>=0 && portID<pipeline().getNumOutputPort() )
-					outputsViewManager->show(portID, pipeline().out(portID), true);
+				int outputPortID = getOutputPortIDFromRecordID(recordIDs.back());
+		
+				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() )
+					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), true);
 			}
 		}
 

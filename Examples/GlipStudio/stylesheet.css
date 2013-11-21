@@ -354,12 +354,12 @@
 /* QLINEDIT */
 	QLineEdit
 	{
-		color: #FFFFFF;
-		background-color: #333333;
+		color: #CCCCCC;
+		background-color: #222222;
 		border-style: solid;
-		border-width: 2px;
-		border-radius: 5px;
-		border-color: #777777;
+		border-width: 1px;
+		/*border-radius: 3px;*/
+		border-color: #AAAAAA;
 	}
 
 /* QMESSAGEBOX */

@@ -39,13 +39,15 @@
 			float		haloColorRGB[3];
 			float		centerCoords[2],
 					angleRadians,
-					scale;
+					scale,
+					originalScreenRatio;
 			bool		fliplr,
 					flipud;
 
-			ViewLink(GLSceneWidget* _scene);
+			ViewLink(GLSceneWidget* _scene, float screenWidth, float screenHeight);
 			
 			bool preparedToDraw(void);
+			void resetOriginalScreenRatio(float screenWidth, float screenHeight);
 			const __ReadOnly_HdlTextureFormat& format(void);
 			void getScalingRatios(float* imageScaling, float* haloScaling=NULL, float haloSize=0.0f, float currentPixelX=0.0f, float currentPixelY=0.0f);
 			void getLocalCoordinates(float x, float y, float& lx, float& ly);
@@ -92,7 +94,6 @@
 
 		private slots :
 			void viewClosed(void);
-			void closeAllViews(void);
 
 		protected :
 			GLSceneWidget* 	scene;
@@ -113,6 +114,9 @@
 
 			void beginQuietUpdate(void);
 			void endQuietUpdate(void);
+
+		public slots : 
+			void closeAllViews(void);
 
 		signals :
 			void closed(void);

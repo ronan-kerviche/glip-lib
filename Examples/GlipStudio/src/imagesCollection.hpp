@@ -89,7 +89,7 @@
 			void updateAlternateColors(void);
 
 		private slots:
-			void itemClickedReceiver(QTreeWidgetItem* item, int column);
+			void itemChangedReceiver(QTreeWidgetItem* item);
 
 		public :
 			TexturesList(QWidget* parent=NULL);

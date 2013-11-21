@@ -68,7 +68,7 @@
 
 		header()->setMovable( false );
 
-		connect(this, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(itemClickedReceiver(QTreeWidgetItem*,int)));
+		connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),	this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
 
 		// size of the columns : 
 		#if QT_VERSION >= 0x050000
@@ -130,13 +130,16 @@
 		}
 	}
 
-	void TexturesList::itemClickedReceiver(QTreeWidgetItem* item, int column)
+	void TexturesList::itemChangedReceiver(QTreeWidgetItem* item)
 	{
-		// Get the record ID : 
-		int recordID = item->data(2, Qt::UserRole).toInt();
+		if(item!=NULL)
+		{
+			// Get the record ID : 
+			int recordID = item->data(2, Qt::UserRole).toInt();
 
-		// Send : 
-		emit focusChanged(recordID);
+			// Send : 
+			emit focusChanged(recordID);
+		}
 	}
 
 	bool TexturesList::recordExists(int recordID, bool throwException) const
@@ -1161,7 +1164,6 @@
 				if( imagesList[id]->isVirtual() && !imagesList[id]->wasSaved() )
 				{
 					// TODO Dialog : 
-					
 					
 				}
 
