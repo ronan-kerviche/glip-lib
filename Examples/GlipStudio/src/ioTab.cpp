@@ -139,6 +139,9 @@
 				s.connectionStatus 	= TextureStatus::Connected;
 
 				portsList.updateRecordStatus( inputRecordIDs[portID], s );
+
+				if( inputsViewManager->isOnDisplay( inputRecordIDs[portID] ) && isInputValid(portID) )
+					inputsViewManager->update( inputRecordIDs[portID], inputTexture(portID) );
 			}
 		}
 
@@ -153,6 +156,8 @@
 				s.connectionStatus	= TextureStatus::NotConnected;
 
 				portsList.updateRecordStatus( inputRecordIDs[portID], s );
+
+				inputsViewManager->removeRecord(portID);
 			}
 		}
 
