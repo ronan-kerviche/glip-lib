@@ -191,14 +191,14 @@
 			throw Exception("Module::pipeline - No pipeline defined.", __FILE__, __LINE__);
 	}
 
-	void Module::pipelineWasCreated(void)			{}
-	void Module::pipelineCompilationFailed(Exception& e)	{}
-	void Module::pipelineWasComputed(void)			{}
-	void Module::pipelineComputationFailed(Exception& e)	{}
-	void Module::pipelineInputWasModified(int portID)	{}
-	void Module::pipelineInputWasReleased(int portID)	{}
-	void Module::pipelineUniformsWereModified(void)		{}
-	void Module::pipelineWasDestroyed(void)			{}
+	void Module::pipelineWasCreated(void)				{}
+	void Module::pipelineCompilationFailed(const Exception& e)	{}
+	void Module::pipelineWasComputed(void)				{}
+	void Module::pipelineComputationFailed(const Exception& e)	{}
+	void Module::pipelineInputWasModified(int portID)		{}
+	void Module::pipelineInputWasReleased(int portID)		{}
+	void Module::pipelineUniformsWereModified(void)			{}
+	void Module::pipelineWasDestroyed(void)				{}
 
 // ControlModule
 	const int ControlModule::maxNumInputs = 256;
@@ -232,14 +232,14 @@
 		clients.push_back(m);
 
 		// Connect the outputs : 
-		QObject::connect( this, SIGNAL(pipelineWasCreated()), 			m, SLOT(pipelineWasCreated()) );
-		QObject::connect( this, SIGNAL(pipelineCompilationFailed(Exception&)),	m, SLOT(pipelineCompilationFailed(Exception&)) );
-		QObject::connect( this, SIGNAL(pipelineWasComputed()), 			m, SLOT(pipelineWasComputed()) );
-		QObject::connect( this, SIGNAL(pipelineComputationFailed(Exception&)),	m, SLOT(pipelineComputationFailed(Exception&)) );
-		QObject::connect( this, SIGNAL(pipelineInputWasModified(int)), 		m, SLOT(pipelineInputWasModified(int)) );
-		QObject::connect( this, SIGNAL(pipelineInputWasReleased(int)), 		m, SLOT(pipelineInputWasReleased(int)) );
-		QObject::connect( this, SIGNAL(pipelineUniformsWereModified()), 	m, SLOT(pipelineUniformsWereModified()) );
-		QObject::connect( this, SIGNAL(pipelineWasDestroyed()), 		m, SLOT(pipelineWasDestroyed()) );
+		QObject::connect( this, SIGNAL(pipelineWasCreated()), 				m, SLOT(pipelineWasCreated()) );
+		QObject::connect( this, SIGNAL(pipelineCompilationFailed(const Exception&)),	m, SLOT(pipelineCompilationFailed(const Exception&)) );
+		QObject::connect( this, SIGNAL(pipelineWasComputed()), 				m, SLOT(pipelineWasComputed()) );
+		QObject::connect( this, SIGNAL(pipelineComputationFailed(const Exception&)),	m, SLOT(pipelineComputationFailed(const Exception&)) );
+		QObject::connect( this, SIGNAL(pipelineInputWasModified(int)), 			m, SLOT(pipelineInputWasModified(int)) );
+		QObject::connect( this, SIGNAL(pipelineInputWasReleased(int)), 			m, SLOT(pipelineInputWasReleased(int)) );
+		QObject::connect( this, SIGNAL(pipelineUniformsWereModified()), 		m, SLOT(pipelineUniformsWereModified()) );
+		QObject::connect( this, SIGNAL(pipelineWasDestroyed()), 			m, SLOT(pipelineWasDestroyed()) );
 
 		// Connect the inputs :
 		QObject::connect( m, SIGNAL(pipelineUniformModification()),		this, SLOT(pipelineUniformModification()) );
@@ -355,7 +355,7 @@
 		if(pipelineExists())
 			return pipelineCode;
 		else
-			return "";
+			return std::string("");
 	}
 
 	const Pipeline& ControlModule::pipeline(void) const
@@ -487,7 +487,10 @@
 			}
 
 			if(!greenLight)
+			{
 				lastComputationSucceeded = false;
+				emit pipelineComputationFailed( Exception("Missing input(s).") );
+			}
 			else
 			{
 				// Compute : 
@@ -590,8 +593,12 @@
 
 				if( pipelineExists() )
 				{
-					pipelineCompilation();		// Will update to the right sizes.
-					requirePipelineComputation();
+					// Removed part : 
+					//pipelineCompilation();		// Will update to the right sizes.
+					//requirePipelineComputation();
+
+					if(k<pipeline().getNumInputPort())
+						requirePipelineComputation();
 				}
 
 				emit pipelineInputWasReleased(k);

@@ -19,7 +19,7 @@
 	LibraryInterface::~LibraryInterface(void)
 	{ }
 
-	void LibraryInterface::pipelineCompilationFailed(Exception& e)
+	void LibraryInterface::pipelineCompilationFailed(const Exception& e)
 	{
 		tabs.setCurrentIndex(tabs.indexOf(&compilationTab));
 	}

@@ -108,12 +108,13 @@
 			}
 		}
 
-		void IOTab::pipelineComputationFailed(Exception& e)
+		void IOTab::pipelineComputationFailed(const Exception& e)
 		{
 			pipelineStatusLabel.setText(tr("Computation of Pipeline \"%1\" failed :\n%2").arg(pipeline().getName().c_str()).arg(e.what()));
 
 			// Update colors : 
-			for(int k=0; k<pipeline().getNumOutputPort(); k++)
+			// (note : the vector outputRecordIDs might not be initialized at this point)
+			for(int k=0; k<std::min(pipeline().getNumOutputPort(), static_cast<int>(outputRecordIDs.size())); k++)
 			{
 				TextureStatus 	s 	= portsList.recordStatus( outputRecordIDs[k] );
 				s.connectionStatus	= TextureStatus::NotConnected;

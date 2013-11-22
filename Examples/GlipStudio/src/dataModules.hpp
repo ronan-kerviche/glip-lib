@@ -85,9 +85,9 @@
 		protected slots :
 			// These will be called upon external modifications, in order for the module to update itself :
 			virtual void pipelineWasCreated(void);
-			virtual void pipelineCompilationFailed(Exception& e);
+			virtual void pipelineCompilationFailed(const Exception& e);
 			virtual void pipelineWasComputed(void);
-			virtual void pipelineComputationFailed(Exception& e);
+			virtual void pipelineComputationFailed(const Exception& e);
 			virtual void pipelineInputWasModified(int portID);
 			virtual void pipelineInputWasReleased(int portID);
 			virtual void pipelineUniformsWereModified(void);
@@ -161,9 +161,9 @@
 
 		signals :
 			void pipelineWasCreated(void);
-			void pipelineCompilationFailed(Exception& e);
+			void pipelineCompilationFailed(const Exception& e);
 			void pipelineWasComputed(void);
-			void pipelineComputationFailed(Exception& e);
+			void pipelineComputationFailed(const Exception& e);
 			void pipelineInputWasModified(int portID);
 			void pipelineInputWasReleased(int portID);
 			void pipelineUniformsWereModified(void);

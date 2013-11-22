@@ -65,14 +65,15 @@
 		data.item(0)->setFont(QFont("", -1, -1, true));
 	}
 
-	void CompilationTab::pipelineCompilationFailed(Exception& e)
+	void CompilationTab::pipelineCompilationFailed(const Exception& e)
 	{
 		cleanCompilationTab(false);
 
 		// Add errors : 
-		e.hideHeader(true);
+		Exception err = e;
+		err.hideHeader(true);
 		std::string line;
-		std::istringstream stream(e.what());
+		std::istringstream stream(err.what());
 
 		while( std::getline(stream, line) )
 			data.addItem( line.c_str() );

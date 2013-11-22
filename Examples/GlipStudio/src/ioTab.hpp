@@ -27,7 +27,7 @@
 			// Pipeline events : 
 			void pipelineWasCreated(void);
 			void pipelineWasComputed(void);
-			void pipelineComputationFailed(Exception& e);
+			void pipelineComputationFailed(const Exception& e);
 			void pipelineInputWasModified(int portID);
 			void pipelineInputWasReleased(int portID);
 			void pipelineWasDestroyed(void);

@@ -22,7 +22,7 @@
 
 		private slots : 
 			void pipelineWasCreated(void);
-			void pipelineCompilationFailed(Exception& e);
+			void pipelineCompilationFailed(const Exception& e);
 
 		public : 
 			CompilationTab(ControlModule& _masterModule, QWidget* parent=NULL);

@@ -28,7 +28,7 @@
 			UniformsTab			uniformsTab;
 
 		private slots :
-			void pipelineCompilationFailed(Exception& e);
+			void pipelineCompilationFailed(const Exception& e);
 					
 		public : 
 			LibraryInterface(ControlModule& _masterModule, QWidget *parent);
