@@ -69,6 +69,7 @@
 		header()->setMovable( false );
 
 		connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),	this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
+		connect(this, SIGNAL(itemClicked(QTreeWidgetItem*, int)),			this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
 
 		// size of the columns : 
 		#if QT_VERSION >= 0x050000
