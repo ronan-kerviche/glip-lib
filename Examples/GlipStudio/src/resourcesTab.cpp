@@ -90,6 +90,7 @@
 		connect(&collection, 		SIGNAL(itemSelectionChanged()), 	this, SLOT(selectionChanged()));
 		connect(&collection, 		SIGNAL(focusChanged(int)),		this, SLOT(focusChanged(int)));
 		connect(&collection, 		SIGNAL(imageLoaded(int)),		this, SLOT(imageLoaded(int)));
+		connect(&collection, 		SIGNAL(imageSettingsChanged(int)),	this, SLOT(imageSettingsChanged(int)));
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
 		connect(&connectionMenu,	SIGNAL(connectToInput(int)),		this, SLOT(connectToInput(int)));
@@ -249,6 +250,18 @@
 			imageRecordIDs.push_back(recordID);
 		}
 
+		void ResourcesTab::imageSettingsChanged(int recordID)
+		{
+			// Display : 
+			if(viewManager->isLinkedToAView(recordID))
+				viewManager->update(recordID, collection.texture(recordID));
+
+			// Pipeline : 
+			int portID = 0;
+			if(isUsedAsPipelineInput(recordID, &portID))
+				registerInputTexture( recordID, portID );
+		}
+
 		void ResourcesTab::imageUnloadedFromDevice(int recordID)
 		{
 			cleanRecordDependances(recordID);
@@ -269,6 +282,11 @@
 
 			if(!selectedRecordIDs.empty())
 				viewManager->show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), true);
+		}
+
+		ImagesCollection* ResourcesTab::getResourcesManagerLink(void)
+		{
+			return &collection;
 		}
 
 /*// TextureObject

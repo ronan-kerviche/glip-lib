@@ -6,7 +6,7 @@
 
 // LibraryInterface :
 	LibraryInterface::LibraryInterface(ControlModule& _masterModule, QWidget *parent)
-	 : Module(_masterModule, parent), layout(this), tabs(this), resourceTab(_masterModule, this), compilationTab(_masterModule, this), ioTab(_masterModule, this), uniformsTab(_masterModule, this)
+	 : Module(_masterModule, parent), layout(this), tabs(this), resourceTab(_masterModule, this), compilationTab(_masterModule, this), ioTab(_masterModule, resourceTab.getResourcesManagerLink(), this), uniformsTab(_masterModule, this)
 	{
 		// Layout : 
 		tabs.addTab(&resourceTab, 	"   Resources   ");

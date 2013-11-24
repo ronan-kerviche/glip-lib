@@ -542,7 +542,13 @@
 				if(!inputTextureOwners[portID]->textureInputCanBeReleased(portID, inputTextureRecordIDs[portID]))
 					return false;
 				else
-					needRecompilation = !inputTexture(portID).isCompatibleWith( m->getTexture(recordID) );
+				{
+					// Old method for the recompilation : 
+					//needRecompilation = !inputTexture(portID).isCompatibleWith( m->getTexture(recordID) );
+
+					// New method (which is more agressive, but required if the pipeline is using formats for internal purpose) : 
+					needRecompilation = inputTexture(portID).format() != m->getTexture(recordID).format();
+				}
 			}
 		
 			// Else :

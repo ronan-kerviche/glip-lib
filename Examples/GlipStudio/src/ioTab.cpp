@@ -1,13 +1,19 @@
 #include "ioTab.hpp"
 
-	IOTab::IOTab(ControlModule& _masterModule, QWidget* parent)
+	IOTab::IOTab(ControlModule& _masterModule, ImagesCollection *_resourcesManagerLink, QWidget* parent)
 	 : 	Module(_masterModule, parent),
 		layout(this),
 		pipelineStatusLabel(this),
 		menuBar(this),
 		portsList(this),
+		imagesMenu("Images", NULL),
+		contextMenu(this),
 		inputsViewManager(NULL),
-		outputsViewManager(NULL)
+		outputsViewManager(NULL),
+		resourcesManagerLink(_resourcesManagerLink),
+		openSaveInterface("ImagesOutputPannel", "File", "*.png *.bmp *.jpg *.jpeg *.gif *.ppm"),
+		copyAsNewResourceAction("Copy as New Resource", this),
+		copyAsNewResourceWithNewNameAction("Copy as New Resource (with new name)", this)
 	{
 		inputsViewManager = getViewManager();
 
@@ -19,6 +25,16 @@
 		if(outputsViewManager==NULL)
 			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
 
+		imagesMenu.addAction(&copyAsNewResourceAction);
+		imagesMenu.addAction(&copyAsNewResourceWithNewNameAction);
+		openSaveInterface.addSaveToMenu(imagesMenu);
+		openSaveInterface.enableOpen(false);
+		openSaveInterface.enableSave(false);
+		openSaveInterface.enableSaveAs(false);
+		copyAsNewResourceAction.setEnabled(false);
+		copyAsNewResourceWithNewNameAction.setEnabled(false);
+
+		menuBar.addMenu(&imagesMenu);
 		menuBar.addMenu(inputsViewManager);
 		menuBar.addMenu(outputsViewManager);
 
@@ -30,15 +46,23 @@
 		outputsViewManager->setTitle("Outputs Views");
 		pipelineStatusLabel.setReadOnly(true);
 
+		contextMenu.addAction(&copyAsNewResourceAction);
+		contextMenu.addAction(&copyAsNewResourceWithNewNameAction);
+		openSaveInterface.addSaveToMenu(contextMenu);
+
 		// Init : 
 		pipelineWasDestroyed();
 
 		// Connect : 
-		connect(&portsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
-		connect(&portsList, 		SIGNAL(focusChanged(int)),	this, SLOT(focusChanged(int)));
-		connect(&portsList, 		SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
-		connect(inputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newInputView()));
-		connect(outputsViewManager, 	SIGNAL(createNewView()), 	this, SLOT(newOutputView()));
+		connect(&portsList, 			SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
+		connect(&portsList, 			SIGNAL(focusChanged(int)),				this, SLOT(focusChanged(int)));
+		connect(&portsList, 			SIGNAL(itemSelectionChanged()),	 			this, SLOT(selectionChanged()));
+		connect(inputsViewManager, 		SIGNAL(createNewView()), 				this, SLOT(newInputView()));
+		connect(outputsViewManager, 		SIGNAL(createNewView()), 				this, SLOT(newOutputView()));
+		connect(&copyAsNewResourceAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
+		connect(&openSaveInterface,		SIGNAL(saveFile(const QString&)),			this, SLOT(saveOutput(const QString&)));
+		connect(&openSaveInterface,		SIGNAL(saveFileAs(const QString&)),			this, SLOT(saveOutput(const QString&)));
+		connect(&portsList,			SIGNAL(customContextMenuRequested(const QPoint&)), 	this, SLOT(showContextMenu(const QPoint&)));
 	}
 
 	IOTab::~IOTab(void)
@@ -187,7 +211,7 @@
 				if(isInputValid(inputPortID))
 					inputsViewManager->show(inputPortID, inputTexture(inputPortID));
 			}
-			else
+			else if(lastComputationWasSuccessful())
 			{
 				outputPortID = getOutputPortIDFromRecordID(recordID);
 
@@ -196,6 +220,8 @@
 				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() && lastComputationWasSuccessful())
 					outputsViewManager->show(outputPortID, pipeline().out(outputPortID));
 			}
+			else
+				outputsViewManager->enableCreationAction(false);
 		}
 
 		void IOTab::selectionChanged(void)
@@ -206,6 +232,40 @@
 			{
 				inputsViewManager->enableCreationAction(false);
 				outputsViewManager->enableCreationAction(false);
+				openSaveInterface.enableSave(false);
+				openSaveInterface.enableSaveAs(false);
+				copyAsNewResourceAction.setEnabled(false);
+				copyAsNewResourceWithNewNameAction.setEnabled(false);
+			}
+			else if(!lastComputationWasSuccessful())
+			{
+				openSaveInterface.enableSave(false);
+				openSaveInterface.enableSaveAs(false);
+				copyAsNewResourceAction.setEnabled(false);
+				copyAsNewResourceWithNewNameAction.setEnabled(false);
+			}
+			else
+			{
+				if(recordIDs.size()==1 && getOutputPortIDFromRecordID(recordIDs.front())>=0)
+				{
+					openSaveInterface.enableSave(true);
+					openSaveInterface.enableSaveAs(true);
+					copyAsNewResourceAction.setEnabled(true);
+					copyAsNewResourceWithNewNameAction.setEnabled(true);
+				}
+				else
+				{
+					openSaveInterface.enableSave(false);
+					openSaveInterface.enableSaveAs(false);
+
+					bool test = true;
+			
+					for(int k=0; k<recordIDs.size() && test; k++)
+						test = getOutputPortIDFromRecordID(recordIDs[k])>=0;
+
+					copyAsNewResourceAction.setEnabled(test);
+					copyAsNewResourceWithNewNameAction.setEnabled(test);
+				}
 			}
 		}
 
@@ -233,5 +293,44 @@
 				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() )
 					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), true);
 			}
+		}
+		
+		void IOTab::copyAsNewResource(void)
+		{
+
+		}
+
+		void IOTab::copyAsNewResourceWithNewName(void)
+		{
+
+		}
+
+		void IOTab::saveOutput(const QString& filename)
+		{
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			if(recordIDs.empty())
+				throw Exception("No selection was made (internal error).", __FILE__, __LINE__);
+
+			if(recordIDs.size()>1)
+				throw Exception("Too many selections (internal error).", __FILE__, __LINE__);
+
+			int portID = getOutputPortIDFromRecordID(recordIDs.front());
+
+			if(portID<0)
+				throw Exception("The selection is not an output port (internal error).", __FILE__, __LINE__);
+
+			ImageObject image(pipeline().out(portID));
+
+			image.save(filename.toStdString());
+
+			openSaveInterface.reportSuccessfulSave(filename);
+		}
+
+		void IOTab::showContextMenu(const QPoint& point)
+		{
+			QPoint globalPos = portsList.viewport()->mapToGlobal(point);
+
+			contextMenu.exec(globalPos);
 		}
 

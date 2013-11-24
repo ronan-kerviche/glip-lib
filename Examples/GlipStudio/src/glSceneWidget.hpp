@@ -51,6 +51,7 @@
 			const __ReadOnly_HdlTextureFormat& format(void);
 			void getScalingRatios(float* imageScaling, float* haloScaling=NULL, float haloSize=0.0f, float currentPixelX=0.0f, float currentPixelY=0.0f);
 			void getLocalCoordinates(float x, float y, float& lx, float& ly);
+			void getCornersPositions(float* xs, float* ys);
 
 			friend class GLSceneWidget; 
 

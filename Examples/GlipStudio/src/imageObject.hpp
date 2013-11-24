@@ -14,7 +14,7 @@
 			bool 			virtualImage,
 						saved;
 			QString 		filename;
-			unsigned char* 		image;
+			ImageBuffer*		imageBuffer;
 			HdlTextureFormat 	textureFormat;
 			HdlTexture* 		textureData;
 

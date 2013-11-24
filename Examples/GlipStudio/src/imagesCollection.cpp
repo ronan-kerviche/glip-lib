@@ -260,15 +260,15 @@
 		const HdlTextureFormatDescriptor& descriptor = newFormat.getFormatDescriptor();
 
 		// Mode : 
-		if( descriptor.hasRedLayer )
+		if( descriptor.hasRedChannel )
 			formatString.append("R");
-		if( descriptor.hasGreenLayer )
+		if( descriptor.hasGreenChannel )
 			formatString.append("G");
-		if( descriptor.hasBlueLayer )
+		if( descriptor.hasBlueChannel )
 			formatString.append("B");
-		if( descriptor.hasAlphaLayer )
+		if( descriptor.hasAlphaChannel )
 			formatString.append("A");
-		if( descriptor.hasLuminanceLayer )
+		if( descriptor.hasLuminanceChannel )
 			formatString.append("L");
 
 		// Depth : 

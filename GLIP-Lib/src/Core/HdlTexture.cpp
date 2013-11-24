@@ -73,7 +73,7 @@ using namespace Glip::CoreGL;
 	// Private tools
 	int __ReadOnly_HdlTextureFormat::getChannelCount(GLenum _mode) const
 	{
-		return static_cast<int>(HdlTextureFormatDescriptorsList::get(_mode).numComponents);
+		return static_cast<int>(HdlTextureFormatDescriptorsList::get(_mode).numChannels);
 	}
 
 	int __ReadOnly_HdlTextureFormat::getChannelSize(GLenum _depth) const
@@ -346,10 +346,10 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
 			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
-			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedLayer, 	redType )
-			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenLayer, 	greenType )
-			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueLayer, 	blueType )
-			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaLayer, 	alphaType )
+			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel, 	redType )
+			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel, 	greenType )
+			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel, 	blueType )
+			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel, 	alphaType )
 			default : 				throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
 		}
 

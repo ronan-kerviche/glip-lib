@@ -1,9 +1,10 @@
 #ifndef __GLIPSTUDIO_IO_TAB__
 #define __GLIPSTUDIO_IO_TAB__
 
-	 #include <QLineEdit>
+	#include <QLineEdit>
 	#include "dataModules.hpp"
 	#include "imagesCollection.hpp"
+	#include "resourcesTab.hpp"
 
 	class IOTab : public Module 
 	{
@@ -13,12 +14,18 @@
 			QVBoxLayout		layout;
 			QLineEdit		pipelineStatusLabel;
 			QMenuBar		menuBar;
+			QMenu			imagesMenu,
+						contextMenu;
+			QAction			copyAsNewResourceAction,
+						copyAsNewResourceWithNewNameAction;
+			OpenSaveInterface	openSaveInterface;
 			TexturesList		portsList;
 			std::vector<int>	inputRecordIDs,
 						outputRecordIDs;
 
 			ViewManager		*inputsViewManager,
 						*outputsViewManager;
+			ImagesCollection	*resourcesManagerLink;
 
 			int getInputPortIDFromRecordID( int recordID );
 			int getOutputPortIDFromRecordID( int recordID );
@@ -33,16 +40,20 @@
 			void pipelineWasDestroyed(void);
 
 			// Show inputs and outputs : 
-			/*void inputSelectionChanged(void);
-			void outputSelectionChanged(void);*/
 			void focusChanged(int recordID);
 			void selectionChanged(void);
 
 			void newInputView(void);
 			void newOutputView(void);
 
+			void copyAsNewResource(void);
+			void copyAsNewResourceWithNewName(void);
+			void saveOutput(const QString& filename);
+
+			void showContextMenu(const QPoint& point);	
+
 		public :
-			IOTab(ControlModule& _masterModule, QWidget* parent=NULL);
+			IOTab(ControlModule& _masterModule, ImagesCollection *_resourcesManager, QWidget* parent=NULL);
 			~IOTab(void);
 	};
 

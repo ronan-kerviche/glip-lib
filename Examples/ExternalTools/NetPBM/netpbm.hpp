@@ -55,6 +55,7 @@ namespace NetPBM
 			bool writeToFile(const std::string& filename);
 			bool copyToTexture(HdlTexture& texture);
 			HdlTexture* createTexture(void);
+			ImageBuffer* createImageBuffer(void);
 	};
 }
 

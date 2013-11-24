@@ -183,6 +183,35 @@
 		ly		/= imageScaling[1];
 	}
 
+	void ViewLink::getCornersPositions(float* xs, float* ys)
+	{
+		float imageScaling[2];
+		getScalingRatios(imageScaling);
+		float 	c = cos(angleRadians),
+			s = sin(angleRadians);
+
+		xs[0]		= -1.0;
+		ys[0]		= -1.0;
+		xs[1]		= -1.0;
+		ys[1]		=  1.0;
+		xs[2]		=  1.0;
+		ys[2]		=  1.0;
+		xs[3]		=  1.0;
+		ys[3]		= -1.0;
+
+		for(int k=0; k<4; k++)
+		{
+			xs[k] *= imageScaling[0];
+			ys[k] *= imageScaling[1];
+
+			float 	x =  c*xs[k] + s*ys[k],
+				y = -s*xs[k] + c*ys[k];
+		
+			xs[k] = x + centerCoords[0];
+			ys[k] = y + centerCoords[1];
+		}
+	}
+
 	void ViewLink::setHaloColor(float r, float g, float b)
 	{
 		haloColorRGB[0]	= r;

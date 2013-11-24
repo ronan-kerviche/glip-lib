@@ -8,7 +8,7 @@ INCLUDEPATH  	+= 	/usr/local/lib \
 			../ExternalTools/NetPBM \
 			../../GLIP-Lib/include
 
-unix: LIBS      += 	../../GLIP-Lib/lib/libglip.a
+unix: LIBS      += 	../../GLIP-Lib/lib/libglip.so
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 

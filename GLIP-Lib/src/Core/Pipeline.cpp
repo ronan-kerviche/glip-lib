@@ -552,14 +552,32 @@
 				}
 			}
 
-			for(int j=0; j<tmp.getNumOutputPort(); j++)
+			// Removing this segment, as some output can be ignored in the pipeline.
+			/*for(int j=0; j<tmp.getNumOutputPort(); j++)
 			{
 				if(getConnectionDestinations(i,j).empty())
 				{
 					res += '\n';
 					res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getTypeName() + "\") output port \"" + tmp.getOutputPortName(i) + "\" is not connected.";
 				}
+			}*/
+
+			// Checking that, at least one connection is used : 
+			bool test = false;
+			for(int j=0; j<tmp.getNumOutputPort(); j++)
+			{
+				if(!getConnectionDestinations(i,j).empty())
+				{
+					test = true;
+					break;
+				}
 			}
+
+			if(!test)
+			{
+				res += '\n';
+				res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getTypeName() + "\") has no output port connected.";
+			}	
 		}
 
 		for(int i=0; i<getNumOutputPort(); i++)

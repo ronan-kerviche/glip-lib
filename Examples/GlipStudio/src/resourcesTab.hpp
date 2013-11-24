@@ -75,6 +75,7 @@
 			void selectionChanged(void);
 			void connectToInput(int i);
 			void imageLoaded(int recordID);
+			void imageSettingsChanged(int recordID);
 			void imageUnloadedFromDevice(int recordID);
 			void imageFreed(int recordID);
 			void createNewView(void);
@@ -82,6 +83,8 @@
 		public :
 			ResourcesTab(ControlModule& _masterModule, QWidget* parent=NULL);
 			~ResourcesTab(void);
+
+			ImagesCollection*	getResourcesManagerLink(void);
 	};
 
 /*// Texture object :

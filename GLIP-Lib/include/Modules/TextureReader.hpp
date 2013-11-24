@@ -24,11 +24,6 @@
 #ifndef __TEXTURE_READER_INCLUDE__
 #define __TEXTURE_READER_INCLUDE__
 
-	/* Info :
-		Implement a slow readback of GL textures
-		Based on glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid* img);
-	*/
-
 	// Include :
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlTexture.hpp"
@@ -38,11 +33,6 @@
 namespace Glip
 {
 	// Prototypes
-	namespace CoreGL
-	{
-		class __HdlTextureFormat_OnlyData;
-	}
-
 	namespace CorePipeline
 	{
 		class OutputDevice;
@@ -234,7 +224,6 @@ Example :
 		};
 	}
 }
-
 
 #endif
 

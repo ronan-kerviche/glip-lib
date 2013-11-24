@@ -112,46 +112,39 @@
 		if(d==GL_BYTE)
 		{
 			char* s = reinterpret_cast<char*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<char>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<char>::max()) - 1.0);
 		}
-
-		if(d==GL_UNSIGNED_BYTE)
+		else if(d==GL_UNSIGNED_BYTE)
 		{
 			unsigned char* s = reinterpret_cast<unsigned char*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<unsigned char>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<unsigned char>::max()) - 1.0);
 		}
-
-		if(d==GL_SHORT)
+		else if(d==GL_SHORT)
 		{
 			short* s = reinterpret_cast<short*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<short>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<short>::max()) - 1.0);
 		}
-
-		if(d==GL_UNSIGNED_SHORT)
+		else if(d==GL_UNSIGNED_SHORT)
 		{
 			unsigned short* s = reinterpret_cast<unsigned short*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<unsigned short>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<unsigned short>::max()) - 1.0);
 		}
-
-		if(d==GL_INT)
+		else if(d==GL_INT)
 		{
 			int* s = reinterpret_cast<int*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<int>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<int>::max()) - 1.0);
 		}
-
-		if(d==GL_UNSIGNED_INT)
+		else if(d==GL_UNSIGNED_INT)
 		{
 			unsigned int* s = reinterpret_cast<unsigned int*>(data);
-			res = static_cast<double>(s[pos])/static_cast<double>(std::numeric_limits<unsigned int>::max());
+			res = static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<unsigned int>::max()) - 1.0);
 		}
-
-		if(d==GL_FLOAT)
+		else if(d==GL_FLOAT)
 		{
 			float* s = reinterpret_cast<float*>(data);
 			res = static_cast<double>(s[pos]);
 		}
-
-		if(d==GL_DOUBLE)
+		else if(d==GL_DOUBLE)
 		{
 			double* s = reinterpret_cast<double*>(data);
 			res = s[pos];

@@ -26,6 +26,7 @@
 
 	#include "Modules/LayoutLoader.hpp"
 	#include "Modules/UniformsVarsLoader.hpp"
+	#include "Modules/ImageBuffer.hpp"
 	#include "Modules/TextureReader.hpp"
 	#include "Modules/ProceduralInput.hpp"
 	#include "Modules/FFT1D.hpp"

@@ -53,6 +53,7 @@ file(
 #Déclaration de l'exécutable
 add_library(
 		glip
-		STATIC
+		#STATIC
+		SHARED
 		${source_files}
 )

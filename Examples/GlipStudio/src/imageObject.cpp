@@ -8,7 +8,7 @@
 	 : 	virtualImage(false),
 		saved(false),
 		filename(_filename), 
-		image(NULL),
+		imageBuffer(NULL),
 		textureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE),
 		textureData(NULL)
 	{
@@ -24,11 +24,7 @@
 
 				textureFormat = img.getFormat();
 				
-				// Allocate space in RAM to store the image : 
-				image = new unsigned char[ img.getSize() ];
-
-				// Copy : 
-				img.copyTo(image);
+				imageBuffer = img.createImageBuffer();
 			}
 			else
 			{
@@ -56,7 +52,7 @@
 				textureFormat.setGLDepth( GL_UNSIGNED_BYTE );
 				
 				// Create buffer : 
-				image = new unsigned char[ textureFormat.getSize() ];
+				imageBuffer = new ImageBuffer(textureFormat);
 
 				// Copy : 
 				unsigned int t=0;
@@ -65,12 +61,15 @@
 					for(int j=0; j<qimage.width(); j++)
 					{
 						QRgb col 	= qimage.pixel(j,i);
-										image[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-						if(descriptor.numComponents>1)	image[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-						if(descriptor.numComponents>2)	image[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
-						if(descriptor.hasAlphaLayer)	image[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
-
-						t += descriptor.numComponents;
+						if(descriptor.numChannels==1)
+							imageBuffer->set(j, i, GL_LUMINANCE,	qRed( col ));
+						else 
+						{
+											imageBuffer->set(j, i, GL_RED, 		static_cast<unsigned char>(qRed( col )));
+							if(descriptor.numChannels>1)	imageBuffer->set(j, i, GL_GREEN,	static_cast<unsigned char>(qGreen( col )));
+							if(descriptor.numChannels>2)	imageBuffer->set(j, i, GL_BLUE,		static_cast<unsigned char>(qBlue( col )));
+							if(descriptor.numChannels>3)	imageBuffer->set(j, i, GL_ALPHA,	static_cast<unsigned char>(qAlpha( col )));
+						}
 					}
 				}
 			}
@@ -95,53 +94,19 @@
 
 	ImageObject::ImageObject(HdlTexture& texture)
 	 : 	virtualImage(true),
-		image(NULL),
+		imageBuffer(NULL),
 		textureFormat(texture),
-		textureData(NULL)
+		textureData(NULL),
+		saved(false)
 	{
 		// Create a buffer : 
-		image = new unsigned char[ texture.getSize() ];
-		
-		try
-		{
-			TextureReader reader("reader",texture.format());
-
-			reader << texture << OutputDevice::Process;
-
-			QColor value;
-			unsigned int t=0;
-			for(int y=0; y<reader.getHeight(); y++)
-			{
-				for(int x=0; x<reader.getWidth(); x++)
-				{
-					for(int k=0; k<textureFormat.getNumChannels(); k++)
-						image[t+k] = static_cast<unsigned char>(reader(x,y,k)*255.0);
-					t += textureFormat.getNumChannels();
-				}
-			}
-		}
-		catch(Exception& e)
-		{
-			std::cout << "ImageObject::ImageObject - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename));
-			delete textureData;
-			textureData = NULL;
-		}
-		catch(std::exception& e)
-		{
-			std::cout << "ImageObject::ImageObject - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename));
-			delete textureData;
-			textureData = NULL;
-		}
+		imageBuffer = new ImageBuffer(texture);
 	}
 
 	ImageObject::~ImageObject(void)
 	{
-		delete image;
-		image = NULL;
+		delete imageBuffer;
+		imageBuffer = NULL;
 		delete textureData;
 		textureData = NULL;
 	}	
@@ -163,11 +128,8 @@
 
 	void ImageObject::loadToDevice(void)
 	{
-		if(textureData==NULL)
-		{
-			textureData = new HdlTexture(textureFormat);
-			textureData->write(image);
-		}
+		textureData = new HdlTexture(textureFormat);
+		(*imageBuffer) >> (*textureData);
 	}
 
 	void ImageObject::unloadFromDevice(void)
@@ -242,11 +204,11 @@
 			const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( textureFormat.getGLMode() );
 			const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( textureFormat.getGLDepth() );
 
-			if( descriptor.hasLuminanceLayer && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
+			if( descriptor.hasLuminanceChannel && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
 				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_RGB888);
-			else if( descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && !descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+			else if( descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && !descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
 				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_RGB888);
-			else if(descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+			else if(descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
 				bufferImage = new QImage(textureFormat.getWidth(), textureFormat.getHeight(), QImage::Format_ARGB32);		
 			else
 				throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
@@ -257,20 +219,39 @@
 			{
 				for(int x=0; x<textureFormat.getWidth(); x++)
 				{
-					const int p = (y * textureFormat.getWidth() + x) * descriptor.numComponents;
-					if(descriptor.numComponents>=4)
+					/*const int p = (y * textureFormat.getWidth() + x) * descriptor.numChannels;
+					if(descriptor.numChannels>=4)
 						value.setAlpha( static_cast<unsigned char>(image[p+3]*255.0) );
-					if(descriptor.numComponents>=3)
+					if(descriptor.numChannels>=3)
 					{
 						value.setGreen( static_cast<unsigned char>(image[p+1]*255.0) );
 						value.setBlue(  static_cast<unsigned char>(image[p+2]*255.0) );
 						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
 					}
-					else if(descriptor.numComponents==1)
+					else if(descriptor.numChannels==1)
 					{
 						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
 						value.setGreen( static_cast<unsigned char>(image[p+0]*255.0) );
 						value.setBlue(  static_cast<unsigned char>(image[p+0]*255.0) );
+					}
+					else
+						throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
+
+					bufferImage->setPixel(x, y, value.rgba());*/
+
+					if(descriptor.numChannels>=4)
+						value.setAlpha( imageBuffer->get<unsigned char>(x, y, GL_ALPHA) );
+					if(descriptor.numChannels>=3)
+					{
+						value.setRed( 	imageBuffer->get<unsigned char>(x, y, GL_RED) );
+						value.setGreen( imageBuffer->get<unsigned char>(x, y, GL_GREEN) );
+						value.setBlue( 	imageBuffer->get<unsigned char>(x, y, GL_BLUE) );
+					}
+					else if(descriptor.numChannels==1)
+					{
+						value.setRed( 	imageBuffer->get<unsigned char>(x, y, GL_LUMINANCE) );
+						value.setGreen( imageBuffer->get<unsigned char>(x, y, GL_LUMINANCE) );
+						value.setBlue( 	imageBuffer->get<unsigned char>(x, y, GL_LUMINANCE) );
 					}
 					else
 						throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);

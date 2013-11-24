@@ -330,12 +330,19 @@
 	{
 		HdlTextureFormat format = getFormat();
 
-		
-	
 		HdlTexture* texture = new HdlTexture(format);
 
 		texture->write(bytes);
 
 		return texture;
+	}
+
+	ImageBuffer* Image::createImageBuffer(void)
+	{
+		ImageBuffer* buffer = new ImageBuffer( getFormat() );
+
+		(*buffer) << reinterpret_cast<void*>(bytes);
+
+		return buffer;
 	}
 

@@ -24,7 +24,8 @@
 #ifndef __HDLTEXTURETOOLS_INCLUDE__
 #define __HDLTEXTURETOOLS_INCLUDE__
 
-	#include "Core/OglInclude.hpp"
+	#include <vector>
+	#include "Core/OglInclude.hpp"	
 
 	namespace Glip
 	{
@@ -38,18 +39,18 @@
 			{
 							/// Name of the mode (GL_RGB, GL_RGBA, etc.).
 				const GLenum 		modeID;
-							/// Number of components.
-				const unsigned char	numComponents;
-							/// True if it has a red layer.
-				const bool		hasRedLayer,
-							/// True if it has a green layer.
-							hasGreenLayer,
-							/// True if it has a blue layer.
-							hasBlueLayer,
-							/// True if it has a alpha layer.
-							hasAlphaLayer,
-							/// True if it has a luminance or intensity layer.
-							hasLuminanceLayer,
+							/// Number of channels.
+				const unsigned char	numChannels;
+							/// True if it has a red channel.
+				const bool		hasRedChannel,
+							/// True if it has a green channel.
+							hasGreenChannel,
+							/// True if it has a blue channel.
+							hasBlueChannel,
+							/// True if it has a alpha channel.
+							hasAlphaChannel,
+							/// True if it has a luminance or intensity channel.
+							hasLuminanceChannel,
 							/// True if it is a compressed mode.
 							isCompressed,
 							/// True if it is associated with a floatting point depth.
@@ -74,16 +75,33 @@
 							alphaDepthInBits,
 							/// Size of the luminance, or intensity, component for a single pixel, in bits.
 							luminanceDepthInBits;
-							/// Type of the red component (GL_NONE if no type is defined or the layer does not exist).
+							/// Type of the red component (GL_NONE if no type is defined or the channel does not exist).
 				const GLenum		redType,
-							/// Type of the green component (GL_NONE if no type is defined or the layer does not exist).
+							/// Type of the green component (GL_NONE if no type is defined or the channel does not exist).
 							greenType,
-							/// Type of the blue component (GL_NONE if no type is defined or the layer does not exist).
+							/// Type of the blue component (GL_NONE if no type is defined or the channel does not exist).
 							blueType,
-							/// Type of the alpha component (GL_NONE if no type is defined or the layer does not exist).
+							/// Type of the alpha component (GL_NONE if no type is defined or the channel does not exist).
 							alphaType,
-							/// Type of the luminance component (GL_NONE if no type is defined or the layer does not exist).
+							/// Type of the luminance component (GL_NONE if no type is defined or the channel does not exist).
 							luminanceType;
+							/// Index of the red component (or -1 if the channel does not exist).
+				const char		indexRed,
+							/// Index of the green component (or -1 if the channel does not exist).
+							indexGreen,
+							/// Index of the blue component (or -1 if the channel does not exist).
+							indexBlue,
+							/// Index of the alpha component (or -1 if the channel does not exist).
+							indexAlpha,
+							/// Index of the luminance component (or -1 if the channel does not exist).
+							indexLuminance;
+
+				// Tools : 
+				bool hasChannel(GLenum channel) const;
+				unsigned char channelSizeInBits(GLenum channel) const;
+				GLenum channelType(GLenum channel) const;
+				char channelIndex(GLenum channel) const;
+				std::vector<GLenum> getChannelsList(void) const;
 			};
 
 			/**
