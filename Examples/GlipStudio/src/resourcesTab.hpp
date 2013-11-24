@@ -70,6 +70,7 @@
 		private slots :
 			// These will be called upon external modifications, in order for the module to update itself :
 			void pipelineWasCreated(void);
+			void pipelineInputFromThisModuleWasReleased(int portID, int recordID);
 			void pipelineWasDestroyed(void);
 			void focusChanged(int recordID);
 			void selectionChanged(void);

@@ -930,7 +930,8 @@
 
 		// Connect : 
 		connect(&openSaveInterface, 	SIGNAL(openFile(const QStringList&)), 			this, SLOT(loadImages(const QStringList&)));
-		connect(&openSaveInterface, 	SIGNAL(saveFile(const QString&)), 			this, SLOT(saveImage(const QString&)));
+		connect(&openSaveInterface, 	SIGNAL(saveFile(const QString&)), 			this, SLOT(saveImage(void)));
+		connect(&openSaveInterface, 	SIGNAL(saveFileAs(const QString&)), 			this, SLOT(saveImage(const QString&)));
 		connect(&freeImageAction, 	SIGNAL(triggered()), 					this, SLOT(freeImages()));
 		connect(this,			SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
 		connect(this,			SIGNAL(customContextMenuRequested(const QPoint&)), 	this, SLOT(showContextMenu(const QPoint&)));
@@ -1081,7 +1082,7 @@
 				for(int k=0; k<selectedRecordIDs.size(); k++)
 				{
 					int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
-					canBeSaved 	= canBeSaved | imagesList[tid]->isVirtual();
+					canBeSaved 	= canBeSaved | (imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty());
 					allHaveMipmaps 	= allHaveMipmaps & imagesList[tid]->getFormat().getMaxLevel()>0;
 		
 					if(!allHaveMipmaps)
@@ -1091,7 +1092,13 @@
 				int id = getIndexFromRecordID(targetRecordID);
 		
 				// Set actions :
-				openSaveInterface.enableSaveAs( canBeSaved );
+				if(selectedRecordIDs.size()==1 && imagesList[getIndexFromRecordID(selectedRecordIDs.front())]->isVirtual())
+					openSaveInterface.enableSaveAs( true );
+				else
+					openSaveInterface.enableSaveAs( false );
+
+				openSaveInterface.enableSave(canBeSaved);
+
 				freeImageAction.setEnabled( true );
 
 				// Set menus :
@@ -1135,6 +1142,19 @@
 					std::cerr << "Caught exception while loading : " << std::endl;
 					std::cout << e.what() << std::endl;
 				}
+			}
+		}
+
+		void ImagesCollection::saveImage(void)
+		{
+			std::vector<int> selectedRecordIDs = getSelectedRecordIDs();
+
+			for(int k=0; k<selectedRecordIDs.size(); k++)
+			{
+				int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
+
+				if( imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty() )
+					imagesList[tid]->save();
 			}
 		}
 
@@ -1327,7 +1347,21 @@
 			}
 		}
 
-		bool canBeClosed(void)
+		void ImagesCollection::addNewResource(HdlTexture& texture, const std::string& resourceName)
+		{
+			imagesList.push_back( new ImageObject(texture) );
+
+			TextureStatus s(TextureStatus::Resource);
+			s.location = TextureStatus::OnRAM;
+			
+			int newRecordID = addRecord( resourceName, imagesList.back()->getFormat(), s);
+			recordIDs.push_back(newRecordID);
+			lockedToDeviceList.push_back(false);
+
+			emit imageLoaded(newRecordID);
+		}
+
+		bool ImagesCollection::canBeClosed(void)
 		{
 			// TODO Check the virtual images which are not saved : 
 			return true;		

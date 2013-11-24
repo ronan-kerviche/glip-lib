@@ -191,6 +191,14 @@
 			connectionMenu.activate(!selectedRecordsID.empty(), selectedRecordsID.size());
 		}
 
+		void ResourcesTab::pipelineInputFromThisModuleWasReleased(int portID, int recordID)
+		{
+			TextureStatus s 	= collection.recordStatus( recordID );
+			s.connectionStatus 	= TextureStatus::NotConnected;
+			s.portID		= -1;
+			collection.updateRecordStatus( recordID, s);
+		}
+
 		void ResourcesTab::pipelineWasDestroyed(void)
 		{
 			updateTexturesLinkInformation();

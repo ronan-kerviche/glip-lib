@@ -515,8 +515,14 @@
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(c));
 
-			openSaveInterface.reportSuccessfulSave( e->filename() );
-			openSaveInterface.enableSave( e->isModified() );
+			if(!e->filename().isEmpty())
+			{
+				openSaveInterface.reportSuccessfulSave( e->filename() );
+				openSaveInterface.enableSave(true);
+			}
+			else
+				openSaveInterface.enableSave(false);
+
 			openSaveInterface.enableSaveAs(true);
 		}
 		else

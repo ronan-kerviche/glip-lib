@@ -90,6 +90,7 @@
 			virtual void pipelineComputationFailed(const Exception& e);
 			virtual void pipelineInputWasModified(int portID);
 			virtual void pipelineInputWasReleased(int portID);
+			virtual void pipelineInputFromThisModuleWasReleased(int portID, int recordID);
 			virtual void pipelineUniformsWereModified(void);
 			virtual void pipelineWasDestroyed(void);
 

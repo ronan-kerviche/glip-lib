@@ -54,15 +54,16 @@
 		pipelineWasDestroyed();
 
 		// Connect : 
-		connect(&portsList, 			SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
-		connect(&portsList, 			SIGNAL(focusChanged(int)),				this, SLOT(focusChanged(int)));
-		connect(&portsList, 			SIGNAL(itemSelectionChanged()),	 			this, SLOT(selectionChanged()));
-		connect(inputsViewManager, 		SIGNAL(createNewView()), 				this, SLOT(newInputView()));
-		connect(outputsViewManager, 		SIGNAL(createNewView()), 				this, SLOT(newOutputView()));
-		connect(&copyAsNewResourceAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
-		connect(&openSaveInterface,		SIGNAL(saveFile(const QString&)),			this, SLOT(saveOutput(const QString&)));
-		connect(&openSaveInterface,		SIGNAL(saveFileAs(const QString&)),			this, SLOT(saveOutput(const QString&)));
-		connect(&portsList,			SIGNAL(customContextMenuRequested(const QPoint&)), 	this, SLOT(showContextMenu(const QPoint&)));
+		connect(&portsList, 				SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
+		connect(&portsList, 				SIGNAL(focusChanged(int)),				this, SLOT(focusChanged(int)));
+		connect(&portsList, 				SIGNAL(itemSelectionChanged()),	 			this, SLOT(selectionChanged()));
+		connect(inputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newInputView()));
+		connect(outputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newOutputView()));
+		connect(&copyAsNewResourceAction,		SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
+		connect(&copyAsNewResourceWithNewNameAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResourceWithNewName()));
+		connect(&openSaveInterface,			SIGNAL(saveFile(const QString&)),			this, SLOT(saveOutput(const QString&)));
+		connect(&openSaveInterface,			SIGNAL(saveFileAs(const QString&)),			this, SLOT(saveOutput(const QString&)));
+		connect(&portsList,				SIGNAL(customContextMenuRequested(const QPoint&)), 	this, SLOT(showContextMenu(const QPoint&)));
 	}
 
 	IOTab::~IOTab(void)
@@ -297,12 +298,52 @@
 		
 		void IOTab::copyAsNewResource(void)
 		{
+			if(!pipelineExists() || !lastComputationWasSuccessful())
+				return ;
 
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			for(int k=0; k<recordIDs.size(); k++)
+			{
+				int outputPortID = getOutputPortIDFromRecordID(recordIDs[k]);
+
+				if(outputPortID>=0)
+					resourcesManagerLink->addNewResource(pipeline().out(outputPortID), pipeline().getOutputPortName(outputPortID));
+			}
 		}
 
 		void IOTab::copyAsNewResourceWithNewName(void)
 		{
+			if(!pipelineExists() || !lastComputationWasSuccessful())
+				return ;
 
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			for(int k=0; k<recordIDs.size(); k++)
+			{
+				int outputPortID = getOutputPortIDFromRecordID(recordIDs[k]);
+
+				if(outputPortID>=0)
+				{
+					// Ask for new name : 
+					bool 	over = false,
+						ok = false;
+			    		QString name;
+
+					do
+					{
+						// Get the new name : 
+						name = QInputDialog::getText(this, tr("Copy Output as new Resource..."), tr("New resource name : "), QLineEdit::Normal, pipeline().getOutputPortName(outputPortID).c_str(), &ok);
+
+						// Check if the name exits : 
+						over = !ok || !name.isEmpty();
+					} while(!over);
+
+					// Copy : 
+					if(ok)
+						resourcesManagerLink->addNewResource(pipeline().out(outputPortID), name.toStdString());
+				}
+			}
 		}
 
 		void IOTab::saveOutput(const QString& filename)

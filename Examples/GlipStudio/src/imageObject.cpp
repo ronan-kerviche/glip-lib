@@ -194,7 +194,7 @@
 			return *textureData;
 	}
 
-	void ImageObject::save(const std::string& filename)
+	void ImageObject::save(const std::string& targetFilename)
 	{
 		QImage* bufferImage = NULL;
 
@@ -219,26 +219,6 @@
 			{
 				for(int x=0; x<textureFormat.getWidth(); x++)
 				{
-					/*const int p = (y * textureFormat.getWidth() + x) * descriptor.numChannels;
-					if(descriptor.numChannels>=4)
-						value.setAlpha( static_cast<unsigned char>(image[p+3]*255.0) );
-					if(descriptor.numChannels>=3)
-					{
-						value.setGreen( static_cast<unsigned char>(image[p+1]*255.0) );
-						value.setBlue(  static_cast<unsigned char>(image[p+2]*255.0) );
-						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
-					}
-					else if(descriptor.numChannels==1)
-					{
-						value.setRed(   static_cast<unsigned char>(image[p+0]*255.0) );
-						value.setGreen( static_cast<unsigned char>(image[p+0]*255.0) );
-						value.setBlue(  static_cast<unsigned char>(image[p+0]*255.0) );
-					}
-					else
-						throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
-
-					bufferImage->setPixel(x, y, value.rgba());*/
-
 					if(descriptor.numChannels>=4)
 						value.setAlpha( imageBuffer->get<unsigned char>(x, y, GL_ALPHA) );
 					if(descriptor.numChannels>=3)
@@ -261,8 +241,11 @@
 			}
 
 			// Save file : 
-			if(!bufferImage->save(filename.c_str()))
-				throw Exception("Cannot save image to file \"" + filename + "\".", __FILE__, __LINE__);
+			if(!bufferImage->save(targetFilename.c_str()))
+				throw Exception("Cannot save image to file \"" + targetFilename + "\".", __FILE__, __LINE__);
+
+			// Save filename : 
+			filename = targetFilename.c_str();
 
 			// Clean : 
 			delete bufferImage;
@@ -272,7 +255,7 @@
 		{
 			std::cout << "ImageObject::save - Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename.c_str()));
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(targetFilename.c_str()));
 			delete bufferImage;
 			bufferImage = NULL;
 		}
@@ -280,9 +263,17 @@
 		{
 			std::cout << "ImageObject::save - Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename.c_str()));
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(targetFilename.c_str()));
 			delete bufferImage;
 			bufferImage = NULL;
 		}
+	}
+
+	void ImageObject::save(void)
+	{
+		if(filename.isEmpty())
+			throw Exception("ImageObject::save - Cannot save with an empty filename.", __FILE__, __LINE__);
+		else
+			this->save(filename.toStdString());
 	}
 

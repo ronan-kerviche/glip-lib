@@ -258,6 +258,7 @@
 		private slots :
 			void selectionChanged(void);
 			void loadImages(const QStringList& filenames);
+			void saveImage(void);
 			void saveImage(const QString& filename);
 			void freeImages(void);
 			void showContextMenu(const QPoint& point);
@@ -280,6 +281,8 @@
 			bool isTextureLockedToDevice(int recordID) const;
 			void unlockTextureFromDevice(int recordID);
 			HdlTexture& texture(int recordID);
+
+			void addNewResource(HdlTexture& texture, const std::string& resourceName);
 
 			bool canBeClosed(void);
 

@@ -191,14 +191,15 @@
 			throw Exception("Module::pipeline - No pipeline defined.", __FILE__, __LINE__);
 	}
 
-	void Module::pipelineWasCreated(void)				{}
-	void Module::pipelineCompilationFailed(const Exception& e)	{}
-	void Module::pipelineWasComputed(void)				{}
-	void Module::pipelineComputationFailed(const Exception& e)	{}
-	void Module::pipelineInputWasModified(int portID)		{}
-	void Module::pipelineInputWasReleased(int portID)		{}
-	void Module::pipelineUniformsWereModified(void)			{}
-	void Module::pipelineWasDestroyed(void)				{}
+	void Module::pipelineWasCreated(void)						{}
+	void Module::pipelineCompilationFailed(const Exception& e)			{}
+	void Module::pipelineWasComputed(void)						{}
+	void Module::pipelineComputationFailed(const Exception& e)			{}
+	void Module::pipelineInputWasModified(int portID)				{}
+	void Module::pipelineInputWasReleased(int portID)				{}
+	void Module::pipelineInputFromThisModuleWasReleased(int portID, int recordID)	{}
+	void Module::pipelineUniformsWereModified(void)					{}
+	void Module::pipelineWasDestroyed(void)						{}
 
 // ControlModule
 	const int ControlModule::maxNumInputs = 256;
@@ -552,6 +553,12 @@
 			}
 		
 			// Else :
+			
+			// Say to the old owner that he lose the connection :
+			if(inputTextureOwners[portID]!=NULL && inputTextureRecordIDs[portID]>=0)
+				inputTextureOwners[portID]->pipelineInputFromThisModuleWasReleased(portID, inputTextureRecordIDs[portID]);
+
+			// Save the new input coordinates : 
 			inputTextureRecordIDs[portID] 	= recordID;
 			inputTextureOwners[portID]	= m;
 

@@ -37,6 +37,7 @@
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& texture(void);
 			void save(const std::string& filename);
+			void save(void);
 	};
 
 #endif
