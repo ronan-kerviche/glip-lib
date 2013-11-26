@@ -978,6 +978,19 @@
 				return std::distance(recordIDs.begin(), it);
 		}
 
+		std::vector<int> ImagesCollection::getIndexFromResourceName(const std::string& name) const
+		{
+			std::vector<int> indices;
+
+			for(int k=0; k<imagesList.size(); k++)
+			{
+				if(imagesList[k]->getName().toStdString()==name)
+					indices.push_back(k);
+			}
+
+			return indices;
+		}
+
 		size_t ImagesCollection::currentDeviceOccupancy(size_t* canBeFreed)
 		{
 			size_t occupancy = 0;
@@ -1075,15 +1088,15 @@
 			else 
 			{
 				// Find if one of the image can be saved : 
-				bool 	canBeSaved 	= false,
+				bool 	canBeSaved 	= true,
 					allHaveMipmaps 	= true;
 				int	targetRecordID	= selectedRecordIDs.front();
 		
 				for(int k=0; k<selectedRecordIDs.size(); k++)
 				{
 					int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
-					canBeSaved 	= canBeSaved | (imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty());
-					allHaveMipmaps 	= allHaveMipmaps & imagesList[tid]->getFormat().getMaxLevel()>0;
+					canBeSaved 	= canBeSaved & (imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty());
+					allHaveMipmaps 	= allHaveMipmaps & (imagesList[tid]->getFormat().getMaxLevel()>0);
 		
 					if(!allHaveMipmaps)
 						targetRecordID = selectedRecordIDs[k];
@@ -1179,25 +1192,7 @@
 			std::vector<int> selectedRecordIDs = getSelectedRecordIDs();
 	
 			for(int k=0; k<selectedRecordIDs.size(); k++)
-			{
-				int id = getIndexFromRecordID( selectedRecordIDs[k] );
-
-				if( imagesList[id]->isVirtual() && !imagesList[id]->wasSaved() )
-				{
-					// TODO Dialog : 
-					
-				}
-
-				// Remove : 
-				removeRecord( selectedRecordIDs[k] );
-				delete imagesList[id];
-
-				recordIDs.erase(recordIDs.begin() + id);
-				imagesList.erase(imagesList.begin() + id);
-				lockedToDeviceList.erase(lockedToDeviceList.begin() + id);
-		
-				emit imageFreed( selectedRecordIDs[k] );
-			}
+				removeResource( selectedRecordIDs[k] );
 		}
 
 		void ImagesCollection::showContextMenu(const QPoint& point)
@@ -1347,9 +1342,30 @@
 			}
 		}
 
-		void ImagesCollection::addNewResource(HdlTexture& texture, const std::string& resourceName)
+		void ImagesCollection::addNewResource(HdlTexture& texture, const std::string& resourceName, bool replace)
 		{
+			QString filename;
+
+			if(replace)
+			{		
+				// Find possible name duplicates and remove them :
+				std::vector<int> sameNamesIndices = getIndexFromResourceName(resourceName);
+
+				if(sameNamesIndices.size()==1)
+					filename = imagesList[sameNamesIndices.front()]->getFilename(); // might still be empty.
+
+				for(std::vector<int>::iterator it=sameNamesIndices.begin(); it!=sameNamesIndices.end(); it++)
+				{
+					if(!removeResource(recordIDs[*it]))
+						return ;
+				}
+			}
+
 			imagesList.push_back( new ImageObject(texture) );
+			imagesList.back()->setName(resourceName.c_str());
+
+			if(!filename.isEmpty())
+				imagesList.back()->setFilename(filename);
 
 			TextureStatus s(TextureStatus::Resource);
 			s.location = TextureStatus::OnRAM;
@@ -1361,9 +1377,68 @@
 			emit imageLoaded(newRecordID);
 		}
 
+		bool ImagesCollection::removeResource(int recordID)
+		{
+			int idx = getIndexFromRecordID(recordID);
+
+			if(idx>=0)
+			{
+				if( imagesList[idx]->isVirtual() && !imagesList[idx]->wasSaved() )
+				{ 
+					QMessageBox 	message(this);
+					message.setText(tr("The resource \"%1\" (%2x%3 pixels) was not saved to the disk.").arg(imagesList[idx]->getName()).arg(imagesList[idx]->getFormat().getWidth()).arg(imagesList[idx]->getFormat().getHeight()));
+
+					QPushButton 	*saveAsButton		= message.addButton(tr("Save As"), QMessageBox::AcceptRole),
+							*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
+							*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole),
+							*saveButton		= NULL;
+				
+					if(!imagesList[idx]->getFilename().isEmpty())
+						message.addButton(tr("Save"), QMessageBox::AcceptRole);
+
+					message.setDefaultButton(saveAsButton);
+
+					message.exec();
+
+					if(message.clickedButton() == saveButton)
+						imagesList[idx]->save();
+					else if(message.clickedButton() == saveAsButton)
+					{
+						QString filename = openSaveInterface.saveAsDialog();
+
+						if(!filename.isEmpty())
+							imagesList[idx]->save(filename.toStdString());
+					}
+					else if(message.clickedButton() == cancelButton)
+						return false;
+					//else if(message.clickedButton() == discardButton)
+						// nothing
+				}
+
+				// Remove : 
+				removeRecord( recordID );
+				delete imagesList[idx];
+
+				recordIDs.erase(recordIDs.begin() + idx);
+				imagesList.erase(imagesList.begin() + idx);
+				lockedToDeviceList.erase(lockedToDeviceList.begin() + idx);
+		
+				emit imageFreed( recordID );
+			}
+			
+			return true; // removal was refused.
+		}
+
 		bool ImagesCollection::canBeClosed(void)
 		{
-			// TODO Check the virtual images which are not saved : 
-			return true;		
+			std::vector<int> tmpRecordIDs = recordIDs; // copy recordIDs because it will be modified as we remove element from it.
+
+			for(std::vector<int>::iterator it=tmpRecordIDs.begin(); it!=tmpRecordIDs.end(); it++)
+			{
+				if( !removeResource(*it) )
+					return false;
+			}
+
+			return true;
 		}
 

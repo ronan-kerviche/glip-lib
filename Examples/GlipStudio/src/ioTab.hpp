@@ -17,6 +17,7 @@
 			QMenu			imagesMenu,
 						contextMenu;
 			QAction			copyAsNewResourceAction,
+						replaceResourceAction,
 						copyAsNewResourceWithNewNameAction;
 			OpenSaveInterface	openSaveInterface;
 			TexturesList		portsList;
@@ -46,7 +47,8 @@
 			void newInputView(void);
 			void newOutputView(void);
 
-			void copyAsNewResource(void);
+			void copyAsNewResource(bool replace=false);
+			void replaceResource(void);
 			void copyAsNewResourceWithNewName(void);
 			void saveOutput(const QString& filename);
 

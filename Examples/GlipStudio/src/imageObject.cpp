@@ -175,10 +175,25 @@
 		return filename;
 	}
 
+	void ImageObject::setFilename(const QString& newFilename)
+	{
+		filename = newFilename;
+	}
+
 	QString ImageObject::getName(void) const
 	{
-		QFileInfo info(filename);
-		return info.fileName();
+		if(name.isEmpty())
+		{
+			QFileInfo info(filename);
+			return info.fileName();
+		}
+		else
+			return name;
+	}
+
+	void ImageObject::setName(const QString& newName)
+	{
+		name = newName;
 	}
 
 	const __ReadOnly_HdlTextureFormat& ImageObject::getFormat(void) const
@@ -245,7 +260,7 @@
 				throw Exception("Cannot save image to file \"" + targetFilename + "\".", __FILE__, __LINE__);
 
 			// Save filename : 
-			filename = targetFilename.c_str();
+			setFilename( targetFilename.c_str() );
 
 			// Clean : 
 			delete bufferImage;

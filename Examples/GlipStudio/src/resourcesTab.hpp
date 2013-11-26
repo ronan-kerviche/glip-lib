@@ -66,6 +66,7 @@
 			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
 			void updateTexturesLinkInformation(void);
+			bool canBeClosed(void);
 
 		private slots :
 			// These will be called upon external modifications, in order for the module to update itself :

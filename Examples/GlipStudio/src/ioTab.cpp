@@ -13,7 +13,8 @@
 		resourcesManagerLink(_resourcesManagerLink),
 		openSaveInterface("ImagesOutputPannel", "File", "*.png *.bmp *.jpg *.jpeg *.gif *.ppm"),
 		copyAsNewResourceAction("Copy as New Resource", this),
-		copyAsNewResourceWithNewNameAction("Copy as New Resource (with new name)", this)
+		replaceResourceAction("Replace existing or add as new Resource", this),
+		copyAsNewResourceWithNewNameAction("Copy as New Resource (with new name)...", this)
 	{
 		inputsViewManager = getViewManager();
 
@@ -26,6 +27,7 @@
 			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
 
 		imagesMenu.addAction(&copyAsNewResourceAction);
+		imagesMenu.addAction(&replaceResourceAction);
 		imagesMenu.addAction(&copyAsNewResourceWithNewNameAction);
 		openSaveInterface.addSaveToMenu(imagesMenu);
 		openSaveInterface.enableOpen(false);
@@ -47,6 +49,7 @@
 		pipelineStatusLabel.setReadOnly(true);
 
 		contextMenu.addAction(&copyAsNewResourceAction);
+		contextMenu.addAction(&replaceResourceAction);
 		contextMenu.addAction(&copyAsNewResourceWithNewNameAction);
 		openSaveInterface.addSaveToMenu(contextMenu);
 
@@ -60,6 +63,7 @@
 		connect(inputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newInputView()));
 		connect(outputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newOutputView()));
 		connect(&copyAsNewResourceAction,		SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
+		connect(&replaceResourceAction,			SIGNAL(triggered()),					this, SLOT(replaceResource()));
 		connect(&copyAsNewResourceWithNewNameAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResourceWithNewName()));
 		connect(&openSaveInterface,			SIGNAL(saveFile(const QString&)),			this, SLOT(saveOutput(const QString&)));
 		connect(&openSaveInterface,			SIGNAL(saveFileAs(const QString&)),			this, SLOT(saveOutput(const QString&)));
@@ -296,7 +300,7 @@
 			}
 		}
 		
-		void IOTab::copyAsNewResource(void)
+		void IOTab::copyAsNewResource(bool replace)
 		{
 			if(!pipelineExists() || !lastComputationWasSuccessful())
 				return ;
@@ -308,8 +312,13 @@
 				int outputPortID = getOutputPortIDFromRecordID(recordIDs[k]);
 
 				if(outputPortID>=0)
-					resourcesManagerLink->addNewResource(pipeline().out(outputPortID), pipeline().getOutputPortName(outputPortID));
+					resourcesManagerLink->addNewResource(pipeline().out(outputPortID), pipeline().getOutputPortName(outputPortID), replace);
 			}
+		}
+
+		void IOTab::replaceResource(void)
+		{
+			copyAsNewResource(true);
 		}
 
 		void IOTab::copyAsNewResourceWithNewName(void)

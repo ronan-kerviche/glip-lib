@@ -178,6 +178,11 @@
 			}
 		}
 
+		bool ResourcesTab::canBeClosed(void)
+		{
+			return collection.canBeClosed();
+		}
+
 	// Private slots : 
 		void ResourcesTab::pipelineWasCreated(void)
 		{

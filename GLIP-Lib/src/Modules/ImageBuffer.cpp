@@ -101,8 +101,8 @@
 	/**
 	\fn unsigned int ImageBuffer::getPixelIndex(unsigned int x, unsigned int y) const
 	\brief Get the pixel index corresponding to the position coordinates.
-	\param X-axis coordinate (along the width).
-	\param Y-axis coordinate (along the height).
+	\param x X-axis coordinate (along the width).
+	\param y Y-axis coordinate (along the height).
 	\return The pixel index.
 	**/
 	unsigned int ImageBuffer::getPixelIndex(unsigned int x, unsigned int y) const
@@ -124,14 +124,24 @@
 	/**
 	\fn unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const
 	\brief Get the component index.
-	\param X-axis coordinate (along the width).
-	\param Y-axis coordinate (along the height).
+	\param x X-axis coordinate (along the width).
+	\param y Y-axis coordinate (along the height).
 	\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
 	\return The component index.
 	**/
 	unsigned int ImageBuffer::getIndex(unsigned int x, unsigned int y, GLenum channel) const
 	{
 		return getPixelIndex(x,y)*descriptor.numChannels + getChannelIndex(channel);
+	}
+
+	/**
+	\fn const unsigned char* ImageBuffer::getBuffer(void) const
+	\brief Get access to the buffer.
+	\return A pointer to the buffer array.
+	**/
+	const unsigned char* ImageBuffer::getBuffer(void) const
+	{
+		return buffer;
 	}
 
 	/**

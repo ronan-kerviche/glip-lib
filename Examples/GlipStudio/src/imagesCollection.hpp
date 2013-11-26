@@ -246,6 +246,7 @@
 
 			// Private tools on memory : 
 			int getIndexFromRecordID(int recordID) const;
+			std::vector<int> getIndexFromResourceName(const std::string& name) const;
 			size_t currentDeviceOccupancy(size_t* canBeFreed=NULL);
 			void cleanCurrentCollection(void);
 			static size_t totalDeviceOccupancy(size_t* canBeFreed=NULL);
@@ -282,7 +283,8 @@
 			void unlockTextureFromDevice(int recordID);
 			HdlTexture& texture(int recordID);
 
-			void addNewResource(HdlTexture& texture, const std::string& resourceName);
+			void addNewResource(HdlTexture& texture, const std::string& resourceName, bool replace=false);
+			bool removeResource(int recordID);
 
 			bool canBeClosed(void);
 

@@ -13,7 +13,8 @@
 		private : 
 			bool 			virtualImage,
 						saved;
-			QString 		filename;
+			QString 		filename,
+						name;
 			ImageBuffer*		imageBuffer;
 			HdlTextureFormat 	textureFormat;
 			HdlTexture* 		textureData;
@@ -33,7 +34,9 @@
 			void setSWrapping(GLint m);
 			void setTWrapping(GLint m);
 			const QString& getFilename(void) const;
+			void setFilename(const QString& newFilename);
 			QString getName(void) const;
+			void setName(const QString& newName);
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& texture(void);
 			void save(const std::string& filename);

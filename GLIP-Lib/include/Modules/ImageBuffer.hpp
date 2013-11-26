@@ -59,6 +59,7 @@ namespace Glip
 				unsigned int getPixelIndex(unsigned int x, unsigned int y) const;
 				unsigned int getChannelIndex(GLenum channel) const;
 				unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const;
+				const unsigned char* getBuffer(void) const;
 
 				const ImageBuffer& operator<<(HdlTexture& texture);
 				const ImageBuffer& operator<<(const ImageBuffer& image);
@@ -136,8 +137,8 @@ namespace Glip
 		/**
 		\fn T ImageBuffer::get(unsigned int x, unsigned int y, GLenum channel) const
 		\brief Access data of the buffer with automatic dynamic range conversion.
-		\param X-axis coordinate (along the width).
-		\param Y-axis coordinate (along the height).
+		\param x X-axis coordinate (along the width).
+		\param y Y-axis coordinate (along the height).
 		\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
 		\return The value of the targeted component.
 		**/
@@ -165,8 +166,8 @@ namespace Glip
 		/**
 		\fn ImageBuffer& ImageBuffer::set(unsigned int x, unsigned int y, GLenum channel, const T& value)
 		\brief Write data to the buffer with automatic dynamic range conversion.
-		\param X-axis coordinate (along the width).
-		\param Y-axis coordinate (along the height).
+		\param x X-axis coordinate (along the width).
+		\param y Y-axis coordinate (along the height).
 		\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
 		\param value The value to be written.
 		\return This.
