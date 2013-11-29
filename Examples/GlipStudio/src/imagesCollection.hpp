@@ -62,6 +62,7 @@
 			int			portID;
 			ConnectionStatus	connectionStatus;
 			bool			lockedToDevice;
+			bool 			savedToDisk;
 			MemLoc			location;
 
 			TextureStatus(void);
@@ -82,7 +83,7 @@
 			std::vector<QTreeWidgetItem*>	itemsList;
 			std::vector<std::string>	namesList;
 			std::vector<TextureStatus>	statusList;
-			std::vector<HdlTextureFormat > 	formatsList;
+			std::vector<HdlTextureFormat> 	formatsList;
 			std::vector<bool>		hasFormatList;
 
 			int getIndexFromRecordID(int recordID) const;

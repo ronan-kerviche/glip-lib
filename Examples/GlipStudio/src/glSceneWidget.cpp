@@ -2,6 +2,8 @@
 	#include "glSceneWidget.hpp"
 	#include <limits>
 
+	#define MATHS_CST_PI (3.141592653589)
+
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -536,6 +538,44 @@
 			ViewLink::endQuietUpdate();
 	}
 
+// MouseData
+	GLSceneWidget::MouseData::MouseData(void)
+	 : 	xLastClick(0.0f),
+		yLastClick(0.0f),
+		xCurrent(0.0f),
+		yCurrent(0.0f),
+		xLastRelease(0.0f),
+		yLastRelease(0.0f),
+		xVectorCurrent(0.0f),
+		yVectorCurrent(0.0f),
+		xLastVector(0.0f),
+		yLastVector(0.0f)
+	{
+		std::memset(colorLastClick, 	0, sizeof(colorLastClick));
+		std::memset(colorCurrent, 	0, sizeof(colorCurrent));
+		std::memset(colorLastRelease, 	0, sizeof(colorLastRelease));
+	}
+
+	GLSceneWidget::MouseData::MouseData(const MouseData& c)
+	 :	xLastClick(c.xLastClick),
+		yLastClick(c.yLastClick),
+		xCurrent(c.xCurrent),
+		yCurrent(c.yCurrent),
+		xLastRelease(c.xLastRelease),
+		yLastRelease(c.yLastRelease),
+		xVectorCurrent(c.xVectorCurrent),
+		yVectorCurrent(c.yVectorCurrent),
+		xLastVector(c.xLastVector),
+		yLastVector(c.yLastVector)
+	{
+		for(int k=0; k<3; k++)
+		{
+			colorLastClick[k]	= c.colorLastClick[k];
+			colorCurrent[k]		= c.colorCurrent[k];
+			colorLastRelease[k]	= c.colorLastRelease[k];
+		}
+	}
+
 // Special shaders : 
 	const std::string placementVertexShaderSource = 	"#version 130															\n"
 								"																\n"
@@ -641,7 +681,7 @@
 		clearColorRed(0.1f),
 		clearColorGreen(0.1f),
 		clearColorBlue(0.1f),
-		handMode(true),
+		currentMouseMode(NoMode), 		// set latter in the constructor
 		contextMenu(this)
 	{
 		screenCenter[0]		= 0.0f;
@@ -707,9 +747,10 @@
 		resetGlobalZoomAction			= contextMenu.addAction(			"Reset Global Zoom", 			this, SLOT(resetGlobalZoom()));
 		resetGlobalAction			= contextMenu.addAction(			"Reset Global",				this, SLOT(resetGlobal()));
 		handModeAction 				= contextMenu.addAction(			"Hand Mode",				this, SLOT(switchSelectionMode()));
+		manipulationModeAction			= contextMenu.addAction(			"Manipulation Mode",			this, SLOT(switchSelectionMode()));
+		selectionModeAction			= contextMenu.addAction(			"Selection Mode",			this, SLOT(switchSelectionMode()));
 		toggleFullscreenAction			= contextMenu.addAction(			"Fullscreen",				this, SLOT(toggleFullscreenMode()));
 
-		handModeAction->setCheckable(true);
 		toggleFullscreenAction->setCheckable(true);
 
 		// Init keys :
@@ -727,7 +768,9 @@
 		setKeyForAction(KeyCloseView,			Qt::Key_Delete);
 		setKeyForAction(KeyControl,			Qt::Key_Control);
 		setKeyForAction(KeyShiftRotate,			Qt::Key_Shift);
-		setKeyForAction(KeyToggleHandMode,		Qt::Key_Alt);
+		setKeyForAction(KeySetHandMode,			Qt::ALT + Qt::Key_V);
+		setKeyForAction(KeySetManipulationMode,		Qt::ALT + Qt::Key_B);
+		setKeyForAction(KeySetSelectionMode,		Qt::ALT + Qt::Key_N);
 		setKeyForAction(KeySelectAll,			QKeySequence::SelectAll);
 
 		for(int i=0; i<NumActionKey; i++)
@@ -742,8 +785,7 @@
 
 		quad = new GeometryInstance( GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB );
 
-		handMode = false;
-		switchSelectionMode(); // Will turn hand mode to true and set the correct initialization.
+		switchSelectionMode(HandMode);
 	}
 
 
@@ -761,19 +803,9 @@
 	}
 
 	// Tools : 
-		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const QKeySequence& k) const
+		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const QKeyEvent& event) const
 		{
-			for(int i=0; i<NumActionKey; i++)
-				if(keyAssociation[i]==k)
-					return static_cast<GLSceneWidget::KeyAction>(i);
-
-			// else
-			return NoAction;
-		}
-
-		GLSceneWidget::KeyAction GLSceneWidget::correspondingAction(const QKeyEvent& e) const
-		{
-			const int s = (e.key() | e.modifiers());
+			const int s = (event.key() | event.modifiers());
 
 			for(int i=0; i<NumActionKey; i++)
 			{
@@ -801,10 +833,10 @@
 	// Qt events interception : 
 		void GLSceneWidget::keyPressEvent(QKeyEvent* event)
 		{
+			GLSceneWidget::KeyAction a = correspondingAction(*event);
+
 			if(!event->isAutoRepeat())
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(event->key());
-
 				#ifdef __VERBOSE__
 					std::cout << "GLSceneWidget::keyPressEvent - Event : Key pressed" << std::endl;
 				#endif
@@ -822,8 +854,6 @@
 			}
 			else
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(event->key());
-
 				if(a!=NoAction)
 					processAction();
 			}
@@ -833,7 +863,7 @@
 		{
 			if(!event->isAutoRepeat())
 			{
-				GLSceneWidget::KeyAction a = correspondingAction(event->key());
+				GLSceneWidget::KeyAction a = correspondingAction(*event);
 
 				#ifdef __VERBOSE__
 					std::cout << "GLSceneWidget::keyReleaseEvent - Event : Key released" << std::endl;
@@ -917,7 +947,7 @@
 			processAction();
 
 			// Test : 
-			//#ifdef __VERBOSE__
+			#ifdef __VERBOSE__
 				float ax, ay, rx, ry;
 				getGLCoordinatesAbsolute(lastPosX, lastPosY, ax, ay);
 				getGLCoordinatesRelative(lastPosX, lastPosY, rx, ry);
@@ -930,7 +960,7 @@
 					selectionList.front()->getLocalCoordinates(ax, ay, lx, ly);
 					std::cout << "Local    : " << lx << 'x' << ly << std::endl;
 				}
-			//#endif
+			#endif
 		}
 
 		void GLSceneWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -1081,26 +1111,25 @@
 		}
 
 	// Process Action function : 
-		ViewLink* GLSceneWidget::updateSelection(bool dropSelection)
+		ViewLink* GLSceneWidget::updateSelection(bool addToSelection, bool dropSelection, unsigned char* colorUnderClick)
 		{
-			unsigned char testRGB[3]; // To be removed?
-			ViewLink* under = getObjectIDUnder(lastPosX, lastPosY, testRGB);
+			ViewLink* under = getObjectIDUnder(lastPosX, lastPosY, colorUnderClick);
 
 			bool test = viewIsSelected(under);
 
 			if(under==NULL && !selectionList.empty() && !pressed(KeyControl) && dropSelection)
 				selectionList.clear();
-			else if(under!=NULL && !pressed(KeyControl) && !test)
+			else if(under!=NULL && !pressed(KeyControl) && !test && addToSelection)
 			{
 				selectionList.clear();
 				selectionList.push_back(under);
 			}
-			else if(under!=NULL && pressed(KeyControl) && !test)
+			else if(under!=NULL && pressed(KeyControl) && !test && addToSelection)
 			{
 				selectionList.push_back(under);
 			}
 
-			if(under!=NULL)
+			if(under!=NULL && addToSelection)
 				emit under->selected();
 
 			return under;
@@ -1108,7 +1137,12 @@
 	
 		void GLSceneWidget::processAction(void)
 		{
-			bool needUpdate = false;
+			bool 	needUpdate 		= false,
+				mouseDataWasUpdated	= false;
+
+			// Some static data : 
+			float xLastClick, yLastClick;
+			getGLCoordinatesAbsolute(lastPosX, lastPosY, xLastClick, yLastClick);
 
 			// Mouse : 
 				if(justDoubleLeftClicked())
@@ -1120,14 +1154,23 @@
 
 				if(justLeftClicked())
 				{
-					if(handMode)
+					if(currentMouseMode==HandMode)
 						setCursor(Qt::ClosedHandCursor);
 					else
-					{
-						ViewLink* under = updateSelection();
-		
-						if(under!=NULL)
+					{	unsigned char colorUnderClick[3]; 
+						ViewLink* under = updateSelection( (currentMouseMode==ManipulationMode), (currentMouseMode==ManipulationMode), colorUnderClick);
+
+						if(under!=NULL && currentMouseMode==ManipulationMode)
 							bringUpView(under);
+						else if(!selectionList.empty() && currentMouseMode==SelectionMode)
+						{
+							selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastClick, mouseData.yLastClick);
+
+							if(under==selectionList.back())
+								std::memcpy(mouseData.colorLastClick, colorUnderClick, 3*sizeof(unsigned char));
+
+							mouseDataWasUpdated = true;
+						}
 					}
 					
 					needUpdate = true; // Need update for deselection anymway.
@@ -1135,14 +1178,32 @@
 
 				if(justLeftClickReleased())
 				{
-					if(handMode)
+					if(currentMouseMode==HandMode)
 						setCursor(Qt::OpenHandCursor);
+					else
+					{
+						unsigned char colorUnderClick[3];
+						ViewLink* under = updateSelection(false, false, colorUnderClick);
+
+						if(!selectionList.empty() && currentMouseMode==SelectionMode)
+						{
+							selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastRelease, mouseData.yLastRelease);
+
+							mouseData.xLastVector	= mouseData.xLastRelease - mouseData.xLastClick;
+							mouseData.yLastVector	= mouseData.yLastRelease - mouseData.yLastClick;
+
+							if(under==selectionList.back())
+								std::memcpy(mouseData.colorLastRelease, colorUnderClick, 3*sizeof(unsigned char));
+
+							mouseDataWasUpdated = true;
+						}
+					}
 				}
 
 				if(justRightClicked())
 				{
-					if(!handMode)
-						updateSelection(false);
+					if(currentMouseMode==ManipulationMode)
+						updateSelection(true, false);
 
 					QPoint globalPos = mapToGlobal(QPoint(lastPosX, lastPosY));
 
@@ -1159,10 +1220,10 @@
 
 					getGLCoordinatesRelative(deltaX, deltaY, dx, dy);
 
-					if(!pressed(KeyShiftRotate))
+					if(!pressed(KeyShiftRotate) && currentMouseMode!=SelectionMode)
 					{
 						// Apply to selection as translation :
-						if(!selectionList.empty() && !handMode)
+						if(!selectionList.empty() && currentMouseMode==ManipulationMode)
 						{
 							for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
 							{
@@ -1170,40 +1231,50 @@
 								(*it)->centerCoords[1] += dy;
 							}
 						}
-						else if(handMode)
+						else if(currentMouseMode==HandMode)
 						{
 							screenCenter[0] += dx;
 							screenCenter[1] += dy;
 						}
 					}
-					else if(!handMode) // Rotation is only possible in selection mode
+					else if(currentMouseMode==ManipulationMode && !selectionList.empty()) // Rotation is only possible in selection mode
 					{
-						ViewLink* under = updateSelection(false);
+						// Compute angle for current center :
+						float 	ox	= 0.0f,
+							oy	= 0.0f,
+							nx	= 0.0f,
+							ny	= 0.0f,
+							dAngle 	= 0.0f;
 
-						if(under!=NULL)
-						{
-							// Compute angle for current center :
-							float 	ox	= 0.0f,
-								oy	= 0.0f,
-								nx	= 0.0f,
-								ny	= 0.0f,
-								dAngle 	= 0.0f;
+						getGLCoordinatesAbsolute(lastPosX, lastPosY, ox, oy);
+						getGLCoordinatesAbsolute(lastPosX - deltaX, lastPosY - deltaY, nx, ny);
 
-							getGLCoordinatesAbsolute(lastPosX, lastPosY, ox, oy);
-							getGLCoordinatesAbsolute(lastPosX - deltaX, lastPosY - deltaY, nx, ny);
+						ox	= selectionList.back()->centerCoords[0] - ox;
+						oy	= selectionList.back()->centerCoords[1] - oy;
+						nx 	= selectionList.back()->centerCoords[0] - nx;
+						ny	= selectionList.back()->centerCoords[1] - ny;
 
-							ox	= under->centerCoords[0] - ox;
-							oy	= under->centerCoords[1] - oy;
-							nx 	= under->centerCoords[0] - nx;
-							ny	= under->centerCoords[1] - ny;
+						//std::cout << "New angle : " << std::atan2(oy, ox) << std::endl;
+						dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
 
-							//std::cout << "New angle : " << std::atan2(oy, ox) << std::endl;
-							dAngle	= std::atan2(oy, ox) - std::atan2(ny, nx);
+						// Apply to selection as rotation :
+						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+							(*it)->angleRadians += dAngle;
+					}
+					else if(currentMouseMode==SelectionMode && !selectionList.empty())
+					{
+						unsigned char colorUnderClick[3];
+						ViewLink* under = updateSelection(false, false, colorUnderClick);
 
-							// Apply to selection as rotation :
-							for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-								(*it)->angleRadians += dAngle;
-						}
+						selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xCurrent, mouseData.yCurrent);
+
+						mouseData.xVectorCurrent	= mouseData.xCurrent - mouseData.xLastClick;
+						mouseData.yVectorCurrent	= mouseData.yCurrent - mouseData.yLastClick;
+
+						if(under==selectionList.back())
+							std::memcpy(mouseData.colorCurrent, colorUnderClick, 3*sizeof(unsigned char));
+
+						mouseDataWasUpdated = true;
 					}
 
 					needUpdate 	= true;
@@ -1213,12 +1284,12 @@
 
 				if( deltaWheelSteps!=0 )
 				{
-					if(!selectionList.empty() && !handMode)
+					if(!selectionList.empty() && currentMouseMode==ManipulationMode)
 					{
 						for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
 							(*it)->scale *= std::pow(1.2f, deltaWheelSteps);
 					}
-					else if(handMode)
+					else if(currentMouseMode!=ManipulationMode)
 					{
 						float xc, yc;
 						getGLCoordinatesAbsoluteRaw(lastPosX, lastPosY, xc, yc);
@@ -1230,12 +1301,18 @@
 				}
 
 			// Keyboard : 
-				if( justPressed(KeyToggleHandMode) )
-					switchSelectionMode();
+				if( justPressed(KeySetHandMode) )
+					switchSelectionMode(HandMode);
+			
+				if( justPressed(KeySetManipulationMode) )
+					switchSelectionMode(ManipulationMode);
+
+				if( justPressed(KeySetSelectionMode) )
+					switchSelectionMode(SelectionMode);
 
 				if( justPressed(KeyResetView) )
 				{
-					if(handMode)
+					if(currentMouseMode!=ManipulationMode)
 						resetGlobal();
 					else
 						resetSelection();
@@ -1276,6 +1353,9 @@
 				}
 
 			// Finally : 
+			if(mouseDataWasUpdated)
+				mouseDataUpdated(mouseData);
+
 			if(needUpdate)
 				paintGL();
 		}
@@ -1613,7 +1693,7 @@
 
 					glReadPixels(x, height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
 
-					std::cout << "Color picked : " << static_cast<int>(rgb[0]) << ',' << static_cast<int>(rgb[1]) << ',' << static_cast<int>(rgb[2]) << std::endl;
+					//std::cout << "Color picked : " << static_cast<int>(rgb[0]) << ',' << static_cast<int>(rgb[1]) << ',' << static_cast<int>(rgb[2]) << std::endl;
 				}
 
 				return links[rid];
@@ -1680,10 +1760,20 @@
 			else
 				showAllAction->setEnabled(true);
 
-			if(handMode)
-				handModeAction->setChecked(true);
+			if(currentMouseMode==HandMode)
+				handModeAction->setEnabled(false);
 			else
-				handModeAction->setChecked(false);
+				handModeAction->setEnabled(true);
+
+			if(currentMouseMode==ManipulationMode)
+				manipulationModeAction->setEnabled(false);
+			else
+				manipulationModeAction->setEnabled(true);
+
+			if(currentMouseMode==SelectionMode)
+				selectionModeAction->setEnabled(false);
+			else
+				selectionModeAction->setEnabled(true);
 
 			if(fullscreenModeEnabled)
 				toggleFullscreenAction->setChecked(true);
@@ -1786,14 +1876,35 @@
 
 		void GLSceneWidget::switchSelectionMode(void)
 		{
-			handMode = !handMode;
+			// Get caller : 
+			QAction* emitter = reinterpret_cast<QAction*>( QObject::sender() );
 
-			if(handMode && leftClick)
-				setCursor(Qt::ClosedHandCursor);
-			else if(handMode)
-				setCursor(Qt::OpenHandCursor);
+			if(emitter==handModeAction)		
+				switchSelectionMode(HandMode);
+			else if(emitter==manipulationModeAction)	
+				switchSelectionMode(ManipulationMode);
+			else if(emitter==selectionModeAction)	
+				switchSelectionMode(SelectionMode);
+			else					
+				switchSelectionMode(NoMode);
+		}
+
+		void GLSceneWidget::switchSelectionMode(MouseMode newMouseMode)
+		{
+			if(newMouseMode!=NoMode)
+				currentMouseMode = newMouseMode;
 			else
+				currentMouseMode = static_cast<MouseMode>( (currentMouseMode + 1) % NumMouseMode);
+
+			// Update cursor : 
+			if(currentMouseMode==HandMode && leftClick)
+				setCursor(Qt::ClosedHandCursor);
+			else if(currentMouseMode==HandMode)
+				setCursor(Qt::OpenHandCursor);
+			else if(currentMouseMode==ManipulationMode)
 				setCursor(Qt::ArrowCursor);
+			else //if(currentMouseMode==SelectionMode)
+				setCursor(Qt::CrossCursor);
 		}
 
 		void GLSceneWidget::setFullscreenMode(bool enabled)
@@ -1833,19 +1944,19 @@
 		void GLSceneWidget::turn90(void)
 		{
 			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				(*it)->angleRadians = -0.5f*M_PI;
+				(*it)->angleRadians = -0.5f*MATHS_CST_PI;
 		}
 
 		void GLSceneWidget::turn180(void)
 		{
 			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				(*it)->angleRadians = -M_PI;
+				(*it)->angleRadians = -MATHS_CST_PI;
 		}
 
 		void GLSceneWidget::turn270(void)
 		{
 			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				(*it)->angleRadians = -1.5f*M_PI;
+				(*it)->angleRadians = -1.5f*MATHS_CST_PI;
 		}
 
 		void GLSceneWidget::fliplr(void)
@@ -2030,7 +2141,9 @@
 					case KeyResetView:		resetGlobalAction->setShortcut( key );		break;
 					case KeyCloseView:		closeSelectedAction->setShortcut( key );	break;
 					case KeySelectAll:		selectAllAction->setShortcut( key );		break;
-					case KeyToggleHandMode:		handModeAction->setShortcut( key );		break;
+					case KeySetHandMode:		handModeAction->setShortcut( key );		break;
+					case KeySetManipulationMode:	manipulationModeAction->setShortcut( key );	break;
+					case KeySetSelectionMode:	selectionModeAction->setShortcut( key );	break;
 					case KeyToggleFullscreen:	toggleFullscreenAction->setShortcut( key );	break;
 					default:									break;
 				}

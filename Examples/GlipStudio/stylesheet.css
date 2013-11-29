@@ -342,6 +342,15 @@
 	QSpinBox::down-arrow
 	{ }
 
+	QSpinBox:!enabled
+	{
+		padding-left: 5px;
+		padding-right: 15px; /* make room for the arrows */
+		border:none;
+		background: #202020;
+		color: #777777;
+	}
+
 	QDoubleSpinBox
 	{
 		padding-left: 5px;
@@ -349,6 +358,15 @@
 		border:none;
 		background: #282828;
 		color: #FFFFFF;
+	}
+
+	QDoubleSpinBox:!enabled
+	{
+		padding-left: 5px;
+		padding-right: 15px; /* make room for the arrows */
+		border:none;
+		background: #202020;
+		color: #777777;
 	}
 
 /* QLINEDIT */
@@ -382,4 +400,11 @@
 		color: #FFFFFF;
 		background-color: #222222;
 	}*/
+
+	QToolTip
+	{
+		color: #ffffff; 
+		background-color: #333333;
+		border: none;
+	} 
 

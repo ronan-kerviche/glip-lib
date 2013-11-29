@@ -4,10 +4,13 @@
 
 // UniformObject	
 	UniformObject::UniformObject(const std::string& _varName)
-	 : QWidget(NULL), varName(_varName), hasBeenUpdated(false)
+	 : QWidget(NULL), varName(_varName), hasBeenUpdated(false), currentExternalDataLink(NoExternalLink)
 	{
 		//std::cout << "UniformObject::UniformObject : " << this << std::endl;
 		setAutoFillBackground(true);
+	
+		for(int k=0; k<NumExternalValueLink-1; k++)	// no accounting for no-link.
+			allowedExternalValueLink[k] = false;
 	}
 
 	UniformObject::~UniformObject(void)
@@ -47,12 +50,28 @@
 		this->blockSignals(false);
 	}
 
+	bool UniformObject::isExternalValueLinkAllowed(ExternalValueLink evl) const
+	{
+		return allowedExternalValueLink[evl];
+	}
+
+	const ExternalValueLink& UniformObject::getCurrentExternalValueLink(void) const
+	{
+		return currentExternalDataLink;
+	}
+
+	bool UniformObject::loadExternalData(const GLSceneWidget::MouseData& mouseData)
+	{
+		return false;
+	}
+
 // UniformUnknown
 	UniformUnknown::UniformUnknown(const std::string& name, const QString& message)
 	 : UniformObject(name), layout(this), label(message, this)
 	{
 		//std::cout << "UniformUnknown::UniformUnknown : " << this << std::endl;
-		item = new QTreeWidgetItem(NodeVarInteger);
+		item = new QTreeWidgetItem(NodeVarUnknown);
+		item->setData(0, Qt::UserRole, QVariant::fromValue<UniformObject*>( reinterpret_cast<UniformObject*>(this) ));
 
 		layout.addWidget(&label);
 
@@ -76,6 +95,9 @@
 	}
 
 	void UniformUnknown::applySettings(BoxesSettings&)
+	{ }
+
+	void UniformUnknown::setExternalValueLink(ExternalValueLink evl)
 	{ }
 
 // UniformInteger
@@ -107,11 +129,20 @@
 		
 		// Build item : 
 		item = new QTreeWidgetItem(NodeVarInteger);
+		item->setData(0, Qt::UserRole, QVariant::fromValue<UniformObject*>( reinterpret_cast<UniformObject*>(this) ));
 
 		if(un)
 			item->setText(0, tr("%1 [%2x%3xunsigned]").arg(getVarName().c_str()).arg(n).arg(m) );
 		else
 			item->setText(0, tr("%1 [%2x%3xint]").arg(getVarName().c_str()).arg(n).arg(m) );
+
+		// Set possible external links : 
+		if(n==1 && m==3)
+		{
+			allowedExternalValueLink[ColorLastClick]	= true;
+			allowedExternalValueLink[ColorCurrent]		= true;
+			allowedExternalValueLink[ColorLastRelease]	= true;
+		}
 	}
 
 	UniformInteger::~UniformInteger(void)
@@ -189,6 +220,47 @@
 		return item;
 	}
 
+	void UniformInteger::setExternalValueLink(ExternalValueLink evl)
+	{
+		currentExternalDataLink = evl;
+
+		const bool test = (evl==NoExternalLink);
+		
+		for(int k=0; k<data.count(); k++)
+			data[k]->setEnabled(test);
+
+		this->blockSignals(!test); // make sure that the modified flag is written but that the element does not send any further reports.
+	}
+
+	bool UniformInteger::loadExternalData(const GLSceneWidget::MouseData& mouseData)
+	{
+		switch(currentExternalDataLink)
+		{
+			case ColorLastClick :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue(mouseData.colorLastClick[k]);
+				return true;
+			case ColorCurrent :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue(mouseData.colorCurrent[k]);
+				return true;
+			case ColorLastRelease :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue(mouseData.colorCurrent[k]);
+				return true;
+			case NoExternalLink :
+				return false;
+			case LastClick :
+			case CurrentPosition : 
+			case LastRelease :
+			case VectorCurrent :
+			case LastVector :
+				throw Exception("UniformInteger::loadExternalData - Received external data which should have been forbidden (internal error).", __FILE__, __LINE__);
+			default :
+				throw Exception("UniformInteger::loadExternalData - Unknown external data link (internal error).", __FILE__, __LINE__);
+		}
+	}
+
 // UniformFloat
 	UniformFloat::UniformFloat(const std::string& name, GLenum _type, int n, int m)
 	 : UniformObject(name), item(NULL), layout(this), type(_type)
@@ -215,9 +287,26 @@
 		}
 		
 		// Build item : 
-		item = new QTreeWidgetItem(NodeVarInteger);
+		item = new QTreeWidgetItem(NodeVarFloatingPoint);
+		item->setData(0, Qt::UserRole, QVariant::fromValue<UniformObject*>( reinterpret_cast<UniformObject*>(this) ));
 
 		item->setText(0, tr("%1 [%2x%3xfloat]").arg(getVarName().c_str()).arg(n).arg(m) );
+
+		// Set possible external links : 
+		if(n==1 && m==2)
+		{
+			allowedExternalValueLink[LastClick]		= true;
+			allowedExternalValueLink[CurrentPosition]	= true;
+			allowedExternalValueLink[LastRelease]		= true;
+			allowedExternalValueLink[VectorCurrent]		= true;
+			allowedExternalValueLink[LastVector]		= true;
+		}
+		else if(n==1 && m==3)
+		{
+			allowedExternalValueLink[ColorLastClick]	= true;
+			allowedExternalValueLink[ColorCurrent]		= true;
+			allowedExternalValueLink[ColorLastRelease]	= true;
+		}
 	}
 
 	UniformFloat::~UniformFloat(void)
@@ -237,6 +326,7 @@
 
 	void UniformFloat::applyUpdate(HdlProgram& prgm)
 	{
+		std::cout << __LINE__ << " :: Applying " << getVarName() << std::endl;
 		float buffer[16];
 		
 		for(int k=0; k<data.size(); k++)
@@ -266,6 +356,61 @@
 		return item;
 	}
 
+	void UniformFloat::setExternalValueLink(ExternalValueLink evl)
+	{
+		currentExternalDataLink = evl;
+
+		const bool test = (evl==NoExternalLink);
+		
+		for(int k=0; k<data.count(); k++)
+			data[k]->setEnabled(test);
+
+		this->blockSignals(!test); // make sure that the modified flag is written but that the element does not send any further reports.
+	}
+
+	bool UniformFloat::loadExternalData(const GLSceneWidget::MouseData& mouseData)
+	{
+		switch(currentExternalDataLink)
+		{
+			case LastClick :
+				data[0]->setValue( mouseData.xLastClick );
+				data[1]->setValue( mouseData.yLastClick );
+				return true;
+			case CurrentPosition :
+				data[0]->setValue( mouseData.xCurrent );
+				data[1]->setValue( mouseData.yCurrent );
+				return true;
+			case LastRelease :
+				data[0]->setValue( mouseData.xLastRelease );
+				data[1]->setValue( mouseData.yLastRelease );
+				return true;
+			case VectorCurrent :
+				data[0]->setValue( mouseData.xVectorCurrent );
+				data[1]->setValue( mouseData.yVectorCurrent );
+				return true;
+			case LastVector :
+				data[0]->setValue( mouseData.xLastVector );
+				data[1]->setValue( mouseData.yLastVector );
+				return true;
+			case ColorLastClick :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue( static_cast<double>(mouseData.colorLastClick[k])/255.0 );
+				return true;
+			case ColorCurrent :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue( static_cast<double>(mouseData.colorCurrent[k])/255.0 );
+				return true;
+			case ColorLastRelease :
+				for(int k=0; k<data.count(); k++)
+					data[k]->setValue( static_cast<double>(mouseData.colorCurrent[k])/255.0 );
+				return true;
+			case NoExternalLink :
+				return false;
+			default :
+				throw Exception("UniformInteger::loadExternalData - Unknown external data link (internal error).", __FILE__, __LINE__);
+		}
+	}
+
 // FilterGroup
 	FilterElement::FilterElement(Filter& filter, const std::vector<std::string>& _path, QTreeWidget* tree)
 	 : name(filter.getName()), path(_path), item(NULL)
@@ -273,6 +418,7 @@
 		//std::cout << "FilterElement::FilterElement : " << this << std::endl;
 
 		item = new QTreeWidgetItem(NodeFilter);
+		item->setData(0, Qt::UserRole, QVariant::fromValue<UniformObject*>( reinterpret_cast<UniformObject*>(NULL) ));
 
 		item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(filter.getTypeName().c_str()) );
 
@@ -389,6 +535,16 @@
 		return objects.size();
 	}
 
+	bool FilterElement::spreadExternalData(const GLSceneWidget::MouseData& mouseData)
+	{
+		bool test = false;
+
+		for(int k=0; k<objects.size(); k++)
+			test = test || objects[k]->loadExternalData(mouseData);
+		
+		return test;
+	}
+
 // PipelineElement
 	PipelineElement::PipelineElement(const __ReadOnly_PipelineLayout& pipeline, const std::string& name, const std::string& pathStr, const std::vector<std::string>& path, Pipeline& mainPipeline, QTreeWidget* tree, bool isRoot)
 	 : item(NULL)
@@ -396,6 +552,7 @@
 		//std::cout << "PipelineElement::PipelineElement : " << this << std::endl;
 
 		item = new QTreeWidgetItem(NodeFilter);
+		item->setData(0, Qt::UserRole, QVariant::fromValue<UniformObject*>( reinterpret_cast<UniformObject*>(NULL) ));
 
 		if(!path.empty())
 			item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(pathStr.c_str()));
@@ -488,6 +645,19 @@
 			c += pipelineObjects[k]->varsCount();
 
 		return c;
+	}
+
+	bool PipelineElement::spreadExternalData(const GLSceneWidget::MouseData& mouseData)
+	{
+		bool test = false;
+
+		for(int k=0; k<filterObjects.size(); k++)
+			test = test || filterObjects[k]->spreadExternalData(mouseData);
+		
+		for(int k=0; k<pipelineObjects.size(); k++)
+			test = test || pipelineObjects[k]->spreadExternalData(mouseData);
+
+		return test;
 	}
 
 // Settings
@@ -898,6 +1068,90 @@
 		}
 	}
 
+// LinkToExternalValue
+	LinkToExternalValue::LinkToExternalValue(QWidget* parent)
+	 : 	QMenu("External values links", parent),
+		signalMapper(this),
+		target(NULL)
+	{
+		links[LastClick]	= addAction("Coordinates on last right click");
+		links[CurrentPosition]	= addAction("Current coordinates, when holding right click");
+		links[LastRelease]	= addAction("Coordinates on last right click release");
+		links[VectorCurrent]	= addAction("Current vector coordinates, between right click and current position");
+		links[LastVector]	= addAction("Last vector coordinates, between right click and release");
+		links[ColorLastClick]	= addAction("Color under last right click");
+		links[ColorCurrent]	= addAction("Color under current position, when holding right click");
+		links[ColorLastRelease]	= addAction("Color under last right click release");
+		links[NoExternalLink]	= addAction("Clear link");
+
+		for(int k=0; k<NumExternalValueLink; k++)
+		{
+			links[k]->setCheckable(true);
+			signalMapper.setMapping(links[k], k);
+            		connect(links[k], SIGNAL(triggered()), &signalMapper, SLOT(map()));
+		}
+
+		connect(&signalMapper, SIGNAL(mapped(int)), this, SLOT(changeExternalValueLinkTo(int)));
+
+		updateMenu();
+	}
+
+	LinkToExternalValue::~LinkToExternalValue(void)
+	{ }
+
+	void LinkToExternalValue::updateMenu(void)
+	{
+		target = NULL;
+
+		for(int k=0; k<NumExternalValueLink; k++)
+		{
+			links[k]->setEnabled(false);
+			links[k]->setChecked(false);
+		}
+	}
+
+	void LinkToExternalValue::updateMenu(QTreeWidgetItem* item)
+	{
+		if(item==NULL)
+		{
+			updateMenu();
+			return ;
+		}
+
+		// Get the uniform object pointer : 
+		target = item->data(0, Qt::UserRole).value<UniformObject*>(); //QVariant::value<UniformObject*>( item->data(0, Qt::UserRole) );
+		
+
+		if(item->type()<=NodeLeaf || item->type()>=NodeVarUnknown || target ==NULL)
+			updateMenu();
+		else
+		{
+			// Lock down the links which are not allowed :
+			for(int k=0; k<NumExternalValueLink-1; k++)
+			{
+				links[k]->setEnabled( target->isExternalValueLinkAllowed(static_cast<ExternalValueLink>(k)) );
+				links[k]->setChecked(false);
+			}
+			links[NoExternalLink]->setEnabled( true );
+			
+			// Set the checkable : 
+			if( target->getCurrentExternalValueLink()!=NoExternalLink )
+				links[ target->getCurrentExternalValueLink() ]->setChecked(true);
+		}
+	}
+
+	void LinkToExternalValue::changeExternalValueLinkTo(int link)
+	{
+		target->setExternalValueLink(static_cast<ExternalValueLink>(link));
+
+		// Update menu : 
+		for(int k=0; k<NumExternalValueLink-1; k++)
+			links[k]->setChecked(false);
+		
+		if( target->getCurrentExternalValueLink()!=NoExternalLink )
+			links[ target->getCurrentExternalValueLink() ]->setChecked(true);
+	}
+
 // UniformsTab
 	UniformsTab::UniformsTab(ControlModule& _masterModule, QWidget* parent)
 	 : 	Module(_masterModule, parent),
@@ -905,6 +1159,7 @@
 		showSettings("Settings", this),
 		tree(this),
 		settings(this),
+		linkToExternalValue(this),
 		mainPipeline(NULL),
 		dontAskForSave(false),
 		modified(false),
@@ -912,12 +1167,15 @@
 		fileMenu("File", this),
 		openSaveInterface("UniformsPannel", "File", "*.ppl *.ext *.uvd")
 	{
+		tree.setContextMenuPolicy(Qt::CustomContextMenu);
+
 		openSaveInterface.enableOpen(false);
 		openSaveInterface.enableSave(false);
 		openSaveInterface.enableSaveAs(false);
 
 		openSaveInterface.addToMenu(fileMenu);
 		menuBar.addMenu(&fileMenu);
+		menuBar.addMenu(&linkToExternalValue);
 		menuBar.addMenu(&mainLibraryMenu);
 		menuBar.addAction(&showSettings);
 
@@ -928,20 +1186,23 @@
 		settings.hide();
 
 		tree.setIndentation(8);
-		tree.setSelectionMode(QAbstractItemView::NoSelection);
+		//tree.setSelectionMode(QAbstractItemView::NoSelection);
+		tree.setSelectionMode(QAbstractItemView::SingleSelection);
 
 		QStringList listLabels;
 		listLabels.push_back("Name");
 		listLabels.push_back("Data");
 		tree.setHeaderLabels( listLabels );
 
-		QObject::connect(&showSettings,		SIGNAL(triggered()),			this, 	SLOT(switchSettings()));
-		QObject::connect(&openSaveInterface,	SIGNAL(openFile(const QStringList&)),	this,	SLOT(loadData(const QStringList&)));
-		QObject::connect(&openSaveInterface,	SIGNAL(saveFileAs(const QString&)),	this,	SLOT(saveData(const QString&)));
-		QObject::connect(&openSaveInterface,	SIGNAL(saveFile(const QString&)),	this,	SLOT(saveData(const QString&)));
-		QObject::connect(&settings,		SIGNAL(settingsChanged()),		this,	SLOT(settingsChanged()));
-		QObject::connect(this, 			SIGNAL(requestDataUpdate()),		this,	SLOT(dataWasModified()));
-		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),		this, 	SLOT(mainLibraryPipelineUpdate()));
+		QObject::connect(&showSettings,		SIGNAL(triggered()),						this, 			SLOT(switchSettings()));
+		QObject::connect(&openSaveInterface,	SIGNAL(openFile(const QStringList&)),				this,			SLOT(loadData(const QStringList&)));
+		QObject::connect(&openSaveInterface,	SIGNAL(saveFileAs(const QString&)),				this,			SLOT(saveData(const QString&)));
+		QObject::connect(&openSaveInterface,	SIGNAL(saveFile(const QString&)),				this,			SLOT(saveData(const QString&)));
+		QObject::connect(&settings,		SIGNAL(settingsChanged()),					this,			SLOT(settingsChanged()));
+		QObject::connect(this, 			SIGNAL(requestDataUpdate()),					this,			SLOT(dataWasModified()));
+		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),					this, 			SLOT(mainLibraryPipelineUpdate()));
+		QObject::connect(&tree,			SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),	&linkToExternalValue,	SLOT(updateMenu(QTreeWidgetItem*)));
+		QObject::connect(&tree,			SIGNAL(customContextMenuRequested(const QPoint&)), 		this, 			SLOT(showContextMenu(const QPoint&)));
 	}
 
 	UniformsTab::~UniformsTab(void)
@@ -956,6 +1217,7 @@
 
 		// Disconnect : 
 		tree.blockSignals(true);
+		linkToExternalValue.updateMenu();
 
 		/*QTreeWidgetItem* root = tree.takeTopLevelItem(0);
 
@@ -1005,6 +1267,7 @@
 		{
 			if(pipelineUniformsCanBeModified())
 			{
+				std::cout << __LINE__ << " :: Applying modification." << std::endl;
 				mainPipeline->update(pipeline());
 				requirePipelineComputation();
 			}
@@ -1173,6 +1436,13 @@
 			}
 		}		
 	}
+
+	void UniformsTab::showContextMenu(const QPoint& point)
+	{
+		QPoint globalPos = tree.viewport()->mapToGlobal(point);
+
+		linkToExternalValue.exec(globalPos);
+	}
 			
 	void UniformsTab::pipelineWasCreated(void)
 	{
@@ -1215,4 +1485,17 @@
 		openSaveInterface.clearLastSaveMemory();
 	}
 
+	void UniformsTab::mouseParametersWereUpdated(const GLSceneWidget::MouseData& data)
+	{
+		if(mainPipeline!=NULL)
+		{
+			bool test = mainPipeline->spreadExternalData(data);
+
+			if(test)
+			{
+				std::cout << __LINE__ << " :: Emitting data update request." << std::endl;
+				emit requestDataUpdate();
+			}
+		}
+	}
 

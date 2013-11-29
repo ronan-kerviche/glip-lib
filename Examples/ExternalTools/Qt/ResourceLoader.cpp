@@ -144,7 +144,7 @@
 		HdlTexture* texture = new HdlTexture(fmt);
 
 		#ifndef __USE_PBO__
-			unsigned char* temp = new unsigned char[image.width()*image.height()*descriptor.numComponents];
+			unsigned char* temp = new unsigned char[image.width()*image.height()*descriptor.numChannels];
 			int t=0;
 
 			for(int i=0; i<image.height(); i++)
@@ -153,13 +153,13 @@
 				{
 					QRgb col 	= image.pixel(j,i);
 									temp[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-					if(descriptor.numComponents>1)	temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-					if(descriptor.numComponents>2)	temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+					if(descriptor.numChannels>1)	temp[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+					if(descriptor.numChannels>2)	temp[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
 
-					if(descriptor.hasAlphaLayer)
+					if(descriptor.hasAlphaChannel)
 						temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
 
-					t += descriptor.numComponents;
+					t += descriptor.numChannels;
 				}
 			}
 
@@ -170,7 +170,7 @@
 			try
 			{
 				//Example for texture streaming to the GPU (live video for example, but in that case, the PBO is only created once)
-				//HdlPBO pbo(image.width(),image.height(),descriptor.numComponents,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
+				//HdlPBO pbo(image.width(),image.height(),descriptor.numChannels,1,GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
 				HdlPBO pbo(fmt, GL_PIXEL_UNPACK_BUFFER_ARB, GL_STREAM_DRAW_ARB);
 
 				// YOU MUST WRITE ONCE IN THE TEXTURE BEFORE USING PBO::copyToTexture ON IT.
@@ -185,13 +185,13 @@
 					{
 						QRgb col 	= image.pixel(j,i);
 										ptr[t+0] 	= static_cast<unsigned char>( qRed( col ) );
-						if(descriptor.numComponents>1)	ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
-						if(descriptor.numComponents>1)	ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
+						if(descriptor.numChannels>1)	ptr[t+1] 	= static_cast<unsigned char>( qGreen( col ) );
+						if(descriptor.numChannels>1)	ptr[t+2] 	= static_cast<unsigned char>( qBlue( col ) );
 
-						if(descriptor.hasAlphaLayer)
+						if(descriptor.hasAlphaChannel)
 							temp[t+3] 	= static_cast<unsigned char>( qAlpha( col ) );
 
-						t += descriptor.numComponents;
+						t += descriptor.numChannels;
 					}
 				}
 
@@ -224,17 +224,17 @@
 			const int depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( texture.getGLDepth() );
 
 			// Test input image : 
-			if( descriptor.hasLuminanceLayer && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
+			if( descriptor.hasLuminanceChannel && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
 			{
 				id = eLUMI;
 				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
 			}
-			else if( descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && !descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+			else if( descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && !descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
 			{
 				id = eRGB8;
 				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_RGB888);
 			}
-			else if(descriptor.hasRedLayer && descriptor.hasGreenLayer && descriptor.hasBlueLayer && descriptor.hasAlphaLayer && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+			else if(descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
 			{
 				id = eRGBA;
 				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_ARGB32);
@@ -307,7 +307,7 @@
 								throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
 						}
 						bufferImage->setPixel(x, y, value.rgba());
-						p += descriptor.numComponents;
+						p += descriptor.numChannels;
 					}
 				}
 

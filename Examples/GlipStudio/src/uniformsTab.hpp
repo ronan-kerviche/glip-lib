@@ -26,10 +26,26 @@
 
 	enum NodesType
 	{
-		NodeFilter	= 1,		
-		NodePipeline	= 2,
-		NodeLeaf	= 10,
-		NodeVarInteger	= 12
+		NodeFilter		= 1,		
+		NodePipeline		= 2,
+		NodeLeaf		= 10,
+		NodeVarInteger		= 11,
+		NodeVarFloatingPoint	= 12,
+		NodeVarUnknown		= 99
+	};
+
+	enum ExternalValueLink
+	{
+		LastClick,
+		CurrentPosition,
+		LastRelease,
+		VectorCurrent,
+		LastVector,
+		ColorLastClick,
+		ColorCurrent,
+		ColorLastRelease,
+		NoExternalLink,
+		NumExternalValueLink,
 	};
 
 	class BoxesSettings;
@@ -41,8 +57,11 @@
 		private :
 			const std::string 	varName;
 			bool			hasBeenUpdated;
-
+			
 		protected : 
+			bool			allowedExternalValueLink[NumExternalValueLink];
+			ExternalValueLink	currentExternalDataLink;
+
 			UniformObject(const std::string& _varName);
 			
 			virtual void applyUpdate(HdlProgram& prgm) = 0;
@@ -51,7 +70,7 @@
 		protected slots : 
 			void declareUpdate(void);
 
-		public : 		
+		public : 
 			virtual ~UniformObject(void);
 	
 			virtual QTreeWidgetItem* treeItem(void) const = 0;
@@ -60,12 +79,20 @@
 			void update(HdlProgram& prgm);
 			void read(HdlProgram& prgm);
 
+			bool isExternalValueLinkAllowed(ExternalValueLink evl) const;
+			const ExternalValueLink& getCurrentExternalValueLink(void) const;
+			virtual void setExternalValueLink(ExternalValueLink evl) = 0;
+			virtual bool loadExternalData(const GLSceneWidget::MouseData& mouseData);
+
 		public slots : 
 			virtual void applySettings(BoxesSettings&) = 0;
 
 		signals : 
 			void updated(void);
 	};
+
+		// Qt need this : 
+		Q_DECLARE_METATYPE(UniformObject*)
 
 	class UniformUnknown : public UniformObject
 	{
@@ -84,6 +111,8 @@
 			~UniformUnknown(void);
 
 			QTreeWidgetItem* treeItem(void) const;
+
+			void setExternalValueLink(ExternalValueLink evl);
 
 		public slots : 
 			void applySettings(BoxesSettings&);	
@@ -108,6 +137,8 @@
 			~UniformInteger(void);
 
 			QTreeWidgetItem* treeItem(void) const;
+			void setExternalValueLink(ExternalValueLink evl);
+			bool loadExternalData(const GLSceneWidget::MouseData& mouseData);
 
 		public slots :
 			void applySettings(BoxesSettings&);
@@ -131,6 +162,8 @@
 			~UniformFloat(void);
 
 			QTreeWidgetItem* treeItem(void) const;
+			void setExternalValueLink(ExternalValueLink evl);
+			bool loadExternalData(const GLSceneWidget::MouseData& mouseData);
 
 		public slots :
 			void applySettings(BoxesSettings&);
@@ -153,6 +186,7 @@
 			QTreeWidgetItem* treeItem(void) const;
 			void update(Pipeline& pipeline);
 			int varsCount(void) const;
+			bool spreadExternalData(const GLSceneWidget::MouseData& mouseData);
 
 		signals :
 			void updated(void);
@@ -175,6 +209,7 @@
 			QTreeWidgetItem* treeItem(void) const;
 			void update(Pipeline& pipeline);
 			int varsCount(void) const;
+			bool spreadExternalData(const GLSceneWidget::MouseData& mouseData);
 
 		signals :
 			void updated(void);
@@ -256,6 +291,25 @@
 			void requireProcessing(void);
 	};
 
+	class LinkToExternalValue : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			QSignalMapper	signalMapper;
+			QAction		*links[NumExternalValueLink];
+			UniformObject	*target;	
+
+		public :
+			LinkToExternalValue(QWidget* parent=NULL);
+			~LinkToExternalValue(void);
+
+		public slots :
+			void updateMenu(void);
+			void updateMenu(QTreeWidgetItem* target);
+			void changeExternalValueLinkTo(int link);
+	};
+
 	class UniformsTab : public Module
 	{
 		Q_OBJECT
@@ -270,8 +324,8 @@
 			OpenSaveInterface	openSaveInterface;
 			QAction			showSettings;
 			BoxesSettings		settings;
+			LinkToExternalValue	linkToExternalValue;
 			QTreeWidget		tree;
-			//QString		currentPath;
 			
 			PipelineElement*	mainPipeline;
 
@@ -289,10 +343,12 @@
 			bool loadData(const QStringList& filenames);	
 			void saveData(const QString& filename);
 			void mainLibraryPipelineUpdate(void);
+			void showContextMenu(const QPoint& point);
 
 			// Inherited :
 			void pipelineWasCreated(void);
 			void pipelineWasDestroyed(void);
+			void mouseParametersWereUpdated(const GLSceneWidget::MouseData& data);
 
 		public : 
 			UniformsTab(ControlModule& _masterModule, QWidget* parent=NULL);

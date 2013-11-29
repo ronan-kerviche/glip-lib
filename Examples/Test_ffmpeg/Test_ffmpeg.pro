@@ -12,7 +12,7 @@ unix: LIBS        += 	-lavutil \
 			-lavcodec \
 			-lavutil \
 			-lswscale \
-			../../GLIP-Lib/lib/libglip.a
+			../../GLIP-Lib/lib/libglip.so
 
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib

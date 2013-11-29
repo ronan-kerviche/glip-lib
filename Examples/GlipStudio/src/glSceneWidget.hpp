@@ -6,6 +6,7 @@
 
 	#include "GLIPLib.hpp"
 	#include <cmath>
+	#include <cstring>
 	#include <QGLWidget>
 	#include <QKeyEvent>
 	#include <QVBoxLayout>
@@ -148,11 +149,44 @@
 				KeyCloseView,
 				KeyControl,
 				KeyShiftRotate,
-				KeyToggleHandMode,
+				KeySetHandMode,
+				KeySetManipulationMode,
+				KeySetSelectionMode,
 				KeySelectAll,
 				// Add new keys before this line
 				NumActionKey,
 				NoAction
+			};
+
+			// Current mouse mode : 
+			enum MouseMode
+			{
+				HandMode,
+				ManipulationMode,
+				SelectionMode,
+				NumMouseMode,
+				NoMode
+			};
+
+			// Current mouse data : 
+			struct MouseData
+			{
+				float 		xLastClick,
+						yLastClick,
+						xCurrent,
+						yCurrent,
+						xLastRelease,
+						yLastRelease,
+						xVectorCurrent,
+						yVectorCurrent,
+						xLastVector,
+						yLastVector;
+				unsigned char	colorLastClick[3],
+						colorCurrent[3],
+						colorLastRelease[3];
+
+				MouseData(void);
+				MouseData(const MouseData& c);
 			};
 
 		private : 
@@ -205,7 +239,7 @@
 			float					screenCenter[2],
 								homothetieCentre[2];
 			float					homothetieRapport;
-			bool					handMode;
+			MouseMode				currentMouseMode;
 
 			// Menu : 
 			QMenu					contextMenu;
@@ -223,6 +257,8 @@
 								*resetGlobalZoomAction,
 								*resetGlobalAction,
 								*handModeAction,
+								*manipulationModeAction,
+								*selectionModeAction,
 								*toggleFullscreenAction;
 			QMenu					*transformationOfSelectionMenu;				
 			QAction					*turn0Action,
@@ -232,9 +268,11 @@
 								*fliplrAction,
 								*flipudAction;
 
+			// Mouse and coordinates memory : 
+			MouseData				mouseData;
+
 			// Tools : 
 			int getViewID(const ViewLink* view) const;
-			KeyAction correspondingAction(const QKeySequence& k) const;
 			KeyAction correspondingAction(const QKeyEvent& e) const;
 
 			// Qt Events interception : 
@@ -258,7 +296,7 @@
 			bool justMouseWheelTurned(void);
 
 			// Event processing function : 
-			ViewLink* updateSelection(bool dropSelection=true);
+			ViewLink* updateSelection(bool addToSelection, bool dropSelection, unsigned char* colorUnderClick=NULL);
 			void processAction(void);
 
 			// QGL Tools : 
@@ -291,6 +329,7 @@
 			void resetGlobalZoom(void);
 			void resetGlobal(void);
 			void switchSelectionMode(void);
+			void switchSelectionMode(MouseMode newMouseMode);
 			void setFullscreenMode(bool enabled);
 			void toggleFullscreenMode(void);
 			void turn0(void);
@@ -336,6 +375,7 @@
 
 		signals :
 			void requireContainerCatch(void);
+			void mouseDataUpdated(const GLSceneWidget::MouseData& data); 
 	};
 
 	class GLSceneWidgetContainer : public QWidget

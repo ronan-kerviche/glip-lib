@@ -108,6 +108,7 @@
 				TextureStatus s( TextureStatus::InputPort );
 				s.location 		= TextureStatus::VirtualLink;
 				s.portID		= k;
+				s.savedToDisk		= true;
 
 				inputRecordIDs[k] = portsList.addRecord( pipeline().getInputPortName(k), s );
 				pipelineInputWasModified(k);
@@ -119,6 +120,7 @@
 				s.location 		= TextureStatus::OnVRAM;
 				s.connectionStatus 	= lastComputationWasSuccessful() ? TextureStatus::Connected : TextureStatus::NotConnected ;
 				s.portID		= k;
+				s.savedToDisk		= true;
 
 				outputRecordIDs[k] = portsList.addRecord( pipeline().getOutputPortName(k), pipeline().out(k).format(), s );
 			}

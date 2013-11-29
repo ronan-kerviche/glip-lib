@@ -7,6 +7,7 @@
 		portID(-1),
 		connectionStatus(NotConnected),
 		lockedToDevice(false),
+		savedToDisk(false),
 		type(NoType),
 		location(NoMemLoc)
 	{ }
@@ -16,6 +17,7 @@
 		portID(c.portID),
 		connectionStatus(c.connectionStatus),
 		lockedToDevice(c.lockedToDevice),
+		savedToDisk(c.savedToDisk),
 		type(c.type),
 		location(c.location)
 	{ }
@@ -26,6 +28,7 @@
 		portID(-1),
 		connectionStatus(NotConnected),
 		lockedToDevice(false),
+		savedToDisk(false),
 		location(NoMemLoc)
 	{ }
 
@@ -45,6 +48,7 @@
 		portID			= c.portID;
 		connectionStatus	= c.connectionStatus;
 		lockedToDevice		= c.lockedToDevice;
+		savedToDisk		= c.savedToDisk;
 		type			= c.type;
 		location		= c.location;
 
@@ -60,7 +64,7 @@
 		setContextMenuPolicy(Qt::CustomContextMenu);
 
 		QStringList listLabels;
-		listLabels.push_back("Status");
+		listLabels.push_back("  Status  "); // The extra spaces ensure the extra-long content is not trunctated in the column.
 		listLabels.push_back("Connection");
 		listLabels.push_back("Name");
 		listLabels.push_back("Size");
@@ -290,6 +294,23 @@
 		QBrush 	foreground	= palette().foreground().color(),
 			lighter		= QBrush(foreground.color().lighter(80));
 		itemsList[id]->setForeground(3, lighter );
+
+		// Tooltip : 
+		QString toolTip;
+
+		toolTip += "<table>";
+			if(s>1024*1024)
+				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3 MB)</td></tr>").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(s/(1024*1024));
+			else
+				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3 KB)</td></tr>").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(s/(1024));
+			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( newFormat.getGLMode() ).c_str());
+			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( newFormat.getGLDepth() ).c_str());
+			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( newFormat.getMinFilter() ).c_str()).arg(glParamName( newFormat.getMagFilter() ).c_str());
+			toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( newFormat.getSWrapping() ).c_str()).arg(glParamName( newFormat.getTWrapping() ).c_str());
+			toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(newFormat.getBaseLevel()).arg(newFormat.getMaxLevel());
+		toolTip += "</table>";
+
+		itemsList[id]->setToolTip(3, toolTip); 
 	}
 
 	const TextureStatus& TexturesList::recordStatus(int recordID)
@@ -313,24 +334,27 @@
 			QString message;
 			QBrush brush;
 
+			if(!s.savedToDisk)
+				message += "* ";
+
 			if( s.location==TextureStatus::NotLoaded )
 			{
-				message = "DISK";
+				message += "DISK";
 				brush = QBrush(Qt::darkRed);
 			}
 			else if( s.location==TextureStatus::OnRAM )
 			{
-				message = "RAM";
+				message += "RAM";
 				brush = QBrush(QColor(255, 128, 0));
 			}
 			else if( s.location==TextureStatus::OnVRAM )
 			{
-				message = "VRAM";
+				message += "VRAM";
 				brush = QBrush(Qt::green);
 			}
 			else if( s.location==TextureStatus::VirtualLink)
 			{
-				message = "LINK";
+				message += "LINK";
 				brush = QBrush(Qt::lightGray);
 			}
 			else
@@ -1141,7 +1165,8 @@
 					imagesList.push_back( new ImageObject(currentFilename) );
 
 					TextureStatus s(TextureStatus::Resource);
-					s.location = TextureStatus::OnRAM;
+					s.location 	= TextureStatus::OnRAM;
+					s.savedToDisk 	= true;
 
 					int newRecordID = addRecord( imagesList.back()->getName().toStdString(), imagesList.back()->getFormat(), s);
 					recordIDs.push_back(newRecordID);
@@ -1151,7 +1176,7 @@
 				}
 				catch(Exception& e)
 				{
-					// TODO
+					// TODO : Add a clean error message.
 					std::cerr << "Caught exception while loading : " << std::endl;
 					std::cout << e.what() << std::endl;
 				}
@@ -1167,7 +1192,14 @@
 				int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
 
 				if( imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty() )
+				{
 					imagesList[tid]->save();
+
+					// Update the status : 
+					TextureStatus s = recordStatus( selectedRecordIDs[k] );
+					s.savedToDisk = true;
+					updateRecordStatus( selectedRecordIDs[k], s );
+				}
 			}
 		}
 
@@ -1183,6 +1215,11 @@
 				{
 					imagesList[id]->save( filename.toStdString() );
 					openSaveInterface.reportSuccessfulSave( filename );
+
+					// Update the status : 
+					TextureStatus s = recordStatus( selectedRecordIDs.front() );
+					s.savedToDisk = true;
+					updateRecordStatus( selectedRecordIDs.front(), s );
 				}
 			}
 		}
@@ -1368,7 +1405,8 @@
 				imagesList.back()->setFilename(filename);
 
 			TextureStatus s(TextureStatus::Resource);
-			s.location = TextureStatus::OnRAM;
+			s.location 	= TextureStatus::OnRAM;
+			s.savedToDisk 	= false;
 			
 			int newRecordID = addRecord( resourceName, imagesList.back()->getFormat(), s);
 			recordIDs.push_back(newRecordID);
@@ -1388,7 +1426,7 @@
 					QMessageBox 	message(this);
 					message.setText(tr("The resource \"%1\" (%2x%3 pixels) was not saved to the disk.").arg(imagesList[idx]->getName()).arg(imagesList[idx]->getFormat().getWidth()).arg(imagesList[idx]->getFormat().getHeight()));
 
-					QPushButton 	*saveAsButton		= message.addButton(tr("Save As"), QMessageBox::AcceptRole),
+					QPushButton 	*saveAsButton		= message.addButton(tr("Save As..."), QMessageBox::AcceptRole),
 							*discardButton		= message.addButton(tr("Discard"), QMessageBox::DestructiveRole),
 							*cancelButton		= message.addButton(tr("Cancel"), QMessageBox::RejectRole),
 							*saveButton		= NULL;

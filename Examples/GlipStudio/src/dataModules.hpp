@@ -93,6 +93,7 @@
 			virtual void pipelineInputFromThisModuleWasReleased(int portID, int recordID);
 			virtual void pipelineUniformsWereModified(void);
 			virtual void pipelineWasDestroyed(void);
+			virtual void mouseParametersWereUpdated(const GLSceneWidget::MouseData& data);
 
 		signals : 
 			// These must be called after performing some actions on the pipeline :

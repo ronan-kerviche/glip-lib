@@ -46,3 +46,5 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/libraryInterface.cpp \
 			./src/mainInterface.cpp
 
+ICON		= 	../../Doc/Doxygen/Graphics/gliplibLogo.svg
+
