@@ -52,6 +52,12 @@
 			masterModule->unregisterInputTexture(this, recordID);
 	}
 
+	void Module::releaseInputPort(int portID)
+	{
+		if(masterModule!=NULL)
+			masterModule->releaseInputPort(portID);
+	}
+
 	bool Module::requirePrepareToPipelineUniformsModification(void)
 	{
 		if(masterModule==NULL)
@@ -617,6 +623,39 @@
 				}
 
 				emit pipelineInputWasReleased(k);
+			}
+		}
+	}
+
+	void ControlModule::releaseInputPort(int portID)
+	{
+		if(portID<inputTextureRecordIDs.size())
+		{
+			// Check if all modules allow inputs change : 
+			bool poll = true;
+
+			for(std::vector<Module*>::iterator itr=clients.begin(); itr!=clients.end() && poll; itr++)
+				poll = poll && (*itr)->pipelineInputsCanBeModified();
+
+			if( poll )
+			{
+				if(inputTextureOwners[portID]!=NULL && inputTextureRecordIDs[portID]>=0)
+					inputTextureOwners[portID]->pipelineInputFromThisModuleWasReleased(portID, inputTextureRecordIDs[portID]);
+
+				inputTextureRecordIDs[portID]	= -1;
+				inputTextureOwners[portID]	= NULL;
+
+				if( pipelineExists() )
+				{
+					// Removed part : 
+					//pipelineCompilation();		// Will update to the right sizes.
+					//requirePipelineComputation();
+
+					if(portID<pipeline().getNumInputPort())
+						requirePipelineComputation();
+				}
+
+				emit pipelineInputWasReleased(portID);
 			}
 		}
 	}

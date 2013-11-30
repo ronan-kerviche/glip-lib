@@ -16,7 +16,8 @@
 			QMenuBar		menuBar;
 			QMenu			imagesMenu,
 						contextMenu;
-			QAction			copyAsNewResourceAction,
+			QAction			releaseInputAction,
+						copyAsNewResourceAction,
 						replaceResourceAction,
 						copyAsNewResourceWithNewNameAction;
 			OpenSaveInterface	openSaveInterface;
@@ -47,6 +48,7 @@
 			void newInputView(void);
 			void newOutputView(void);
 
+			void releaseInput(void);
 			void copyAsNewResource(bool replace=false);
 			void replaceResource(void);
 			void copyAsNewResourceWithNewName(void);

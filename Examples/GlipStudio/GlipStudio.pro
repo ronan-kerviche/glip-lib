@@ -14,6 +14,7 @@ win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 HEADERS      	+= 	./src/glSceneWidget.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
+			../ExternalTools/Qt/ResourceLoader.hpp \
 			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
 			./src/codePannel.hpp \
@@ -31,6 +32,7 @@ HEADERS      	+= 	./src/glSceneWidget.hpp \
 SOURCES      	+= 	./src/main.cpp \
 			./src/glSceneWidget.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
+			../ExternalTools/Qt/ResourceLoader.cpp \
 			./src/dataModules.cpp \
 			./src/codeEditor.cpp \
 			./src/codePannel.cpp \

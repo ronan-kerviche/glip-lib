@@ -726,7 +726,6 @@
 
 		// Contextual Menu : 
 		selectAllAction				= contextMenu.addAction(			"Select All", 				this, SLOT(selectAll()));
-		selectAllVisibleAction			= contextMenu.addAction(			"Select All Visible", 			this, SLOT(selectAllVisible()));
 			// Sub menu : transformations
 			transformationOfSelectionMenu	= contextMenu.addMenu("Transformations");
 			turn0Action			= transformationOfSelectionMenu->addAction(	"Turn 0 degree",			this, SLOT(turn0()));
@@ -735,14 +734,16 @@
 			turn270Action			= transformationOfSelectionMenu->addAction(	"Turn 270 degrees",			this, SLOT(turn270()));
 			fliplrAction			= transformationOfSelectionMenu->addAction(	"Flip left/right",			this, SLOT(fliplr()));
 			flipudAction			= transformationOfSelectionMenu->addAction(	"Flip up/down",				this, SLOT(flipud()));
+		changeSelectionStackMenu		= contextMenu.addMenu("Stack");
+			raiseSelectedAction		= changeSelectionStackMenu->addAction(		"Raise selected views",			this, SLOT(raiseSelected()));
+			setSelectedOnForegroundAction	= changeSelectionStackMenu->addAction(		"Set selected views on foreground",	this, SLOT(setSelectedOnForeground()));
+			lowerSelectedAction		= changeSelectionStackMenu->addAction(		"Lower selected views",			this, SLOT(lowerSelected()));
+			setSelectedOnBackgroundAction	= changeSelectionStackMenu->addAction(		"Set selected views on background",	this, SLOT(setSelectedOnBackground()));
 		resetSelectedAngleAction		= contextMenu.addAction(			"Reset angles of selected views", 	this, SLOT(resetSelectionAngle()));
 		resetSelectedScaleAction		= contextMenu.addAction(			"Reset scales of selected views", 	this, SLOT(resetSelectionAngle()));
 		resetSelectedPositionAction 		= contextMenu.addAction(			"Reset positions of selected views",	this, SLOT(resetSelectionPosition()));
 		resetSelectionAction			= contextMenu.addAction(			"Reset selected views", 		this, SLOT(resetSelection()));
-		hideSelectedAction			= contextMenu.addAction(			"Hide selected views", 			this, SLOT(hideCurrentSelection()));
 		closeSelectedAction			= contextMenu.addAction(			"Close selected views", 		this, SLOT(closeSelection()));
-		hideAllAction				= contextMenu.addAction(			"Hide All", 				this, SLOT(hideAll()));
-		showAllAction				= contextMenu.addAction(			"Show All", 				this, SLOT(showAll()));
 		resetGlobalPositionAction		= contextMenu.addAction(			"Reset Global Position", 		this, SLOT(resetGlobalPosition()));
 		resetGlobalZoomAction			= contextMenu.addAction(			"Reset Global Zoom", 			this, SLOT(resetGlobalZoom()));
 		resetGlobalAction			= contextMenu.addAction(			"Reset Global",				this, SLOT(resetGlobal()));
@@ -1709,56 +1710,23 @@
 			else
 				selectAllAction->setEnabled(true);
 
-			if(displayList.empty())
-				selectAllVisibleAction->setEnabled(false);
-			else
-				selectAllVisibleAction->setEnabled(true);
-	
-			if(selectionList.empty())
-			{
-				resetSelectedAngleAction->setEnabled(false);
-				resetSelectedScaleAction->setEnabled(false);
-				resetSelectedPositionAction->setEnabled(false);
-				resetSelectionAction->setEnabled(false);
-				hideSelectedAction->setEnabled(false);
-				closeSelectedAction->setEnabled(false);
-				turn0Action->setEnabled(false);
-				turn90Action->setEnabled(false);
-				turn180Action->setEnabled(false);
-				turn270Action->setEnabled(false);
-				fliplrAction->setEnabled(false);
-				flipudAction->setEnabled(false);
-			}
-			else
-			{
-				resetSelectedAngleAction->setEnabled(true);
-				resetSelectedScaleAction->setEnabled(true);
-				resetSelectedPositionAction->setEnabled(true);
-				resetSelectionAction->setEnabled(true);
-				turn0Action->setEnabled(true);
-				turn90Action->setEnabled(true);
-				turn180Action->setEnabled(true);
-				turn270Action->setEnabled(true);
-				fliplrAction->setEnabled(true);
-				flipudAction->setEnabled(true);
+			const bool test = !selectionList.empty();
 
-				if(displayList.empty())
-					hideSelectedAction->setEnabled(false);
-				else
-					hideSelectedAction->setEnabled(true);
-
-				closeSelectedAction->setEnabled(true);
-			}
-
-			if(displayList.empty())
-				hideAllAction->setEnabled(false);
-			else
-				hideAllAction->setEnabled(true);
-
-			if(links.size()==displayList.size())
-				showAllAction->setEnabled(false);
-			else
-				showAllAction->setEnabled(true);
+			resetSelectedAngleAction->setEnabled(test);
+			resetSelectedScaleAction->setEnabled(test);
+			resetSelectedPositionAction->setEnabled(test);
+			resetSelectionAction->setEnabled(test);
+			closeSelectedAction->setEnabled(test);
+			turn0Action->setEnabled(test);
+			turn90Action->setEnabled(test);
+			turn180Action->setEnabled(test);
+			turn270Action->setEnabled(test);
+			fliplrAction->setEnabled(test);
+			flipudAction->setEnabled(test);
+			raiseSelectedAction->setEnabled(test);
+			setSelectedOnForegroundAction->setEnabled(test);
+			lowerSelectedAction->setEnabled(test);
+			setSelectedOnBackgroundAction->setEnabled(test);
 
 			if(currentMouseMode==HandMode)
 				handModeAction->setEnabled(false);
@@ -1784,36 +1752,6 @@
 		void GLSceneWidget::selectAll(void)
 		{
 			selectionList = links;
-		}
-
-		void GLSceneWidget::selectAllVisible(void)
-		{
-			selectionList.clear();
-			for(std::list<ViewLink*>::iterator it=displayList.begin(); it!=displayList.end(); it++)
-				selectionList.push_back(*it);
-		}
-
-		void GLSceneWidget::hideAll(void)
-		{
-			std::list<ViewLink*> copyDisplayList = displayList;
-
-			for(std::list<ViewLink*>::iterator it=copyDisplayList.begin(); it!=copyDisplayList.end(); ++it)
-				hideView(*it);
-		}
-
-		void GLSceneWidget::showAll(void)
-		{
-			for(std::vector<ViewLink*>::iterator it=links.begin(); it!=links.end(); it++)
-			{
-				if(!viewIsVisible(*it))
-					pushBackView(*it);
-			}
-		}
-
-		void GLSceneWidget::hideCurrentSelection(void)
-		{
-			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
-				hideView(*it);
 		}
 
 		void GLSceneWidget::closeSelection(void)
@@ -1971,6 +1909,30 @@
 				(*it)->flipud = !(*it)->flipud;
 		}
 
+		void GLSceneWidget::raiseSelected(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				raiseView(*it);
+		}
+
+		void GLSceneWidget::setSelectedOnForeground(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				bringUpView(*it);
+		}
+
+		void GLSceneWidget::lowerSelected(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				lowerView(*it);
+		}
+
+		void GLSceneWidget::setSelectedOnBackground(void)
+		{
+			for(std::vector<ViewLink*>::iterator it=selectionList.begin(); it!=selectionList.end(); it++)
+				pushBackView(*it);
+		}
+
 	// Main mechanics : 
 		void GLSceneWidget::updateScene(void)
 		{
@@ -2009,11 +1971,39 @@
 			displayList.push_back(view);
 		}
 
+		void GLSceneWidget::raiseView(ViewLink* view)
+		{
+			viewExists(view, true);
+
+			std::list<ViewLink*>::iterator 	it 	= std::find(displayList.begin(), displayList.end(), view),
+							next 	= it;
+							next++;
+			
+			int pos = std::distance(displayList.begin(), it);
+
+			if(pos<displayList.size()-1) // if not already on top :
+				std::iter_swap(it, next);
+		}
+
 		void GLSceneWidget::pushBackView(ViewLink* view)
 		{
 			viewExists(view, true);
 			hideView(view);
 			displayList.push_front(view);
+		}
+
+		void GLSceneWidget::lowerView(ViewLink* view)
+		{
+			viewExists(view, true);
+
+			std::list<ViewLink*>::iterator 	it 	= std::find(displayList.begin(), displayList.end(), view),
+							prev 	= it;
+							prev--;
+
+			int pos = std::distance(displayList.begin(), it);
+
+			if(pos>0) // if not already on bottom :
+				std::iter_swap(prev, it);
 		}
 
 		void GLSceneWidget::hideView(ViewLink* view)

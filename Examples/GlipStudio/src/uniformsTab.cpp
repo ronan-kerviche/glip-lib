@@ -326,7 +326,6 @@
 
 	void UniformFloat::applyUpdate(HdlProgram& prgm)
 	{
-		std::cout << __LINE__ << " :: Applying " << getVarName() << std::endl;
 		float buffer[16];
 		
 		for(int k=0; k<data.size(); k++)
@@ -540,7 +539,10 @@
 		bool test = false;
 
 		for(int k=0; k<objects.size(); k++)
-			test = test || objects[k]->loadExternalData(mouseData);
+		{
+			const bool t = objects[k]->loadExternalData(mouseData);
+			test = t || test;
+		} 
 		
 		return test;
 	}
@@ -652,10 +654,16 @@
 		bool test = false;
 
 		for(int k=0; k<filterObjects.size(); k++)
-			test = test || filterObjects[k]->spreadExternalData(mouseData);
+		{
+			const bool t = filterObjects[k]->spreadExternalData(mouseData);
+			test = t || test;
+		} 
 		
 		for(int k=0; k<pipelineObjects.size(); k++)
-			test = test || pipelineObjects[k]->spreadExternalData(mouseData);
+		{
+			const bool t = pipelineObjects[k]->spreadExternalData(mouseData);
+			test = t || test;
+		}
 
 		return test;
 	}
@@ -1074,19 +1082,19 @@
 		signalMapper(this),
 		target(NULL)
 	{
-		links[LastClick]	= addAction("Coordinates on last right click");
-		links[CurrentPosition]	= addAction("Current coordinates, when holding right click");
-		links[LastRelease]	= addAction("Coordinates on last right click release");
-		links[VectorCurrent]	= addAction("Current vector coordinates, between right click and current position");
-		links[LastVector]	= addAction("Last vector coordinates, between right click and release");
-		links[ColorLastClick]	= addAction("Color under last right click");
-		links[ColorCurrent]	= addAction("Color under current position, when holding right click");
-		links[ColorLastRelease]	= addAction("Color under last right click release");
+		links[LastClick]	= addAction("Coordinates on last left click");
+		links[CurrentPosition]	= addAction("Current coordinates, when holding left click");
+		links[LastRelease]	= addAction("Coordinates on last left click release");
+		links[VectorCurrent]	= addAction("Current vector coordinates, between left click and current position");
+		links[LastVector]	= addAction("Last vector coordinates, between left click and release");
+		links[ColorLastClick]	= addAction("Color under last left click");
+		links[ColorCurrent]	= addAction("Color under current position, when holding left click");
+		links[ColorLastRelease]	= addAction("Color under last left click release");
 		links[NoExternalLink]	= addAction("Clear link");
 
 		for(int k=0; k<NumExternalValueLink; k++)
 		{
-			links[k]->setCheckable(true);
+			links[k]->setCheckable( k!=NoExternalLink );
 			signalMapper.setMapping(links[k], k);
             		connect(links[k], SIGNAL(triggered()), &signalMapper, SLOT(map()));
 		}
@@ -1267,7 +1275,6 @@
 		{
 			if(pipelineUniformsCanBeModified())
 			{
-				std::cout << __LINE__ << " :: Applying modification." << std::endl;
 				mainPipeline->update(pipeline());
 				requirePipelineComputation();
 			}
@@ -1492,10 +1499,7 @@
 			bool test = mainPipeline->spreadExternalData(data);
 
 			if(test)
-			{
-				std::cout << __LINE__ << " :: Emitting data update request." << std::endl;
 				emit requestDataUpdate();
-			}
 		}
 	}
 

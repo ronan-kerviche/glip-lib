@@ -20,6 +20,100 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+// QImage tools : 
+	ImageBuffer* createImageBufferFromQImage(const QImage& qimage)
+	{
+		// Create the format : 
+		GLenum mode = GL_NONE;
+
+		if(qimage.allGray())
+			mode = GL_LUMINANCE;
+		else if(qimage.hasAlphaChannel())
+			mode = GL_RGBA;
+		else
+			mode = GL_RGB;
+
+		const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
+
+		HdlTextureFormat textureFormat( qimage.width(), qimage.height(), mode, GL_UNSIGNED_BYTE );
+		
+		// Create buffer : 
+		ImageBuffer* buffer = new ImageBuffer(textureFormat);
+
+		// Copy : 
+		for(int i=0; i<qimage.height(); i++)
+		{
+			for(int j=0; j<qimage.width(); j++)
+			{
+				QRgb col 	= qimage.pixel(j,i);
+				if(descriptor.numChannels==1)
+					buffer->set(j, i, GL_LUMINANCE,	qRed( col ));
+				else 
+				{
+									buffer->set(j, i, GL_RED, 	static_cast<unsigned char>(qRed( col )));
+					if(descriptor.numChannels>1)	buffer->set(j, i, GL_GREEN,	static_cast<unsigned char>(qGreen( col )));
+					if(descriptor.numChannels>2)	buffer->set(j, i, GL_BLUE,	static_cast<unsigned char>(qBlue( col )));
+					if(descriptor.numChannels>3)	buffer->set(j, i, GL_ALPHA,	static_cast<unsigned char>(qAlpha( col )));
+				}
+			}
+		}
+
+		return buffer;
+	}
+
+	QImage* createQImageFromImageBuffer(const ImageBuffer& buffer)
+	{
+		QImage* qimage = NULL;
+
+		// Get the mode :
+		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( buffer.getGLMode() );
+		const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( buffer.getGLDepth() );
+
+		if( descriptor.hasLuminanceChannel && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
+			qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_RGB888);
+		else if( descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && !descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+			qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_RGB888);
+		else if(descriptor.hasRedChannel && descriptor.hasGreenChannel && descriptor.hasBlueChannel && descriptor.hasAlphaChannel && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+			qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_ARGB32);		
+		else
+			throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+
+		// Copy to QImage : 
+		QColor value;
+		for(int y=0; y<buffer.getHeight(); y++)
+		{
+			for(int x=0; x<buffer.getWidth(); x++)
+			{
+				if(descriptor.numChannels>=4)
+					value.setAlpha( buffer.get<unsigned char>(x, y, GL_ALPHA) );
+				if(descriptor.numChannels>=3)
+					value.setBlue( 	buffer.get<unsigned char>(x, y, GL_BLUE) );
+				if(descriptor.numChannels>=2)
+				{
+					value.setRed( 	buffer.get<unsigned char>(x, y, GL_RED) );
+					value.setGreen( buffer.get<unsigned char>(x, y, GL_GREEN) );
+					
+				}
+				else if(descriptor.numChannels==1)
+				{
+					value.setRed( 	buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
+					value.setGreen( buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
+					value.setBlue( 	buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
+				}
+				else
+				{
+					delete qimage;
+					throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
+				}
+
+				qimage->setPixel(x, y, value.rgba());
+			}
+		}
+
+		return qimage;
+	}
+
+// Image Loader : 
 	ImageLoader::ImageLoader(void)
 	{ }
 

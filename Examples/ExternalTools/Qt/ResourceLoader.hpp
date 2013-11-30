@@ -45,6 +45,9 @@
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+	extern ImageBuffer* createImageBufferFromQImage(const QImage& qimage);
+	extern QImage* createQImageFromImageBuffer(const ImageBuffer& buffer);
+
 	class ImageLoader
 	{
 		private :

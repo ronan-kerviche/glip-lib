@@ -54,6 +54,7 @@
 			bool requirePipelineComputation(void);
 			bool registerInputTexture(int recordID, int portID);
 			void unregisterInputTexture(int recordID);
+			void releaseInputPort(int portID);				// Force the input port to be released, even if this Module is not its owner.
 			bool requirePrepareToPipelineUniformsModification(void);
 			bool requirePipelineDestruction(void);
 
@@ -153,6 +154,7 @@
 			bool requirePipelineComputation(void);
 			bool registerInputTexture(Module* m, int recordID, int portID);
 			void unregisterInputTexture(Module* m, int recordID);
+			void releaseInputPort(int portID);
 			bool requirePrepareToPipelineUniformsModification(void);
 			bool requirePipelineDestruction(bool keepCode=false);
 			bool requireClose(void);

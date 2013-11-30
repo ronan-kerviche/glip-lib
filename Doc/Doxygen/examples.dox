@@ -702,10 +702,10 @@ First we write a script file <i>convolutionTools.ppl</i> containing :
 Then we write a second script <i>sobel.ppl</i> :
 	\code
 	// Include previous file :
-	INCLUDE_FILE(convolutionTools.ppl);
+	INCLUDE_FILE(convolutionTools.ppl)
 
 	// Format :
-	REQUIRED_FORMAT:sobelOutputFormat();
+	REQUIRED_FORMAT:sobelOutputFormat()
 
 	SHARED_CODE:sobelShared
 	{

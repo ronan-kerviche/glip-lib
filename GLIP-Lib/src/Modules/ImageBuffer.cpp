@@ -67,7 +67,7 @@
 
 	ImageBuffer::~ImageBuffer(void)
 	{
-		delete buffer;
+		delete[] buffer;
 	}
 
 	/**
@@ -156,6 +156,8 @@
 			throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
 		else
 		{
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
 			// Read the texture : 
 			texture.bind();
 			glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), reinterpret_cast<GLvoid*>(buffer));

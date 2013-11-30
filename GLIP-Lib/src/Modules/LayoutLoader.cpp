@@ -1276,7 +1276,7 @@
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;
@@ -1716,7 +1716,7 @@
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a PipelineFile.", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;

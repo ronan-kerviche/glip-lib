@@ -12,6 +12,7 @@
 		outputsViewManager(NULL),
 		resourcesManagerLink(_resourcesManagerLink),
 		openSaveInterface("ImagesOutputPannel", "File", "*.png *.bmp *.jpg *.jpeg *.gif *.ppm"),
+		releaseInputAction("Release input", this),
 		copyAsNewResourceAction("Copy as New Resource", this),
 		replaceResourceAction("Replace existing or add as new Resource", this),
 		copyAsNewResourceWithNewNameAction("Copy as New Resource (with new name)...", this)
@@ -26,6 +27,7 @@
 		if(outputsViewManager==NULL)
 			throw Exception("ResourcesTab::ResourcesTab - Unable to create a new ViewManager (output).", __FILE__, __LINE__);
 
+		imagesMenu.addAction(&releaseInputAction);
 		imagesMenu.addAction(&copyAsNewResourceAction);
 		imagesMenu.addAction(&replaceResourceAction);
 		imagesMenu.addAction(&copyAsNewResourceWithNewNameAction);
@@ -33,7 +35,9 @@
 		openSaveInterface.enableOpen(false);
 		openSaveInterface.enableSave(false);
 		openSaveInterface.enableSaveAs(false);
+		releaseInputAction.setEnabled(false);
 		copyAsNewResourceAction.setEnabled(false);
+		replaceResourceAction.setEnabled(false);
 		copyAsNewResourceWithNewNameAction.setEnabled(false);
 
 		menuBar.addMenu(&imagesMenu);
@@ -48,6 +52,7 @@
 		outputsViewManager->setTitle("Outputs Views");
 		pipelineStatusLabel.setReadOnly(true);
 
+		contextMenu.addAction(&releaseInputAction);
 		contextMenu.addAction(&copyAsNewResourceAction);
 		contextMenu.addAction(&replaceResourceAction);
 		contextMenu.addAction(&copyAsNewResourceWithNewNameAction);
@@ -59,9 +64,9 @@
 		// Connect : 
 		connect(&portsList, 				SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
 		connect(&portsList, 				SIGNAL(focusChanged(int)),				this, SLOT(focusChanged(int)));
-		connect(&portsList, 				SIGNAL(itemSelectionChanged()),	 			this, SLOT(selectionChanged()));
 		connect(inputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newInputView()));
 		connect(outputsViewManager, 			SIGNAL(createNewView()), 				this, SLOT(newOutputView()));
+		connect(&releaseInputAction,			SIGNAL(triggered()),					this, SLOT(releaseInput()));
 		connect(&copyAsNewResourceAction,		SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
 		connect(&replaceResourceAction,			SIGNAL(triggered()),					this, SLOT(replaceResource()));
 		connect(&copyAsNewResourceWithNewNameAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResourceWithNewName()));
@@ -241,6 +246,7 @@
 				outputsViewManager->enableCreationAction(false);
 				openSaveInterface.enableSave(false);
 				openSaveInterface.enableSaveAs(false);
+				releaseInputAction.setEnabled(false);
 				copyAsNewResourceAction.setEnabled(false);
 				copyAsNewResourceWithNewNameAction.setEnabled(false);
 			}
@@ -268,12 +274,19 @@
 					bool test = true;
 			
 					for(int k=0; k<recordIDs.size() && test; k++)
-						test = getOutputPortIDFromRecordID(recordIDs[k])>=0;
+						test = (getOutputPortIDFromRecordID(recordIDs[k])>=0);
 
 					copyAsNewResourceAction.setEnabled(test);
 					copyAsNewResourceWithNewNameAction.setEnabled(test);
 				}
 			}
+
+			bool test=true;
+			
+			for(int k=0; k<recordIDs.size() && test; k++)
+				test = getInputPortIDFromRecordID(recordIDs[k])>=0;
+
+			releaseInputAction.setEnabled(test);
 		}
 
 		void IOTab::newInputView(void)
@@ -299,6 +312,19 @@
 		
 				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() )
 					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), true);
+			}
+		}
+
+		void IOTab::releaseInput(void)
+		{
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			for(int k=0; k<recordIDs.size(); k++)
+			{
+				int portID = getInputPortIDFromRecordID(recordIDs[k]);
+
+				if(portID>=0)
+					releaseInputPort(portID);
 			}
 		}
 		

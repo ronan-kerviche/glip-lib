@@ -244,15 +244,11 @@
 			// Menu : 
 			QMenu					contextMenu;
 			QAction					*selectAllAction,
-								*selectAllVisibleAction,
 								*resetSelectedAngleAction,
 								*resetSelectedScaleAction,
 								*resetSelectedPositionAction,
 								*resetSelectionAction,
-								*hideSelectedAction,
 								*closeSelectedAction,
-								*hideAllAction,
-								*showAllAction,
 								*resetGlobalPositionAction,
 								*resetGlobalZoomAction,
 								*resetGlobalAction,
@@ -260,13 +256,18 @@
 								*manipulationModeAction,
 								*selectionModeAction,
 								*toggleFullscreenAction;
-			QMenu					*transformationOfSelectionMenu;				
+			QMenu					*transformationOfSelectionMenu;			
 			QAction					*turn0Action,
 								*turn90Action,
 								*turn180Action,
 								*turn270Action,
 								*fliplrAction,
 								*flipudAction;
+			QMenu					*changeSelectionStackMenu;
+			QAction					*raiseSelectedAction,
+								*setSelectedOnForegroundAction,
+								*lowerSelectedAction,
+								*setSelectedOnBackgroundAction;
 
 			// Mouse and coordinates memory : 
 			MouseData				mouseData;
@@ -316,10 +317,6 @@
 			// Actions (for the contextual menu) : 
 			void updateContextMenu(void);
 			void selectAll(void);
-			void selectAllVisible(void);
-			void hideAll(void);
-			void showAll(void);
-			void hideCurrentSelection(void);
 			void closeSelection(void);
 			void resetSelectionAngle(void);
 			void resetSelectionScale(void);
@@ -338,6 +335,10 @@
 			void turn270(void);
 			void fliplr(void);
 			void flipud(void);
+			void raiseSelected(void);
+			void setSelectedOnForeground(void);
+			void lowerSelected(void);
+			void setSelectedOnBackground(void);
 
 		public : 
 			GLSceneWidget(int width, int height, QWidget* _parent=NULL);
@@ -348,7 +349,9 @@
 			ViewLink* createView(void);
 			bool viewExists(ViewLink* view, bool throwException = false);
 			void bringUpView(ViewLink* view);
+			void raiseView(ViewLink* view);
 			void pushBackView(ViewLink* view);
+			void lowerView(ViewLink* view);
 			void hideView(ViewLink* view);
 			void selectView(ViewLink* view, bool dropCurrentSelection=true);
 			void unselectView(ViewLink* view);
