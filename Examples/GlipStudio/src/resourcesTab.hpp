@@ -57,7 +57,6 @@
 			QMenuBar		menuBar;
 			ConnectionMenu		connectionMenu;
 			ImagesCollection	collection;
-
 			ViewManager* 		viewManager;
 
 			//void updateDisplay(WindowRenderer& display);

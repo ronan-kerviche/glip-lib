@@ -350,6 +350,11 @@
 		layout.addWidget(&menuBar);	
 		layout.addWidget(&widgets);
 		layout.addWidget(&pathWidget);
+
+		// TODO : improve this in a mini tutorial : 
+		SettingsManager settings;
+		if( settings.isFirstTimeRun() )
+			aboutAct.trigger();
 	}
 
 	CodeEditorsPannel::~CodeEditorsPannel(void)

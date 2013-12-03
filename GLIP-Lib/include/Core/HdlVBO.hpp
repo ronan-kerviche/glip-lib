@@ -25,6 +25,7 @@
 #define __HDLVBO_INCLUDE__
 
 	// GL include
+	#include "Core/LibTools.hpp"
         #include "Core/OglInclude.hpp"
 	#include "Core/HdlGeBO.hpp"
 
@@ -37,7 +38,7 @@
 			\class HdlVBO
 			\brief Object handle for OpenGL Vertex Buffer Objects.
 			**/
-			class HdlVBO
+			class GLIP_API HdlVBO
 			{
 				private :
 					// Data

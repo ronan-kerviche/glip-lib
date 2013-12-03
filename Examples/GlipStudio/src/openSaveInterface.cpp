@@ -33,6 +33,10 @@
 		if(!e2.body.empty())
 			currentSavePath = e2.getCleanBody().c_str();
 
+		Element e3 = settings.getModuleData(moduleName, "CurrentDir");
+		if(!e3.body.empty())
+			currentDir = e3.getCleanBody().c_str();
+
 		updateMenu();
 
 		connect(&openAction,		SIGNAL(triggered()),	this,	SLOT(open()));
@@ -77,6 +81,13 @@
 			Element e = settings.getModuleData(moduleName, "CurrentSavePath");
 			e.body = currentSavePath.toStdString();
 			settings.setModuleData(moduleName, "CurrentSavePath", e);
+		}
+
+		if(!currentDir.isEmpty())
+		{
+			Element e = settings.getModuleData(moduleName, "CurrentDir");
+			e.body = currentDir.toStdString();
+			settings.setModuleData(moduleName, "CurrentDir", e);
 		}
 	}
 
@@ -276,5 +287,15 @@
 	QString OpenSaveInterface::saveAsDialog(void)
 	{
 		return QFileDialog::getSaveFileName(NULL, tr("Save %1").arg(objectName.c_str()), currentSavePath, tr("%1 (%2)").arg(objectName.c_str()).arg(extensionsList.c_str()));
+	}
+
+	QString OpenSaveInterface::getDirectoryDialog(void)
+	{
+		QString dir = QFileDialog::getExistingDirectory(NULL, "Open Directory", currentDir);
+
+		if(!dir.isEmpty())
+			currentDir = dir;
+
+		return dir;
 	}
 

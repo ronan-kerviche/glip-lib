@@ -24,7 +24,8 @@
 #ifndef __FFT2D_INCLUDE__
 #define __FFT2D_INCLUDE__
 
-	// Include :
+	// Includes
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/Pipeline.hpp"
 
@@ -58,7 +59,7 @@ ifft2D.process(convolutionPipeline.out(0));
 display << ifft2D.output();
 \endcode
 **/
-		class FFT2D
+		class GLIP_API FFT2D
 		{
 			public :
 				///Flags describing the computation options.

@@ -188,6 +188,13 @@
 		{
 			updateTexturesLinkInformation();
 
+			// Lock the textures needed : 
+			for(std::vector<int>::iterator it=imageRecordIDs.begin(); it!=imageRecordIDs.end(); it++)
+			{
+				if(isUsedAsPipelineInput(*it))
+					collection.lockTextureToDevice(*it);
+			}
+
 			// Update connection menu : 
 			connectionMenu.update( pipeline() );
 
@@ -202,11 +209,16 @@
 			s.connectionStatus 	= TextureStatus::NotConnected;
 			s.portID		= -1;
 			collection.updateRecordStatus( recordID, s);
+			collection.unlockTextureFromDevice(recordID);
 		}
 
 		void ResourcesTab::pipelineWasDestroyed(void)
 		{
 			updateTexturesLinkInformation();
+
+			// Release the lock on all input texture (the link is still here and the lock will be re-established if needed by the next pipeline) :
+			for(std::vector<int>::iterator it=imageRecordIDs.begin(); it!=imageRecordIDs.end(); it++)
+				collection.unlockTextureFromDevice(*it);
 
 			// Update connection menu : 
 			connectionMenu.update();
@@ -219,7 +231,7 @@
 		void ResourcesTab::focusChanged(int recordID)
 		{
 			// Display : 
-			viewManager->show( recordID, collection.texture(recordID));
+			viewManager->show( recordID, collection.texture(recordID), collection.recordName(recordID).c_str());
 		}
 
 		void ResourcesTab::selectionChanged(void)
@@ -294,7 +306,7 @@
 			std::vector<int> selectedRecordIDs = collection.getSelectedRecordIDs();
 
 			if(!selectedRecordIDs.empty())
-				viewManager->show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), true);
+				viewManager->show( selectedRecordIDs.back(), collection.texture(selectedRecordIDs.front()), collection.recordName(selectedRecordIDs.back()).c_str(), true);
 		}
 
 		ImagesCollection* ResourcesTab::getResourcesManagerLink(void)

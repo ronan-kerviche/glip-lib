@@ -24,7 +24,8 @@
 #ifndef __PROCEDURAL_INPUT_INCLUDE__
 #define __PROCEDURAL_INPUT_INCLUDE__
 
-	// Include :
+	// Includes
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/Devices.hpp"
 	#include "Core/HdlTexture.hpp"
@@ -46,7 +47,7 @@ namespace Glip
 		\class ProceduralInput
 		\brief Generate texture from a set of few parameters.
 		**/
-		class ProceduralInput : public InputDevice
+		class GLIP_API ProceduralInput : public InputDevice
 		{
 			private :
 				// Data :

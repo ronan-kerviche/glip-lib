@@ -25,6 +25,7 @@
 #define __HDLGEBO_INCLUDE__
 
 	// GL include
+	#include "Core/LibTools.hpp"
         #include "Core/OglInclude.hpp"
 
 	namespace Glip
@@ -36,7 +37,7 @@
 			\class HdlGeBO
 			\brief Object handle for OpenGL Buffer Object (VBO, PBO, VAO, ...).
 			**/
-			class HdlGeBO
+			class GLIP_API HdlGeBO
 			{
 				private :
 					// Data

@@ -26,6 +26,7 @@
 
 	// Includes
 	#include "devDebugTools.hpp"
+	#include "Core/LibTools.hpp"
         #include "Core/Component.hpp"
         #include "Core/HdlTexture.hpp"
 
@@ -54,7 +55,7 @@
 			\class __ReadOnly_FilterLayout
 			\brief Filter layout (Read Only).
 			**/
-			class __ReadOnly_FilterLayout : virtual public __ReadOnly_ComponentLayout, virtual public __ReadOnly_HdlTextureFormat
+			class GLIP_API __ReadOnly_FilterLayout : virtual public __ReadOnly_ComponentLayout, virtual public __ReadOnly_HdlTextureFormat
 			{
 				private :
 					// Data
@@ -94,7 +95,7 @@
 			\class FilterLayout
 			\brief Filter layout.
 			**/
-			class FilterLayout : virtual public ComponentLayout, virtual public __ReadOnly_FilterLayout
+			class GLIP_API FilterLayout : virtual public ComponentLayout, virtual public __ReadOnly_FilterLayout
 			{
 				public :
 					// Tools
@@ -105,7 +106,7 @@
 			\class Filter
 			\brief Filter object.
 			**/
-			class Filter : virtual public Component, virtual public __ReadOnly_FilterLayout
+			class GLIP_API Filter : virtual public Component, virtual public __ReadOnly_FilterLayout
 			{
 				private :
 					// Data

@@ -30,9 +30,6 @@
 		#error A C++ compiler is required!
 	#else
 
-		// Standard
-			#include <string>
-
 		// GL include
 			#include "Core/OglInclude.hpp"
 

@@ -26,6 +26,7 @@
 
 	#include <iostream>
 	#include "devDebugTools.hpp"
+	#include "Core/LibTools.hpp"
 
 	#ifdef _WIN32
 		#define WINDOWS_LEAN_AND_MEAN
@@ -63,7 +64,7 @@
 			\class HandleOpenGL
 			\brief Main OpenGL Handle.
 			**/
-			class HandleOpenGL
+			class GLIP_API HandleOpenGL
 			{
 				public :
 					/// ID of the supported hardware vendors
@@ -81,7 +82,7 @@
 
 				private :
 					// OpenGL keyword :
-					struct KeywordPair
+					struct GLIP_API KeywordPair
 					{
 						GLenum 		value;
 						std::string 	name;
@@ -105,16 +106,16 @@
 					static std::string 	getGLSLVersion(void);
 
 					// Friend functions :
-					friend std::string glParamName(GLenum);
-					friend GLenum glFromString(const std::string&);
+					GLIP_API friend std::string glParamName(GLenum);
+					GLIP_API friend GLenum glFromString(const std::string&);
 			};
 
 			// Tools
-			std::string 	glErrorToString(bool* caughtError = NULL);
-			bool 		glErrors(bool verbose = true, bool quietSituations = true);
-			void 		glDebug(void);
-			std::string 	glParamName(GLenum param);
-			GLenum 		glFromString(const std::string& name);
+			GLIP_API_FUNC std::string	glErrorToString(bool* caughtError = NULL);
+			GLIP_API_FUNC bool 		glErrors(bool verbose = true, bool quietSituations = true);
+			GLIP_API_FUNC void 		glDebug(void);
+			GLIP_API_FUNC std::string 	glParamName(GLenum param);
+			GLIP_API_FUNC GLenum 		glFromString(const std::string& name);
 		}
 	}
 

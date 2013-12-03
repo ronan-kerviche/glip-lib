@@ -24,8 +24,9 @@
 #ifndef __IMAGE_BUFFER_INCLUDE__
 #define __IMAGE_BUFFER_INCLUDE__
 
-	// Include :
+	// Includes
 	#include <limits>
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Exception.hpp"
@@ -42,7 +43,7 @@ namespace Glip
 \class ImageBuffer
 \brief Host-side image buffer.
 **/
-		class ImageBuffer : public __ReadOnly_HdlTextureFormat
+		class GLIP_API ImageBuffer : public __ReadOnly_HdlTextureFormat
 		{
 			private : 
 				const HdlTextureFormatDescriptor	descriptor;

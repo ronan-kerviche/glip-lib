@@ -25,6 +25,7 @@
 #define __HDLSHADER_INCLUDE__
 
 	// GL include
+	#include "Core/LibTools.hpp"
         #include "Core/OglInclude.hpp"
         #include "Core/ShaderSource.hpp"
 	#include <string>
@@ -39,7 +40,7 @@ namespace Glip
 		\class HdlShader
 		\brief Object handle for OpenGL Shaders Objects (both vertex and fragment shaders).
 		**/
-		class HdlShader : public ShaderSource
+		class GLIP_API HdlShader : public ShaderSource
 		{
 			private :
 				// Data
@@ -60,7 +61,7 @@ namespace Glip
 		\class HdlProgram
 		\brief Object handle for OpenGL Program (A vertex and a fragment program).
 		**/
-		class HdlProgram
+		class GLIP_API HdlProgram
 		{
 			private :
 				// Data

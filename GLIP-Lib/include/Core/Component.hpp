@@ -27,6 +27,7 @@
 	// Includes
 	#include <string>
         #include <vector>
+	#include "Core/LibTools.hpp"
 
 	namespace Glip
 	{
@@ -47,7 +48,7 @@
 			\class __ReadOnly_ComponentLayout
 			\brief Layout of a component template (Read Only)
 			**/
-			class __ReadOnly_ComponentLayout
+			class GLIP_API __ReadOnly_ComponentLayout
 			{
 				private :
 					// Data
@@ -85,7 +86,7 @@
 			\class ComponentLayout
 			\brief Layout of a component template
 			**/
-			class ComponentLayout : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API ComponentLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				protected :
 					// Tools
@@ -103,7 +104,7 @@
 			\class Component
 			\brief Element of a pipeline
 			**/
-			class Component : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API Component : virtual public __ReadOnly_ComponentLayout
 			{
 				private :
 					std::string instanceName;

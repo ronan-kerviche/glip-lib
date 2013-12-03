@@ -24,7 +24,8 @@
 #ifndef __TEXTURE_READER_INCLUDE__
 #define __TEXTURE_READER_INCLUDE__
 
-	// Include :
+	// Includes
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Devices.hpp"
@@ -71,7 +72,7 @@ Example of how to use TextureReader :
 \endcode
 
 **/
-		class TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
 				char* originalPointer;
@@ -126,7 +127,7 @@ Example of how to use PBOTextureReader :
 	secondPBOReader.endReadingMemory();
 \endcode
 **/
-		class PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
+		class GLIP_API PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
 		{
 			private : 
 				OutputDevice::OutputDeviceLayout getLayout(void) const;
@@ -153,7 +154,7 @@ Example of how to use PBOTextureReader :
 
 This class is working exacly as TextureReader except that you will access the data in a compressed format (no direct channels/pixels access).
 **/
-		class CompressedTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API CompressedTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
 				char* data;
@@ -202,7 +203,7 @@ Example :
 	somePipeline << someTargetTexture << ... ;
 \endcode
 **/
-		class TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
 		{
 			private :
 				bool 		customTexture;

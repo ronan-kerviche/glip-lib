@@ -25,6 +25,7 @@
 #define __LAYOUT_LOADER_INCLUDE__
 
 	#include <map>
+	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"
 	#include "Core/ShaderSource.hpp"
@@ -258,7 +259,7 @@ Loading Example :
 	\endcode
 
 **/
-		class LayoutLoader
+		class GLIP_API LayoutLoader
 		{
 			public : 
 				/**
@@ -378,7 +379,7 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 	writer.writeToFile(mainPipeline, "./myPipeline.ppl");
 \endcode
 **/
-		class LayoutWriter
+		class GLIP_API LayoutWriter
 		{
 			private :
 				VanillaParserSpace::Element write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name);

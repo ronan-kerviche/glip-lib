@@ -25,6 +25,7 @@
 #define __GLIP_DEVICES__
 
     // Includes
+	#include "Core/LibTools.hpp"
         #include "Core/Component.hpp"
         #include "Core/HdlTexture.hpp"
         #include "Core/Pipeline.hpp"
@@ -83,7 +84,7 @@ class MyInputDevice : public InputDevice
 }
 \endcode
 **/
-			class InputDevice : public Component
+			class GLIP_API InputDevice : public Component
 			{
 				private :
 					// Data
@@ -97,7 +98,7 @@ class MyInputDevice : public InputDevice
 \class InputDeviceLayout
 \brief InputDevice layout structure.
 **/
-					class InputDeviceLayout : public ComponentLayout
+					class GLIP_API InputDeviceLayout : public ComponentLayout
 					{
 						public :
 							InputDeviceLayout(const std::string& _typeName);
@@ -170,7 +171,7 @@ class MyOutputDevice : public OutputDevice
 }
 \endcode
 **/
-			class OutputDevice : public Component
+			class GLIP_API OutputDevice : public Component
 			{
 				public :
 					///Actions enumeration.
@@ -194,7 +195,7 @@ class MyOutputDevice : public OutputDevice
 \class OutputDeviceLayout
 \brief OutputDevice layout structure.
 **/
-					class OutputDeviceLayout : public ComponentLayout
+					class GLIP_API OutputDeviceLayout : public ComponentLayout
 					{
 						public :
 							OutputDeviceLayout(const std::string& _typeName);

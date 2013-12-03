@@ -29,6 +29,7 @@
 	#include <algorithm>
 	#include <map>
 	#include <limits>
+	#include "Core/LibTools.hpp"
         #include "Core/Component.hpp"
         #include "Core/Filter.hpp"
 
@@ -59,7 +60,7 @@
 \class __ReadOnly_PipelineLayout
 \brief Pipeline layout (Read Only).
 **/
-			class __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
 			{
 				public :
 					///Flags describing the component kind.
@@ -185,7 +186,7 @@ How to create a pipeline layout :
 	// If you save the id of the elements, you can use the ID connection method but it usually is harder to read in code afterward.
 \endcode
 **/
-			class PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
+			class GLIP_API PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
 			{
 				public :
 					// Tools
@@ -228,7 +229,7 @@ How to access and modify a uniform variable in a filter :
 	myPipeline[id].prgm().modifyVar("variable", GL_FLOAT, 3.1415);
 \endcode
 **/
-			class Pipeline : public __ReadOnly_PipelineLayout, public Component
+			class GLIP_API Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
 				public :
 					///Actions enumeration.

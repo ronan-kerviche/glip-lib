@@ -32,6 +32,7 @@
 #define __HDLPBO_INCLUDE__
 
 	// GL include
+	#include "Core/LibTools.hpp"
         #include "Core/OglInclude.hpp"
 	#include "Core/HdlGeBO.hpp"
 	#include "Core/HdlTexture.hpp"
@@ -67,7 +68,7 @@ How to use a PBO to upload data to a texture :
 
 For reading operations, use Glip::Modules::PBOTextureReader.
 **/
-			class HdlPBO : public HdlGeBO
+			class GLIP_API HdlPBO : public HdlGeBO
 			{
 				private :
 					// Data

@@ -1757,15 +1757,15 @@
 	{
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(m->getName());
 
-		if(it!=modules.end() && !replace)
-			throw Exception("LayoutLoader::addModule - A module with the name \"" + m->getName() + " already exists.", __FILE__, __LINE__);
-		else
+		if(it==modules.end())
+			modules.insert( std::pair<std::string, LayoutLoaderModule*>( m->getName(), m ) );
+		else if(it!=modules.end() && replace)
 		{
 			delete it->second;
-			it->second = NULL;
+			it->second = m;
 		}
-
-		modules.insert( std::pair<std::string, LayoutLoaderModule*>( m->getName(), m ) );
+		else
+			throw Exception("LayoutLoader::addModule - A module with the name \"" + m->getName() + " already exists.", __FILE__, __LINE__);
 	}
 
 	/**

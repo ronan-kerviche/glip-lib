@@ -2,15 +2,20 @@
 #include <fstream>
 
 // SettingsManager
-	SettingsManager* SettingsManager::master = NULL;
-	VanillaParser* SettingsManager::parser = NULL;
+	SettingsManager* SettingsManager::master 	= NULL;
+	VanillaParser* SettingsManager::parser		= NULL;
 	std::string SettingsManager::settingsFilename;
+	bool SettingsManager::firstTimeRun		= false;
 
-	SettingsManager::SettingsManager(const std::string& filename)
+	SettingsManager::SettingsManager(const std::string& filename)	
 	{
 		if(master!=NULL)
 			throw Exception("SettingsManager::SettingsManager - The settings file was already opened (\"" + settingsFilename + "\").", __FILE__, __LINE__);
 		
+		// Safe to set data now :
+		parser 		= NULL;
+		firstTimeRun	= false;
+
 		try
 		{
 			std::ifstream file;
@@ -33,7 +38,9 @@
 				}
 
 				file.close();
-			}		
+			}
+			else
+				firstTimeRun = true;
 
 			// Parse : 
 			parser = new VanillaParser(code);
@@ -86,6 +93,11 @@
 			delete parser;
 			settingsFilename.clear();
 		}
+	}
+
+	bool SettingsManager::isFirstTimeRun(void) const
+	{
+		return firstTimeRun;
 	}
 
 	void SettingsManager::checkOpenedSettings(void)

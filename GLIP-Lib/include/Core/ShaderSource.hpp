@@ -25,6 +25,7 @@
 #define __GLIP_SHADERSOURCE__
 
 	// Includes
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
         #include <string>
         #include <vector>
@@ -49,7 +50,7 @@ ShaderSource src(myShader);
 
 The shader source will be parsed to find input and output ports name. In the case that you are using gl_FragColor, the name of the output port will be the one contained by string ShaderSource::portNameForFragColor.
 **/
-			class ShaderSource
+			class GLIP_API ShaderSource
 			{
 				private :
 					// Data

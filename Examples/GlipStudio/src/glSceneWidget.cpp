@@ -118,56 +118,70 @@
 
 	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY)
 	{
-		float	imageWidth 	= format().getWidth(),
-			imageHeight	= format().getHeight(),
-			imageRatio	= imageWidth/imageHeight;
+		if(target!=NULL)
+		{
+			float	imageWidth 	= format().getWidth(),
+				imageHeight	= format().getHeight(),
+				imageRatio	= imageWidth/imageHeight;
 
-		if(originalScreenRatio<=1.0f && imageRatio>=1.0f) // imageWidth>=imageHeight
-		{
-			imageScaling[0] = 1.0f;
-			imageScaling[1] = 1.0f / imageRatio;
-		}
-		else if(originalScreenRatio>=1.0f && imageRatio<=1.0f) // imageWidth<=imageHeight
-		{
-			imageScaling[0] = imageRatio;
-			imageScaling[1] = 1.0f;
-		}
-		else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio>=imageRatio)
-		{
-			imageScaling[0]	= imageRatio;
-			imageScaling[1]	= 1.0f;
-		}
-		else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio<=imageRatio)
-		{
-			imageScaling[0]	= originalScreenRatio;
-			imageScaling[1]	= originalScreenRatio / imageRatio;
-		}
-		else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio<=imageRatio)
-		{
-			imageScaling[0]	= 1.0f;
-			imageScaling[1]	= 1.0f / imageRatio;
-		}
-		else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio>=imageRatio)
-		{
-			imageScaling[0]	= imageRatio / originalScreenRatio ;
-			imageScaling[1]	= 1.0f / originalScreenRatio;
-		}
+			if(originalScreenRatio<=1.0f && imageRatio>=1.0f) // imageWidth>=imageHeight
+			{
+				imageScaling[0] = 1.0f;
+				imageScaling[1] = 1.0f / imageRatio;
+			}
+			else if(originalScreenRatio>=1.0f && imageRatio<=1.0f) // imageWidth<=imageHeight
+			{
+				imageScaling[0] = imageRatio;
+				imageScaling[1] = 1.0f;
+			}
+			else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio>=imageRatio)
+			{
+				imageScaling[0]	= imageRatio;
+				imageScaling[1]	= 1.0f;
+			}
+			else if(originalScreenRatio>=1.0f && imageRatio>=1.0f && originalScreenRatio<=imageRatio)
+			{
+				imageScaling[0]	= originalScreenRatio;
+				imageScaling[1]	= originalScreenRatio / imageRatio;
+			}
+			else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio<=imageRatio)
+			{
+				imageScaling[0]	= 1.0f;
+				imageScaling[1]	= 1.0f / imageRatio;
+			}
+			else if(originalScreenRatio<=1.0f && imageRatio<=1.0f && originalScreenRatio>=imageRatio)
+			{
+				imageScaling[0]	= imageRatio / originalScreenRatio ;
+				imageScaling[1]	= 1.0f / originalScreenRatio;
+			}
 
-		// User Scale : 
-		imageScaling[0]	*= scale;
-		imageScaling[1]	*= scale;
+			// User Scale : 
+			imageScaling[0]	*= scale;
+			imageScaling[1]	*= scale;
 
-		if(haloScaling!=NULL)
-		{
-			haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
-			haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			if(haloScaling!=NULL)
+			{
+				haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+				haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			}
+
+			if(fliplr)
+				imageScaling[0] = -imageScaling[0];
+
+			if(flipud)
+				imageScaling[1] = -imageScaling[1];
 		}
-
-		if(fliplr)
-			imageScaling[0] = -imageScaling[0];
-
-		if(flipud)
-			imageScaling[1] = -imageScaling[1];
+		else
+		{
+			imageScaling[0]	= scale;
+			imageScaling[1]	= scale;
+			
+			if(haloScaling!=NULL)
+			{
+				haloScaling[0]	= imageScaling[0] + haloSize * currentPixelX;
+				haloScaling[1]	= imageScaling[1] + haloSize * currentPixelY;
+			}
+		}
 	}
 
 	void ViewLink::getLocalCoordinates(float x, float y, float& lx, float& ly)
@@ -211,6 +225,24 @@
 		
 			xs[k] = x + centerCoords[0];
 			ys[k] = y + centerCoords[1];
+		}
+	}
+
+	bool ViewLink::getCoordinatesInPixelBasis(float x, float y, int& px, int& py)
+	{
+		if(target!=NULL)
+		{
+			px = (x+1.0f)/2.0f * format().getWidth();
+			py = -(y-1.0f)/2.0f * format().getHeight();
+
+			return (px>=0) && (px<format().getWidth()) && (py>=0) && (py<format().getHeight());
+		}
+		else
+		{
+			px = 0;
+			py = 0;
+
+			return false;
 		}
 	}
 
@@ -412,7 +444,7 @@
 		createNewViewAction.setEnabled(s);
 	}
 
-	void ViewManager::show(int recordID, HdlTexture& texture, bool newView)
+	void ViewManager::show(int recordID, HdlTexture& texture, const QString& title, bool newView)
 	{
 		const bool recordIsLinkedToAView = isLinkedToAView(recordID);
 		std::vector<ViewLink*> selectedViews = getSelectedViewsList();
@@ -434,6 +466,7 @@
 			connect(viewLinks.back(), SIGNAL(closed()), this, SLOT(viewClosed()));
 
 			viewLinks.back()->setHaloColor(r, g, b);
+			viewLinks.back()->title = title;
 			(*viewLinks.back()) << texture << OutputDevice::Process;
 			viewLinks.back()->selectView();
 		}
@@ -445,7 +478,10 @@
 			for(int k=0; k<recordIDs.size(); k++)
 			{
 				if(recordIDs[k]==recordID)
+				{
+					viewLinks[k]->title = title;
 					viewLinks[k]->selectView();
+				}
 			}
 		}
 		else
@@ -466,6 +502,7 @@
 		
 			recordIDs[k] = recordID;
 			(*viewLinks[k]) << texture << OutputDevice::Process;
+			viewLinks[k]->title = title;
 			viewLinks[k]->selectView();
 		}
 	}
@@ -476,6 +513,15 @@
 		{
 			if(recordIDs[k]==recordID)
 				(*viewLinks[k]) << texture << OutputDevice::Process;
+		}
+	}
+
+	void ViewManager::clear(int recordID)
+	{
+		for(int k=0; k<recordIDs.size(); k++)
+		{
+			if(recordIDs[k]==recordID)
+				viewLinks[k]->clear();
 		}
 	}
 
@@ -576,6 +622,21 @@
 		}
 	}
 
+	QColor GLSceneWidget::MouseData::getQColorLastClick(void) const
+	{
+		return QColor(colorLastClick[0], colorLastClick[1], colorLastClick[2]);
+	}
+
+	QColor GLSceneWidget::MouseData::getQColorCurrent(void) const
+	{
+		return QColor(colorCurrent[0], colorCurrent[1], colorCurrent[2]);
+	}
+
+	QColor GLSceneWidget::MouseData::getQColorLastRelease(void) const
+	{
+		return QColor(colorLastRelease[0], colorLastRelease[1], colorLastRelease[2]);
+	}
+
 // Special shaders : 
 	const std::string placementVertexShaderSource = 	"#version 130															\n"
 								"																\n"
@@ -624,13 +685,13 @@
 								"uniform sampler2D	viewTexture;												\n"
 								"out     vec4 		displayOutput;												\n"
 								"																\n"
-								"uniform int		selectionMode	= 0,	// 0 for drawing, 1 for making a selection, 2 for drawing a halo.		\n"	
+								"uniform int		selectionMode	= 0,	// 0 for drawing, 1 for making a selection, 2 for drawing a halo...		\n"	
 								"			objectID	= 0;											\n"
 								"uniform vec3		haloColor	= vec3(1.0, 1.0, 1.0);									\n"
 								"																\n"
 								"void main()															\n"
 								"{																\n"
-								"	if(selectionMode==0)													\n"
+								"	if(selectionMode==0) // Draw												\n"
 								"	{															\n"
 								"		// Get the input data :												\n"
 								"		vec4 col  = textureLod(viewTexture, vec2(gl_TexCoord[0].s, 1.0f-gl_TexCoord[0].t), 0.0);			\n"
@@ -638,13 +699,19 @@
 								"		// Write the output data :											\n"
 								"		displayOutput = col;												\n"
 								"	}															\n"
-								"	else if(selectionMode==1)												\n"
+								"	else if(selectionMode==1) // Make the selection										\n"
 								"		displayOutput = vec4( vec3(1.0f,1.0f,1.0f)*float(objectID)/255.0f, 1.0f);					\n"
-								"	else if(selectionMode==2)												\n"
+								"	else if(selectionMode==2) // Draw a halo										\n"
 								"	{															\n"
 								"		// Compute the transparency : 											\n"
 								"		float a = 5.0f*pow( 1.0f - 2.0f * max( abs(gl_TexCoord[0].s-0.5f), abs(gl_TexCoord[0].t-0.5f) ), 0.7f);		\n"
 								"		displayOutput = vec4(haloColor, a);										\n"
+								"	}															\n"
+								"	else if(selectionMode==3) // Dummy image										\n"
+								"	{															\n"
+								"		const float nPeriods = 7.0;											\n"
+								"		float a = sin( nPeriods * gl_TexCoord[0].s * 3.1415 ) * sin( nPeriods * gl_TexCoord[0].t * 3.1415 );		\n"
+								"		displayOutput = vec4(vec3(1.0,1.0,1.0)*(a*a),1.0);								\n"
 								"	}															\n"
 								"	else															\n"
 								"	{															\n"
@@ -767,8 +834,8 @@
 		setKeyForAction(KeyExitOnlyFullscreen,		Qt::Key_Escape);
 		setKeyForAction(KeyResetView,			Qt::Key_Space);
 		setKeyForAction(KeyCloseView,			Qt::Key_Delete);
-		setKeyForAction(KeyControl,			Qt::Key_Control);
-		setKeyForAction(KeyShiftRotate,			Qt::Key_Shift);
+		setKeyForAction(KeyControl,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control)); 	// The first correspond the press event, the second to the release.
+		setKeyForAction(KeyShiftRotate,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift));	// (the same)
 		setKeyForAction(KeySetHandMode,			Qt::ALT + Qt::Key_V);
 		setKeyForAction(KeySetManipulationMode,		Qt::ALT + Qt::Key_B);
 		setKeyForAction(KeySetSelectionMode,		Qt::ALT + Qt::Key_N);
@@ -1418,15 +1485,15 @@
 				placementProgram->modifyVar("homothetieRapport", GL_FLOAT, homothetieRapport);
 
 				// Set the mode :
-				if(forSelection)
+				/*if(forSelection)
 					placementProgram->modifyVar("selectionMode", GL_INT, 1);
 				else
-					placementProgram->modifyVar("selectionMode", GL_INT, 0);
+					placementProgram->modifyVar("selectionMode", GL_INT, 0);*/
 
 				// Go through the list of view in order to draw some of them :
 				for(std::list<ViewLink*>::iterator it = displayList.begin(); it!=displayList.end(); it++)
 				{
-					if((*it)->preparedToDraw())
+					/*if((*it)->preparedToDraw())
 					{
 						// Set positions and rotation : 
 						placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	(*it)->centerCoords);
@@ -1457,7 +1524,44 @@
 				
 						// Draw the image :
 						quad->draw();
+					}*/
+
+					// Set positions and rotation : 
+					placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	(*it)->centerCoords);
+					placementProgram->modifyVar("angle",		GL_FLOAT,	(*it)->angleRadians);
+
+					// Set screen scaling variable : 
+					float 	imageScaling[2],
+						haloScaling[2];
+
+					(*it)->getScalingRatios( imageScaling, haloScaling, 10.0f, sPixelX, sPixelY); // 4.0 is the border layout in pixels, when selected.
+
+					if(forSelection)
+						placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);					
+					else if(viewIsSelected(*it))
+					{
+						placementProgram->modifyVar("selectionMode", 	GL_INT, 	2);
+						placementProgram->modifyVar("imageScaling", 	GL_FLOAT_VEC2, 	haloScaling);
+						placementProgram->modifyVar("haloColor", 	GL_FLOAT_VEC3, 	(*it)->haloColorRGB);
+						
+						quad->draw();
+
+						// Restore : 
+						//placementProgram->modifyVar("selectionMode", 	GL_INT, 	0);
 					}
+
+					if((*it)->preparedToDraw() && !forSelection)
+						placementProgram->modifyVar("selectionMode", GL_INT, 0);
+					else if(!forSelection)
+						placementProgram->modifyVar("selectionMode", GL_INT, 3);
+					else
+						placementProgram->modifyVar("selectionMode", GL_INT, 1);	
+					
+					// Scaling of the image : 
+					placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
+			
+					// Draw the image :
+					quad->draw();
 				}
 
 				// Axis : 
@@ -1499,6 +1603,75 @@
 				HdlTexture::unbind();
 				HdlProgram::stopProgram();
 			}
+
+			// Draw information bar :  
+			if(!forSelection)
+			{
+				QPainter painter(this);
+				drawInformationBar(painter);   
+				painter.end();
+			}
+		}
+
+		void GLSceneWidget::drawInformationBar(QPainter& painter)
+		{
+			const int colorRectangleLength = 8; // in units of border.
+
+			painter.setRenderHint(QPainter::Antialiasing);
+
+			const QColor 	backgroundColor = QColor(clearColorRed*0.7f*255.0f, clearColorGreen*0.7f*255.0f, clearColorBlue*0.7f*255.0f, 127),
+					lastColor	= mouseData.getQColorLastClick(),
+					targetNameColor	= QColor(Qt::white).darker(120);
+			QColor		dynamicValuesColor;
+
+			if(currentMouseMode==SelectionMode && !selectionList.empty())
+				dynamicValuesColor	= targetNameColor;
+			else
+				dynamicValuesColor	= backgroundColor.lighter(800);
+
+			int px=0, py=0;
+			bool testInside = false;
+			QString targetName="(no view selected)";
+
+			if(selectionList.size()==1)
+			{
+				testInside = selectionList.back()->getCoordinatesInPixelBasis(mouseData.xLastClick, mouseData.yLastClick, px, py);
+				targetName = selectionList.back()->title;
+			}
+			else if(!selectionList.empty())
+			{
+				targetName="(multiple view selected)";
+			}
+			
+			QString textLeft 	= tr("Position : %2x%3").arg(px).arg(py),
+				textCenter	= tr("%1").arg(targetName),
+				textRight	= tr("Color (%4,%5,%6) %7").arg(lastColor.red()).arg(lastColor.green()).arg(lastColor.blue()).arg(lastColor.name());
+
+			if(!testInside)
+				textLeft += "(outside)";
+
+			QFontMetrics metrics = QFontMetrics(font());
+			int border = qMax(4, metrics.leading());
+
+			// Draw rect : 
+			QRect 	rectLeft 	= metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125), Qt::AlignLeft | Qt::TextWordWrap, 	textLeft),
+				rectCenter 	= metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125), Qt::AlignCenter | Qt::TextWordWrap, 	textCenter),
+				rectRight	= metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125), Qt::AlignRight | Qt::TextWordWrap, 	textRight);
+
+			// Background : 
+			painter.fillRect(QRect(0, 0, width(), rectLeft.height() + 2*border), backgroundColor);
+
+			// Draw peripheral texts : 
+			painter.setPen(dynamicValuesColor);
+			painter.drawText(border, 							border, rectLeft.width(), 	rectLeft.height(), 	Qt::AlignLeft | Qt::TextWordWrap, 	textLeft);
+			painter.drawText(width()-rectRight.width()-(colorRectangleLength+2)*border,	border, rectRight.width(), 	rectRight.height(), 	Qt::AlignRight | Qt::TextWordWrap, 	textRight);
+
+			// Draw color rectangle : 
+			painter.fillRect(QRect(width()-(colorRectangleLength+1)*border, border, colorRectangleLength*border, rectRight.height()), lastColor);
+			
+			// Draw center text : 
+			painter.setPen(targetNameColor);
+			painter.drawText((width() - rectCenter.width())/2, 				border, rectCenter.width(), 	rectCenter.height(), 	Qt::AlignCenter | Qt::TextWordWrap, 	textCenter);
 		}
 
 		void GLSceneWidget::paintGL(void)

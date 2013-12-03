@@ -24,7 +24,9 @@
 #ifndef __UNIFORMS_VARS_LOADER_INCLUDE__
 #define __UNIFORMS_VARS_LOADER_INCLUDE__
 
+	// Includes 
 	#include <map>
+	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/HdlShader.hpp"
 	#include "Core/Pipeline.hpp"
@@ -130,10 +132,10 @@ Processing example :
 	std::cout << c << " variables were loaded." << std::endl;
 \endcode
 **/
-		class UniformsVarsLoader
+		class GLIP_API UniformsVarsLoader
 		{
 			private :
-				struct Ressource
+				struct GLIP_API Ressource
 				{
 					std::string name;
 					GLenum type;
@@ -149,7 +151,7 @@ Processing example :
 					VanillaParserSpace::Element getCode(void) const;
 				};
 
-				struct RessourceNode
+				struct GLIP_API RessourceNode
 				{
 					std::string name;
 

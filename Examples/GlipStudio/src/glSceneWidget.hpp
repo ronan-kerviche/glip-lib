@@ -53,10 +53,13 @@
 			void getScalingRatios(float* imageScaling, float* haloScaling=NULL, float haloSize=0.0f, float currentPixelX=0.0f, float currentPixelY=0.0f);
 			void getLocalCoordinates(float x, float y, float& lx, float& ly);
 			void getCornersPositions(float* xs, float* ys);
+			bool getCoordinatesInPixelBasis(float x, float y, int& px, int& py);
 
 			friend class GLSceneWidget; 
 
 		public : 
+			QString title;
+
 			~ViewLink(void);
 
 			void setHaloColor(float r, float g, float b);
@@ -107,8 +110,9 @@
 			~ViewManager(void);
 
 			void enableCreationAction(bool s);
-			void show(int recordID, HdlTexture& texture, bool newView=false);
+			void show(int recordID, HdlTexture& texture, const QString& title, bool newView=false);
 			void update(int recordID, HdlTexture& texture);
+			void clear(int recordID);
 			bool isLinkedToAView(int recordID) const;
 			bool isOnDisplay(int recordID) const;
 			bool hasViews(void) const;
@@ -187,6 +191,9 @@
 
 				MouseData(void);
 				MouseData(const MouseData& c);
+				QColor getQColorLastClick(void) const;
+				QColor getQColorCurrent(void) const;
+				QColor getQColorLastRelease(void) const;
 			};
 
 		private : 
@@ -304,6 +311,7 @@
 			void initializeGL(void);
 			void resizeGL(int width, int height);
 			void drawScene(bool forSelection);
+			void drawInformationBar(QPainter& painter);
 			void paintGL(void);
 			float getGlobalScale(void) const;
 			void getGLCoordinatesAbsoluteRaw(float x, float y, float& glX, float& glY);

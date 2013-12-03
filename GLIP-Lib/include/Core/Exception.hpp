@@ -28,6 +28,7 @@
 	#include <iostream>
 	#include <sstream>
 	#include <vector>
+	#include "Core/LibTools.hpp"
 
 	namespace Glip
 	{
@@ -36,7 +37,7 @@
 		\class Exception
 		\brief Exception class, derived from std::exception.
 		**/
-		class Exception : public std::exception
+		class GLIP_API Exception : public std::exception
 		{
 			private :
 				// Data :

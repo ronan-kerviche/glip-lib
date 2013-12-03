@@ -24,8 +24,10 @@
 #ifndef __VANILLA_PARSER_INCLUDE__
 #define __VANILLA_PARSER_INCLUDE__
 
+	// Includes
 	#include <string>
 	#include <vector>
+	#include "Core/LibTools.hpp"
 
 namespace Glip
 {
@@ -44,7 +46,7 @@ namespace Glip
 			*/
 
 			// Layout
-			struct Element
+			struct GLIP_API Element
 			{
 				enum Field
 				{
@@ -78,7 +80,7 @@ namespace Glip
 			};
 
 			// Parser Class : 
-			class VanillaParser 
+			class GLIP_API VanillaParser 
 			{
 				private : 
 					bool compare(const std::string& code, int& k, const std::string token);

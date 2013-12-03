@@ -24,7 +24,8 @@
 #ifndef __FFT1D_INCLUDE__
 #define __FFT1D_INCLUDE__
 
-	// Include :
+	// Includes
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/Pipeline.hpp"
 
@@ -44,7 +45,7 @@ namespace Glip
 		This module might return erroneous result given that the driver will perform blind optimization.
 		Thus results might be affected by lower accuracy and being fetched to a close value.
 		**/
-		class FFT1D
+		class GLIP_API FFT1D
 		{
 			public :
 				///Flags describing the computation options.

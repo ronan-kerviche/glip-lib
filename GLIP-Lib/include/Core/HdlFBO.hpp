@@ -26,6 +26,7 @@
 
 	// Includes
         #include <vector>
+	#include "Core/LibTools.hpp"
         #include "Core/HdlTexture.hpp"
         #include "Core/OglInclude.hpp"
 
@@ -44,7 +45,7 @@
 
 			This class can manage a Frame Buffer Object and multiple rendering target, each one of these rendering target have the same format.
 			**/
-			class HdlFBO : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlFBO : public __ReadOnly_HdlTextureFormat
 			{
 				private :
 					// Data

@@ -23,6 +23,7 @@
 			bool			multiFileOpening;
 			QString			currentOpenPath,
 						currentSavePath,
+						currentDir,
 						lastSaveFilename;
 			QAction			openAction,
 						saveAction,
@@ -62,6 +63,7 @@
 
 			QStringList openDialog(void);
 			QString saveAsDialog(void);
+			QString getDirectoryDialog(void);
 
 		signals : 
 			void openFile(const QStringList& filenames);

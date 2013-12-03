@@ -25,6 +25,7 @@
 #define __HDLTEXTURE_INCLUDE__
 
 	// Include
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlTextureTools.hpp"
 
@@ -38,7 +39,7 @@
 			\class __ReadOnly_HdlTextureFormat
 			\brief Object handle for OpenGL texture formats (Read Only).
 			**/
-			class __ReadOnly_HdlTextureFormat
+			class GLIP_API __ReadOnly_HdlTextureFormat
 			{
 				protected :
 					// Data
@@ -100,7 +101,7 @@
 			\class HdlTextureFormat
 			\brief Object handle for OpenGL texture formats.
 			**/
-			class HdlTextureFormat : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlTextureFormat : public __ReadOnly_HdlTextureFormat
 			{
 				public :
 					// reproduce constructor :
@@ -130,7 +131,7 @@
 			\class HdlTexture
 			\brief Object handle for OpenGL textures.
 			**/
-			class HdlTexture : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlTexture : public __ReadOnly_HdlTextureFormat
 			{
 				private :
 					// Data

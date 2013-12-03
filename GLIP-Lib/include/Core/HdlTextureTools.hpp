@@ -25,6 +25,7 @@
 #define __HDLTEXTURETOOLS_INCLUDE__
 
 	#include <vector>
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"	
 
 	namespace Glip
@@ -35,7 +36,7 @@
 			\class HdlTextureFormatDescriptor
 			\brief Object handle describing an OpenGL Texture mode.
 			**/
-			struct HdlTextureFormatDescriptor
+			struct GLIP_API HdlTextureFormatDescriptor
 			{
 							/// Name of the mode (GL_RGB, GL_RGBA, etc.).
 				const GLenum 		modeID;
@@ -108,7 +109,7 @@
 			\class HdlTextureFormatDescriptorsList
 			\brief Singleton handling the static list of all available HdlTextureFormatDescriptor objects.
 			**/
-			class HdlTextureFormatDescriptorsList
+			class GLIP_API HdlTextureFormatDescriptorsList
 			{
 				private :
 					// Data :

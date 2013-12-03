@@ -27,6 +27,7 @@ HEADERS      	+= 	./src/glSceneWidget.hpp \
 			./src/ioTab.hpp \
 			./src/compilationTab.hpp \
 			./src/uniformsTab.hpp \
+			./src/batchTab.hpp \
 			./src/libraryInterface.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
@@ -45,6 +46,7 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/ioTab.cpp \
 			./src/compilationTab.cpp \
 			./src/uniformsTab.cpp \
+			./src/batchTab.cpp \
 			./src/libraryInterface.cpp \
 			./src/mainInterface.cpp
 

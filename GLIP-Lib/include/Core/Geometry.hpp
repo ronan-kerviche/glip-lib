@@ -26,6 +26,7 @@
 
 	// Includes
 	#include "devDebugTools.hpp"
+	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlVBO.hpp"
 
@@ -45,7 +46,7 @@
 			\class GeometryModel
 			\brief Geometry stored on the host.
 			**/
-			class GeometryModel
+			class GLIP_API GeometryModel
 			{
 				public : 
 					/// Description of the type of geometry (automatic).
@@ -127,7 +128,7 @@
 			\class GeometryInstance
 			\brief Instance of the GeometryModel. Stored on GPU (VBO).
 			**/
-			class GeometryInstance
+			class GLIP_API GeometryInstance
 			{
 				private :
 					// Static memory bank :
@@ -155,7 +156,7 @@
 				\class StandardQuad
 				\brief Geometry : the standard quad, covering the area between (-1,-1) and (1,1).
 				**/
-				class StandardQuad : public GeometryModel
+				class GLIP_API StandardQuad : public GeometryModel
 				{
 					public :
 						StandardQuad(void);
@@ -165,7 +166,7 @@
 				\class PointsGrid2D
 				\brief Geometry : a 2D grid of points.
 				**/
-				class PointsGrid2D : public GeometryModel
+				class GLIP_API PointsGrid2D : public GeometryModel
 				{
 					public :
 						PointsGrid2D(int w, int h);
@@ -175,7 +176,7 @@
 				\class PointsGrid3D
 				\brief Geometry : a 3D grid of points.
 				**/
-				class PointsGrid3D : public GeometryModel
+				class GLIP_API PointsGrid3D : public GeometryModel
 				{
 					public :
 						PointsGrid3D(int w, int h, int d);
@@ -185,7 +186,7 @@
 				\class CustomModel
 				\brief Geometry : build a model.
 				**/
-				class CustomModel : public GeometryModel
+				class GLIP_API CustomModel : public GeometryModel
 				{
 					public :
 						CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord);

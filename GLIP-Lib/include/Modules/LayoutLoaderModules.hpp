@@ -26,6 +26,7 @@
 
 	#include <vector>
 	#include <map>
+	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"
 	#include "Core/ShaderSource.hpp"
@@ -136,7 +137,7 @@ Example, creating a simple Module :
 	\endcode
 	
 **/
-		class LayoutLoaderModule
+		class GLIP_API LayoutLoaderModule
 		{
 			private : 
 				const std::string 	name,

@@ -13,6 +13,7 @@
 			static SettingsManager* master;
 			static VanillaParser* parser;
 			static std::string settingsFilename;
+			static bool firstTimeRun;
 			
 			void checkOpenedSettings(void);
 			std::vector<Element>::iterator getModuleIterator(const std::string& moduleName, const std::string& propertyName);
@@ -22,6 +23,7 @@
 			SettingsManager(void);
 			~SettingsManager(void);
 
+			bool		isFirstTimeRun(void) const;
 			bool		moduleDataExists(const std::string& moduleName, const std::string& propertyName);
 			Element 	getModuleData(const std::string& moduleName, const std::string& propertyName);
 			void		setModuleData(const std::string& moduleName, const std::string& propertyName, Element& data);

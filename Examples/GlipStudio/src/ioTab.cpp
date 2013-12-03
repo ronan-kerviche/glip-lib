@@ -11,7 +11,7 @@
 		inputsViewManager(NULL),
 		outputsViewManager(NULL),
 		resourcesManagerLink(_resourcesManagerLink),
-		openSaveInterface("ImagesOutputPannel", "File", "*.png *.bmp *.jpg *.jpeg *.gif *.ppm"),
+		openSaveInterface("ImagesOutputPannel", "File", "*.bmp *.png *.jpg *.JPEG *.pgm *.ppm"),
 		releaseInputAction("Release input", this),
 		copyAsNewResourceAction("Copy as New Resource", this),
 		replaceResourceAction("Replace existing or add as new Resource", this),
@@ -158,7 +158,15 @@
 			}
 
 			// Close outputs : 
-			outputsViewManager->closeAllViews();
+			//outputsViewManager->closeAllViews();
+
+			// Instead, clear all, but let the views open :
+			outputsViewManager->beginQuietUpdate();
+
+			for(int k=0; k<pipeline().getNumOutputPort(); k++)
+				outputsViewManager->clear( k );
+
+			outputsViewManager->endQuietUpdate();
 		}
 
 		void IOTab::pipelineInputWasModified(int portID)
@@ -185,15 +193,19 @@
 		{
 			if(pipelineExists())
 			{
-				portsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) );
-				portsList.updateRecordFormat( inputRecordIDs[portID] );
+				if(portID<pipeline().getNumInputPort())
+				{
+					portsList.updateRecordName( inputRecordIDs[portID], pipeline().getInputPortName(portID) );
+					portsList.updateRecordFormat( inputRecordIDs[portID] );
 
-				TextureStatus s 	= portsList.recordStatus( inputRecordIDs[portID] );
-				s.connectionStatus	= TextureStatus::NotConnected;
+					TextureStatus s 	= portsList.recordStatus( inputRecordIDs[portID] );
+					s.connectionStatus	= TextureStatus::NotConnected;
 
-				portsList.updateRecordStatus( inputRecordIDs[portID], s );
+					portsList.updateRecordStatus( inputRecordIDs[portID], s );
 
-				inputsViewManager->removeRecord(portID);
+					//inputsViewManager->removeRecord(portID);
+					inputsViewManager->clear(portID);
+				}
 			}
 		}
 
@@ -205,8 +217,8 @@
 			inputRecordIDs.clear();
 			outputRecordIDs.clear();
 			portsList.removeAllRecords();
-			inputsViewManager->closeAllViews();
-			outputsViewManager->closeAllViews();
+			//inputsViewManager->closeAllViews();
+			//outputsViewManager->closeAllViews();
 			inputsViewManager->enableCreationAction(false);
 			outputsViewManager->enableCreationAction(false);
 		}
@@ -221,7 +233,7 @@
 				inputsViewManager->enableCreationAction(true);
 		
 				if(isInputValid(inputPortID))
-					inputsViewManager->show(inputPortID, inputTexture(inputPortID));
+					inputsViewManager->show(inputPortID, inputTexture(inputPortID), pipeline().getInputPortName(inputPortID).c_str());
 			}
 			else if(lastComputationWasSuccessful())
 			{
@@ -230,7 +242,7 @@
 				outputsViewManager->enableCreationAction(true);
 
 				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() && lastComputationWasSuccessful())
-					outputsViewManager->show(outputPortID, pipeline().out(outputPortID));
+					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), pipeline().getOutputPortName(outputPortID).c_str());
 			}
 			else
 				outputsViewManager->enableCreationAction(false);
@@ -298,7 +310,7 @@
 				int inputPortID = getInputPortIDFromRecordID(recordIDs.back());
 		
 				if(isInputValid(inputPortID))
-					inputsViewManager->show(inputPortID, inputTexture(inputPortID), true);
+					inputsViewManager->show(inputPortID, inputTexture(inputPortID), pipeline().getInputPortName(inputPortID).c_str(), true);
 			}
 		}
 
@@ -311,7 +323,7 @@
 				int outputPortID = getOutputPortIDFromRecordID(recordIDs.back());
 		
 				if(outputPortID>=0 && outputPortID<pipeline().getNumOutputPort() )
-					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), true);
+					outputsViewManager->show(outputPortID, pipeline().out(outputPortID), pipeline().getOutputPortName(outputPortID).c_str(), true);
 			}
 		}
 
