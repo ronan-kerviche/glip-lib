@@ -91,7 +91,6 @@
 					static HandleOpenGL		*instance;
 					static SupportedVendor 		vendor;
 					static const KeywordPair 	glKeywords[];
-					//HdlVBO			*standardQuad;
 
 				public :
 					HandleOpenGL(void);
@@ -99,6 +98,7 @@
 
 					static void		init(void);
 					static void		deinit(void);
+					static bool		isInitialized(void);
 					static SupportedVendor 	getVendorID(void);
 					static std::string 	getVendorName(void);
 					static std::string 	getRendererName(void);

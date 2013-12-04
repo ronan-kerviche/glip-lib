@@ -50,6 +50,7 @@
 			bool preparedToDraw(void);
 			void resetOriginalScreenRatio(float screenWidth, float screenHeight);
 			const __ReadOnly_HdlTextureFormat& format(void);
+			void getSize(int& w, int& h);
 			void getScalingRatios(float* imageScaling, float* haloScaling=NULL, float haloSize=0.0f, float currentPixelX=0.0f, float currentPixelY=0.0f);
 			void getLocalCoordinates(float x, float y, float& lx, float& ly);
 			void getCornersPositions(float* xs, float* ys);
@@ -175,6 +176,8 @@
 			// Current mouse data : 
 			struct MouseData
 			{
+				int 		lastSelectionWidth,
+						lastSelectionHeight;
 				float 		xLastClick,
 						yLastClick,
 						xCurrent,

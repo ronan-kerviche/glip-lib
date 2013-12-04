@@ -35,8 +35,8 @@
 	using namespace Glip::Modules;
 	using namespace Glip::Modules::VanillaParserSpace;
 
-	// Static variables :
-	const char* Glip::Modules::keywordsLayoutLoader[LL_NumKeywords] =  {	"TEXTURE_FORMAT",
+	// Static variable :
+	const char* Glip::Modules::LayoutLoader::keywords[LL_NumKeywords] =  {	"TEXTURE_FORMAT",
 										"SHADER_SOURCE",
 										"FILTER_LAYOUT",
 										"PIPELINE_LAYOUT",
@@ -117,7 +117,7 @@
 	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
 	{
 		for(int i=0; i<LL_NumKeywords; i++)
-			if(keywordsLayoutLoader[i]==str) return static_cast<LayoutLoaderKeyword>(i);
+			if(keywords[i]==str) return static_cast<LayoutLoaderKeyword>(i);
 
 		return LL_UnknownKeyword;
 	}
@@ -259,7 +259,7 @@
 	{
 		const std::string 	spacers 	= " \t\r\n\f\v",
 					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
-					keyword 	= keywordsLayoutLoader[KW_LL_INCLUDE_SHARED_SOURCE];
+					keyword 	= keywords[KW_LL_INCLUDE_SHARED_SOURCE];
 
 		size_t pos = str.find(keyword);
 
@@ -825,14 +825,14 @@
 			throw Exception("From line " + to_string(e.startLine) + " : A Geometry Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
 		// Find the first argument :
-		if(e.arguments[0]==keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
+		if(e.arguments[0]==keywords[KW_LL_STANDARD_QUAD])
 		{
 			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::StandardQuad() ) );
 		}
-		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_2D])
+		else if(e.arguments[0]==keywords[KW_LL_GRID_2D])
 		{
 			if(e.arguments.size()!=3)
-				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywords[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h;
 
@@ -844,10 +844,10 @@
 
 			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid2D(w,h) ) );
 		}
-		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_GRID_3D])
+		else if(e.arguments[0]==keywords[KW_LL_GRID_3D])
 		{
 			if(e.arguments.size()!=4)
-				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywords[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			int w, h, z;
 
@@ -862,10 +862,10 @@
 
 			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid3D(w,h,z)) );
 		}
-		else if(e.arguments[0]==keywordsLayoutLoader[KW_LL_CUSTOM_MODEL])
+		else if(e.arguments[0]==keywords[KW_LL_CUSTOM_MODEL])
 		{
 			if(e.arguments.size()!=2 && e.arguments.size()!=3)
-				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywordsLayoutLoader[KW_LL_CUSTOM_MODEL] + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : The model \"" + keywords[KW_LL_CUSTOM_MODEL] + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
 
 			if(e.body.empty() || e.noBody)
 				throw Exception("From line " + to_string(e.startLine) + " : The custom model \"" + e.name + "\" does not have a body.", __FILE__, __LINE__);
@@ -963,7 +963,7 @@
 					else if(associatedKeywords[k]!=KW_LL_ELEMENT)
 					{
 							if( associatedKeywords[k]<LL_NumKeywords )
-								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
 							else
 								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
 					}
@@ -1028,7 +1028,7 @@
 
 		if(e.arguments.size()>2)
 		{
-			if(e.arguments[2]!=keywordsLayoutLoader[KW_LL_DEFAULT_VERTEX_SHADER])
+			if(e.arguments[2]!=keywords[KW_LL_DEFAULT_VERTEX_SHADER])
 			{
 				vertexSource = sourceList.find(e.arguments[2]);
 
@@ -1041,7 +1041,7 @@
 
 		if(e.arguments.size()>5)
 		{
-			if(e.arguments[5]!=keywordsLayoutLoader[KW_LL_STANDARD_QUAD])
+			if(e.arguments[5]!=keywords[KW_LL_STANDARD_QUAD])
 			{
 				geometry = geometryList.find(e.arguments[5]);
 
@@ -1058,22 +1058,22 @@
 
 		if(e.arguments.size()>3)
 		{
-			if(e.arguments[3]==keywordsLayoutLoader[KW_LL_CLEARING_ON])
+			if(e.arguments[3]==keywords[KW_LL_CLEARING_ON])
 				filterLayout->second.enableClearing();
-			else if(e.arguments[3]==keywordsLayoutLoader[KW_LL_CLEARING_OFF])
+			else if(e.arguments[3]==keywords[KW_LL_CLEARING_OFF])
 				filterLayout->second.disableClearing();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[KW_LL_CLEARING_ON] + "\" or \"" + keywordsLayoutLoader[KW_LL_CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[KW_LL_CLEARING_ON] + "\" or \"" + keywords[KW_LL_CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
 		}
 
 		if(e.arguments.size()>4)
 		{
-			if(e.arguments[4]==keywordsLayoutLoader[KW_LL_BLENDING_ON])
+			if(e.arguments[4]==keywords[KW_LL_BLENDING_ON])
 				filterLayout->second.enableBlending();
-			else if(e.arguments[4]==keywordsLayoutLoader[KW_LL_BLENDING_OFF])
+			else if(e.arguments[4]==keywords[KW_LL_BLENDING_OFF])
 				filterLayout->second.disableBlending();
 			else
-				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywordsLayoutLoader[KW_LL_BLENDING_ON] + "\" or \"" + keywordsLayoutLoader[KW_LL_BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+				throw Exception("From line " + to_string(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[KW_LL_BLENDING_ON] + "\" or \"" + keywords[KW_LL_BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
 		}
 	}
 
@@ -1120,7 +1120,7 @@
 						break; //OK
 					default :
 						if( associatedKeywords[k]<LL_NumKeywords )
-							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
 						break;
@@ -1195,11 +1195,11 @@
 					preliminaryTests(parser.elements[k], -1, 4, 4, -1, "Connection");
 
 					// Test the nature of the connection :
-					if(parser.elements[k].arguments[0]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE] && parser.elements[k].arguments[1]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
+					if(parser.elements[k].arguments[0]==keywords[KW_LL_THIS_PIPELINE] && parser.elements[k].arguments[1]==keywords[KW_LL_THIS_PIPELINE])
 						throw Exception("From line " + to_string(parser.elements[k].startLine) + " : Direct connections between input and output are not allowed.", __FILE__, __LINE__);
-					else if(parser.elements[k].arguments[0]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
+					else if(parser.elements[k].arguments[0]==keywords[KW_LL_THIS_PIPELINE])
 						layout.connectToInput(parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
-					else if(parser.elements[k].arguments[2]==keywordsLayoutLoader[KW_LL_THIS_PIPELINE])
+					else if(parser.elements[k].arguments[2]==keywords[KW_LL_THIS_PIPELINE])
 						layout.connectToOutput(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[3]);
 					else
 						layout.connect(parser.elements[k].arguments[0], parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
@@ -1276,7 +1276,7 @@
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywords[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;
@@ -1285,7 +1285,7 @@
 
 			// Check Errors :
 			if(mainPipelineName.empty() && !isSubLoader)
-				throw Exception("No main pipeline (\"" + std::string(keywordsLayoutLoader[KW_LL_PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
+				throw Exception("No main pipeline (\"" + std::string(keywords[KW_LL_PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
 		}
 		catch(Exception& ex)
 		{
@@ -1716,7 +1716,7 @@
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywordsLayoutLoader[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
+							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : The keyword " + keywords[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
 						else
 							throw Exception("From line " + to_string(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
 						break;
@@ -1817,6 +1817,22 @@
 		}
 	}
 
+	/**
+	\fn const char* LayoutLoader::getKeyword(LayoutLoaderKeyword k)
+	\brief Get the actual keyword string.
+	\param k The index of the keyword.
+	\return A const pointer to a C-style character string.
+	**/
+	const char* LayoutLoader::getKeyword(LayoutLoaderKeyword k)
+	{
+		if(k>=0 && k<LL_NumKeywords)
+			return keywords[k];
+		else if(k==LL_UnknownKeyword)
+			return "<Unknown Keyword>";
+		else
+			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + to_string(k) + ".", __FILE__, __LINE__);
+	}
+
 // LayoutWriter 
 	/**
 	\fn LayoutWriter::LayoutWriter(void)
@@ -1833,13 +1849,13 @@
 	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : name cannot be empty.", __FILE__, __LINE__);
 		if(hLayout.getBaseLevel()!=0)
-			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ]) + " : base level cannot be different than 0 (current : " + to_string(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : base level cannot be different than 0 (current : " + to_string(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__);
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= keywordsLayoutLoader[ KW_LL_FORMAT_LAYOUT ];
+		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT );
 		e.name		= name;
 		e.body.clear();
 		e.noBody 	= true;
@@ -1860,11 +1876,11 @@
 	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_SHADER_SOURCE ]) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__);
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= keywordsLayoutLoader[ KW_LL_SHADER_SOURCE ];
+		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE );
 		e.name		= name;
 		e.body		= source.getSource();
 		e.arguments.clear();
@@ -1876,21 +1892,21 @@
 	VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_GEOMETRY ]) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_GEOMETRY )) + " : name cannot be empty.", __FILE__, __LINE__);
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= keywordsLayoutLoader[ KW_LL_GEOMETRY ];
+		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_GEOMETRY );
 		e.name		= name;
 
 		if(mdl.type==GeometryModel::StandardQuad)	
 		{
-			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_STANDARD_QUAD ] );
+			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_STANDARD_QUAD ) );
 			e.noBody	= true;
 		}
 		else if(mdl.type==GeometryModel::PointsGrid2D)
 		{
-			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_GRID_2D ] );
+			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_GRID_2D ) );
 
 			// Find grid size :
 			GLfloat x = 0.0, y = 0.0; 
@@ -1905,7 +1921,7 @@
 		}	
 		else if(mdl.type==GeometryModel::PointsGrid3D)
 		{
-			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_GRID_3D ] );
+			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_GRID_3D ) );
 
 			// Find grid size : 
 			GLfloat x = 0.0, y = 0.0, z = 0.0; 
@@ -1922,7 +1938,7 @@
 		}
 		else if(mdl.type==GeometryModel::CustomModel)
 		{
-			e.arguments.push_back( keywordsLayoutLoader[ KW_LL_CUSTOM_MODEL ] );
+			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_CUSTOM_MODEL ) );
 			e.arguments.push_back( glParamName(mdl.primitiveGL) );
 
 			if( mdl.hasTexCoord )
@@ -1930,7 +1946,7 @@
 
 			// Write model : 
 			VanillaParserSpace::Element v;
-			v.strKeyword	= keywordsLayoutLoader[ KW_LL_VERTEX ];
+			v.strKeyword	= LayoutLoader::getKeyword( KW_LL_VERTEX );
 			v.noName 	= true;
 			v.noBody 	= true;
 			for(int k=0; k<mdl.getNumVertices(); k++)
@@ -1956,7 +1972,7 @@
 			}
 
 			VanillaParserSpace::Element p;
-			p.strKeyword	= keywordsLayoutLoader[ KW_LL_ELEMENT ];
+			p.strKeyword	= LayoutLoader::getKeyword( KW_LL_ELEMENT );
 			p.noName 	= true;
 			p.noBody 	= true;
 			e.body += "\n";
@@ -1989,7 +2005,7 @@
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ];
+		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_FILTER_LAYOUT );
 		e.name		= fLayout.getTypeName();
 		e.body.clear();
 		e.noBody	= true;
@@ -2011,17 +2027,17 @@
 			e.arguments.push_back( vertName );
 		}
 		else
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_DEFAULT_VERTEX_SHADER] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_DEFAULT_VERTEX_SHADER) );
 
 		if(fLayout.isClearingEnabled())
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_CLEARING_ON] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_CLEARING_ON) );
 		else
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_CLEARING_OFF] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_CLEARING_OFF) );
 
 		if(fLayout.isBlendingEnabled())
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_BLENDING_ON] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_BLENDING_ON) );
 		else
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_BLENDING_OFF] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_BLENDING_OFF) );
 
 		if(!fLayout.isStandardGeometryModel())
 		{
@@ -2031,7 +2047,7 @@
 			e.arguments.push_back( mdlName );
 		}
 		else
-			e.arguments.push_back( keywordsLayoutLoader[KW_LL_STANDARD_QUAD] );
+			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_STANDARD_QUAD) );
 
 		return e;
 	}
@@ -2041,9 +2057,9 @@
 		std::string keyword;
 
 		if(isMain)
-			keyword = keywordsLayoutLoader[ KW_LL_PIPELINE_MAIN ];
+			keyword = LayoutLoader::getKeyword( KW_LL_PIPELINE_MAIN );
 		else
-			keyword = keywordsLayoutLoader[ KW_LL_PIPELINE_LAYOUT ];
+			keyword = LayoutLoader::getKeyword( KW_LL_PIPELINE_LAYOUT );
 
 		VanillaParserSpace::Element e;
 
@@ -2055,7 +2071,7 @@
 
 		// Declare all ports : 
 		VanillaParserSpace::Element inPorts;
-		inPorts.strKeyword = keywordsLayoutLoader[ KW_LL_INPUT_PORTS ];
+		inPorts.strKeyword = LayoutLoader::getKeyword( KW_LL_INPUT_PORTS );
 		inPorts.name.clear();
 		inPorts.noName = true;
 		inPorts.body.clear();
@@ -2067,7 +2083,7 @@
 		e.body += inPorts.getCode() + "\n";
 
 		VanillaParserSpace::Element outPorts;
-		outPorts.strKeyword = keywordsLayoutLoader[ KW_LL_OUTPUT_PORTS ];
+		outPorts.strKeyword = LayoutLoader::getKeyword( KW_LL_OUTPUT_PORTS );
 		outPorts.name.clear();
 		outPorts.noName = true;
 		outPorts.body.clear();
@@ -2093,11 +2109,11 @@
 			{
 				case __ReadOnly_PipelineLayout::FILTER :
 					c 		= write( pLayout.filterLayout(k) );
-					d.strKeyword	= keywordsLayoutLoader[ KW_LL_FILTER_INSTANCE ];
+					d.strKeyword	= LayoutLoader::getKeyword( KW_LL_FILTER_INSTANCE );
 					break;
 				case __ReadOnly_PipelineLayout::PIPELINE :
 					c = write( pLayout.pipelineLayout(k) );
-					d.strKeyword	= keywordsLayoutLoader[ KW_LL_PIPELINE_INSTANCE ];
+					d.strKeyword	= LayoutLoader::getKeyword( KW_LL_PIPELINE_INSTANCE );
 					break;
 				default :
 					throw Exception("LayoutWriter::write - Internal error : unknown element type.", __FILE__, __LINE__);
@@ -2115,7 +2131,7 @@
 
 		// Add Connections :  
 		VanillaParserSpace::Element c;
-		c.strKeyword	= keywordsLayoutLoader[ KW_LL_CONNECTION ];
+		c.strKeyword	= LayoutLoader::getKeyword(KW_LL_CONNECTION);
 		c.name.clear();
 		c.noName = true;
 		c.body.clear();
@@ -2129,7 +2145,7 @@
 
 			if(x.idOut==__ReadOnly_PipelineLayout::THIS_PIPELINE)
 			{
-				c.arguments.push_back( keywordsLayoutLoader[ KW_LL_THIS_PIPELINE] );
+				c.arguments.push_back( LayoutLoader::getKeyword(KW_LL_THIS_PIPELINE) );
 				c.arguments.push_back( pLayout.getInputPortName(x.portOut) );
 			}
 			else
@@ -2140,7 +2156,7 @@
 			
 			if(x.idIn==__ReadOnly_PipelineLayout::THIS_PIPELINE)
 			{
-				c.arguments.push_back( keywordsLayoutLoader[ KW_LL_THIS_PIPELINE] );
+				c.arguments.push_back( LayoutLoader::getKeyword(KW_LL_THIS_PIPELINE) );
 				c.arguments.push_back( pLayout.getOutputPortName(x.portIn) );
 			}
 			else

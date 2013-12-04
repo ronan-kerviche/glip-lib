@@ -45,8 +45,8 @@
 					GLenum		buildTarget,
 							buildUsage;
 					int 		size;
-					static bool 	binding[4],
-					mapping[4];
+					static bool 	binding[4];
+					static bool 	mapping[4];	// VS/CL will complain if these two are not splitted.
 
 					// No copy constructor
 					HdlGeBO(const HdlGeBO&);

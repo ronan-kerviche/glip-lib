@@ -41,6 +41,10 @@ namespace Glip
 
 	namespace Modules
 	{
+		/**		
+		\enum Glip::Modules::LayoutLoaderKeyword
+		\brief Keywords used by LayoutLoader and LayoutWriter. Use LayoutLoader::getKeyword() to get the actual string.
+		**/
 		enum LayoutLoaderKeyword
 		{
 			KW_LL_FORMAT_LAYOUT,
@@ -78,8 +82,6 @@ namespace Glip
 			LL_NumKeywords,
 			LL_UnknownKeyword
 		};
-
-		extern const char* keywordsLayoutLoader[LL_NumKeywords];
 
 /**
 \class LayoutLoader
@@ -268,7 +270,7 @@ Loading Example :
 
 				WARNING : It does not explore included files which might to incomplete list of requirements.
 				**/
-				struct PipelineScriptElements
+				struct GLIP_API PipelineScriptElements
 				{
 					std::vector<std::string> 			addedPaths,		/// Paths added by the script.
 											includedFiles,		/// File included by the script.
@@ -292,6 +294,8 @@ Loading Example :
 				};
 
 			private :
+				static const char* keywords[LL_NumKeywords];
+
 				bool 						isSubLoader;
 
 				// Reading dynamic :
@@ -363,6 +367,8 @@ Loading Example :
 				std::vector<std::string> listModules(void) const;
 				const LayoutLoaderModule& module(const std::string& name) const;
 				void removeModule(const std::string& name);
+
+				static const char* getKeyword(LayoutLoaderKeyword k); 
 		};
 
 /**

@@ -34,7 +34,7 @@
 	using namespace Glip::Modules::VanillaParserSpace;
 
 	// Static variables :
-	const char* Glip::Modules::keywordsUniformsVarsLoader[UL_NumKeywords] =  {	"PIPELINE",
+	const char* Glip::Modules::UniformsVarsLoader::keywords[UL_NumKeywords] =  {	"PIPELINE",
 											"FILTER",
 											"GL_FLOAT",
 											"GL_FLOAT_VEC2",
@@ -163,7 +163,7 @@
 		name = e.name;
 
 		#define READ_ELEMENT( glType, cType, narg ) \
-			if(e.strKeyword==keywordsUniformsVarsLoader[KW_UL_##glType]) \
+			if(e.strKeyword==keywords[KW_UL_##glType]) \
 			{ \
 				type = glType; \
 				cType* tmp = new cType [ narg ]; \
@@ -448,8 +448,8 @@
 
 			for(int k=0; k<parser.elements.size(); k++)
 			{
-				if(parser.elements[k].strKeyword!=keywordsUniformsVarsLoader[KW_UL_PIPELINE])
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must be of type \"" + keywordsUniformsVarsLoader[KW_UL_PIPELINE] + "\" (current : \"" + parser.elements[k].strKeyword + "\").", __FILE__, __LINE__);
+				if(parser.elements[k].strKeyword!=keywords[KW_UL_PIPELINE])
+					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must be of type \"" + keywords[KW_UL_PIPELINE] + "\" (current : \"" + parser.elements[k].strKeyword + "\").", __FILE__, __LINE__);
 
 				if( parser.elements[k].noName || parser.elements[k].name.empty() )
 					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
@@ -546,7 +546,7 @@
 
 		for(int k=0; k<parser.elements.size(); k++)
 		{
-			if(parser.elements[k].strKeyword==keywordsUniformsVarsLoader[KW_UL_PIPELINE] || parser.elements[k].strKeyword==keywordsUniformsVarsLoader[KW_UL_FILTER])
+			if(parser.elements[k].strKeyword==keywords[KW_UL_PIPELINE] || parser.elements[k].strKeyword==keywords[KW_UL_FILTER])
 			{
 				if( parser.elements[k].noName || parser.elements[k].name.empty() )
 					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
@@ -619,7 +619,7 @@
 		if(node.subNodes.empty() && !node.ressources.empty())
 		{
 			// Filter :
-			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_FILTER];
+			e.strKeyword 	= keywords[KW_UL_FILTER];
 			e.name		= node.name;
 			e.noName	= false;
 			e.arguments.clear();
@@ -638,7 +638,7 @@
 		else if(!node.subNodes.empty() || isRoot)
 		{
 			// Pipeline :
-			e.strKeyword 	= keywordsUniformsVarsLoader[KW_UL_PIPELINE];
+			e.strKeyword 	= keywords[KW_UL_PIPELINE];
 			e.name		= node.name;
 			e.noName	= false;
 			e.arguments.clear();
@@ -848,5 +848,21 @@
 		file << getCode();
 
 		file.close();
+	}
+
+	/**
+	\fn const char* UniformsVarsLoader::getKeyword(UniformVarsLoaderKeyword k)
+	\brief Get the actual keyword string.
+	\param k The index of the keyword.
+	\return A const pointer to a C-style character string.
+	**/
+	const char* UniformsVarsLoader::getKeyword(UniformVarsLoaderKeyword k)
+	{
+		if(k>=0 && k<UL_NumKeywords)
+			return keywords[k];
+		else if(k==UL_UnknownKeyword)
+			return "<Unknown Keyword>";
+		else
+			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + to_string(k) + ".", __FILE__, __LINE__);
 	}
 

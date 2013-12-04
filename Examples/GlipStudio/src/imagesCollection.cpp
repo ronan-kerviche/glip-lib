@@ -70,19 +70,21 @@
 		listLabels.push_back("Size");
 		setHeaderLabels( listLabels );
 
-		header()->setMovable( false );
+		
 
 		connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),	this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
 		connect(this, SIGNAL(itemClicked(QTreeWidgetItem*, int)),			this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
 
 		// size of the columns : 
 		#if QT_VERSION >= 0x050000
+			header()->setSectionsMovable( false );
 			resizeColumnToContents(0);
 			resizeColumnToContents(1);
 			header()->setSectionResizeMode(0, QHeaderView::Fixed); 
 			header()->setSectionResizeMode(1, QHeaderView::Stretch);
 			header()->setSectionResizeMode(2, QHeaderView::Fixed);
 		#else
+			header()->setMovable( false );
 			resizeColumnToContents(0);
 			resizeColumnToContents(1);
 			header()->setResizeMode(0, QHeaderView::Fixed); 

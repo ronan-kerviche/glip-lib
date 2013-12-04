@@ -71,7 +71,7 @@
 	}
 
 	/**
-	\fn const HdlTextureFormatDescriptor& getDescriptor(void) const
+	\fn const HdlTextureFormatDescriptor& ImageBuffer::getDescriptor(void) const
 	\brief Get the descriptor of the GL mode.
 	\return A HdlTextureFormatDescriptor object reference.
 	**/
@@ -122,7 +122,7 @@
 	}
 
 	/**
-	\fn unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const
+	\fn unsigned int ImageBuffer::getIndex(unsigned int x, unsigned int y, GLenum channel) const
 	\brief Get the component index.
 	\param x X-axis coordinate (along the width).
 	\param y Y-axis coordinate (along the height).
@@ -256,7 +256,7 @@
 	}
 
 	/**
-	\fn const ImageBuffer& operator>>(void* bytes)
+	\fn const ImageBuffer& ImageBuffer::operator>>(void* bytes)
 	\brief Copy an array.
 	\param bytes The buffer to copy (assumed to be of size __ReadOnly_HdlTextureFormat::getSize()).
 	\return This.

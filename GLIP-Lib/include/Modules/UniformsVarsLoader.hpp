@@ -39,6 +39,7 @@ namespace Glip
 
 	namespace Modules
 	{
+		/// Keywords used by UniformVarsLoader. Use UniformsVarsLoader::getKeyword() to get the actual string.
 		enum UniformVarsLoaderKeyword
 		{
 			KW_UL_PIPELINE,
@@ -69,8 +70,6 @@ namespace Glip
 			UL_NumKeywords,
 			UL_UnknownKeyword
 		};
-
-		extern const char* keywordsUniformsVarsLoader[UL_NumKeywords];
 
 /**
 \class UniformsVarsLoader
@@ -135,6 +134,8 @@ Processing example :
 		class GLIP_API UniformsVarsLoader
 		{
 			private :
+				static const char* keywords[UL_NumKeywords];
+
 				struct GLIP_API Ressource
 				{
 					std::string name;
@@ -184,6 +185,8 @@ Processing example :
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;
 				void writeToFile(const std::string& filename) const;
+
+				static const char* getKeyword(UniformVarsLoaderKeyword k);
 		};
 	}
 }

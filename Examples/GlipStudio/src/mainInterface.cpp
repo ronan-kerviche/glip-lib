@@ -92,8 +92,9 @@
 			
 		if(!stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
-			QMessageBox::information(NULL, tr("GlipStudio::GlipStudi - Error :"), tr("The style sheet \"%1\" could not be loaded.").arg(stylesheetFile.fileName()));
-			throw Exception("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded.", __FILE__, __LINE__); 
+			QString path = QDir::currentPath();
+			QMessageBox::information(NULL, tr("GlipStudio::GlipStudio - Error :"), tr("The style sheet \"%1\" could not be loaded.\nIn %2.").arg(stylesheetFile.fileName()).arg(path));
+			throw Exception("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (" + path.toStdString() + ").", __FILE__, __LINE__); 
 		}
 
 		QTextStream 	stylesheetStream(&stylesheetFile);

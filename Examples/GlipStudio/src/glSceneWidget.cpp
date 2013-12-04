@@ -79,6 +79,20 @@
 			return *target;
 	}
 
+	void ViewLink::getSize(int& w, int& h)
+	{
+		if(target==NULL)
+		{
+			w = 0;
+			h = 0;
+		}
+		else
+		{
+			w = format().getWidth();
+			h = format().getHeight();
+		}
+	}
+
 	/*
 	// Old function, not accounting for the filling of the screen : 
 	void ViewLink::getScalingRatios(float* imageScaling, float* haloScaling, float haloSize, float currentPixelX, float currentPixelY)
@@ -586,7 +600,9 @@
 
 // MouseData
 	GLSceneWidget::MouseData::MouseData(void)
-	 : 	xLastClick(0.0f),
+	 : 	lastSelectionWidth(0),
+		lastSelectionHeight(0),
+		xLastClick(0.0f),
 		yLastClick(0.0f),
 		xCurrent(0.0f),
 		yCurrent(0.0f),
@@ -603,7 +619,9 @@
 	}
 
 	GLSceneWidget::MouseData::MouseData(const MouseData& c)
-	 :	xLastClick(c.xLastClick),
+	 :	lastSelectionWidth(c.lastSelectionWidth),
+		lastSelectionHeight(c.lastSelectionHeight),
+		xLastClick(c.xLastClick),
 		yLastClick(c.yLastClick),
 		xCurrent(c.xCurrent),
 		yCurrent(c.yCurrent),
@@ -1230,12 +1248,12 @@
 
 						if(under!=NULL && currentMouseMode==ManipulationMode)
 							bringUpView(under);
-						else if(!selectionList.empty() && currentMouseMode==SelectionMode)
+						else if(under!=NULL && currentMouseMode==SelectionMode)
 						{
-							selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastClick, mouseData.yLastClick);
+							under->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastClick, mouseData.yLastClick);
+							under->getSize(mouseData.lastSelectionWidth, mouseData.lastSelectionHeight);
 
-							if(under==selectionList.back())
-								std::memcpy(mouseData.colorLastClick, colorUnderClick, 3*sizeof(unsigned char));
+							std::memcpy(mouseData.colorLastClick, colorUnderClick, 3*sizeof(unsigned char));
 
 							mouseDataWasUpdated = true;
 						}
@@ -1253,15 +1271,15 @@
 						unsigned char colorUnderClick[3];
 						ViewLink* under = updateSelection(false, false, colorUnderClick);
 
-						if(!selectionList.empty() && currentMouseMode==SelectionMode)
+						if(under!=NULL && currentMouseMode==SelectionMode)
 						{
-							selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastRelease, mouseData.yLastRelease);
+							under->getLocalCoordinates(xLastClick, yLastClick, mouseData.xLastRelease, mouseData.yLastRelease);
+							under->getSize(mouseData.lastSelectionWidth, mouseData.lastSelectionHeight);
 
 							mouseData.xLastVector	= mouseData.xLastRelease - mouseData.xLastClick;
 							mouseData.yLastVector	= mouseData.yLastRelease - mouseData.yLastClick;
 
-							if(under==selectionList.back())
-								std::memcpy(mouseData.colorLastRelease, colorUnderClick, 3*sizeof(unsigned char));
+							std::memcpy(mouseData.colorLastRelease, colorUnderClick, 3*sizeof(unsigned char));
 
 							mouseDataWasUpdated = true;
 						}
@@ -1334,13 +1352,12 @@
 						unsigned char colorUnderClick[3];
 						ViewLink* under = updateSelection(false, false, colorUnderClick);
 
-						selectionList.back()->getLocalCoordinates(xLastClick, yLastClick, mouseData.xCurrent, mouseData.yCurrent);
+						under->getLocalCoordinates(xLastClick, yLastClick, mouseData.xCurrent, mouseData.yCurrent);
 
 						mouseData.xVectorCurrent	= mouseData.xCurrent - mouseData.xLastClick;
 						mouseData.yVectorCurrent	= mouseData.yCurrent - mouseData.yLastClick;
 
-						if(under==selectionList.back())
-							std::memcpy(mouseData.colorCurrent, colorUnderClick, 3*sizeof(unsigned char));
+						std::memcpy(mouseData.colorCurrent, colorUnderClick, 3*sizeof(unsigned char));
 
 						mouseDataWasUpdated = true;
 					}
@@ -1639,16 +1656,14 @@
 				targetName = selectionList.back()->title;
 			}
 			else if(!selectionList.empty())
-			{
-				targetName="(multiple view selected)";
-			}
+				targetName="(multiple views selected)";
 			
 			QString textLeft 	= tr("Position : %2x%3").arg(px).arg(py),
 				textCenter	= tr("%1").arg(targetName),
 				textRight	= tr("Color (%4,%5,%6) %7").arg(lastColor.red()).arg(lastColor.green()).arg(lastColor.blue()).arg(lastColor.name());
 
 			if(!testInside)
-				textLeft += "(outside)";
+				textLeft += " (outside)";
 
 			QFontMetrics metrics = QFontMetrics(font());
 			int border = qMax(4, metrics.leading());

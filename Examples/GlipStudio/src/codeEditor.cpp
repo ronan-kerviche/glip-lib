@@ -61,7 +61,7 @@
 
 			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + Glip::Modules::keywordsLayoutLoader[i] + "\\b";
+				std::string str = std::string("\\b") + LayoutLoader::getKeyword(static_cast<Glip::Modules::LayoutLoaderKeyword>(i)) + "\\b";
 				glipllkeywordPatterns << str.c_str();
 			}
 
@@ -80,7 +80,7 @@
 
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + Glip::Modules::keywordsUniformsVarsLoader[i] + "\\b";
+				std::string str = std::string("\\b") + UniformsVarsLoader::getKeyword(static_cast<UniformVarsLoaderKeyword>(i)) + "\\b";
 				glipulkeywordPatterns << str.c_str();
 			}
 

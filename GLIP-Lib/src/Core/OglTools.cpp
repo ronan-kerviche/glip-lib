@@ -65,10 +65,6 @@ using namespace Glip::CoreGL;
 				else
 				    vendor = vd_UNKNOWN;
 
-				// OLD : Create a standard quad :
-				// NOW : See Geometries.
-				//standardQuad = HdlVBO::generate2DStandardQuad();
-
 				instance = this;
 			}
 			else
@@ -113,6 +109,16 @@ using namespace Glip::CoreGL;
 			}
 			else
 				throw Exception("HandleOpenGL::deinit - GLIP-LIB has never been initialized for this program.", __FILE__, __LINE__);
+		}
+
+		/**
+		\fn bool HandleOpenGL::isInitialized(void)
+		\brief Test if the context was already initialized.
+		\return True if the context was initialized (and not terminated).
+		**/
+		bool HandleOpenGL::isInitialized(void)
+		{
+			return (instance!=NULL);
 		}
 
 		/**
