@@ -78,7 +78,13 @@
 
 				// Write all elements : 
 				for(int k=0; k<parser->elements.size(); k++)
-					file << parser->elements[k].getCode() << std::endl;
+				{
+					// Clean first : 
+					parser->elements[k].body = parser->elements[k].getCleanBody();
+
+					// Then, get code : 
+					file << parser->elements[k].getCode() << std::endl << std::endl;
+				}
 
 				file.close();
 			}

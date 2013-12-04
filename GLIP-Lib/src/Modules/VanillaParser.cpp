@@ -81,7 +81,14 @@
 		size_t 	pStart 	= body.find_first_not_of(spacers),
 			pEnd 	= body.find_last_not_of(spacers);
 		
-		return body.substr(pStart, pEnd-pStart+1);
+		if(pStart==std::string::npos && pEnd==std::string::npos)
+			return body;
+		else if(pStart==std::string::npos && pEnd!=std::string::npos) // Second is mandatory.
+			return body.substr(0, pEnd+1);
+		else if(pStart!=std::string::npos && pEnd==std::string::npos)
+			return body.substr(pStart, std::string::npos);
+		else
+			return body.substr(pStart, pEnd-pStart+1);
 	}
 
 	std::string Element::getCode(void) const
