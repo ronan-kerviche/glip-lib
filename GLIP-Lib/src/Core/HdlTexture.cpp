@@ -70,48 +70,6 @@ using namespace Glip::CoreGL;
 	__ReadOnly_HdlTextureFormat::~__ReadOnly_HdlTextureFormat(void)
 	{ }
 
-	// Private tools
-	int __ReadOnly_HdlTextureFormat::getChannelCount(GLenum _mode) const
-	{
-		return static_cast<int>(HdlTextureFormatDescriptorsList::get(_mode).numChannels);
-	}
-
-	int __ReadOnly_HdlTextureFormat::getChannelSize(GLenum _depth) const
-	{
-		return HdlTextureFormatDescriptorsList::getTypeDepth(_depth);
-	}
-
-	GLenum __ReadOnly_HdlTextureFormat::getAliasMode(GLenum _mode) const
-	{
-		return HdlTextureFormatDescriptorsList::get(_mode).aliasMode;
-	}
-
-	bool __ReadOnly_HdlTextureFormat::isCompressedMode(GLenum _mode) const
-	{
-		return HdlTextureFormatDescriptorsList::get(_mode).isCompressed;
-	}
-
-	bool __ReadOnly_HdlTextureFormat::isFloatingPointMode(GLenum _mode, GLenum _depth) const
-	{
-		return HdlTextureFormatDescriptorsList::get(_mode).isFloatting;
-	}
-
-	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingCompressedMode(GLenum _mode) const
-	{
-		if(isCompressedMode(_mode))
-			return _mode;
-		else
-			return HdlTextureFormatDescriptorsList::get(_mode).correspondingModeForCompressing;
-	}
-
-	GLenum __ReadOnly_HdlTextureFormat::getCorrespondingUncompressedMode(GLenum _mode) const
-	{
-		if(!isCompressedMode(_mode))
-			return _mode;
-		else
-			return HdlTextureFormatDescriptorsList::get(_mode).correspondingModeForCompressing;
-	}
-
 // Public Tools
 	/**
 	\fn     int __ReadOnly_HdlTextureFormat::getWidth(void) const
@@ -152,9 +110,9 @@ using namespace Glip::CoreGL;
 	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
 	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
 	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return imgH*imgW; }
-	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getChannelCount(mode); }
-	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return getChannelSize(getGLDepth()); }
-	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*getChannelCount(mode); }
+	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels; }
+	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
+	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*getNumChannels(); }
 	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getWidth()) * static_cast<size_t>(getHeight()) * static_cast<size_t>(getNumChannels()) * static_cast<size_t>(getChannelDepth()); }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
@@ -164,8 +122,8 @@ using namespace Glip::CoreGL;
 	int	__ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
 	GLenum	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
 	GLenum	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
-	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return isCompressedMode(mode); }
-	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return isFloatingPointMode(mode, depth); }
+	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return getFormatDescriptor().isCompressed; }
+	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloating || depth==GL_FLOAT || depth==GL_DOUBLE; }
 
 	/**
 	\fn const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
@@ -173,7 +131,7 @@ using namespace Glip::CoreGL;
 	**/
 	const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
 	{
-		return HdlTextureFormatDescriptorsList::get(getGLMode());
+		return HdlTextureFormatDescriptorsList::get(mode);
 	}
 
 	/**
@@ -186,7 +144,7 @@ using namespace Glip::CoreGL;
 		return  (imgW			== f.imgW)		&&
 			(imgH			== f.imgH)		&&
 			(getNumChannels()	== f.getNumChannels())	&&
-			(getChannelDepth()	== f.getChannelDepth())   &&
+			(getChannelDepth()	== f.getChannelDepth())	&&
 			(getSize()		== f.getSize())		&&
 			(mode			== f.mode)		&&
 			(depth			== f.depth)		&&
@@ -239,7 +197,7 @@ using namespace Glip::CoreGL;
 		else
 		{
 			__ReadOnly_HdlTextureFormat res(*this);
-			res.mode = getCorrespondingCompressedMode(mode);
+			res.mode = getFormatDescriptor().getCompressedMode();
 			return res;
 		}
 	}
@@ -256,7 +214,7 @@ using namespace Glip::CoreGL;
 		else
 		{
 			__ReadOnly_HdlTextureFormat res(*this);
-			res.mode = getCorrespondingUncompressedMode(mode);
+			res.mode = getFormatDescriptor().getUncompressedMode();
 			return res;
 		}
 	}
@@ -278,7 +236,7 @@ using namespace Glip::CoreGL;
 				(baseLevel		== f.baseLevel)		&&
 				(maxLevel		== f.maxLevel);
 
-		return test && (f.mode==getCorrespondingCompressedMode(mode));
+		return test && (f.mode==getFormatDescriptor().getCompressedMode());
 	}
 
 	/**
@@ -738,7 +696,7 @@ using namespace Glip::CoreGL;
 		if(pixelDepth==GL_ZERO)
 			pixelDepth = depth;
 
-		pixelFormat = getAliasMode(pixelFormat);
+		pixelFormat = getFormatDescriptor().aliasMode; //getAliasMode(pixelFormat);
 
 		// Bind it
 		glBindTexture(GL_TEXTURE_2D, texID);

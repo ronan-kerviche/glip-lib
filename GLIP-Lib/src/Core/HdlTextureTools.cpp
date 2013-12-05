@@ -258,6 +258,32 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	}
 
 	/**
+	\fn GLenum HdlTextureFormatDescriptor::getCompressedMode(void) const
+	\brief Get the corresponding compressed mode for the current mode.
+	\return The corresponding compressed mode. If the mode is compressed, the function return modeID.
+	**/
+	GLenum HdlTextureFormatDescriptor::getCompressedMode(void) const
+	{
+		if(isCompressed)
+			return modeID;
+		else
+			return correspondingModeForCompressing;
+	}
+
+	/**
+	\fn GLenum HdlTextureFormatDescriptor::getUncompressedMode(void) const
+	\brief Get the corresponding uncompressed mode for the current mode.
+	\return The corresponding uncompressed mode. If the mode is uncompressed, the function return modeID.
+	**/
+	GLenum HdlTextureFormatDescriptor::getUncompressedMode(void) const
+	{
+		if(isCompressed)
+			return correspondingModeForCompressing;
+		else
+			return modeID;
+	}
+
+	/**
 	\fn    int HdlTextureFormatDescriptorsList::getNumDescriptors(void)
 	\brief Returns the number of known GL modes for texture formats (GL_RGB, GL_RGBA, ...).
 	\return Returns the number of known GL modes.

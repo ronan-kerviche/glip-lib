@@ -54,8 +54,8 @@
 							hasLuminanceChannel,
 							/// True if it is a compressed mode.
 							isCompressed,
-							/// True if it is associated with a floatting point depth.
-							isFloatting;
+							/// True if it is associated with a floating point depth.
+							isFloating;
 							/// The generic mode (e.g. GL_RG32F will have GL_RG).
 				const GLenum		aliasMode,
 							/// If the mode is uncompressed, this will be the correspondin compressed mode. Otherwise it will the corresponding uncompressed mode.
@@ -103,6 +103,8 @@
 				GLenum channelType(GLenum channel) const;
 				char channelIndex(GLenum channel) const;
 				std::vector<GLenum> getChannelsList(void) const;
+				GLenum getCompressedMode(void) const;
+				GLenum getUncompressedMode(void) const;
 			};
 
 			/**

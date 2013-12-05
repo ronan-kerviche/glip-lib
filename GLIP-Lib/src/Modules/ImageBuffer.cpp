@@ -31,7 +31,7 @@
 	/**
 	\fn ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format)
 	\brief ImageBuffer constructor.
-	\param format The format of this buffer.
+	\param format The format of this buffer (or the equivalent uncompressed format).
 	**/
 	ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format)
 	 :  __ReadOnly_HdlTextureFormat(format.getUncompressedFormat()), descriptor(format.getFormatDescriptor()), buffer(NULL)
@@ -165,8 +165,27 @@
 	}
 
 	/**
+	\fn    void ImageBuffer::setMinFilter(GLenum mf)
+	\brief Sets the texture's minification parameter.
+	\param mf The new minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
+	\fn    void ImageBuffer::setMagFilter(GLenum mf)
+	\brief Sets the texture's magnification parameter.
+	\param mf The new magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
+	\fn    void ImageBuffer::setSWrapping(GLenum m)
+	\brief Sets the texture's S wrapping parameter.
+	\param m The new S wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
+	\fn    void ImageBuffer::setTWrapping(GLenum m)
+	\brief Sets the texture's T wrapping parameter.
+	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
+	**/
+	void ImageBuffer::setMinFilter(GLenum mf)	{ minFilter = mf; }
+	void ImageBuffer::setMagFilter(GLenum mf)	{ magFilter = mf; }
+	void ImageBuffer::setSWrapping(GLenum m)	{ wraps     = m;  }
+	void ImageBuffer::setTWrapping(GLenum m)	{ wrapt     = m;  }
+
+	/**
 	\fn const ImageBuffer& ImageBuffer::operator<<(HdlTexture& texture)
-	\brief Copy a texture to this buffer.
+	\brief Copy a texture to this buffer and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param texture The texture to copy.
 	\return This.
 	**/
@@ -188,13 +207,18 @@
 
 			HdlTexture::unbind();
 
+			setMinFilter(texture.getMinFilter());
+			setMagFilter(texture.getMagFilter());
+			setSWrapping(texture.getSWrapping());
+			setTWrapping(texture.getTWrapping());
+
 			return (*this);
 		}
 	}
 
 	/**
 	\fn const ImageBuffer& ImageBuffer::operator<<(const ImageBuffer& image)
-	\brief Copy a buffer.
+	\brief Copy a buffer and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param image The buffer to copy.
 	\return This.
 	**/
@@ -205,6 +229,11 @@
 		else
 		{
 			std::memcpy(buffer, image.buffer, getSize());
+	
+			setMinFilter(image.getMinFilter());
+			setMagFilter(image.getMagFilter());
+			setSWrapping(image.getSWrapping());
+			setTWrapping(image.getTWrapping());
 			
 			return (*this);
 		}
@@ -225,7 +254,7 @@
 
 	/**
 	\fn const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture)
-	\brief Write buffer to a texture.
+	\brief Write buffer to a texture and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param texture The texture to be written.
 	\return This.
 	**/
@@ -258,13 +287,18 @@
 
 			HdlTexture::unbind();
 
+			texture.setMinFilter(getMinFilter());
+			texture.setMagFilter(getMagFilter());
+			texture.setSWrapping(getSWrapping());
+			texture.setTWrapping(getTWrapping());
+
 			return (*this);
 		}
 	}
 
 	/**
 	\fn const ImageBuffer& ImageBuffer::operator>>(ImageBuffer& image)
-	\brief Copy a buffer.
+	\brief Copy a buffer and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param image The buffer to be written.
 	\return This.
 	**/

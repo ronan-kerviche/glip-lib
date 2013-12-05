@@ -64,6 +64,11 @@ namespace Glip
 				unsigned char* getBuffer(void);
 				const unsigned char* getBuffer(void) const;
 
+				void setMinFilter(GLenum mf);
+				void setMagFilter(GLenum mf);
+				void setSWrapping(GLenum m);
+				void setTWrapping(GLenum m);
+
 				const ImageBuffer& operator<<(HdlTexture& texture);
 				const ImageBuffer& operator<<(const ImageBuffer& image);
 				const ImageBuffer& operator<<(const void* bytes);

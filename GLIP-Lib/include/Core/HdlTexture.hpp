@@ -47,19 +47,12 @@
 					GLenum	mode, depth, minFilter, magFilter, wraps, wrapt;  	// Image format, texture filtering and wrapping modes.
 					int	baseLevel, maxLevel;                			// MipMap information.
 
-					// Protected tools :
-					int	getChannelCount(GLenum _mode)				const;
-					int	getChannelSize(GLenum _depth)				const;
-					GLenum	getAliasMode(GLenum _mode)				const;
-					bool	isCompressedMode(GLenum _mode)				const;
-					bool	isFloatingPointMode(GLenum _mode, GLenum _depth)	const;
-					GLenum	getCorrespondingCompressedMode(GLenum _mode)		const;
-					GLenum 	getCorrespondingUncompressedMode(GLenum _mode) 		const;
+					// Protected constructors : 
 					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
-					virtual ~__ReadOnly_HdlTextureFormat(void);
+				virtual ~__ReadOnly_HdlTextureFormat(void);
 
 					int	getWidth    	(void) const;
 					int	getHeight   	(void) const;
