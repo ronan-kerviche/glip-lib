@@ -38,7 +38,7 @@ namespace Glip
 
 	namespace Modules
 	{
-		// Structure
+		// Structure :
 /**
 \class ImageBuffer
 \brief Host-side image buffer.
@@ -60,6 +60,8 @@ namespace Glip
 				unsigned int getPixelIndex(unsigned int x, unsigned int y) const;
 				unsigned int getChannelIndex(GLenum channel) const;
 				unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const;
+				unsigned int getRowLength(void) const;
+				unsigned char* getBuffer(void);
 				const unsigned char* getBuffer(void) const;
 
 				const ImageBuffer& operator<<(HdlTexture& texture);
@@ -70,128 +72,135 @@ namespace Glip
 				const ImageBuffer& operator>>(void* bytes);
 
 				template<typename T>
-				T get(unsigned int x, unsigned int y, GLenum channel) const;
+				T* reinterpret(unsigned int x, unsigned int y, GLenum channel);
+
+				template<typename T>
+				const T* reinterpret(unsigned int x, unsigned int y, GLenum channel) const;
+
+				signed long long get(unsigned int x, unsigned int y, GLenum channel) const;
+				ImageBuffer& set(unsigned int x, unsigned int y, GLenum channel, const signed long long& value);
+				float getNormalized(unsigned int x, unsigned int y, GLenum channel) const;
+				ImageBuffer& setNormalized(unsigned int x, unsigned int y, GLenum channel, const float& value);
+
+				// Static tools : 
+				template<typename T>
+				static float getRangeMax(void);
 		
 				template<typename T>
-				ImageBuffer& set(unsigned int x, unsigned int y, GLenum channel, const T& value);
+				static float getRangeMin(void);
+
+				template<typename T>
+				static float getDynamicRange(void);
+
+				template<typename T>
+				static float getNormalizedValue(const T& v);
+
+				template<typename T>
+				static T getDenormalizedValue(const float& v);
+
+				template<typename T>
+				static T clampValue(const signed long long& v);
 		};
+
+		// Template functions : 
+			/**
+			\fn T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel)
+			\brief Reinterpret the buffer to some given type.
+			\param x X-axis coordinate (along the width).
+			\param y Y-axis coordinate (along the height).
+			\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
+			\return The buffer at the requested component position, reinterpreted to the requested type.
+			**/
+			template<typename T>
+			T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel)
+			{
+				unsigned int pos = getIndex(x, y, channel) * getChannelDepth();
+				return reinterpret_cast<T*>(buffer + pos);
+			}
+
+			/**
+			\fn const T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel) const
+			\brief Reinterpret the buffer to some given type.
+			\param x X-axis coordinate (along the width).
+			\param y Y-axis coordinate (along the height).
+			\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
+			\return The buffer at the requested component position, reinterpreted to the requested type.
+			**/
+			template<typename T>
+			const T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel) const
+			{
+				unsigned int pos = getIndex(x, y, channel) * getChannelDepth();
+				return reinterpret_cast<T*>(buffer + pos);
+			}
+
+			/**
+			\fn float ImageBuffer::getRangeMax(void)
+			\brief Get the maximum of a given type.
+			\return The maximum of the type, in single precision floating point format.
+			**/
+			template<typename T>
+			float ImageBuffer::getRangeMax(void)
+			{
+				return static_cast<float>(std::numeric_limits<T>::max());
+			}
 		
-		// Macro tools : 
-		#define IMAGE_BUFFER_GET_CONVERT_TYPES( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					res = static_cast<EXTERNAL_TYPE>( static_cast<double>(s[pos])/(static_cast<double>(std::numeric_limits<BUFFER_TYPE>::max()) - 1.0)*(static_cast<double>(std::numeric_limits<EXTERNAL_TYPE>::max())-1.0) ); \
-				}
+			/**
+			\fn float ImageBuffer::getRangeMin(void)
+			\brief Get the minimum of a given type.
+			\return The minimum of the type, in single precision floating point format.
+			**/
+			template<typename T>
+			float ImageBuffer::getRangeMin(void)
+			{
+				return static_cast<float>(std::numeric_limits<T>::min());
+			}
 
-		#define IMAGE_BUFFER_GET_CONVERT_TYPES_BUFFER_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					res = static_cast<EXTERNAL_TYPE>( static_cast<double>(s[pos])*(static_cast<double>(std::numeric_limits<EXTERNAL_TYPE>::max())-1.0) ); \
-				}
+			/**
+			\fn float ImageBuffer::getDynamicRange(void)
+			\brief Get the dynamic range of a given type.
+			\return The range of the type, in single precision floating point format.
+			**/
+			template<typename T>
+			float ImageBuffer::getDynamicRange(void)
+			{
+				return getRangeMax<T>() - getRangeMin<T>();
+			}
+	
+			/**
+			\fn float ImageBuffer::getNormalizedValue(const T& v)
+			\brief Get the normalized value conversion. Assume the full dynamic range of the input type is used.
+			\param v Input value.
+			\return The normalized value in single precision floating point format (in the [0.0f, 1.0f] range).
+			**/
+			template<typename T>
+			float ImageBuffer::getNormalizedValue(const T& v)
+			{
+				return static_cast<float>(v) / getDynamicRange<T>();
+			}
 
-		#define IMAGE_BUFFER_GET_CONVERT_TYPES_EXTERNAL_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					res = static_cast<EXTERNAL_TYPE>(s[pos])/(static_cast<EXTERNAL_TYPE>(std::numeric_limits<BUFFER_TYPE>::max()) - 1.0); \
-				}
+			/**
+			\fn T ImageBuffer::getDenormalizedValue(const float& v)
+			\brief Get the denormalized value conversion. Clamp the input to the [0.0f, 1.0f] range.
+			\param v Input value.
+			\return The denormalized value expressed in the full dynamic range of the requested output type.
+			**/
+			template<typename T>
+			T ImageBuffer::getDenormalizedValue(const float& v)
+			{
+				return static_cast<T>( std::min( std::max(v, 0.0f), 1.0f)  * getDynamicRange<T>() - getRangeMin<T>() );
+			}
 
-		#define IMAGE_BUFFER_GET_CONVERT_TYPES_BUFFER_AND_EXTERNAL_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					res = static_cast<EXTERNAL_TYPE>(s[pos]); \
-				}
-
-
-		#define IMAGE_BUFFER_SET_CONVERT_TYPES( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					s[pos] = static_cast<BUFFER_TYPE>( static_cast<double>(value)/(static_cast<double>(std::numeric_limits<EXTERNAL_TYPE>::max())-1.0) * (static_cast<double>(std::numeric_limits<BUFFER_TYPE>::max())-1.0) ); \
-				}
-
-		#define IMAGE_BUFFER_SET_CONVERT_TYPES_BUFFER_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					s[pos] = static_cast<BUFFER_TYPE>( static_cast<double>(value)/(static_cast<double>(std::numeric_limits<EXTERNAL_TYPE>::max())-1.0) ); \
-				}
-
-		#define IMAGE_BUFFER_SET_CONVERT_TYPES_EXTERNAL_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					s[pos] = static_cast<BUFFER_TYPE>( static_cast<double>(value) * (static_cast<double>(std::numeric_limits<BUFFER_TYPE>::max())-1.0) ); \
-				}
-
-		#define IMAGE_BUFFER_SET_CONVERT_TYPES_BUFFER_AND_EXTERNAL_NORMALIZED( GL_TYPE_NAME, BUFFER_TYPE, EXTERNAL_TYPE) \
-				if(depth==GL_TYPE_NAME) \
-				{ \
-					BUFFER_TYPE* s = reinterpret_cast<BUFFER_TYPE*>(buffer); \
-					s[pos] = static_cast<BUFFER_TYPE>(value); \
-				}
-
-		// Template operators : 
-		/**
-		\fn T ImageBuffer::get(unsigned int x, unsigned int y, GLenum channel) const
-		\brief Access data of the buffer with automatic dynamic range conversion.
-		\param x X-axis coordinate (along the width).
-		\param y Y-axis coordinate (along the height).
-		\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
-		\return The value of the targeted component.
-		**/
-		template<typename T>
-		T ImageBuffer::get(unsigned int x, unsigned int y, GLenum channel) const
-		{
-			GLenum depth = getGLDepth();
-			unsigned int pos = getIndex(x, y, channel);
-			T res;
-			
-				IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_BYTE, 		char,		T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_UNSIGNED_BYTE, 	unsigned char,	T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_SHORT,		short,		T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_UNSIGNED_SHORT,	unsigned short,	T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_INT,			int,		T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES( 			GL_UNSIGNED_INT,	unsigned int,	T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES_BUFFER_NORMALIZED( 	GL_FLOAT,		float,		T)
-			else	IMAGE_BUFFER_GET_CONVERT_TYPES_BUFFER_NORMALIZED( 	GL_DOUBLE,		double,		T)
-			else
-				throw Exception("ImageBuffer::get - Unknown depth : \"" + glParamName(depth) + "\".", __FILE__, __LINE__);
-
-			return res;
-		}
-
-		/**
-		\fn ImageBuffer& ImageBuffer::set(unsigned int x, unsigned int y, GLenum channel, const T& value)
-		\brief Write data to the buffer with automatic dynamic range conversion.
-		\param x X-axis coordinate (along the width).
-		\param y Y-axis coordinate (along the height).
-		\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
-		\param value The value to be written.
-		\return This.
-		**/
-		template<typename T>
-		ImageBuffer& ImageBuffer::set(unsigned int x, unsigned int y, GLenum channel, const T& value)
-		{
-			GLenum depth = getGLDepth();
-			unsigned int pos = getIndex(x, y, channel);
-
-				IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_BYTE, 		char,		T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_UNSIGNED_BYTE, 	unsigned char,	T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_SHORT,		short,		T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_UNSIGNED_SHORT,	unsigned short,	T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_INT,			int,		T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES( 			GL_UNSIGNED_INT,	unsigned int,	T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES_BUFFER_NORMALIZED( 	GL_FLOAT,		float,		T)
-			else	IMAGE_BUFFER_SET_CONVERT_TYPES_BUFFER_NORMALIZED( 	GL_DOUBLE,		double,		T)
-			else
-				throw Exception("ImageBuffer::set - Unknown depth : \"" + glParamName(depth) + "\".", __FILE__, __LINE__);
-
-			return (*this);
-		}
+			/**
+			\fn T ImageBuffer::clampValue(const signed long long& v)
+			\brief Clamp the value to the full dynamic range of the output type.
+			\param v Input value.
+			\return The clamped value.
+			**/
+			template<typename T>
+			T ImageBuffer::clampValue(const signed long long& v)
+			{
+				return static_cast<T>(  std::min( std::max(v, static_cast<signed long long>(std::numeric_limits<T>::min())), static_cast<signed long long>(std::numeric_limits<T>::max()) ));
+			}
 	}
 }
 

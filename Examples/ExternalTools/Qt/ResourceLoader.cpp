@@ -47,13 +47,13 @@
 			{
 				QRgb col 	= qimage.pixel(j,i);
 				if(descriptor.numChannels==1)
-					buffer->set(j, i, GL_LUMINANCE,	qRed( col ));
+					buffer->set(j, i, GL_LUMINANCE,	qRed(  col ));
 				else 
 				{
-									buffer->set(j, i, GL_RED, 	static_cast<unsigned char>(qRed( col )));
-					if(descriptor.numChannels>1)	buffer->set(j, i, GL_GREEN,	static_cast<unsigned char>(qGreen( col )));
-					if(descriptor.numChannels>2)	buffer->set(j, i, GL_BLUE,	static_cast<unsigned char>(qBlue( col )));
-					if(descriptor.numChannels>3)	buffer->set(j, i, GL_ALPHA,	static_cast<unsigned char>(qAlpha( col )));
+									buffer->set(j, i, GL_RED, 	qRed( col ));
+					if(descriptor.numChannels>1)	buffer->set(j, i, GL_GREEN,	qGreen( col ));
+					if(descriptor.numChannels>2)	buffer->set(j, i, GL_BLUE,	qBlue( col ));
+					if(descriptor.numChannels>3)	buffer->set(j, i, GL_ALPHA,	qAlpha( col ));
 				}
 			}
 		}
@@ -85,20 +85,20 @@
 			for(int x=0; x<buffer.getWidth(); x++)
 			{
 				if(descriptor.numChannels>=4)
-					value.setAlpha( buffer.get<unsigned char>(x, y, GL_ALPHA) );
+					value.setAlpha( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_ALPHA) ) );
 				if(descriptor.numChannels>=3)
-					value.setBlue( 	buffer.get<unsigned char>(x, y, GL_BLUE) );
+					value.setBlue( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_BLUE) ) );
 				if(descriptor.numChannels>=2)
 				{
-					value.setRed( 	buffer.get<unsigned char>(x, y, GL_RED) );
-					value.setGreen( buffer.get<unsigned char>(x, y, GL_GREEN) );
+					value.setRed( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_RED) ) );
+					value.setGreen( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_GREEN) ) );
 					
 				}
 				else if(descriptor.numChannels==1)
 				{
-					value.setRed( 	buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
-					value.setGreen( buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
-					value.setBlue( 	buffer.get<unsigned char>(x, y, GL_LUMINANCE) );
+					value.setRed( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
+					value.setGreen( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
+					value.setBlue( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
 				}
 				else
 				{
