@@ -351,6 +351,8 @@
 		else 	ADAPT(	GL_UNSIGNED_INT,	unsigned int)
 		else 	ADAPTF(	GL_FLOAT,		float)
 		else 	ADAPTF(	GL_DOUBLE,		double)
+		else
+			throw Exception("ImageBuffer::get - Unknown GL depth type (internal error).", __FILE__, __LINE__);
 
 		#undef ADAPT
 		#undef ADAPTF
@@ -385,6 +387,8 @@
 		else 	ADAPT(	GL_UNSIGNED_INT,	unsigned int)
 		else 	ADAPTF(	GL_FLOAT,		float)
 		else 	ADAPTF(	GL_DOUBLE,		double)
+		else
+			throw Exception("ImageBuffer::set - Unknown GL depth type (internal error).", __FILE__, __LINE__);
 
 		#undef ADAPT
 		#undef ADAPTF
@@ -420,6 +424,8 @@
 		else 	ADAPT(	GL_UNSIGNED_INT,	unsigned int)
 		else 	ADAPTF(	GL_FLOAT,		float)
 		else 	ADAPTF(	GL_DOUBLE,		double)
+		else
+			throw Exception("ImageBuffer::getNormalized - Unknown GL depth type (internal error).", __FILE__, __LINE__);
 
 		#undef ADAPT
 		#undef ADAPTF
@@ -454,6 +460,8 @@
 		else 	ADAPT(	GL_UNSIGNED_INT,	unsigned int)
 		else 	ADAPTF(	GL_FLOAT,		float)
 		else 	ADAPTF(	GL_DOUBLE,		double)
+		else
+			throw Exception("ImageBuffer::setNormalized - Unknown GL depth type (internal error).", __FILE__, __LINE__);
 
 		#undef ADAPT
 		#undef ADAPTF

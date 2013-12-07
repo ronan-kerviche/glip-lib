@@ -13,6 +13,7 @@ win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 HEADERS      	+= 	./src/glSceneWidget.hpp \
+			./src/glView.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
 			../ExternalTools/Qt/ResourceLoader.hpp \
 			./src/dataModules.hpp \
@@ -32,6 +33,7 @@ HEADERS      	+= 	./src/glSceneWidget.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
 			./src/glSceneWidget.cpp \
+			./src/glView.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
 			../ExternalTools/Qt/ResourceLoader.cpp \
 			./src/dataModules.cpp \
