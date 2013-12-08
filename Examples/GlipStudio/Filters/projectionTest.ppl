@@ -11,24 +11,26 @@ SHADER_SOURCE:projectionShader()
 	uniform float rot = 0.0;
 	uniform mat2 trsm 	= mat2(1.0, 0.0, 0.0, 1.0);
 	uniform mat3 projCol 	= mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-	uniform vec3 colorClamp	= vec3(1.0, 1.0, 1.0);
+	uniform vec3 colorClamp	= vec3(1.0, 1.0, 1.0),
+		     offset	= vec3(0.0, 0.0, 0.0);
 
 	void main()
 	{
-		float aRot = rot * 10.0;
+		float aRot 	= rot * 10.0;
 
-		vec2 tex = gl_TexCoord[0].st - vec2(0.5, 0.5);
+		vec2 tex 	= gl_TexCoord[0].st - vec2(0.5, 0.5);
 
-		tex = mat2(cos(aRot), -sin(aRot), sin(aRot), cos(aRot)) * trsm * tex;
+		tex 		= mat2(cos(aRot), -sin(aRot), sin(aRot), cos(aRot)) * trsm * tex;
 
-		tex = tex + vec2(0.5, 0.5);
+		tex 		= tex + vec2(0.5, 0.5);
 
 		// Get the input data :
-		vec4 col  = textureLod(texInput, tex, 0.0);
+		vec4 col  	= textureLod(texInput, tex, 0.0);
 
 		// Write the output data :
-		texOutput.rgb = projCol*col.rgb;
-		texOutput.a = col.a;
+		col.rgb		= col.rgb - offset;
+		texOutput.rgb 	= projCol*col.rgb;
+		texOutput.a 	= col.a;
 	
 		// Clamp the color (do not write any fragment) :
 		if(texOutput.r>colorClamp.r || texOutput.g>colorClamp.g || texOutput.b>colorClamp.b)

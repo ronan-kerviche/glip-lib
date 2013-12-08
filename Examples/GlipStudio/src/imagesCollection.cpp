@@ -70,9 +70,7 @@
 		listLabels.push_back("Size");
 		setHeaderLabels( listLabels );
 
-		
-
-		connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),	this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
+		connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),	this, SLOT(itemChangedReceiver(QTreeWidgetItem*, QTreeWidgetItem*)));
 		connect(this, SIGNAL(itemClicked(QTreeWidgetItem*, int)),			this, SLOT(itemChangedReceiver(QTreeWidgetItem*)));
 
 		// size of the columns : 
@@ -104,11 +102,13 @@
 		blockSignals(true);
 	}
 
-	int TexturesList::getIndexFromRecordID(int recordID) const
+	int TexturesList::getIndexFromRecordID(int recordID, bool throwException) const
 	{
 		std::vector<int>::const_iterator it = std::find(recordIDs.begin(), recordIDs.end(), recordID);
 
-		if(it==recordIDs.end())
+		if(it==recordIDs.end() && throwException)
+			throw Exception("TexturesList::getIndexFromRecordID - Record #" + to_string(recordID) + " does not exist.", __FILE__, __LINE__);
+		else if(it==recordIDs.end())
 			return -1;
 		else
 			return std::distance(recordIDs.begin(), it);
@@ -149,6 +149,22 @@
 		}
 	}
 
+	void TexturesList::itemChangedReceiver(QTreeWidgetItem* currentItem, QTreeWidgetItem* previousItem)
+	{
+		// Protection : this function is enabling the user to use the keyboard to change the current view.
+		// If the previous item was null, it means that the trigger does not come from the keyboard.
+		// These cases must be ignored.
+
+		if(currentItem!=NULL && previousItem!=NULL)
+		{
+			// Get the record ID : 
+			int recordID = currentItem->data(2, Qt::UserRole).toInt();
+
+			// Send : 
+			emit focusChanged(recordID);
+		}
+	}
+
 	bool TexturesList::recordExists(int recordID, bool throwException) const
 	{
 		if( getIndexFromRecordID(recordID)<0 )
@@ -174,6 +190,7 @@
 		// Add a new record : 
 		recordIDs.push_back(newRecordID);
 		namesList.push_back(name);
+		filenamesList.push_back("");
 		statusList.push_back(s);
 		formatsList.push_back(HdlTextureFormat(1,1,GL_RGB,GL_UNSIGNED_BYTE));
 		hasFormatList.push_back(false);
@@ -184,6 +201,7 @@
 
 		// Update the line : 
 		updateRecordName(newRecordID, name);
+		updateRecordFilename(newRecordID, "");
 		updateRecordFormat(newRecordID);
 		updateRecordStatus(newRecordID, s);
 
@@ -205,15 +223,12 @@
 
 	const std::string& TexturesList::recordName(int recordID) const
 	{
-		recordExists(recordID, true);
-		return namesList[ getIndexFromRecordID(recordID) ];
+		return namesList[ getIndexFromRecordID(recordID, true) ];
 	}
 
 	void TexturesList::updateRecordName(int recordID, const std::string& newName)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		namesList[ id ] = newName;
 		
@@ -229,17 +244,36 @@
 		itemsList[id]->setForeground(2, lighter );
 	}
 
-	const HdlTextureFormat& TexturesList::recordFormat(int recordID) const
+	const std::string& TexturesList::recordFilename(int recordID) const
 	{
-		recordExists(recordID, true);
-		return formatsList[ getIndexFromRecordID(recordID) ];
+		return filenamesList[ getIndexFromRecordID(recordID, true) ];
+	}
+
+	void TexturesList::updateRecordFilename(int recordID, const std::string& filename)
+	{
+		int id = getIndexFromRecordID(recordID, true);
+
+		filenamesList[id] = filename;
+
+		// Update : 
+		QString tooltip;
+
+		if(!filename.empty())
+			tooltip = tr("<i>Filename : </i> %1").arg(filename.c_str());
+		else
+			tooltip = tr("<i>Filename : </i> <i>N.A.</i>");
+
+		itemsList[id]->setToolTip(2, tooltip);
+	}
+
+	const __ReadOnly_HdlTextureFormat& TexturesList::recordFormat(int recordID) const
+	{
+		return formatsList[ getIndexFromRecordID(recordID, true) ];
 	}
 
 	void TexturesList::updateRecordFormat(int recordID)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		hasFormatList[ id ] = false;
 
@@ -253,9 +287,7 @@
 
 	void TexturesList::updateRecordFormat(int recordID, const HdlTextureFormat& newFormat)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		formatsList[ id ] = newFormat;
 		hasFormatList[ id ] = true;
@@ -317,18 +349,14 @@
 
 	const TextureStatus& TexturesList::recordStatus(int recordID)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		return statusList[id];
 	}
 	
 	void TexturesList::updateRecordStatus(int recordID, const TextureStatus& s)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		statusList[id] = s;
 
@@ -412,9 +440,7 @@
 
 	void TexturesList::removeRecord(int recordID)
 	{
-		recordExists(recordID, true);
-
-		int id = getIndexFromRecordID(recordID);
+		int id = getIndexFromRecordID(recordID, true);
 
 		takeTopLevelItem( indexOfTopLevelItem( itemsList[id] ) );
 		delete itemsList[id];
@@ -422,6 +448,7 @@
 		recordIDs.erase( recordIDs.begin() + id );
 		itemsList.erase( itemsList.begin() + id );
 		namesList.erase( namesList.begin() + id );
+		filenamesList.erase( filenamesList.begin() + id );
 		statusList.erase( statusList.begin() + id );
 		formatsList.erase( formatsList.begin() + id );
 
@@ -956,7 +983,7 @@
 
 		// Connect : 
 		connect(&openSaveInterface, 	SIGNAL(openFile(const QStringList&)), 			this, SLOT(loadImages(const QStringList&)));
-		connect(&openSaveInterface, 	SIGNAL(saveFile(const QString&)), 			this, SLOT(saveImage(void)));
+		connect(&openSaveInterface, 	SIGNAL(saveFile()), 					this, SLOT(saveImage(void)));
 		connect(&openSaveInterface, 	SIGNAL(saveFileAs(const QString&)), 			this, SLOT(saveImage(const QString&)));
 		connect(&freeImageAction, 	SIGNAL(triggered()), 					this, SLOT(freeImages()));
 		connect(this,			SIGNAL(itemSelectionChanged()), 			this, SLOT(selectionChanged()));
@@ -1143,9 +1170,6 @@
 				// Set menus :
 				filterMenu.update( imagesList[id]->getFormat() );
 				wrappingMenu.update( imagesList[id]->getFormat() );
-
-				// Misc : 
-				openSaveInterface.clearLastSaveMemory();
 			}
 		}
 
@@ -1171,6 +1195,7 @@
 					s.savedToDisk 	= true;
 
 					int newRecordID = addRecord( imagesList.back()->getName().toStdString(), imagesList.back()->getFormat(), s);
+					updateRecordFilename(newRecordID, imagesList.back()->getFilename().toStdString());
 					recordIDs.push_back(newRecordID);
 					lockedToDeviceList.push_back(false);
 
@@ -1202,6 +1227,14 @@
 					s.savedToDisk = true;
 					updateRecordStatus( selectedRecordIDs[k], s );
 				}
+				else
+				{
+					// Get a filename to save to : 
+					QString filename = openSaveInterface.saveAsDialog(imagesList[tid]->getName());
+
+					if(!filename.isEmpty())
+						saveImage(filename);
+				}
 			}
 		}
 
@@ -1222,6 +1255,7 @@
 					TextureStatus s = recordStatus( selectedRecordIDs.front() );
 					s.savedToDisk = true;
 					updateRecordStatus( selectedRecordIDs.front(), s );
+					updateRecordFilename(selectedRecordIDs.front(), filename.toStdString());
 				}
 			}
 		}
@@ -1381,35 +1415,55 @@
 			}
 		}
 
+		const __ReadOnly_HdlTextureFormat& ImagesCollection::textureFormat(int recordID) const
+		{
+			imageExists(recordID, true);
+
+			// Check that the target is not already on the device : 
+			int id = getIndexFromRecordID(recordID);
+
+			return imagesList[id]->getFormat();
+		}
+
 		void ImagesCollection::addNewResource(HdlTexture& texture, const std::string& resourceName, bool replace)
 		{
-			QString filename;
-
 			if(replace)
 			{		
 				// Find possible name duplicates and remove them :
 				std::vector<int> sameNamesIndices = getIndexFromResourceName(resourceName);
 
-				if(sameNamesIndices.size()==1)
-					filename = imagesList[sameNamesIndices.front()]->getFilename(); // might still be empty.
-
-				for(std::vector<int>::iterator it=sameNamesIndices.begin(); it!=sameNamesIndices.end(); it++)
+				if(!sameNamesIndices.empty())
 				{
-					if(!removeResource(recordIDs[*it]))
-						return ;
+					const int id = sameNamesIndices.front();
+					imagesList[id]->replaceBy(texture);
+
+					const int recordID = recordIDs[id];
+
+					// Update format and status : 
+					updateRecordFormat(recordID, imagesList[id]->getFormat());
+
+					TextureStatus s(TextureStatus::Resource);
+					s.location 	= TextureStatus::OnRAM;
+					s.savedToDisk 	= false;
+					
+					updateRecordStatus(recordID, s);
+
+					// Declare change to upper level : 
+					emit imageReplaced(recordID);
+
+					// Done : 
+					return ;
 				}
 			}
-
+		
+			// Else, create : 
 			imagesList.push_back( new ImageObject(texture) );
 			imagesList.back()->setName(resourceName.c_str());
-
-			if(!filename.isEmpty())
-				imagesList.back()->setFilename(filename);
 
 			TextureStatus s(TextureStatus::Resource);
 			s.location 	= TextureStatus::OnRAM;
 			s.savedToDisk 	= false;
-			
+		
 			int newRecordID = addRecord( resourceName, imagesList.back()->getFormat(), s);
 			recordIDs.push_back(newRecordID);
 			lockedToDeviceList.push_back(false);

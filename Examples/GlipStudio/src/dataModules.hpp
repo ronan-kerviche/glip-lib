@@ -65,6 +65,7 @@
 			virtual void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 			virtual bool isValidTexture(int recordID);
 			virtual HdlTexture& getTexture(int recordID);
+			virtual const __ReadOnly_HdlTextureFormat& getTextureFormat(int portID) const;
 			virtual void giveTextureInformation(int recordID, std::string& name);
 			bool isListedAsPipelineInput(int recordID, int* portID = NULL) const;
 			bool isUsedAsPipelineInput(int recordID, int* portID = NULL) const;
@@ -78,6 +79,7 @@
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);
 			HdlTexture& inputTexture(int portID);
+			const __ReadOnly_HdlTextureFormat& inputTextureFormat(int portID) const;
 			void getInputTextureInformation(int portID, std::string& name);
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
@@ -102,7 +104,7 @@
 			void pipelineUniformModification(void);
 	};
 
-	class ControlModule : public QWidget
+	class ControlModule : public QMainWindow
 	{
 		Q_OBJECT
 
@@ -127,7 +129,7 @@
 		protected : 
 			GLSceneWidgetContainer display;
 
-			ControlModule(QWidget* parent = NULL);
+			ControlModule(void);
 
 		public : 			
 			virtual ~ControlModule(void);
@@ -141,6 +143,7 @@
 			bool lastComputationWasSuccessful(void) const;
 			bool isInputValid(int portID);
 			HdlTexture& inputTexture(int portID);
+			const __ReadOnly_HdlTextureFormat& inputTextureFormat(int portID) const;
 			void getInputTextureInformation(int portID, std::string& name);
 			bool isListedAsPipelineInput(const Module* m, int recordID, int* portID = NULL) const;
 			bool isUsedAsPipelineInput(const Module* m, int recordID, int* portID = NULL) const;

@@ -52,6 +52,7 @@
 			void copyAsNewResource(bool replace=false);
 			void replaceResource(void);
 			void copyAsNewResourceWithNewName(void);
+			void saveOutput(void);
 			void saveOutput(const QString& filename);
 
 			void showContextMenu(const QPoint& point);	

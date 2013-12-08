@@ -326,6 +326,7 @@
 			BoxesSettings		settings;
 			LinkToExternalValue	linkToExternalValue;
 			QTreeWidget		tree;
+			QString			lastSaveFilename;
 			
 			PipelineElement*	mainPipeline;
 
@@ -340,7 +341,8 @@
 			void switchSettings(void);
 			void settingsChanged(void);
 			void dataWasModified(void);
-			bool loadData(const QStringList& filenames);	
+			bool loadData(const QStringList& filenames);
+			void saveData(void);
 			void saveData(const QString& filename);
 			void mainLibraryPipelineUpdate(void);
 			void showContextMenu(const QPoint& point);

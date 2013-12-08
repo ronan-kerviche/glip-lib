@@ -41,6 +41,7 @@
 			HdlTexture& texture(void);
 			void save(const std::string& filename);
 			void save(void);
+			void replaceBy(HdlTexture& texture);
 	};
 
 #endif

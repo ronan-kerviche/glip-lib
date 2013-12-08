@@ -116,6 +116,7 @@
 		private slots : 	
 			void newTab(void);
 			void open(const QStringList& filenames);
+			void save(void);
 			void save(const QString& filename);
 			void saveAs(const QString& filename);
 			void saveAll(void);

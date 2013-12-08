@@ -1,7 +1,7 @@
 // Histogram pipeline.
 // You must use a 3D grid as geometry for it to work.
 
-TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins
+TEXTURE_FORMAT:histogramBinsFormat(4096,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins
 //TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)  	// Final window representation
 REQUIRED_FORMAT:showHistogramFormat(inputTexture)
 

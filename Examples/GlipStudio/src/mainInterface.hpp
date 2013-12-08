@@ -24,7 +24,6 @@
 		Q_OBJECT
 
 		private : 
-			QVBoxLayout		mainLayout;
 			QSplitter		mainSplitter;
 			QWidget			container;
 			QVBoxLayout		containerLayout;

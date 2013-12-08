@@ -90,6 +90,7 @@
 		connect(&collection, 		SIGNAL(itemSelectionChanged()), 	this, SLOT(selectionChanged()));
 		connect(&collection, 		SIGNAL(focusChanged(int)),		this, SLOT(focusChanged(int)));
 		connect(&collection, 		SIGNAL(imageLoaded(int)),		this, SLOT(imageLoaded(int)));
+		connect(&collection, 		SIGNAL(imageReplaced(int)),		this, SLOT(imageReplaced(int)));
 		connect(&collection, 		SIGNAL(imageSettingsChanged(int)),	this, SLOT(imageSettingsChanged(int)));
 		connect(&collection, 		SIGNAL(imageUnloadedFromDevice(int)),	this, SLOT(imageUnloadedFromDevice(int)));
 		connect(&collection, 		SIGNAL(imageFreed(int)),		this, SLOT(imageFreed(int)));
@@ -109,6 +110,11 @@
 		HdlTexture& ResourcesTab::getTexture(int recordID)
 		{
 			return collection.texture(recordID);
+		}
+
+		const __ReadOnly_HdlTextureFormat& ResourcesTab::getTextureFormat(int recordID) const
+		{
+			return collection.textureFormat(recordID);
 		}
 
 		void ResourcesTab::giveTextureInformation(int recordID, std::string& name)
@@ -273,6 +279,35 @@
 		void ResourcesTab::imageLoaded(int recordID)
 		{
 			imageRecordIDs.push_back(recordID);
+		}
+
+		void ResourcesTab::imageReplaced(int recordID)
+		{
+			int portID = 0;
+
+			// Update connection / link information :
+			TextureStatus s = collection.recordStatus( recordID );
+			if(isUsedAsPipelineInput(recordID, &portID))
+			{
+				s.connectionStatus 	= TextureStatus::Connected;
+				s.portID		= portID;
+			}
+			else if(isListedAsPipelineInput(recordID, &portID))
+			{
+				s.connectionStatus 	= TextureStatus::WaitingLink;
+				s.portID		= portID;
+			}
+			else
+			{
+				s.connectionStatus 	= TextureStatus::NotConnected;
+				s.portID		= -1;
+			}
+
+			collection.updateRecordStatus(recordID, s);
+
+			// Update view if needed : 
+			if(viewManager->isLinkedToAView(recordID))
+				viewManager->update(recordID, collection.texture(recordID));
 		}
 
 		void ResourcesTab::imageSettingsChanged(int recordID)

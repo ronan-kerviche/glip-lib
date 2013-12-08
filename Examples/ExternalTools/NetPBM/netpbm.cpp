@@ -125,13 +125,13 @@
 		}
 
 		// Change endianess : 
-		if(precision>=8)
+		/*if(precision>=8)
 		{
 			unsigned short* tbytes = reinterpret_cast<unsigned short*>(buffer + p);
 
 			for(int k=0; k<format.getNumElements(); k++)
-				tbytes[k] = changeEndianness16(tbytes[k]);
-		}
+				tbytes[k] = std::numeric_limits<unsigned short>::max() - changeEndianness16(tbytes[k]);
+		}*/
 
 		ImageBuffer* result = new ImageBuffer(format);
 		(*result) << (buffer + p);

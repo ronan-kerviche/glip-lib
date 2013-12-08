@@ -164,6 +164,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1, true,	"Scale a format by a scalar (or two), save as a new format.\n"
+											"Will prevent to reach a 0x0 texture by ensuring that the size is\n"
+											"at least 1 pixel in each dimension\n"
 											"Arguments : nameOriginal, scaleFactor, nameNew.\n"
 											"            nameOriginal, scaleFactorX, scaleFactorY, nameNew.")
 		 	{
@@ -181,8 +183,8 @@
 					if(s<=0.0)
 						throw Exception("The scale cannot be negative or equal to zero (s = " + to_string(s) + ").", __FILE__, __LINE__);
 		
-					newFmt.setWidth( newFmt.getWidth() * s );
-					newFmt.setHeight( newFmt.getHeight() * s );
+					newFmt.setWidth( std::max(newFmt.getWidth() * s, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() * s, 1.0) );
 				}
 				else
 				{
@@ -193,8 +195,8 @@
 					if(sy<=0.0)
 						throw Exception("The scale cannot be negative or equal to zero (sy = " + to_string(sy) + ").", __FILE__, __LINE__);
 		
-					newFmt.setWidth( newFmt.getWidth() * sx );
-					newFmt.setHeight( newFmt.getHeight() * sy );
+					newFmt.setWidth( std::max(newFmt.getWidth() * sx, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() * sy, 1.0) );
 				}
 
 				// Test : 

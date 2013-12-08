@@ -255,8 +255,8 @@
 		setKeyForAction(KeyDown,			Qt::Key_Down);
 		setKeyForAction(KeyLeft,			Qt::Key_Left);
 		setKeyForAction(KeyRight,			Qt::Key_Right);
-		setKeyForAction(KeyZoomIn,			Qt::Key_Plus);
-		setKeyForAction(KeyZoomOut,			Qt::Key_Minus);
+		setKeyForAction(KeyZoomIn,			QKeySequence(Qt::Key_Plus, Qt::SHIFT + Qt::Key_Plus, Qt::KeypadModifier + Qt::Key_Plus));	// Support for keypad and shifts.
+		setKeyForAction(KeyZoomOut,			QKeySequence(Qt::Key_Minus, Qt::SHIFT + Qt::Key_Minus, Qt::KeypadModifier + Qt::Key_Minus));	// Support for keypad and shifts.
 		setKeyForAction(KeyRotationClockWise,		Qt::Key_F);
 		setKeyForAction(KeyRotationCounterClockWise,	Qt::Key_D);
 		setKeyForAction(KeyToggleFullscreen,		Qt::Key_Return);
@@ -345,7 +345,7 @@
 					keyJustPressed[static_cast<int>(a)] = true;
 					keyJustReleased[static_cast<int>(a)] = false;
 
-					processAction();
+					processKeyboardAction();
 				}
 				else
 					std::cerr << "GLSceneWidget::keyPressEvent - Warning : Key not associated" << std::endl;
@@ -353,7 +353,7 @@
 			else
 			{
 				if(a!=NoAction)
-					processAction();
+					processKeyboardAction();
 			}
 		}
 
@@ -373,7 +373,7 @@
 					keyJustPressed[static_cast<int>(a)] = false;
 					keyJustReleased[static_cast<int>(a)] = true;
 
-					processAction();
+					processKeyboardAction();
 				}
 				else
 					std::cerr << "GLSceneWidget::keyReleaseEvent - Warning : Key not associated" << std::endl;
@@ -395,7 +395,7 @@
 			lastPosX = event->x();
 			lastPosY = event->y();
 
-			processAction();
+			processMouseAction();
 		}
 
 		void GLSceneWidget::wheelEvent(QWheelEvent *event)
@@ -414,7 +414,7 @@
 			lastPosX = event->x();
 			lastPosY = event->y();
 
-			processAction();
+			processMouseAction();
 
 			// wheelSteps 	> 0 : away of the user
 			// 		< 0 : toward the user
@@ -442,7 +442,7 @@
 			lastPosX = event->x();
 			lastPosY = event->y();
 
-			processAction();
+			processMouseAction();
 
 			// Test : 
 			#ifdef __VERBOSE__
@@ -484,7 +484,7 @@
 			lastPosX = event->x();
 			lastPosY = event->y();
 
-			processAction();
+			processMouseAction();
 		}
 
 		void GLSceneWidget::mouseDoubleClickEvent(QMouseEvent * event)
@@ -501,7 +501,7 @@
 			lastPosX = event->x();
 			lastPosY = event->y();
 
-			processAction();
+			processMouseAction();
 		}
 
 		bool GLSceneWidget::pressed(const KeyAction& a) const
@@ -633,7 +633,7 @@
 			return under;
 		}
 	
-		void GLSceneWidget::processAction(void)
+		void GLSceneWidget::processMouseAction(void)
 		{
 			bool 	needUpdate 		= false,
 				mouseDataWasUpdated	= false;
@@ -738,13 +738,12 @@
 					else if(currentMouseMode==ManipulationMode && !selectionList.empty()) // Rotation is only possible in selection mode
 					{
 						// Compute angle for current center :
-						float 	ox	= 0.0f,
-							oy	= 0.0f,
+						float 	ox	= xLastClick,
+							oy	= yLastClick,
 							nx	= 0.0f,
 							ny	= 0.0f,
 							dAngle 	= 0.0f;
 
-						getGLCoordinatesAbsolute(lastPosX, lastPosY, ox, oy);
 						getGLCoordinatesAbsolute(lastPosX - deltaX, lastPosY - deltaY, nx, ny);
 
 						ox	= selectionList.back()->centerCoords[0] - ox;
@@ -789,7 +788,7 @@
 					else if(currentMouseMode!=ManipulationMode)
 					{
 						float xc, yc;
-						getGLCoordinatesAbsoluteRaw(lastPosX, lastPosY, xc, yc);
+						getGLCoordinatesAbsoluteRaw(lastPosX, lastPosY, xc, yc);				// Note that we are using raw coordinates for this one.
 						homothetieComposition(xc, yc, static_cast<float>(deltaWheelSteps>0.0f)*2.0f - 1.0f);
 					}
 
@@ -797,61 +796,114 @@
 					deltaWheelSteps = 0;
 				}
 
-			// Keyboard : 
-				if( justPressed(KeySetHandMode) )
-					switchSelectionMode(HandMode);
-			
-				if( justPressed(KeySetManipulationMode) )
-					switchSelectionMode(ManipulationMode);
-
-				if( justPressed(KeySetSelectionMode) )
-					switchSelectionMode(SelectionMode);
-
-				if( justPressed(KeyResetView) )
-				{
-					if(currentMouseMode!=ManipulationMode)
-						resetGlobal();
-					else
-						resetSelection();
-				
-					needUpdate 	= true;
-				}
-
-				if( justPressed(KeyToggleFullscreen) )
-					toggleFullscreenMode();
-
-				if( justPressed(KeyExitOnlyFullscreen) )
-					setFullscreenMode(false);
-
-				if( justPressed(KeyCloseView) )
-				{
-					closeSelection();
-					needUpdate 	= true;
-				}
-
-				if( justPressed(KeySelectAll) )
-				{
-					selectAll();
-					needUpdate 	= true;
-				}
-
-				if( pressed(KeyRotationClockWise) )
-				{
-					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-						(*it)->angleRadians -= 0.05f;
-					needUpdate 	= true;
-				}				
-
-				if( pressed(KeyRotationCounterClockWise) )
-				{
-					for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
-						(*it)->angleRadians += 0.05f;
-					needUpdate 	= true;
-				}
-
 			// Finally : 
 			if(mouseDataWasUpdated)
 				mouseDataUpdated(mouseData);
+
+			if(needUpdate)
+				paintGL();
+		}
+
+		void GLSceneWidget::processKeyboardAction(void)
+		{
+			bool 	needUpdate = false;
+
+			const float	deltaX	= 10.0f,
+					deltaY	= 10.0f;
+			float 		xStep	= 0.0f, 
+					yStep	= 0.0f;
+
+			getGLCoordinatesRelative(deltaX, deltaY, xStep, yStep);
+
+			// Motion : 
+			if( pressed(KeyUp) )
+			{
+				screenCenter[1] 	-= yStep;
+				needUpdate 		= true;
+			}
+			
+			if( pressed(KeyDown) )
+			{
+				screenCenter[1] 	+= yStep;
+				needUpdate 		= true;
+			}
+
+			if( pressed(KeyLeft) )
+			{
+				screenCenter[0] 	-= xStep;
+				needUpdate 		= true;
+			}
+
+			if( pressed(KeyRight) )
+			{
+				screenCenter[0] 	+= xStep;
+				needUpdate 		= true;
+			}
+
+			if( pressed(KeyZoomIn) )
+			{
+				homothetieRapport 	= homothetieRapport*1.2f;
+				needUpdate 		= true;
+			}
+
+			if( pressed(KeyZoomOut) )
+			{
+				homothetieRapport 	= homothetieRapport/1.2f;
+				needUpdate 		= true;
+			}
+
+			if( pressed(KeyRotationClockWise) )
+			{
+				for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+					(*it)->angleRadians -= 0.05f;
+				needUpdate 	= true;
+			}				
+
+			if( pressed(KeyRotationCounterClockWise) )
+			{
+				for(std::vector<ViewLink*>::iterator it = selectionList.begin(); it!=selectionList.end(); it++)
+					(*it)->angleRadians += 0.05f;
+				needUpdate 	= true;
+			}
+
+			// Mode : 
+			if( justPressed(KeySetHandMode) )
+				switchSelectionMode(HandMode);
+		
+			if( justPressed(KeySetManipulationMode) )
+				switchSelectionMode(ManipulationMode);
+
+			if( justPressed(KeySetSelectionMode) )
+				switchSelectionMode(SelectionMode);
+
+			// Tools : 
+			if( justPressed(KeyResetView) )
+			{
+				if(currentMouseMode!=ManipulationMode)
+					resetGlobal();
+				else
+					resetSelection();
+			
+				needUpdate 	= true;
+			}
+
+			if( justPressed(KeyToggleFullscreen) )
+				toggleFullscreenMode();
+
+			if( justPressed(KeyExitOnlyFullscreen) )
+				setFullscreenMode(false);
+
+			if( justPressed(KeyCloseView) )
+			{
+				closeSelection();
+				needUpdate 	= true;
+			}
+
+			if( justPressed(KeySelectAll) )
+			{
+				selectAll();
+				needUpdate 	= true;
+			}
 
 			if(needUpdate)
 				paintGL();
@@ -913,48 +965,9 @@
 				placementProgram->modifyVar("homothetieCentre", GL_FLOAT_VEC2, homothetieCentre);
 				placementProgram->modifyVar("homothetieRapport", GL_FLOAT, homothetieRapport);
 
-				// Set the mode :
-				/*if(forSelection)
-					placementProgram->modifyVar("selectionMode", GL_INT, 1);
-				else
-					placementProgram->modifyVar("selectionMode", GL_INT, 0);*/
-
 				// Go through the list of view in order to draw some of them :
 				for(std::list<ViewLink*>::iterator it = displayList.begin(); it!=displayList.end(); it++)
 				{
-					/*if((*it)->preparedToDraw())
-					{
-						// Set positions and rotation : 
-						placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	(*it)->centerCoords);
-						placementProgram->modifyVar("angle",		GL_FLOAT,	(*it)->angleRadians);
-
-						// Set screen scaling variable : 
-						float 	imageScaling[2],
-							haloScaling[2];
-
-						(*it)->getScalingRatios( imageScaling, haloScaling, 10.0f, sPixelX, sPixelY); // 4.0 is the border layout in pixels, when selected.
-
-						if(forSelection)
-							placementProgram->modifyVar("objectID", GL_INT, getViewID(*it)+1);					
-						else if(viewIsSelected(*it))
-						{
-							placementProgram->modifyVar("selectionMode", 	GL_INT, 	2);
-							placementProgram->modifyVar("imageScaling", 	GL_FLOAT_VEC2, 	haloScaling);
-							placementProgram->modifyVar("haloColor", 	GL_FLOAT_VEC3, 	(*it)->haloColorRGB);
-							
-							quad->draw();
-
-							// Restore : 
-							placementProgram->modifyVar("selectionMode", 	GL_INT, 	0);
-						}	
-						
-						// Scaling of the image : 
-						placementProgram->modifyVar("imageScaling", GL_FLOAT_VEC2, imageScaling);
-				
-						// Draw the image :
-						quad->draw();
-					}*/
-
 					// Set positions and rotation : 
 					placementProgram->modifyVar("centerCoords", 	GL_FLOAT_VEC2, 	(*it)->centerCoords);
 					placementProgram->modifyVar("angle",		GL_FLOAT,	(*it)->angleRadians);
@@ -1072,7 +1085,7 @@
 			
 			QString textLeft 	= tr("Position : %2x%3").arg(px).arg(py),
 				textCenter	= tr("%1").arg(targetName),
-				textRight	= tr("Color (%4,%5,%6) %7").arg(lastColor.red()).arg(lastColor.green()).arg(lastColor.blue()).arg(lastColor.name());
+				textRight	= tr("Color (%4,%5,%6) %7").arg(lastColor.red()).arg(lastColor.green()).arg(lastColor.blue()).arg(lastColor.name().toUpper());
 
 			if(!testInside)
 				textLeft += " (outside)";

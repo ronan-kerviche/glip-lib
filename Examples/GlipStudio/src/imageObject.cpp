@@ -211,3 +211,17 @@
 			this->save(filename.toStdString());
 	}
 
+	void ImageObject::replaceBy(HdlTexture& texture)
+	{
+		virtualImage 	= true;
+		saved		= false;
+
+		delete imageBuffer;
+		imageBuffer	= new ImageBuffer(texture);
+
+		textureFormat 	= texture;
+
+		delete textureData;
+		textureData	= NULL;
+	}
+

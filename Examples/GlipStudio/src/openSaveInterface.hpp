@@ -23,26 +23,32 @@
 			bool			multiFileOpening;
 			QString			currentOpenPath,
 						currentSavePath,
-						currentDir,
-						lastSaveFilename;
+						currentDir;
 			QAction			openAction,
 						saveAction,
 						saveAsAction,
-						clearRecentFilesMenu;
-			QMenu			recentFilesMenu;
-			QList<QString> 		filenames;
-			std::vector<QAction*>	currentActions;
+						clearRecentOpenedFilesMenu,
+						clearRecentSavedFilesMenu;
+			QMenu			recentOpenedFilesMenu,
+						recentSavedFilesMenu;
+			QList<QString> 		openedFilenames,
+						savedFilenames;
+			std::vector<QAction*>	currentOpenedFileActions,
+						currentSavedFileActions;
 
 			bool fileExists(const QString& filename);
 
 		private slots :
-			void append(const QString& filename);  			
-			void updateMenu(void);
+			void appendOpenedFile(const QString& filename); 
+			void appendSavedFile(const QString& filename); 	
+			void updateOpenMenu(void);
+			void updateSaveMenu(void);
 			void requestOpenAction(void);
 			void open(void);
 			void saveSignal(void);
 			void saveAs(void);
-			void clearRecentFilesList(void);
+			void clearRecentOpenedFilesList(void);
+			void clearRecentSavedFilesList(void);
 
 		public : 
 			OpenSaveInterface(const std::string& _moduleName, const std::string& _objectName, const std::string& _extensionsList, bool _multiFileOpening=true);
@@ -59,15 +65,15 @@
 			void reportSuccessfulLoad(const QString& filename);
 			void reportFailedLoad(const QString& filename);
 			void reportSuccessfulSave(const QString& filename);
-			void clearLastSaveMemory(void);
+			//void clearLastSaveMemory(void);
 
 			QStringList openDialog(void);
-			QString saveAsDialog(void);
+			QString saveAsDialog(const QString& specialTitle="");
 			QString getDirectoryDialog(void);
 
 		signals : 
 			void openFile(const QStringList& filenames);
-			void saveFile(const QString& filename);
+			void saveFile(void);				// The client must know the filename (for multiple resources, it is easier that way).
 			void saveFileAs(const QString& filename);
 	};
 

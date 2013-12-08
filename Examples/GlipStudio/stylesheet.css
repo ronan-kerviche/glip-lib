@@ -12,6 +12,30 @@
 		color: #FFFFFF;
 	}
 
+	/*QPushButton
+	{
+		color: #DDDDDD;
+		border: 1px solid #777777;
+		border-radius: 2px;
+		background-color: #333333;
+		min-width: 80px;
+		margin:5px
+	}
+
+	QPushButton:hover
+	{
+		color: #FFFFFF;
+		background-color: #222222;
+	}*/
+
+/* QTOOLTIP */
+	QToolTip
+	{
+		color: #ffffff; 
+		background-color: #333333;
+		border: none;
+	} 
+
 /* SPLITTER */
 	QSplitter::handle
 	{
@@ -384,27 +408,42 @@
 	QMessageBox
 	{ }
 
-/* QPUSHBUTTON */
-	/*QPushButton
-	{
-		color: #DDDDDD;
-		border: 1px solid #777777;
-		border-radius: 2px;
-		background-color: #333333;
-		min-width: 80px;
-		margin:5px
-	}
+/* QCOMBOBOX */
+		QComboBox
+		{
+			font: bold;
+		}
 
-	QPushButton:hover
-	{
-		color: #FFFFFF;
-		background-color: #222222;
-	}*/
+		QComboBox QAbstractItemView
+		{
+			background:#555555;
+			color:#FFFFFF;
+		}
 
-	QToolTip
-	{
-		color: #ffffff; 
-		background-color: #333333;
-		border: none;
-	} 
+		QComboBox QAbstractItemView
+		{
+			background:#222222;
+		}
+
+		QComboBox:editable
+		{
+			background:#222222;
+		}
+
+		QComboBox:!editable, QComboBox::drop-down:!editable
+		{
+			background:#555555;
+		}
+
+		QComboBox:!editable:on, QComboBox::drop-down:!editable:on
+		{
+			color:#FFFFFF;
+			background:#555555;
+		}
+
+		QComboBox:!editable:off, QComboBox::drop-down:!editable:off
+		{
+			color:#888888;
+			background:#555555;
+		}
 

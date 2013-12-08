@@ -11,7 +11,7 @@
 		inputsViewManager(NULL),
 		outputsViewManager(NULL),
 		resourcesManagerLink(_resourcesManagerLink),
-		openSaveInterface("ImagesOutputPannel", "File", "*.bmp *.png *.jpg *.JPEG *.pgm *.ppm"),
+		openSaveInterface("ImagesOutputPannel", "Image", "*.bmp *.png *.jpg *.JPEG *.pgm *.ppm"),
 		releaseInputAction("Release input", this),
 		copyAsNewResourceAction("Copy as New Resource", this),
 		replaceResourceAction("Replace existing or add as new Resource", this),
@@ -70,7 +70,7 @@
 		connect(&copyAsNewResourceAction,		SIGNAL(triggered()),					this, SLOT(copyAsNewResource()));
 		connect(&replaceResourceAction,			SIGNAL(triggered()),					this, SLOT(replaceResource()));
 		connect(&copyAsNewResourceWithNewNameAction,	SIGNAL(triggered()),					this, SLOT(copyAsNewResourceWithNewName()));
-		connect(&openSaveInterface,			SIGNAL(saveFile(const QString&)),			this, SLOT(saveOutput(const QString&)));
+		connect(&openSaveInterface,			SIGNAL(saveFile()),					this, SLOT(saveOutput(void)));
 		connect(&openSaveInterface,			SIGNAL(saveFileAs(const QString&)),			this, SLOT(saveOutput(const QString&)));
 		connect(&portsList,				SIGNAL(customContextMenuRequested(const QPoint&)), 	this, SLOT(showContextMenu(const QPoint&)));
 	}
@@ -157,9 +157,6 @@
 				portsList.updateRecordStatus( outputRecordIDs[k], s );
 			}
 
-			// Close outputs : 
-			//outputsViewManager->closeAllViews();
-
 			// Instead, clear all, but let the views open :
 			outputsViewManager->beginQuietUpdate();
 
@@ -203,7 +200,6 @@
 
 					portsList.updateRecordStatus( inputRecordIDs[portID], s );
 
-					//inputsViewManager->removeRecord(portID);
 					inputsViewManager->clear(portID);
 				}
 			}
@@ -217,8 +213,6 @@
 			inputRecordIDs.clear();
 			outputRecordIDs.clear();
 			portsList.removeAllRecords();
-			//inputsViewManager->closeAllViews();
-			//outputsViewManager->closeAllViews();
 			inputsViewManager->enableCreationAction(false);
 			outputsViewManager->enableCreationAction(false);
 		}
@@ -260,45 +254,30 @@
 				openSaveInterface.enableSaveAs(false);
 				releaseInputAction.setEnabled(false);
 				copyAsNewResourceAction.setEnabled(false);
-				copyAsNewResourceWithNewNameAction.setEnabled(false);
-			}
-			else if(!lastComputationWasSuccessful())
-			{
-				openSaveInterface.enableSave(false);
-				openSaveInterface.enableSaveAs(false);
-				copyAsNewResourceAction.setEnabled(false);
+				replaceResourceAction.setEnabled(false);
 				copyAsNewResourceWithNewNameAction.setEnabled(false);
 			}
 			else
 			{
-				if(recordIDs.size()==1 && getOutputPortIDFromRecordID(recordIDs.front())>=0)
-				{
-					openSaveInterface.enableSave(true);
-					openSaveInterface.enableSaveAs(true);
-					copyAsNewResourceAction.setEnabled(true);
-					copyAsNewResourceWithNewNameAction.setEnabled(true);
-				}
-				else
-				{
-					openSaveInterface.enableSave(false);
-					openSaveInterface.enableSaveAs(false);
-
-					bool test = true;
+				bool 	testAllOutput 		= lastComputationWasSuccessful(),	// If the last computation was not successfull, do not enable any Save or Copy operation.
+					testAllInput 		= true,
+					testOneInputValid 	= false;
 			
-					for(int k=0; k<recordIDs.size() && test; k++)
-						test = (getOutputPortIDFromRecordID(recordIDs[k])>=0);
-
-					copyAsNewResourceAction.setEnabled(test);
-					copyAsNewResourceWithNewNameAction.setEnabled(test);
+				for(int k=0; k<recordIDs.size(); k++)
+				{
+					int inputPortID 	= getInputPortIDFromRecordID(recordIDs[k]);
+					testAllInput		= (inputPortID>=0);
+					testOneInputValid	= testOneInputValid || isInputValid(inputPortID);
+					testAllOutput 		= (getOutputPortIDFromRecordID(recordIDs[k])>=0);
 				}
+
+				releaseInputAction.setEnabled(testAllInput && testOneInputValid);
+				openSaveInterface.enableSave(testAllOutput);
+				openSaveInterface.enableSaveAs(testAllOutput);
+				copyAsNewResourceAction.setEnabled(testAllOutput);
+				replaceResourceAction.setEnabled(testAllOutput);
+				copyAsNewResourceWithNewNameAction.setEnabled(testAllOutput);
 			}
-
-			bool test=true;
-			
-			for(int k=0; k<recordIDs.size() && test; k++)
-				test = getInputPortIDFromRecordID(recordIDs[k])>=0;
-
-			releaseInputAction.setEnabled(test);
 		}
 
 		void IOTab::newInputView(void)
@@ -395,6 +374,44 @@
 			}
 		}
 
+		void IOTab::saveOutput(void)
+		{
+			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
+
+			for(std::vector<int>::iterator it=recordIDs.begin(); it!=recordIDs.end(); it++)
+			{
+				int portID = getOutputPortIDFromRecordID(*it);
+
+				if(portID>=0)
+				{
+					std::string filename = portsList.recordFilename(*it);
+
+					if(!filename.empty())
+					{
+						ImageObject image(pipeline().out(portID));
+			
+						image.save(filename);
+
+						openSaveInterface.reportSuccessfulSave(filename.c_str());
+					}
+					else
+					{
+						// Get a filename to save to : 
+						QString filename = openSaveInterface.saveAsDialog(pipeline().getOutputPortName(portID).c_str());
+
+						if(!filename.isEmpty())
+						{
+							ImageObject image(pipeline().out(portID));
+							image.save(filename.toStdString());
+
+							openSaveInterface.reportSuccessfulSave(filename);
+							portsList.updateRecordFilename(*it, filename.toStdString());
+						}
+					}
+				}
+			}
+		}
+
 		void IOTab::saveOutput(const QString& filename)
 		{
 			std::vector<int> recordIDs = portsList.getSelectedRecordIDs();
@@ -415,6 +432,7 @@
 			image.save(filename.toStdString());
 
 			openSaveInterface.reportSuccessfulSave(filename);
+			portsList.updateRecordFilename(recordIDs.front(), filename.toStdString());
 		}
 
 		void IOTab::showContextMenu(const QPoint& point)

@@ -1,16 +1,109 @@
 #include "compilationTab.hpp"
 
+// ModuleDocumentation :
+	ModuleDocumentation::ModuleDocumentation(QWidget* parent)
+	 :	QWidget(parent),
+		layout(this),
+		title("Module : "),
+		comboBox(this),			
+		description(this)
+	{
+		title.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		title.setSizePolicy( QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum) );
+
+		comboBox.setSizePolicy( QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum) );
+		comboBox.setEditable(false);
+
+		moduleChoiceLine.addWidget(&title);
+		moduleChoiceLine.addWidget(&comboBox);
+
+		layout.addLayout(&moduleChoiceLine);
+		layout.addWidget(&description);
+	
+		description.setReadOnly(true);
+
+		connect(&comboBox, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(updateDocumentationDisplay(const QString&)));
+
+		setMinimumWidth(512);
+	}
+
+	ModuleDocumentation::~ModuleDocumentation(void)
+	{ }
+
+	void ModuleDocumentation::updateDocumentationDisplay(const QString& moduleName)
+	{
+		int id = moduleNames.indexOf(moduleName);
+
+		if(id>=0)
+			description.setPlainText( tr("%1\nMANUAL :\n%2").arg(moduleInfo[id], moduleManuals[id]) );
+	}
+
+	bool ModuleDocumentation::isDocumented(const QString& moduleName) const
+	{
+		return moduleNames.contains(moduleName);
+	}
+
+	bool ModuleDocumentation::isEmpty(void) const
+	{
+		return moduleNames.empty();
+	}
+
+	void ModuleDocumentation::update(const LayoutLoader& loader)
+	{
+		std::vector<std::string> modulesNamesList = loader.listModules();
+
+		for(std::vector<std::string>::iterator it=modulesNamesList.begin(); it!=modulesNamesList.end(); it++)
+		{
+			if(!isDocumented( (*it).c_str() ))
+			{
+				const LayoutLoaderModule& module = loader.module(*it);
+
+				// Create the data : 
+				QString info;
+	
+					if(module.getMinNumArguments()==0)
+						info +=	tr("Minimum number of arguments : No arguments allowed.\n");
+					else if(module.getMinNumArguments()<0)
+						info +=	tr("Minimum number of arguments : Unlimited.\n");
+					else
+						info +=	tr("Minimum number of arguments : %1\n").arg(module.getMinNumArguments());
+
+					if(module.getMaxNumArguments()==0)
+						info +=	tr("Maximum number of arguments : No arguments allowed.\n");
+					else if(module.getMaxNumArguments()<0)
+						info +=	tr("Maximum number of arguments : Unlimited.\n");
+					else
+						info +=	tr("Maximum number of arguments : %1\n").arg(module.getMaxNumArguments());
+
+					if(module.bodyPresenceTest()<0)
+						info +=	tr("Body                        : Cannot have a body.\n");
+					else if(module.bodyPresenceTest()==0)
+						info +=	tr("Body                        : Body is optional.\n");
+					else
+						info +=	tr("Body                        : Must have a body.\n");
+
+				// Append : 
+				moduleNames.append( module.getName().c_str() );
+				moduleInfo.append( info );
+				moduleManuals.append( module.getManual().c_str() );
+
+				// Combo box : 
+				comboBox.addItem( module.getName().c_str() );
+			}
+		}
+	}
+
+// Compilation Tab : 
 	CompilationTab::CompilationTab(ControlModule& _masterModule, QWidget* parent)
 	 : Module(_masterModule, parent), layout(this), data(this)
 	{
+		showDocumentationAction = menuBar.addAction("Modules Documentation", this, SLOT(showDocumentation()));
+		showDocumentationAction->setEnabled(false);
+
+		layout.addWidget(&menuBar);
 		layout.addWidget(&data);
 
 		data.setAlternatingRowColors(true);
-
-		/*QFont font;
-		font.setFamily("Monospace");
-		font.setFixedPitch(true);
-		data.setFont(font);*/
 
 		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
 		if( fid < 0)
@@ -44,16 +137,15 @@
 
 	void CompilationTab::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{
-		/// TODO : update list of modules available in loader...
-		/*std::vector<std::string> modulesList = loader.listModules();
-
-		std::cout << "List of modules : " << std::endl; 
-		for(int k=0; k<modulesList.size(); k++)
+		documentation.update(loader);
+	
+		if(documentation.isEmpty())
 		{
-			std::cout << "- " << modulesList[k] << std::endl;
-			std::cout <<  loader.module( modulesList[k] ).getManual() << std::endl << std::endl;
+			documentation.hide();
+			showDocumentationAction->setEnabled(false);
 		}
-		std::cout << "End of modules list." << std::endl;*/
+		else
+			showDocumentationAction->setEnabled(true);
 	}
 
 	void CompilationTab::pipelineWasCreated(void)
@@ -77,5 +169,10 @@
 
 		while( std::getline(stream, line) )
 			data.addItem( line.c_str() );
+	}
+
+	void CompilationTab::showDocumentation(void)
+	{
+		documentation.show();
 	}
 

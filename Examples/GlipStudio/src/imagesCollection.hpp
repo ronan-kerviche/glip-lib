@@ -82,35 +82,39 @@
 			std::vector<int>		recordIDs;
 			std::vector<QTreeWidgetItem*>	itemsList;
 			std::vector<std::string>	namesList;
+			std::vector<std::string>	filenamesList;
 			std::vector<TextureStatus>	statusList;
 			std::vector<HdlTextureFormat> 	formatsList;
 			std::vector<bool>		hasFormatList;
 
-			int getIndexFromRecordID(int recordID) const;
+			int getIndexFromRecordID(int recordID, bool throwException=false) const;
 			void updateAlternateColors(void);
 
 		private slots:
 			void itemChangedReceiver(QTreeWidgetItem* item);
+			void itemChangedReceiver(QTreeWidgetItem* currentItem, QTreeWidgetItem* previousItem);
 
 		public :
 			TexturesList(QWidget* parent=NULL);
 			~TexturesList(void);
 				
-			bool			recordExists(int recordID, bool throwException=false) const;
-			int 			addRecord(const std::string& name, const TextureStatus& s=TextureStatus());
-			int 			addRecord(const std::string& name, const HdlTextureFormat& format, const TextureStatus& s=TextureStatus());
-			const std::string& 	recordName(int recordID) const;
-			void			updateRecordName(int recordID, const std::string& newName);
-			const HdlTextureFormat& recordFormat(int recordID) const;
-			void 			updateRecordFormat(int recordID);
-			void 			updateRecordFormat(int recordID, const HdlTextureFormat& newFormat);
-			const TextureStatus&	recordStatus(int recordID);
-			void			updateRecordStatus(int recordID, const TextureStatus& s);
-			void 			removeRecord(int recordID);
-			void 			removeAllRecords(void);
+			bool					recordExists(int recordID, bool throwException=false) const;
+			int 					addRecord(const std::string& name, const TextureStatus& s=TextureStatus());
+			int 					addRecord(const std::string& name, const HdlTextureFormat& format, const TextureStatus& s=TextureStatus());
+			const std::string& 			recordName(int recordID) const;
+			void					updateRecordName(int recordID, const std::string& newName);
+			const std::string&			recordFilename(int recordID) const;
+			void 					updateRecordFilename(int recordID, const std::string& filename);
+			const __ReadOnly_HdlTextureFormat& 	recordFormat(int recordID) const;
+			void 					updateRecordFormat(int recordID);
+			void 					updateRecordFormat(int recordID, const HdlTextureFormat& newFormat);
+			const TextureStatus&			recordStatus(int recordID);
+			void					updateRecordStatus(int recordID, const TextureStatus& s);
+			void 					removeRecord(int recordID);
+			void 					removeAllRecords(void);
 
-			std::vector<int>	getSelectedRecordIDs(void);
-			int			getRecordIDsUnder(const QPoint& pt);
+			std::vector<int>			getSelectedRecordIDs(void);
+			int					getRecordIDsUnder(const QPoint& pt);
 
 		signals :
 			void focusChanged(int recordID);
@@ -283,6 +287,7 @@
 			bool isTextureLockedToDevice(int recordID) const;
 			void unlockTextureFromDevice(int recordID);
 			HdlTexture& texture(int recordID);
+			const __ReadOnly_HdlTextureFormat& textureFormat(int recordID) const;
 
 			void addNewResource(HdlTexture& texture, const std::string& resourceName, bool replace=false);
 			bool removeResource(int recordID);
@@ -292,6 +297,7 @@
 		signals : 
 			void imageLoaded(int recordID);
 			void imageLoadedToDevice(int recordID);
+			void imageReplaced(int recordID);
 			void imageSettingsChanged(int recordID);
 			void imageUnloadedFromDevice(int recordID);
 			void imageFreed(int recordID);

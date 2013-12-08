@@ -7,6 +7,8 @@
 	PathWidget::PathWidget(QWidget* parent)
 	 : QWidget(parent), layout(this), menuBar(this), addPathAct(tr("Add path"), this), removePathAct(tr("Remove path"), this), clearAllPathAct(tr("Clear all paths"), this)
 	{
+		setMaximumHeight(256); 
+
 		connect(&addPathAct, 		SIGNAL(triggered()), this, SLOT(addPath()));
 		connect(&removePathAct, 	SIGNAL(triggered()), this, SLOT(removePath()));
 		connect(&clearAllPathAct, 	SIGNAL(triggered()), this, SLOT(clearAll()));
@@ -300,30 +302,30 @@
 		newTabAct.setShortcuts(QKeySequence::New);
 		openSaveInterface.enableShortcuts(true);
 
-		connect(&newTabAct, SIGNAL(triggered()), this, SLOT(newTab()));
-		connect(&openSaveInterface, SIGNAL(openFile(const QStringList&)), this, SLOT(open(const QStringList&)));
-		connect(&openSaveInterface, SIGNAL(saveFile(const QString&)), this, SLOT(save(const QString&)));
-		connect(&openSaveInterface, SIGNAL(saveFileAs(const QString&)), this, SLOT(saveAs(const QString&)));
-		connect(&saveAllAct, SIGNAL(triggered()), this, SLOT(saveAll()));
-		connect(&closeAllAct, SIGNAL(triggered()), this, SLOT(closeAll()));
-		connect(&templateMenu, SIGNAL(insertTemplate()), this, SLOT(insertTemplate()));
+		connect(&newTabAct, 		SIGNAL(triggered()), 			this, SLOT(newTab()));
+		connect(&openSaveInterface, 	SIGNAL(openFile(const QStringList&)), 	this, SLOT(open(const QStringList&)));
+		connect(&openSaveInterface, 	SIGNAL(saveFile(void)), 		this, SLOT(save(void)));
+		connect(&openSaveInterface, 	SIGNAL(saveFileAs(const QString&)), 	this, SLOT(saveAs(const QString&)));
+		connect(&saveAllAct, 		SIGNAL(triggered()), 			this, SLOT(saveAll()));
+		connect(&closeAllAct, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
+		connect(&templateMenu, 		SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
 
 		QList<QKeySequence> refreshShortcuts;
 		refreshShortcuts.push_back(QKeySequence(tr("Ctrl+r")));
 		refreshShortcuts.push_back(QKeySequence(tr("F5")));
 		refreshAct.setShortcuts(refreshShortcuts);
-		connect(&refreshAct, SIGNAL(triggered()), this, SLOT(refresh()));
+		connect(&refreshAct, 		SIGNAL(triggered()), 			this, SLOT(refresh()));
 
 		closeTabAct.setStatusTip(tr("Close"));
 		closeTabAct.setShortcuts(QKeySequence::Close);
-		connect(&closeTabAct, SIGNAL(triggered()), this, SLOT(closeTab()));
+		connect(&closeTabAct, 		SIGNAL(triggered()), 			this, SLOT(closeTab()));
 
 		showPathWidget.setStatusTip(tr("Show paths"));
-		connect(&showPathWidget, SIGNAL(triggered()), this, SLOT(switchPathWidget()));
+		connect(&showPathWidget, 	SIGNAL(triggered()), 			this, SLOT(switchPathWidget()));
 
-		connect(&aboutAct, SIGNAL(triggered()), this, SLOT(aboutMessage()));
+		connect(&aboutAct, 		SIGNAL(triggered()), 			this, SLOT(aboutMessage()));
 
-		connect(&widgets, SIGNAL(currentChanged(int)), this, SLOT(tabChanged(int)));
+		connect(&widgets, 		SIGNAL(currentChanged(int)), 		this, SLOT(tabChanged(int)));
 
 		// Movable : 	
 		widgets.setMovable(true);
@@ -383,6 +385,18 @@
 			openFile( filenames[k] );
 	}
 
+	void CodeEditorsPannel::save(void)
+	{
+		if(widgets.count() > 0)
+		{
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+
+			e->save();
+
+			openSaveInterface.reportSuccessfulSave(e->filename());
+		}
+	}
+
 	void CodeEditorsPannel::save(const QString& filename)
 	{
 		if(widgets.count() > 0)
@@ -391,6 +405,8 @@
 
 			e->setFilename(filename);
 			e->save();
+
+			openSaveInterface.reportSuccessfulSave(filename);
 		}
 	}
 
@@ -404,6 +420,7 @@
 			e->save();
 
 			openSaveInterface.reportSuccessfulSave(filename);
+			openSaveInterface.enableSave(true);
 		}
 	}
 
@@ -421,18 +438,22 @@
 
 				QString currentPath = e->path();
 
-				QString fileName = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
+				QString filename = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
 
-				if(!fileName.isEmpty())
+				if(!filename.isEmpty())
 				{
-					e->setFilename(fileName);
+					e->setFilename(filename);
 					e->save();
+
+					openSaveInterface.reportSuccessfulSave(filename);
 				}
 			}
 			else
 			{
 				e->save();
 				widgets.setCurrentWidget(e);
+
+				openSaveInterface.reportSuccessfulSave(e->filename());
 			}
 		}
 
@@ -521,10 +542,7 @@
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(c));
 
 			if(!e->filename().isEmpty())
-			{
-				openSaveInterface.reportSuccessfulSave( e->filename() );
 				openSaveInterface.enableSave(true);
-			}
 			else
 				openSaveInterface.enableSave(false);
 
@@ -622,8 +640,8 @@
 
 				// Save as new file : 
 				openSaveInterface.reportSuccessfulLoad( filename );
-				openSaveInterface.reportSuccessfulSave( filename );
 				openSaveInterface.enableSave(true);
 			}
 		}
 	}
+

@@ -103,6 +103,11 @@
 		throw Exception("Module::getTexture - This Module does not have textures.", __FILE__, __LINE__);
 	}
 
+	const __ReadOnly_HdlTextureFormat& Module::getTextureFormat(int recordID) const
+	{
+		throw Exception("Module::getTextureFormat - This Module does not have textures.", __FILE__, __LINE__);
+	}
+
 	void Module::giveTextureInformation(int recordID, std::string& name)
 	{
 		name = "N.A.";
@@ -138,6 +143,14 @@
 			throw Exception("Module::inputTexture - No master module (internal error).", __FILE__, __LINE__);
 		else
 			return masterModule->inputTexture(portID);
+	}
+
+	const __ReadOnly_HdlTextureFormat&  Module::inputTextureFormat(int portID) const
+	{
+		if(masterModule==NULL)
+			throw Exception("Module::inputTextureFormat - No master module (internal error).", __FILE__, __LINE__);
+		else
+			return masterModule->inputTextureFormat(portID);
 	}
 
 	void Module::getInputTextureInformation(int portID, std::string& name)
@@ -206,13 +219,13 @@
 	void Module::pipelineInputFromThisModuleWasReleased(int portID, int recordID)	{}
 	void Module::pipelineUniformsWereModified(void)					{}
 	void Module::pipelineWasDestroyed(void)						{}
-	void Module::mouseParametersWereUpdated(const GLSceneWidget::MouseData& data)	{};
+	void Module::mouseParametersWereUpdated(const GLSceneWidget::MouseData& data)	{}
 
 // ControlModule
 	const int ControlModule::maxNumInputs = 256;
 
-	ControlModule::ControlModule(QWidget* parent)
-	 : QWidget(parent), display(640, 480, this), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
+	ControlModule::ControlModule(void)
+	 : display(640, 480, this), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
 	{
 		LayoutLoaderModule::addBasicModules(pipelineLoader);
 
@@ -284,7 +297,7 @@
 	
 	bool ControlModule::isInputValid(int portID)
 	{
-		if(portID<0 || portID>inputTextureOwners.size())
+		if(portID<0 || portID>=inputTextureOwners.size())
 			return false;
 		else if(inputTextureOwners[portID]!=NULL)
 			return inputTextureOwners[portID]->isValidTexture( inputTextureRecordIDs[portID] );
@@ -298,6 +311,14 @@
 			throw Exception("ControlModule::inputTexture - Input texture " + to_string(portID) + " does not have owner (internal error).", __FILE__, __LINE__);
 		else
 			return inputTextureOwners[portID]->getTexture(inputTextureRecordIDs[portID]);
+	}
+
+	const __ReadOnly_HdlTextureFormat& ControlModule::inputTextureFormat(int portID) const
+	{
+		if(inputTextureOwners[portID]==NULL)
+			throw Exception("ControlModule::inputTextureFormat - Input texture " + to_string(portID) + " does not have owner (internal error).", __FILE__, __LINE__);
+		else
+			return inputTextureOwners[portID]->getTextureFormat(inputTextureRecordIDs[portID]);
 	}
 
 	void ControlModule::getInputTextureInformation(int portID, std::string& name)
@@ -418,7 +439,7 @@
 			for(int k=0; k<infos.mainPipelineInputs.size(); k++)
 			{
 				if(isInputValid(k))
-					pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], inputTexture(k).format() );
+					pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], inputTextureFormat(k) );
 				else
 					pipelineLoader.addRequiredElement( infos.mainPipelineInputs[k], HdlTextureFormat(1, 1, GL_RGB, GL_UNSIGNED_BYTE) ); // non blocking
 			}
@@ -550,13 +571,16 @@
 			{
 				if(!inputTextureOwners[portID]->textureInputCanBeReleased(portID, inputTextureRecordIDs[portID]))
 					return false;
-				else
+				else if(inputTextureOwners[portID]==m && inputTextureRecordIDs[portID]==recordID)
+					needRecompilation = true;									// Force recompilation as the texture is the same (some settings must
+																	// have changed but they won't be picked by the last case).
+				else 
 				{
 					// Old method for the recompilation : 
 					//needRecompilation = !inputTexture(portID).isCompatibleWith( m->getTexture(recordID) );
 
 					// New method (which is more agressive, but required if the pipeline is using formats for internal purpose) : 
-					needRecompilation = inputTexture(portID).format() != m->getTexture(recordID).format();
+					needRecompilation = inputTextureFormat(portID) != m->getTextureFormat(recordID);
 				}
 			}
 		

@@ -8,7 +8,7 @@
 
 // MainWindow
 	MainWindow::MainWindow(void)
-	 : mainLayout(this), codeEditors(*this, this), libraryInterface(*this, this)
+	 : /*mainLayout(this),*/ codeEditors(*this, this), libraryInterface(*this, this)
 	{
 		// Display tools : 
 		display.sceneWidget().setKeyboardActions(true);
@@ -22,7 +22,7 @@
 
 		mainSplitter.addWidget(&container);
 		mainSplitter.addWidget(&codeEditors);
-		mainLayout.addWidget(&mainSplitter);
+		setCentralWidget(&mainSplitter);
 
 		resize(1280,720);
 		show();

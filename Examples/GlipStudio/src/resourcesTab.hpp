@@ -62,6 +62,7 @@
 			//void updateDisplay(WindowRenderer& display);
 			bool isValidTexture(int recordID);
 			HdlTexture& getTexture(int recordID);
+			const __ReadOnly_HdlTextureFormat& getTextureFormat(int recordID) const;
 			void giveTextureInformation(int recordID, std::string& name);
 			void cleanRecordDependances(int recordID);
 			void updateTexturesLinkInformation(void);
@@ -76,6 +77,7 @@
 			void selectionChanged(void);
 			void connectToInput(int i);
 			void imageLoaded(int recordID);
+			void imageReplaced(int recordID);
 			void imageSettingsChanged(int recordID);
 			void imageUnloadedFromDevice(int recordID);
 			void imageFreed(int recordID);

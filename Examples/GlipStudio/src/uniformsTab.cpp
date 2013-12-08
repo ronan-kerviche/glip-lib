@@ -1205,7 +1205,7 @@
 		QObject::connect(&showSettings,		SIGNAL(triggered()),						this, 			SLOT(switchSettings()));
 		QObject::connect(&openSaveInterface,	SIGNAL(openFile(const QStringList&)),				this,			SLOT(loadData(const QStringList&)));
 		QObject::connect(&openSaveInterface,	SIGNAL(saveFileAs(const QString&)),				this,			SLOT(saveData(const QString&)));
-		QObject::connect(&openSaveInterface,	SIGNAL(saveFile(const QString&)),				this,			SLOT(saveData(const QString&)));
+		QObject::connect(&openSaveInterface,	SIGNAL(saveFile()),						this,			SLOT(saveData(void)));
 		QObject::connect(&settings,		SIGNAL(settingsChanged()),					this,			SLOT(settingsChanged()));
 		QObject::connect(this, 			SIGNAL(requestDataUpdate()),					this,			SLOT(dataWasModified()));
 		QObject::connect(&mainLibraryMenu,	SIGNAL(requireProcessing()),					this, 			SLOT(mainLibraryPipelineUpdate()));
@@ -1403,6 +1403,11 @@
 		return true;
 	}
 
+	void UniformsTab::saveData(void)
+	{
+		saveData(lastSaveFilename);
+	}
+
 	void UniformsTab::saveData(const QString& filename)
 	{
 		if(filename.isEmpty())
@@ -1430,6 +1435,8 @@
 		openSaveInterface.enableSave(true);
 
 		HdlProgram::stopProgram();
+
+		lastSaveFilename = filename;
 	}
 
 	void UniformsTab::mainLibraryPipelineUpdate(void)
@@ -1489,7 +1496,6 @@
 		openSaveInterface.enableOpen(false);
 		openSaveInterface.enableSaveAs(false);
 		openSaveInterface.enableSave(false);
-		openSaveInterface.clearLastSaveMemory();
 	}
 
 	void UniformsTab::mouseParametersWereUpdated(const GLSceneWidget::MouseData& data)

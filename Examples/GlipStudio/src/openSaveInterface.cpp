@@ -11,17 +11,27 @@
 		openAction(tr("Open %1s").arg(_objectName.c_str()), this),
 		saveAction(tr("Save %1").arg(_objectName.c_str()), this),
 		saveAsAction(tr("Save %1 as...").arg(_objectName.c_str()), this),
-		recentFilesMenu(tr("Recent %1s").arg(_objectName.c_str())),
-		clearRecentFilesMenu("Clear list", this)
+		recentOpenedFilesMenu(tr("Recent %1s opened").arg(_objectName.c_str())),
+		recentSavedFilesMenu(tr("Recent %1s saved").arg(_objectName.c_str())),
+		clearRecentOpenedFilesMenu("Clear list", this),
+		clearRecentSavedFilesMenu("Clear list", this)
 	{
 		SettingsManager settings;
 
 		for(int k=0; k<maxLinks; k++)
 		{
-			Element e = settings.getModuleData(moduleName, "RecentFile_"+to_string(k));
+			Element e = settings.getModuleData(moduleName, "RecentOpenedFile_"+to_string(k));
 
 			if(!e.body.empty())
-				append( e.getCleanBody().c_str() );
+				appendOpenedFile( e.getCleanBody().c_str() );
+		}
+
+		for(int k=0; k<maxLinks; k++)
+		{
+			Element e = settings.getModuleData(moduleName, "RecentSavedFile_"+to_string(k));
+
+			if(!e.body.empty())
+				appendSavedFile( e.getCleanBody().c_str() );
 		}
 
 		// Paths : 
@@ -37,12 +47,14 @@
 		if(!e3.body.empty())
 			currentDir = e3.getCleanBody().c_str();
 
-		updateMenu();
+		updateOpenMenu();
+		updateSaveMenu();
 
-		connect(&openAction,		SIGNAL(triggered()),	this,	SLOT(open()));
-		connect(&saveAction,		SIGNAL(triggered()),	this,	SLOT(saveSignal()));
-		connect(&saveAsAction,		SIGNAL(triggered()),	this,	SLOT(saveAs()));
-		connect(&clearRecentFilesMenu,	SIGNAL(triggered()),	this,	SLOT(clearRecentFilesList()));
+		connect(&openAction,			SIGNAL(triggered()),	this,	SLOT(open()));
+		connect(&saveAction,			SIGNAL(triggered()),	this,	SLOT(saveSignal()));
+		connect(&saveAsAction,			SIGNAL(triggered()),	this,	SLOT(saveAs()));
+		connect(&clearRecentOpenedFilesMenu,	SIGNAL(triggered()),	this,	SLOT(clearRecentOpenedFilesList()));
+		connect(&clearRecentSavedFilesMenu,	SIGNAL(triggered()),	this,	SLOT(clearRecentSavedFilesList()));
 
 		enableSave(false);
 	}
@@ -51,20 +63,39 @@
 	{
 		SettingsManager settings;
 
-		for(int k=filenames.count()-1; k>=0; k--)
+		for(int k=openedFilenames.count()-1; k>=0; k--)
 		{	
-			const std::string name = "RecentFile_"+to_string(filenames.count()-1-k);
+			const std::string name = "RecentOpenedFile_"+to_string(openedFilenames.count()-1-k);
 
 			Element e = settings.getModuleData(moduleName, name);
 
-			e.body = filenames[k].toStdString();
+			e.body = openedFilenames[k].toStdString();
 
 			settings.setModuleData(moduleName, name, e);
 		}
 
-		for(int k=filenames.count(); k<maxLinks; k++)
+		for(int k=openedFilenames.count(); k<maxLinks; k++)
 		{
-			const std::string name = "RecentFile_"+to_string(k);
+			// Make sure we don't reintroduce old files : 
+			const std::string name = "RecentOpenedFile_"+to_string(k);
+			settings.removeModuleData(moduleName, name);
+		}
+
+		for(int k=savedFilenames.count()-1; k>=0; k--)
+		{	
+			const std::string name = "RecentSavedFile_"+to_string(savedFilenames.count()-1-k);
+
+			Element e = settings.getModuleData(moduleName, name);
+
+			e.body = savedFilenames[k].toStdString();
+
+			settings.setModuleData(moduleName, name, e);
+		}
+
+		for(int k=savedFilenames.count(); k<maxLinks; k++)
+		{
+			// Make sure we don't reintroduce old files : 
+			const std::string name = "RecentSavedFile_"+to_string(k);
 			settings.removeModuleData(moduleName, name);
 		}
 
@@ -91,48 +122,94 @@
 		}
 	}
 
-	void OpenSaveInterface::append(const QString& filename)
+	void OpenSaveInterface::appendOpenedFile(const QString& filename)
 	{
-		filenames.removeAll(filename);
+		openedFilenames.removeAll(filename);
 
 		if(!filename.isEmpty())
 		{
 			QFileInfo info(filename);
 			
 			if(info.exists() && info.isFile())
-				filenames.push_front( filename );
+				openedFilenames.push_front( filename );
 			else
 				std::cerr << "File does not exists : \"" << filename.toStdString() << "\"." << std::endl;
 		}
 
-		while(filenames.count()>maxLinks)
-			filenames.removeLast();
+		while(openedFilenames.count()>maxLinks)
+			openedFilenames.removeLast();
 
-		updateMenu();
+		updateOpenMenu();
+	}
+
+	void OpenSaveInterface::appendSavedFile(const QString& filename)
+	{
+		savedFilenames.removeAll(filename);
+
+		if(!filename.isEmpty())
+		{
+			QFileInfo info(filename);
+			
+			if(info.exists() && info.isFile())
+				savedFilenames.push_front( filename );
+			else
+				std::cerr << "File does not exists : \"" << filename.toStdString() << "\"." << std::endl;
+		}
+
+		while(savedFilenames.count()>maxLinks)
+			savedFilenames.removeLast();
+
+		updateSaveMenu();
 	}
 			
-	void OpenSaveInterface::updateMenu(void)
+	void OpenSaveInterface::updateOpenMenu(void)
 	{
-		recentFilesMenu.clear();
-		currentActions.clear();
+		recentOpenedFilesMenu.clear();
+		currentOpenedFileActions.clear();
 
-		if(!filenames.isEmpty())
+		if(!openedFilenames.isEmpty())
 		{
-			for(int k=0; k<filenames.count(); k++)
+			for(int k=0; k<openedFilenames.count(); k++)
 			{
-				QFileInfo info( filenames[k] );
-				QAction* tmp = recentFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
-				tmp->setToolTip( filenames[k] );
-				tmp->setStatusTip( filenames[k] );
-				currentActions.push_back(tmp);
+				QFileInfo info( openedFilenames[k] );
+				QAction* tmp = recentOpenedFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
+				tmp->setToolTip( openedFilenames[k] );
+				tmp->setStatusTip( openedFilenames[k] );
+				currentOpenedFileActions.push_back(tmp);
 			}
 
-			recentFilesMenu.addSeparator();
-			recentFilesMenu.addAction(&clearRecentFilesMenu);
+			recentOpenedFilesMenu.addSeparator();
+			recentOpenedFilesMenu.addAction(&clearRecentOpenedFilesMenu);
 		}
 		else
 		{
-			QAction* tmp = recentFilesMenu.addAction( "(none)" );
+			QAction* tmp = recentOpenedFilesMenu.addAction( "(none)" );
+			tmp->setDisabled(true);
+		}
+	}
+
+	void OpenSaveInterface::updateSaveMenu(void)
+	{
+		recentSavedFilesMenu.clear();
+		currentSavedFileActions.clear();
+
+		if(!savedFilenames.isEmpty())
+		{
+			for(int k=0; k<savedFilenames.count(); k++)
+			{
+				QFileInfo info( savedFilenames[k] );
+				QAction* tmp = recentSavedFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
+				tmp->setToolTip( savedFilenames[k] );
+				tmp->setStatusTip( savedFilenames[k] );
+				currentSavedFileActions.push_back(tmp);
+			}
+
+			recentSavedFilesMenu.addSeparator();
+			recentSavedFilesMenu.addAction(&clearRecentSavedFilesMenu);
+		}
+		else
+		{
+			QAction* tmp = recentSavedFilesMenu.addAction( "(none)" );
 			tmp->setDisabled(true);
 		}
 	}
@@ -141,27 +218,26 @@
 	{
 		QAction* sender = reinterpret_cast<QAction*>(QObject::sender());
 
-		QStringList filenames;
+		QStringList openedFilenames;
 
-		filenames.append(sender->statusTip());
+		openedFilenames.append(sender->statusTip());
 
-		append(sender->statusTip());
+		appendOpenedFile(sender->statusTip());
 
-		emit openFile(filenames);
+		emit openFile(openedFilenames);
 	}
 
 	void OpenSaveInterface::open(void)
 	{
-		QStringList filenames = openDialog();
+		QStringList openedFilenames = openDialog();
 
-		if(!filenames.isEmpty())
-			emit openFile(filenames);
+		if(!openedFilenames.isEmpty())
+			emit openFile(openedFilenames);
 	}
 
 	void OpenSaveInterface::saveSignal(void)
 	{
-		if(!lastSaveFilename.isEmpty())
-			emit saveFile( lastSaveFilename );
+		emit saveFile();
 	}
 
 	void OpenSaveInterface::saveAs(void)
@@ -172,26 +248,32 @@
 			emit saveFileAs(filename);
 	}
 
-	void OpenSaveInterface::clearRecentFilesList(void)
+	void OpenSaveInterface::clearRecentOpenedFilesList(void)
 	{
-		filenames.clear();
-		updateMenu();
+		openedFilenames.clear();
+		updateOpenMenu();
+	}
+
+	void OpenSaveInterface::clearRecentSavedFilesList(void)
+	{
+		savedFilenames.clear();
+		updateSaveMenu();
 	}
 
 	void OpenSaveInterface::enableOpen(bool state)
 	{
 		openAction.setEnabled(state);
 		
-		for(std::vector<QAction*>::iterator it=currentActions.begin(); it!=currentActions.end(); it++)
+		for(std::vector<QAction*>::iterator it=currentOpenedFileActions.begin(); it!=currentOpenedFileActions.end(); it++)
+			(*it)->setEnabled(state);
+
+		for(std::vector<QAction*>::iterator it=currentSavedFileActions.begin(); it!=currentSavedFileActions.end(); it++)
 			(*it)->setEnabled(state);
 	}
 
 	void OpenSaveInterface::enableSave(bool state)
 	{
-		if(!lastSaveFilename.isEmpty() && state)
-			saveAction.setEnabled(state);
-		else
-			saveAction.setEnabled(false);
+		saveAction.setEnabled(state);
 	}
 
 	void OpenSaveInterface::enableSaveAs(bool state)
@@ -219,7 +301,8 @@
 	{
 		menu.addAction(&openAction);
 		addSaveToMenu(menu);
-		menu.addMenu(&recentFilesMenu);
+		menu.addMenu(&recentOpenedFilesMenu);
+		menu.addMenu(&recentSavedFilesMenu);
 	}
 
 	void OpenSaveInterface::addSaveToMenu(QMenu& menu)
@@ -230,31 +313,28 @@
 
 	void OpenSaveInterface::reportSuccessfulLoad(const QString& filename)
 	{
-		append( filename );
+		appendOpenedFile( filename );
 	}
 
 	void OpenSaveInterface::reportFailedLoad(const QString& filename)
 	{
-		filenames.removeAll(filename);
+		openedFilenames.removeAll(filename);
 
-		updateMenu();
+		updateOpenMenu();
 	}
 
 	void OpenSaveInterface::reportSuccessfulSave(const QString& filename)
 	{
-		lastSaveFilename = filename;
-
-		append( filename );
+		appendSavedFile( filename );
 
 		QFileInfo info(filename);
 		currentSavePath = info.path();
 	}
 
-	void OpenSaveInterface::clearLastSaveMemory(void)
+	/*void OpenSaveInterface::clearLastSaveMemory(void)
 	{
-		lastSaveFilename.clear();
 		saveAction.setEnabled(false);
-	}
+	}*/
 
 	QStringList OpenSaveInterface::openDialog(void)
 	{
@@ -278,15 +358,18 @@
 
 			// Push in recent files list : 
 			for(int k=0; k<filenames.count(); k++)
-				append(filenames.at(k));	
+				appendOpenedFile(filenames.at(k));	
 		}
 
 		return filenames;
 	}
 
-	QString OpenSaveInterface::saveAsDialog(void)
+	QString OpenSaveInterface::saveAsDialog(const QString& specialTitle)
 	{
-		return QFileDialog::getSaveFileName(NULL, tr("Save %1").arg(objectName.c_str()), currentSavePath, tr("%1 (%2)").arg(objectName.c_str()).arg(extensionsList.c_str()));
+		if(!specialTitle.isEmpty())
+			return QFileDialog::getSaveFileName(NULL, tr("Save %1 : %2").arg(objectName.c_str()).arg(specialTitle), currentSavePath, tr("%1 (%2)").arg(objectName.c_str()).arg(extensionsList.c_str()));
+		else 
+			return QFileDialog::getSaveFileName(NULL, tr("Save %1").arg(objectName.c_str()), currentSavePath, tr("%1 (%2)").arg(objectName.c_str()).arg(extensionsList.c_str()));
 	}
 
 	QString OpenSaveInterface::getDirectoryDialog(void)

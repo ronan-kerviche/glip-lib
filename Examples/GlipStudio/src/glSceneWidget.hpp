@@ -199,7 +199,8 @@
 
 			// Event processing function : 
 			ViewLink* updateSelection(bool addToSelection, bool dropSelection, unsigned char* colorUnderClick=NULL);
-			void processAction(void);
+			void processMouseAction(void);
+			void processKeyboardAction(void);
 
 			// QGL Tools : 
 			void initializeGL(void);
