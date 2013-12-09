@@ -317,6 +317,8 @@ Loading Example :
 				std::map<std::string,LayoutLoaderModule*>	modules;			// Using pointers to avoid conflict between polymorphism and object slicing.
 
 				// Tools :
+				LayoutLoader(const LayoutLoader& master);
+
 				LayoutLoaderKeyword getKeyword(const std::string& str);
 
 				void 	clean(void);

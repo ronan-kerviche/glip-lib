@@ -9,7 +9,8 @@
 		lockedToDevice(false),
 		savedToDisk(false),
 		type(NoType),
-		location(NoMemLoc)
+		location(NoMemLoc),
+		sizeOnGPU(0)
 	{ }
 
 	TextureStatus::TextureStatus(const TextureStatus& c)
@@ -19,7 +20,8 @@
 		lockedToDevice(c.lockedToDevice),
 		savedToDisk(c.savedToDisk),
 		type(c.type),
-		location(c.location)
+		location(c.location),
+		sizeOnGPU(c.sizeOnGPU)
 	{ }
 
 	TextureStatus::TextureStatus(Type _type)
@@ -29,7 +31,8 @@
 		connectionStatus(NotConnected),
 		lockedToDevice(false),
 		savedToDisk(false),
-		location(NoMemLoc)
+		location(NoMemLoc),
+		sizeOnGPU(0)
 	{ }
 
 	bool TextureStatus::isBlank(void) const
@@ -51,6 +54,7 @@
 		savedToDisk		= c.savedToDisk;
 		type			= c.type;
 		location		= c.location;
+		sizeOnGPU		= c.sizeOnGPU;
 
 		return (*this);
 	}
@@ -135,6 +139,22 @@
 				topLevelItem(k)->setBackground(l, QBrush(*ptr));
 			}
 		}
+	}
+
+	QString TexturesList::getSizeString(unsigned int sizeInBytes)
+	{
+		const float	GB = 1024.0f*1024.0f*1024.0f,
+				MB = 1024.0f*1024.0f,
+				KB = 1024.0f;
+
+		if(sizeInBytes>=GB)
+			return tr("%1 GB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/GB)) );
+		else if(sizeInBytes>=MB)
+			return tr("%1 MB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/MB)) );
+		else if(sizeInBytes>=KB)
+			return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/KB)) );
+		else 
+			return tr("%1 B").arg( sizeInBytes );
 	}
 
 	void TexturesList::itemChangedReceiver(QTreeWidgetItem* item)
@@ -312,17 +332,9 @@
 		// Depth : 
 		formatString.append( tr(" %1 bits").arg(newFormat.getChannelDepth()*8) );
 
-		// Get the size : 
-		QString sizeStr;
-
-		size_t s = newFormat.getSize();
-		if(s>1024*1024)
-			sizeStr = tr("%1 MB").arg(s/(1024*1024));
-		else
-			sizeStr = tr("%1 KB").arg(s/(1024));
-
 		// Print : 
-		itemsList[id]->setText(3, tr("%1 x %2 (%3; %4)").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(sizeStr).arg(formatString));
+		QString sizeStr = getSizeString(newFormat.getSize());
+		itemsList[id]->setText(3, tr("%1 x %2 (%3; %4)").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg( sizeStr ).arg(formatString));
 
 		// Color : 
 		QBrush 	foreground	= palette().foreground().color(),
@@ -333,10 +345,7 @@
 		QString toolTip;
 
 		toolTip += "<table>";
-			if(s>1024*1024)
-				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3 MB)</td></tr>").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(s/(1024*1024));
-			else
-				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3 KB)</td></tr>").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(s/(1024));
+			toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(newFormat.getWidth()).arg(newFormat.getHeight()).arg(sizeStr);
 			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( newFormat.getGLMode() ).c_str());
 			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( newFormat.getGLDepth() ).c_str());
 			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( newFormat.getMinFilter() ).c_str()).arg(glParamName( newFormat.getMagFilter() ).c_str());
@@ -361,7 +370,8 @@
 		statusList[id] = s;
 
 		//Set the status string : 
-			QString message;
+			QString message,
+				tooltip;
 			QBrush brush;
 
 			if(!s.savedToDisk)
@@ -370,22 +380,30 @@
 			if( s.location==TextureStatus::NotLoaded )
 			{
 				message += "DISK";
-				brush = QBrush(Qt::darkRed);
+				brush 	= QBrush(Qt::darkRed);
+				tooltip =  "Size on GPU : 0 B";
 			}
 			else if( s.location==TextureStatus::OnRAM )
 			{
 				message += "RAM";
-				brush = QBrush(QColor(255, 128, 0));
+				brush 	= QBrush(QColor(255, 128, 0));
+				tooltip =  "Size on GPU : 0 B";
 			}
 			else if( s.location==TextureStatus::OnVRAM )
 			{
 				message += "VRAM";
 				brush = QBrush(Qt::green);
+
+				if(s.sizeOnGPU>0)
+					tooltip =  tr("Size on GPU : %1").arg( getSizeString(s.sizeOnGPU) );
+				else 
+					tooltip =  "Size on GPU : <i>Not Available.</i>";
 			}
 			else if( s.location==TextureStatus::VirtualLink)
 			{
 				message += "LINK";
 				brush = QBrush(Qt::lightGray);
+				tooltip =  "Size on GPU : 0 B";
 			}
 			else
 				throw Exception("TexturesList::updateStatus - Unknown Status code : " + to_string(s.location) + ".", __FILE__, __LINE__);
@@ -394,6 +412,7 @@
 			itemsList[id]->setText(0, message);
 			itemsList[id]->setTextAlignment(0, Qt::AlignHCenter);
 			itemsList[id]->setForeground(0, brush);
+			itemsList[id]->setToolTip(0, tooltip);
 
 		// Set the connection string : 
 			message.clear();
@@ -1397,7 +1416,8 @@
 					imagesList[id]->loadToDevice();
 
 					TextureStatus s = recordStatus( recordID );
-					s.location = TextureStatus::OnVRAM;
+					s.location 	= TextureStatus::OnVRAM;
+					s.sizeOnGPU 	= imagesList[id]->texture().getSizeOnGPU();
 					updateRecordStatus( recordID, s );
 
 					// Tell : 

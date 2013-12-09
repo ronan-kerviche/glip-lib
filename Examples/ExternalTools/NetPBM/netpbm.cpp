@@ -66,7 +66,7 @@
 		HdlTextureFormat format(0, 0, GL_NONE, GL_NONE);
 
 		if(head=="P5")
-			format.setGLMode(GL_LUMINANCE);
+			format.setGLMode(GL_R16_SNORM); //GL_LUMINANCE16_SNORM does not work, use GL_R16_SNORM instead.
 		else if(head=="P6")
 			format.setGLMode(GL_RGB);
 		else
@@ -124,14 +124,15 @@
 			throw Exception("NetPBM::loadNetPBMFile - Body size mismatch (expectation : " + to_string(format.getSize()) + "; File : " + to_string(length-p) + ").", __FILE__, __LINE__);
 		}
 
-		// Change endianess : 
-		/*if(precision>=8)
+		// Change endianess (see http://netpbm.sourceforge.net/doc/pamendian.html) :
+		int n = 1; 
+		if((*(char*)&n==1) && precision>8) // The machine is little endian and the data is on more than 8 bits.
 		{
 			unsigned short* tbytes = reinterpret_cast<unsigned short*>(buffer + p);
 
 			for(int k=0; k<format.getNumElements(); k++)
-				tbytes[k] = std::numeric_limits<unsigned short>::max() - changeEndianness16(tbytes[k]);
-		}*/
+				tbytes[k] = changeEndianness16(tbytes[k]);
+		}
 
 		ImageBuffer* result = new ImageBuffer(format);
 		(*result) << (buffer + p);

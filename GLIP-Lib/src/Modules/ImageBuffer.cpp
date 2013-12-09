@@ -201,9 +201,9 @@
 			texture.bind();
 			glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), reinterpret_cast<GLvoid*>(buffer));
 			
-			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-				OPENGL_ERROR_TRACKER("ImageBuffer::operator<<", "glGetTexImage()")
-			#endif
+			GLenum err = glGetError();
+			if(err!=GL_NO_ERROR)
+				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
 
 			HdlTexture::unbind();
 
@@ -270,11 +270,11 @@
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 			//write
-			glTexImage2D(GL_TEXTURE_2D, 0, getGLMode(), getWidth(), getHeight(), 0, getGLMode(), getGLDepth(), reinterpret_cast<GLvoid*>(buffer));
+			glTexImage2D(GL_TEXTURE_2D, 0, getGLMode(), getWidth(), getHeight(), 0, descriptor.aliasMode, getGLDepth(), reinterpret_cast<GLvoid*>(buffer));
 
-			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-				OPENGL_ERROR_TRACKER("ImageBuffer::operator>>", "glTexImage2D()")
-			#endif
+			GLenum err = glGetError();
+			if(err!=GL_NO_ERROR)
+				throw Exception("ImageBuffer::operator>> - Unable to copy data to texture (glTexImage2D). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
 
 			if( texture.getMaxLevel()>0 )
 			{

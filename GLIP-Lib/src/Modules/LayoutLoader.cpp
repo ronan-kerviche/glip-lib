@@ -81,12 +81,32 @@
 		clearPaths();
 	}
 
+	LayoutLoader::LayoutLoader(const LayoutLoader& master)
+	 : isSubLoader(true)
+	{
+		// Copy static data : 
+		staticPaths		= master.staticPaths;
+		requiredFormatList 	= master.requiredFormatList;
+		requiredGeometryList 	= master.requiredGeometryList;
+		requiredPipelineList 	= master.requiredPipelineList;
+		modules			= master.modules;
+
+		// Copy this path to the inner version :
+		dynamicPaths 		= master.dynamicPaths;
+
+		// Copy dynamic data into the static ones too : 
+		requiredFormatList.insert( 	master.formatList.begin(), 	master.formatList.end());
+		requiredGeometryList.insert(	master.geometryList.begin(),	master.geometryList.end());
+		requiredPipelineList.insert(	master.pipelineList.begin(),	master.pipelineList.end());
+	}
+
 	LayoutLoader::~LayoutLoader(void)
 	{
 		// Dynamic :
 		clean();
 
 		// And static :
+		staticPaths.clear();
 		requiredFormatList.clear();
 		requiredGeometryList.clear();
 		requiredPipelineList.clear();
@@ -374,16 +394,16 @@
 		else if(e.arguments[0].find('\\')!=std::string::npos)
 			throw Exception("From line " + to_string(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '\\'.", __FILE__, __LINE__);
 
-		LayoutLoader subLoader;
+		LayoutLoader subLoader(*this); // 'this' is the master pipeline in that case.
 
-		// Set it as a sub-loader :
+		/*// Set it as a sub-loader :
 		subLoader.isSubLoader = true;
 		subLoader.requiredFormatList = requiredFormatList;
 		subLoader.requiredGeometryList = requiredGeometryList;
 		subLoader.requiredPipelineList = requiredPipelineList;
 
 		// Copy this path to the inner version :
-		subLoader.dynamicPaths = dynamicPaths;
+		subLoader.dynamicPaths = dynamicPaths;*/
 
 		// Load the file :
 		std::string content;

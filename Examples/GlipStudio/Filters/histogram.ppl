@@ -1,9 +1,9 @@
 // Histogram pipeline.
 // You must use a 3D grid as geometry for it to work.
 
-TEXTURE_FORMAT:histogramBinsFormat(4096,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins
+TEXTURE_FORMAT:histogramBinsFormat(4095,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins, here, you can replace 255 by 4095 or more for deeper images.
 //TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)  	// Final window representation
-REQUIRED_FORMAT:showHistogramFormat(inputTexture)
+REQUIRED_FORMAT:showHistogramFormat(inputTexture, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
 GEOMETRY:grid(GRID_3D, 512, 512, 3)
 
@@ -11,14 +11,15 @@ SHADER_SOURCE:histogramVertShader
 {
 	#version 130
 
+	precision highp float;
+
 	uniform sampler2D inputTexture;
 
 	void main()
 	{
 		// Vertex texture fetching :
-		vec4 col = textureLod(inputTexture, gl_Vertex.xy/512.0f, 0.0);
+		vec4 col = texture(inputTexture, gl_Vertex.xy/512.0f);
 		
-
 		float sel = 0.0;
 
 		// "Payload"
@@ -39,7 +40,7 @@ SHADER_SOURCE:histogramVertShader
 		}
 
 		// Only on [0.0,1.0] interval :
-		clamp(sel, 0.0, 1.0);
+		sel = clamp(sel, 0.0, 1.0);
 
 		// Done
 		gl_Position.x = (sel-0.5)*2.0; 	// set new point position to the color intensity in [-1.0,1.0] interval
@@ -77,7 +78,7 @@ SHADER_SOURCE:showHistogramShader
 		vec4 col	= textureLod(inputTexture,  pos, 0);
 
 		if(pos.t>(1.0-hist.r*scale) )
-			outputTexture.r = 1.0;
+			outputTexture.r = 1.0 - col.r;
 		else
 			outputTexture.r = col.r;
 
@@ -97,7 +98,7 @@ SHADER_SOURCE:showHistogramShader
 FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON, grid)  // Clearing and Blending!
 FILTER_LAYOUT:histogramShowFilter(showHistogramFormat, showHistogramShader)
 
-PIPELINE_MAIN:pipelineHistogram()
+PIPELINE_MAIN:pipelineHistogram
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(outputTexture, histogramBins)

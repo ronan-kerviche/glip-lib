@@ -33,6 +33,18 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	{GL_RED, 			1, 	true, 	false, 	false, 	false, 	false, 	false, 	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_NONE, 		0, 	0, 	0, 	0, 	0, 	0, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
 	{GL_GREEN, 			1,	false,	true, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	-1,		0,		-1,		-1,		-1},
 	{GL_BLUE, 			1,	false,	false, 	true,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	-1,		-1,		0,		-1,		-1},
+	{GL_R8,				1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_BYTE,		1, 	8, 	8, 	0, 	0, 	0, 	0,	GL_BYTE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R8I,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_BYTE,		1, 	8, 	8, 	0, 	0, 	0, 	0,	GL_BYTE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R8UI,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_BYTE,		1, 	8, 	8, 	0, 	0, 	0, 	0,	GL_BYTE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R8_SNORM,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_BYTE,		1, 	8, 	8, 	0, 	0, 	0, 	0,	GL_BYTE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R16,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_SHORT,		2, 	16, 	16, 	0, 	0, 	0, 	0,	GL_SHORT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R16I,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_SHORT,		2, 	16, 	16, 	0, 	0, 	0, 	0,	GL_SHORT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R16UI,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_SHORT,		2, 	16, 	16, 	0, 	0, 	0, 	0,	GL_SHORT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R16_SNORM,			1,	true,	false, 	false,	false,	false,	false,   false,	GL_RED,			GL_COMPRESSED_RED, 		GL_SHORT,		2, 	16, 	16, 	0, 	0, 	0, 	0,	GL_SHORT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R16F,			1,	true,	false, 	false,	false,	false,	false,	 true,	GL_RED,			GL_COMPRESSED_RED, 		GL_FLOAT,		2, 	16, 	16, 	0, 	0, 	0, 	0,	GL_FLOAT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R32I,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_INT,			4, 	32, 	32, 	0, 	0, 	0, 	0,	GL_INT,			GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R32UI,			1,	true,	false, 	false,	false,	false,	false,	 false,	GL_RED,			GL_COMPRESSED_RED, 		GL_UNSIGNED_INT,	4, 	32, 	32, 	0, 	0, 	0, 	0,	GL_UNSIGNED_INT,	GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
+	{GL_R32F,			1,	true,	false, 	false,	false,	false,	false,	 true,	GL_RED,			GL_COMPRESSED_RED, 		GL_FLOAT,		4, 	32, 	32, 	0, 	0, 	0, 	0,	GL_FLOAT,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	0,		-1,		-1,		-1,		-1},
 	{GL_ALPHA,			1,	false,	false, 	false,	true,	false,	false,	 false,	GL_ALPHA,		GL_COMPRESSED_ALPHA, 		GL_NONE,		0, 	0, 	0, 	0, 	0, 	0, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,		GL_NONE,	-1,		-1,		-1,		0,		-1},
 	{GL_ALPHA4,			1,	false,	false, 	false,	true,	false,	false,	 false,	GL_ALPHA,		GL_COMPRESSED_ALPHA, 		GL_NONE,		1, 	4, 	0, 	0, 	0, 	4, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_BYTE,		GL_NONE,	-1,		-1,		-1,		0,		-1},
 	{GL_ALPHA8,			1,	false,	false, 	false,	true,	false,	false,	 false,	GL_ALPHA,		GL_COMPRESSED_ALPHA, 		GL_BYTE,		1, 	8, 	0, 	0, 	0, 	8, 	0,	GL_NONE,		GL_NONE,		GL_NONE,		GL_BYTE,		GL_NONE,	-1,		-1,		-1,		0,		-1},
@@ -121,7 +133,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	{GL_RGBA32F,			4,	true,	true,	true,	true,	false,	false,	 true,	GL_RGBA,		GL_COMPRESSED_RGBA, 		GL_FLOAT,		16, 	128, 	32, 	32, 	32, 	32, 	0,	GL_FLOAT,		GL_FLOAT,		GL_FLOAT,		GL_FLOAT,		GL_NONE,	0,		1,		2,		3,		-1},
 	{GL_RGB10_A2,			4,	true,	true,	true,	true,	false,	false,	 false,	GL_RGB,			GL_COMPRESSED_RGBA, 		GL_NONE,		4,	32, 	10,	10,	10,	2,	0,	GL_SHORT,		GL_SHORT,		GL_SHORT,		GL_BYTE,		GL_NONE,	0,		1,		2,		3,		-1},
 	{GL_RGB10_A2UI,			4,	true,	true,	true,	true,	false,	false,	 false,	GL_RGB,			GL_COMPRESSED_RGBA, 		GL_NONE,		4,	32, 	10,	10,	10,	2,	0,	GL_SHORT,		GL_SHORT,		GL_SHORT,		GL_UNSIGNED_BYTE,	GL_NONE,	0,		1,		2,		3,		-1},
-	// name	                    channels  	red     green   blue    alpha   lum.   compress.  alias			corresponding       	      Forced Depth           TSBytes  TSbits   RedSb  GreenSb BlueSb  AlphaSb LumSb
+	// name	                    channels  	red     green   blue    alpha   lum.   compress. float  alias			corresponding       	      Forced Depth           TSBytes  TSbits   RedSb  GreenSb BlueSb  AlphaSb LumSb	redType			greenType		blueType		alphaType		luminanceType 	indexRed	indexGreen	indexBlue	indexAlpha 	indexLuminance
 
 	// Compressed modes :
 	// name	                                      chan.  red    green   blue    alpha    lum.   compr. float 	alias 				corresponding         Forced Depth           TSBytes  TSbits   RedSb  GreenSb BlueSb  AlphaSb LumSb	redType		greenType	blueType	alphaType	luminanceType 	indexRed	indexGreen	indexBlue	indexAlpha 	indexLuminance

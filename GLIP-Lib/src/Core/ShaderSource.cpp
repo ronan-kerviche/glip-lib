@@ -295,6 +295,11 @@
 		else if(str	== "mat3")				typeCode = GL_DOUBLE_MAT3;
 		else if(str	== "mat4")				typeCode = GL_DOUBLE_MAT4;*/
 		else if(str	== "sampler2D")				typeCode = GL_SAMPLER_2D;
+		else if(str	== "usampler2D")			typeCode = GL_SAMPLER_2D;
+		else if(str	== "isampler2D")			typeCode = GL_SAMPLER_2D;
+		else if(str	== "sampler2DRect​")			typeCode = GL_SAMPLER_2D;
+		else if(str	== "usampler2DRect​")			typeCode = GL_SAMPLER_2D;
+		else if(str	== "isampler2DRect​")			typeCode = GL_SAMPLER_2D;
 		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
  		else
 			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__);

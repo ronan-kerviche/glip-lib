@@ -64,6 +64,7 @@
 			bool			lockedToDevice;
 			bool 			savedToDisk;
 			MemLoc			location;
+			unsigned int		sizeOnGPU;
 
 			TextureStatus(void);
 			TextureStatus(const TextureStatus& c);
@@ -89,6 +90,7 @@
 
 			int getIndexFromRecordID(int recordID, bool throwException=false) const;
 			void updateAlternateColors(void);
+			QString getSizeString(unsigned int sizeInBytes);
 
 		private slots:
 			void itemChangedReceiver(QTreeWidgetItem* item);

@@ -18,6 +18,7 @@
 							clearAllPathAct;
 
 		private slots :
+			void update(void);
 			void addPath(void);
 			void removePath(void);
 			void clearAll(void);

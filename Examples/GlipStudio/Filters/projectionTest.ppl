@@ -1,5 +1,5 @@
 //TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE)
-REQUIRED_FORMAT:format(texInput)
+REQUIRED_FORMAT:format(texInput, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
 SHADER_SOURCE:projectionShader()
 {
@@ -8,11 +8,12 @@ SHADER_SOURCE:projectionShader()
 	uniform sampler2D	texInput;
 	out     vec4 		texOutput;
 
-	uniform float rot = 0.0;
-	uniform mat2 trsm 	= mat2(1.0, 0.0, 0.0, 1.0);
-	uniform mat3 projCol 	= mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-	uniform vec3 colorClamp	= vec3(1.0, 1.0, 1.0),
-		     offset	= vec3(0.0, 0.0, 0.0);
+	uniform float 	rot 		= 0.0;
+	uniform mat2 	trsm 		= mat2(1.0, 0.0, 0.0, 1.0);
+	uniform mat3 	projCol 	= mat3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+	uniform vec3 	colorClamp	= vec3(1.0, 1.0, 1.0),
+		     	offsetPre	= vec3(0.0, 0.0, 0.0),
+			offsetPost	= vec3(0.0, 0.0, 0.0);
 
 	void main()
 	{
@@ -28,8 +29,9 @@ SHADER_SOURCE:projectionShader()
 		vec4 col  	= textureLod(texInput, tex, 0.0);
 
 		// Write the output data :
-		col.rgb		= col.rgb - offset;
+		col.rgb		= col.rgb - offsetPre;
 		texOutput.rgb 	= projCol*col.rgb;
+		texOutput.rgb 	= texOutput.rgb - offsetPost;
 		texOutput.a 	= col.a;
 	
 		// Clamp the color (do not write any fragment) :
@@ -41,7 +43,7 @@ SHADER_SOURCE:projectionShader()
 // Declare the filter layout :
 FILTER_LAYOUT:projectionFilter(format, projectionShader)
 
-PIPELINE_MAIN:pipelineProjection()
+PIPELINE_MAIN:pipelineProjection
 {
 	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(texInput)

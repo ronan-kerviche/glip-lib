@@ -9,10 +9,12 @@
 	{
 		setMaximumHeight(256); 
 
-		connect(&addPathAct, 		SIGNAL(triggered()), this, SLOT(addPath()));
-		connect(&removePathAct, 	SIGNAL(triggered()), this, SLOT(removePath()));
-		connect(&clearAllPathAct, 	SIGNAL(triggered()), this, SLOT(clearAll()));
+		connect(&addPathAct, 		SIGNAL(triggered()), 		this, SLOT(addPath()));
+		connect(&removePathAct, 	SIGNAL(triggered()), 		this, SLOT(removePath()));
+		connect(&clearAllPathAct, 	SIGNAL(triggered()), 		this, SLOT(clearAll()));
+		connect(&data,			SIGNAL(itemSelectionChanged()),	this, SLOT(update()));
 
+		removePathAct.setEnabled(false);
 		menuBar.addAction(&addPathAct);
 		menuBar.addAction(&removePathAct);
 		menuBar.addAction(&clearAllPathAct);
@@ -70,6 +72,13 @@
 		}
 
 		clearAll();
+	}
+
+	void PathWidget::update(void)
+	{
+		QList<QListWidgetItem*> selectedItems = data.selectedItems();
+
+		removePathAct.setDisabled( selectedItems.isEmpty() );
 	}
 
 	void PathWidget::addPath(void)
@@ -310,10 +319,10 @@
 		connect(&closeAllAct, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
 		connect(&templateMenu, 		SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
 
-		QList<QKeySequence> refreshShortcuts;
-		refreshShortcuts.push_back(QKeySequence(tr("Ctrl+r")));
-		refreshShortcuts.push_back(QKeySequence(tr("F5")));
-		refreshAct.setShortcuts(refreshShortcuts);
+		QKeySequence qs(Qt::CTRL + Qt::Key_R);
+		refreshAct.setShortcut(qs);
+		refreshAct.setText(refreshAct.text() + " (" + qs.toString() + ")");
+
 		connect(&refreshAct, 		SIGNAL(triggered()), 			this, SLOT(refresh()));
 
 		closeTabAct.setStatusTip(tr("Close"));
@@ -595,6 +604,7 @@
 	void CodeEditorsPannel::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{
 		// Add path : 
+		loader.clearPaths();
 		loader.addToPaths( getPaths() );
 	}
 
