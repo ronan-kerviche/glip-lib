@@ -264,7 +264,9 @@ How to access and modify a uniform variable in a filter :
 					std::vector<OutputHub>			outputsList;
 					std::map<int, int>			filtersGlobalIDsList;
 
-					bool 					perfsMonitoring;
+					bool 					firstRun,
+										broken,
+										perfsMonitoring;
 					GLuint					queryObject;
 					std::vector<double>			perfs;
 					double					totalPerf;
@@ -292,6 +294,8 @@ How to access and modify a uniform variable in a filter :
 					HdlTexture& 	out(int id = 0);
 					HdlTexture& 	out(const std::string& portName);
 					Filter& 	operator[](int filterID);
+					bool 		wentThroughFirstRun(void) const;
+					bool 		isBroken(void) const;
 					void 		enablePerfsMonitoring(void);
 					void 		disablePerfsMonitoring(void);
 					double		getTiming(int filterID);

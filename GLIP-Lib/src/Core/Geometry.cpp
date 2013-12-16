@@ -720,32 +720,42 @@
 
 	// 2D Grid of points
 		/**
-		\fn PointsGrid2D::PointsGrid2D(int w, int h)
+		\fn PointsGrid2D::PointsGrid2D(int w, int h, bool normalized)
 		\brief PointsGrid2D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
+		\param normalized If true, the coordinates will be normalized in the range [0, 1].
 		**/
-		PointsGrid2D::PointsGrid2D(int w, int h)
+		PointsGrid2D::PointsGrid2D(int w, int h, bool normalized)
 		 : GeometryModel(GeometryModel::PointsGrid2D, 2, GL_POINTS, false)
 		{
 			for(int i=0; i<h; i++)
 			{
 				for(int j=0; j<w; j++)
 				{
-					addVertex2D(j,  i);
+					if(!normalized)
+						addVertex2D(j,  i);
+					else
+					{
+						const float 	x = static_cast<float>(j)/static_cast<float>(w-1),
+								y = static_cast<float>(i)/static_cast<float>(h-1);
+
+						addVertex2D(x,  y);
+					}
 				}
 			}
 		}
 
 	// 3D Grid of points
 		/**
-		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d)
+		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d, bool normalized)
 		\brief PointsGrid3D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
 		\param d Number of points along the Z dimension.
+		\param normalized If true, the coordinates will be normalized in the range [0, 1].
 		**/
-		PointsGrid3D::PointsGrid3D(int w, int h, int d)
+		PointsGrid3D::PointsGrid3D(int w, int h, int d, bool normalized)
 		 : GeometryModel(GeometryModel::PointsGrid3D, 3, GL_POINTS, false)
 		{
 			for(int k=0; k<d; k++)
@@ -754,7 +764,16 @@
 				{
 					for(int j=0; j<w; j++)
 					{
-						addVertex3D(j, i, k);
+						if(!normalized)
+							addVertex3D(j, i, k);
+						else
+					{
+						const float 	x = static_cast<float>(j)/static_cast<float>(w-1),
+								y = static_cast<float>(i)/static_cast<float>(h-1),
+								z = static_cast<float>(k)/static_cast<float>(d-1);
+
+						addVertex2D(x,  y, z);
+					}
 					}
 				}
 			}

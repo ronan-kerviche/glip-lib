@@ -57,7 +57,7 @@ using namespace Glip::CoreGL;
 		glGenFramebuffers(1, &fboID);
 
 		if(fboID==0)
-			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
 		else
 		{
 			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -66,7 +66,7 @@ using namespace Glip::CoreGL;
 		}
 
 
-		for(int i=0; i<numTarget; i++) // At least one!
+		for(int i=0; i<numTarget; i++)
 			addTarget();
 
 		// check FBO status
@@ -169,10 +169,6 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlFBO::beginRendering - Can't render to " + to_string(usedTarget) + " textures because the current number of targets is " + to_string(targets.size()), __FILE__, __LINE__);
 
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
-
-		/*/ Set up color_tex and depth_rb for render-to-texture
-		Useless : glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, assTex.getID(), 0);
-		Useless : glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rboID);*/
 
 		glDrawBuffers(usedTarget, attachmentsList);
 

@@ -490,13 +490,13 @@
 
 	bool ControlModule::pipelineComputation(void)
 	{
-		if(!pipelineExists())
-		{
-			lastComputationSucceeded = false;
-			return false;
-		}
+		lastComputationSucceeded = false;
 
-		lastComputationSucceeded = true;
+		if(!pipelineExists())
+			return false;
+
+		if(pipeline().isBroken())
+			return false;
 
 		try
 		{
@@ -517,23 +517,23 @@
 			}
 
 			if(!greenLight)
-			{
-				lastComputationSucceeded = false;
 				emit pipelineComputationFailed( Exception("Missing input(s).") );
-			}
 			else
 			{
 				// Compute : 
-				pipeline() << Pipeline::Process;		
-	
+				pipeline() << Pipeline::Process;
+
+				lastComputationSucceeded = true;
+
 				// Signals : 
 				emit pipelineWasComputed();
 			}
 		}
 		catch(Exception& e)
 		{
-			emit pipelineComputationFailed(e);
 			lastComputationSucceeded = false;
+		
+			emit pipelineComputationFailed(e);
 		}
 
 		return lastComputationSucceeded;

@@ -206,6 +206,7 @@ Example, creating a simple Module :
 
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
+				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase);
 		};
 
 		// Simple MACROS : 
@@ -360,8 +361,10 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_PIXELS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_MATCH )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
+			LAYOUT_LOADER_MODULE_DEFINITION( CHAIN_PIPELINES )
 			LAYOUT_LOADER_MODULE_DEFINITION( ABORT_ERROR )
 	}
 }

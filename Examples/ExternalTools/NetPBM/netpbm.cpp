@@ -66,7 +66,7 @@
 		HdlTextureFormat format(0, 0, GL_NONE, GL_NONE);
 
 		if(head=="P5")
-			format.setGLMode(GL_R16_SNORM); //GL_LUMINANCE16_SNORM does not work, use GL_R16_SNORM instead.
+			format.setGLMode(GL_LUMINANCE); //GL_LUMINANCE16_SNORM does not work, use GL_R16_SNORM instead.
 		else if(head=="P6")
 			format.setGLMode(GL_RGB);
 		else
@@ -111,7 +111,10 @@
 		if(precision<=8)
 			format.setGLDepth(GL_UNSIGNED_BYTE);
 		else if(precision<=16)
+		{
+			format.setGLMode(GL_LUMINANCE16);
 			format.setGLDepth(GL_UNSIGNED_SHORT);
+		}		
 		else
 			throw Exception("NetPBM::loadNetPBMFile - Unable to create buffer for a precision of " + to_string(precision) + " bits.", __FILE__, __LINE__);
 

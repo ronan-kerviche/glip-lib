@@ -159,7 +159,13 @@ Examples : <BR>
 <b>REQUIRED_PIPELINE</b>:<i>pipeline_layout_name</i>(required_pipeline_name)
 
 - Main pipeline layout (the layout at the end of the loading stage) : <BR>
-<i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b>.
+<i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b> <BR>
+Or, via an indirection : <BR>
+<b>PIPELINE_MAIN</b>:<i>main_pipeline_name</i>(<i>pipeline_layout_name</i>) <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>INPUT_PORTS</b>(<i>force_input_port_name_1</i> [,<i>force_input_port_name_2</i>, ..., <i>force_input_port_name_n</i>] ) <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>OUTPUT_PORTS</b>(<i>force_output_port_name_1</i> [,<i>force_output_port_name_2</i>, ..., <i>force_output_port_name_n</i>] ) <BR>
+}
 
 - Add to the search path : <BR>
 <b>ADD_PATH</b>(/some/path/) <BR>

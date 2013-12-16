@@ -270,6 +270,9 @@
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
 
+		firstRun	= true;
+		broken		= true; // Wait for complete initialization.
+
 		// Check for the number of input
 		if(getNumInputPort()>limInput)
 			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many input port for hardware (Max : " + to_string(limInput) + ", Current : " + to_string(getNumInputPort()) + ").", __FILE__, __LINE__);
@@ -325,6 +328,9 @@
 
 		// Build the geometry :
 		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW_ARB );
+
+		// Finally : 
+		broken		= false;
 	}
 
 	Filter::~Filter(void)
@@ -370,8 +376,7 @@
 
 		// Prepare the renderer
 			renderer.beginRendering(getNumOutputPort());
-			//std::cout << "Begin rendering 		: "; glErrors(true, false);
-
+			
 		// Enable states
 			if(isBlendingEnabled())
 			{
@@ -386,36 +391,59 @@
 				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			}
-			//std::cout << "Clearing states 		: "; glErrors(true, false);
 
 		// Link the textures
 			for(int i=0; i<getNumInputPort(); i++)
 			{
 				//std::cout << "Using : " << arguments[i] << std::endl;
-				/*if(arguments[i]==NULL)
-					throw Exception("Argument is NULL", __FILE__, __LINE__);*/
 				arguments[i]->bind(i);
 			}
-			//std::cout << "Binding	 		: "; glErrors(true, false);
 
 		// Prepare geometry
 			glLoadIdentity();
 
 		// Load the shader
 			program->use();
-			//std::cout << "Using shader 		: "; glErrors(true, false);
+			
+		// Test on first run ; 
+			if(firstRun)
+			{
+				const GLenum err = glGetError();
+
+				if(err!=GL_NO_ERROR)
+				{
+					// Force end rendering : 
+					HdlProgram::stopProgram();
+					renderer.endRendering();
+
+					firstRun 	= false;
+					broken 		= true;
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+				}
+			}
 
 		// Draw
-			/*if(vbo!=NULL)
-				vbo->draw();
-			else
-				HandleOpenGL::standardQuadVBO().draw();*/
 			geometry->draw();
-			//std::cout << "drawing VBO 		: "; glErrors(true, false);
+
+		// Test on first run ; 
+			if(firstRun)
+			{
+				const GLenum err = glGetError();
+
+				if(err!=GL_NO_ERROR)
+				{
+					// Force end rendering : 
+					HdlProgram::stopProgram();
+					renderer.endRendering();
+
+					firstRun 	= false;
+					broken 		= true;
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+				}
+			}
 
 		// Stop using the shader
 			HdlProgram::stopProgram();
-			//std::cout << "Stop program 		: "; glErrors(true, false);
 
 		// Remove from stack
 			if(isBlendingEnabled())
@@ -427,13 +455,24 @@
 				//std::cout << "Unbinding " << i << std::endl;
 				HdlTexture::unbind(i);
 			}
-			//std::cout << "Unbinding 		: "; glErrors(true, false);
 
 		// End rendering
 			renderer.endRendering();
-			//std::cout << "End rendering 		: "; glErrors(true, false);
 
+		// Test on first run ; 
+			if(firstRun)
+			{
+				const GLenum err = glGetError();
 
+				if(err!=GL_NO_ERROR)
+				{
+					firstRun 	= false;
+					broken 		= true;
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+				}
+				else
+					firstRun 	= false; // First run completed successfully.
+			}
 	}
 
 	/**
@@ -446,15 +485,23 @@
 		return *program;
 	}
 
-	/*
-	fn void Filter::setGeometry(HdlVBO* v)
-	brief Push different geometry rendering, the Filter object will take care of deleting the data when needed. The object will take care to free previously used memory.
-	param v Pointer to the new geometry to use. If set to NULL it will use the standard quad from HandleOpenGL::standardQuadVBO().
-	*/
-	/*void Filter::setGeometry(HdlVBO* v)
+	/**
+	\fn bool Filter::wentThroughFirstRun(void) const
+	\brief Check if the filter was already applied, at least once.
+	\return True if the filter was already applied.
+	**/
+	bool Filter::wentThroughFirstRun(void) const
 	{
-		if(vbo!=NULL)
-			delete vbo;
+		return !firstRun;
+	}
 
-		vbo = v;
-	}*/
+	/**
+	\fn bool Filter::isBroken(void) const
+	\brief Check if the filter is broken (its initialization failed, or an error occured during its first run).
+	\return True if the filter is broken and should not be used.
+	**/
+	bool Filter::isBroken(void) const
+	{
+		return broken;
+	}
+

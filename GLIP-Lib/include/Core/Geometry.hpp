@@ -169,7 +169,7 @@
 				class GLIP_API PointsGrid2D : public GeometryModel
 				{
 					public :
-						PointsGrid2D(int w, int h);
+						PointsGrid2D(int w, int h, bool normalized=false);
 				};
 
 				/**
@@ -179,7 +179,7 @@
 				class GLIP_API PointsGrid3D : public GeometryModel
 				{
 					public :
-						PointsGrid3D(int w, int h, int d);
+						PointsGrid3D(int w, int h, int d, bool normalized=false);
 				};
 
 				/**

@@ -228,10 +228,10 @@
 	}
 
 	/**
-	\fn bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
-	\brief Check if an input port exists, knowing its name
-	\param name The name of the input port.
-	\return True if an input port named correctly exists, False otherwise.
+	\fn bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
+	\brief Check if an output port exists, knowing its name
+	\param name The name of the output port.
+	\return True if an output port named correctly exists, False otherwise.
 	**/
 	bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
 	{
@@ -304,6 +304,32 @@
 			outputPorts.push_back(name);
 			return id;
 		}
+	}
+
+	/**
+	\fn void ComponentLayout::setInputPortName(int i, const std::string& newName)
+	\brief Change the name of an input port.
+	\param i The ID of the target input port.
+	\param newName The name of the new input port.
+	**/
+	void ComponentLayout::setInputPortName(int i, const std::string& newName)
+	{
+		checkInputPort(i);
+
+		inputPorts[i] = newName;
+	}
+
+	/**
+	\fn void ComponentLayout::setOutputPortName(int i, const std::string& newName)
+	\brief Change the name of an output port.
+	\param i The ID of the target output port.
+	\param newName The name of the new output port.
+	**/
+	void ComponentLayout::setOutputPortName(int i, const std::string& newName)
+	{
+		checkOutputPort(i);
+
+		outputPorts[i] = newName;
 	}
 
 // Component :

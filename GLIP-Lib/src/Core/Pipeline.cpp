@@ -948,8 +948,9 @@
 	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0)
 	{
 		cleanInput();
-		//outputBuffer.assign(getNumOutputPort(), 0);
-                //outputBufferPort.assign(getNumOutputPort(), 0);
+
+		firstRun 	= true;
+		broken		= true; // Wait for complete initialization.
 
 		try
 		{
@@ -964,6 +965,8 @@
 			Exception m("Exception caught while building Pipeline " + getFullName() + " : ", __FILE__, __LINE__);
 			throw m + e;
 		}
+
+		broken		= false;
 	}
 
 	Pipeline::~Pipeline(void)
@@ -1052,7 +1055,7 @@
 					#endif
 				}
 				else
-					throw Exception("Unknown exception kind.", __FILE__, __LINE__);
+					throw Exception("Unknown element kind.", __FILE__, __LINE__);
 			}
 
 			// Then change the connections :
@@ -1502,7 +1505,22 @@
 				//glFlush();
 			}
 
-			f->process(*t);
+			if(firstRun)
+			{
+				try
+				{
+					f->process(*t);
+				}
+				catch(Exception& e)
+				{
+					firstRun	= false;
+					broken 		= true;
+					Exception m("Pipeline::process - Exception caught in pipeline " + getFullName() + ", during processing : ", __FILE__, __LINE__);
+					throw m + e;
+				}
+			}
+			else
+				f->process(*t);
 
 			if(perfsMonitoring)
 			{
@@ -1545,6 +1563,8 @@
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "Pipeline::process - Done for pipeline : " << getFullName() << std::endl;
 		#endif
+
+		firstRun = false;
 	}
 
 	/**
@@ -1617,9 +1637,6 @@
 	HdlTexture& Pipeline::out(int i)
 	{
 		checkOutputPort(i);
-		/*int bufferID 		= useBuffer[outputBuffer[i]];
-		int bufferPortID 	= outputBufferPort[i];
-		return *((*buffers[bufferID])[bufferPortID]);*/
 		return (*(*buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
 	}
 
@@ -1657,6 +1674,26 @@
 			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + to_string(filterID) + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
+	}
+
+	/**
+	\fn bool Pipeline::wentThroughFirstRun(void) const
+	\brief Check if the pipeline was already computed, at least once.
+	\return True if the pipeline was already applied.
+	**/
+	bool Pipeline::wentThroughFirstRun(void) const
+	{
+		return !firstRun;
+	}
+
+	/**
+	\fn bool Pipeline::isBroken(void) const
+	\brief Check if the pipeline is broken (its initialization failed, or an error occured during its first run).
+	\return True if the pipeline is broken and should not be used.
+	**/
+	bool Pipeline::isBroken(void) const
+	{
+		return broken;
 	}
 
 	/**

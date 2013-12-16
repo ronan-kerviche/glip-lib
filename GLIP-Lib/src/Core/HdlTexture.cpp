@@ -502,7 +502,7 @@ using namespace Glip::CoreGL;
 
 		glEnable(GL_TEXTURE_2D);
 
-		// Create the texture
+		// Create the texture :
 		glGenTextures(1, &texID);
 
 		// COMMON ERROR : USE OF MIPMAP : LINEAR_MIPMAP_NEAREST... when max level = 0 (leads to Invalid Enum)
@@ -511,9 +511,9 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(texID==0)
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
 
-		// Set it up
+		// Set it up :
 		glBindTexture(GL_TEXTURE_2D,texID);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getMinFilter() );
@@ -528,11 +528,10 @@ using namespace Glip::CoreGL;
 			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 		}
 
-		bool testAcceptanceFailed;
-		std::string errString = glErrorToString(&testAcceptanceFailed);
+		GLenum err = glGetError();
 
-		if(testAcceptanceFailed)
-			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + to_string(getBaseLevel()) + ", MaxLevel = " + to_string(getMaxLevel()) + ". Last OpenGL error : " + errString + ".", __FILE__, __LINE__);
+		if(err)
+			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + to_string(getBaseLevel()) + ", MaxLevel = " + to_string(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__);
 
 		HdlTexture::unbind();
 	}
@@ -541,7 +540,7 @@ using namespace Glip::CoreGL;
 	{
 		HdlTexture::unbind();
 
-		// delete the texture
+		// delete the texture :
 		glDeleteTextures( 1, &texID);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -677,7 +676,7 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
 			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__);
-			default : 				throw Exception("HdlTexture::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+			default : 				throw Exception("HdlTexture::setSetting : Throw unable to set parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
 		}
 	}
 
@@ -696,14 +695,14 @@ using namespace Glip::CoreGL;
 		if(pixelDepth==GL_ZERO)
 			pixelDepth = depth;
 
-		pixelFormat = getFormatDescriptor().aliasMode; //getAliasMode(pixelFormat);
+		pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
 
-		// Bind it
+		// Bind it :
 		glBindTexture(GL_TEXTURE_2D, texID);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-		//write
+		//write :
 		glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -771,12 +770,12 @@ using namespace Glip::CoreGL;
 
 		bind();
 
-		size_t imgSize = getSize();
+		const size_t imgSize = getSize();
 
-		char* tmp = new char[imgSize];
-		memset(tmp, dataByte, imgSize);
+		char* tmp = new char[imgSize];	// Do not use on GPU here, it might fail.
+		std::memset(tmp, dataByte, imgSize);
 
-		write(tmp);
+		write(reinterpret_cast<GLvoid*>(tmp));
 
 		delete[] tmp;
 	}

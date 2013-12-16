@@ -114,7 +114,8 @@
 					HdlShader*  			fragmentShader;
 					HdlProgram* 			program;
 					GeometryInstance*		geometry;
-					//HdlVBO*     			vbo;
+					bool				firstRun,
+									broken;
 					std::vector<HdlTexture*>	arguments;
 
 				protected :
@@ -130,8 +131,10 @@
 				public :
 					// Tools
 					virtual ~Filter(void);
+
 					HdlProgram& prgm(void);
-					//void setGeometry(HdlVBO* v=NULL);
+					bool wentThroughFirstRun(void) const;
+					bool isBroken(void) const;
 			};
 		}
 	}

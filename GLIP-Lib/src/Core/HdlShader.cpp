@@ -74,9 +74,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(shader==0)
-		{
-			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
-		}
+			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
 
 		// send the source code
 		const char* data = getSourceCstr();
@@ -178,7 +176,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(program==0)
-			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glErrorToString(), __FILE__, __LINE__);
+			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
 
 		attachedFragmentShader = attachedVertexShader = 0;
 	}
@@ -266,15 +264,6 @@ using namespace Glip::CoreGL;
 			#endif
 
 			log[logSize] = 0;
-
-			// Write the log in a file
-			//std::cout << "Information written in programLog.txt" << std::endl;
-			//std::fstream logFile;
-			//logFile.open("./programLog.txt", std::fstream::out | std::fstream::app);
-			//logFile << "Linking log from GlProgram" << std::endl;
-			//logFile.write(log, logSize);
-			//logFile << std::endl << std::endl;
-			//logFile.close();
 
 			std::string logstr(log);
 			delete[] log;
@@ -408,16 +397,17 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	{
-		glErrors(); // clean error buffer
+		glGetError(); // clean error buffer, isolate from previous possible errors.
+
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
 		#endif
 		glBindFragDataLocation(program, frag, fragName.c_str());
 
-		bool test = glErrors();
+		GLenum err = glGetError();
 
-		if(test)
-			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\".", __FILE__, __LINE__);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -482,6 +472,7 @@ using namespace Glip::CoreGL;
 	#define GENmodifyVarA( argT1, argT2, argT3)   \
 		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1 v0, argT1 v1, argT1 v2, argT1 v3) \
 		{ \
+			glGetError(); \
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
@@ -497,15 +488,16 @@ using namespace Glip::CoreGL;
 				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
 			} \
 			 \
-			bool test = glErrors(); \
+			GLenum err = glGetError(); \
 			 \
-			if(test) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
+			if(err!=GL_NO_ERROR) \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__); \
 		} \
 
 	#define GENmodifyVarB( argT1, argT2, argT3)   \
 		void HdlProgram::modifyVar(const std::string& varName, GLenum t, argT1* v) \
 		{ \
+			glGetError(); \
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
@@ -521,10 +513,10 @@ using namespace Glip::CoreGL;
 				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
 			} \
 			 \
-			bool test = glErrors(); \
+			GLenum err = glGetError(); \
 			 \
-			if(test) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__); \
+			if(err!=GL_NO_ERROR) \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__); \
 		}
 
 	GENmodifyVarA( int, INT, i)
@@ -538,6 +530,7 @@ using namespace Glip::CoreGL;
 	// Last one, with matrices :
 	void HdlProgram::modifyVar(const std::string& varName, GLenum t, float* v)
 	{
+		glGetError();
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
@@ -556,10 +549,10 @@ using namespace Glip::CoreGL;
 			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
 		}
 
-		bool test = glErrors();
+		GLenum err = glGetError();
 
-		if(test)
-			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\".", __FILE__, __LINE__);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -571,6 +564,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlProgram::getVar(const std::string& varName, int* ptr)
 	{
+		glGetError();
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
@@ -579,10 +573,10 @@ using namespace Glip::CoreGL;
 
 		glGetUniformiv(program, loc, ptr);
 
-		bool test = glErrors();
+		GLenum err = glGetError();
 
-		if(test)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -594,6 +588,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlProgram::getVar(const std::string& varName, unsigned int* ptr)
 	{
+		glGetError();
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
@@ -602,10 +597,10 @@ using namespace Glip::CoreGL;
 
 		glGetUniformuiv(program, loc, ptr);
 
-		bool test = glErrors();
+		GLenum err = glGetError();
 
-		if(test)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -617,6 +612,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlProgram::getVar(const std::string& varName, float* ptr)
 	{
+		glGetError();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if (loc==-1)
@@ -624,10 +620,10 @@ using namespace Glip::CoreGL;
 
 		glGetUniformfv(program, loc, ptr);
 
-		bool test = glErrors();
+		GLenum err = glGetError();
 
-		if(test)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\".", __FILE__, __LINE__);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**

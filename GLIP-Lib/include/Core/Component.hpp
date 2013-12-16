@@ -98,6 +98,9 @@
 					ComponentLayout(const std::string& _typeName);
 					ComponentLayout(const __ReadOnly_ComponentLayout&);
 					virtual ~ComponentLayout(void);
+
+					void setInputPortName(int i, const std::string& newName);
+					void setOutputPortName(int i, const std::string& newName);
 			};
 
 			/**

@@ -1,24 +1,43 @@
 // Histogram pipeline.
-// You must use a 3D grid as geometry for it to work.
 
-TEXTURE_FORMAT:histogramBinsFormat(4095,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins, here, you can replace 255 by 4095 or more for deeper images.
+REQUIRED_FORMAT:inputFormat(inputTexture)
+
+//TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins, here, you can replace 255 by 4095 or more for deeper images.
+MODULE_CALL:IF_FORMAT_SETTING_MATCH(inputFormat, GL_TEXTURE_DEPTH, GL_UNSIGNED_SHORT)
+{
+	true
+	{
+		// 8191 is the largest size supported.
+		TEXTURE_FORMAT:histogramBinsFormat(8191,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
+	}
+
+	false
+	{
+		TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
+	}
+}
+
+
 //TEXTURE_FORMAT:showHistogramFormat(1024,1024,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)  	// Final window representation
 REQUIRED_FORMAT:showHistogramFormat(inputTexture, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
-GEOMETRY:grid(GRID_3D, 512, 512, 3)
+//GEOMETRY:grid(GRID_3D, 512, 512, 3)
+MODULE_CALL:FORMAT_SCALE_SIZE(inputFormat, 0.5, scaledInput)
+MODULE_CALL:GENERATE_SAME_SIZE_3D_GRID(scaledInput, grid)
 
 SHADER_SOURCE:histogramVertShader
 {
 	#version 130
 
-	precision highp float;
-
 	uniform sampler2D inputTexture;
 
 	void main()
 	{
+		vec2 s = textureSize(inputTexture, 0);
+		vec2 pos = vec2( gl_Vertex.x / s.x, gl_Vertex.y/s.y );
+
 		// Vertex texture fetching :
-		vec4 col = texture(inputTexture, gl_Vertex.xy/512.0f);
+		vec4 col = texture(inputTexture, pos);
 		
 		float sel = 0.0;
 
@@ -53,12 +72,14 @@ SHADER_SOURCE:histogramFragShader
 {
 	#version 130
 
+	uniform sampler2D inputTexture;
 	out vec4 histogramBins;
-
-	const float nrm = 1.0f / (512.0f * 512.0f);
 
 	void main()
 	{
+		ivec2 s = textureSize(inputTexture, 0);
+		float nrm = 1.0f / float(s.x*s.y);
+
 		histogramBins = gl_Color*nrm;
 	}
 }
@@ -78,7 +99,7 @@ SHADER_SOURCE:showHistogramShader
 		vec4 col	= textureLod(inputTexture,  pos, 0);
 
 		if(pos.t>(1.0-hist.r*scale) )
-			outputTexture.r = 1.0 - col.r;
+			outputTexture.r = 1.0;
 		else
 			outputTexture.r = col.r;
 

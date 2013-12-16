@@ -200,11 +200,11 @@ using namespace Glip::CoreGL;
 			Err( GL_STACK_UNDERFLOW,			"Stack UnderFlow")
 			Err( GL_OUT_OF_MEMORY,				"Out of Memory")
 			Err( GL_TABLE_TOO_LARGE,			"Table too large")
-			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation - Don't forget to write something once in the attached texture! (in the init)")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer - Most likely incompatibility with texture format")
-			Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer - Likely incompatibility with texture format")
-			case GL_NO_ERROR : return "(No error)";
-			default          : return "Unknown error (Code : " + to_string(err) + ")";
+			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation (possible incomplete texture)")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
+			Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer (possible incompatibility with texture format)")
+			case GL_NO_ERROR : 				return "(No error)";
+			default          : 				return "Unknown error (Code : " + to_string(err) + ")";
 		}
 		#undef Err
 	}
@@ -233,12 +233,12 @@ using namespace Glip::CoreGL;
 				Err( GL_STACK_UNDERFLOW,			"Stack UnderFlow")
 				Err( GL_OUT_OF_MEMORY,				"Out of Memory")
 				Err( GL_TABLE_TOO_LARGE,			"Table too large")
-				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation - Don't forget to write something once in the attached texture! (in the init)")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer - Most likely incompatibility with texture format")
-				Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer - Likely incompatibility with texture format")
+				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation (possible incomplete texture)")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
+				Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer (possible incompatibility with texture format)")
 
 				case GL_NO_ERROR : if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
-				default          :                       std::cout << "OpenGL error : Error NOT recognized (Code : " << err << ')' << std::endl; break;
+				default          :                       std::cout << "OpenGL error : Unknown error (Code : " << err << ')' << std::endl; break;
 			}
 			#undef Err
 		}
