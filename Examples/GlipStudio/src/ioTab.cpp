@@ -34,7 +34,6 @@
 		openSaveInterface.addSaveToMenu(imagesMenu);
 		openSaveInterface.enableOpen(false);
 		openSaveInterface.enableSave(false);
-		openSaveInterface.enableSaveAs(false);
 		releaseInputAction.setEnabled(false);
 		copyAsNewResourceAction.setEnabled(false);
 		replaceResourceAction.setEnabled(false);
@@ -181,8 +180,8 @@
 
 				portsList.updateRecordStatus( inputRecordIDs[portID], s );
 
-				if( inputsViewManager->isOnDisplay( inputRecordIDs[portID] ) && isInputValid(portID) )
-					inputsViewManager->update( inputRecordIDs[portID], inputTexture(portID) );
+				if( inputsViewManager->isOnDisplay( portID ) )
+					inputsViewManager->update( portID, inputTexture(portID) );
 			}
 		}
 
@@ -251,7 +250,6 @@
 				inputsViewManager->enableCreationAction(false);
 				outputsViewManager->enableCreationAction(false);
 				openSaveInterface.enableSave(false);
-				openSaveInterface.enableSaveAs(false);
 				releaseInputAction.setEnabled(false);
 				copyAsNewResourceAction.setEnabled(false);
 				replaceResourceAction.setEnabled(false);
@@ -273,7 +271,6 @@
 
 				releaseInputAction.setEnabled(testAllInput && testOneInputValid);
 				openSaveInterface.enableSave(testAllOutput);
-				openSaveInterface.enableSaveAs(testAllOutput);
 				copyAsNewResourceAction.setEnabled(testAllOutput);
 				replaceResourceAction.setEnabled(testAllOutput);
 				copyAsNewResourceWithNewNameAction.setEnabled(testAllOutput);

@@ -1,18 +1,18 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
-TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+REQUIRED_FORMAT:format(textureInput)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
 SHADER_SOURCE:HelloWorld()
 {
 	#version 130
 
-	uniform sampler2D	texInput;
-	out     vec4 		texOutput;
+	uniform sampler2D	textureInput;
+	out     vec4 		textureOutput;
 
 	void main()
 	{
 		// Get the input data :
-		vec4 col  = textureLod(texInput, gl_TexCoord[0].st, 0.0);
+		vec4 col  = textureLod(textureInput, gl_TexCoord[0].st, 0.0);
 
 		/*if(col.a>0.0)
 			col.ba = vec2(0.5,0.1);*/
@@ -20,7 +20,7 @@ SHADER_SOURCE:HelloWorld()
 		col.rgb = (col.rrr + col.ggg + col.bbb)/3.0;
 
 		// Write the output data :
-		texOutput = col;
+		textureOutput = col;
 	}
 }
 
@@ -29,11 +29,11 @@ FILTER_LAYOUT:helloFilter(format,HelloWorld)
 // The filter layout will have one input port and one output port, which names are respectively texInput and texOutput.
 // This information is gathered from the shader source HelloWorld, by analyzing the variables declared as uniform sampler2D for inputs and out vec4 for outputs.
 
-PIPELINE_MAIN:pMainGradient()
+PIPELINE_MAIN:pMainGradient
 {
 	// Declare some input and output ports for this pipeline ::
-	INPUT_PORTS(texInput)
-	OUTPUT_PORTS(texOutput)
+	INPUT_PORTS(textureInput)
+	OUTPUT_PORTS(textureOutput)
 
 	FILTER_INSTANCE:instHello(helloFilter)
 

@@ -111,6 +111,7 @@
 			bool canBeClosed(void);
 			std::string getCurrentFilename(void);
 			std::string getCurrentCode(void);
+			void updateCurrentToolTip(void);
 			const std::vector<std::string>& getPaths(void);
 			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 

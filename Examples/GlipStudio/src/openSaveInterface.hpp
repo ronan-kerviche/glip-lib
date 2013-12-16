@@ -56,7 +56,6 @@
 
 			void enableOpen(bool state);
 			void enableSave(bool state);
-			void enableSaveAs(bool state);
 			void enableShortcuts(bool state);
 
 			void addToMenu(QMenu& menu);
@@ -73,7 +72,7 @@
 
 		signals : 
 			void openFile(const QStringList& filenames);
-			void saveFile(void);				// The client must know the filename (for multiple resources, it is easier that way).
+			void saveFile(void);				// The client must know the filename or manually ask for one (for multiple resources, it is easier that way).
 			void saveFileAs(const QString& filename);
 	};
 

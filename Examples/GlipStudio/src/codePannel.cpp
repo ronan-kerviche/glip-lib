@@ -400,9 +400,21 @@
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
+			if(e->filename().isEmpty())
+			{
+				QString filename = openSaveInterface.saveAsDialog();
+	
+				if(!filename.isEmpty())			
+					e->setFilename(filename);
+				else
+					return ;
+			}
+
 			e->save();
 
 			openSaveInterface.reportSuccessfulSave(e->filename());
+
+			updateCurrentToolTip();
 		}
 	}
 
@@ -416,6 +428,8 @@
 			e->save();
 
 			openSaveInterface.reportSuccessfulSave(filename);
+
+			updateCurrentToolTip();
 		}
 	}
 
@@ -430,6 +444,8 @@
 
 			openSaveInterface.reportSuccessfulSave(filename);
 			openSaveInterface.enableSave(true);
+
+			updateCurrentToolTip();
 		}
 	}
 
@@ -455,6 +471,7 @@
 					e->save();
 
 					openSaveInterface.reportSuccessfulSave(filename);
+					updateCurrentToolTip();
 				}
 			}
 			else
@@ -463,6 +480,7 @@
 				widgets.setCurrentWidget(e);
 
 				openSaveInterface.reportSuccessfulSave(e->filename());
+				updateCurrentToolTip();
 			}
 		}
 
@@ -547,21 +565,9 @@
 	void CodeEditorsPannel::tabChanged(int c)
 	{
 		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(c));
-
-			if(!e->filename().isEmpty())
-				openSaveInterface.enableSave(true);
-			else
-				openSaveInterface.enableSave(false);
-
-			openSaveInterface.enableSaveAs(true);
-		}
+			openSaveInterface.enableSave(true);
 		else
-		{
 			openSaveInterface.enableSave(false);
-			openSaveInterface.enableSaveAs(false);
-		}
 	}
 
 	std::string CodeEditorsPannel::getCurrentFilename(void)
@@ -586,6 +592,18 @@
 		}
 		else
 			return "";
+	}
+
+	void CodeEditorsPannel::updateCurrentToolTip(void)
+	{
+		CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+
+		QString toolTip = "<table>";
+			toolTip += tr("<tr><td><i>Filename</i></td><td>:</td><td>%1</td></tr>").arg(e->getTitle());
+			toolTip += tr("<tr><td><i>Path</i></td><td>:</td><td>%1</td></tr>").arg(e->path());
+		toolTip += "</table>";
+
+		widgets.setTabToolTip(widgets.currentIndex(), toolTip);
 	}
 
 	const std::vector<std::string>& CodeEditorsPannel::getPaths(void)
@@ -648,9 +666,10 @@
 				// Append the path : 
 				pathWidget.addPath( e->path().toStdString() );
 
-				// Save as new file : 
+				// Report : 
 				openSaveInterface.reportSuccessfulLoad( filename );
 				openSaveInterface.enableSave(true);
+				updateCurrentToolTip();
 			}
 		}
 	}

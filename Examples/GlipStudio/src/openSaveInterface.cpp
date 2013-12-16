@@ -173,8 +173,8 @@
 			{
 				QFileInfo info( openedFilenames[k] );
 				QAction* tmp = recentOpenedFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
-				tmp->setToolTip( openedFilenames[k] );
-				tmp->setStatusTip( openedFilenames[k] );
+				QString path = tr("Path : %1").arg(info.path()) + "/";
+				tmp->setStatusTip( path );
 				currentOpenedFileActions.push_back(tmp);
 			}
 
@@ -274,10 +274,6 @@
 	void OpenSaveInterface::enableSave(bool state)
 	{
 		saveAction.setEnabled(state);
-	}
-
-	void OpenSaveInterface::enableSaveAs(bool state)
-	{
 		saveAsAction.setEnabled(state);
 	}
 

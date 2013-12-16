@@ -1152,7 +1152,7 @@
 
 			if(selectedRecordIDs.empty())
 			{
-				openSaveInterface.enableSaveAs(false);
+				openSaveInterface.enableSave(false);
 				freeImageAction.setEnabled(false);
 				filterMenu.update();
 				wrappingMenu.update();
@@ -1167,7 +1167,7 @@
 				for(int k=0; k<selectedRecordIDs.size(); k++)
 				{
 					int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
-					canBeSaved 	= canBeSaved & (imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty());
+					canBeSaved 	= canBeSaved && imagesList[tid]->isVirtual();
 					allHaveMipmaps 	= allHaveMipmaps & (imagesList[tid]->getFormat().getMaxLevel()>0);
 		
 					if(!allHaveMipmaps)
@@ -1175,12 +1175,6 @@
 				}
 
 				int id = getIndexFromRecordID(targetRecordID);
-		
-				// Set actions :
-				if(selectedRecordIDs.size()==1 && imagesList[getIndexFromRecordID(selectedRecordIDs.front())]->isVirtual())
-					openSaveInterface.enableSaveAs( true );
-				else
-					openSaveInterface.enableSaveAs( false );
 
 				openSaveInterface.enableSave(canBeSaved);
 

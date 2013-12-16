@@ -1179,7 +1179,6 @@
 
 		openSaveInterface.enableOpen(false);
 		openSaveInterface.enableSave(false);
-		openSaveInterface.enableSaveAs(false);
 
 		openSaveInterface.addToMenu(fileMenu);
 		menuBar.addMenu(&fileMenu);
@@ -1479,8 +1478,7 @@
 		modified = false;
 
 		openSaveInterface.enableOpen(true);
-		openSaveInterface.enableSaveAs(true);
-		openSaveInterface.enableSave(false);
+		openSaveInterface.enableSave(true);
 
 		tree.resizeColumnToContents(0);
 	}
@@ -1494,7 +1492,6 @@
 		modified = false;
 
 		openSaveInterface.enableOpen(false);
-		openSaveInterface.enableSaveAs(false);
 		openSaveInterface.enableSave(false);
 	}
 

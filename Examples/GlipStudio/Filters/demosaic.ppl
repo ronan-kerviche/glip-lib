@@ -5,8 +5,7 @@
 // Avoid blow : ../../tmpDCRAW/dcraw -v -d -w -H 1 *.CR2
 //TEXTURE_FORMAT:original(2856, 4290, GL_RGB, GL_UNSIGNED_BYTE)
 //TEXTURE_FORMAT:original(4290, 2856, GL_RGB, GL_UNSIGNED_BYTE)
-//REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
-REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB16, GL_UNSIGNED_SHORT)
+REQUIRED_FORMAT:formatDemosaic(inputTexture, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
 /*
 	White balance points : 
@@ -20,7 +19,7 @@ REQUIRED_FORMAT:original(FormatIn_0, *, *, GL_RGB16, GL_UNSIGNED_SHORT)
 	Cloudy: multipliers 2.336605 1.000000 1.334642
 */
 
-SHARED_SOURCE:demosaic
+SHARED_SOURCE:demosaicShared
 {
 	void demosaicSimple(in int mode, in sampler2D inputTexture, out vec3 outputColor)
 	{
@@ -73,77 +72,10 @@ SHADER_SOURCE:demosaic
 {
 	#version 130
 
-	void RGBToHSV( in vec3 rgb, out vec3 hsv )
-	{
-		float mn, mx, delta;
-
-		mn = min( min(rgb.r, rgb.g), rgb.b );
-		mx = max( max(rgb.r, rgb.g), rgb.b );
-		hsv.z = mx;
-
-		delta = mx - mn;
-
-		if( mx != 0.0 )
-		{
-			hsv.y = delta / mx;
-
-			if( rgb.r == mx )
-				hsv.x = ( rgb.g - rgb.b ) / delta;
-			else if( rgb.g == mx )
-				hsv.x = 2 + ( rgb.b - rgb.r ) / delta;
-			else
-				hsv.x = 4 + ( rgb.r - rgb.g ) / delta;	
-
-			hsv.x = hsv.x * 60.0;
-			if( hsv.x < 0 )
-				hsv.x = hsv.x + 360.0;
-		}
-		else
-		{
-			hsv.y = 0;
-			hsv.x = -1;
-		}
-	}
-
-	void HSVToRGB( in vec3 hsv, out vec3 rgb )
-	{
-		int i;
-		float f, p, q, t;
-
-		if( hsv.y == 0 ) 
-			rgb = hsv.zzz;
-		else
-		{
-			hsv.x = hsv.x / 60;
-			i = int( floor( hsv.x ) );
-			f = hsv.x - i;
-			p = hsv.z * ( 1 - hsv.y );
-			q = hsv.z * ( 1 - hsv.y * f );
-			t = hsv.z * ( 1 - hsv.y * ( 1 - f ) );
-
-			if( i==0 )
-				rgb = vec3(hsv.z, t, p);
-			else if( i==1 )
-				rgb = vec3(q, hsv.z, p);
-			else if( i==2 )
-				rgb = vec3(p, hsv.z, t);
-			else if( i==3 )
-				rgb = vec3(p, q, hsv.z);
-			else if( i==4 )
-				rgb = vec3(t, p, hsv.z);
-			else
-				rgb = vec3(hsv.z, p, q);
-		}
-	}
-
-	INCLUDE_SHARED_SOURCE:demosaic
+	INCLUDE_SHARED_SOURCE:demosaicShared
 
 	uniform sampler2D inputTexture;
 	out vec4 outputTexture;
-
-	uniform float offset = 0.0, gamma=2.2, scale=1.0;
-	uniform vec3 wb = vec3(1, 1, 1); //vec3(0.1371, 0.1620, 0.1771);
-	uniform vec3 hsv = vec3(0.0, 1.0, 1.0);
 
 	void main()
 	{
@@ -158,12 +90,12 @@ SHADER_SOURCE:demosaic
 
 		//outputTexture = (outputTexture - 0.7)*2.0;
 
-		if(mode!=0)
+		/*if(mode!=0)
 		{
 			outputTexture.rgb = outputTexture.rgb - offset;
 			//outputTexture.rgb = pow(outputTexture.rgb, vec3(1.0, 1.0, 1.0)*gamma);
 			outputTexture.rgb = outputTexture.rgb / wb * scale;
-		}
+		}*/
 
 		/*vec3 tmp;
 		RGBToHSV(outputTexture.rgb, tmp);
@@ -178,7 +110,7 @@ SHADER_SOURCE:demosaic
 	}
 }
 
-FILTER_LAYOUT:demosaic(original, demosaic)
+FILTER_LAYOUT:demosaic(formatDemosaic, demosaic)
 
 PIPELINE_MAIN:demosaic
 {
