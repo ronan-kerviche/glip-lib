@@ -269,7 +269,7 @@
 
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-			//write
+			// Write :
 			glTexImage2D(GL_TEXTURE_2D, 0, getGLMode(), getWidth(), getHeight(), 0, descriptor.aliasMode, getGLDepth(), reinterpret_cast<GLvoid*>(buffer));
 
 			GLenum err = glGetError();

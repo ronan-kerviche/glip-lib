@@ -39,7 +39,7 @@ SHADER_SOURCE:ChangeHSV
 
 		// Write the output data :
 		changedHSV.rgb = rgb;
-		changedHSV.a = 1.0;
+		changedHSV.a = col.a;
 	}
 }
 

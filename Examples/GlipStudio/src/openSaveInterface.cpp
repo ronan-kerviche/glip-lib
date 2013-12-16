@@ -173,6 +173,8 @@
 			{
 				QFileInfo info( openedFilenames[k] );
 				QAction* tmp = recentOpenedFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
+				tmp->setToolTip( openedFilenames[k] );
+
 				QString path = tr("Path : %1").arg(info.path()) + "/";
 				tmp->setStatusTip( path );
 				currentOpenedFileActions.push_back(tmp);
@@ -200,7 +202,9 @@
 				QFileInfo info( savedFilenames[k] );
 				QAction* tmp = recentSavedFilesMenu.addAction( tr("%1. %2").arg(k+1).arg(info.fileName()), this, SLOT(requestOpenAction()));
 				tmp->setToolTip( savedFilenames[k] );
-				tmp->setStatusTip( savedFilenames[k] );
+
+				QString path = tr("Path : %1").arg(info.path()) + "/";
+				tmp->setStatusTip( path );
 				currentSavedFileActions.push_back(tmp);
 			}
 
@@ -220,9 +224,9 @@
 
 		QStringList openedFilenames;
 
-		openedFilenames.append(sender->statusTip());
+		openedFilenames.append(sender->toolTip());
 
-		appendOpenedFile(sender->statusTip());
+		appendOpenedFile(sender->toolTip());
 
 		emit openFile(openedFilenames);
 	}

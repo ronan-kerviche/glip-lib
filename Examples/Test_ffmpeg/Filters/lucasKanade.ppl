@@ -13,6 +13,7 @@ TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, 
 */
 
 // DYNAMIC TEXTURE SIZES : 
+TEXTURE_FORMAT:FormatIn_0(512, 288, GL_RGB, GL_UNSIGNED_BYTE)
 REQUIRED_FORMAT:computationFormat	(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 REQUIRED_FORMAT:computationFormatFloat	(FormatIn_0, *, *,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 REQUIRED_FORMAT:sideBySideFormat	(FormatIn_0, *, *, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
@@ -190,7 +191,7 @@ FILTER_LAYOUT:cOpticalFlow(computationFormatFloat,sh_opticalFlow)
 FILTER_LAYOUT:cMix(computationFormat,sh_Mix)
 FILTER_LAYOUT:cSBS(sideBySideFormat,sh_sideBySide)
 
-PIPELINE_MAIN:opticalFlow()
+PIPELINE_MAIN:opticalFlow
 {
 	INPUT_PORTS(latest, oldest)
 	OUTPUT_PORTS(grayScale, derivatives, opticalFlow, outVisu, outSideBySide)
