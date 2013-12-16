@@ -135,6 +135,7 @@
 			loader.addModule( new FORMAT_MINIMUM_ELEMENTS );
 			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
 			loader.addModule( new IF_FORMAT_SETTING_MATCH );
+			loader.addModule( new IF_FORMAT_SETTING_LARGERTHAN );
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
 			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
 			loader.addModule( new CHAIN_PIPELINES );
@@ -523,7 +524,7 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1, true, 	"Match if a format setting is equal to a value (integer).\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1, true, 	"Match if a format setting is equal to a value (integer or GL keyword).\n"
 												"Arguments : nameFormat, nameSetting, value.\n"
 												"            nameSettings : the settings name can be found in the documentation of __ReadOnly_HdlTextureFormat::getSetting).")
 			{
@@ -547,6 +548,35 @@
 				getCases(body, trueCase, falseCase);
 
 				if(it->second.getSetting(setting)==value)
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_LARGERTHAN, 3, 3, 1, true, 	"Match if a format setting is larger than a value (integer or GL keyword).\n"
+													"Arguments : nameFormat, nameSetting, value.\n"
+													"            nameSettings : the settings name can be found in the documentation of __ReadOnly_HdlTextureFormat::getSetting).")
+			{
+				FORMAT_MUST_EXIST( arguments[0] )
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+
+				// Get the value : 
+				GLenum setting = glFromString( arguments[1] );
+
+				// Special cast : 
+				unsigned int value;
+
+				if(!from_string(arguments[2], value))
+					value = glFromString( arguments[2] );
+
+				// Get the cases : 
+				std::string 	trueCase, 
+						falseCase;
+
+				getCases(body, trueCase, falseCase);
+
+				if(it->second.getSetting(setting)>value)
 					executionCode = trueCase;
 				else
 					executionCode = falseCase;
@@ -588,7 +618,7 @@
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1, true, 	"Create a pipeline by connecting the pipelines passed in arguments in line.\n"
+			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1, true, 	"Create a pipeline by connecting the pipelines passed in arguments, in line.\n"
 											"Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...\n"
 											"            isStrict if 'true' (case sensitive) the pipelines connection are enforced strictly (if outputs of\n"
 											"                     the first pipeline are not equal to the number of input of the second pipeline,\n"

@@ -78,8 +78,11 @@ FORMAT_MINIMUM_PIXELS		| Find the format having the smallest number of pixels, s
 FORMAT_MAXIMUM_PIXELS		| Find the format having the largest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
-GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry.
+IF_FORMAT_SETTING_MATCH		| Match if a format setting is equal to a value (integer). Arguments : nameFormat, nameSetting, value.
+IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value (integer or GL keyword). Arguments : nameFormat, nameSetting, value.
+GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
+GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
+CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
 ABORT_ERROR			| Return a user defined error. Argument : error description.
 </CENTER>
 
@@ -362,6 +365,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_MATCH )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_LARGERTHAN )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( CHAIN_PIPELINES )
