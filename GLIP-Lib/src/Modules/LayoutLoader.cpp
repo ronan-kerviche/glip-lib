@@ -701,7 +701,7 @@
 		if(sharedCodeList.find(e.name)!=sharedCodeList.end())
 			throw Exception("From line " + to_string(e.startLine) + " : A SharedCode Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
 
-		sharedCodeList.insert( std::pair<std::string, std::string>(e.name, e.body) );
+		sharedCodeList.insert( std::pair<std::string, std::string>(e.name, e.getCleanBody()) );
 	}
 
 	void LayoutLoader::buildFormat(const VanillaParserSpace::Element& e)
@@ -813,7 +813,7 @@
 		{
 			try
 			{
-				std::string content = e.body;
+				std::string content = e.getCleanBody();
 
 				enhanceShaderSource(content);
 

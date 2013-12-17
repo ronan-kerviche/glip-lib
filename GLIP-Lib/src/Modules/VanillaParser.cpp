@@ -22,6 +22,8 @@
 **/
 
 	// Includes : 
+	#include <limits>
+	#include <cmath>
 	#include "Modules/VanillaParser.hpp"
 	#include "Core/Exception.hpp"
 
@@ -76,19 +78,120 @@
 
 	std::string Element::getCleanBody(void) const
 	{	
-		const std::string spacers = " \t\r\n\f\v";
+		// Align the elements with their tabs.
+		const std::string 	spacers = " \t\r\n\f\v",
+					spaces	= " \t";
+		const char 		newLine	= '\n',
+					space	= ' ',
+					tab	= '\t';
 
-		size_t 	pStart 	= body.find_first_not_of(spacers),
-			pEnd 	= body.find_last_not_of(spacers);
+		size_t 	lineStart 	= 0,
+			lineEnd		= body.find(newLine, lineStart),
+			minNumTabs	= std::numeric_limits<size_t>::max(),
+			firstLine	= std::string::npos,			// not specified yet.
+			lastLine	= std::string::npos;			// not specified yet.
+			 
+		// Test : 
+		while(lineStart!=std::string::npos)
+		{
+			// Is the line empty of usable characters?
+			size_t firstChar = body.find_first_not_of(spacers, lineStart);
+
+			if( firstChar < lineEnd )
+			{
+				// Count the number of spaces (or equivalent) :
+				bool 	isSpaceChar 	= true;
+				size_t 	numSpaces 	= 0,
+					pos 		= lineStart;
+
+				while(isSpaceChar)
+				{
+					if( body[pos]==tab )
+						numSpaces += 1;
+					else
+						isSpaceChar = false;
+
+					pos++;
+
+					if(pos>=body.size())
+						isSpaceChar = false;
+				}
+
+				// Get the minimum : 
+				minNumTabs = std::min(minNumTabs, numSpaces);
+			}
+
+			// Next line : 
+			if(lineEnd!=std::string::npos)
+			{
+				lineStart 	= lineEnd + 1;
+				lineEnd		= body.find(newLine, lineStart);
+			}
+			else
+				lineStart	= std::string::npos;
+		}
+
+		// Remove : 
+		std::string	cleanBody = body;
+
+		lineStart 	= 0;
+		lineEnd		= cleanBody.find(newLine, lineStart);
 		
-		if(pStart==std::string::npos && pEnd==std::string::npos)
-			return body;
-		else if(pStart==std::string::npos && pEnd!=std::string::npos) // Second is mandatory.
-			return body.substr(0, pEnd+1);
-		else if(pStart!=std::string::npos && pEnd==std::string::npos)
-			return body.substr(pStart, std::string::npos);
+		while(lineStart!=std::string::npos)
+		{
+			// Is the line empty of usable characters?
+			size_t firstChar = cleanBody.find_first_not_of(spacers, lineStart);
+
+			if( firstChar < lineEnd )
+			{
+				// Remove the minimum number of spaces or equivalent : 
+				size_t 		endRemoval 	= lineStart;
+				long long	count		= minNumTabs;
+
+				while(count>0)
+				{
+					if(cleanBody[endRemoval]==tab )
+						count-=1;
+					else 
+						throw Exception("Element::getCleanBody - Out of range (internal error).", __FILE__, __LINE__);
+
+					endRemoval++;
+				}
+
+				// Remove : 
+				cleanBody.erase(lineStart, endRemoval - lineStart);
+
+				// Lines : 
+				if(firstLine==std::string::npos)
+					firstLine = lineStart;
+
+				lastLine = lineStart; // Save this line as the last line.
+
+				// Find new End : 
+				lineEnd	= cleanBody.find(newLine, lineStart);
+			}
+
+			// Next line : 
+			if(lineEnd!=std::string::npos)
+			{
+				lineStart 	= lineEnd + 1;
+				lineEnd		= cleanBody.find(newLine, lineStart);
+			}
+			else
+				lineStart	= std::string::npos;
+		}
+
+		// No content : 
+		if(firstLine==std::string::npos)
+			return "";
+
+		// Remove front and back lines : 
+		size_t lastCharacter = cleanBody.find(newLine, lastLine);
+
+		if(lastCharacter==std::string::npos)
+			return cleanBody.substr(firstLine);
 		else
-			return body.substr(pStart, pEnd-pStart+1);
+			return cleanBody.substr(firstLine, lastCharacter-firstLine);
 	}
 
 	std::string Element::getCode(void) const
