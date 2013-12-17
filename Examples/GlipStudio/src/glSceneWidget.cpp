@@ -763,14 +763,17 @@
 						unsigned char colorUnderClick[3];
 						ViewLink* under = updateSelection(false, false, colorUnderClick);
 
-						under->getLocalCoordinates(xLastClick, yLastClick, mouseData.xCurrent, mouseData.yCurrent);
+						if(under!=NULL)
+						{
+							under->getLocalCoordinates(xLastClick, yLastClick, mouseData.xCurrent, mouseData.yCurrent);
 
-						mouseData.xVectorCurrent	= mouseData.xCurrent - mouseData.xLastClick;
-						mouseData.yVectorCurrent	= mouseData.yCurrent - mouseData.yLastClick;
+							mouseData.xVectorCurrent	= mouseData.xCurrent - mouseData.xLastClick;
+							mouseData.yVectorCurrent	= mouseData.yCurrent - mouseData.yLastClick;
 
-						std::memcpy(mouseData.colorCurrent, colorUnderClick, 3*sizeof(unsigned char));
+							std::memcpy(mouseData.colorCurrent, colorUnderClick, 3*sizeof(unsigned char));
 
-						mouseDataWasUpdated = true;
+							mouseDataWasUpdated = true;
+						}
 					}
 
 					needUpdate 	= true;
