@@ -102,7 +102,7 @@ If the format is not found in the required element, it is searched in the known 
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>GeometryType</i>, <i>param1</i>, ... <i>paramN</i>) <BR>
 Examples : <BR>
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_2D</i>, <i>integer : width</i>, <i>integer : height</i>) <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>integer : width</i>, <i>integer : height</i>, <i>interger : depth</i>) <BR>
+<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>integer : width</i>, <i>integer : height</i>, <i>integer : depth</i>) <BR>
 <b>GEOMETRY</b>:<i>geometry_name</i>(<i>CUSTOM_MODEL</i>, <i>GL Primitive (GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)</i>, [<i>true (if it has texcoord definition embedded)</i>]) <BR>
 { <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a vertex (depending on the format) :</i> <BR>
@@ -274,29 +274,41 @@ Loading Example :
 				\struct PipelineScriptElements
 				\brief Contains data about a script, possibly made before the load operation.
 
-				WARNING : It does not explore included files which might to incomplete list of requirements.
+				WARNING : It does not explore included files which might lead to an incomplete list of requirements.
 				**/
 				struct GLIP_API PipelineScriptElements
-				{
-					std::vector<std::string> 			addedPaths,		/// Paths added by the script.
-											includedFiles,		/// File included by the script.
-											requiredFormats,	/// Names of the formats required by the script.
-											requiredGeometries,	/// Names of the geometries required by the script.
-											requiredPipelines,	/// Names of the pipelines required by the script.
-											modulesCalls,		/// Names of the modules called by the script.
-											formatsLayout,		/// Names of the formats contained in the script.
-											shaderSources,		/// Names of the shader source code contained in the script.
-											geometries,		/// Names of the geometries contained in the script.
-											filtersLayout,		/// Names of the filter layouts contained in the script.
-											pipelines;		/// Names of the pipelines layout contained in the script.
-
-					std::vector< std::vector<std::string> >		pipelineInputs;		/// List of the input ports for each pipeline contained in the script (same order as pipelines).
-					std::vector< std::vector<std::string> >		pipelineOutputs;	/// List of the output ports for each pipeline contained in the script (same order as pipelines).
-
-					std::string					mainPipeline;		/// Name of the main pipeline contained in the script.
-
-					std::vector<std::string> 			mainPipelineInputs,	/// List of the input ports for the main pipeline contained in the script.
-											mainPipelineOutputs;	/// List of the output ports for the main pipeline contained in the script.
+				{							/// Paths added by the script.
+					std::vector<std::string> 			addedPaths,
+											/// File included by the script.		
+											includedFiles,		
+											/// Names of the formats required by the script.
+											requiredFormats,	
+											/// Names of the geometries required by the script.
+											requiredGeometries,	
+											/// Names of the pipelines required by the script.
+											requiredPipelines,	
+											/// Names of the modules called by the script.
+											modulesCalls,		
+											/// Names of the formats contained in the script.
+											formatsLayout,		
+											/// Names of the shader source code contained in the script.
+											shaderSources,		
+											/// Names of the geometries contained in the script.
+											geometries,		
+											/// Names of the filter layouts contained in the script.
+											filtersLayout,		
+											/// Names of the pipelines layout contained in the script.
+											pipelines;		
+											/// List of the input ports for each pipeline contained in the script (same order as pipelines).
+					std::vector< std::vector<std::string> >		pipelineInputs;	
+											/// List of the output ports for each pipeline contained in the script (same order as pipelines).	
+					std::vector< std::vector<std::string> >		pipelineOutputs;	
+											/// Name of the main pipeline contained in the script.
+					std::string					mainPipeline;		
+											/// List of the input ports for the main pipeline contained in the script.
+					std::vector<std::string> 			mainPipelineInputs,	
+											/// List of the output ports for the main pipeline contained in the script.
+											mainPipelineOutputs;	
 				};
 
 			private :

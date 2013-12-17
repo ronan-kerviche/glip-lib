@@ -583,7 +583,7 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1, true,	"Create a 2D grid geometry of the same size as the format in argument.\n"
-												"Arguments : nameFormat, nameNewGeometry [, normalized]."
+												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
 												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -601,7 +601,7 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1, true,	"Create a 3D grid geometry of the same size as the format in argument.\n"
-												"Arguments : nameFormat, nameNewGeometry [, normalized]."
+												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
 												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )

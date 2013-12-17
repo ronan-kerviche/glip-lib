@@ -151,6 +151,7 @@
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
+			const LayoutLoader& loader(void) const;
 		
 			// Distribution of the requirements : 
 			bool requirePipelineCreation(const std::string& code);

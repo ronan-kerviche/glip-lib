@@ -409,41 +409,95 @@
 	{ }
 
 /* QCOMBOBOX */
-		QComboBox
-		{
-			font: bold;
-		}
+	QComboBox
+	{
+		font: bold;
+	}
 
-		QComboBox QAbstractItemView
-		{
-			background:#555555;
-			color:#FFFFFF;
-		}
+	QComboBox QAbstractItemView
+	{
+		background:#555555;
+		color:#FFFFFF;
+	}
 
-		QComboBox QAbstractItemView
-		{
-			background:#222222;
-		}
+	QComboBox QAbstractItemView
+	{
+		background:#222222;
+	}
 
-		QComboBox:editable
-		{
-			background:#222222;
-		}
+	QComboBox:editable
+	{
+		background:#222222;
+	}
 
-		QComboBox:!editable, QComboBox::drop-down:!editable
-		{
-			background:#555555;
-		}
+	QComboBox:!editable, QComboBox::drop-down:!editable
+	{
+		background:#555555;
+	}
 
-		QComboBox:!editable:on, QComboBox::drop-down:!editable:on
-		{
-			color:#FFFFFF;
-			background:#555555;
-		}
+	QComboBox:!editable:on, QComboBox::drop-down:!editable:on
+	{
+		color:#FFFFFF;
+		background:#555555;
+	}
 
-		QComboBox:!editable:off, QComboBox::drop-down:!editable:off
-		{
-			color:#888888;
-			background:#555555;
-		}
+	QComboBox:!editable:off, QComboBox::drop-down:!editable:off
+	{
+		color:#888888;
+		background:#555555;
+	}
+
+/* QSPLITTER */
+	/*QSplitter::handle
+	{
+		
+	}*/
+
+	QSplitter::handle:horizontal
+	{
+		width: 4px;
+
+		background-color: qlineargradient(	x1:0, y1:0, x2:0, y2:1,
+							stop: 0.0 #333333, 
+							stop: 0.2 #333333, 
+							stop: 0.5 #202020,
+							stop: 0.8 #333333, 
+							stop: 1.0 #333333);
+	}
+
+	QSplitter::handle:vertical
+	{
+		height: 4px;
+	
+		background-color: qlineargradient(	x1:0, y1:0, x2:1, y2:0,
+							stop: 0.0 #333333, 
+							stop: 0.2 #333333, 
+							stop: 0.5 #202020,
+							stop: 0.8 #333333, 
+							stop: 1.0 #333333);
+	}
+
+	QSplitter::handle:horizontal:pressed
+	{
+		width: 4px;
+
+		background-color: qlineargradient(	x1:0, y1:0, x2:0, y2:1,
+							stop: 0.0 #333333, 
+							stop: 0.2 #333333, 
+							stop: 0.5 #505050,
+							stop: 0.8 #333333, 
+							stop: 1.0 #333333);
+	}
+
+	QSplitter::handle:vertical:pressed
+	{
+		height: 4px;
+	
+		background-color: qlineargradient(	x1:0, y1:0, x2:1, y2:0,
+							stop: 0.0 #333333, 
+							stop: 0.2 #333333, 
+							stop: 0.5 #505050,
+							stop: 0.8 #333333, 
+							stop: 1.0 #333333);
+	}
 

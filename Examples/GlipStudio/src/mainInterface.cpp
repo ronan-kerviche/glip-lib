@@ -25,7 +25,7 @@
 		setCentralWidget(&mainSplitter);
 
 		resize(1280,720);
-		show();
+		show(); 
 	}
 
 	MainWindow::~MainWindow(void)

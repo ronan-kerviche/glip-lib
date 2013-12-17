@@ -457,31 +457,8 @@
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
-			if(e->filename().isEmpty())
-			{
-				widgets.setCurrentWidget(e);
-
-				QString currentPath = e->path();
-
-				QString filename = QFileDialog::getSaveFileName(this, tr("Save Pipeline Script File"), currentPath, tr("Pipeline Script Files (*.ppl *.glsl *.ext *.uvd)"));
-
-				if(!filename.isEmpty())
-				{
-					e->setFilename(filename);
-					e->save();
-
-					openSaveInterface.reportSuccessfulSave(filename);
-					updateCurrentToolTip();
-				}
-			}
-			else
-			{
-				e->save();
-				widgets.setCurrentWidget(e);
-
-				openSaveInterface.reportSuccessfulSave(e->filename());
-				updateCurrentToolTip();
-			}
+			widgets.setCurrentWidget(e);
+			save();
 		}
 
 		if(widgets.count() > 0)
@@ -565,9 +542,15 @@
 	void CodeEditorsPannel::tabChanged(int c)
 	{
 		if(widgets.count() > 0)
+		{
 			openSaveInterface.enableSave(true);
+			saveAllAct.setEnabled(true);
+		}
 		else
+		{
 			openSaveInterface.enableSave(false);
+			saveAllAct.setEnabled(false);
+		}	
 	}
 
 	std::string CodeEditorsPannel::getCurrentFilename(void)

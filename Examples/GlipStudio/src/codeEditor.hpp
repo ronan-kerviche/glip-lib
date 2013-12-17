@@ -79,7 +79,7 @@
 			void documentWasModified(void);
 			
 		public :
-			CodeEditor(QWidget *parent = 0);
+			CodeEditor(QWidget *parent = 0, bool syntaxColoration=true);
 			virtual ~CodeEditor(void);
 
 			int lineNumberAreaWidth(void) const;

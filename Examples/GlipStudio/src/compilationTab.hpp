@@ -4,6 +4,7 @@
 	#include "GLIPLib.hpp"
 	#include "dataModules.hpp"
 	#include "codeEditor.hpp"
+	#include "openSaveInterface.hpp"
 	
 	#include <QListWidget>
 	#include <QVBoxLayout>
@@ -44,10 +45,13 @@
 		private : 
 			QVBoxLayout		layout;
 			QListWidget		data;
-			QAction*		showDocumentationAction;
+			QAction			*showDocumentationAction,
+						*dumpPipelineCodeAction;
 			QMenuBar		menuBar;
 			ModuleDocumentation	documentation;
+			OpenSaveInterface	openSaveInterface;
 
+			void updateDocumentation(const LayoutLoader& loader);
 			void cleanCompilationTab(bool writeNoPipeline=false);
 			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 
@@ -55,6 +59,7 @@
 			void pipelineWasCreated(void);
 			void pipelineCompilationFailed(const Exception& e);
 			void showDocumentation(void);
+			void dumpPipelineCode(void);
 
 		public : 
 			CompilationTab(ControlModule& _masterModule, QWidget* parent=NULL);

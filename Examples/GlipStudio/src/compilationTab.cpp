@@ -6,7 +6,7 @@
 		layout(this),
 		title("Module : "),
 		comboBox(this),			
-		description(this)
+		description(this, false)
 	{
 		title.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		title.setSizePolicy( QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum) );
@@ -95,10 +95,19 @@
 
 // Compilation Tab : 
 	CompilationTab::CompilationTab(ControlModule& _masterModule, QWidget* parent)
-	 : Module(_masterModule, parent), layout(this), data(this)
+	 : 	Module(_masterModule, parent),
+		layout(this),
+		data(this),
+		openSaveInterface("CompilationPannel", "File", "*.ppl, *.txt")
 	{
+		openSaveInterface.enableOpen(false);
+		openSaveInterface.enableSave(false);
+
 		showDocumentationAction = menuBar.addAction("Modules Documentation", this, SLOT(showDocumentation()));
 		showDocumentationAction->setEnabled(false);
+
+		dumpPipelineCodeAction	= menuBar.addAction("Save Pipeline Code As...", this, SLOT(dumpPipelineCode()));
+		dumpPipelineCodeAction->setEnabled(false);
 
 		layout.addWidget(&menuBar);
 		layout.addWidget(&data);
@@ -113,11 +122,26 @@
 		data.setFont( db.font("Source Code Pro", "Regular", data.font().pointSize()) );
 
 		cleanCompilationTab(true);
+
+		updateDocumentation(_masterModule.loader());
 	}
 
 	CompilationTab::~CompilationTab(void)
 	{
 		cleanCompilationTab(false);
+	}
+
+	void CompilationTab::updateDocumentation(const LayoutLoader& loader)
+	{
+		documentation.update(loader);
+	
+		if(documentation.isEmpty())
+		{
+			documentation.hide();
+			showDocumentationAction->setEnabled(false);
+		}
+		else
+			showDocumentationAction->setEnabled(true);
 	}
 
 	void CompilationTab::cleanCompilationTab(bool writeNoPipeline)
@@ -137,15 +161,7 @@
 
 	void CompilationTab::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
 	{
-		documentation.update(loader);
-	
-		if(documentation.isEmpty())
-		{
-			documentation.hide();
-			showDocumentationAction->setEnabled(false);
-		}
-		else
-			showDocumentationAction->setEnabled(true);
+		updateDocumentation(loader);
 	}
 
 	void CompilationTab::pipelineWasCreated(void)
@@ -155,6 +171,8 @@
 		// Add OK message : 
 		data.addItem("Compilation succeeded...");
 		data.item(0)->setFont(QFont("", -1, -1, true));
+
+		dumpPipelineCodeAction->setEnabled(true);
 	}
 
 	void CompilationTab::pipelineCompilationFailed(const Exception& e)
@@ -169,10 +187,28 @@
 
 		while( std::getline(stream, line) )
 			data.addItem( line.c_str() );
+
+		dumpPipelineCodeAction->setEnabled(false);
 	}
 
 	void CompilationTab::showDocumentation(void)
 	{
 		documentation.show();
+	}
+
+	void CompilationTab::dumpPipelineCode(void)
+	{
+		if(pipelineExists())
+		{
+			QString filename = openSaveInterface.saveAsDialog(tr("Save Raw Pipeline Code for %1").arg(pipeline().getFullName().c_str()));
+
+			if(!filename.isEmpty())
+			{
+				// Get the code : 
+				LayoutWriter writer;
+
+				writer.writeToFile(pipeline(), filename.toStdString());
+			}
+		}
 	}
 

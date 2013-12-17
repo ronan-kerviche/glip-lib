@@ -929,13 +929,39 @@
 		}
 	}
 
+// Pipeline::BufferFormatsCell
+	int Pipeline::BufferFormatsCell::size(void) const
+	{
+		return formats.size();
+	}
+
+	void Pipeline::BufferFormatsCell::append(const __ReadOnly_HdlTextureFormat& fmt, int count)
+	{
+		formats.push_back(fmt);
+		outputCounts.push_back(count);
+	}
+
+// Pipeline::BuffersCell
+	Pipeline::BuffersCell::BuffersCell(const BufferFormatsCell& bufferFormats)
+	{
+		for(int k=0; k<bufferFormats.formats.size(); k++)
+			buffersList.push_back( new HdlFBO(bufferFormats.formats[k], bufferFormats.outputCounts[k]) );
+	}
+
+	Pipeline::BuffersCell::~BuffersCell(void)
+	{
+		for(std::vector<HdlFBO*>::iterator it = buffersList.begin(); it!=buffersList.end(); it++)
+			delete (*it);
+		buffersList.clear();
+	}
+
 // Pipeline
 	/**
 	\fn Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
 	\brief NODESC.
 	**/
 	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake)
-	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, "(Intermediate : " + name + ")"), perfsMonitoring(false), queryObject(0)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, "(Intermediate : " + name + ")"), perfsMonitoring(false), queryObject(0), currentCell(NULL)
 	{ }
 
 	/**
@@ -945,7 +971,7 @@
 	\param name Name of the pipeline.
 	**/
 	Pipeline::Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name)
-	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0)
+	 : __ReadOnly_ComponentLayout(p), __ReadOnly_PipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0), currentCell(NULL)
 	{
 		cleanInput();
 
@@ -973,9 +999,13 @@
 	{
 		cleanInput();
 
-		for(std::vector<HdlFBO*>::iterator it = buffersList.begin(); it!=buffersList.end(); it++)
-			delete (*it);
-		buffersList.clear();
+		currentCell = NULL;
+		for(std::map<int, BuffersCell*>::iterator it=cells.begin(); it!=cells.end(); it++)
+		{
+			delete it->second;
+			it->second = NULL;
+		}		
+		cells.clear();
 
 		for(std::vector<Filter*>::iterator it = filtersList.begin(); it!=filtersList.end(); it++)
 			delete (*it);
@@ -1254,10 +1284,10 @@
 				{
 					// Try to find a match in the buffers :
 					bool noMatch = true;
-					for(int l=0; l<buffersList.size(); l++)
+					for(int l=0; l<bufferFormats.size(); l++)
 					{
 						// If this buffer is a match :
-						if( *filtersList[ candidatesIdx[k] ] == *buffersList[l] )
+						if( *filtersList[ candidatesIdx[k] ] == bufferFormats.formats[l] )
 						{
 							noMatch = false;
 
@@ -1265,23 +1295,23 @@
 							if(bufferOccupancy[l]==0)
 							{
 								// If the current choice is lower in priority or larger in buffer size :
-								if( currentDecision>1 || ((currentDecision==1) && fmt.getSize()<buffersList[l]->getSize()) )
+								if( currentDecision>1 || ((currentDecision==1) && fmt.getSize()<bufferFormats.formats[l].getSize()) )
 								{
 									fIdx = candidatesIdx[k];
 									bIdx = l;
 									currentDecision = 1;
-									fmt = *buffersList[l];
+									fmt = bufferFormats.formats[l];
 								}
 							}
 							else // The buffer is not free :
 							{
 								// If no other choices were made :
-								if(currentDecision>3 || ( (currentDecision==3) && (fmt.getSize()<buffersList[l]->getSize()) ) )
+								if(currentDecision>3 || ( (currentDecision==3) && (fmt.getSize()<bufferFormats.formats[l].getSize()) ) )
 								{
 									fIdx = candidatesIdx[k];
 									bIdx = -1;
 									currentDecision = 3;
-									fmt = *buffersList[l];
+									fmt = bufferFormats.formats[l];
 								}
 							}
 						}
@@ -1316,10 +1346,10 @@
 				else if(currentDecision==2 || currentDecision==3)
 				{
 					// Create a new buffer :
-					buffersList.push_back( new HdlFBO(fmt, filtersList[ fIdx ]->getNumOutputPort() ) );
+					bufferFormats.append( fmt, filtersList[ fIdx ]->getNumOutputPort() );
 					bufferOccupancy.push_back(0);
 
-					bIdx = buffersList.size()-1;
+					bIdx = bufferFormats.size()-1;
 					tmpActions[ fIdx ].bufferIdx = bIdx;
 
 					// Push :
@@ -1400,10 +1430,15 @@
 			throw m+e;
 		}
 
+		// Create the first cell : 
+		int cellID = createBuffersCell();
+
+		// Link it : 
+		changeTargetBuffersCell(cellID);
+
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "END ALLOCATE" << std::endl;
 		#endif
-
 	}
 
 	/**
@@ -1427,15 +1462,23 @@
 		int size = 0;
 
 		#ifdef __GLIPLIB_VERBOSE__
-			std::cout << "Pipeline::getSize for " << getFullName() << " (" << buffersList.size() << " buffers)" <<std::endl;
+			std::cout << "Pipeline::getSize for " << getFullName() << " (" << bufferFormats.size() << " buffers per cell, " << cells.size() << "cells total)" <<std::endl;
 		#endif
 
-		for(int i=0; i<buffersList.size(); i++)
+		if(askDriver && currentCell==NULL)
+			throw Exception("Pipeline::getSize - Unable to get the sizes of the GL objects from the Driver as no cell is currently in use.", __FILE__, __LINE__);
+
+		for(int i=0; i<bufferFormats.size(); i++)
 		{
-			int fsize = buffersList[i]->getSize(askDriver);
+			int fsize = 0;
+	
+			if(askDriver)
+				fsize = currentCell->buffersList[i]->getSize(askDriver);
+			else
+				fsize = bufferFormats.formats[i].getSize();
 
 			#ifdef __GLIPLIB_VERBOSE__
-				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << buffersList[i]->getWidth() << ", H:" << buffersList[i]->getHeight() << ",T:" << buffersList[i]->getAttachmentCount() << ')' << std::endl;
+				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << bufferFormats.formats[i]->getWidth() << ", H:" << bufferFormats.formats[i]->getHeight() << ",T:" << bufferFormats.outputCounts[i] << ')' << std::endl;
 			#endif
 			size += fsize;
 		}
@@ -1456,6 +1499,9 @@
 		clock_t 	timing 		= 0,
 				totalTiming 	= 0;
 
+		if(currentCell==NULL)
+			throw Exception("Pipeline::process - No BufferCell was assigned.", __FILE__, __LINE__);
+
 		if(!GLEW_VERSION_3_3 && perfsMonitoring)
 		{
 			totalTiming = clock();
@@ -1470,7 +1516,7 @@
 		{
 			ActionHub* 	action 	= &actionsList[k];
 			Filter* 	f 	= filtersList[ action->filterIdx ];
-			HdlFBO* 	t 	= buffersList[ action->bufferIdx ];
+			HdlFBO* 	t 	= currentCell->buffersList[ action->bufferIdx ];
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "    applying filter : " << f->getFullName() << "..." << std::endl;
@@ -1488,7 +1534,7 @@
 				if(bufferID==THIS_PIPELINE)
 					f->setInputForNextRendering(l, inputsList[portID]);
 				else
-					f->setInputForNextRendering(l, (*buffersList[bufferID])[portID]);
+					f->setInputForNextRendering(l, (*currentCell->buffersList[bufferID])[portID]);
 			}
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -1629,27 +1675,45 @@
 	}
 
 	/**
-	\fn HdlTexture& Pipeline::out(int i)
+	\fn HdlTexture& Pipeline::out(int i, int cellID)
 	\brief Return the output of the pipeline.
 	\param i The ID of the output port.
+	\param cellID Choose the target cell (default : current in-use cell).
 	\return A reference to the corresponding output texture or raise an exception if any errors occur.
 	**/
-	HdlTexture& Pipeline::out(int i)
+	HdlTexture& Pipeline::out(int i, int cellID)
 	{
 		checkOutputPort(i);
-		return (*(*buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
+
+		if(cellID==0)
+		{
+			if(currentCell==NULL)
+				throw Exception("Pipeline::out - Unable to get the output " + getOutputPortName(i) + " as no cell is currently in use.", __FILE__, __LINE__);
+			else
+				return (*(*currentCell->buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
+		}
+		else
+		{
+			std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
+
+			if(it==cells.end())
+				throw Exception("Pipeline::out - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+			else
+				return (*(*it->second->buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
+		}
 	}
 
 	/**
-	\fn HdlTexture& Pipeline::out(const std::string& portName)
+	\fn HdlTexture& Pipeline::out(const std::string& portName, int cellID)
 	\brief Return the output of the pipeline.
 	\param portName The name of the output port.
+	\param cellID Choose the target cell (default : current in-use cell).
 	\return A reference to the corresponding output texture or raise an exception if any errors occur.
 	**/
-	HdlTexture& Pipeline::out(const std::string& portName)
+	HdlTexture& Pipeline::out(const std::string& portName, int cellID)
 	{
 		int index = getInputPortID(portName);
-		return out(index);
+		return out(index, cellID);
 	}
 
 	/**
@@ -1694,6 +1758,118 @@
 	bool Pipeline::isBroken(void) const
 	{
 		return broken;
+	}
+
+	/**
+	\fn int Pipeline::createBuffersCell(void)
+	\brief Create a new buffers cell for this pipeline.
+	\return The ID of the new cell (larger or equal to 1).
+	**/
+	int Pipeline::createBuffersCell(void)
+	{
+		static int	staticCellID 	= 1;
+		const int 	cellID 		= staticCellID;
+
+		cells[cellID] = new BuffersCell(bufferFormats);
+
+		staticCellID++;
+
+		return cellID;
+	}
+
+	/**
+	\fn int Pipeline::getNumBuffersCells(void) const
+	\brief Get the number of buffers cells.
+	\return The number of cells.
+	**/
+	int Pipeline::getNumBuffersCells(void) const
+	{
+		return cells.size();
+	}
+
+	/**
+	\fn bool Pipeline::isBuffersCellValid(int cellID) const
+	\brief Test if a cell ID is valid.
+	\param cellID The targeted ID.
+	\return True if the cell ID corresponds to an existing buffers cell.
+	**/
+	bool Pipeline::isBuffersCellValid(int cellID) const
+	{
+		return (cells.find(cellID) != cells.end());
+	}
+
+	/**
+	\fn int Pipeline::getCurrentCellID(void) const
+	\brief Get the ID of the buffers cell currently in use for rendering.
+	\return The cell ID of the current buffers cell.
+	**/
+	int Pipeline::getCurrentCellID(void) const
+	{
+		if(currentCell==NULL)
+			return 0;
+		else
+		{
+			for(std::map<int, BuffersCell*>::const_iterator it=cells.begin(); it!=cells.end(); it++)
+			{
+				if(it->second==currentCell)
+					return it->first;
+			}
+
+			throw Exception("Pipeline::getCurrentCellID - The current cell is not listed (internal error).", __FILE__, __LINE__);
+		}
+	}
+
+	/**
+	\fn std::vector<int> Pipeline::getCellIDs(void) const
+	\brief Get all the IDs of the available cells.
+	\return A list of all the valid IDs.
+	**/
+	std::vector<int> Pipeline::getCellIDs(void) const
+	{
+		std::vector<int> results;
+
+		for(std::map<int, BuffersCell*>::const_iterator it=cells.begin(); it!=cells.end(); it++)
+			results.push_back( it->first );
+
+		return results;
+	}
+
+	/**
+	\fn void Pipeline::changeTargetBuffersCell(int cellID)
+	\brief Change the rendering target to another buffers cell.
+	\param cellID The targeted ID.
+	**/
+	void Pipeline::changeTargetBuffersCell(int cellID)
+	{
+		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
+
+		if(it==cells.end())
+			throw Exception("Pipeline::changeTargetBufferCell - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+		else
+			currentCell = it->second;
+	}
+
+	/**
+	\fn void Pipeline::removeBuffersCell(int cellID)
+	\brief Remove a buffers cell. If the cell is in use, it is necessary that the user change the rendering target afterward.
+	\param cellID The targeted ID.
+	**/
+	void Pipeline::removeBuffersCell(int cellID)
+	{
+		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
+
+		if(it==cells.end())
+			throw Exception("Pipeline::removeBufferCell - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+		else
+		{
+			if(currentCell==it->second)
+				currentCell = NULL;
+			
+			delete it->second;
+			it->second = NULL;
+
+			cells.erase(it);
+		}
 	}
 
 	/**

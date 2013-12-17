@@ -103,8 +103,8 @@ Example, creating a simple Module :
 		LAYOUT_LOADER_MODULE_DEFINITION( MyAdditionModule )
 		// (If your module ought to be more complex, you will have to go through a full description)
 
-		// In the source file (must have 2 arguments, no body and show the manual if any errors occur) : 
-		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 2, 2, -1, true, 	"Increase or decrease the size of a format, save as a new format.\n"
+		// In the source file (must have exactly 3 arguments (min = max = 3), no body and show the manual if any errors occur) : 
+		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 3, 3, -1, true, 	"Increase or decrease the size of a format, save as a new format.\n"
 										"Arguments : nameOriginal, delta, nameNew.")
 		{
 			// Check that the target element exists : 
@@ -213,6 +213,7 @@ Example, creating a simple Module :
 		};
 
 		// Simple MACROS : 
+			/** LAYOUT_LOADER_MODULE_DEFINITION( name )	Declaration of a module. **/
 			#define LAYOUT_LOADER_MODULE_DEFINITION( name )	class name : public LayoutLoaderModule \
 									{ \
 										public : \
@@ -235,6 +236,7 @@ Example, creating a simple Module :
 													std::string& executionCode); \
 									};
 
+			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)			Source of a module. **/
 			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
 																		void 	moduleName :: apply(	const std::vector<std::string>& 		arguments,  \
 																						const std::string&				body, \

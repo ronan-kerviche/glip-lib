@@ -227,6 +227,7 @@
 	ControlModule::ControlModule(void)
 	 : display(640, 480, this), lastComputationSucceeded(false), pipelinePtr(NULL), displayClient(NULL)
 	{
+		// Add basic modules from the library : 
 		LayoutLoaderModule::addBasicModules(pipelineLoader);
 
 		inputTextureRecordIDs.assign(maxNumInputs, -1);
@@ -402,6 +403,11 @@
 			return *pipelinePtr;
 		else
 			throw Exception("ControlModule::pipeline - No pipeline in use.", __FILE__, __LINE__);
+	}
+
+	const LayoutLoader& ControlModule::loader(void) const
+	{
+		return pipelineLoader;
 	}
 
 	bool ControlModule::pipelineCompilation(void)

@@ -228,6 +228,39 @@ How to access and modify a uniform variable in a filter :
 	// Access the filter and modify the variable : 
 	myPipeline[id].prgm().modifyVar("variable", GL_FLOAT, 3.1415);
 \endcode
+
+Buffers Cell : in order to save rendering results (for a ping-pong between the same pipeline, its outputs being used as its future inputs), you can use 
+the buffers cell which represents the needed buffers for one full computation. A simple example of a pipeline applied in a loop : 
+\code 
+	// Get the ID of the cell created by default : 
+	int cellA = myPipeline.getCurrentCellID();
+
+	// Create another cell : 
+	int cellB = myPipeline.createBuffersCell();
+
+	// Initialization ; 
+	myPipeline << input1 << input2 << ... << Pipeline::Process;
+
+	// Loop : 
+	for(int k=0; k<numLoops; k++)
+	{
+		if(k%2==0)
+		{
+			myPipeline.changeTargetBuffersCell(cellB);	// cellA was written in the init, now use cellB.
+
+			// Compute : 
+			myPipeline << myPipeline.out(0, cellA) << myPipeline.out(1, cellA) << ... << Pipeline::Process;
+		}		
+		else
+		{
+			myPipeline.changeTargetBuffersCell(cellA);	// The opposite.
+
+			// Compute : 
+			myPipeline << myPipeline.out(0, cellB) << myPipeline.out(1, cellB) << ... << Pipeline::Process;
+
+		}
+	}
+\endcode
 **/
 			class GLIP_API Pipeline : public __ReadOnly_PipelineLayout, public Component
 			{
@@ -244,21 +277,41 @@ How to access and modify a uniform variable in a filter :
 				private :
 					struct ActionHub
 					{
-						std::vector<int> 	inputBufferIdx;		// The index of the buffer providing the argument k.
-						std::vector<int> 	inputArgumentIdx;	// The index of the output providing the argument k.
-						int			bufferIdx;		// The index of the buffer to use for output.
-						int			filterIdx;		// The index of the filter.
+						std::vector<int> 		inputBufferIdx;		// The index of the buffer providing the argument k.
+						std::vector<int> 		inputArgumentIdx;	// The index of the output providing the argument k.
+						int				bufferIdx;		// The index of the buffer to use for output.
+						int				filterIdx;		// The index of the filter.
 					};
 
 					struct OutputHub
 					{
-						int 			bufferIdx;		// The index of the targeted buffer holding the input.
-						int			outputIdx;		// The index of the output for this buffer which has to be used.
+						int 				bufferIdx;		// The index of the targeted buffer holding the input.
+						int				outputIdx;		// The index of the output for this buffer which has to be used.
+					};
+
+					struct BufferFormatsCell
+					{
+						std::vector<HdlTextureFormat> 	formats;		// Format of the FBO.
+						std::vector<int>		outputCounts;		// Number of output textures for the current FBO.
+
+						int size(void) const;
+						void append(const __ReadOnly_HdlTextureFormat& fmt, int count);
+					};
+
+					struct BuffersCell
+					{
+						std::vector<HdlFBO*>		buffersList;
+		
+						BuffersCell(const BufferFormatsCell& bufferFormats);
+						~BuffersCell(void);
 					};
 
 					// Data
 					std::vector<HdlTexture*> 		inputsList;
-					std::vector<HdlFBO*>			buffersList;				
+					BufferFormatsCell			bufferFormats;
+					std::map<int, BuffersCell*>		cells;
+					BuffersCell*				currentCell;
+					//std::vector<HdlFBO*>			buffersList;		
 					std::vector<Filter*>			filtersList;					
 					std::vector<ActionHub>			actionsList;
 					std::vector<OutputHub>			outputsList;
@@ -286,21 +339,31 @@ How to access and modify a uniform variable in a filter :
 					Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
-					int 		getNumActions(void);
-					int 		getSize(bool askDriver = false);
-					Pipeline& 	operator<<(HdlTexture& texture);
-					Pipeline& 	operator<<(Pipeline& pipeline);
-					Pipeline& 	operator<<(ActionType a);
-					HdlTexture& 	out(int id = 0);
-					HdlTexture& 	out(const std::string& portName);
-					Filter& 	operator[](int filterID);
-					bool 		wentThroughFirstRun(void) const;
-					bool 		isBroken(void) const;
-					void 		enablePerfsMonitoring(void);
-					void 		disablePerfsMonitoring(void);
-					double		getTiming(int filterID);
-					double 		getTiming(int action, std::string& filterName);
-					double 		getTotalTiming(void);
+					int 			getNumActions(void);
+					int 			getSize(bool askDriver = false);
+
+					Pipeline& 		operator<<(HdlTexture& texture);
+					Pipeline& 		operator<<(Pipeline& pipeline);
+					Pipeline& 		operator<<(ActionType a);
+					HdlTexture& 		out(int id = 0, int cellID=0);
+					HdlTexture& 		out(const std::string& portName, int cellID=0);
+					Filter& 		operator[](int filterID);
+					bool 			wentThroughFirstRun(void) const;
+					bool 			isBroken(void) const;
+
+					int			createBuffersCell(void);
+					int			getNumBuffersCells(void) const;
+					bool			isBuffersCellValid(int cellID) const;
+					int			getCurrentCellID(void) const;
+					std::vector<int>	getCellIDs(void) const;
+					void			changeTargetBuffersCell(int cellID);
+					void			removeBuffersCell(int cellID);
+
+					void 			enablePerfsMonitoring(void);
+					void 			disablePerfsMonitoring(void);
+					double			getTiming(int filterID);
+					double 			getTiming(int action, std::string& filterName);
+					double 			getTotalTiming(void);
 			};
 		}
 	}

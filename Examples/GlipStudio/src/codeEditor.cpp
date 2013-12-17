@@ -26,7 +26,6 @@
 				glslkeywordPatterns << str.c_str();
 			}
 
-
 			foreach(const QString& pattern, glslkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
@@ -44,7 +43,6 @@
 				std::string str = std::string("\\b") + GLSLFunction[i] + "\\b";
 				glslfunctionPatterns << str.c_str();
 			}
-
 
 			foreach(const QString& pattern, glslfunctionPatterns)
 			{
@@ -162,8 +160,12 @@
 	}
 
 // CodeEditor
-	CodeEditor::CodeEditor(QWidget *parent)
-	 : QPlainTextEdit(parent), currentFilename(""), firstModification(true), documentModified(false)
+	CodeEditor::CodeEditor(QWidget *parent, bool syntaxColoration)
+	 : 	QPlainTextEdit(parent), 
+		currentFilename(""),
+		firstModification(true),
+		documentModified(false),
+		highLighter(NULL)
 	{
 		lineNumberArea = new LineNumberArea(this);
 
@@ -189,7 +191,8 @@
 		QFontMetrics metrics(font);
 		setTabStopWidth(tabStop * metrics.width(' '));
 
-		highLighter = new Highlighter(document());
+		if(syntaxColoration)
+			highLighter = new Highlighter(document());
 	}
 
 	CodeEditor::~CodeEditor(void)
