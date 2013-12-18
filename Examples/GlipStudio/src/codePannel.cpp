@@ -298,59 +298,61 @@
 		fileMenu("File", this), 
 		openSaveInterface("CodePannel", "File", "*.ppl *.glsl *.ext *.uvd *.txt"),
 		templateMenu(this), 
-	  	newTabAct(tr("&New tab"), this),
-		saveAllAct(tr("Save all"), this),
-		refreshAct("Compile", this),
-		closeTabAct(tr("&Close"), this),
-		showPathWidget(tr("Paths"),this),
+	  	newTabAction(tr("&New tab"), this),
+		saveAllAction("Save all", this),
+		refreshAction("Compile", this),
+		closeTabAction(tr("&Close"), this),
+		showPathWidgetAction("Paths",this),
 		pathWidget(this),
-		closeAllAct(tr("Close all"), this),
-		aboutAct(tr("About"), this)
+		showEditorSettingsAction("Editor Settings", this),
+		closeAllAction("Close all", this),
+		aboutAction("About", this)
 	{
 		// Add the actions : 
-		newTabAct.setShortcuts(QKeySequence::New);
+		newTabAction.setShortcuts(QKeySequence::New);
 		openSaveInterface.enableShortcuts(true);
 
-		connect(&newTabAct, 		SIGNAL(triggered()), 			this, SLOT(newTab()));
-		connect(&openSaveInterface, 	SIGNAL(openFile(const QStringList&)), 	this, SLOT(open(const QStringList&)));
-		connect(&openSaveInterface, 	SIGNAL(saveFile(void)), 		this, SLOT(save(void)));
-		connect(&openSaveInterface, 	SIGNAL(saveFileAs(const QString&)), 	this, SLOT(saveAs(const QString&)));
-		connect(&saveAllAct, 		SIGNAL(triggered()), 			this, SLOT(saveAll()));
-		connect(&closeAllAct, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
-		connect(&templateMenu, 		SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
+		connect(&newTabAction, 			SIGNAL(triggered()), 			this, SLOT(newTab()));
+		connect(&openSaveInterface, 		SIGNAL(openFile(const QStringList&)), 	this, SLOT(open(const QStringList&)));
+		connect(&openSaveInterface, 		SIGNAL(saveFile(void)), 		this, SLOT(save(void)));
+		connect(&openSaveInterface, 		SIGNAL(saveFileAs(const QString&)), 	this, SLOT(saveAs(const QString&)));
+		connect(&saveAllAction, 		SIGNAL(triggered()), 			this, SLOT(saveAll()));
+		connect(&closeAllAction, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
+		connect(&templateMenu, 			SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
 
 		QKeySequence qs(Qt::CTRL + Qt::Key_R);
-		refreshAct.setShortcut(qs);
-		refreshAct.setText(refreshAct.text() + " (" + qs.toString() + ")");
+		refreshAction.setShortcut(qs);
+		refreshAction.setText(refreshAction.text() + " (" + qs.toString() + ")");
+		connect(&refreshAction, 		SIGNAL(triggered()), 			this, SLOT(refresh()));
 
-		connect(&refreshAct, 		SIGNAL(triggered()), 			this, SLOT(refresh()));
+		closeTabAction.setStatusTip(tr("Close"));
+		closeTabAction.setShortcuts(QKeySequence::Close);
+		connect(&closeTabAction, 		SIGNAL(triggered()), 			this, SLOT(closeTab()));
 
-		closeTabAct.setStatusTip(tr("Close"));
-		closeTabAct.setShortcuts(QKeySequence::Close);
-		connect(&closeTabAct, 		SIGNAL(triggered()), 			this, SLOT(closeTab()));
+		showPathWidgetAction.setStatusTip(tr("Show paths"));
+		connect(&showPathWidgetAction, 		SIGNAL(triggered()), 			this, SLOT(switchPathWidget()));
 
-		showPathWidget.setStatusTip(tr("Show paths"));
-		connect(&showPathWidget, 	SIGNAL(triggered()), 			this, SLOT(switchPathWidget()));
+		connect(&showEditorSettingsAction,	SIGNAL(triggered()), 			this, SLOT(showEditorSettings()));
+		connect(&aboutAction, 			SIGNAL(triggered()), 			this, SLOT(aboutMessage()));
 
-		connect(&aboutAct, 		SIGNAL(triggered()), 			this, SLOT(aboutMessage()));
-
-		connect(&widgets, 		SIGNAL(currentChanged(int)), 		this, SLOT(tabChanged(int)));
+		connect(&widgets, 			SIGNAL(currentChanged(int)), 		this, SLOT(tabChanged(int)));
 
 		// Movable : 	
 		widgets.setMovable(true);
 
 		// Menus :
-		fileMenu.addAction(&newTabAct);
+		fileMenu.addAction(&newTabAction);
 		openSaveInterface.addToMenu(fileMenu);
-		fileMenu.addAction(&saveAllAct);
-		fileMenu.addAction(&closeTabAct);
-		fileMenu.addAction(&closeAllAct);
+		fileMenu.addAction(&saveAllAction);
+		fileMenu.addAction(&closeTabAction);
+		fileMenu.addAction(&closeAllAction);
 	
 		menuBar.addMenu(&fileMenu);
 		menuBar.addMenu(&templateMenu);
-		menuBar.addAction(&refreshAct);
-		menuBar.addAction(&showPathWidget);
-		menuBar.addAction(&aboutAct);
+		menuBar.addAction(&refreshAction);
+		menuBar.addAction(&showPathWidgetAction);
+		menuBar.addAction(&showEditorSettingsAction);
+		menuBar.addAction(&aboutAction);
 
 		// Add the first tab : 
 		newTab();
@@ -365,11 +367,12 @@
 		// TODO : improve this in a mini tutorial : 
 		SettingsManager settings;
 		if( settings.isFirstTimeRun() )
-			aboutAct.trigger();
+			aboutAction.trigger();
 	}
 
 	CodeEditorsPannel::~CodeEditorsPannel(void)
 	{
+		editorSettings.close();
 		/*while(widgets.count()>0)
 			widgets.removeTab(0);
 
@@ -506,12 +509,12 @@
 		if(pathWidget.isVisible())
 		{
 			pathWidget.hide();
-			showPathWidget.setText("Paths");			
+			showPathWidgetAction.setText("Paths");			
 		}
 		else
 		{
 			pathWidget.show();
-			showPathWidget.setText("Hide paths");
+			showPathWidgetAction.setText("Hide paths");
 		}
 	}
 
@@ -532,6 +535,11 @@
 		}
 	}
 
+	void CodeEditorsPannel::showEditorSettings(void)
+	{
+		editorSettings.show();
+	}
+
 	void CodeEditorsPannel::aboutMessage(void)
 	{
 		int pointSize = font().pointSize();
@@ -544,12 +552,12 @@
 		if(widgets.count() > 0)
 		{
 			openSaveInterface.enableSave(true);
-			saveAllAct.setEnabled(true);
+			saveAllAction.setEnabled(true);
 		}
 		else
 		{
 			openSaveInterface.enableSave(false);
-			saveAllAct.setEnabled(false);
+			saveAllAction.setEnabled(false);
 		}	
 	}
 

@@ -7,17 +7,17 @@
 
 // Highlighter
 	Highlighter::Highlighter(QTextDocument *parent)
-	 : QSyntaxHighlighter(parent)
+	 : QSyntaxHighlighter(parent), highlightEnabled(true)
 	{
 		HighlightingRule rule;
 
-		QFontDatabase db;
-		QFont keyFont = db.font("Source Code Pro", "Bold", glslkeywordFormat.font().pointSize());
+		//QFontDatabase db;
+		//QFont keyFont = db.font("Source Code Pro", "Bold", glslkeywordFormat.font().pointSize());
 
 		// GLSL Keywords :
-			glslkeywordFormat.setForeground(QColor(255,128,0));
+			//glslkeywordFormat.setForeground(QColor(255,128,0));
 			//glslkeywordFormat.setFontWeight(QFont::Bold);
-			glslkeywordFormat.setFont(keyFont);
+			//glslkeywordFormat.setFont(keyFont);
 			QStringList glslkeywordPatterns;
 
 			for(int i=0; i<GLSL_KW_END; i++)
@@ -29,13 +29,13 @@
 			foreach(const QString& pattern, glslkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
-				rule.format = glslkeywordFormat;
+				rule.format = &glslkeywordFormat;
 				highlightingRules.append(rule);
 			}
 
 		// GLSL Functions : 
-			glslfunctionFormat.setForeground(QColor(255,128,0));
-			glslfunctionFormat.setFont(keyFont);
+			//glslfunctionFormat.setForeground(QColor(255,128,0));
+			//glslfunctionFormat.setFont(keyFont);
 			QStringList glslfunctionPatterns;
 
 			for(int i=0; i<GLSL_FN_END; i++)
@@ -47,14 +47,14 @@
 			foreach(const QString& pattern, glslfunctionPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
-				rule.format = glslfunctionFormat;
+				rule.format = &glslfunctionFormat;
 				highlightingRules.append(rule);
 			}
 
 		// GLIP LayoutLoader Keywords : 
-			glipLayoutLoaderKeywordFormat.setForeground(QColor(255, 51, 255));
+			//glipLayoutLoaderKeywordFormat.setForeground(QColor(255, 51, 255));
 			//glipLayoutLoaderKeywordFormat.setFontWeight(QFont::Bold);
-			glipLayoutLoaderKeywordFormat.setFont(keyFont);
+			//glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipllkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
@@ -66,14 +66,14 @@
 			foreach(const QString& pattern, glipllkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
-				rule.format = glipLayoutLoaderKeywordFormat;
+				rule.format = &glipLayoutLoaderKeywordFormat;
 				highlightingRules.append(rule);
 			}
 
 		// GLIP Uniform Loader Keywords : 
-			glipUniformLoaderKeywordFormat.setForeground(QColor(51, 255, 255));
+			//glipUniformLoaderKeywordFormat.setForeground(QColor(51, 255, 255));
 			//glipUniformLoaderKeywordFormat.setFontWeight(QFont::Bold);
-			glipLayoutLoaderKeywordFormat.setFont(keyFont);
+			//glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipulkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
@@ -85,7 +85,7 @@
 			foreach(const QString& pattern, glipulkeywordPatterns)
 			{
 				rule.pattern = QRegExp(pattern);
-				rule.format = glipUniformLoaderKeywordFormat;
+				rule.format = &glipUniformLoaderKeywordFormat;
 				highlightingRules.append(rule);
 			}
 
@@ -97,13 +97,15 @@
 			highlightingRules.append(rule);*/
 
 		// Single line comment : 
-			singleLineCommentFormat.setForeground(QColor(51,153,255));
+			//singleLineCommentFormat.setForeground(QColor(51,153,255));
 			rule.pattern = QRegExp("//[^\n]*");
-			rule.format = singleLineCommentFormat;
+			rule.format = &singleLineCommentFormat;
 			highlightingRules.append(rule);
 
 		// Mult line comment : 
-			multiLineCommentFormat.setForeground(QColor(51,153,255));
+			//multiLineCommentFormat.setForeground(QColor(51,153,255));
+			commentStartExpression = QRegExp("/\\*");
+			commentEndExpression = QRegExp("\\*/");
 
 		// Quotation ; 
 			/*quotationFormat.setForeground(QColor(51,255,51));
@@ -117,10 +119,6 @@
 			rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
 			rule.format = functionFormat;
 			highlightingRules.append(rule);*/
-
-		
-		commentStartExpression = QRegExp("/\\*");
-		commentEndExpression = QRegExp("\\*/");
 	}
 
 	void Highlighter::highlightBlock(const QString &text)
@@ -132,7 +130,7 @@
 			while(index >= 0)
 			{
 				int length = expression.matchedLength();
-				setFormat(index, length, rule.format);
+				setFormat(index, length, *rule.format);
 				index = expression.indexIn(text, index + length);
 			}
 		}
@@ -159,40 +157,70 @@
 		}
 	}
 
+	void Highlighter::updateSettings(const CodeEditorSettings& settings)
+	{
+		// Color : 
+		glslkeywordFormat.setForeground(		settings.getGLSLKeywordColor() );
+		glslfunctionFormat.setForeground(		settings.getGLSLFunctionColor() );
+		glipLayoutLoaderKeywordFormat.setForeground(	settings.getGLIPLayoutLoaderKeywordColor() );
+		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
+		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
+		multiLineCommentFormat.setForeground(		settings.getCommentsColor() );
+
+		// Font : 
+		glslkeywordFormat.setFont(			settings.getKeywordFont() );
+		glslfunctionFormat.setFont(			settings.getKeywordFont() );	
+		glipLayoutLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
+		glipUniformLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
+		singleLineCommentFormat.setFont(		settings.getKeywordFont() );
+		multiLineCommentFormat.setFont(			settings.getKeywordFont() );
+
+		// General highlighting (only if highlight was allowed for this editor) :
+		highlightEnabled = settings.isHighlightEnabled();
+
+		// Update : 
+		rehighlight();
+	}
+
 // CodeEditor
 	CodeEditor::CodeEditor(QWidget *parent, bool syntaxColoration)
 	 : 	QPlainTextEdit(parent), 
 		currentFilename(""),
 		firstModification(true),
 		documentModified(false),
+		highlightLine(true),
 		highLighter(NULL)
 	{
+		// Get settings : 
+		CodeEditorSettings& editorSettings = CodeEditorSettings::instance();
+
 		lineNumberArea = new LineNumberArea(this);
 
-		connect(this, SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
-		connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
-		connect(this, SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
-		connect(document(), SIGNAL(contentsChanged()), 	this, SLOT(documentWasModified()));
+		connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
+		connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
+		connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
+		connect(document(), 		SIGNAL(contentsChanged()), 		this, SLOT(documentWasModified()));
+		connect(&editorSettings,	SIGNAL(settingsModified()),		this, SLOT(updateSettings()));
 
 		updateLineNumberAreaWidth(0);
 	
 		// Set the font : 
-		int currentFontSize = document()->defaultFont().pointSize(); 
-		//font.setFamily("Monospace");
-		//font.setFixedPitch(true);
-		//font.setPointSize(currentFontSize);
+		/*int currentFontSize = document()->defaultFont().pointSize();
 		QFontDatabase db;
 		font = db.font("Source Code Pro", "Regular", currentFontSize);
 		font.setFixedPitch(true);
-		setFont(font);	
+		setFont(font);*/
 
 		// Set the tabulation length :
-		const int tabStop = 8;
+		/*const int tabStop = 8;
 		QFontMetrics metrics(font);
-		setTabStopWidth(tabStop * metrics.width(' '));
+		setTabStopWidth(tabStop * metrics.width(' '));*/
 
 		if(syntaxColoration)
 			highLighter = new Highlighter(document());
+
+		// Update settings : 
+		updateSettings();
 	}
 
 	CodeEditor::~CodeEditor(void)
@@ -247,6 +275,34 @@
 			documentModified = true;
 			emit titleChanged();
 		}
+	}
+
+	void CodeEditor::updateSettings(void)
+	{
+		// Prevent the code from sending modification signal :
+		blockSignals(true);
+
+		CodeEditorSettings& editorSettings = CodeEditorSettings::instance();
+
+		// Set the font : 
+		setFont(editorSettings.getEditorFont());
+
+		// Set the tabulation length :
+		const int tabStop = editorSettings.getNumberOfSpacesPerTabulation();
+		QFontMetrics metrics(editorSettings.getEditorFont());
+		setTabStopWidth(tabStop * metrics.width(' '));
+
+		// Set word wrap : 
+		setWordWrapMode( editorSettings.getWrapMode() );
+
+		// Set line highlight :
+		highlightLine = editorSettings.isLineHighlightEnabled();
+
+		// Propagate : 
+		if(highLighter!=NULL)
+			highLighter->updateSettings(editorSettings);
+
+		blockSignals(false);
 	}
 	
 	void CodeEditor::resizeEvent(QResizeEvent *e)
@@ -317,22 +373,25 @@
 
 	void CodeEditor::highlightCurrentLine(void)
 	{
-		QList<QTextEdit::ExtraSelection> extraSelections;
-
-		if (!isReadOnly())
+		if(highlightLine)
 		{
-			QTextEdit::ExtraSelection selection;
+			QList<QTextEdit::ExtraSelection> extraSelections;
 
-			QColor lineColor = palette().background().color().lighter(130);			
+			if (!isReadOnly())
+			{
+				QTextEdit::ExtraSelection selection;
 
-			selection.format.setBackground(lineColor);
-			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-			selection.cursor = textCursor();
-			selection.cursor.clearSelection();
-			extraSelections.append(selection);
+				QColor lineColor = palette().background().color().lighter(130);			
+
+				selection.format.setBackground(lineColor);
+				selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+				selection.cursor = textCursor();
+				selection.cursor.clearSelection();
+				extraSelections.append(selection);
+			}
+
+			setExtraSelections(extraSelections);
 		}
-
-		setExtraSelections(extraSelections);
 	}
 
 	void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -528,5 +587,253 @@
 	QSize LineNumberArea::sizeHint() const
 	{
 		return QSize(codeEditor->lineNumberAreaWidth(), 0);
+	}
+
+// CodeEditorSettings
+	CodeEditorSettings* CodeEditorSettings::singleton = NULL;
+
+	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
+	 : 	QWidget(parent),
+		layout(this),
+		glslKeywordColorLabel("GLSL Keywords"),
+		glslFunctionColorLabel("GLSL Functions"),
+		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
+		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
+		commentsColorLabel("Comments"),
+		okButton("OK"),
+		applyButton("Apply"),
+		cancelButton("Cancel"),
+		resetButton("Reset")
+	{
+		if(singleton!=NULL)
+			throw Exception("CodeEditorSettings::CodeEditorSettings - A settings widget already exists (internal error).", __FILE__, __LINE__);
+		
+		// Set the singleton : 
+		singleton = this;
+
+		// Load the data : 
+			// TEMPORARY (default)
+			resetSettings();
+			
+		// Create the layout for the GUI : 
+			// Colors : 
+				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
+				layoutColors.addWidget(&glslFunctionColorLabel, 		1, 0);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	2, 0);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	3, 0);
+				layoutColors.addWidget(&commentsColorLabel, 			4, 0);
+
+				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
+				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	2, 1);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	3, 1);
+				layoutColors.addWidget(&commentsColorButton, 			4, 1);
+
+				groupColors.setTitle("Highlight colors");
+				groupColors.setLayout(&layoutColors);
+
+				// Connect : 
+				connect(&glslKeywordColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glslFunctionColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+
+			// Font : 
+				layoutFonts.addWidget(&editorFontButton);
+				layoutFonts.addWidget(&keywordFontButton);
+
+				groupFonts.setTitle("Fonts");
+				groupFonts.setLayout(&layoutFonts);
+
+				// Connect :
+				connect(&editorFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
+				connect(&keywordFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
+				
+			// General : 
+				layout.addWidget(&groupFonts, 0, 0, 2, 2);
+				layout.addWidget(&groupColors, 0, 2, 5, 2);
+				layout.addWidget(&resetButton, 6, 0);
+				layout.addWidget(&cancelButton, 6, 1);
+				layout.addWidget(&applyButton, 6, 2);
+				layout.addWidget(&okButton, 6, 3);
+
+				connect(&applyButton,				SIGNAL(released()),	this, SLOT(softApply()));
+				connect(&okButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
+				connect(&cancelButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
+				connect(&resetButton,				SIGNAL(released()),	this, SLOT(resetSettings()));
+
+			// Update data in the GUI : 
+				updateGUI();
+	}
+
+	CodeEditorSettings::~CodeEditorSettings(void)
+	{
+		if(singleton==this)
+		{
+			// Save the data : 
+
+			// Clear : 
+			singleton = NULL;
+		}
+		// else : do nothing.
+	}
+
+	void CodeEditorSettings::updateGUI(void)
+	{
+		// From Values to GUI...
+
+		// Colors : 
+		glslKeywordColorButton.setStyleSheet(			tr("background:%1;").arg(glslKeywordColor.name()) );
+		glslFunctionColorButton.setStyleSheet(			tr("background:%1;").arg(glslFunctionColor.name()) );
+		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
+		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
+		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
+
+		// Fonts : 
+		editorFontButton.setText(tr("Editor : %1 (%2)").arg(editorFont.family()).arg(editorFont.pointSize()));
+		editorFontButton.setFont(editorFont);
+
+		keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(keywordFont.family()).arg(keywordFont.pointSize()));
+		keywordFontButton.setFont(keywordFont);
+	}
+
+	void CodeEditorSettings::updateValues(void)
+	{
+		// From GUI to Values...
+
+		// Colors :
+		glslKeywordColor		= glslKeywordColorButton.palette().color(QPalette::Window);
+		glslFunctionColor		= glslFunctionColorButton.palette().color(QPalette::Window);
+		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
+		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
+		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
+
+		// Fonts :
+		editorFont	= editorFontButton.font();
+		keywordFont	= keywordFontButton.font();
+
+		// Propagate : 
+		emit settingsModified();
+	}
+
+	void CodeEditorSettings::changeColor(void)
+	{
+		// Get the pushbutton : 
+		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		QString title;
+
+		if(target==&glslKeywordColorButton)
+			title = "GLSL Keywords Color";
+		else if(target==&glslFunctionColorButton)
+			title = "GLSL Functions Color";
+		else if(target==&glipLayoutLoaderKeywordColorButton)
+			title = "GLIP Layout Loader Keywords Color";
+		else if(target==&glipUniformLoaderKeywordColorButton)
+			title = "GLIP Uniforms Loader Keyword";
+		else if(target==&commentsColorButton)
+			title = "Comments Color";
+		else
+			throw Exception("CodeEditorSettings::changeColor - Unknown color picker (internal error).", __FILE__, __LINE__);
+
+		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), this, title);
+
+		target->setStyleSheet( tr("background:%1;").arg(result.name()) );
+	}
+
+	void CodeEditorSettings::changeFont(void)
+	{
+		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		QString title;
+
+		if(target==&editorFontButton)
+			title = "Editor Font";
+		else if(target==&keywordFontButton)
+			title = "Keyword Font";
+		else
+			throw Exception("CodeEditorSettings::changeFont - Unknown color picker (internal error).", __FILE__, __LINE__);
+
+		bool ok = false;
+		QFont result = QFontDialog::getFont(&ok, target->font(), this, title);
+
+		if(ok)
+		{
+			result.setFixedPitch(true);
+
+			if(target==&editorFontButton)
+				editorFontButton.setText(tr("Editor : %1 (%2)").arg(result.family()).arg(result.pointSize()));
+			else if(target==&keywordFontButton)
+				keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(result.family()).arg(result.pointSize()));
+
+			target->setFont(result);
+		}
+	}
+
+	void CodeEditorSettings::softApply(void)
+	{
+		updateValues();
+	}
+
+	void CodeEditorSettings::quitDialog(void)
+	{
+		QPushButton* sender = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		hide();
+
+		if(sender==&okButton)
+			updateValues();
+	}
+
+	void CodeEditorSettings::resetSettings(void)
+	{
+		// Colors : 
+		glslKeywordColor		= QColor(255,128,0);
+		glslFunctionColor		= QColor(255,128,0);
+		glipLayoutLoaderKeywordColor	= QColor(255, 51, 255);
+		glipUniformLoaderKeywordColor	= QColor(51, 255, 255);
+		commentsColor			= QColor(51,153,255);
+
+		// Fonts : 
+		QFontDatabase db;
+
+		editorFont = db.font("Source Code Pro", "Regular", 11);
+		editorFont.setFixedPitch(true);
+
+		keywordFont = db.font("Source Code Pro", "Bold", 11);
+		editorFont.setFixedPitch(true);
+
+		// Set the tabulation length :
+		tabNumberOfSpaces = 8;
+
+		// Wrap mode :
+		wrapMode = QTextOption::WordWrap;
+
+		// Highlight : 
+		enableHighlight 	= true;
+		highlightCurrentLine	= true;
+
+		updateGUI();
+	}
+
+	const QColor& 			CodeEditorSettings::getGLSLKeywordColor(void) const			{ return glslKeywordColor; }
+	const QColor& 			CodeEditorSettings::getGLSLFunctionColor(void) const			{ return glslFunctionColor; }
+	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
+	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
+	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
+	const QFont&			CodeEditorSettings::getEditorFont(void) const				{ return editorFont; }
+	const QFont& 			CodeEditorSettings::getKeywordFont(void) const				{ return keywordFont; }
+	const QTextOption::WrapMode& 	CodeEditorSettings::getWrapMode(void) const				{ return wrapMode; }
+	const int& 			CodeEditorSettings::getNumberOfSpacesPerTabulation(void) const		{ return tabNumberOfSpaces; }
+	const bool& 			CodeEditorSettings::isHighlightEnabled(void) const			{ return enableHighlight; }
+	const bool&			CodeEditorSettings::isLineHighlightEnabled(void) const			{ return highlightCurrentLine; }
+
+	CodeEditorSettings& CodeEditorSettings::instance(void)
+	{
+		if(singleton==NULL)
+			throw Exception("CodeEditorSettings::instance - No instance is available (internal error).", __FILE__, __LINE__);
+		else
+			return *singleton;
 	}
 

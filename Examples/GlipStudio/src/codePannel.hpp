@@ -99,14 +99,16 @@
 			QMenu			fileMenu;
 			OpenSaveInterface	openSaveInterface;
 			TemplateMenu		templateMenu;
-			QAction 		newTabAct,
-						saveAllAct,
-						refreshAct,
-						closeTabAct,
-						closeAllAct,
-						showPathWidget,
-						aboutAct;
+			QAction 		newTabAction,
+						saveAllAction,
+						refreshAction,
+						closeTabAction,
+						closeAllAction,
+						showPathWidgetAction,
+						showEditorSettingsAction,
+						aboutAction;
 			PathWidget		pathWidget;
+			CodeEditorSettings	editorSettings;
 
 			bool canBeClosed(void);
 			std::string getCurrentFilename(void);
@@ -128,6 +130,7 @@
 			void switchPathWidget(void);
 			void updateTitle(void);
 			void insertTemplate(void);
+			void showEditorSettings(void);
 			void aboutMessage(void);
 			void tabChanged(int c);
 

@@ -8,8 +8,11 @@
 
 // MainWindow
 	MainWindow::MainWindow(void)
-	 : /*mainLayout(this),*/ codeEditors(*this, this), libraryInterface(*this, this)
+	 : frame(this), codeEditors(*this, this), libraryInterface(*this, this)
 	{
+		// Transmit the close signal : 
+		connect(&frame, SIGNAL(closeSignal()), this, SLOT(close()) );
+
 		// Display tools : 
 		display.sceneWidget().setKeyboardActions(true);
 		display.sceneWidget().setMouseActions(true);
@@ -24,8 +27,11 @@
 		mainSplitter.addWidget(&codeEditors);
 		setCentralWidget(&mainSplitter);
 
-		resize(1280,720);
-		show(); 
+		frame.titleBar().setWindowTitle("GlipStudio");
+		frame.resize(1280,720);
+		frame.setMinimumWidth(512);
+		frame.setMinimumHeight(512);
+		frame.show();
 	}
 
 	MainWindow::~MainWindow(void)
@@ -33,12 +39,17 @@
 		// Safe reparenting, we do not want the OpenGL context to be deleted upon deletion of the interface as some ressources can still be handled by higher managers.
 		// Reparting prevent secondarySplitter from deleting its child &display.
 		display.setParent(NULL);
+		frame.setParent(NULL);
+		frame.removeContent();
 	}
 
 	void MainWindow::closeEvent(QCloseEvent *event)
 	{
 		if( requireClose() )
+		{
 			event->accept();
+			frame.close();
+		}
 		else
 			event->ignore();
 	}

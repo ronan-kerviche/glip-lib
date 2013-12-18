@@ -6,6 +6,7 @@
 	#include "dataModules.hpp"
 	#include "codePannel.hpp"
 	#include "libraryInterface.hpp"
+	#include "titleBar.hpp"
 
 	#include <QtGlobal>
 	#if QT_VERSION >= 0x050000
@@ -24,13 +25,14 @@
 		Q_OBJECT
 
 		private : 
+			WindowFrame		frame;
 			QSplitter		mainSplitter;
 			QWidget			container;
 			QVBoxLayout		containerLayout;
 			QSplitter		secondarySplitter;
 
+			CodeEditorsPannel 	codeEditors;		// Force the code settings to be generated first.
 			LibraryInterface	libraryInterface;
-			CodeEditorsPannel 	codeEditors;
 
 			void closeEvent(QCloseEvent *event);
 

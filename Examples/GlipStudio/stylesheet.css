@@ -448,11 +448,6 @@
 	}
 
 /* QSPLITTER */
-	/*QSplitter::handle
-	{
-		
-	}*/
-
 	QSplitter::handle:horizontal
 	{
 		width: 4px;
@@ -499,5 +494,21 @@
 							stop: 0.5 #505050,
 							stop: 0.8 #333333, 
 							stop: 1.0 #333333);
+	}
+
+/* QGROUPBOX */
+	QGroupBox
+	{
+		border: 1px solid #666666;
+		border-radius: 9px;
+		margin-top: 0.5em;
+	}
+
+	QGroupBox::title
+	{
+		color:#CCCCCC;
+		subcontrol-origin: margin;
+		left: 10px;
+		padding: 0 3px 0 3px;
 	}
 

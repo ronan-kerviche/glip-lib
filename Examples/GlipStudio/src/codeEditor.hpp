@@ -22,6 +22,7 @@
 
 	class CodeEditor;
 	class LineNumberArea;
+	class CodeEditorSettings;
 
 	class Highlighter : public QSyntaxHighlighter
 	{
@@ -31,7 +32,7 @@
 			struct HighlightingRule
 			{
 				QRegExp pattern;
-				QTextCharFormat format;
+				QTextCharFormat* format;
 			};
 
 			QVector<HighlightingRule> highlightingRules;
@@ -39,21 +40,24 @@
 			QRegExp commentStartExpression;
 			QRegExp commentEndExpression;
 
+			bool		highlightEnabled;
 			QTextCharFormat glslkeywordFormat,
 					glslfunctionFormat,
 					glipLayoutLoaderKeywordFormat,
 					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
-					multiLineCommentFormat,
-					quotationFormat;
-			//QTextCharFormat classFormat;
-			//QTextCharFormat functionFormat;
+					multiLineCommentFormat;
+					//quotationFormat,
+					//classFormat,
+					//functionFormat;
 
 		protected:
 			void highlightBlock(const QString &text);
 
 		public:
 			Highlighter(QTextDocument *parent = 0);
+
+			void updateSettings(const CodeEditorSettings& settings);
 	};
 
 	class CodeEditor : public QPlainTextEdit 
@@ -62,7 +66,8 @@
 		
 		private : 
 			bool		firstModification,
-					documentModified;
+					documentModified,
+					highlightLine;
 			QString 	currentFilename;
 			QFont		font;
 			Highlighter 	*highLighter;
@@ -77,6 +82,7 @@
 			void highlightCurrentLine(void);
 			void updateLineNumberArea(const QRect &, int);
 			void documentWasModified(void);
+			void updateSettings(void);
 			
 		public :
 			CodeEditor(QWidget *parent = 0, bool syntaxColoration=true);
@@ -114,6 +120,89 @@
 		public :
 			LineNumberArea(CodeEditor *editor);
 			QSize sizeHint() const;
+	};
+
+	class CodeEditorSettings : public QWidget
+	{
+		Q_OBJECT
+
+		private :
+			static CodeEditorSettings* singleton;
+
+			// Data : 
+			QColor 			glslKeywordColor,
+						glslFunctionColor,
+						glipLayoutLoaderKeywordColor,
+						glipUniformLoaderKeywordColor,
+						commentsColor;
+			QFont			editorFont,
+						keywordFont;
+			QTextOption::WrapMode	wrapMode;
+			int			tabNumberOfSpaces;
+			bool			enableHighlight,
+						highlightCurrentLine;
+
+			// Gui : 
+			QGridLayout		layout;
+			QGroupBox		groupColors,
+						groupFonts;
+						//groupMiscTab;
+			QGridLayout		layoutColors;
+			QVBoxLayout		layoutFonts;
+						//layoutMisc;
+			QLabel			glslKeywordColorLabel,
+						glslFunctionColorLabel,
+						glipLayoutLoaderKeywordColorLabel,
+						glipUniformLoaderKeywordColorLabel,
+						commentsColorLabel;
+			QPushButton		glslKeywordColorButton,
+						glslFunctionColorButton,
+						glipLayoutLoaderKeywordColorButton,
+						glipUniformLoaderKeywordColorButton,
+						commentsColorButton,
+						editorFontButton,
+						keywordFontButton,
+						okButton,
+						applyButton,
+						cancelButton,
+						resetButton;
+			/*QCheckBox		highlightKeywordsCheck,
+						highlightCurrentLineCheck;	
+			QComboBox		warpmodesBox;
+			QSpinBox		tabSpacesSpin;*/
+
+			void updateGUI(void);
+			void updateValues(void);
+
+		private slots :
+			void changeColor(void);
+			void changeFont(void);
+			void softApply(void);
+			void quitDialog(void);
+
+		public : 
+			CodeEditorSettings(QWidget* parent=NULL);
+			~CodeEditorSettings(void);
+
+			const QColor& getGLSLKeywordColor(void) const;
+			const QColor& getGLSLFunctionColor(void) const;
+			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
+			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
+			const QColor& getCommentsColor(void) const;
+			const QFont& getEditorFont(void) const;
+			const QFont& getKeywordFont(void) const;
+			const QTextOption::WrapMode& getWrapMode(void) const;
+			const int& getNumberOfSpacesPerTabulation(void) const;
+			const bool& isHighlightEnabled(void) const;
+			const bool& isLineHighlightEnabled(void) const;
+
+			static CodeEditorSettings& instance(void);
+
+		public slots :
+			void resetSettings(void);
+
+		signals :
+			void settingsModified(void);
 	};
 
 #endif

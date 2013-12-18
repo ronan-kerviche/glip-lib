@@ -30,6 +30,7 @@ HEADERS      	+= 	./src/glSceneWidget.hpp \
 			./src/uniformsTab.hpp \
 			./src/batchTab.hpp \
 			./src/libraryInterface.hpp \
+			./src/titleBar.hpp \
 			./src/mainInterface.hpp
 SOURCES      	+= 	./src/main.cpp \
 			./src/glSceneWidget.cpp \
@@ -50,6 +51,7 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/uniformsTab.cpp \
 			./src/batchTab.cpp \
 			./src/libraryInterface.cpp \
+			./src/titleBar.cpp \
 			./src/mainInterface.cpp
 
 ICON		= 	../../Doc/Doxygen/Graphics/gliplibLogo.svg
