@@ -703,6 +703,31 @@
 				else
 					wrapMode = QTextOption::NoWrap;
 			}
+
+			// Fonts :
+			QFontDatabase db;
+
+			e = settings.getModuleData(moduleName, "EditorFont");
+			if(e.arguments.size()==3)
+			{
+				int pointSize = 11;
+
+				if(!from_string(e.arguments.back()))
+					pointSize = 11;
+
+				editorFont = db.font( e.arguments[0].c_str(), e.arguments[2].c_str(), pointSize);
+			}
+
+			e = settings.getModuleData(moduleName, "KeywordsFont");
+			if(e.arguments.size()==3)
+			{
+				int pointSize = 11;
+
+				if(!from_string(e.arguments.back()))
+					pointSize = 11;
+
+				keywordFont = db.font( e.arguments[0].c_str(), e.arguments[2].c_str(), pointSize);
+			}
 				
 		// Create the layout for the GUI : 
 			// Colors : 
@@ -827,6 +852,20 @@
 			else
 				e.arguments.push_back( to_string(static_cast<int>(false)) );
 			settings.setModuleData(moduleName, "WordWrapEnabled", e);
+
+			e = settings.getModuleData(moduleName, "EditorFont");
+			e.arguments.clear();
+			e.arguments.push_back( editorFont.family() );
+			e.arguments.push_back( editorFont.styleName() );
+			e.arguments.push_back( to_string(editorFont.pointSize()) );
+			settings.setModuleData(moduleName, "EditorFont", e);
+
+			e = settings.getModuleData(moduleName, "KeywordsFont");
+			e.arguments.clear();
+			e.arguments.push_back( keywordFont.family() );
+			e.arguments.push_back( keywordFont.styleName() );
+			e.arguments.push_back( to_string(keywordFont.pointSize()) );
+			settings.setModuleData(moduleName,"KeywordsFont", e);
 
 			// Clear : 
 			singleton = NULL;
