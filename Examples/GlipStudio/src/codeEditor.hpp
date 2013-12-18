@@ -80,6 +80,7 @@
 		private slots:
 			void updateLineNumberAreaWidth(int newBlockCount);
 			void highlightCurrentLine(void);
+			void clearHighlightOfCurrentLine(void);
 			void updateLineNumberArea(const QRect &, int);
 			void documentWasModified(void);
 			void updateSettings(void);
@@ -127,7 +128,8 @@
 		Q_OBJECT
 
 		private :
-			static CodeEditorSettings* singleton;
+			static CodeEditorSettings* 	singleton;
+			static const std::string	moduleName;
 
 			// Data : 
 			QColor 			glslKeywordColor,
@@ -145,11 +147,11 @@
 			// Gui : 
 			QGridLayout		layout;
 			QGroupBox		groupColors,
-						groupFonts;
-						//groupMiscTab;
+						groupFonts,
+						groupMisc;
 			QGridLayout		layoutColors;
-			QVBoxLayout		layoutFonts;
-						//layoutMisc;
+			QVBoxLayout		layoutFonts,
+						layoutMisc;
 			QLabel			glslKeywordColorLabel,
 						glslFunctionColorLabel,
 						glipLayoutLoaderKeywordColorLabel,
@@ -166,10 +168,10 @@
 						applyButton,
 						cancelButton,
 						resetButton;
-			/*QCheckBox		highlightKeywordsCheck,
+			QCheckBox		highlightKeywordsCheck,
 						highlightCurrentLineCheck;	
-			QComboBox		warpmodesBox;
-			QSpinBox		tabSpacesSpin;*/
+			QComboBox		wrapModesBox;
+			QSpinBox		tabSpacesSpin;
 
 			void updateGUI(void);
 			void updateValues(void);

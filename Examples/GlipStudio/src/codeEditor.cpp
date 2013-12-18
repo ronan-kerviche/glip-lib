@@ -1,6 +1,7 @@
 #include <cmath>
 #include "codeEditor.hpp"
 #include "keywords.hpp"
+#include "settingsManager.hpp"
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -123,37 +124,40 @@
 
 	void Highlighter::highlightBlock(const QString &text)
 	{
-		foreach(const HighlightingRule &rule, highlightingRules)
+		if( highlightEnabled )
 		{
-			QRegExp expression(rule.pattern);
-			int index = expression.indexIn(text);
-			while(index >= 0)
+			foreach(const HighlightingRule &rule, highlightingRules)
 			{
-				int length = expression.matchedLength();
-				setFormat(index, length, *rule.format);
-				index = expression.indexIn(text, index + length);
+				QRegExp expression(rule.pattern);
+				int index = expression.indexIn(text);
+				while(index >= 0)
+				{
+					int length = expression.matchedLength();
+					setFormat(index, length, *rule.format);
+					index = expression.indexIn(text, index + length);
+				}
 			}
-		}
-		setCurrentBlockState(0);
+			setCurrentBlockState(0);
 
-		int startIndex = 0;
-		if (previousBlockState() != 1)
-			startIndex = commentStartExpression.indexIn(text);
+			int startIndex = 0;
+			if (previousBlockState() != 1)
+				startIndex = commentStartExpression.indexIn(text);
 
-		while(startIndex >= 0)
-		{
-			int endIndex = commentEndExpression.indexIn(text, startIndex);
-			int commentLength;
-			if(endIndex == -1)
+			while(startIndex >= 0)
 			{
-				setCurrentBlockState(1);
-				commentLength = text.length() - startIndex;
-			}
-			else
-				commentLength = endIndex - startIndex + commentEndExpression.matchedLength();
+				int endIndex = commentEndExpression.indexIn(text, startIndex);
+				int commentLength;
+				if(endIndex == -1)
+				{
+					setCurrentBlockState(1);
+					commentLength = text.length() - startIndex;
+				}
+				else
+					commentLength = endIndex - startIndex + commentEndExpression.matchedLength();
 
-			setFormat(startIndex, commentLength, multiLineCommentFormat);
-			startIndex = commentStartExpression.indexIn(text, startIndex + commentLength);
+				setFormat(startIndex, commentLength, multiLineCommentFormat);
+				startIndex = commentStartExpression.indexIn(text, startIndex + commentLength);
+			}
 		}
 	}
 
@@ -281,11 +285,13 @@
 	{
 		// Prevent the code from sending modification signal :
 		blockSignals(true);
+		document()->blockSignals(true);
 
 		CodeEditorSettings& editorSettings = CodeEditorSettings::instance();
 
 		// Set the font : 
 		setFont(editorSettings.getEditorFont());
+		document()->setDefaultFont(editorSettings.getEditorFont());
 
 		// Set the tabulation length :
 		const int tabStop = editorSettings.getNumberOfSpacesPerTabulation();
@@ -298,10 +304,14 @@
 		// Set line highlight :
 		highlightLine = editorSettings.isLineHighlightEnabled();
 
+		if(!highlightLine)
+			clearHighlightOfCurrentLine();
+
 		// Propagate : 
 		if(highLighter!=NULL)
 			highLighter->updateSettings(editorSettings);
 
+		document()->blockSignals(false);
 		blockSignals(false);
 	}
 	
@@ -392,6 +402,26 @@
 
 			setExtraSelections(extraSelections);
 		}
+	}
+
+	void CodeEditor::clearHighlightOfCurrentLine(void)
+	{
+		QList<QTextEdit::ExtraSelection> extraSelections;
+
+		if (!isReadOnly())
+		{
+			QTextEdit::ExtraSelection selection;
+
+			QColor lineColor = palette().background().color();			
+
+			selection.format.setBackground(lineColor);
+			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+			selection.cursor = textCursor();
+			selection.cursor.clearSelection();
+			extraSelections.append(selection);
+		}
+
+		setExtraSelections(extraSelections);
 	}
 
 	void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -590,7 +620,8 @@
 	}
 
 // CodeEditorSettings
-	CodeEditorSettings* CodeEditorSettings::singleton = NULL;
+	CodeEditorSettings* CodeEditorSettings::singleton 	= NULL;
+	const std::string CodeEditorSettings::moduleName 	= "CodeEditorSettings";
 
 	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
 	 : 	QWidget(parent),
@@ -600,6 +631,8 @@
 		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
 		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
 		commentsColorLabel("Comments"),
+		highlightKeywordsCheck("Highlight keywords"),
+		highlightCurrentLineCheck("Highlight current line"),
 		okButton("OK"),
 		applyButton("Apply"),
 		cancelButton("Cancel"),
@@ -612,9 +645,65 @@
 		singleton = this;
 
 		// Load the data : 
-			// TEMPORARY (default)
+			// First, restore all to default : 
 			resetSettings();
+
+			// Then load settings : 
+			SettingsManager settings;
+			Element e;
+
+			e = settings.getModuleData(moduleName, "ColorGLSLKeywords");
+			if(!e.arguments.empty())
+				glslKeywordColor.setNamedColor( e.arguments.front().c_str() );
+
+			e = settings.getModuleData(moduleName, "ColorGLSLFunctions");
+			if(!e.arguments.empty())
+				glslFunctionColor.setNamedColor( e.arguments.front().c_str() );
+
+			e = settings.getModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords");
+			if(!e.arguments.empty())
+				glipLayoutLoaderKeywordColor.setNamedColor( e.arguments.front().c_str() );
+				
+			e = settings.getModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords");
+			if(!e.arguments.empty())
+				glipUniformLoaderKeywordColor.setNamedColor( e.arguments.front().c_str() );
 			
+			e = settings.getModuleData(moduleName, "ColorComments");
+			if(!e.arguments.empty())
+				commentsColor.setNamedColor( e.arguments.front().c_str() );
+
+			e = settings.getModuleData(moduleName, "TabulationLength");
+			if(!e.arguments.empty())
+				from_string(e.arguments.front(), tabNumberOfSpaces);
+
+			e = settings.getModuleData(moduleName, "HighlightEnabled");
+			if(!e.arguments.empty())
+			{
+				int tmp = 0;
+				from_string(e.arguments.front(), tmp);
+				enableHighlight = tmp>0;
+			}
+
+			e = settings.getModuleData(moduleName, "HighlightCurrentLineEnabled");
+			if(!e.arguments.empty())
+			{
+				int tmp = 0;
+				from_string(e.arguments.front(), tmp);
+				highlightCurrentLine = tmp>0;
+			}
+
+			e = settings.getModuleData(moduleName, "WordWrapEnabled");
+			if(!e.arguments.empty())
+			{
+				int tmp = 0;
+				from_string(e.arguments.front(), tmp);
+
+				if(tmp>0)
+					wrapMode = QTextOption::WordWrap;
+				else
+					wrapMode = QTextOption::NoWrap;
+			}
+				
 		// Create the layout for the GUI : 
 			// Colors : 
 				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
@@ -649,22 +738,38 @@
 				// Connect :
 				connect(&editorFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
 				connect(&keywordFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
+
+			// Misc : 
+				wrapModesBox.addItem( "Word wrap", 	QVariant(QTextOption::WordWrap) );
+				wrapModesBox.addItem( "No wrap", 	QVariant(QTextOption::NoWrap) );
+
+				tabSpacesSpin.setRange(0, 128);
+				tabSpacesSpin.setPrefix("Tabulations length : ");
+
+				layoutMisc.addWidget(&highlightKeywordsCheck);
+				layoutMisc.addWidget(&highlightCurrentLineCheck);
+				layoutMisc.addWidget(&wrapModesBox);
+				layoutMisc.addWidget(&tabSpacesSpin);
 				
+				groupMisc.setTitle("Miscellaneous");
+				groupMisc.setLayout(&layoutMisc);
+
 			// General : 
-				layout.addWidget(&groupFonts, 0, 0, 2, 2);
-				layout.addWidget(&groupColors, 0, 2, 5, 2);
-				layout.addWidget(&resetButton, 6, 0);
-				layout.addWidget(&cancelButton, 6, 1);
-				layout.addWidget(&applyButton, 6, 2);
-				layout.addWidget(&okButton, 6, 3);
+				layout.addWidget(&groupFonts, 	0, 0, 2, 2);
+				layout.addWidget(&groupMisc, 	2, 0, 4, 2);
+				layout.addWidget(&groupColors, 	0, 2, 5, 2);
+				layout.addWidget(&resetButton, 	7, 0);
+				layout.addWidget(&cancelButton, 7, 1);
+				layout.addWidget(&applyButton, 	7, 2);
+				layout.addWidget(&okButton, 	7, 3);
 
 				connect(&applyButton,				SIGNAL(released()),	this, SLOT(softApply()));
 				connect(&okButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
 				connect(&cancelButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
-				connect(&resetButton,				SIGNAL(released()),	this, SLOT(resetSettings()));
+				connect(&resetButton,				SIGNAL(released()),	this, SLOT(resetSettings())); 
 
-			// Update data in the GUI : 
-				updateGUI();
+		// Final update :
+			updateGUI();
 	}
 
 	CodeEditorSettings::~CodeEditorSettings(void)
@@ -672,6 +777,56 @@
 		if(singleton==this)
 		{
 			// Save the data : 
+			SettingsManager settings;
+			Element e;
+
+			e = settings.getModuleData(moduleName, "ColorGLSLKeywords");
+			e.arguments.clear();
+			e.arguments.push_back( glslKeywordColor.name().toStdString() );
+			settings.setModuleData(moduleName, "ColorGLSLKeywords", e);
+
+			e = settings.getModuleData(moduleName, "ColorGLSLFunctions");
+			e.arguments.clear();
+			e.arguments.push_back( glslFunctionColor.name().toStdString() );
+			settings.setModuleData(moduleName, "ColorGLSLFunctions", e);
+			
+			e = settings.getModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords");
+			e.arguments.clear();
+			e.arguments.push_back( glipLayoutLoaderKeywordColor.name().toStdString() );
+			settings.setModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords", e);
+				
+			e = settings.getModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords");
+			e.arguments.clear();
+			e.arguments.push_back( glipUniformLoaderKeywordColor.name().toStdString() );
+			settings.setModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords", e);
+			
+			e = settings.getModuleData(moduleName, "ColorComments");
+			e.arguments.clear();
+			e.arguments.push_back( commentsColor.name().toStdString() );
+			settings.setModuleData(moduleName, "ColorComments", e);
+
+			e = settings.getModuleData(moduleName, "TabulationLength");
+			e.arguments.clear();
+			e.arguments.push_back( to_string(tabNumberOfSpaces) );
+			settings.setModuleData(moduleName, "TabulationLength", e);
+
+			e = settings.getModuleData(moduleName, "HighlightEnabled");
+			e.arguments.clear();
+			e.arguments.push_back( to_string(static_cast<int>(enableHighlight)) );
+			settings.setModuleData(moduleName, "HighlightEnabled", e);
+			
+			e = settings.getModuleData(moduleName, "HighlightCurrentLineEnabled");
+			e.arguments.clear();
+			e.arguments.push_back( to_string(static_cast<int>(highlightCurrentLine)) );
+			settings.setModuleData(moduleName, "HighlightCurrentLineEnabled", e);
+
+			e = settings.getModuleData(moduleName, "WordWrapEnabled");
+			e.arguments.clear();
+			if(wrapMode==QTextOption::WordWrap)
+				e.arguments.push_back( to_string(static_cast<int>(true)) );
+			else
+				e.arguments.push_back( to_string(static_cast<int>(false)) );
+			settings.setModuleData(moduleName, "WordWrapEnabled", e);
 
 			// Clear : 
 			singleton = NULL;
@@ -696,6 +851,12 @@
 
 		keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(keywordFont.family()).arg(keywordFont.pointSize()));
 		keywordFontButton.setFont(keywordFont);
+
+		// Misc : 
+		highlightKeywordsCheck.setChecked( enableHighlight );
+		highlightCurrentLineCheck.setChecked( highlightCurrentLine );
+		wrapModesBox.setCurrentIndex( wrapModesBox.findData(QVariant(wrapMode)) );
+		tabSpacesSpin.setValue( tabNumberOfSpaces );
 	}
 
 	void CodeEditorSettings::updateValues(void)
@@ -710,8 +871,14 @@
 		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
 
 		// Fonts :
-		editorFont	= editorFontButton.font();
-		keywordFont	= keywordFontButton.font();
+		editorFont			= editorFontButton.font();
+		keywordFont			= keywordFontButton.font();
+
+		// Misc : 
+		enableHighlight			= highlightKeywordsCheck.isChecked();
+		highlightCurrentLine		= highlightCurrentLineCheck.isChecked();
+		wrapMode			= static_cast<QTextOption::WrapMode>( wrapModesBox.itemData( wrapModesBox.currentIndex() ).toUInt() );
+		tabNumberOfSpaces 		= tabSpacesSpin.value();
 
 		// Propagate : 
 		emit settingsModified();
@@ -789,11 +956,11 @@
 	void CodeEditorSettings::resetSettings(void)
 	{
 		// Colors : 
-		glslKeywordColor		= QColor(255,128,0);
-		glslFunctionColor		= QColor(255,128,0);
-		glipLayoutLoaderKeywordColor	= QColor(255, 51, 255);
-		glipUniformLoaderKeywordColor	= QColor(51, 255, 255);
-		commentsColor			= QColor(51,153,255);
+		glslKeywordColor		= QColor(255,	128,	0);
+		glslFunctionColor		= QColor(85,	255,	0);
+		glipLayoutLoaderKeywordColor	= QColor(255, 	51, 	255);
+		glipUniformLoaderKeywordColor	= QColor(51, 	255, 	255);
+		commentsColor			= QColor(51,	153,	255);
 
 		// Fonts : 
 		QFontDatabase db;

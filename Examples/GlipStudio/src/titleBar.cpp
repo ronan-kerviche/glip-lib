@@ -46,7 +46,7 @@
 		layout.addWidget(&minimize);
 		layout.addWidget(&maximize);
 		layout.addWidget(&close);
-		layout.addSpacing(16);
+		layout.addSpacing(8);
 
 		titleLabel.setOpenExternalLinks(false);
 
@@ -190,14 +190,16 @@
 		const QColor backgroundColor = palette().color(QWidget::backgroundRole());
 
 		// Window's background :
+		const int 	border 		= 16,
+				titleLength 	= 256;
 		QPolygon background;
 
-		background 	<< QPoint(	0,				16)
-				<< QPoint(	width()-256,			16)
-				<< QPoint(	width()-256 + 16,		0)
-				<< QPoint(	width(),			0)
-				<< QPoint(	width(), 			height())
-				<< QPoint(	0, 				height());
+		background 	<< QPoint(	0,					border)
+				<< QPoint(	width() - titleLength,			border)
+				<< QPoint(	width() - titleLength + border,		0)
+				<< QPoint(	width(),				0)
+				<< QPoint(	width(), 				height())
+				<< QPoint(	0, 					height());
 
 		painter.setPen( QPen(backgroundColor) );
 		painter.setBrush( QBrush(backgroundColor) );
@@ -208,13 +210,13 @@
 		const int delta = 2;
 		QPolygon outline;
 
-		outline 	<< QPoint(	delta,				16 + delta)
-				<< QPoint(	width()-256 + delta,		16 + delta)
-				<< QPoint(	width()-256 + 16 + delta,	delta)
-				<< QPoint(	width() - delta - 1,		delta)
-				<< QPoint(	width() - delta - 1, 		height() - delta - 1)
-				<< QPoint(	delta, 				height() - delta - 1);
-
+		outline 	<< QPoint(	delta,						border + delta)
+				<< QPoint(	width() - titleLength + delta/1.4142f,		border + delta)
+				<< QPoint(	width() - titleLength + border + delta/1.4142f,	delta)
+				<< QPoint(	width() - delta - 1,				delta)
+				<< QPoint(	width() - delta - 1, 				height() - delta - 1)
+				<< QPoint(	delta, 						height() - delta - 1);
+	
 		painter.setBackgroundMode(Qt::TransparentMode);
 		painter.setPen( QPen(backgroundColor.lighter(300)) );
 		
