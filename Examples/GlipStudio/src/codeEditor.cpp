@@ -705,30 +705,74 @@
 			}
 
 			// Fonts :
-			QFontDatabase db;
-
-			e = settings.getModuleData(moduleName, "EditorFont");
-			if(e.arguments.size()==3)
+			QFontDatabase 	db;
+			QString 	familyName,
+					styleName;
+			int		pointSize;
+			bool		test		= true;
+			
+			e = settings.getModuleData(moduleName, "EditorFont_Family");
+			if(!e.noBody)
+				familyName = e.getCleanBody().c_str();		
+			else
 			{
-				int pointSize = 11;
-
-				if(!from_string(e.arguments.back()))
-					pointSize = 11;
-
-				editorFont = db.font( e.arguments[0].c_str(), e.arguments[2].c_str(), pointSize);
+				familyName = "Source Code Pro";
+				test = false;
 			}
 
-			e = settings.getModuleData(moduleName, "KeywordsFont");
-			if(e.arguments.size()==3)
+			e = settings.getModuleData(moduleName, "EditorFont_Style");
+			if(!e.noBody)
+				styleName = e.getCleanBody().c_str();
+			else
 			{
-				int pointSize = 11;
-
-				if(!from_string(e.arguments.back()))
-					pointSize = 11;
-
-				keywordFont = db.font( e.arguments[0].c_str(), e.arguments[2].c_str(), pointSize);
+				styleName = "Regular";
+				test = false;
 			}
-				
+
+			e = settings.getModuleData(moduleName, "EditorFont_PointSize");
+			if(e.arguments.size()==1)
+			{
+				if( !from_string(e.arguments.back(), pointSize) )
+					pointSize = 11;
+			}
+			else
+				test = false;
+
+			if(test)
+				editorFont = db.font( familyName, styleName, pointSize);
+			
+			test = true;
+
+			e = settings.getModuleData(moduleName, "KeywordsFont_Family");
+			if(!e.noBody)
+				familyName = e.getCleanBody().c_str();		
+			else
+			{
+				familyName = "Source Code Pro";
+				test = false;
+			}
+
+			e = settings.getModuleData(moduleName, "KeywordsFont_Style");
+			if(!e.noBody)
+				styleName = e.getCleanBody().c_str();
+			else
+			{
+				styleName = "Regular";
+				test = false;
+			}
+
+			e = settings.getModuleData(moduleName, "KeywordsFont_PointSize");
+			if(e.arguments.size()==1)
+			{
+				if( !from_string(e.arguments.back(), pointSize) )
+					pointSize = 11;
+			}
+			else
+				test = false;
+
+			if(test)
+				keywordFont = db.font( familyName, styleName, pointSize);
+		
 		// Create the layout for the GUI : 
 			// Colors : 
 				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
@@ -853,19 +897,36 @@
 				e.arguments.push_back( to_string(static_cast<int>(false)) );
 			settings.setModuleData(moduleName, "WordWrapEnabled", e);
 
-			e = settings.getModuleData(moduleName, "EditorFont");
-			e.arguments.clear();
-			e.arguments.push_back( editorFont.family() );
-			e.arguments.push_back( editorFont.styleName() );
-			e.arguments.push_back( to_string(editorFont.pointSize()) );
-			settings.setModuleData(moduleName, "EditorFont", e);
+			// Fonts :
+			e = settings.getModuleData(moduleName, "EditorFont_Family");
+			e.body.clear();
+			e.body = editorFont.family().toStdString();
+			settings.setModuleData(moduleName, "EditorFont_Family", e);
 
-			e = settings.getModuleData(moduleName, "KeywordsFont");
+			e = settings.getModuleData(moduleName, "EditorFont_Style");
+			e.body.clear();
+			e.body = editorFont.styleName().toStdString();
+			settings.setModuleData(moduleName, "EditorFont_Style", e);
+			
+			e = settings.getModuleData(moduleName, "EditorFont_PointSize");
 			e.arguments.clear();
-			e.arguments.push_back( keywordFont.family() );
-			e.arguments.push_back( keywordFont.styleName() );
+			e.arguments.push_back( to_string(editorFont.pointSize()) );
+			settings.setModuleData(moduleName, "EditorFont_PointSize", e);
+			
+			e = settings.getModuleData(moduleName, "KeywordsFont_Family");
+			e.body.clear();
+			e.body = keywordFont.family().toStdString();
+			settings.setModuleData(moduleName, "KeywordsFont_Family", e);
+
+			e = settings.getModuleData(moduleName, "KeywordsFont_Style");
+			e.body.clear();
+			e.body = keywordFont.styleName().toStdString();
+			settings.setModuleData(moduleName, "KeywordsFont_Style", e);
+			
+			e = settings.getModuleData(moduleName, "KeywordsFont_PointSize");
+			e.arguments.clear();
 			e.arguments.push_back( to_string(keywordFont.pointSize()) );
-			settings.setModuleData(moduleName,"KeywordsFont", e);
+			settings.setModuleData(moduleName, "KeywordsFont_PointSize", e);
 
 			// Clear : 
 			singleton = NULL;

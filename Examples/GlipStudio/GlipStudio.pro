@@ -16,6 +16,7 @@ HEADERS      	+= 	./src/glSceneWidget.hpp \
 			./src/glView.hpp \
 			../ExternalTools/NetPBM/netpbm.hpp \
 			../ExternalTools/Qt/ResourceLoader.hpp \
+			./src/customTabWidget.hpp \
 			./src/dataModules.hpp \
 			./src/codeEditor.hpp \
 			./src/codePannel.hpp \
@@ -37,6 +38,7 @@ SOURCES      	+= 	./src/main.cpp \
 			./src/glView.cpp \
 			../ExternalTools/NetPBM/netpbm.cpp \
 			../ExternalTools/Qt/ResourceLoader.cpp \
+			./src/customTabWidget.cpp \
 			./src/dataModules.cpp \
 			./src/codeEditor.cpp \
 			./src/codePannel.cpp \

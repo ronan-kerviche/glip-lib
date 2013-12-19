@@ -1,6 +1,7 @@
 #ifndef __GLIPSTUDIO_CODE_PANNEL__
 #define __GLIPSTUDIO_CODE_PANNEL__
 
+	#include "customTabWidget.hpp"
 	#include "codeEditor.hpp"
 	#include "openSaveInterface.hpp"
 
@@ -94,7 +95,7 @@
  		
 		private : 
 			QVBoxLayout		layout;
-			QTabWidget		widgets;
+			CustomTabWidget		widgets;
 			QMenuBar 		menuBar;
 			QMenu			fileMenu;
 			OpenSaveInterface	openSaveInterface;

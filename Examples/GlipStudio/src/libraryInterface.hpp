@@ -2,6 +2,7 @@
 #define __GLIPSTUDIO_LIBRARY_INTERFACE__
 
 	#include "GLIPLib.hpp"
+	#include "customTabWidget.hpp"
 	#include "dataModules.hpp"
 	#include "resourcesTab.hpp"
 	#include "compilationTab.hpp"
@@ -21,13 +22,14 @@
 
 		private : 
 			QVBoxLayout			layout;
-			QTabWidget			tabs;
+			CustomTabWidget			tabs;
 			ResourcesTab			resourceTab;			
 			CompilationTab			compilationTab;
 			IOTab				ioTab;
 			UniformsTab			uniformsTab;
 
 		private slots :
+			void pipelineWasCreated(void);
 			void pipelineCompilationFailed(const Exception& e);
 					
 		public : 

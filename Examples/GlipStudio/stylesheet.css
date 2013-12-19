@@ -216,7 +216,7 @@
 	QTabWidget::tab-bar
 	{
 		alignment: center;
-		color: #FF0000;
+		/*color: #FF0000;*/
 	}
 
 	QTabBar::tab
@@ -225,7 +225,7 @@
 		border: 2px;
 		background: #555555;
 		min-width: 15ex;
-		color: #FFFFFF;
+		/*color: #FFFFFF; Will prevent colors in tables. */
 	}
 
 	QTabBar::tab:selected, QTabBar::tab:hover

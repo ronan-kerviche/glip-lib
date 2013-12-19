@@ -387,6 +387,7 @@
 		CodeEditor* newEditor = new CodeEditor(this);
 		widgets.addTab(newEditor, newEditor->getTitle());
 		widgets.setCurrentWidget( newEditor );
+		widgets.setCurrentTabTextColor( Qt::white );
 
 		connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
 	}
@@ -470,8 +471,17 @@
 
 	void CodeEditorsPannel::refresh(void)
 	{
-		if(widgets.count() > 0)
+		if(widgets.count()>0)
 		{
+			// Update colors : 
+			for(int k=0; k<widgets.count(); k++)
+				widgets.setTabTextColor(k, Qt::white);
+				
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+			if(!e->empty())
+				widgets.setCurrentTabTextColor(Qt::cyan);
+
+			// Send code : 
 			requirePipelineCreation(getCurrentCode() + "\n");
 		}
 	}

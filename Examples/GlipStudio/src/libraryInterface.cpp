@@ -13,18 +13,27 @@
 		uniformsTab(_masterModule, this)
 	{
 		// Layout : 
-		tabs.addTab(&resourceTab, 	"   Resources   ");
-		tabs.addTab(&compilationTab,	"   Compilation   ");
-		tabs.addTab(&ioTab,		"   I/O   ");
-		tabs.addTab(&uniformsTab, 	"   Uniforms   ");
+		tabs.addTab(&resourceTab, 	"   Resources   ");	tabs.setTabTextColor(0, Qt::white);
+		tabs.addTab(&compilationTab,	"   Compilation   ");	tabs.setTabTextColor(1, Qt::white);
+		tabs.addTab(&ioTab,		"   I/O   ");		tabs.setTabTextColor(2, Qt::white);
+		tabs.addTab(&uniformsTab, 	"   Uniforms   ");	tabs.setTabTextColor(3, Qt::white);
 		layout.addWidget(&tabs);
 	}
 
 	LibraryInterface::~LibraryInterface(void)
 	{ }
 
+	void LibraryInterface::pipelineWasCreated(void)
+	{
+		tabs.setTabTextColor(1, Qt::white);
+		tabs.setTabTextColor(2, Qt::green);
+	}
+
 	void LibraryInterface::pipelineCompilationFailed(const Exception& e)
 	{
 		tabs.setCurrentIndex(tabs.indexOf(&compilationTab));
+
+		tabs.setTabTextColor(1, QColor(255, 128, 0));
+		tabs.setTabTextColor(2, Qt::white);
 	}
 
