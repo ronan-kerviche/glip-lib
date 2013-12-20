@@ -1060,6 +1060,10 @@
 
 		void GLSceneWidget::drawInformationBar(QPainter& painter)
 		{
+			// Avoid use of textures and programs : 
+			HdlTexture::unbind();
+			HdlProgram::stopProgram();
+
 			const int colorRectangleLength = 8; // in units of border.
 
 			painter.setRenderHint(QPainter::Antialiasing);

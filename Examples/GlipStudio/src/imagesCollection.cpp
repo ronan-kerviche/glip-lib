@@ -974,7 +974,7 @@
 		filterMenu(this), wrappingMenu(this), contextMenu(this),
 		freeImageAction("Free image", this),	
 		settingsAction("Settings", this),
-		openSaveInterface(moduleName, "Image", "*.bmp *.png *.jpg *.JPEG *.pgm *.ppm")
+		openSaveInterface(moduleName, "Image", "*.bmp *.png *.jpg *.jpeg *.pgm *.ppm *.raw")
 	{
 		if(collectionsList.empty())
 		{

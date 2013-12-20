@@ -46,6 +46,10 @@ namespace Glip
 		class GLIP_API ImageBuffer : public __ReadOnly_HdlTextureFormat
 		{
 			private : 
+				static const unsigned int headerNumBytes;
+				static const unsigned int maxCommentLength;
+				static const std::string headerSignature;
+
 				const HdlTextureFormatDescriptor	descriptor;
 				unsigned char				*buffer;
 
@@ -105,6 +109,9 @@ namespace Glip
 
 				template<typename T>
 				static T clampValue(const signed long long& v);
+
+				static ImageBuffer* load(const std::string& filename, std::string* comment=NULL);
+				void write(const std::string& filename, const std::string& comment="") const;
 		};
 
 		// Template functions : 

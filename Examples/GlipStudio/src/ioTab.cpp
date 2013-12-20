@@ -11,7 +11,7 @@
 		inputsViewManager(NULL),
 		outputsViewManager(NULL),
 		resourcesManagerLink(_resourcesManagerLink),
-		openSaveInterface("ImagesOutputPannel", "Image", "*.bmp *.png *.jpg *.JPEG *.pgm *.ppm"),
+		openSaveInterface("ImagesOutputPannel", "Image", "*.bmp *.png *.jpg *.jpeg *.pgm *.ppm *.raw"),
 		releaseInputAction("Release input", this),
 		copyAsNewResourceAction("Copy as New Resource", this),
 		replaceResourceAction("Replace existing or add as new Resource", this),

@@ -19,6 +19,18 @@
 			
 			if(file.completeSuffix()=="ppm" || file.completeSuffix()=="pgm")
 				imageBuffer 	= NetPBM::loadNetPBMFile(filename.toStdString());
+			else if(file.completeSuffix()=="raw")
+			{
+				std::string comment;
+
+				imageBuffer 	= ImageBuffer::load(filename.toStdString(), &comment);
+
+				if(!comment.empty())
+				{
+					std::cout << "Comment in RAW file : " << std::endl;
+					std::cout << comment << std::endl;
+				}
+			}
 			else
 			{
 				QImage qimage(filename);
@@ -172,6 +184,8 @@
 			
 			if(file.completeSuffix()=="ppm" || file.completeSuffix()=="pgm")
 				NetPBM::saveNetPBMToFile(*imageBuffer, targetFilename);
+			else if(file.completeSuffix()=="raw")
+				imageBuffer->write(targetFilename, "Written by GlipStudio.");
 			else
 			{
 				QImage* qimage = createQImageFromImageBuffer(*imageBuffer);
@@ -193,13 +207,13 @@
 		{
 			std::cout << "ImageObject::save - Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(targetFilename.c_str()));
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot save image %1.").arg(targetFilename.c_str()));
 		}
 		catch(std::exception& e)
 		{
 			std::cout << "ImageObject::save - Exception caught : " << std::endl;
 			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(targetFilename.c_str()));
+			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot save image %1.").arg(targetFilename.c_str()));
 		}
 	}
 

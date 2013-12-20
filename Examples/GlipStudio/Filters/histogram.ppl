@@ -80,7 +80,7 @@ SHADER_SOURCE:histogramFragShader
 		ivec2 s = textureSize(inputTexture, 0);
 		float nrm = 1.0f / float(s.x*s.y);
 
-		histogramBins = gl_Color*nrm;
+		histogramBins = gl_Color * nrm;
 	}
 }
 

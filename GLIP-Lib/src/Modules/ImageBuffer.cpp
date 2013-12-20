@@ -22,11 +22,16 @@
 **/
 
 	#include <cstring>
+	#include <fstream>
 	#include "Modules/ImageBuffer.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::Modules;
+
+	const unsigned int 	ImageBuffer::headerNumBytes 	= (8 + 4*2 + 4*6 + 4*2 + 4);
+	const unsigned int 	ImageBuffer::maxCommentLength	= 1048576;			// 1MB
+	const std::string 	ImageBuffer::headerSignature 	= "GLIPRAW0";
 
 	/**
 	\fn ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format)
@@ -36,6 +41,9 @@
 	ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format)
 	 :  __ReadOnly_HdlTextureFormat(format.getUncompressedFormat()), descriptor(format.getFormatDescriptor()), buffer(NULL)
 	{
+		if(getSize()==0)
+			throw Exception("ImageBuffer::ImageBuffer - Cannot build an empty format.", __FILE__, __LINE__);
+	
 		buffer = new unsigned char[getSize()];
 	}
 
@@ -47,6 +55,9 @@
 	ImageBuffer::ImageBuffer(HdlTexture& texture)	
 	 :  __ReadOnly_HdlTextureFormat(texture.getUncompressedFormat()), descriptor(texture.getFormatDescriptor()), buffer(NULL)
 	{
+		if(getSize()==0)
+			throw Exception("ImageBuffer::ImageBuffer - Cannot build an empty format.", __FILE__, __LINE__);
+		
 		buffer = new unsigned char[getSize()];
 
 		(*this) << texture;
@@ -467,6 +478,197 @@
 		#undef ADAPTF
 
 		return (*this);
+	}
+
+	/**
+	\fn ImageBuffer* ImageBuffer::load(const std::string& filename, std::string* comment)
+	\brief Load an image buffer from a RAW file. The raw file contain all image information, plus texture setting and an optional comment.
+	\param filename The file name (and path).
+	\param comment If the pointer is non-null and if there is a comment in the file, the comment will be written in the tarted string.
+	\return A pointer to an ImageBuffer object. The user has the responsability to release the memory (with delete). Raise an exception if any error occurs.
+	**/
+	ImageBuffer* ImageBuffer::load(const std::string& filename, std::string* comment)
+	{
+		// Try to open for read : 
+		std::fstream file;
+
+		file.open( filename.c_str(), std::fstream::in | std::fstream::binary );
+
+		if(!file.is_open())
+		{
+			file.close();
+			throw Exception("ImageBuffer::load - Cannot open file \"" + filename + "\" for reading.", __FILE__, __LINE__);
+		}
+
+		file.seekg(0, std::ios_base::end);
+		size_t fileLength = file.tellg();
+
+		if(fileLength<headerNumBytes)
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : header is to short.", __FILE__, __LINE__);
+
+		// Rewind : 
+		file.seekg(std::ios_base::beg);
+
+		// Read the header : 
+		char header[headerNumBytes];
+
+		file.read(header, headerNumBytes);
+
+		unsigned int p = 0;
+
+		// Check the magic signature : 
+		std::string signature(header, 8);
+
+		if(signature!=headerSignature)
+		{
+			file.close();
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the file is not a raw file (version 0).", __FILE__, __LINE__);
+		}
+
+		p += signature.size();
+
+		// Get the sizes and other data : 
+		unsigned int	width,
+				height;
+	
+		width		= * reinterpret_cast<unsigned int*>(header + p);	p += sizeof(width);
+		height		= * reinterpret_cast<unsigned int*>(header + p);	p += sizeof(height);
+
+		GLenum		mode,
+				depth,
+				minFilter,
+				magFilter,
+				sWrapping,
+				tWrapping;
+
+		mode		= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(mode);
+		depth		= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(depth);
+		minFilter	= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(minFilter);
+		magFilter	= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(magFilter);
+		sWrapping	= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(sWrapping);
+		tWrapping	= * reinterpret_cast<GLenum*>(header + p);		p += sizeof(tWrapping);
+
+		unsigned int	minMipmap,
+				maxMipmap;
+
+		minMipmap	= * reinterpret_cast<unsigned int*>(header + p);	p += sizeof(minMipmap);
+		maxMipmap	= * reinterpret_cast<unsigned int*>(header + p);	p += sizeof(maxMipmap);
+
+		unsigned int	commentLength;
+		
+		commentLength	= * reinterpret_cast<unsigned int*>(header + p);	p += sizeof(commentLength);
+
+		if(commentLength>maxCommentLength)
+		{
+			file.close();
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the comment embedded in the file is too long.", __FILE__, __LINE__);
+		}
+
+		// Load comment, if necessary :
+		if(commentLength==0)
+		{
+			if(comment!=NULL)
+				comment->clear();
+		}
+		else
+		{
+			char* commentBuffer = new char[commentLength];
+
+			file.read(commentBuffer, commentLength);
+
+			if(comment!=NULL)
+				comment->assign(commentBuffer, commentLength);
+
+			delete[] commentBuffer;
+		}
+
+		// Create the resulting imageBuffer : 
+		HdlTextureFormat format(width, height, mode, depth, minFilter, magFilter, sWrapping, tWrapping, minMipmap, maxMipmap);
+		ImageBuffer* imageBuffer = new ImageBuffer(format);
+
+		// Test remaining space in the file :
+		size_t remainingBytes = fileLength - file.tellg();
+
+		if(remainingBytes!=imageBuffer->getSize())
+		{
+			file.close();
+			delete imageBuffer;
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the image length does not match expectation.", __FILE__, __LINE__);
+		}
+
+		// Else : load!
+		file.read( reinterpret_cast<char*>(imageBuffer->getBuffer()), remainingBytes);
+
+		// Finally : 
+		file.close();
+
+		return imageBuffer;
+	}
+
+	/**
+	\fn void ImageBuffer::write(const std::string& filename, const std::string& comment) const
+	\brief Write an image buffer to a RAW file. The raw file contain all image information, plus texture setting and an optional comment. Raise an exception if any error occurs.
+	\param filename The file name (and path).
+	\param comment Save this comment to the file (the current limit is a 1MB string).
+	**/
+	void ImageBuffer::write(const std::string& filename, const std::string& comment) const
+	{
+		if(comment.size()>maxCommentLength)
+			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\" : the comment is too long (it cannot exceed " + to_string(maxCommentLength) + " characters).", __FILE__, __LINE__);
+
+		// Try to open for read : 
+		std::fstream file;
+
+		file.open( filename.c_str(), std::fstream::out | std::fstream::binary );
+
+		if(!file.is_open())
+			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\".", __FILE__, __LINE__);
+
+		// Signature :
+		file.write(headerSignature.c_str(), headerSignature.size());
+
+		// Data :
+		unsigned int	width		= getWidth(),
+				height		= getHeight();
+		GLenum		mode		= getGLMode(),
+				depth		= getGLDepth(),
+				minFilter	= getMinFilter(),
+				magFilter	= getMagFilter(),
+				sWrapping 	= getSWrapping(),
+				tWrapping	= getTWrapping();
+		unsigned int	minMipmap	= getBaseLevel(),
+				maxMipmap	= getMaxLevel();
+
+		file.write(	reinterpret_cast<char*>(&width), 	sizeof(width) );
+		file.write(	reinterpret_cast<char*>(&height), 	sizeof(height) );
+		file.write(	reinterpret_cast<char*>(&mode), 	sizeof(mode) );
+		file.write(	reinterpret_cast<char*>(&depth), 	sizeof(depth) );
+		file.write(	reinterpret_cast<char*>(&minFilter), 	sizeof(minFilter) );
+		file.write(	reinterpret_cast<char*>(&magFilter), 	sizeof(magFilter) );
+		file.write(	reinterpret_cast<char*>(&sWrapping), 	sizeof(sWrapping) );
+		file.write(	reinterpret_cast<char*>(&tWrapping), 	sizeof(tWrapping) );
+		file.write(	reinterpret_cast<char*>(&minMipmap), 	sizeof(minMipmap) );
+		file.write(	reinterpret_cast<char*>(&maxMipmap), 	sizeof(maxMipmap) );
+
+		// Write comment : 
+		if(comment.empty())
+		{
+			unsigned int l = 0;
+			file.write(	reinterpret_cast<char*>(&l),	sizeof(l));
+		}
+		else
+		{
+			unsigned int l = comment.size();
+			file.write(	reinterpret_cast<char*>(&l),	sizeof(l));
+
+			file.write(	comment.c_str(), l);
+		}
+
+		// Write data :
+		file.write( reinterpret_cast<const char*>(getBuffer()), getSize());
+
+		// Finally : 
+		file.close();
 	}
 
 // Specialization of the template operators : 

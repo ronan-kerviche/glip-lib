@@ -192,7 +192,7 @@
 		currentFilename(""),
 		firstModification(true),
 		documentModified(false),
-		highlightLine(true),
+		highlightLine(false),
 		highLighter(NULL)
 	{
 		// Get settings : 
@@ -207,18 +207,6 @@
 		connect(&editorSettings,	SIGNAL(settingsModified()),		this, SLOT(updateSettings()));
 
 		updateLineNumberAreaWidth(0);
-	
-		// Set the font : 
-		/*int currentFontSize = document()->defaultFont().pointSize();
-		QFontDatabase db;
-		font = db.font("Source Code Pro", "Regular", currentFontSize);
-		font.setFixedPitch(true);
-		setFont(font);*/
-
-		// Set the tabulation length :
-		/*const int tabStop = 8;
-		QFontMetrics metrics(font);
-		setTabStopWidth(tabStop * metrics.width(' '));*/
 
 		if(syntaxColoration)
 			highLighter = new Highlighter(document());
@@ -406,22 +394,26 @@
 
 	void CodeEditor::clearHighlightOfCurrentLine(void)
 	{
-		QList<QTextEdit::ExtraSelection> extraSelections;
-
-		if (!isReadOnly())
+		// Prevent clear, if it was not already in place.
+		if(highlightLine)	
 		{
-			QTextEdit::ExtraSelection selection;
+			QList<QTextEdit::ExtraSelection> extraSelections;
 
-			QColor lineColor = palette().background().color();			
+			if (!isReadOnly())
+			{
+				QTextEdit::ExtraSelection selection;
 
-			selection.format.setBackground(lineColor);
-			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-			selection.cursor = textCursor();
-			selection.cursor.clearSelection();
-			extraSelections.append(selection);
+				QColor lineColor = palette().background().color();			
+
+				selection.format.setBackground(lineColor);
+				selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+				selection.cursor = textCursor();
+				selection.cursor.clearSelection();
+				extraSelections.append(selection);
+			}
+
+			setExtraSelections(extraSelections);
 		}
-
-		setExtraSelections(extraSelections);
 	}
 
 	void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -1006,7 +998,9 @@
 
 		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), this, title);
 
-		target->setStyleSheet( tr("background:%1;").arg(result.name()) );
+		// If the user pressed 'Ok' : 
+		if(result.isValid())
+			target->setStyleSheet( tr("background:%1;").arg(result.name()) );
 	}
 
 	void CodeEditorSettings::changeFont(void)

@@ -1,34 +1,25 @@
 
 /* General */
 *
-{ 
+{
+	color: #FFFFFF;
 	background: #333333;
 }
 
-/* PUSHBUTTON */
+/* PUSH BUTTON */
 	QPushButton
 	{
 		background: #444444;
-		color: #FFFFFF;
-	}
-
-	/*QPushButton
-	{
-		color: #DDDDDD;
-		border: 1px solid #777777;
-		border-radius: 2px;
-		background-color: #333333;
-		min-width: 80px;
-		margin:5px
+		/*border: 1px solid #AAAAAA;*/
+		color: #CCCCCC;
 	}
 
 	QPushButton:hover
 	{
 		color: #FFFFFF;
-		background-color: #222222;
-	}*/
+	}
 
-/* QTOOLTIP */
+/* TOOL TIP */
 	QToolTip
 	{
 		color: #ffffff; 
@@ -36,8 +27,8 @@
 		border: none;
 	} 
 
-/* SPLITTER */
-	QSplitter::handle
+/* SPLITTER (RE-DEFINED LATTER) */
+	/*QSplitter::handle
 	{
 		background: #444444;
 		color: #484848;
@@ -56,7 +47,7 @@
 	QSplitter::handle:pressed
 	{
 		background: #777777;
-	}
+	}*/
 
 /* MENU BAR */
 	QMenuBar::item
@@ -118,7 +109,7 @@
 
 	QTextEdit
 	{
-		color: #FFFFFF;
+		/*color: #FFFFFF;*/
 		background: #222222;
 	}
 
@@ -393,7 +384,7 @@
 		color: #777777;
 	}
 
-/* QLINEDIT */
+/* LINE EDIT */
 	QLineEdit
 	{
 		color: #CCCCCC;
@@ -404,12 +395,12 @@
 		border-color: #AAAAAA;
 	}
 
-/* QMESSAGEBOX */
+/* MESSAGE BOX */
 	QMessageBox
 	{ }
 
-/* QCOMBOBOX */
-	QComboBox
+/* COMBO BOX */
+	/*QComboBox
 	{
 		font: bold;
 	}
@@ -445,9 +436,9 @@
 	{
 		color:#888888;
 		background:#555555;
-	}
+	}*/
 
-/* QSPLITTER */
+/* SPLITTER */
 	QSplitter::handle:horizontal
 	{
 		width: 4px;
@@ -496,7 +487,7 @@
 							stop: 1.0 #333333);
 	}
 
-/* QGROUPBOX */
+/* GROUP BOX */
 	QGroupBox
 	{
 		border: 1px solid #666666;
@@ -510,5 +501,46 @@
 		subcontrol-origin: margin;
 		left: 10px;
 		padding: 0 3px 0 3px;
+	}
+
+/* CHECK BOX */
+	QCheckBox
+	{
+		spacing: 5px;
+		color: #FFFFFF;
+	}
+
+	QCheckBox::indicator
+	{
+		width: 6px;
+		height: 6px;
+		border: 2px solid #777777;
+		border-radius: 2px;
+		background: #272727;
+ 	}
+
+	QCheckBox::indicator:unchecked
+	{
+		background: #222222;
+	}
+
+	QCheckBox::indicator:unchecked:hover
+	{
+		background: #444444;
+	}
+
+	QCheckBox::indicator:checked
+	{
+		background: #FFFFFF;
+	}
+
+	QCheckBox::indicator:checked:hover
+	{
+		background: #DDDDDD;
+	}
+
+	QCheckBox::indicator:indeterminate
+	{
+		background:#AAAAAA;
 	}
 
