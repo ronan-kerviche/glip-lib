@@ -83,8 +83,9 @@
 			resizeColumnToContents(0);
 			resizeColumnToContents(1);
 			header()->setSectionResizeMode(0, QHeaderView::Fixed); 
-			header()->setSectionResizeMode(1, QHeaderView::Stretch);
-			header()->setSectionResizeMode(2, QHeaderView::Fixed);
+			header()->setSectionResizeMode(1, QHeaderView::Fixed);
+			header()->setSectionResizeMode(2, QHeaderView::Stretch);
+			header()->setSectionResizeMode(3, QHeaderView::Fixed);
 		#else
 			header()->setMovable( false );
 			resizeColumnToContents(0);
@@ -93,11 +94,6 @@
 			header()->setResizeMode(1, QHeaderView::Fixed);
 			header()->setResizeMode(2, QHeaderView::Stretch);
 			header()->setResizeMode(3, QHeaderView::Fixed);
-			
-			//header()->setResizeMode(0, QHeaderView::Fixed);
-			//header()->resizeSection(1, 400);
-			//header()->setResizeMode(1, QHeaderView::Fixed);
-			//header()->setStretchLastSection(true);
 		#endif
 	}
 
@@ -1197,18 +1193,20 @@
 			// Load : 
 			for(int k=0; k<filenames.count(); k++)
 			{
-				QString currentFilename = filenames.at( k );
+				const QString currentFilename = filenames.at( k );
 
 				try
 				{
-					imagesList.push_back( new ImageObject(currentFilename) );
+					ImageObject* current = new ImageObject(currentFilename);
+
+					imagesList.push_back( current );
 
 					TextureStatus s(TextureStatus::Resource);
 					s.location 	= TextureStatus::OnRAM;
 					s.savedToDisk 	= true;
 
-					int newRecordID = addRecord( imagesList.back()->getName().toStdString(), imagesList.back()->getFormat(), s);
-					updateRecordFilename(newRecordID, imagesList.back()->getFilename().toStdString());
+					int newRecordID = addRecord( current->getName().toStdString(), current->getFormat(), s);
+					updateRecordFilename(newRecordID, current->getFilename().toStdString());
 					recordIDs.push_back(newRecordID);
 					lockedToDeviceList.push_back(false);
 
@@ -1216,9 +1214,13 @@
 				}
 				catch(Exception& e)
 				{
-					// TODO : Add a clean error message.
-					std::cerr << "Caught exception while loading : " << std::endl;
-					std::cout << e.what() << std::endl;
+					// Save : 
+					qWarning() << e.what();
+
+					// Show : 
+					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Unable to load the image from file \"%1\".").arg(currentFilename), QMessageBox::Ok);
+					messageBox.setDetailedText(e.what());
+					messageBox.exec();
 				}
 			}
 		}
@@ -1229,24 +1231,37 @@
 
 			for(int k=0; k<selectedRecordIDs.size(); k++)
 			{
-				int tid 	= getIndexFromRecordID( selectedRecordIDs[k] );
+				int tid = getIndexFromRecordID( selectedRecordIDs[k] );
 
-				if( imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty() )
+				try
 				{
-					imagesList[tid]->save();
+					if( imagesList[tid]->isVirtual() && !imagesList[tid]->getFilename().isEmpty() )
+					{
+						imagesList[tid]->save();
 
-					// Update the status : 
-					TextureStatus s = recordStatus( selectedRecordIDs[k] );
-					s.savedToDisk = true;
-					updateRecordStatus( selectedRecordIDs[k], s );
+						// Update the status : 
+						TextureStatus s = recordStatus( selectedRecordIDs[k] );
+						s.savedToDisk = true;
+						updateRecordStatus( selectedRecordIDs[k], s );
+					}
+					else
+					{
+						// Get a filename to save to : 
+						QString filename = openSaveInterface.saveAsDialog(imagesList[tid]->getName());
+
+						if(!filename.isEmpty())
+							saveImage(filename);
+					}
 				}
-				else
+				catch(Exception& e)
 				{
-					// Get a filename to save to : 
-					QString filename = openSaveInterface.saveAsDialog(imagesList[tid]->getName());
+					// Save : 
+					qWarning() << e.what();
 
-					if(!filename.isEmpty())
-						saveImage(filename);
+					// Show : 
+					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Unable to save the image \"%1\".").arg(imagesList[tid]->getName()), QMessageBox::Ok);
+					messageBox.setDetailedText(e.what());
+					messageBox.exec();
 				}
 			}
 		}
@@ -1259,16 +1274,29 @@
 			{
 				int id = getIndexFromRecordID( selectedRecordIDs.front() );
 
-				if( imagesList[id]->isVirtual() )
+				try
 				{
-					imagesList[id]->save( filename.toStdString() );
-					openSaveInterface.reportSuccessfulSave( filename );
+					if( imagesList[id]->isVirtual() )
+					{
+						imagesList[id]->save( filename.toStdString() );
+						openSaveInterface.reportSuccessfulSave( filename );
 
-					// Update the status : 
-					TextureStatus s = recordStatus( selectedRecordIDs.front() );
-					s.savedToDisk = true;
-					updateRecordStatus( selectedRecordIDs.front(), s );
-					updateRecordFilename(selectedRecordIDs.front(), filename.toStdString());
+						// Update the status : 
+						TextureStatus s = recordStatus( selectedRecordIDs.front() );
+						s.savedToDisk = true;
+						updateRecordStatus( selectedRecordIDs.front(), s );
+						updateRecordFilename(selectedRecordIDs.front(), filename.toStdString());
+					}
+				}
+				catch(Exception& e)
+				{
+					// Save : 
+					qWarning() << e.what();
+
+					// Show : 
+					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Unable to save the image \"%1\".").arg(imagesList[id]->getName()), QMessageBox::Ok);
+					messageBox.setDetailedText(e.what());
+					messageBox.exec();
 				}
 			}
 		}

@@ -1,4 +1,5 @@
 #include "mainInterface.hpp"
+#include <QtDebug>
 #include <QDateTime>
 
 	using namespace Glip;
@@ -47,6 +48,10 @@
 	{
 		if( requireClose() )
 		{
+			codeEditors.close();
+			display.close();
+			libraryInterface.close();
+
 			event->accept();
 			frame.close();
 		}
@@ -54,10 +59,48 @@
 			event->ignore();
 	}
 
+// Special function, for redirection of qDebug, qCritical, etc. to a file : 
+	void customMessageHandler(QtMsgType type, const char *msg)
+	{
+		QDateTime dateTime = QDateTime::currentDateTime();
+		
+
+		QString txt;
+
+		switch (type)
+		{
+			case QtDebugMsg:
+				txt = QString("[%1] DEBUG :\n%2").arg(dateTime.toString()).arg(msg);
+				break;
+			case QtWarningMsg:
+				txt = QString("[%1] WARNING :\n%2").arg(dateTime.toString()).arg(msg);
+				break;
+			case QtCriticalMsg:
+				txt = QString("[%1] CRITICAL :\n%2").arg(dateTime.toString()).arg(msg);
+				break;
+			case QtFatalMsg:
+				txt = QString("[%1] FATAL :\n%2").arg(dateTime.toString()).arg(msg);
+				break;
+			default :
+				txt = QString("[%1] UNKNOWN :\n%2").arg(dateTime.toString()).arg(msg);
+		}
+
+		QFile outFile("errorLog.txt");
+		outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+		QTextStream stream(&outFile);
+		stream << txt << "\n";
+
+		if(type==QtFatalMsg)
+			abort();
+	}
+
 // GlipStudio
 	GlipStudio::GlipStudio(int& argc, char** argv)
 	 : QApplication(argc, argv), settingsManager(NULL), mainWindow(NULL)
 	{
+		// Set the redirections of logs : 
+		qInstallMsgHandler(customMessageHandler);
+
 		// Load fonts : 
 		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
 		if( fid < 0)
@@ -104,8 +147,13 @@
 		if(!stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
 			QString path = QDir::currentPath();
-			QMessageBox::information(NULL, tr("GlipStudio::GlipStudio - Error :"), tr("The style sheet \"%1\" could not be loaded.\nIn %2.").arg(stylesheetFile.fileName()).arg(path));
-			throw Exception("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (" + path.toStdString() + ").", __FILE__, __LINE__); 
+
+			Exception e("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (" + path.toStdString() + ").", __FILE__, __LINE__); 
+
+			qCritical() << e.what();
+
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("The style sheet \"%1\" could not be loaded.\nIn %2. The execution will continue with default system theme (BAD).").arg(stylesheetFile.fileName()).arg(path), QMessageBox::Ok);
+			messageBox.exec();
 		}
 
 		QTextStream 	stylesheetStream(&stylesheetFile);
@@ -115,7 +163,23 @@
 		QApplication::setStyleSheet(stylesheet);
 
 		// Load settings : 
-		settingsManager = new SettingsManager("settings.vnp");
+		try
+		{
+			settingsManager = new SettingsManager("settings.vnp");
+		}
+		catch(Exception& e)
+		{
+			// Save : 
+			qWarning() << e.what();
+
+			// Show : 
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Unable to load the settings from \"settings.vnp\". The settings will be reset."), QMessageBox::Ok);
+			messageBox.setDetailedText(e.what());
+			messageBox.exec();
+
+			// Create a blank settings bank : 
+			settingsManager = new SettingsManager("settings.vnp", true);
+		}
 
 		mainWindow = new MainWindow();
 	}
@@ -134,23 +198,8 @@
 		} 
 		catch(std::exception& e) 
 		{
-			std::cerr << "Exception caught :" << std::endl;
-			std::cout << e.what() << std::endl;
-
 			// Save : 
-			QFile file("exceptions.txt");
-
-			if( file.open(QIODevice::WriteOnly | QIODevice::Text) )
-			{
-				QTextStream out(&file);
-
-				QDateTime dateTime = QDateTime::currentDateTime();
-
-				out << "On " << dateTime.toString() << ", the following exception was caught : \n";
-				out << e.what() << "\n";
-			
-				file.close();		
-			}
+			qWarning() << e.what();	
 
 			// Warning :
 			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught. However, you might be able to continue execution."), QMessageBox::Ok);

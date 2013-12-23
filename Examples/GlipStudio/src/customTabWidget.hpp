@@ -12,6 +12,7 @@
 			CustomTabWidget(QWidget* parent=NULL);
 			virtual ~CustomTabWidget(void);
 
+			void setTabsTextColor(const QColor& color);
 			void setTabTextColor(int index, const QColor& color);
 			void setCurrentTabTextColor(const QColor& color);
 	};

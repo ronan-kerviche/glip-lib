@@ -7,7 +7,7 @@
 	std::string SettingsManager::settingsFilename;
 	bool SettingsManager::firstTimeRun		= false;
 
-	SettingsManager::SettingsManager(const std::string& filename)	
+	SettingsManager::SettingsManager(const std::string& filename, bool reset)	
 	{
 		if(master!=NULL)
 			throw Exception("SettingsManager::SettingsManager - The settings file was already opened (\"" + settingsFilename + "\").", __FILE__, __LINE__);
@@ -16,44 +16,52 @@
 		parser 		= NULL;
 		firstTimeRun	= false;
 
-		try
+		if(!reset)
 		{
-			std::ifstream file;
-	
-			file.open(filename.c_str());
-
-			std::string code;
-
-			if(file.is_open() && file.good() && !file.fail())
+			try
 			{
-				// Read : 
-				std::string line;
-
-				file.seekg(0, std::ios::beg);
-
-				while(std::getline(file,line))
-				{
-					code += line;
-					code += "\n";
-				}
-
-				file.close();
-			}
-			else
-				firstTimeRun = true;
-
-			// Parse : 
-			parser = new VanillaParser(code);
-		}
-		catch(Exception& e)
-		{
-			delete parser;
-			Exception m("SettingsManager::SettingsManager - Error caught while reading the settings file (\"" + filename + "\") : ", __FILE__, __LINE__);
-			throw m+e;
-		}
+				std::ifstream file;
 	
-		master = this;
-		settingsFilename = filename;
+				file.open(filename.c_str());
+
+				std::string code;
+
+				if(file.is_open() && file.good() && !file.fail())
+				{
+					// Read : 
+					std::string line;
+
+					file.seekg(0, std::ios::beg);
+
+					while(std::getline(file,line))
+					{
+						code += line;
+						code += "\n";
+					}
+
+					file.close();
+				}
+				else
+					firstTimeRun = true;
+
+				// Parse : 
+				parser = new VanillaParser(code);
+			}
+			catch(Exception& e)
+			{
+				delete parser;
+				Exception m("SettingsManager::SettingsManager - Error caught while reading the settings file (\"" + filename + "\") : ", __FILE__, __LINE__);
+				throw m+e;
+			}
+		}
+		else
+		{
+			parser 		= new VanillaParser("");
+			firstTimeRun 	= true;
+		}	
+
+		master 			= this;
+		settingsFilename 	= filename;
 	}
 
 	SettingsManager::SettingsManager(void)

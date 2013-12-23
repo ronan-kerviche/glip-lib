@@ -2,12 +2,14 @@
 
 // ModuleDocumentation :
 	ModuleDocumentation::ModuleDocumentation(QWidget* parent)
-	 :	QWidget(parent),
+	 :	Window(parent),
 		layout(this),
 		title("Module : "),
 		comboBox(this),			
 		description(this, false)
 	{
+		frame.titleBar().setWindowTitle("Module Documentation");
+
 		title.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 		title.setSizePolicy( QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum) );
 
@@ -210,5 +212,10 @@
 				writer.writeToFile(pipeline(), filename.toStdString());
 			}
 		}
+	}
+
+	void CompilationTab::closeEvent(QCloseEvent *event)
+	{
+		documentation.close();
 	}
 

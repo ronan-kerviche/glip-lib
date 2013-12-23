@@ -4,8 +4,9 @@
 	#include "customTabWidget.hpp"
 	#include "codeEditor.hpp"
 	#include "openSaveInterface.hpp"
+	#include "titleBar.hpp"
 
-	class PathWidget : public QWidget
+	class PathWidget : public Window
 	{
 		Q_OBJECT
 
@@ -117,6 +118,7 @@
 			void updateCurrentToolTip(void);
 			const std::vector<std::string>& getPaths(void);
 			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
+			void closeEvent(QEvent* event);
 
 		private slots : 	
 			void newTab(void);
@@ -141,6 +143,7 @@
 
 		public slots : 
 			void openFile(const QString& filename);
+			void close(void);
 	};
 
 #endif

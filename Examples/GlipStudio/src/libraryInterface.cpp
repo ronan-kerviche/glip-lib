@@ -18,6 +18,10 @@
 		tabs.addTab(&ioTab,		"   I/O   ");		tabs.setTabTextColor(2, Qt::white);
 		tabs.addTab(&uniformsTab, 	"   Uniforms   ");	tabs.setTabTextColor(3, Qt::white);
 		layout.addWidget(&tabs);
+
+		tabs.setTabTextColor(1, QColor("#333333") );
+		tabs.setTabTextColor(2, QColor("#333333") );
+		tabs.setTabTextColor(3, QColor("#333333") );
 	}
 
 	LibraryInterface::~LibraryInterface(void)
@@ -25,15 +29,27 @@
 
 	void LibraryInterface::pipelineWasCreated(void)
 	{
-		tabs.setTabTextColor(1, Qt::white);
-		tabs.setTabTextColor(2, Qt::green);
+		tabs.setTabTextColor(1, QColor("#333333") );
+		tabs.setTabTextColor(2, Qt::white);
+		tabs.setTabTextColor(3, Qt::white);
 	}
 
 	void LibraryInterface::pipelineCompilationFailed(const Exception& e)
 	{
 		tabs.setCurrentIndex(tabs.indexOf(&compilationTab));
 
-		tabs.setTabTextColor(1, QColor(255, 128, 0));
-		tabs.setTabTextColor(2, Qt::white);
+		tabs.setTabTextColor(1, Qt::white);
+		tabs.setTabTextColor(2, QColor("#333333") );
+		tabs.setTabTextColor(3, QColor("#333333") );
+	}
+
+	void LibraryInterface::closeEvent(QCloseEvent *event)
+	{
+		resourceTab.close();
+		compilationTab.close();
+		ioTab.close();
+		uniformsTab.close();
+
+		event->accept();
 	}
 

@@ -31,7 +31,10 @@
 		private slots :
 			void pipelineWasCreated(void);
 			void pipelineCompilationFailed(const Exception& e);
-					
+		
+		protected :		
+			void closeEvent(QCloseEvent *event);
+
 		public : 
 			LibraryInterface(ControlModule& _masterModule, QWidget *parent);
 			~LibraryInterface(void);

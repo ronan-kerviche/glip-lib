@@ -3,6 +3,7 @@
 
 	#include "GLIPLib.hpp"
 	#include "dataModules.hpp"
+	#include "titleBar.hpp"
 	#include <QPlainTextEdit>
 	#include <QVector>
 	#include <QSyntaxHighlighter>
@@ -123,7 +124,7 @@
 			QSize sizeHint() const;
 	};
 
-	class CodeEditorSettings : public QWidget
+	class CodeEditorSettings : public Window
 	{
 		Q_OBJECT
 

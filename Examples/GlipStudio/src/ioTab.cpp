@@ -101,8 +101,6 @@
 	// Private slots : 
 		void IOTab::pipelineWasCreated(void)
 		{
-			//pipelineStatusLabel.setText(tr("Pipeline \"%1\" was created.").arg(pipeline().getName().c_str()));
-
 			// Set up the lists : 
 			inputRecordIDs.assign( pipeline().getNumInputPort(), -1);
 			outputRecordIDs.assign( pipeline().getNumOutputPort(), -1);
@@ -206,7 +204,7 @@
 
 		void IOTab::pipelineWasDestroyed(void)
 		{
-			pipelineStatusLabel.setText(tr("No Pipeline"));
+			pipelineStatusLabel.setText(tr("No Pipeline..."));
 
 			// Clean the lists :
 			inputRecordIDs.clear();

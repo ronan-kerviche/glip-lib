@@ -5,13 +5,14 @@
 	#include "dataModules.hpp"
 	#include "codeEditor.hpp"
 	#include "openSaveInterface.hpp"
+	#include "titleBar.hpp"
 	
 	#include <QListWidget>
 	#include <QVBoxLayout>
 
 	using namespace Glip;
 
-	class ModuleDocumentation : public QWidget
+	class ModuleDocumentation : public Window
 	{
 		Q_OBJECT
 
@@ -60,6 +61,9 @@
 			void pipelineCompilationFailed(const Exception& e);
 			void showDocumentation(void);
 			void dumpPipelineCode(void);
+
+		protected :
+			void closeEvent(QCloseEvent *event);
 
 		public : 
 			CompilationTab(ControlModule& _masterModule, QWidget* parent=NULL);

@@ -5,9 +5,11 @@
 
 // PathWidget
 	PathWidget::PathWidget(QWidget* parent)
-	 : QWidget(parent), layout(this), menuBar(this), addPathAct(tr("Add path"), this), removePathAct(tr("Remove path"), this), clearAllPathAct(tr("Clear all paths"), this)
+	 : Window(parent), layout(this), menuBar(this), addPathAct(tr("Add path"), this), removePathAct(tr("Remove path"), this), clearAllPathAct(tr("Clear all paths"), this)
 	{
-		setMaximumHeight(256); 
+		frame.titleBar().setWindowTitle("Include Paths");
+
+		frame.setMinimumWidth(768);
 
 		connect(&addPathAct, 		SIGNAL(triggered()), 		this, SLOT(addPath()));
 		connect(&removePathAct, 	SIGNAL(triggered()), 		this, SLOT(removePath()));
@@ -362,7 +364,6 @@
 
 		layout.addWidget(&menuBar);	
 		layout.addWidget(&widgets);
-		layout.addWidget(&pathWidget);
 
 		// TODO : improve this in a mini tutorial : 
 		SettingsManager settings;
@@ -373,13 +374,6 @@
 	CodeEditorsPannel::~CodeEditorsPannel(void)
 	{
 		editorSettings.close();
-		/*while(widgets.count()>0)
-			widgets.removeTab(0);
-
-		for(int i=0; i<tabs.size(); i++)
-			delete tabs[i];
-
-		tabs.clear();*/
 	}
 
 	void CodeEditorsPannel::newTab(void)
@@ -387,7 +381,7 @@
 		CodeEditor* newEditor = new CodeEditor(this);
 		widgets.addTab(newEditor, newEditor->getTitle());
 		widgets.setCurrentWidget( newEditor );
-		widgets.setCurrentTabTextColor( Qt::white );
+		widgets.setCurrentTabTextColor( QColor("#BBBBBB") );
 
 		connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
 	}
@@ -474,12 +468,11 @@
 		if(widgets.count()>0)
 		{
 			// Update colors : 
-			for(int k=0; k<widgets.count(); k++)
-				widgets.setTabTextColor(k, Qt::white);
+			widgets.setTabsTextColor(QColor("#BBBBBB") );
 				
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 			if(!e->empty())
-				widgets.setCurrentTabTextColor(Qt::cyan);
+				widgets.setCurrentTabTextColor(Qt::white);
 
 			// Send code : 
 			requirePipelineCreation(getCurrentCode() + "\n");
@@ -516,7 +509,7 @@
 
 	void CodeEditorsPannel::switchPathWidget(void)
 	{
-		if(pathWidget.isVisible())
+		/*if(pathWidget.isVisible())
 		{
 			pathWidget.hide();
 			showPathWidgetAction.setText("Paths");			
@@ -525,7 +518,8 @@
 		{
 			pathWidget.show();
 			showPathWidgetAction.setText("Hide paths");
-		}
+		}*/
+		pathWidget.show();
 	}
 
 	void CodeEditorsPannel::updateTitle(void)
@@ -673,5 +667,21 @@
 				updateCurrentToolTip();
 			}
 		}
+	}
+
+	void CodeEditorsPannel::closeEvent(QEvent* event)
+	{
+		pathWidget.close();
+		editorSettings.close();
+
+		event->accept();
+	}
+
+	void CodeEditorsPannel::close(void)
+	{
+		pathWidget.close();
+		editorSettings.close();
+
+		QWidget::close();
 	}
 

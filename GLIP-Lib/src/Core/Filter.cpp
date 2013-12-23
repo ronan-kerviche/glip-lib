@@ -90,20 +90,37 @@
 	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
 	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(c.blending), clearing(c.clearing), isStandardVertex(c.isStandardVertex), isStandardGeometry(c.isStandardGeometry)
 	{
-		if(c.vertexSource!=NULL)
-			vertexSource   = new ShaderSource(*c.vertexSource);
-		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
+		try
+		{
+			if(c.vertexSource!=NULL)
+				vertexSource   = new ShaderSource(*c.vertexSource);
+			else
+				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
-		if(c.fragmentSource!=NULL)
-			fragmentSource = new ShaderSource(*c.fragmentSource);
-		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
+			if(c.fragmentSource!=NULL)
+				fragmentSource = new ShaderSource(*c.fragmentSource);
+			else
+				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
-		if(c.geometryModel!=NULL)
-			geometryModel = new GeometryModel(*c.geometryModel);
-		else
-			throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
+			if(c.geometryModel!=NULL)
+				geometryModel = new GeometryModel(*c.geometryModel);
+			else
+				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
+		}
+		catch(Exception& e)
+		{
+			// Clean : 
+			delete vertexSource;
+			delete fragmentSource;
+			delete geometryModel;
+
+			vertexSource 	= NULL;
+			fragmentSource	= NULL;
+			geometryModel	= NULL;
+
+			throw e;
+		}
+		
 	}
 
 	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
@@ -286,17 +303,25 @@
 		try
 		{
 			// Build the shaders :
-			vertexShader   = new HdlShader(GL_VERTEX_SHADER, getVertexSource());
-			fragmentShader = new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
-			program        = new HdlProgram(*vertexShader, *fragmentShader);
+			vertexShader	= new HdlShader(GL_VERTEX_SHADER, getVertexSource());
+			fragmentShader	= new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
+			program		= new HdlProgram(*vertexShader, *fragmentShader);
 		}
 		catch(Exception& e)
 		{
+			delete vertexShader;
+			delete fragmentShader;
+			delete program;
+
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
+			delete vertexShader;
+			delete fragmentShader;
+			delete program;
+
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
@@ -317,11 +342,19 @@
 		}
 		catch(Exception& e)
 		{
+			delete vertexShader;
+			delete fragmentShader;
+			delete program;
+
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
+			delete vertexShader;
+			delete fragmentShader;
+			delete program;
+
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
 		}
@@ -330,18 +363,18 @@
 		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW_ARB );
 
 		// Finally : 
-		broken		= false;
+		broken = false;
 	}
 
 	Filter::~Filter(void)
 	{
-		if(program==NULL)
+		/*if(program==NULL)
 			throw Exception("Filter::~Filter - Internal error : program is NULL", __FILE__, __LINE__);
 		if(vertexShader==NULL)
 			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
 		if(fragmentShader==NULL)
 			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-		/*if(vbo!=NULL)
+		if(vbo!=NULL)
 			delete vbo;*/
 
 		delete program;

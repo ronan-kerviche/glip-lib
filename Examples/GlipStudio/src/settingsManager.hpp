@@ -19,7 +19,7 @@
 			std::vector<Element>::iterator getModuleIterator(const std::string& moduleName, const std::string& propertyName);
 
 		public : 
-			SettingsManager(const std::string& filename);
+			SettingsManager(const std::string& filename, bool reset=false);
 			SettingsManager(void);
 			~SettingsManager(void);
 

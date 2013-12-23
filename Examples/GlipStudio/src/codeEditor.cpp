@@ -616,7 +616,7 @@
 	const std::string CodeEditorSettings::moduleName 	= "CodeEditorSettings";
 
 	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
-	 : 	QWidget(parent),
+	 : 	Window(parent, true),							// Dialog mode.
 		layout(this),
 		glslKeywordColorLabel("GLSL Keywords"),
 		glslFunctionColorLabel("GLSL Functions"),
@@ -630,6 +630,8 @@
 		cancelButton("Cancel"),
 		resetButton("Reset")
 	{
+		frame.titleBar().setWindowTitle("Editor Settings");
+
 		if(singleton!=NULL)
 			throw Exception("CodeEditorSettings::CodeEditorSettings - A settings widget already exists (internal error).", __FILE__, __LINE__);
 		

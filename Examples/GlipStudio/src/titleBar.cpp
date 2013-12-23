@@ -6,7 +6,8 @@
 // Static styles : 
 	const char* buttonStyle	= 	"QToolButton 		{ background:%2; border:4px solid %1; border-radius:8px; }"
 					"QToolButton:hover 	{ background:%3; border:4px solid %1; border-radius:8px; }"
-					"QToolButton:pressed 	{ background:%4; border:5px solid %1; border-radius:8px; }";
+					"QToolButton:pressed 	{ background:%4; border:5px solid %1; border-radius:8px; }"
+					"QToolButton:!enabled 	{ background:%5; border:5px solid %1; border-radius:8px; }";
 
 // TitleBar :
 	TitleBar::TitleBar(QWidget *parent)
@@ -15,42 +16,48 @@
 		minimize(this),
 		maximize(this),
 		close(this),
-		maximized(false)
+		maximized(false),
+		resizable(true)
 	{
 		// Don't let this widget inherit the parent's backround color
 		setAutoFillBackground(true);
 
 		const QColor 	backgroundColor = QColor("#333333"),		//,palette().color(QWidget::backgroundRole())
-				minimizeColor	= QColor(128, 	0, 	0),
-				maximizeColor	= QColor(0, 	128, 	0),
-				closeColor	= QColor(0, 	0, 	128);
+				minimizeColor	= QColor(80, 	80, 	80),
+				maximizeColor	= QColor(128, 	128, 	128),
+				closeColor	= QColor(192, 	192, 	192);
+
+		const int 	w		= 32,
+				h		= 16;
 
 		// Buttons : 
-		minimize.setMinimumSize(32, 16);
-		minimize.setMaximumSize(32, 16);
-		minimize.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(minimizeColor.name()).arg(minimizeColor.lighter(200).name()).arg(minimizeColor.lighter(80).name()) );
+		minimize.setMinimumSize(w, h);
+		minimize.setMaximumSize(w, h);
+		minimize.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(minimizeColor.name()).arg(minimizeColor.lighter(200).name()).arg(minimizeColor.lighter(80).name()).arg(backgroundColor.lighter(50).name()) );
 		minimize.setToolTip("Minimize");
 
-		maximize.setMinimumSize(32, 16);
-		maximize.setMaximumSize(32, 16);
-		maximize.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(maximizeColor.name()).arg(maximizeColor.lighter(200).name()).arg(maximizeColor.lighter(80).name()) );
+		maximize.setMinimumSize(w, h);
+		maximize.setMaximumSize(w, h);
+		maximize.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(maximizeColor.name()).arg(maximizeColor.lighter(200).name()).arg(maximizeColor.lighter(80).name()).arg(backgroundColor.lighter(50).name()) );
 		maximize.setToolTip("Maximize");
 
-		close.setMinimumSize(32, 16);
-		close.setMaximumSize(32, 16);
-		close.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(closeColor.name()).arg(closeColor.lighter(200).name()).arg(closeColor.lighter(80).name()) );
+		close.setMinimumSize(w, h);
+		close.setMaximumSize(w, h);
+		close.setStyleSheet( tr(buttonStyle).arg(backgroundColor.name()).arg(closeColor.name()).arg(closeColor.lighter(200).name()).arg(closeColor.lighter(80).name()).arg(backgroundColor.lighter(50).name()) );
 		close.setToolTip("Close");
 
+		titleLabel.setMaximumWidth(140);
+
+		layout.addWidget(&blankLabel);
 		layout.addWidget(&titleLabel);
-		layout.addSpacing(32);
 		layout.addWidget(&minimize);
 		layout.addWidget(&maximize);
 		layout.addWidget(&close);
-		layout.addSpacing(8);
+		layout.addSpacing(4);
 
 		titleLabel.setOpenExternalLinks(false);
 
-		layout.setMargin(2);
+		layout.setMargin(1);
 		layout.setSpacing(0);
 
 		connect(&close, 	SIGNAL(clicked()), parentWidget(), 	SIGNAL(closeSignal()) );
@@ -102,8 +109,10 @@
 
 	void TitleBar::mouseDoubleClickEvent(QMouseEvent * event)
 	{
-		if(event->buttons() & Qt::LeftButton)
+		if(event->buttons()==Qt::LeftButton)
 			showMaxRestore();
+		else
+			event->accept();
 	}
 
 	bool TitleBar::isMaximized(void) const
@@ -117,8 +126,48 @@
 		title.remove(QRegExp("<[^>]*>"));
 
 		titleLabel.setText(title);
-		titleLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 		parentWidget()->setWindowTitle(title);
+	}
+
+	bool TitleBar::isResizable(void) const
+	{
+		return resizable;
+	}
+
+	bool TitleBar::isMinimizable(void) const
+	{
+		return minimize.isEnabled();
+	}
+
+	bool TitleBar::isMaximizable(void) const
+	{
+		return maximize.isEnabled();
+	}
+
+	bool TitleBar::isClosable(void) const
+	{
+		return close.isEnabled();
+	}
+
+	void TitleBar::setResizeable(bool _resizeable)
+	{
+		resizable = _resizeable;
+	}
+
+	void TitleBar::setMinimizable(bool minimizable)
+	{
+		minimize.setEnabled(minimizable);
+	}
+
+	void TitleBar::setMaximizable(bool maximizable)
+	{
+		maximize.setEnabled(maximizable);
+	}
+
+	void TitleBar::setClosable(bool closable)
+	{
+		close.setEnabled(closable);
 	}
 
 // WindowFrame :
@@ -234,7 +283,7 @@
 		int x = event->x();
 		int y = event->y();
 
-		if(mouseDown)
+		if(mouseDown && titleBar().isResizable())
 		{
 			int dx = x - oldPos.x();
 			int dy = y - oldPos.y();
@@ -250,13 +299,14 @@
 			if(moveUp)
 				g.setTop(g.top() + dy);
 
-			setGeometry(g);
+			if(g.width()>=minimumWidth() && g.width()<maximumWidth() && g.height()>=minimumHeight() && g.width()<maximumHeight())
+				setGeometry(g);
 
 			oldPos = QPoint(!moveLeft ? event->x() : oldPos.x(), event->y());
 		}
-		else
+		else if(titleBar().isResizable())
 		{
-			const int border = 2;
+			const int border = 1;
 
 			QRect 	r		= rect();
 				moveLeft	= qAbs(x - r.left()) 	<= border;
@@ -306,11 +356,69 @@
 		return titleBarWidget;
 	}
 
+	void WindowFrame::setResizeable(bool resizeable)
+	{
+		titleBarWidget.setResizeable(resizeable);
+	}
+
+	void WindowFrame::setMinimizable(bool minimizable)
+	{
+		titleBarWidget.setMinimizable(minimizable);
+	}
+
+	void WindowFrame::setMaximizable(bool setMaximizable)
+	{
+		titleBarWidget.setMaximizable(setMaximizable);
+	}
+
+	void WindowFrame::setClosable(bool closable)
+	{
+		titleBarWidget.setClosable(closable);
+	}
+	
 	void WindowFrame::close(void)
 	{
 		removeContent();
 
 		// Continue : 
 		QFrame::close();
+	}
+
+// Window : 
+	Window::Window(QWidget* parent, bool dialogMode)
+	 : 	QWidget(parent),
+		frame(this)
+	{
+		if(dialogMode)
+		{
+			frame.setResizeable(false);
+			frame.setMinimizable(false);
+			frame.setMaximizable(false);
+			frame.setClosable(false);
+		}
+
+		connect(&frame, SIGNAL(closeSignal()), this, SLOT(hide()));
+	}
+
+	Window::~Window(void)
+	{
+		frame.setParent(NULL);
+		frame.removeContent();
+	}
+
+	void Window::show(void)
+	{
+		frame.show();
+	}
+
+	void Window::hide(void)
+	{
+		frame.hide();
+	}
+
+	void Window::close(void)
+	{
+		frame.close();
+		QWidget::close();
 	}
 

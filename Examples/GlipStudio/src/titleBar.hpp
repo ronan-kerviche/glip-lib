@@ -21,10 +21,12 @@
 			QToolButton 	minimize,
 					maximize,
 					close;
-			bool 		maximized;
+			bool 		maximized,
+					resizable;
 			QPoint 		startPos,
 					clickPos;
-			QLabel		titleLabel;
+			QLabel		titleLabel,
+					blankLabel;
 			QHBoxLayout	layout;
 
 		private slots :
@@ -42,6 +44,15 @@
 
 			bool isMaximized(void) const;
 			void setWindowTitle(QString title);
+
+			bool isResizable(void) const;
+			bool isMinimizable(void) const;
+			bool isMaximizable(void) const;
+			bool isClosable(void) const;
+			void setResizeable(bool _resizeable);
+			void setMinimizable(bool minimizable);
+			void setMaximizable(bool setMaximizable);
+			void setClosable(bool closable);
 	};
      
 	class WindowFrame : public QFrame
@@ -76,11 +87,33 @@
 			void removeContent(void);
 			TitleBar& titleBar(void);
 
+			void setResizeable(bool resizeable);
+			void setMinimizable(bool minimizable);
+			void setMaximizable(bool setMaximizable);
+			void setClosable(bool closable);
+
 		public slots :
 			void close(void);
 
 		signals :
 			void closeSignal(void);
+	};
+
+	class Window : public QWidget
+	{
+		Q_OBJECT
+
+		protected :
+			WindowFrame frame;
+
+		public : 
+			Window(QWidget* parent, bool dialogMode=false);
+			~Window(void);
+
+		public slots:
+			void show(void);
+			void hide(void);
+			void close(void);
 	};
 
 #endif

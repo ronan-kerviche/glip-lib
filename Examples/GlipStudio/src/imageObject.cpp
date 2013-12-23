@@ -46,15 +46,15 @@
 		}
 		catch(Exception& e)
 		{
-			std::cout << "ImageObject::ImageObject - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename));
+			delete imageBuffer;
+
+			throw e;
 		}
 		catch(std::exception& e)
 		{
-			std::cout << "ImageObject::ImageObject - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot load image %1.").arg(filename));
+			delete imageBuffer;
+
+			throw Exception(e.what(), __FILE__, __LINE__);
 		}
 	}
 
@@ -177,6 +177,8 @@
 
 	void ImageObject::save(const std::string& targetFilename)
 	{
+		QImage* qimage = NULL;
+
 		try
 		{
 			// Open the file and guess the texture format : 
@@ -188,7 +190,7 @@
 				imageBuffer->write(targetFilename, "Written by GlipStudio.");
 			else
 			{
-				QImage* qimage = createQImageFromImageBuffer(*imageBuffer);
+				qimage = createQImageFromImageBuffer(*imageBuffer);
 				
 				const bool test = qimage->save(targetFilename.c_str());
 
@@ -205,15 +207,15 @@
 		}
 		catch(Exception& e)
 		{
-			std::cout << "ImageObject::save - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot save image %1.").arg(targetFilename.c_str()));
+			delete qimage;
+
+			throw e;
 		}
 		catch(std::exception& e)
 		{
-			std::cout << "ImageObject::save - Exception caught : " << std::endl;
-			std::cout << e.what() << std::endl;
-			QMessageBox::information(NULL, QObject::tr("ImageObject"), QObject::tr("Cannot save image %1.").arg(targetFilename.c_str()));
+			delete qimage;
+
+			throw Exception(e.what(), __FILE__, __LINE__);
 		}
 	}
 

@@ -1,4 +1,4 @@
-REQUIRED_FORMAT:fmt( inputBilateral )
+REQUIRED_FORMAT:fmt( inputBilateral, *, *, *, *, GL_LINEAR, GL_LINEAR )
 
 INCLUDE_FILE(maths.ppl)
 
