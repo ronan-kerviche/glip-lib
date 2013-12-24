@@ -628,7 +628,8 @@
 		okButton("OK"),
 		applyButton("Apply"),
 		cancelButton("Cancel"),
-		resetButton("Reset")
+		resetButton("Reset"),
+		defaultFontSize( fontInfo().pointSize() )
 	{
 		frame.titleBar().setWindowTitle("Editor Settings");
 
@@ -727,7 +728,7 @@
 			if(e.arguments.size()==1)
 			{
 				if( !from_string(e.arguments.back(), pointSize) )
-					pointSize = 11;
+					pointSize = defaultFontSize;
 			}
 			else
 				test = false;
@@ -1061,10 +1062,10 @@
 		// Fonts : 
 		QFontDatabase db;
 
-		editorFont = db.font("Source Code Pro", "Regular", 11);
+		editorFont = db.font("Source Code Pro", "Regular", defaultFontSize);
 		editorFont.setFixedPitch(true);
 
-		keywordFont = db.font("Source Code Pro", "Bold", 11);
+		keywordFont = db.font("Source Code Pro", "Bold", defaultFontSize);
 		editorFont.setFixedPitch(true);
 
 		// Set the tabulation length :

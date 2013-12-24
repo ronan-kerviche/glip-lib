@@ -60,7 +60,11 @@
 	}
 
 // Special function, for redirection of qDebug, qCritical, etc. to a file : 
+#if QT_VERSION >= 0x050000
+	void customMessageHandler(QtMsgType type, const QMessageLogContext& context, const char *msg)
+#else
 	void customMessageHandler(QtMsgType type, const char *msg)
+#endif
 	{
 		QDateTime dateTime = QDateTime::currentDateTime();
 		
@@ -99,7 +103,11 @@
 	 : QApplication(argc, argv), settingsManager(NULL), mainWindow(NULL)
 	{
 		// Set the redirections of logs : 
-		qInstallMsgHandler(customMessageHandler);
+		#if QT_VERSION >= 0x050000
+			qInstallMessageHandler(reinterpret_cast<QtMessageHandler>(customMessageHandler));
+		#else
+			qInstallMsgHandler(customMessageHandler);
+		#endif
 
 		// Load fonts : 
 		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");

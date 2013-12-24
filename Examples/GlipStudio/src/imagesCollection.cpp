@@ -963,7 +963,8 @@
 
 // ImagesCollection
 	std::vector<ImagesCollection*> ImagesCollection::collectionsList;
-	size_t ImagesCollection::maxDeviceOccupancy = 805306368; //768MB
+	size_t ImagesCollection::maxDeviceOccupancy = 	805306368; // 768 MB
+							//68719476736; //64 GB
 
 	ImagesCollection::ImagesCollection(const std::string& moduleName, QWidget* parent)
 	 : 	TexturesList(parent),
@@ -1362,7 +1363,7 @@
 
 		void ImagesCollection::openSettingsMenu(void)
 		{
-			MemoryUsageDialog dialogBox( totalDeviceOccupancy()/1048516, maxDeviceOccupancy/1048516, 800, this);
+			MemoryUsageDialog dialogBox( totalDeviceOccupancy()/1048516, maxDeviceOccupancy/1048516, 8192, this);
 
 			if(dialogBox.exec()==QDialog::Accepted)
 				maxDeviceOccupancy = static_cast<size_t>(dialogBox.getMaxUsageMB())*1048516;

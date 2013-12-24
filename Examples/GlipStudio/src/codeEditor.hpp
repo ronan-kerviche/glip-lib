@@ -133,6 +133,7 @@
 			static const std::string	moduleName;
 
 			// Data : 
+			const int		defaultFontSize;
 			QColor 			glslKeywordColor,
 						glslFunctionColor,
 						glipLayoutLoaderKeywordColor,

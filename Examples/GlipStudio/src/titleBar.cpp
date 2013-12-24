@@ -192,15 +192,6 @@
 		layout.addWidget(contentWidget);
 		layout.setMargin(2);
 		layout.setSpacing(0);
-
-		#if QT_VERSION >= 0x040500
-			#ifdef Q_WS_X11
-				if(x11Info().isCompositingManagerRunning())
-					setAttribute(Qt::WA_TranslucentBackground);
-			#else
-				setAttribute(Qt::WA_TranslucentBackground);
-			#endif
-		#endif
 	}
 
 	WindowFrame::~WindowFrame(void)
@@ -409,6 +400,7 @@
 	void Window::show(void)
 	{
 		frame.show();
+		frame.raise();
 	}
 
 	void Window::hide(void)
