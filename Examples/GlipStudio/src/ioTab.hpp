@@ -4,7 +4,6 @@
 	#include <QLineEdit>
 	#include "dataModules.hpp"
 	#include "imagesCollection.hpp"
-	#include "resourcesTab.hpp"
 
 	class IOTab : public Module 
 	{

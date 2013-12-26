@@ -1302,9 +1302,7 @@
 
 			if(message.clickedButton() == saveButton)
 			{
-				//saveData();
-				QString filename = openSaveInterface.saveAsDialog();
-				saveData(filename);
+				saveData();
 				return true;
 			}
 			else if(message.clickedButton() == storeToMainLibButton)
@@ -1404,7 +1402,14 @@
 
 	void UniformsTab::saveData(void)
 	{
-		saveData(lastSaveFilename);
+		if(!lastSaveFilename.isEmpty())
+			saveData(lastSaveFilename);
+		else
+		{
+			QString filename = openSaveInterface.saveAsDialog();
+
+			saveData(filename);
+		}
 	}
 
 	void UniformsTab::saveData(const QString& filename)

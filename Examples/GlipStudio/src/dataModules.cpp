@@ -273,7 +273,7 @@
 		QObject::connect( &display.sceneWidget(),	SIGNAL(mouseDataUpdated(const GLSceneWidget::MouseData&)),	m, 	SLOT(mouseParametersWereUpdated(const GLSceneWidget::MouseData&)));
 
 		// Connect the inputs :
-		QObject::connect( m, 		SIGNAL(pipelineUniformModification()),				this, 	SLOT(pipelineUniformModification()) );
+		QObject::connect( m, 				SIGNAL(pipelineUniformModification()),				this, 	SLOT(pipelineUniformModification()) );
 	}
 
 	void ControlModule::removeClient(Module* m)

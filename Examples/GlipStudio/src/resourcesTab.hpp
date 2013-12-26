@@ -31,7 +31,7 @@
 
 		private : 
 			QList<QString>		portsNames;
-			QList<QAction *>	currentActions;
+			QList<QAction*>		currentActions;
 			QSignalMapper		mapper;
 
 		public : 
@@ -40,7 +40,7 @@
 
 			void activate(bool state, int numConnections=1);
 			void update(void);
-			void update(const __ReadOnly_PipelineLayout& layout);			
+			void update(const __ReadOnly_PipelineLayout& layout);
 
 		signals :
 			void connectToInput(int i);

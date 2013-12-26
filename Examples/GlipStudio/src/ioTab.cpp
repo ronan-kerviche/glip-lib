@@ -262,9 +262,9 @@
 				for(int k=0; k<recordIDs.size(); k++)
 				{
 					int inputPortID 	= getInputPortIDFromRecordID(recordIDs[k]);
-					testAllInput		= (inputPortID>=0);
+					testAllInput		= testAllInput && (inputPortID>=0);
 					testOneInputValid	= testOneInputValid || isInputValid(inputPortID);
-					testAllOutput 		= (getOutputPortIDFromRecordID(recordIDs[k])>=0);
+					testAllOutput 		= testAllOutput && (getOutputPortIDFromRecordID(recordIDs[k])>=0);
 				}
 
 				releaseInputAction.setEnabled(testAllInput && testOneInputValid);
