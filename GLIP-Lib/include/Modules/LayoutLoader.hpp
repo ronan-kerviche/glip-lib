@@ -130,7 +130,7 @@ Examples : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>(<i>string filename</i>)
 
 - Filter layout :
-<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>])
+<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>, <i>geometry_name</i>])
 
 - Pipeline layout : <BR>
 <b>PIPELINE_LAYOUT</b>:<i>pipeline_layout_name</i> <BR>
@@ -290,7 +290,7 @@ Loading Example :
 											/// Names of the modules called by the script.
 											modulesCalls,		
 											/// Names of the formats contained in the script.
-											formatsLayout,		
+											formats,		
 											/// Names of the shader source code contained in the script.
 											shaderSources,		
 											/// Names of the geometries contained in the script.

@@ -68,12 +68,16 @@
 		private : 
 			bool		firstModification,
 					documentModified,
+					documentModifiedTrigger,
 					highlightLine;
 			QString 	currentFilename;
 			QFont		font;
 			Highlighter 	*highLighter;
 			QWidget 	*lineNumberArea;
+			QList<QMenu*>	subMenus;
 
+			void 		contextMenuEvent(QContextMenuEvent* event);
+	
 		protected :
 			void resizeEvent(QResizeEvent *event);
 			void keyPressEvent(QKeyEvent* e);
@@ -94,14 +98,17 @@
 			bool empty(void) const;
 			const QString& filename(void) const;
 			QString path(void) const;
+			QString getRawTitle(void) const;
 			QString getTitle(void) const;
 			std::string currentContent(void) const;
 			bool isModified(void) const;
+			bool isModifiedTrigger(void);
 			bool canBeClosed(void);
 			void setFilename(const QString& newFilename);
 			bool load(void);
 			bool save(void);
 			void insert(const QString& text);
+			void addSubMenu(QMenu* menu);
 
 			void lineNumberAreaPaintEvent(QPaintEvent *event);
 

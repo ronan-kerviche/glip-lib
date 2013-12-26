@@ -210,6 +210,14 @@
 			throw Exception("Module::pipeline - No pipeline defined.", __FILE__, __LINE__);
 	}
 
+	LayoutLoader::PipelineScriptElements Module::scan(const std::string& code)
+	{
+		if(masterModule==NULL)
+			throw Exception("Module::scan - No connection to Main Module available (internal error).", __FILE__, __LINE__);
+		else
+			return masterModule->scan(code);
+	}
+
 	void Module::pipelineWasCreated(void)						{}
 	void Module::pipelineCompilationFailed(const Exception& e)			{}
 	void Module::pipelineWasComputed(void)						{}
@@ -408,6 +416,11 @@
 	const LayoutLoader& ControlModule::loader(void) const
 	{
 		return pipelineLoader;
+	}
+
+	LayoutLoader::PipelineScriptElements ControlModule::scan(const std::string& code)
+	{
+		return pipelineLoader.listElements(code);
 	}
 
 	bool ControlModule::pipelineCompilation(void)

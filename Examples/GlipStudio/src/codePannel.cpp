@@ -177,6 +177,7 @@
 										"Filter layout", 
 										"Pipeline layout", 
 										"Main pipeline layout",
+										"Main pipeline indirection",
 										"Input ports", 
 										"Output ports", 
 										"Filter instance",
@@ -203,6 +204,7 @@
 										"FILTER_LAYOUT: ( , )\n",
 										"PIPELINE_LAYOUT: \n{\n\t\n}\n",
 										"PIPELINE_MAIN: \n{\n\t\n}\n",
+										"PIPELINE_MAIN: ()\n",
 										"INPUT_PORTS( )\n",
 										"OUTPUT_PORTS( )\n",
 										"FILTER_INSTANCE: ( )\n",
@@ -229,6 +231,7 @@
 										"FILTER_LAYOUT: /* name */ ( /* output texture format name */, /* shader name */)\n",
 										"PIPELINE_LAYOUT: /* name */\n{\n\t/* structure code */\n}\n",
 										"PIPELINE_MAIN: /* name */\n{\n\t/* structure code */\n}\n",
+										"PIPELINE_MAIN: /* name */ ( /* other pipeline name */ )\n",
 										"INPUT_PORTS( /* ports names list */ )\n",
 										"OUTPUT_PORTS( /* ports names list */ )\n",
 										"FILTER_INSTANCE: /* instance name */ ( /* filter layout name */ )\n",
@@ -292,6 +295,154 @@
 		}
 	}
 
+// ElementsMenu
+	ElementsMenu::ElementsMenu(QWidget* parent)
+	 : QMenu("Elements", parent), timer(this)
+	{
+		updateMenu();
+
+		connect(&timer, SIGNAL(timeout()), this, SIGNAL(updateElements()));
+
+		timer.setInterval(15 * 1000);
+		timer.start();
+	}
+
+	ElementsMenu::~ElementsMenu(void)
+	{
+		clear();
+	}
+
+	void ElementsMenu::insertCalled(void)
+	{
+		QAction* sender = reinterpret_cast<QAction*>( QObject::sender() );
+
+		emit insertElement(sender->toolTip());
+	}
+
+	void ElementsMenu::updateMenu(void)
+	{
+		if(menus.empty())
+		{
+			clear();
+			addAction("No elements")->setEnabled(false);
+		}		
+		else
+		{
+			QList<QAction*> actionsList = actions();
+			for(int k=0; k<actionsList.count(); k++)
+				removeAction( actionsList[k] );
+
+			for(std::map<CodeEditor*, QMenu*>::iterator it=menus.begin(); it!=menus.end(); it++)
+				addMenu(it->second);
+		}
+	}
+	
+	void ElementsMenu::scan(CodeEditor* editor, LayoutLoader::PipelineScriptElements& elements)
+	{
+		std::map<CodeEditor*, QMenu*>::iterator it = menus.find(editor);
+
+		if(!editor->empty())
+		{
+			QMenu* menu = new QMenu(editor->getTitle());
+
+			menu->addAction(tr("Include %1").arg(editor->getRawTitle()), this, SLOT(insertCalled()))->setToolTip(tr("INCLUDE_FILE(%1)\n").arg(editor->getRawTitle()));
+
+			if(!editor->path().isEmpty())
+				menu->addAction(tr("Add path..."), this, SLOT(insertCalled()))->setToolTip(tr("ADD_PATH(%1)\n").arg(editor->path()));
+
+			// Load : 
+				#define MAKE_LIST( listName, name ) \
+					if(!elements. listName .empty()) \
+					{ \
+						QMenu* tmp = menu->addMenu(tr( name " (%1)").arg(elements. listName .size())); \
+						\
+						for(int k=0; k<elements. listName .size(); k++) \
+							tmp->addAction(elements. listName [k].c_str(), this, SLOT(insertCalled()))->setToolTip(elements. listName [k].c_str()); \
+	 				}
+
+				MAKE_LIST( requiredFormats, 	"Required Formats" );
+				MAKE_LIST( requiredGeometries,	"Required Geometries" );
+				MAKE_LIST( requiredPipelines,	"Required Pipelines" );
+				MAKE_LIST( formats,		"Formats" );
+				MAKE_LIST( shaderSources,	"Shader Sources" );
+				MAKE_LIST( geometries,		"Geometries" );
+				MAKE_LIST( filtersLayout,	"Filter Layouts");
+
+				#undef MAKE_LIST
+
+				// Pipelines : 
+				if(!elements.pipelines.empty())
+				{
+					QMenu* tmp = menu->addMenu(tr("Pipelines (%1)").arg(elements.pipelines.size()));
+
+					for(int k=0; k<elements.pipelines.size(); k++)
+					{
+						tmp->addAction(elements.pipelines[k].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelines[k].c_str());
+
+						QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineInputs[k].size()));
+
+						for(int ki=0; ki<elements.pipelineInputs[k].size(); ki++)
+							i->addAction(elements.pipelineInputs[k][ki].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelineInputs[k][ki].c_str());
+
+						QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineOutputs[k].size()));
+
+						for(int ko=0; ko<elements.pipelineOutputs[k].size(); ko++)
+							o->addAction(elements.pipelineOutputs[k][ko].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelineOutputs[k][ko].c_str());
+					}
+				}
+
+				if(!elements.mainPipeline.empty())
+				{
+					QMenu* tmp = menu->addMenu("Main Pipeline");
+
+					tmp->addAction(elements.mainPipeline.c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipeline.c_str());
+
+					QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineInputs.size()));
+
+					for(int ki=0; ki<elements.mainPipelineInputs.size(); ki++)
+						i->addAction(elements.mainPipelineInputs[ki].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipelineInputs[ki].c_str());
+
+					QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineOutputs.size()));
+
+					for(int ko=0; ko<elements.mainPipelineOutputs.size(); ko++)
+						o->addAction(elements.mainPipelineOutputs[ko].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipelineOutputs[ko].c_str());
+				}
+
+			// Test and update : 
+			if(menu->actions().isEmpty())
+			{
+				// clear : 
+				remove(editor);
+
+				// clean : 
+				delete menu;
+			}
+			else if(it!=menus.end())
+			{
+				removeAction(it->second->menuAction());
+				delete it->second;
+
+				it->second = menu;
+			}
+			else
+				menus[editor] = menu;
+
+			updateMenu();
+		}
+	}
+
+	void ElementsMenu::remove(CodeEditor* editor)
+	{
+		std::map<CodeEditor*, QMenu*>::iterator it = menus.find(editor);
+
+		if(it!=menus.end())
+		{
+			removeAction(it->second->menuAction());
+			delete it->second;
+			menus.erase(it);
+		}
+	}
+
 // CodeEditorsPannel
 	CodeEditorsPannel::CodeEditorsPannel(ControlModule& _masterModule, QWidget* parent)
 	 : 	Module(_masterModule, parent), 
@@ -300,6 +451,7 @@
 		fileMenu("File", this), 
 		openSaveInterface("CodePannel", "File", "*.ppl *.glsl *.ext *.uvd *.txt"),
 		templateMenu(this), 
+		elementsMenu(this),
 	  	newTabAction(tr("&New tab"), this),
 		saveAllAction("Save all", this),
 		refreshAction("Compile", this),
@@ -321,6 +473,8 @@
 		connect(&saveAllAction, 		SIGNAL(triggered()), 			this, SLOT(saveAll()));
 		connect(&closeAllAction, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
 		connect(&templateMenu, 			SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
+		connect(&elementsMenu,			SIGNAL(updateElements()),		this, SLOT(updateElements()));
+		connect(&elementsMenu,			SIGNAL(insertElement(const QString&)),	this, SLOT(insertElement(const QString&)));
 
 		QKeySequence qs(Qt::CTRL + Qt::Key_R);
 		refreshAction.setShortcut(qs);
@@ -351,6 +505,7 @@
 	
 		menuBar.addMenu(&fileMenu);
 		menuBar.addMenu(&templateMenu);
+		menuBar.addMenu(&elementsMenu);
 		menuBar.addAction(&refreshAction);
 		menuBar.addAction(&showPathWidgetAction);
 		menuBar.addAction(&showEditorSettingsAction);
@@ -379,6 +534,8 @@
 	void CodeEditorsPannel::newTab(void)
 	{
 		CodeEditor* newEditor = new CodeEditor(this);
+		newEditor->addSubMenu(&templateMenu);
+		newEditor->addSubMenu(&elementsMenu);
 		widgets.addTab(newEditor, newEditor->getTitle());
 		widgets.setCurrentWidget( newEditor );
 		widgets.setCurrentTabTextColor( QColor("#BBBBBB") );
@@ -487,6 +644,7 @@
 
 			if(e->canBeClosed())
 			{
+				elementsMenu.remove(e);
 				widgets.removeTab(widgets.indexOf(e));
 				delete e;
 			}
@@ -509,16 +667,6 @@
 
 	void CodeEditorsPannel::switchPathWidget(void)
 	{
-		/*if(pathWidget.isVisible())
-		{
-			pathWidget.hide();
-			showPathWidgetAction.setText("Paths");			
-		}
-		else
-		{
-			pathWidget.show();
-			showPathWidgetAction.setText("Hide paths");
-		}*/
 		pathWidget.show();
 	}
 
@@ -563,6 +711,27 @@
 			openSaveInterface.enableSave(false);
 			saveAllAction.setEnabled(false);
 		}	
+	}
+
+	void CodeEditorsPannel::updateElements(void)
+	{
+		for(int k=0; k<widgets.count(); k++)
+		{
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
+
+			if(e->isModifiedTrigger())
+				updateElementsOfEditor(e);
+		}
+	}
+
+	void CodeEditorsPannel::insertElement(const QString& element)
+	{
+		if(widgets.count() > 0)
+		{
+			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
+
+			e->insert( element );
+		}
 	}
 
 	std::string CodeEditorsPannel::getCurrentFilename(void)
@@ -665,6 +834,9 @@
 				openSaveInterface.reportSuccessfulLoad( filename );
 				openSaveInterface.enableSave(true);
 				updateCurrentToolTip();
+
+				// Scan : 
+				updateElementsOfEditor(e);
 			}
 		}
 	}
@@ -683,5 +855,19 @@
 		editorSettings.close();
 
 		QWidget::close();
+	}
+
+	void CodeEditorsPannel::updateElementsOfEditor(CodeEditor* e)
+	{
+		try
+		{
+			LayoutLoader::PipelineScriptElements elements = scan(e->currentContent() + "\n");
+
+			elementsMenu.scan(e, elements);
+		}
+		catch(Exception& err)
+		{
+			elementsMenu.remove(e);
+		}
 	}
 

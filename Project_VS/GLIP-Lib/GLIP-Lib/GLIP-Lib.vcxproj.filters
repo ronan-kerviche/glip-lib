@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\..\GLIP-Lib\include\devDebugTools.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,6 +63,9 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlVBO.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\LibTools.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\OglInclude.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -84,7 +84,13 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT2D.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ImageBuffer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoaderModules.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\Modules.hpp">
@@ -104,6 +110,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\glew.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,9 +126,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Geometry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\glew.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlFBO.cpp">
@@ -158,7 +164,13 @@
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ImageBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoaderModules.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ProceduralInput.cpp">

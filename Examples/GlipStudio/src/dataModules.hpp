@@ -84,6 +84,7 @@
 			const std::string& getPipelineCode(void) const;
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
+			LayoutLoader::PipelineScriptElements scan(const std::string& code);		
 
 		protected slots :
 			// These will be called upon external modifications, in order for the module to update itself :
@@ -152,6 +153,7 @@
 			const Pipeline& pipeline(void) const;
 			Pipeline& pipeline(void);
 			const LayoutLoader& loader(void) const;
+			LayoutLoader::PipelineScriptElements scan(const std::string& code);
 		
 			// Distribution of the requirements : 
 			bool requirePipelineCreation(const std::string& code);

@@ -1,5 +1,4 @@
 // Histogram pipeline.
-
 REQUIRED_FORMAT:inputFormat(inputTexture)
 
 //TEXTURE_FORMAT:histogramBinsFormat(255,1,GL_RGB32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)		// Histograms bins, here, you can replace 255 by 4095 or more for deeper images.

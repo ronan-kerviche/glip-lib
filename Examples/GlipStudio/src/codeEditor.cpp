@@ -192,6 +192,7 @@
 		currentFilename(""),
 		firstModification(true),
 		documentModified(false),
+		documentModifiedTrigger(false),
 		highlightLine(false),
 		highLighter(NULL)
 	{
@@ -229,6 +230,19 @@
 		delete tmp2;
 	}
 
+	void CodeEditor::contextMenuEvent(QContextMenuEvent* event)
+	{
+		QMenu *menu = createStandardContextMenu();
+		
+		menu->addSeparator();
+
+		for(int k=0; k<subMenus.count(); k++)
+			menu->addMenu(subMenus[k]);
+
+		menu->exec(event->globalPos());
+		delete menu;
+	}
+
 	int CodeEditor::lineNumberAreaWidth(void) const
 	{
 		int digits = std::floor( std::log10( qMax(1, blockCount()) ) ) + 1;
@@ -262,10 +276,15 @@
 	{
 		if(firstModification)
 			firstModification = false;
-		else if(!documentModified)
+		else
 		{
-			documentModified = true;
-			emit titleChanged();
+			documentModifiedTrigger = true;
+
+			if(!documentModified)
+			{
+				documentModified = true;
+				emit titleChanged();
+			}
 		}
 	}
 
@@ -469,6 +488,16 @@
 		}
 	}
 
+	QString CodeEditor::getRawTitle(void) const
+	{
+		QFileInfo path(filename());
+
+		if(path.exists())
+			return path.fileName();
+		else
+			return "<Unnamed>";
+	}
+
 	QString CodeEditor::getTitle(void) const
 	{
 		QFileInfo path(filename());
@@ -493,6 +522,17 @@
 	bool CodeEditor::isModified(void) const
 	{
 		return documentModified;
+	}
+
+	bool CodeEditor::isModifiedTrigger(void)
+	{
+		if(documentModifiedTrigger)
+		{
+			documentModifiedTrigger = false;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	bool CodeEditor::canBeClosed(void)
@@ -594,6 +634,11 @@
 	void CodeEditor::insert(const QString& text)
 	{
 		textCursor().insertText(text);
+	}
+
+	void CodeEditor::addSubMenu(QMenu* menu)
+	{
+		subMenus.append(menu);
 	}
 
 // LineNumberArea 
@@ -760,7 +805,7 @@
 			if(e.arguments.size()==1)
 			{
 				if( !from_string(e.arguments.back(), pointSize) )
-					pointSize = 11;
+					pointSize = defaultFontSize;
 			}
 			else
 				test = false;

@@ -1784,7 +1784,7 @@
 					case KW_LL_REQUIRED_FORMAT :
 						preliminaryTests(rootParser.elements[k], 1, 1, 10, -1, "RequiredFormat");
 						result.requiredFormats.push_back( rootParser.elements[k].arguments[0] );
-						result.formatsLayout.push_back( rootParser.elements[k].name );
+						result.formats.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_REQUIRED_GEOMETRY :
 						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredGeometry"); 
@@ -1794,7 +1794,7 @@
 					case KW_LL_REQUIRED_PIPELINE :
 						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredPipeline");
 						result.requiredPipelines.push_back( rootParser.elements[k].arguments[0] );
-						// WARNING, THE REQUIRED PIPELINE ARE NOT LISTED BECAUSE WE CAN'T KNOW THEIR INPUTS/OUTPUTS AHEAD OF TIME.
+						// WARNING, THE REQUIRED PIPELINE I/O ARE NOT LISTED BECAUSE WE CAN'T KNOW THEM AHEAD OF TIME.
 						break;
 					case KW_LL_MODULE_CALL :
 						preliminaryTests(rootParser.elements[k], 1, -1, -1, 0, "ModuleCall");
@@ -1802,7 +1802,7 @@
 						break;
 					case KW_LL_FORMAT_LAYOUT :
 						preliminaryTests(rootParser.elements[k], 1, 4, 9, -1, "Format"); 
-						result.formatsLayout.push_back( rootParser.elements[k].name );
+						result.formats.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_SHADER_SOURCE :
 						preliminaryTests(rootParser.elements[k], 1, 0, 1, 0, "ShaderSource");

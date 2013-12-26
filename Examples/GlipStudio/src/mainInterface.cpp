@@ -8,6 +8,8 @@
 	using namespace Glip::Modules;
 
 // MainWindow
+	const std::string MainWindow::moduleName = "MainWindow";
+
 	MainWindow::MainWindow(void)
 	 : frame(this), codeEditors(*this, this), libraryInterface(*this, this)
 	{
@@ -29,14 +31,82 @@
 		setCentralWidget(&mainSplitter);
 
 		frame.titleBar().setWindowTitle("GlipStudio");
-		frame.resize(1280,720);
-		frame.setMinimumWidth(512);
-		frame.setMinimumHeight(512);
+
+		// Load layout data : 
+		SettingsManager settings;
+		Element e;
+
+		e = settings.getModuleData(moduleName, "MainLayout");
+		bool test = false;
+
+		if(!e.arguments.empty())
+		{
+			test = true;
+
+			std::vector<int> tmp(e.arguments.size(), 0);
+			
+			for(int k=0; k<e.arguments.size() && test; k++)
+				test = test && from_string(e.arguments[k], tmp[k]);
+
+			if(test)
+			{
+				const int offset = 4;
+				frame.setGeometry( QRect(tmp[0], tmp[1], tmp[2], tmp[3]) );
+						
+
+				QList<int> sizesMain, sizesSecondary;
+				
+				sizesMain = mainSplitter.sizes();
+
+				for(int k=0; k<sizesMain.count() && offset+k<tmp.size(); k++)
+					sizesMain[k] = tmp[offset + k];
+
+				mainSplitter.setSizes(sizesMain);
+				
+				sizesSecondary = secondarySplitter.sizes();
+					
+				for(int k=0; k<sizesSecondary.count() && offset+sizesMain.count()+k<tmp.size(); k++)
+					sizesSecondary[k] = tmp[offset + sizesMain.count() + k];
+
+				secondarySplitter.setSizes(sizesSecondary);
+			}
+		}
+		
+		if(!test)
+		{		
+			frame.resize(1280,720);
+			frame.setMinimumWidth(512);
+			frame.setMinimumHeight(512);
+		}
+
 		frame.show();
 	}
 
 	MainWindow::~MainWindow(void)
 	{
+		// Save layout data : 
+		SettingsManager settings;
+		Element e;
+
+		e = settings.getModuleData(moduleName, "MainLayout");
+		e.arguments.clear();
+		e.arguments.push_back( to_string(frame.geometry().x()) );
+		e.arguments.push_back( to_string(frame.geometry().y()) );
+		e.arguments.push_back( to_string(frame.geometry().width()) );
+		e.arguments.push_back( to_string(frame.geometry().height()) );
+		
+		QList<int> sizes = mainSplitter.sizes();
+
+		for(int k=0; k<sizes.count(); k++)
+			e.arguments.push_back( to_string(sizes[k]) );
+
+		sizes = secondarySplitter.sizes();
+
+		for(int k=0; k<sizes.count(); k++)
+			e.arguments.push_back( to_string(sizes[k]) );
+
+		settings.setModuleData(moduleName, "MainLayout", e);
+
 		// Safe reparenting, we do not want the OpenGL context to be deleted upon deletion of the interface as some ressources can still be handled by higher managers.
 		// Reparting prevent secondarySplitter from deleting its child &display.
 		display.setParent(NULL);

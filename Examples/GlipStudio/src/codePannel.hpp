@@ -57,6 +57,7 @@
 				tplFilterLayout,
 				tplPipelineLayout,
 				tplMainPipelineLayout,
+				tplMainPipelineLayoutIndirection,
 				tplInputPorts, 
 				tplOutputPorts,
 				tplFilterInstance,
@@ -90,6 +91,31 @@
 			void insertTemplate(void);
 	};
 
+	class ElementsMenu : public QMenu
+	{
+		Q_OBJECT
+		
+		private : 
+			QTimer 				timer;
+			std::map<CodeEditor*, QMenu*>	menus;
+			
+			void updateMenu(void);
+
+		private slots :
+			void insertCalled(void);
+
+		public : 
+			ElementsMenu(QWidget* parent=NULL);
+			~ElementsMenu(void);
+
+			void scan(CodeEditor* editor, LayoutLoader::PipelineScriptElements& elements);
+			void remove(CodeEditor* editor);
+
+		signals :
+			void updateElements(void);
+			void insertElement(const QString& element);
+	};
+
 	class CodeEditorsPannel : public Module
 	{
 		Q_OBJECT
@@ -101,6 +127,7 @@
 			QMenu			fileMenu;
 			OpenSaveInterface	openSaveInterface;
 			TemplateMenu		templateMenu;
+			ElementsMenu		elementsMenu;
 			QAction 		newTabAction,
 						saveAllAction,
 						refreshAction,
@@ -119,7 +146,8 @@
 			const std::vector<std::string>& getPaths(void);
 			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
 			void closeEvent(QEvent* event);
-
+			void updateElementsOfEditor(CodeEditor* e);
+			
 		private slots : 	
 			void newTab(void);
 			void open(const QStringList& filenames);
@@ -136,6 +164,8 @@
 			void showEditorSettings(void);
 			void aboutMessage(void);
 			void tabChanged(int c);
+			void updateElements(void);
+			void insertElement(const QString& element);
 
 		public :
 			CodeEditorsPannel(ControlModule& _masterModule, QWidget* parent);

@@ -28,6 +28,7 @@
 			QLabel		titleLabel,
 					blankLabel;
 			QHBoxLayout	layout;
+			QRect		nonMaximizedGeometry;
 
 		private slots :
 			void showSmall(void);

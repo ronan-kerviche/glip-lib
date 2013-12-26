@@ -25,6 +25,8 @@
 		Q_OBJECT
 
 		private : 
+			static const std::string moduleName;
+
 			WindowFrame		frame;
 			QSplitter		mainSplitter;
 			QWidget			container;

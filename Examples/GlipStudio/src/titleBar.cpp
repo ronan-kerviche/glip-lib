@@ -75,14 +75,37 @@
 
 	void TitleBar::showMaxRestore(void)
 	{
+		const QDesktopWidget *desktop = QApplication::desktop();
+
 		if(maximized)
 		{
-			parentWidget()->showNormal();
+			//parentWidget()->showNormal();
+
+			if( nonMaximizedGeometry.width() * nonMaximizedGeometry.height() >= 0.81f * desktop->availableGeometry().width() * desktop->availableGeometry().height() )
+			{
+				nonMaximizedGeometry.setX( 	desktop->availableGeometry().x() + desktop->availableGeometry().width() * 0.05f );
+				nonMaximizedGeometry.setY( 	desktop->availableGeometry().y() + desktop->availableGeometry().height() * 0.05f );
+				nonMaximizedGeometry.setWidth(	desktop->availableGeometry().width() * 0.9f );
+				nonMaximizedGeometry.setHeight(	desktop->availableGeometry().height() * 0.9f );
+			}
+
+			// Reuse geometry : 
+			parentWidget()->setGeometry(nonMaximizedGeometry);
+
 			maximized = false;
 		}
 		else
 		{
-			parentWidget()->showMaximized();
+			//parentWidget()->showMaximized();	// Not working on Windows, where it also covers the task bar.
+			// See http://stackoverflow.com/questions/2641193/qt-win-showmaximized-overlapping-taskbar-on-a-frameless-window
+
+			// Save geometry : 
+			nonMaximizedGeometry = parentWidget()->geometry();
+
+			// Because reserved space can be on all sides of the scren
+			// you have to both move and resize the window
+			parentWidget()->setGeometry(desktop->availableGeometry());
+
 			maximized = true;
 		}
 	}
@@ -91,19 +114,17 @@
 	{
 		if(event->buttons() & Qt::LeftButton)
 		{
-			startPos = event->globalPos();
+			//startPos = event->globalPos();
 			clickPos = mapToParent(event->pos());
 		}
 	}
 
 	void TitleBar::mouseMoveEvent(QMouseEvent* event)
 	{
-		if((event->buttons() & Qt::LeftButton) && parentWidget()!=NULL)
+		if((event->buttons()==Qt::LeftButton) && parentWidget()!=NULL)
 		{
-			if(maximized)
-				showMaxRestore();
-
-			parentWidget()->move(event->globalPos() - clickPos);
+			if(!maximized)
+				parentWidget()->move(event->globalPos() - clickPos);
 		}
 	}
 
@@ -132,7 +153,7 @@
 
 	bool TitleBar::isResizable(void) const
 	{
-		return resizable;
+		return resizable && !isMaximized();
 	}
 
 	bool TitleBar::isMinimizable(void) const
@@ -271,10 +292,12 @@
 
 	void WindowFrame::mouseMoveEvent(QMouseEvent *event)
 	{
-		int x = event->x();
-		int y = event->y();
+		const QDesktopWidget *desktop = QApplication::desktop();
 
-		if(mouseDown && titleBar().isResizable())
+		const int 	x = event->x(),
+				y = event->y();
+
+		if(mouseDown && titleBar().isResizable() && desktop->availableGeometry().contains(event->globalPos(), true) )
 		{
 			int dx = x - oldPos.x();
 			int dy = y - oldPos.y();
@@ -297,7 +320,7 @@
 		}
 		else if(titleBar().isResizable())
 		{
-			const int border = 1;
+			const int border = 0;
 
 			QRect 	r		= rect();
 				moveLeft	= qAbs(x - r.left()) 	<= border;
