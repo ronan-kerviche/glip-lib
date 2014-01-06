@@ -42,6 +42,7 @@ using namespace Glip::CoreGL;
 	HdlShader::HdlShader(GLenum _type, const ShaderSource& src)
 	 : ShaderSource(src)
 	{
+		NEED_EXTENSION(GLEW_VERSION_2_0)
 		NEED_EXTENSION(GLEW_ARB_vertex_shader)
 		NEED_EXTENSION(GLEW_ARB_fragment_shader)
 		NEED_EXTENSION(GLEW_ARB_shader_objects)
