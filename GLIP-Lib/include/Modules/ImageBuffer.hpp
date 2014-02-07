@@ -76,9 +76,9 @@ namespace Glip
 				const ImageBuffer& operator<<(HdlTexture& texture);
 				const ImageBuffer& operator<<(const ImageBuffer& image);
 				const ImageBuffer& operator<<(const void* bytes);
-				const ImageBuffer& operator>>(HdlTexture& texture);
-				const ImageBuffer& operator>>(ImageBuffer& image);
-				const ImageBuffer& operator>>(void* bytes);
+				const ImageBuffer& operator>>(HdlTexture& texture) const;
+				const ImageBuffer& operator>>(ImageBuffer& image) const;
+				const ImageBuffer& operator>>(void* bytes) const;
 
 				template<typename T>
 				T* reinterpret(unsigned int x, unsigned int y, GLenum channel);

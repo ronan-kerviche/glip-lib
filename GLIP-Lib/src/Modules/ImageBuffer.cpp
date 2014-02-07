@@ -264,12 +264,12 @@
 	}
 
 	/**
-	\fn const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture)
+	\fn const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture) const
 	\brief Write buffer to a texture and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param texture The texture to be written.
 	\return This.
 	**/
-	const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture)
+	const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture) const
 	{
 		if(!isCompatibleWith(texture))
 			throw Exception("ImageBuffer::operator>> - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
@@ -308,12 +308,12 @@
 	}
 
 	/**
-	\fn const ImageBuffer& ImageBuffer::operator>>(ImageBuffer& image)
+	\fn const ImageBuffer& ImageBuffer::operator>>(ImageBuffer& image) const
 	\brief Copy a buffer and the following properties : minification and magnification filters, S and T wrapping modes.
 	\param image The buffer to be written.
 	\return This.
 	**/
-	const ImageBuffer& ImageBuffer::operator>>(ImageBuffer& image)
+	const ImageBuffer& ImageBuffer::operator>>(ImageBuffer& image) const
 	{
 		image << (*this);
 
@@ -321,12 +321,12 @@
 	}
 
 	/**
-	\fn const ImageBuffer& ImageBuffer::operator>>(void* bytes)
+	\fn const ImageBuffer& ImageBuffer::operator>>(void* bytes) const
 	\brief Copy an array.
 	\param bytes The buffer to copy (assumed to be of size __ReadOnly_HdlTextureFormat::getSize()).
 	\return This.
 	**/
-	const ImageBuffer& ImageBuffer::operator>>(void* bytes)
+	const ImageBuffer& ImageBuffer::operator>>(void* bytes) const
 	{
 		std::memcpy(bytes, buffer, getSize());
 
