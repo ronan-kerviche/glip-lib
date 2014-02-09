@@ -40,10 +40,10 @@
 											"GL_FLOAT_VEC2",
 											"GL_FLOAT_VEC3",
 											"GL_FLOAT_VEC4",
-											"GL_DOUBLE",
+											/*"GL_DOUBLE",
 											"GL_DOUBLE_VEC2",
 											"GL_DOUBLE_VEC3",
-											"GL_DOUBLE_VEC4",
+											"GL_DOUBLE_VEC4",*/
 											"GL_INT",
 											"GL_INT_VEC2",
 											"GL_INT_VEC3",
@@ -61,9 +61,11 @@
 											"GL_FLOAT_MAT4"
 										};
 
-// Nodes :
+// UniformsVarsLoader::Ressource :
 	UniformsVarsLoader::Ressource::Ressource(void)
-	 : type(GL_NONE), data(NULL)
+	 : 	name("Undefined"),
+		type(GL_NONE), 
+		data(NULL)
 	{ }
 
 	UniformsVarsLoader::Ressource::Ressource(const Ressource& cpy)
@@ -339,37 +341,119 @@
 		#undef GET_CODE
 	}
 
+	const std::string& UniformsVarsLoader::Ressource::getName(void) const
+	{
+		return name;
+	}
+
+	const GLenum& UniformsVarsLoader::Ressource::getType(void) const
+	{
+		return type;
+	}
+
+	double UniformsVarsLoader::Ressource::get(const int& i, const int& j) const				
+	{
+		#define GET_VALUE( glType, cType, nr, nc) \
+			if( type == glType ) \
+			{ \
+				if(i<0 || i>=nc || j<0 || j>=nr) \
+					throw Exception("Ressource::get - Parameter (" + to_string(i) + "," + to_string(j) + ") is out of bound. The container is \"" + glParamName(type) + "\".", __FILE__, __LINE__); \
+				cType* ptr = reinterpret_cast< cType* >(data); \
+				return static_cast<double>(ptr[j*nc + i]); \
+			}
+
+			GET_VALUE( GL_FLOAT, 			float, 		1,	1 )
+		else	GET_VALUE( GL_FLOAT_VEC2, 		float,		2,	1 )
+		else	GET_VALUE( GL_FLOAT_VEC3, 		float, 		3,	1 )
+		else	GET_VALUE( GL_FLOAT_VEC4,		float, 		4,	1 )
+		/*else	GET_VALUE( GL_DOUBLE,			double,		1,	1 )
+		else	GET_VALUE( GL_DOUBLE_VEC2,		double,		2,	1 )
+		else	GET_VALUE( GL_DOUBLE_VEC3,		double,		3,	1 )
+		else	GET_VALUE( GL_DOUBLE_VEC4,		double,		4,	1 )*/
+		else	GET_VALUE( GL_INT,			int,		1,	1 )
+		else	GET_VALUE( GL_INT_VEC2,			int,		2,	1 )
+		else	GET_VALUE( GL_INT_VEC3,			int,		3,	1 )
+		else	GET_VALUE( GL_INT_VEC4,			int,		4,	1 )
+		else	GET_VALUE( GL_UNSIGNED_INT,		unsigned int,	1,	1 )
+		else	GET_VALUE( GL_UNSIGNED_INT_VEC2,	unsigned int,	2,	1 )
+		else	GET_VALUE( GL_UNSIGNED_INT_VEC3,	unsigned int,	3,	1 )
+		else	GET_VALUE( GL_UNSIGNED_INT_VEC4,	unsigned int,	4,	1 )
+		else	GET_VALUE( GL_BOOL,			int,		1,	1 )
+		else	GET_VALUE( GL_BOOL_VEC2,		int,		2,	1 )
+		else	GET_VALUE( GL_BOOL_VEC3,		int,		3,	1 )
+		else	GET_VALUE( GL_BOOL_VEC4,		int,		4,	1 )
+		else	GET_VALUE( GL_FLOAT_MAT2,		float,		2,	2 )
+		else	GET_VALUE( GL_FLOAT_MAT3,		float,		3,	3 )
+		else	GET_VALUE( GL_FLOAT_MAT4,		float,		4,	4 )
+		else
+			throw Exception("Ressource::get - Unknown type \"" + glParamName(type) + "\" for element \"" + name + "\".", __FILE__, __LINE__);
+
+		#undef GET_VALUE
+	}
+
+// UniformsVarsLoader::RessourceNode
+	UniformsVarsLoader::RessourceNode::RessourceNode(void)
+	 : 	name("Undefined")
+	{ }
+
+	UniformsVarsLoader::RessourceNode::RessourceNode(const RessourceNode& cpy)
+	 : 	name(cpy.name)
+	{
+		for(std::vector<UniformsVarsLoader::RessourceNode*>::const_iterator it=cpy.subNodes.begin(); it!=cpy.subNodes.end(); it++)
+			subNodes.push_back( new UniformsVarsLoader::RessourceNode(*(*it)) );
+
+		for(std::vector<UniformsVarsLoader::Ressource*>::const_iterator it=cpy.ressources.begin(); it!=cpy.ressources.end(); it++)
+			ressources.push_back( new UniformsVarsLoader::Ressource(*(*it)) );	
+	}
+
+	UniformsVarsLoader::RessourceNode::~RessourceNode(void)
+	{
+		clear();
+	}
+
+	void UniformsVarsLoader::RessourceNode::clear(void)
+	{
+		for(std::vector<UniformsVarsLoader::RessourceNode*>::iterator it=subNodes.begin(); it!=subNodes.end(); it++)
+			delete (*it);
+
+		for(std::vector<UniformsVarsLoader::Ressource*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
+			delete (*it);
+
+		subNodes.clear();
+		ressources.clear();
+	}
+
 	int UniformsVarsLoader::RessourceNode::apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current)
 	{
 		int c = 0;
 
 		for(int k=0; k<subNodes.size(); k++)
 		{
-			if(!current.doesElementExist(subNodes[k].name))
-				throw Exception("Missing element \"" + subNodes[k].name + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
+			if(!current.doesElementExist(subNodes[k]->name))
+				throw Exception("Missing element \"" + subNodes[k]->name + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
 
-			int id = current.getElementIndex(subNodes[k].name);
+			int id = current.getElementIndex(subNodes[k]->name);
 
 			if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::PIPELINE )
-				c += subNodes[k].apply( pipeline, current.pipelineLayout(id) );
+				c += subNodes[k]->apply( pipeline, current.pipelineLayout(id) );
 			else if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::FILTER )
 			{
-				if( !subNodes[k].subNodes.empty() )
-					throw Exception("Element \"" + subNodes[k].name + "\" is a pipeline in the uniforms data and a filter in the Pipeline " + pipeline.getFullName() + ".", __FILE__, __LINE__);
+				if( !subNodes[k]->subNodes.empty() )
+					throw Exception("Element \"" + subNodes[k]->name + "\" is a pipeline in the uniforms data and a filter in the Pipeline " + pipeline.getFullName() + ".", __FILE__, __LINE__);
 
 				int gid = current.getElementID( id );
 				Filter& filter = pipeline[gid];
-				std::vector<Ressource>& ressources = subNodes[k].ressources;
+				std::vector<Ressource*>& ressources = subNodes[k]->ressources;
 
 				for(int l=0; l<ressources.size(); l++)
 				{
-					ressources[l].apply(filter);
+					ressources[l]->apply(filter);
 				}
 
 				c += ressources.size();
 			}
 			else
-				throw Exception("Unknown component kind for element \"" + subNodes[k].name + "\".", __FILE__, __LINE__);
+				throw Exception("Unknown component kind for element \"" + subNodes[k]->name + "\".", __FILE__, __LINE__);
 		}
 
 		return c;
@@ -380,11 +464,59 @@
 		int c = 0;
 
 		for(int k=0; k<subNodes.size(); k++)
-			c += subNodes[k].getNumVariables();
+			c += subNodes[k]->getNumVariables();
 
 		c += ressources.size();
 
 		return c;
+	}
+
+	UniformsVarsLoader::RessourceNode& UniformsVarsLoader::RessourceNode::getSubNode(const std::string& name)
+	{
+		for(std::vector<UniformsVarsLoader::RessourceNode*>::iterator it=subNodes.begin(); it!=subNodes.end(); it++)
+		{
+			if((*it)->name==name)
+				return *(*it);
+		}
+
+		// Not found : 
+		throw Exception("UniformsVarsLoader::RessourceNode::getSubNode - No subnode named \"" + name + "\" was found.", __FILE__, __LINE__);
+	}
+
+	const UniformsVarsLoader::RessourceNode& UniformsVarsLoader::RessourceNode::getSubNode(const std::string& name) const
+	{
+		for(std::vector<UniformsVarsLoader::RessourceNode*>::const_iterator it=subNodes.begin(); it!=subNodes.end(); it++)
+		{
+			if((*it)->name==name)
+				return *(*it);
+		}
+
+		// Not found : 
+		throw Exception("UniformsVarsLoader::RessourceNode::getSubNode - No subnode named \"" + name + "\" was found.", __FILE__, __LINE__);
+	}
+
+	UniformsVarsLoader::Ressource& UniformsVarsLoader::RessourceNode::getRessource(const std::string& name)
+	{
+		for(std::vector<UniformsVarsLoader::Ressource*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
+		{
+			if((*it)->name==name)
+				return *(*it);
+		}
+
+		// Not found : 
+		throw Exception("UniformsVarsLoader::Ressource::getRessource - No ressource named \"" + name + "\" was found.", __FILE__, __LINE__);
+	}
+
+	const UniformsVarsLoader::Ressource& UniformsVarsLoader::RessourceNode::getRessource(const std::string& name) const
+	{
+		for(std::vector<UniformsVarsLoader::Ressource*>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
+		{
+			if((*it)->name==name)
+				return *(*it);
+		}
+
+		// Not found : 
+		throw Exception("UniformsVarsLoader::Ressource::getRessource - No ressource named \"" + name + "\" was found.", __FILE__, __LINE__);
 	}
 
 // UniformsVarsLoader
@@ -395,8 +527,22 @@
 	UniformsVarsLoader::UniformsVarsLoader(void)
 	{ }
 
+	/**
+	\fn UniformsVarsLoader::UniformsVarsLoader(const UniformsVarsLoader& cpy)
+	\brief UniformsVarsLoader copy constructor.
+	\param cpy The object to be copied.
+	**/
+	UniformsVarsLoader::UniformsVarsLoader(const UniformsVarsLoader& cpy)
+	{
+		for(std::vector<RessourceNode*>::const_iterator it=cpy.ressources.begin(); it!=cpy.ressources.end(); it++)
+			ressources.push_back(new RessourceNode(*(*it)) );
+	}
+
 	UniformsVarsLoader::~UniformsVarsLoader(void)
 	{
+		for(std::vector<RessourceNode*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
+			delete (*it);
+
 		// Clear :
 		ressources.clear();
 	}
@@ -462,13 +608,12 @@
 				// Try to find a duplicate :
 				for(int l=0; l<ressources.size(); l++)
 				{
-					if(ressources[l].name==parser.elements[k].name)
+					if(ressources[l]->name==parser.elements[k].name)
 					{
 						if(replace)
 						{
-							ressources[l].subNodes.clear();
-							ressources[l].ressources.clear();
-							ptr = &ressources[l];
+							ressources[l]->clear();
+							ptr = ressources[l];
 						}
 						else
 							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : An element with the name \"" + parser.elements[k].name + "\" has already been registered (replace=false).", __FILE__, __LINE__);
@@ -477,8 +622,8 @@
 
 				if(ptr==NULL)
 				{
-					ressources.push_back( RessourceNode() );
-					ptr = &ressources.back();
+					ressources.push_back( new RessourceNode() );
+					ptr = ressources.back();
 				}
 
 				ptr->name = parser.elements[k].name;
@@ -514,13 +659,12 @@
 		// Try to find a duplicate :
 		for(int l=0; l<ressources.size(); l++)
 		{
-			if(ressources[l].name==pipeline.getName())
+			if(ressources[l]->name==pipeline.getName())
 			{
 				if(replace)
 				{
-					ressources[l].subNodes.clear();
-					ressources[l].ressources.clear();
-					ptr = &ressources[l];
+					ressources[l]->clear();
+					ptr = ressources[l];
 					break ;
 				}
 				else
@@ -530,8 +674,8 @@
 
 		if(ptr==NULL)
 		{
-			ressources.push_back( RessourceNode() );
-			ptr = &ressources.back();
+			ressources.push_back( new RessourceNode() );
+			ptr = ressources.back();
 		}
 
 		ptr->name = pipeline.getName();
@@ -554,15 +698,15 @@
 				if( parser.elements[k].noBody )
 					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__);
 
-				root.subNodes.push_back( RessourceNode() );
-				root.subNodes.back().name = parser.elements[k].name;
+				root.subNodes.push_back( new RessourceNode() );
+				root.subNodes.back()->name = parser.elements[k].name;
 
-				processNode(parser.elements[k].body, root.subNodes.back());
+				processNode(parser.elements[k].body, *root.subNodes.back());
 			}
 			else // It must be a ressource :
 			{
-				root.ressources.push_back( Ressource() );
-				root.ressources.back().build( parser.elements[k] );
+				root.ressources.push_back( new Ressource() );
+				root.ressources.back()->build( parser.elements[k] );
 			}
 		}
 
@@ -578,18 +722,18 @@
 			if(current.getElementKind(k)==__ReadOnly_PipelineLayout::PIPELINE)
 			{
 				// Add node :
-				root.subNodes.push_back( RessourceNode() );
-				root.subNodes.back().name = current.getElementName(k);
+				root.subNodes.push_back( new RessourceNode() );
+				root.subNodes.back()->name = current.getElementName(k);
 
-				processNode(pipeline, current.pipelineLayout(k), root.subNodes.back());
+				processNode(pipeline, current.pipelineLayout(k), *root.subNodes.back());
 			}
 			else if(current.getElementKind(k)==__ReadOnly_PipelineLayout::FILTER)
 			{
 				// Add node :
-				root.subNodes.push_back( RessourceNode() );
-				root.subNodes.back().name = current.getElementName(k);
+				root.subNodes.push_back( new RessourceNode() );
+				root.subNodes.back()->name = current.getElementName(k);
 
-				RessourceNode& r = root.subNodes.back();
+				RessourceNode& r = *root.subNodes.back();
 
 				// Get variable list :
 				int gid = current.getElementID(k);
@@ -602,8 +746,8 @@
 				{
 					if( filter.prgm().isValid(vars[l]) )
 					{
-						r.ressources.push_back( Ressource() );
-						r.ressources.back().build( vars[l], type[l], filter.prgm() );
+						r.ressources.push_back( new Ressource() );
+						r.ressources.back()->build( vars[l], type[l], filter.prgm() );
 					}
 				}
 			}
@@ -628,7 +772,7 @@
 
 			for(int k=0; k<node.ressources.size(); k++)
 			{
-				VanillaParserSpace::Element es = node.ressources[k].getCode();
+				VanillaParserSpace::Element es = node.ressources[k]->getCode();
 				e.body += es.getCode();
 
 				if(k<node.ressources.size()-1)
@@ -647,7 +791,7 @@
 
 			for(int k=0; k<node.subNodes.size(); k++)
 			{
-				VanillaParserSpace::Element es = getNodeCode(node.subNodes[k]);
+				VanillaParserSpace::Element es = getNodeCode(*node.subNodes[k]);
 
 				// Don't show empty elements :
 				if(!es.body.empty())
@@ -682,8 +826,11 @@
 		// Find element :
 		for(int k=0; k<ressources.size(); k++)
 		{
-			if(ressources[k].name==name)
+			if(ressources[k]->name==name)
+			{
+				delete ressources[k];
 				ressources.erase( ressources.begin() + k );
+			}
 		}
 	}
 
@@ -697,7 +844,7 @@
 	{
 		for(int k=0; k<ressources.size(); k++)
 		{
-			if(ressources[k].name==name)
+			if(ressources[k]->name==name)
 				return true;
 		}
 
@@ -714,7 +861,7 @@
 		std::vector<std::string> typeNames;
 
 		for(int k=0; k<ressources.size(); k++)
-			typeNames.push_back( ressources[k].name );
+			typeNames.push_back( ressources[k]->name );
 
 		return typeNames;
 	}
@@ -739,7 +886,7 @@
 		int c = 0;
 
 		for(int k=0; k<ressources.size(); k++)
-			c += ressources[k].getNumVariables();
+			c += ressources[k]->getNumVariables();
 		
 		return c;
 	}
@@ -756,8 +903,8 @@
 
 		for(int k=0; k<ressources.size(); k++)
 		{
-			if(ressources[k].name==name)
-				c += ressources[k].getNumVariables();
+			if(ressources[k]->name==name)
+				c += ressources[k]->getNumVariables();
 		}
 
 		return c;
@@ -778,8 +925,8 @@
 			// Scan the current ressources to find a corresponding name :
 			for(int k=0; k<ressources.size(); k++)
 			{
-				if(ressources[k].name==pipeline.getName())
-					c += ressources[k].apply(pipeline, pipeline);
+				if(ressources[k]->name==pipeline.getName())
+					c += ressources[k]->apply(pipeline, pipeline);
 			}
 
 			HdlProgram::stopProgram();
@@ -804,7 +951,7 @@
 
 		for(int k=0; k<ressources.size(); k++)
 		{
-			VanillaParserSpace::Element e = getNodeCode(ressources[k], true);
+			VanillaParserSpace::Element e = getNodeCode(*ressources[k], true);
 			res += e.getCode() + "\n";
 		}
 
@@ -821,9 +968,9 @@
 	{
 		for(int k=0; k<ressources.size(); k++)
 		{
-			if(ressources[k].name==name)
+			if(ressources[k]->name==name)
 			{
-				VanillaParserSpace::Element e = getNodeCode(ressources[k], true);
+				VanillaParserSpace::Element e = getNodeCode(*ressources[k], true);
 				return e.getCode();
 			}
 		}

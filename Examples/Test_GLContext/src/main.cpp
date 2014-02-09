@@ -19,6 +19,18 @@ int main(int argc, char** argv)
 		QApplication app(argc,argv);
 		WindowRenderer window(640, 480);
 
+		// Test : 
+		std::string test;
+		std::cout << "Type : " << std::endl;
+		std::cin >> test;
+
+		HdlDynamicData* d = HdlDynamicData::build(glFromString(test));
+
+		std::cout << (*d) << std::endl;
+	
+		delete d;
+		// end test.
+
 		return app.exec();
 	}
 	catch(std::exception& e)

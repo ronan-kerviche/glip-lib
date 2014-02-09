@@ -27,6 +27,7 @@
 	// Includes 
 	#include <map>
 	#include "Core/LibTools.hpp"
+	#include "Core/HdlDynamicData.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/HdlShader.hpp"
 	#include "Core/Pipeline.hpp"
@@ -136,40 +137,78 @@ Processing example :
 			private :
 				static const char* keywords[UL_NumKeywords];
 
-				struct GLIP_API Ressource
+			public : 
+				class GLIP_API Ressource
 				{
-					std::string name;
-					GLenum type;
-					void* data;
+					private : 
+						std::string 	name;
+						GLenum 		type;
+						void* 		data;
 
-					Ressource(void);
-					Ressource(const Ressource& cpy);
-					~Ressource(void);
+						friend class UniformsVarsLoader;
 
-					void build(const VanillaParserSpace::Element& e);
-					void build(const std::string& varName, GLenum t, HdlProgram& prgm);
-					void apply(Filter& filter);
-					VanillaParserSpace::Element getCode(void) const;
+						// Forbidden : 
+						Ressource& operator=(const Ressource& cpy);
+
+					protected :
+						Ressource(void);
+						Ressource(const Ressource& cpy);
+
+						void build(const VanillaParserSpace::Element& e);
+						void build(const std::string& varName, GLenum t, HdlProgram& prgm);
+						void apply(Filter& filter);
+						VanillaParserSpace::Element getCode(void) const;
+
+					public : 
+						~Ressource(void);
+
+						const std::string& getName(void) const;
+						const GLenum& getType(void) const;
+						double get(const int& i=0, const int& j=0) const;
 				};
 
-				struct GLIP_API RessourceNode
+				class GLIP_API RessourceNode
 				{
-					std::string name;
+					private : 
+						std::string 			name;
+						std::vector<RessourceNode*> 	subNodes;
+						std::vector<Ressource*>		ressources;
 
-					std::vector<RessourceNode> 	subNodes;
-					std::vector<Ressource>		ressources;
+						friend class UniformsVarsLoader;
 
-					int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
-					int getNumVariables(void) const;
+						// Forbidden : 
+						RessourceNode& operator=(const RessourceNode& cpy);
+
+					protected : 
+						RessourceNode(void);
+						RessourceNode(const RessourceNode& cpy);
+
+						void clear(void);
+						int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
+						int getNumVariables(void) const;
+
+					public : 
+						~RessourceNode(void);
+
+						RessourceNode& getSubNode(const std::string& name);
+						const RessourceNode& getSubNode(const std::string& name) const;
+						Ressource& getRessource(const std::string& name);
+						const Ressource& getRessource(const std::string& name) const;
 				};
 
-				std::vector<RessourceNode> ressources;
+			private : 
+				std::vector<RessourceNode*> ressources;
 
 				void processNode(std::string body, RessourceNode& root);
 				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);
 				VanillaParserSpace::Element getNodeCode(const RessourceNode& node, const bool isRoot = false) const;
+
+				// Forbidden : 
+				UniformsVarsLoader operator=(const UniformsVarsLoader&);
+
 			public :
 				UniformsVarsLoader(void);
+				UniformsVarsLoader(const UniformsVarsLoader& cpy);
 				~UniformsVarsLoader(void);
 
 				void load(std::string source, bool replace=false);
