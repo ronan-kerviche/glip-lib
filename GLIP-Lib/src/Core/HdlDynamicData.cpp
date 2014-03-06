@@ -119,7 +119,11 @@
 				res = reinterpret_cast<HdlDynamicData*>(d); \
 			}
 
-			GENERATE_ELM( GL_FLOAT, 		float, 		1,	1 )
+			GENERATE_ELM( GL_BYTE,			char,		1,	1 )
+		else	GENERATE_ELM( GL_UNSIGNED_BYTE,		unsigned char,	1,	1 )
+		else	GENERATE_ELM( GL_SHORT,			short,		1,	1 )
+		else	GENERATE_ELM( GL_UNSIGNED_SHORT,	unsigned short,	1,	1 )
+		else	GENERATE_ELM( GL_FLOAT, 		float, 		1,	1 )
 		else	GENERATE_ELM( GL_FLOAT_VEC2, 		float,		2,	1 )
 		else	GENERATE_ELM( GL_FLOAT_VEC3, 		float, 		3,	1 )
 		else	GENERATE_ELM( GL_FLOAT_VEC4,		float, 		4,	1 )

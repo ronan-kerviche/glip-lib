@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : UniformsVarsLoader.cpp                                                                     */
+/*     File          : UniformsVarsLoader.cpp                                                                    */
 /*     Original Date : June 8th 2013                                                                             */
 /*                                                                                                               */
 /*     Description   : Uniforms variables save/load.                                                             */
@@ -40,10 +40,10 @@
 											"GL_FLOAT_VEC2",
 											"GL_FLOAT_VEC3",
 											"GL_FLOAT_VEC4",
-											/*"GL_DOUBLE",
+											"GL_DOUBLE",
 											"GL_DOUBLE_VEC2",
 											"GL_DOUBLE_VEC3",
-											"GL_DOUBLE_VEC4",*/
+											"GL_DOUBLE_VEC4",
 											"GL_INT",
 											"GL_INT_VEC2",
 											"GL_INT_VEC3",
