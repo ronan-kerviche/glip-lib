@@ -79,6 +79,7 @@ namespace Glip
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
 			KW_LL_MODULE_CALL,
+			KW_LL_UNIQUE,
 			LL_NumKeywords,
 			LL_UnknownKeyword
 		};
@@ -90,6 +91,9 @@ namespace Glip
 The LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::Core::PipelineLayout or a Glip::Core::Pipeline that you can use directly or combined with other pipeline structures.
 
 The script must be structured with the following commands (but no special order is needed except standard declaration order) :
+
+- Protect file from being including twice and leading to redefinition errors : <BR>
+<b>UNIQUE</b>(<i>someUniqueString</i>) 
 
 - Format for the texture : <BR>
 <b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, [ <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i>, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ])
@@ -139,9 +143,11 @@ Examples : <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>OUTPUT_PORTS</b>(<i>output_port_name_1</i> [,<i>output_port_name_2</i>, ..., <i>output_port_name_n</i>] ) <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>FILTER_INSTANCE</b>:<i>filter_instance_name</i>(<i>filter_layout_name</i>) <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>FILTER_INSTANCE</b>:<i>filter_layout_name</i> <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>PIPELINE_INSTANCE</b>:<i>pipeline_instance_name</i>(<i>pipeline_layout_name</i>) <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>PIPELINE_INSTANCE</b>:<i>pipeline_layout_name</i> <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(THIS,<i>this_port_name</i>,<i>element_name</i>,<i>e_port_name</i>) // Connection to input. <BR>
@@ -216,11 +222,14 @@ Or, via an indirection : <BR>
 
 	PIPELINE_MAIN:pMainGradient
 	{
-		// Declare some input and output ports for this pipeline ::
+		// Declare some input and output ports for this pipeline :
 		INPUT_PORTS(texInput)
 		OUTPUT_PORTS(texOutput)
 
-		FILTER_INSTANCE:instHello(helloFilter)
+		// Declare one filter component : 
+		FILTER_INSTANCE:helloFilter
+		// We could also give it a special name ('instHello') : 
+		// FILTER_INSTANCE:instHello(helloFilter)
 
 		// Since the input and output port names we chose for the pipeline are the same than for the filter
 		// (as described in the shader source) then we don't need to do the connections (it will be made automatically).
@@ -277,7 +286,10 @@ Loading Example :
 				WARNING : It does not explore included files which might lead to an incomplete list of requirements.
 				**/
 				struct GLIP_API PipelineScriptElements
-				{							/// Paths added by the script.
+				{	
+											/// Unique identifier.
+					std::string					unique;
+											/// Paths added by the script.
 					std::vector<std::string> 			addedPaths,
 											/// File included by the script.		
 											includedFiles,		
@@ -320,6 +332,7 @@ Loading Example :
 				std::string					currentPath;
 				std::vector<std::string>			dynamicPaths;
 				std::vector<LayoutLoaderKeyword>		associatedKeyword;
+				std::vector<std::string>			uniqueList;
 				std::map<std::string, std::string>		sharedCodeList;
 				std::map<std::string, HdlTextureFormat> 	formatList;
 				std::map<std::string, ShaderSource> 		sourceList;
@@ -348,6 +361,7 @@ Loading Example :
 				void	append(LayoutLoader& subLoader);
 				void 	appendPath(const VanillaParserSpace::Element& e);
 				void	includeFile(const VanillaParserSpace::Element& e);
+				bool	checkUnique(const VanillaParserSpace::Element& e);
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);

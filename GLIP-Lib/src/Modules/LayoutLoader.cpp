@@ -68,6 +68,7 @@
 										"ELEMENT",
 										"ADD_PATH",
 										"MODULE_CALL",
+										"UNIQUE"
 									};
 
 // LayoutLoader
@@ -86,6 +87,7 @@
 	{
 		// Copy static data : 
 		staticPaths		= master.staticPaths;
+		uniqueList		= master.uniqueList;
 		requiredFormatList 	= master.requiredFormatList;
 		requiredGeometryList 	= master.requiredGeometryList;
 		requiredPipelineList 	= master.requiredPipelineList;
@@ -126,6 +128,7 @@
 		currentPath.clear();
 		dynamicPaths.clear();
 		associatedKeyword.clear();
+		uniqueList.clear();
 		formatList.clear();
 		sourceList.clear();
 		geometryList.clear();
@@ -363,6 +366,13 @@
 			INSERTION( pipelineList );
 
 		#undef INSERTION
+
+		// Others : 
+		for(std::vector<std::string>::const_iterator it=subLoader.uniqueList.begin(); it!=subLoader.uniqueList.end(); it++)
+		{
+			if(std::find(uniqueList.begin(), uniqueList.end(), *it)==uniqueList.end())
+				uniqueList.push_back(*it);
+		}
 	}
 
 	void LayoutLoader::appendPath(const VanillaParserSpace::Element& e)
@@ -423,6 +433,23 @@
 				throw m + ex;
 			}
 		}
+	}
+
+	bool LayoutLoader::checkUnique(const VanillaParserSpace::Element& e)
+	{
+		// Preliminary tests :
+		preliminaryTests(e, -1, 1, 1, -1, "Unique");
+
+		// Test if the unique qlreqdy exists : 
+		std::vector<std::string>::const_iterator it = std::find(uniqueList.begin(), uniqueList.end(), e.arguments[0]);
+
+		if(it==uniqueList.end())
+		{
+			uniqueList.push_back(e.arguments[0]);
+			return true;
+		}
+		else
+			return false;
 	}
 
 	void LayoutLoader::buildRequiredFormat(const VanillaParserSpace::Element& e)
@@ -1252,23 +1279,43 @@
 				switch(associatedKeywords[k])
 				{
 					case KW_LL_FILTER_INSTANCE :
-						preliminaryTests(parser.elements[k], 1, 1, 1, -1, "FilterInstance");
-						filter = filterList.find(parser.elements[k].arguments[0]);
+						{
+							preliminaryTests(parser.elements[k], 1, 0, 1, -1, "FilterInstance");
 
-						if(filter==filterList.end())
-							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : No FilterLayout with name \"" + parser.elements[k].arguments[0] + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
-						else
-							layout.add(filter->second, parser.elements[k].name);
+							std::string filterName;
+
+							if(parser.elements[k].arguments.empty())
+								filterName = parser.elements[k].name;
+							else
+								filterName = parser.elements[k].arguments[0];
+
+							filter = filterList.find(filterName);
+
+							if(filter==filterList.end())
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : No FilterLayout with name \"" + filterName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+							else
+								layout.add(filter->second, parser.elements[k].name);
+						}
 						break;
 
 					case KW_LL_PIPELINE_INSTANCE :
-						preliminaryTests(parser.elements[k], 1, 1, 1, -1, "PipelineInstance");
-						pipeline = pipelineList.find(parser.elements[k].arguments[0]);
+						{
+							preliminaryTests(parser.elements[k], 1, 1, 1, -1, "PipelineInstance");
 
-						if(pipeline==pipelineList.end())
-							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : No PipelineLayout with name \"" + parser.elements[k].arguments[0] + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
-						else
-							layout.add(pipeline->second, parser.elements[k].name);
+							std::string pipelineName;
+
+							if(parser.elements[k].arguments.empty())
+								pipelineName = parser.elements[k].name;
+							else
+								pipelineName = parser.elements[k].arguments[0];
+
+							pipeline = pipelineList.find(pipelineName);
+
+							if(pipeline==pipelineList.end())
+								throw Exception("From line " + to_string(parser.elements[k].startLine) + " : No PipelineLayout with name \"" + pipelineName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+							else
+								layout.add(pipeline->second, parser.elements[k].name);
+						}
 						break;
 
 					default :
@@ -1322,6 +1369,29 @@
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
 
+			// Check if there is any Unique requirement : 
+			std::vector<LayoutLoaderKeyword>::iterator uniqueIterator = std::find(associatedKeyword.begin(), associatedKeyword.end(), KW_LL_UNIQUE);
+	
+			if(uniqueIterator!=associatedKeyword.end())
+			{
+				// Check if their is a second unique (error) : 
+				std::vector<LayoutLoaderKeyword>::iterator secondUniqueIterator = std::find(uniqueIterator+1, associatedKeyword.end(), KW_LL_UNIQUE);
+
+				if(secondUniqueIterator!=associatedKeyword.end())
+				{
+					const VanillaParserSpace::Element& e = rootParser.elements[std::distance(associatedKeyword.begin(), secondUniqueIterator)];
+
+					throw Exception("From line " + to_string(e.startLine) + " : Illegal second " + keywords[KW_LL_UNIQUE] + " identifier in file.", __FILE__, __LINE__);
+				}
+				else 
+				{
+					const VanillaParserSpace::Element& e = rootParser.elements[std::distance(associatedKeyword.begin(), uniqueIterator)];
+
+					if(!checkUnique(e))
+						return ; // Do not load the code if an ID matches.
+				}
+			}
+
 			// Process :
 			for(int k=0; k<associatedKeyword.size(); k++)
 			{
@@ -1333,6 +1403,8 @@
 					case KW_LL_INCLUDE_FILE :
 						includeFile(rootParser.elements[k]);
 						break;
+					case KW_LL_UNIQUE :
+						break; // Already processed, nothing to do here.
 					case KW_LL_SHARED_SOURCE :
 						buildSharedCode(rootParser.elements[k]);
 						break;
@@ -1776,6 +1848,10 @@
 					case KW_LL_INCLUDE_FILE :
 						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "IncludeFile");
 						result.includedFiles.push_back( rootParser.elements[k].arguments[0] );
+						break;
+					case KW_LL_UNIQUE:
+						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "Unique");
+						result.unique = rootParser.elements[k].arguments[0];
 						break;
 					case KW_LL_SHARED_SOURCE :
 						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "SharedCode");

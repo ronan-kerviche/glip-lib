@@ -1,5 +1,6 @@
-// Maths functions : 
+UNIQUE(MATHS_FUNCTIONS)
 
+// Maths functions : 
 SHARED_SOURCE:maths
 {
 	float gaussian(float l, float r)

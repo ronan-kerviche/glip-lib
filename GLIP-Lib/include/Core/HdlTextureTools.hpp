@@ -98,13 +98,13 @@
 							indexLuminance;
 
 				// Tools : 
-				inline bool hasChannel(GLenum channel) const;
-				inline unsigned char channelSizeInBits(GLenum channel) const;
-				inline GLenum channelType(GLenum channel) const;
-				inline char channelIndex(GLenum channel) const;
-				inline std::vector<GLenum> getChannelsList(void) const;
-				inline GLenum getCompressedMode(void) const;
-				inline GLenum getUncompressedMode(void) const;
+				bool hasChannel(GLenum channel) const;
+				unsigned char channelSizeInBits(GLenum channel) const;
+				GLenum channelType(GLenum channel) const;
+				char channelIndex(GLenum channel) const;
+				std::vector<GLenum> getChannelsList(void) const;
+				GLenum getCompressedMode(void) const;
+				GLenum getUncompressedMode(void) const;
 			};
 
 			/**
@@ -126,8 +126,7 @@
 						static const HdlTextureFormatDescriptor& get(int id);
 						static const HdlTextureFormatDescriptor& get(const GLenum& modeID);
 						static int getTypeDepth(GLenum depth);
-			};
-
+			};	
 		}
 	}
 
