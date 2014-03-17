@@ -112,7 +112,7 @@
 					// Data
 					HdlShader*  			vertexShader;
 					HdlShader*  			fragmentShader;
-					HdlProgram* 			program;
+					HdlProgram* 			prgm;
 					GeometryInstance*		geometry;
 					bool				firstRun,
 									broken;
@@ -132,7 +132,7 @@
 					// Tools
 					virtual ~Filter(void);
 
-					HdlProgram& prgm(void);
+					HdlProgram& program(void);
 					bool wentThroughFirstRun(void) const;
 					bool isBroken(void) const;
 			};

@@ -112,7 +112,7 @@ Processing example :
 	uLoader.load(mainPipeline, true);
 
 	// Get the corresponding code :
-	std::string uCode = uLoader.getCode( mainPipeline.getName() );
+	std::string uCode = uLoader.getCode( mainPipeline.getTypeName() );
 
 	// Get the code of all the data saved : 
 	std::string uAllCode = uLoader.getCode();
@@ -138,73 +138,109 @@ Processing example :
 				static const char* keywords[UL_NumKeywords];
 
 			public : 
+				// Prototypes : 
+				class Node;
+				class Ressource;
+
+				/// Const iterator over the nodes (refers to a std::pair, use second to access the const UniformsVarsLoader::Node& object).
+				typedef std::map<const std::string, Node>::const_iterator 	NodeConstIterator;
+				/// Iterator over the nodes (refers to a std::pair, use second to access the UniformsVarsLoader::Node& object).
+				typedef std::map<const std::string, Node>::iterator 		NodeIterator;
+				/// Const iterator over the ressources (refers to a std::pair, use second to access the const UniformsVarsLoader::Ressource& object).
+				typedef std::map<const std::string, Ressource>::const_iterator 	RessourceConstIterator;
+				/// Iterator over the ressources (refers to a std::pair, use second to access the UniformsVarsLoader::Ressource& object).
+				typedef std::map<const std::string, Ressource>::iterator 	RessourceIterator;
+
+/**
+\class Ressource
+\brief Ressource (variable) of a structure (filter, pipeline).
+**/
 				class GLIP_API Ressource
 				{
 					private : 
 						std::string 	name;
-						GLenum 		type;
-						void* 		data;
+						HdlDynamicData* data;
 
-						friend class UniformsVarsLoader;
+					public : 
+						/// This flag can be used to manually set the variable as modified or non modified, in order to limit driver work time.
+						bool modified;
 
-						// Forbidden : 
-						Ressource& operator=(const Ressource& cpy);
-
-					protected :
 						Ressource(void);
 						Ressource(const Ressource& cpy);
-
-						void build(const VanillaParserSpace::Element& e);
-						void build(const std::string& varName, GLenum t, HdlProgram& prgm);
-						void apply(Filter& filter);
-						VanillaParserSpace::Element getCode(void) const;
-
-					public : 
+						Ressource(const VanillaParserSpace::Element& e);
+						Ressource(const std::string& _name, const HdlDynamicData& _data);
+						
 						~Ressource(void);
 
+						Ressource& operator=(const Ressource& cpy);
+						
 						const std::string& getName(void) const;
-						const GLenum& getType(void) const;
-						double get(const int& i=0, const int& j=0) const;
+						const HdlDynamicData& object(void) const;
+						HdlDynamicData& object(void);
+						int applyTo(Filter& filter, bool forceWrite=true) const;
+						VanillaParserSpace::Element getCodeElement(void) const;
 				};
 
-				class GLIP_API RessourceNode
+/**
+\class Node
+\brief Container structure (filter, pipeline).
+**/
+				class GLIP_API Node
 				{
-					private : 
-						std::string 			name;
-						std::vector<RessourceNode*> 	subNodes;
-						std::vector<Ressource*>		ressources;
+					private :
+						std::string 				name;
+						std::map<const std::string, Node> 	subNodes;
+						std::map<const std::string, Ressource>	ressources;
 
-						friend class UniformsVarsLoader;
+					public :
+						Node(void);
+						Node(const VanillaParserSpace::Element& e);
+						Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_PipelineLayout& current);
+						Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_FilterLayout& current);				
+						Node(const Node& cpy);
+						~Node(void);
 
-						// Forbidden : 
-						RessourceNode& operator=(const RessourceNode& cpy);
+						Node& operator=(const Node& cpy);
 
-					protected : 
-						RessourceNode(void);
-						RessourceNode(const RessourceNode& cpy);
-
+						const std::string& getName(void) const;
+						bool isFilter(void) const;
+						bool isPipeline(void) const;
+						bool empty(void) const;
 						void clear(void);
-						int apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current);
-						int getNumVariables(void) const;
+						bool hasModifications(void) const;
+						void clearModifiedFlags(bool value=false);
 
-					public : 
-						~RessourceNode(void);
+						int getNumSubNodes(void) const;
+						std::vector<std::string> getSubNodesNamesList(void) const;
+						bool subNodeExists(const std::string& nodeName) const;
+						const Node& subNode(const std::string& nodeName) const;
+						Node& subNode(const std::string& nodeName);
+						//void addNode(const Node& node);
+						void eraseNode(const std::string& nodeName);
+						NodeConstIterator nodeBegin(void) const;
+						NodeConstIterator nodeEnd(void) const;
+						NodeIterator nodeBegin(void);
+						NodeIterator nodeEnd(void);
 
-						RessourceNode& getSubNode(const std::string& name);
-						const RessourceNode& getSubNode(const std::string& name) const;
-						Ressource& getRessource(const std::string& name);
-						const Ressource& getRessource(const std::string& name) const;
+						int getNumRessources(void) const;
+						std::vector<std::string> getRessourcesNamesList(void) const;
+						bool ressourceExists(const std::string& ressourceName) const;
+						const Ressource& ressource(const std::string& ressourceName) const;
+						Ressource& ressource(const std::string& ressourceName);
+						//void addRessource(const Ressource& ressource);
+						void eraseRessource(const std::string& ressourceName);
+						RessourceConstIterator ressourceBegin(void) const;
+						RessourceConstIterator ressourceEnd(void) const;
+						RessourceIterator ressourceBegin(void);
+						RessourceIterator ressourceEnd(void);
+
+						int applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite=true) const;
+						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true) const;
+						VanillaParserSpace::Element getCodeElement(void) const;
 				};
 
-			private : 
-				std::vector<RessourceNode*> ressources;
-
-				void processNode(std::string body, RessourceNode& root);
-				void processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root);
-				VanillaParserSpace::Element getNodeCode(const RessourceNode& node, const bool isRoot = false) const;
-
-				// Forbidden : 
-				UniformsVarsLoader operator=(const UniformsVarsLoader&);
+			private :
+				std::map<const std::string, Node> nodes;
 
 			public :
 				UniformsVarsLoader(void);
@@ -220,7 +256,7 @@ Processing example :
 				bool empty(void) const;
 				int getNumVariables(void) const;
 				int getNumVariables(const std::string& name) const;
-				int applyTo(Pipeline& pipeline);
+				int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;
 				void writeToFile(const std::string& filename) const;

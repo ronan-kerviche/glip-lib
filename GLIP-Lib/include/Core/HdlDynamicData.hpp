@@ -68,7 +68,7 @@ delete data;
 
 					// Forbidden : 
 					HdlDynamicData(const HdlDynamicData&);
-					HdlDynamicData& operator=(const HdlDynamicData& cpy);
+					//HdlDynamicData& operator=(const HdlDynamicData& cpy);
 
 				protected : 
 					HdlDynamicData(const GLenum& _type, int _rows=1, int _columns=1);
@@ -76,7 +76,7 @@ delete data;
 				public : 
 					virtual ~HdlDynamicData(void);
 
-					const GLenum& getType(void) const;
+					const GLenum& getGLType(void) const;
 					const int& getNumRows(void) const;
 					const int& getNumColumns(void) const;
 					int getNumElements(void) const;
@@ -133,9 +133,18 @@ delete data;
 					**/
 					virtual void* getPtr(void) = 0;
 
+					/**
+					\fn virtual operator=(const HdlDynamicData& cpy) = 0;
+					\brief Copy the value from another HdlDynamicData object. Type MUST match, will raise an exception otherwise.
+					\param cpy The object to be copied.
+					\return Reference to this object.
+					**/
+					virtual HdlDynamicData& operator=(const HdlDynamicData& cpy) = 0;
+
 					friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
 	
 					static HdlDynamicData* build(const GLenum& type);
+					static HdlDynamicData* copy(const HdlDynamicData& cpy);
 			};
 
 			GLIP_API_FUNC std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
@@ -165,6 +174,8 @@ delete data;
 
 					const void* getPtr(void) const;
 					void* getPtr(void);
+
+					HdlDynamicData& operator=(const HdlDynamicData& cpy);
 			};
 
 			// Template implementation :
@@ -233,6 +244,16 @@ delete data;
 				return reinterpret_cast<void*>(data);
 			}
 
+			template<typename T>
+			HdlDynamicData& HdlDynamicDataSpecial<T>::operator=(const HdlDynamicData& cpy)
+			{
+				if(cpy.getGLType()!=getGLType())
+					throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__);
+				
+				std::memcpy(data, cpy.getPtr(), getNumElements()*sizeof(T));
+				
+				return (*this);
+			}
 		}
 	}
 

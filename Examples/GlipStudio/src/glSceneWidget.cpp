@@ -147,7 +147,7 @@
 								"	}															\n"
 								"}																\n";
 
-// GLSceneWidget
+// GLSceneWidget :
 	GLSceneWidget::GLSceneWidget(int width, int height, QWidget* _parent)
 	 : 	QGLWidget(_parent),
 		parent(_parent),

@@ -61,99 +61,15 @@
 											"GL_FLOAT_MAT4"
 										};
 
-// UniformsVarsLoader::Ressource :
+// UniformsVarsLoader::Ressource : 
 	UniformsVarsLoader::Ressource::Ressource(void)
-	 : 	name("Undefined"),
-		type(GL_NONE), 
-		data(NULL)
+	 : 	data(NULL),
+		modified(false)
 	{ }
 
-	UniformsVarsLoader::Ressource::Ressource(const Ressource& cpy)
-	 : name(cpy.name), type(cpy.type), data(NULL)
-	{
-		if(cpy.data!=NULL)
-		{
-			#define COPY_ELEMENT( glType, cType, narg ) \
-				if(type== glType ) \
-				{ \
-					cType* tmp = new cType [ narg ]; \
-					std::memcpy(tmp, cpy.data, narg * sizeof( cType ) ); \
-					data = reinterpret_cast<void*>( tmp ); \
-				}
-
-				COPY_ELEMENT( GL_FLOAT, 		float, 		1 )
-			else	COPY_ELEMENT( GL_FLOAT_VEC2, 		float,		2 )
-			else	COPY_ELEMENT( GL_FLOAT_VEC3, 		float, 		3 )
-			else	COPY_ELEMENT( GL_FLOAT_VEC4,		float, 		4 )
-			else	COPY_ELEMENT( GL_DOUBLE,		double,		1 )
-			else	COPY_ELEMENT( GL_DOUBLE_VEC2,		double,		2 )
-			else	COPY_ELEMENT( GL_DOUBLE_VEC3,		double,		3 )
-			else	COPY_ELEMENT( GL_DOUBLE_VEC4,		double,		4 )
-			else	COPY_ELEMENT( GL_INT,			int,		1 )
-			else	COPY_ELEMENT( GL_INT_VEC2,		int,		2 )
-			else	COPY_ELEMENT( GL_INT_VEC3,		int,		3 )
-			else	COPY_ELEMENT( GL_INT_VEC4,		int,		4 )
-			else	COPY_ELEMENT( GL_UNSIGNED_INT,		unsigned int,	1 )
-			else	COPY_ELEMENT( GL_UNSIGNED_INT_VEC2,	unsigned int,	2 )
-			else	COPY_ELEMENT( GL_UNSIGNED_INT_VEC3,	unsigned int,	3 )
-			else	COPY_ELEMENT( GL_UNSIGNED_INT_VEC4,	unsigned int,	4 )
-			else	COPY_ELEMENT( GL_BOOL,			int,		1 )
-			else	COPY_ELEMENT( GL_BOOL_VEC2,		int,		2 )
-			else	COPY_ELEMENT( GL_BOOL_VEC3,		int,		3 )
-			else	COPY_ELEMENT( GL_BOOL_VEC4,		int,		4 )
-			else	COPY_ELEMENT( GL_FLOAT_MAT2,		float,		4 )
-			else	COPY_ELEMENT( GL_FLOAT_MAT3,		float,		9 )
-			else	COPY_ELEMENT( GL_FLOAT_MAT4,		float,		16 )
-			else
-				throw Exception("Ressource::Ressource - Unknown type \"" + glParamName(type) + "\" for element \"" + name + "\".", __FILE__, __LINE__);
-
-			#undef COPY_ELEMENT
-		}
-	}
-
-	UniformsVarsLoader::Ressource::~Ressource(void)
-	{
-		if(data!=NULL)
-		{
-			#define DELETE_DATA( glType, cType ) \
-				if( type == glType ) \
-				{ \
-					cType* tmp = reinterpret_cast< cType* >( data ); \
-					data = NULL; \
-					delete[] tmp; \
-				}
-
-				DELETE_DATA( GL_FLOAT, 			float)
-			else	DELETE_DATA( GL_FLOAT_VEC2, 		float)
-			else	DELETE_DATA( GL_FLOAT_VEC3, 		float)
-			else	DELETE_DATA( GL_FLOAT_VEC4,		float)
-			else	DELETE_DATA( GL_DOUBLE,			double)
-			else	DELETE_DATA( GL_DOUBLE_VEC2,		double)
-			else	DELETE_DATA( GL_DOUBLE_VEC3,		double)
-			else	DELETE_DATA( GL_DOUBLE_VEC4,		double)
-			else	DELETE_DATA( GL_INT,			int)
-			else	DELETE_DATA( GL_INT_VEC2,		int)
-			else	DELETE_DATA( GL_INT_VEC3,		int)
-			else	DELETE_DATA( GL_INT_VEC4,		int)
-			else	DELETE_DATA( GL_UNSIGNED_INT,		unsigned int)
-			else	DELETE_DATA( GL_UNSIGNED_INT_VEC2,	unsigned int)
-			else	DELETE_DATA( GL_UNSIGNED_INT_VEC3,	unsigned int)
-			else	DELETE_DATA( GL_UNSIGNED_INT_VEC4,	unsigned int)
-			else	DELETE_DATA( GL_BOOL,			int)
-			else	DELETE_DATA( GL_BOOL_VEC2,		int)
-			else	DELETE_DATA( GL_BOOL_VEC3,		int)
-			else	DELETE_DATA( GL_BOOL_VEC4,		int)
-			else	DELETE_DATA( GL_FLOAT_MAT2,		float)
-			else	DELETE_DATA( GL_FLOAT_MAT3,		float)
-			else	DELETE_DATA( GL_FLOAT_MAT4,		float)
-			else
-				throw Exception("Ressource::~Ressource - Unknown type " + glParamName(type) + ".", __FILE__, __LINE__);
-
-			#undef DELETE_DATA
-		}
-	}
-
-	void UniformsVarsLoader::Ressource::build(const VanillaParserSpace::Element& e)
+	UniformsVarsLoader::Ressource::Ressource(const VanillaParserSpace::Element& e)
+	 : 	data(NULL),
+		modified(false)
 	{
 		if(e.noName || e.name.empty())
 			throw Exception("From line " + to_string(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
@@ -164,362 +80,683 @@
 		// Set the name :
 		name = e.name;
 
-		#define READ_ELEMENT( glType, cType, narg ) \
-			if(e.strKeyword==keywords[KW_UL_##glType]) \
-			{ \
-				type = glType; \
-				cType* tmp = new cType [ narg ]; \
-				\
-				if( e.arguments.size()!=narg ) \
-					throw Exception("From line " + to_string(e.startLine) + " : Element \"" + e.name + "\" of type \"" + e.strKeyword + "\" has " + to_string(e.arguments.size()) + " while it should have exactly " + to_string(narg) + ".", __FILE__, __LINE__); \
-				\
-				for(int k=0; k<narg; k++) \
-				{ \
-					if( !from_string( e.arguments[k], tmp[k] ) ) \
-						throw Exception("From line " + to_string(e.startLine) + " : Unable to read parameter " + to_string(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__); \
-				} \
-				\
-				data = reinterpret_cast<void*>(tmp); \
+		// Create the data : 
+		data = HdlDynamicData::build(glFromString(e.strKeyword));
+
+		for(int j=0; j<data->getNumColumns(); j++)
+		{	
+			for(int i=0; i<data->getNumRows(); i++)
+			{
+				const int k = data->getIndex(i, j);
+				double 	val = 0.0;
+		
+				if( !from_string( e.arguments[k], val ) )
+					throw Exception("From line " + to_string(e.startLine) + " : Unable to read parameter " + to_string(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__);
+				else
+					data->set( val, i, j);
 			}
-
-		// Load the data :
-			READ_ELEMENT( GL_FLOAT, 		float, 		1 )
-		else	READ_ELEMENT( GL_FLOAT_VEC2, 		float,		2 )
-		else	READ_ELEMENT( GL_FLOAT_VEC3, 		float, 		3 )
-		else	READ_ELEMENT( GL_FLOAT_VEC4,		float, 		4 )
-		else	READ_ELEMENT( GL_DOUBLE,		double,		1 )
-		else	READ_ELEMENT( GL_DOUBLE_VEC2,		double,		2 )
-		else	READ_ELEMENT( GL_DOUBLE_VEC3,		double,		3 )
-		else	READ_ELEMENT( GL_DOUBLE_VEC4,		double,		4 )
-		else	READ_ELEMENT( GL_INT,			int,		1 )
-		else	READ_ELEMENT( GL_INT_VEC2,		int,		2 )
-		else	READ_ELEMENT( GL_INT_VEC3,		int,		3 )
-		else	READ_ELEMENT( GL_INT_VEC4,		int,		4 )
-		else	READ_ELEMENT( GL_UNSIGNED_INT,		unsigned int,	1 )
-		else	READ_ELEMENT( GL_UNSIGNED_INT_VEC2,	unsigned int,	2 )
-		else	READ_ELEMENT( GL_UNSIGNED_INT_VEC3,	unsigned int,	3 )
-		else	READ_ELEMENT( GL_UNSIGNED_INT_VEC4,	unsigned int,	4 )
-		else	READ_ELEMENT( GL_BOOL,			int,		1 )
-		else	READ_ELEMENT( GL_BOOL_VEC2,		int,		2 )
-		else	READ_ELEMENT( GL_BOOL_VEC3,		int,		3 )
-		else	READ_ELEMENT( GL_BOOL_VEC4,		int,		4 )
-		else	READ_ELEMENT( GL_FLOAT_MAT2,		float,		4 )
-		else	READ_ELEMENT( GL_FLOAT_MAT3,		float,		9 )
-		else	READ_ELEMENT( GL_FLOAT_MAT4,		float,		16 )
-		else
-			throw Exception("From line " + to_string(e.startLine) + " : Unknown type \"" + e.strKeyword + "\" for element \"" + e.name + "\".", __FILE__, __LINE__);
-
-		#undef READ_ELEMENT
+		}
 	}
 
-	void UniformsVarsLoader::Ressource::build(const std::string& varName, GLenum t, HdlProgram& prgm)
+	UniformsVarsLoader::Ressource::Ressource(const std::string& _name, const HdlDynamicData& _data)
+	 : 	name(_name),
+		data(NULL),
+		modified(false)
 	{
-		name = varName;
-
-		#define ALLOC_ELEMENT( glType, cType, narg ) \
-			if( t==glType ) \
-			{ \
-				type = glType; \
-				cType* tmp = new cType [ narg ]; \
-				\
-				prgm.getVar(varName, tmp); \
-				\
-				data = reinterpret_cast<void*>(tmp); \
-			}
-
-			ALLOC_ELEMENT( GL_FLOAT, 		float, 		1 )
-		else	ALLOC_ELEMENT( GL_FLOAT_VEC2, 		float,		2 )
-		else	ALLOC_ELEMENT( GL_FLOAT_VEC3, 		float, 		3 )
-		else	ALLOC_ELEMENT( GL_FLOAT_VEC4,		float, 		4 )
-		/*else	ALLOC_ELEMENT( GL_DOUBLE,		double,		1 )
-		else	ALLOC_ELEMENT( GL_DOUBLE_VEC2,		double,		2 )
-		else	ALLOC_ELEMENT( GL_DOUBLE_VEC3,		double,		3 )
-		else	ALLOC_ELEMENT( GL_DOUBLE_VEC4,		double,		4 )*/
-		else	ALLOC_ELEMENT( GL_INT,			int,		1 )
-		else	ALLOC_ELEMENT( GL_INT_VEC2,		int,		2 )
-		else	ALLOC_ELEMENT( GL_INT_VEC3,		int,		3 )
-		else	ALLOC_ELEMENT( GL_INT_VEC4,		int,		4 )
-		else	ALLOC_ELEMENT( GL_UNSIGNED_INT,		unsigned int,	1 )
-		else	ALLOC_ELEMENT( GL_UNSIGNED_INT_VEC2,	unsigned int,	2 )
-		else	ALLOC_ELEMENT( GL_UNSIGNED_INT_VEC3,	unsigned int,	3 )
-		else	ALLOC_ELEMENT( GL_UNSIGNED_INT_VEC4,	unsigned int,	4 )
-		else	ALLOC_ELEMENT( GL_BOOL,			int,		1 )
-		else	ALLOC_ELEMENT( GL_BOOL_VEC2,		int,		2 )
-		else	ALLOC_ELEMENT( GL_BOOL_VEC3,		int,		3 )
-		else	ALLOC_ELEMENT( GL_BOOL_VEC4,		int,		4 )
-		else	ALLOC_ELEMENT( GL_FLOAT_MAT2,		float,		4 )
-		else	ALLOC_ELEMENT( GL_FLOAT_MAT3,		float,		9 )
-		else	ALLOC_ELEMENT( GL_FLOAT_MAT4,		float,		16 )
-		else
-			throw Exception("Ressource::build - Unknown type \"" + glParamName(t) + "\" for element \"" + varName + "\".", __FILE__, __LINE__);
-
-		#undef ALLOC_ELEMENT
+		data = HdlDynamicData::copy(_data);
 	}
 
-	void UniformsVarsLoader::Ressource::apply(Filter& filter)
+	UniformsVarsLoader::Ressource::Ressource(const Ressource& cpy)
+	 : 	name(cpy.name),
+		data(NULL),
+		modified(false)
 	{
-		#define APPLY( glType, cType ) \
-			if( type == glType ) \
-				filter.prgm().modifyVar(name, glType, reinterpret_cast< cType* >(data));
-
-			APPLY( GL_FLOAT, 			float)
-		else	APPLY( GL_FLOAT_VEC2, 			float)
-		else	APPLY( GL_FLOAT_VEC3, 			float)
-		else	APPLY( GL_FLOAT_VEC4,			float)
-		/*else	APPLY( GL_DOUBLE,			double)
-		else	APPLY( GL_DOUBLE_VEC2,			double)
-		else	APPLY( GL_DOUBLE_VEC3,			double)
-		else	APPLY( GL_DOUBLE_VEC4,			double)*/
-		else	APPLY( GL_INT,				int)
-		else	APPLY( GL_INT_VEC2,			int)
-		else	APPLY( GL_INT_VEC3,			int)
-		else	APPLY( GL_INT_VEC4,			int)
-		else	APPLY( GL_UNSIGNED_INT,			unsigned int)
-		else	APPLY( GL_UNSIGNED_INT_VEC2,		unsigned int)
-		else	APPLY( GL_UNSIGNED_INT_VEC3,		unsigned int)
-		else	APPLY( GL_UNSIGNED_INT_VEC4,		unsigned int)
-		else	APPLY( GL_BOOL,				int)
-		else	APPLY( GL_BOOL_VEC2,			int)
-		else	APPLY( GL_BOOL_VEC3,			int)
-		else	APPLY( GL_BOOL_VEC4,			int)
-		else	APPLY( GL_FLOAT_MAT2,			float)
-		else	APPLY( GL_FLOAT_MAT3,			float)
-		else	APPLY( GL_FLOAT_MAT4,			float)
-		else
-			throw Exception("Ressource::apply - Unknown type " + glParamName(type) + ".", __FILE__, __LINE__);
-
-		#undef APPLY
+		data = HdlDynamicData::copy(*cpy.data);
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCode(void) const
+	UniformsVarsLoader::Ressource::~Ressource(void)
 	{
-		#define GET_CODE( glType, cType, narg ) \
-			if( type == glType ) \
-			{ \
-				VanillaParserSpace::Element e; \
-				e.strKeyword 	= glParamName(type); \
-				e.name		= name; \
-				e.noName	= false; \
-				e.noArgument	= false; \
-				e.noBody	= true; \
-				e.body.clear(); \
-				\
-				cType* tmp = reinterpret_cast< cType* >( data ); \
-				\
-				for(int k=0; k< narg ; k++) \
-					e.arguments.push_back( to_string(tmp[k]) ); \
-				\
-				return e; \
-			}
+		delete data;
+		data = NULL;
+	}
+	
+	UniformsVarsLoader::Ressource& UniformsVarsLoader::Ressource::operator=(const Ressource& cpy)
+	{
+		name = cpy.name;
+		delete data;
+		data = NULL;
 
-			GET_CODE( GL_FLOAT, 		float, 		1 )
-		else	GET_CODE( GL_FLOAT_VEC2, 	float,		2 )
-		else	GET_CODE( GL_FLOAT_VEC3, 	float, 		3 )
-		else	GET_CODE( GL_FLOAT_VEC4,	float, 		4 )
-		/*else	GET_CODE( GL_DOUBLE,		double,		1 )
-		else	GET_CODE( GL_DOUBLE_VEC2,	double,		2 )
-		else	GET_CODE( GL_DOUBLE_VEC3,	double,		3 )
-		else	GET_CODE( GL_DOUBLE_VEC4,	double,		4 )*/
-		else	GET_CODE( GL_INT,		int,		1 )
-		else	GET_CODE( GL_INT_VEC2,		int,		2 )
-		else	GET_CODE( GL_INT_VEC3,		int,		3 )
-		else	GET_CODE( GL_INT_VEC4,		int,		4 )
-		else	GET_CODE( GL_UNSIGNED_INT,	unsigned int,	1 )
-		else	GET_CODE( GL_UNSIGNED_INT_VEC2,	unsigned int,	2 )
-		else	GET_CODE( GL_UNSIGNED_INT_VEC3,	unsigned int,	3 )
-		else	GET_CODE( GL_UNSIGNED_INT_VEC4,	unsigned int,	4 )
-		else	GET_CODE( GL_BOOL,		int,		1 )
-		else	GET_CODE( GL_BOOL_VEC2,		int,		2 )
-		else	GET_CODE( GL_BOOL_VEC3,		int,		3 )
-		else	GET_CODE( GL_BOOL_VEC4,		int,		4 )
-		else	GET_CODE( GL_FLOAT_MAT2,	float,		4 )
-		else	GET_CODE( GL_FLOAT_MAT3,	float,		9 )
-		else	GET_CODE( GL_FLOAT_MAT4,	float,		16 )
-		else
-			throw Exception("Ressource::getCode - Unknown type \"" + glParamName(type) + "\" for element \"" + name + "\".", __FILE__, __LINE__);
-
-		#undef GET_CODE
+		if(cpy.data!=NULL)
+			data = HdlDynamicData::copy(*cpy.data);
+		
+		return (*this);	
 	}
 
+	/**
+	\fn const std::string& UniformsVarsLoader::Ressource::getName(void) const
+	\brief Get the name of the ressource.
+	\return Constant reference to the standard string containing the name of the Ressource.
+	**/
 	const std::string& UniformsVarsLoader::Ressource::getName(void) const
 	{
 		return name;
 	}
 
-	const GLenum& UniformsVarsLoader::Ressource::getType(void) const
+	/**
+	\fn const HdlDynamicData& UniformsVarsLoader::Ressource::object(void) const
+	\brief Get the object of the ressource (access to the variable itself).
+	\return Constant reference to the variable.
+	**/
+	const HdlDynamicData& UniformsVarsLoader::Ressource::object(void) const
 	{
-		return type;
-	}
-
-	double UniformsVarsLoader::Ressource::get(const int& i, const int& j) const				
-	{
-		#define GET_VALUE( glType, cType, nr, nc) \
-			if( type == glType ) \
-			{ \
-				if(i<0 || i>=nc || j<0 || j>=nr) \
-					throw Exception("Ressource::get - Parameter (" + to_string(i) + "," + to_string(j) + ") is out of bound. The container is \"" + glParamName(type) + "\".", __FILE__, __LINE__); \
-				cType* ptr = reinterpret_cast< cType* >(data); \
-				return static_cast<double>(ptr[j*nc + i]); \
-			}
-
-			GET_VALUE( GL_FLOAT, 			float, 		1,	1 )
-		else	GET_VALUE( GL_FLOAT_VEC2, 		float,		2,	1 )
-		else	GET_VALUE( GL_FLOAT_VEC3, 		float, 		3,	1 )
-		else	GET_VALUE( GL_FLOAT_VEC4,		float, 		4,	1 )
-		/*else	GET_VALUE( GL_DOUBLE,			double,		1,	1 )
-		else	GET_VALUE( GL_DOUBLE_VEC2,		double,		2,	1 )
-		else	GET_VALUE( GL_DOUBLE_VEC3,		double,		3,	1 )
-		else	GET_VALUE( GL_DOUBLE_VEC4,		double,		4,	1 )*/
-		else	GET_VALUE( GL_INT,			int,		1,	1 )
-		else	GET_VALUE( GL_INT_VEC2,			int,		2,	1 )
-		else	GET_VALUE( GL_INT_VEC3,			int,		3,	1 )
-		else	GET_VALUE( GL_INT_VEC4,			int,		4,	1 )
-		else	GET_VALUE( GL_UNSIGNED_INT,		unsigned int,	1,	1 )
-		else	GET_VALUE( GL_UNSIGNED_INT_VEC2,	unsigned int,	2,	1 )
-		else	GET_VALUE( GL_UNSIGNED_INT_VEC3,	unsigned int,	3,	1 )
-		else	GET_VALUE( GL_UNSIGNED_INT_VEC4,	unsigned int,	4,	1 )
-		else	GET_VALUE( GL_BOOL,			int,		1,	1 )
-		else	GET_VALUE( GL_BOOL_VEC2,		int,		2,	1 )
-		else	GET_VALUE( GL_BOOL_VEC3,		int,		3,	1 )
-		else	GET_VALUE( GL_BOOL_VEC4,		int,		4,	1 )
-		else	GET_VALUE( GL_FLOAT_MAT2,		float,		2,	2 )
-		else	GET_VALUE( GL_FLOAT_MAT3,		float,		3,	3 )
-		else	GET_VALUE( GL_FLOAT_MAT4,		float,		4,	4 )
+		if(data==NULL)
+			throw Exception("UniformsVarsLoader::Ressource::object - Data object not available.", __FILE__, __LINE__);
 		else
-			throw Exception("Ressource::get - Unknown type \"" + glParamName(type) + "\" for element \"" + name + "\".", __FILE__, __LINE__);
-
-		#undef GET_VALUE
+			return (*data);
 	}
 
-// UniformsVarsLoader::RessourceNode
-	UniformsVarsLoader::RessourceNode::RessourceNode(void)
-	 : 	name("Undefined")
+	/**
+	\fn HdlDynamicData& UniformsVarsLoader::Ressource::object(void)
+	\brief Get the object of the ressource (access to the variable itself).
+	\return Reference to the variable.
+	**/
+	HdlDynamicData& UniformsVarsLoader::Ressource::object(void)
+	{
+		if(data==NULL)
+			throw Exception("UniformsVarsLoader::Ressource::object - Data object not available.", __FILE__, __LINE__);
+		else
+			return (*data);
+	}
+
+	int UniformsVarsLoader::Ressource::applyTo(Filter& filter, bool forceWrite) const
+	{
+		if(data==NULL)
+			throw Exception("UniformsVarsLoader::Ressource::applyTo - Data object not available.", __FILE__, __LINE__);
+		else if(modified || forceWrite)
+		{
+			filter.program().modifyVar(name, *data);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCodeElement(void) const
+	{
+		if(data==NULL)
+			throw Exception("UniformsVarsLoader::Ressource::getCodeElement - Data object not available.", __FILE__, __LINE__);
+
+		VanillaParserSpace::Element e;
+
+		e.strKeyword 	= data->getGLType();
+		e.name		= name;
+		e.noName	= false;
+		
+		e.arguments.assign(data->getNumElements(), "");
+
+		for(int j=0; j<data->getNumColumns(); j++)
+		{	
+			for(int i=0; i<data->getNumRows(); i++)
+			{
+				const int k = data->getIndex(i, j);
+	
+				e.arguments[k] = to_string( data->get(i, j) );
+			}
+		}
+
+		e.noArgument	= false;
+		e.noBody	= true;
+		e.body.clear();
+
+		return e;
+	}
+
+// UniformsVarsLoader::Node : 
+	UniformsVarsLoader::Node::Node(void)
 	{ }
 
-	UniformsVarsLoader::RessourceNode::RessourceNode(const RessourceNode& cpy)
-	 : 	name(cpy.name)
+	UniformsVarsLoader::Node::Node(const VanillaParserSpace::Element& e)
 	{
-		for(std::vector<UniformsVarsLoader::RessourceNode*>::const_iterator it=cpy.subNodes.begin(); it!=cpy.subNodes.end(); it++)
-			subNodes.push_back( new UniformsVarsLoader::RessourceNode(*(*it)) );
+		if(e.noName || e.name.empty())
+			throw Exception("From line " + to_string(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
 
-		for(std::vector<UniformsVarsLoader::Ressource*>::const_iterator it=cpy.ressources.begin(); it!=cpy.ressources.end(); it++)
-			ressources.push_back( new UniformsVarsLoader::Ressource(*(*it)) );	
+		if(e.strKeyword!=keywords[KW_UL_FILTER] && e.strKeyword!=keywords[KW_UL_PIPELINE])
+			throw Exception("From line " + to_string(e.startLine) + " : Unknown element type : \"" + e.strKeyword + "\".", __FILE__, __LINE__);
+
+		name = e.name;
+
+		const bool supposedToBeAFilter = (e.strKeyword==keywords[KW_UL_FILTER]);
+					
+		if(!e.noBody && !e.body.empty())
+		{
+			VanillaParser parser(e.body);
+
+			if(supposedToBeAFilter)
+			{
+				// Load all elements as ressources : 
+				for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+				{
+					Ressource tmp(*it);
+					ressources[tmp.getName()] = tmp;
+				}
+			}
+			else
+			{
+				// Load all elements as pipelines or filters : 
+				for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+				{
+					Node tmp(*it);
+			
+					if(!tmp.empty())
+						subNodes[tmp.getName()] = tmp;
+				}	
+			}
+		}
+		// else, stay empty.
 	}
 
-	UniformsVarsLoader::RessourceNode::~RessourceNode(void)
+	UniformsVarsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_PipelineLayout& current)
+	 : 	name(_name)
 	{
-		clear();
+		for(int k=0; k<current.getNumElements(); k++)
+		{
+			switch(current.getElementKind(k))
+			{
+				case __ReadOnly_PipelineLayout::FILTER :
+					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.filterLayout(k));
+					break;
+				case __ReadOnly_PipelineLayout::PIPELINE :
+					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.pipelineLayout(k));
+					break;
+				default :
+					throw Exception("UniformsVarsLoader::Node::Node - Unknown element type (internal error).", __FILE__, __LINE__);
+			}
+		}
 	}
 
-	void UniformsVarsLoader::RessourceNode::clear(void)
+	UniformsVarsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_FilterLayout& current)
+	 : 	name(_name)
 	{
-		for(std::vector<UniformsVarsLoader::RessourceNode*>::iterator it=subNodes.begin(); it!=subNodes.end(); it++)
-			delete (*it);
+		// Get access to the filter : 
+		int gid = pipeline.getElementID(name);
+		Filter& filter = pipeline[gid];	
 
-		for(std::vector<UniformsVarsLoader::Ressource*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
-			delete (*it);
+		// Get the program : 
+		HdlProgram& prgm = filter.program();
 
+		// Get the variables : 
+		const std::vector<std::string>& 	uniformVarsNames = prgm.getUniformVarsNames();
+ 		const std::vector<GLenum>& 		uniformVarsTypes = prgm.getUniformVarsTypes();
+
+		for(int k=0; k<uniformVarsNames.size(); k++)
+		{
+			HdlDynamicData* data = HdlDynamicData::build(uniformVarsTypes[k]);
+
+			prgm.getVar( uniformVarsNames[k], *data);
+
+			ressources[ uniformVarsNames[k] ] = Ressource(uniformVarsNames[k], *data);
+
+			delete data;
+		}
+	}
+
+	UniformsVarsLoader::Node::Node(const Node& cpy)
+	 : 	name(cpy.name),
+		subNodes(cpy.subNodes),
+		ressources(cpy.ressources)
+	{ }
+
+	UniformsVarsLoader::Node::~Node(void)
+	{
 		subNodes.clear();
 		ressources.clear();
 	}
 
-	int UniformsVarsLoader::RessourceNode::apply(Pipeline& pipeline, __ReadOnly_PipelineLayout& current)
+	UniformsVarsLoader::Node& UniformsVarsLoader::Node::operator=(const Node& cpy)
+	{
+		name 		= cpy.name;
+		subNodes	= cpy.subNodes;
+		ressources	= cpy.ressources;
+
+		return (*this);
+	}
+
+	/**
+	\fn const std::string& UniformsVarsLoader::Node::getName(void) const
+	\brief Get the name of the node.
+	\return Constant reference to the standard string containing the name of the Node.
+	**/
+	const std::string& UniformsVarsLoader::Node::getName(void) const
+	{
+		return name;
+	}
+
+	/**
+	\fn bool UniformsVarsLoader::Node::isFilter(void) const
+	\brief Get the name of the ressource.
+	\return True if the node is empty (no sub-node or no ressource).
+	**/
+	bool UniformsVarsLoader::Node::isFilter(void) const
+	{
+		return subNodes.empty() && !ressources.empty();
+	}
+
+	/**
+	\fn bool UniformsVarsLoader::Node::isPipeline(void) const
+	\brief Test if a Node is a pipeline (either the node is empty or it has sub-nodes only).
+	\return True if the Node corresponds to a Pipeline structure.
+	**/
+	bool UniformsVarsLoader::Node::isPipeline(void) const
+	{
+		return !subNodes.empty() && ressources.empty();
+	}
+
+	/**
+	\fn bool UniformsVarsLoader::Node::empty(void) const
+	\brief Test if a Node is a filter (either the node is empty or it has ressources only).
+	\return True if the Node corresponds to a Filter structure.
+	**/
+	bool UniformsVarsLoader::Node::empty(void) const
+	{
+		return subNodes.empty() && ressources.empty();
+	}
+
+	/**
+	\fn void UniformsVarsLoader::Node::clear(void)
+	\brief Removes all ressources and sub-nodes from this node.
+	**/
+	void UniformsVarsLoader::Node::clear(void)
+	{
+		subNodes.clear();
+		ressources.clear();
+	}
+
+	/**
+	\fn bool UniformsVarsLoader::Node::hasModifications(void) const
+	\brief Test if this branch contains modified variables.
+	\return True, if variable contained declared modification (see UniformsVarsLoader::Ressource::modified).
+	**/
+	bool UniformsVarsLoader::Node::hasModifications(void) const
+	{
+		if(empty())
+			return false;
+
+		bool test = false;
+
+		for(RessourceConstIterator it=ressourceBegin(); it!=ressourceEnd(); it++)
+			test = test || it->second.modified;
+		
+		for(NodeConstIterator it=nodeBegin(); it!=nodeEnd(); it++)
+			test = test || it->second.hasModifications();
+	}
+
+	/**
+	\fn void UniformsVarsLoader::Node::clearModifiedFlags(bool value)
+	\brief Go through all sub-nodes and change any Ressource::modified flag.
+	\param value The new value to set for the flags (true, will set all the subsequent modified flags to true).
+	**/
+	void UniformsVarsLoader::Node::clearModifiedFlags(bool value)
+	{
+		for(RessourceIterator it=ressourceBegin(); it!=ressourceEnd(); it++)
+			it->second.modified = value;
+		
+		for(NodeIterator it=nodeBegin(); it!=nodeEnd(); it++)
+			it->second.clearModifiedFlags(value);
+	}
+
+	/**
+	\fn int UniformsVarsLoader::Node::getNumSubNodes(void) const
+	\brief Get the number of sub-nodes.
+	\return The number of sub-nodes.
+	**/
+	int UniformsVarsLoader::Node::getNumSubNodes(void) const
+	{
+		return subNodes.size();
+	}
+
+	/**
+	\fn std::vector<std::string> UniformsVarsLoader::Node::getSubNodesNamesList(void) const
+	\brief Get a list of the name of all sub-nodes.
+	\return A list of all sub-nodes names.
+	**/
+	std::vector<std::string> UniformsVarsLoader::Node::getSubNodesNamesList(void) const
+	{
+		std::vector<std::string> namesList;
+
+		for(std::map<std::string, Node>::const_iterator it=subNodes.begin(); it!=subNodes.end(); it++)
+			namesList.push_back(it->first);
+
+		return namesList;
+	}
+	
+	/**
+	\fn bool UniformsVarsLoader::Node::subNodeExists(const std::string& nodeName) const
+	\brief Test if a sub-node exist.
+	\param nodeName The name of the targeted node.
+	\return True if the node exists, false otherwise.
+	**/
+	bool UniformsVarsLoader::Node::subNodeExists(const std::string& nodeName) const
+	{
+		return subNodes.find(nodeName)!=subNodes.end();
+	}
+
+	/**
+	\fn const UniformsVarsLoader::Node& UniformsVarsLoader::Node::subNode(const std::string& nodeName) const
+	\brief Access a sub-node by its name.
+	\param nodeName The name of the targeted node.
+	\return A (constant) reference to the targeted node or raise an exception is any error occurs.
+	**/
+	const UniformsVarsLoader::Node& UniformsVarsLoader::Node::subNode(const std::string& nodeName) const
+	{
+		std::map<std::string, Node>::const_iterator it = subNodes.find(nodeName);
+
+		if(it==subNodes.end())
+			throw Exception("UniformsVarsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+		else
+			return it->second;
+	}
+
+	/**
+	\fn UniformsVarsLoader::Node& UniformsVarsLoader::Node::subNode(const std::string& nodeName)
+	\brief Access a sub-node by its name.
+	\param nodeName The name of the targeted node.
+	\return A reference to the targeted node or raise an exception is any error occurs.
+	**/
+	UniformsVarsLoader::Node& UniformsVarsLoader::Node::subNode(const std::string& nodeName)
+	{
+		std::map<std::string, Node>::iterator it = subNodes.find(nodeName);
+
+		if(it==subNodes.end())
+			throw Exception("UniformsVarsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+		else
+			return it->second;
+	}
+
+	/*void UniformsVarsLoader::Node::addNode(const Node& node)
+	{
+		subNodes[node.getName()] = node;
+	}*/
+
+	/**
+	\fn void UniformsVarsLoader::Node::eraseNode(const std::string& nodeName)
+	\brief Remove a node by its name or raise an exception if any error occurs.
+	\param nodeName The name of the targeted node.
+	**/
+	void UniformsVarsLoader::Node::eraseNode(const std::string& nodeName)
+	{
+		std::map<std::string, Node>::iterator it = subNodes.find(nodeName);
+
+		if(it==subNodes.end())
+			throw Exception("UniformsVarsLoader::Node::eraseNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+		else
+			subNodes.erase(it);
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::Node::nodeBegin(void) const
+	\brief Get the 'begin' iterator on the sub-nodes list.
+	\return A UniformsVarsLoader::NodeConstIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::Node::nodeBegin(void) const
+	{
+		return subNodes.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::Node::nodeEnd(void) const
+	\brief Get the 'end' iterator on the sub-nodes list.
+	\return A UniformsVarsLoader::NodeConstIterator on 'end'. 
+	**/
+	UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::Node::nodeEnd(void) const
+	{
+		return subNodes.end();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeIterator UniformsVarsLoader::Node::nodeBegin(void)
+	\brief Get the 'begin' iterator on the sub-nodes list.
+	\return A UniformsVarsLoader::NodeIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::NodeIterator UniformsVarsLoader::Node::nodeBegin(void)
+	{
+		return subNodes.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeIterator UniformsVarsLoader::Node::nodeEnd(void)
+	\brief Get the 'end' iterator on the sub-nodes list.
+	\return A UniformsVarsLoader::NodeIterator on 'end'. 
+	**/
+	UniformsVarsLoader::NodeIterator UniformsVarsLoader::Node::nodeEnd(void)
+	{
+		return subNodes.end();
+	}
+
+	/**
+	\fn int UniformsVarsLoader::Node::getNumRessources(void) const
+	\brief Get the number of ressources.
+	\return The number of ressources.
+	**/
+	int UniformsVarsLoader::Node::getNumRessources(void) const
+	{
+		return ressources.size();
+	}
+
+	/**
+	\fn std::vector<std::string> UniformsVarsLoader::Node::getRessourcesNamesList(void) const
+	\brief Get a list of the name of all ressources.
+	\return A list of all ressources names.
+	**/
+	std::vector<std::string> UniformsVarsLoader::Node::getRessourcesNamesList(void) const
+	{
+		std::vector<std::string> namesList;
+
+		for(std::map<std::string, Ressource>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
+			namesList.push_back(it->first);
+
+		return namesList;
+	}
+
+	/**
+	\fn bool UniformsVarsLoader::Node::ressourceExists(const std::string& ressourceName) const
+	\brief Test if a ressource exist.
+	\param ressourceName The name of the targeted ressource.
+	\return True if the ressource exists, false otherwise.
+	**/
+	bool UniformsVarsLoader::Node::ressourceExists(const std::string& ressourceName) const
+	{
+		return ressources.find(ressourceName)!=ressources.end();
+	}
+
+	/**
+	\fn const UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName) const
+	\brief Access a ressource by its name.
+	\param ressourceName The name of the targeted ressource.
+	\return A (constant) reference to the targeted ressource or raise an exception is any error occurs.
+	**/
+	const UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName) const
+	{
+		std::map<std::string, Ressource>::const_iterator it = ressources.find(ressourceName);
+
+		if(it==ressources.end())
+			throw Exception("UniformsVarsLoader::Node::ressource - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		else
+			return it->second;
+	}
+
+	/**
+	\fn UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName)
+	\brief Access a ressource by its name.
+	\param ressourceName The name of the targeted ressource.
+	\return A reference to the targeted ressource or raise an exception is any error occurs.
+	**/
+	UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName)
+	{
+		std::map<std::string, Ressource>::iterator it = ressources.find(ressourceName);
+
+		if(it==ressources.end())
+			throw Exception("UniformsVarsLoader::Node::ressource - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		else
+			return it->second;
+	}
+
+	/*void UniformsVarsLoader::Node::addRessource(const Ressource& ressource)
+	{
+		ressources[ressource.getName()] = ressource;
+	}*/
+
+	/**
+	\fn void UniformsVarsLoader::Node::eraseRessource(const std::string& ressourceName)
+	\brief Remove a ressource by its name or raise an exception if any error occurs.
+	\param ressourceName The name of the targeted ressource.
+	**/
+	void UniformsVarsLoader::Node::eraseRessource(const std::string& ressourceName)
+	{
+		std::map<std::string, Ressource>::iterator it = ressources.find(ressourceName);
+
+		if(it==ressources.end())
+			throw Exception("UniformsVarsLoader::Node::eraseNode - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		else
+			ressources.erase(it);
+	}
+
+	/**
+	\fn UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceBegin(void) const
+	\brief Get the 'begin' iterator on the ressources list.
+	\return A UniformsVarsLoader::RessourceConstIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceBegin(void) const
+	{
+		return ressources.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceEnd(void) const
+	\brief Get the 'end' iterator on the ressources list.
+	\return A UniformsVarsLoader::RessourceConstIterator on 'end'. 
+	**/
+	UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceEnd(void) const
+	{
+		return ressources.end();
+	}
+
+	/**
+	\fn UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceBegin(void)
+	\brief Get the 'begin' iterator on the ressources list.
+	\return A UniformsVarsLoader::RessourceIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceBegin(void)
+	{
+		return ressources.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceEnd(void)
+	\brief Get the 'end' iterator on the ressources list.
+	\return A UniformsVarsLoader::RessourceIterator on 'end'. 
+	**/
+	UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceEnd(void)
+	{
+		return ressources.end();
+	}
+
+	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite) const
 	{
 		int c = 0;
 
-		for(int k=0; k<subNodes.size(); k++)
+		for(std::map<std::string, UniformsVarsLoader::Node>::const_iterator it=subNodes.begin(); it!=subNodes.end(); it++)
 		{
-			if(!current.doesElementExist(subNodes[k]->name))
-				throw Exception("Missing element \"" + subNodes[k]->name + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
+			if(!current.doesElementExist(it->second.getName()))
+				throw Exception("Missing element \"" + it->second.getName() + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
 
-			int id = current.getElementIndex(subNodes[k]->name);
-
-			if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::PIPELINE )
-				c += subNodes[k]->apply( pipeline, current.pipelineLayout(id) );
-			else if( current.getElementKind( id ) == __ReadOnly_PipelineLayout::FILTER )
+			int id = current.getElementIndex(it->second.getName());
+	
+			const __ReadOnly_PipelineLayout::ComponentKind kind = current.getElementKind(id);
+	
+			switch(kind)
 			{
-				if( !subNodes[k]->subNodes.empty() )
-					throw Exception("Element \"" + subNodes[k]->name + "\" is a pipeline in the uniforms data and a filter in the Pipeline " + pipeline.getFullName() + ".", __FILE__, __LINE__);
-
-				int gid = current.getElementID( id );
-				Filter& filter = pipeline[gid];
-				std::vector<Ressource*>& ressources = subNodes[k]->ressources;
-
-				for(int l=0; l<ressources.size(); l++)
-				{
-					ressources[l]->apply(filter);
-				}
-
-				c += ressources.size();
+				case __ReadOnly_PipelineLayout::FILTER :
+					{
+						int gid = current.getElementID(id);
+						Filter& filter = pipeline[gid];	
+						c += it->second.applyTo(pipeline, filter, forceWrite);
+					}
+					break;
+				case __ReadOnly_PipelineLayout::PIPELINE :
+					c += it->second.applyTo(pipeline, current.pipelineLayout(id), forceWrite);
+					break;
+				default : 
+					throw Exception("Unknown element type (internal error).", __FILE__, __LINE__);
 			}
-			else
-				throw Exception("Unknown component kind for element \"" + subNodes[k]->name + "\".", __FILE__, __LINE__);
 		}
 
 		return c;
 	}
 
-	int UniformsVarsLoader::RessourceNode::getNumVariables(void) const
+	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite) const
 	{
 		int c = 0;
 
-		for(int k=0; k<subNodes.size(); k++)
-			c += subNodes[k]->getNumVariables();
+		if(!empty() && !isFilter())
+			throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__);
 
-		c += ressources.size();
+		for(std::map<std::string, UniformsVarsLoader::Ressource>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
+			c += it->second.applyTo(filter, forceWrite);
 
 		return c;
 	}
 
-	UniformsVarsLoader::RessourceNode& UniformsVarsLoader::RessourceNode::getSubNode(const std::string& name)
+	VanillaParserSpace::Element UniformsVarsLoader::Node::getCodeElement(void) const
 	{
-		for(std::vector<UniformsVarsLoader::RessourceNode*>::iterator it=subNodes.begin(); it!=subNodes.end(); it++)
+		VanillaParserSpace::Element e;
+
+		e.noName = true;
+		e.noArgument = true;
+		e.noBody = true;
+
+		if(empty())
+			return e;
+
+		if(isFilter())
+			e.strKeyword = keywords[KW_UL_FILTER];
+		else
+			e.strKeyword = keywords[KW_UL_PIPELINE];
+
+		e.name = name;
+		e.noName = false;
+
+		e.noArgument = true;
+		e.noBody = false;
+
+		if(isFilter())
 		{
-			if((*it)->name==name)
-				return *(*it);
+			for(RessourceConstIterator it=ressourceBegin(); it!=ressourceEnd(); )
+			{
+				e.body += it->second.getCodeElement().getCode();
+
+				it++;
+
+				if(it!=ressourceEnd())
+					e.body += '\n';
+			}
+		}
+		else
+		{
+			for(NodeConstIterator it=nodeBegin(); it!=nodeEnd(); )
+			{
+				e.body += it->second.getCodeElement().getCode();
+
+				it++;
+
+				if(it!=nodeEnd())
+					e.body += '\n';
+			}
 		}
 
-		// Not found : 
-		throw Exception("UniformsVarsLoader::RessourceNode::getSubNode - No subnode named \"" + name + "\" was found.", __FILE__, __LINE__);
+		return e;
 	}
 
-	const UniformsVarsLoader::RessourceNode& UniformsVarsLoader::RessourceNode::getSubNode(const std::string& name) const
-	{
-		for(std::vector<UniformsVarsLoader::RessourceNode*>::const_iterator it=subNodes.begin(); it!=subNodes.end(); it++)
-		{
-			if((*it)->name==name)
-				return *(*it);
-		}
-
-		// Not found : 
-		throw Exception("UniformsVarsLoader::RessourceNode::getSubNode - No subnode named \"" + name + "\" was found.", __FILE__, __LINE__);
-	}
-
-	UniformsVarsLoader::Ressource& UniformsVarsLoader::RessourceNode::getRessource(const std::string& name)
-	{
-		for(std::vector<UniformsVarsLoader::Ressource*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
-		{
-			if((*it)->name==name)
-				return *(*it);
-		}
-
-		// Not found : 
-		throw Exception("UniformsVarsLoader::Ressource::getRessource - No ressource named \"" + name + "\" was found.", __FILE__, __LINE__);
-	}
-
-	const UniformsVarsLoader::Ressource& UniformsVarsLoader::RessourceNode::getRessource(const std::string& name) const
-	{
-		for(std::vector<UniformsVarsLoader::Ressource*>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
-		{
-			if((*it)->name==name)
-				return *(*it);
-		}
-
-		// Not found : 
-		throw Exception("UniformsVarsLoader::Ressource::getRessource - No ressource named \"" + name + "\" was found.", __FILE__, __LINE__);
-	}
-
-// UniformsVarsLoader
+// UniformsVarsLoader :
 	/**
 	\fn UniformsVarsLoader::UniformsVarsLoader(void)
 	\brief UniformsVarsLoader constructor.
@@ -533,18 +770,12 @@
 	\param cpy The object to be copied.
 	**/
 	UniformsVarsLoader::UniformsVarsLoader(const UniformsVarsLoader& cpy)
-	{
-		for(std::vector<RessourceNode*>::const_iterator it=cpy.ressources.begin(); it!=cpy.ressources.end(); it++)
-			ressources.push_back(new RessourceNode(*(*it)) );
-	}
+	 : 	nodes(cpy.nodes)
+	{ }
 
 	UniformsVarsLoader::~UniformsVarsLoader(void)
 	{
-		for(std::vector<RessourceNode*>::iterator it=ressources.begin(); it!=ressources.end(); it++)
-			delete (*it);
-
-		// Clear :
-		ressources.clear();
+		nodes.clear();
 	}
 
 	/**
@@ -587,59 +818,34 @@
 		}
 		// else : "already loaded"
 
-		// Do the first parse operation :
+		// Load :
 		try
 		{
 			VanillaParser parser(source);
 
-			for(int k=0; k<parser.elements.size(); k++)
+			for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 			{
-				if(parser.elements[k].strKeyword!=keywords[KW_UL_PIPELINE])
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must be of type \"" + keywords[KW_UL_PIPELINE] + "\" (current : \"" + parser.elements[k].strKeyword + "\").", __FILE__, __LINE__);
+				Node tmp(*it);
 
-				if( parser.elements[k].noName || parser.elements[k].name.empty() )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
-
-				if( parser.elements[k].noBody )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__);
-
-				RessourceNode* ptr = NULL;
-
-				// Try to find a duplicate :
-				for(int l=0; l<ressources.size(); l++)
+				if(!tmp.empty())
 				{
-					if(ressources[l]->name==parser.elements[k].name)
-					{
-						if(replace)
-						{
-							ressources[l]->clear();
-							ptr = ressources[l];
-						}
-						else
-							throw Exception("From line " + to_string(parser.elements[k].startLine) + " : An element with the name \"" + parser.elements[k].name + "\" has already been registered (replace=false).", __FILE__, __LINE__);
-					}
+					if(!hasPipeline(tmp.getName()) || replace)
+						nodes[tmp.getName()] = tmp;
+					else
+						throw Exception("From line " + to_string(it->startLine) + " : An element with the typename \"" + tmp.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
 				}
-
-				if(ptr==NULL)
-				{
-					ressources.push_back( new RessourceNode() );
-					ptr = ressources.back();
-				}
-
-				ptr->name = parser.elements[k].name;
-				processNode(parser.elements[k].body, *ptr);
 			}
 		}
 		catch(Exception& e)
 		{
 			if(!filename.empty())
 			{
-				Exception m("UniformsVarsLoader::UniformsVarsLoader - Unable to load uniforms data from file \"" + filename + "\" : ", __FILE__, __LINE__);
+				Exception m("UniformsVarsLoader::load - Unable to load uniforms data from file \"" + filename + "\" : ", __FILE__, __LINE__);
 				throw m + e;
 			}
 			else
 			{
-				Exception m("UniformsVarsLoader::UniformsVarsLoader - Unable to load uniforms data : ", __FILE__, __LINE__);
+				Exception m("UniformsVarsLoader::load - Unable to load uniforms data : ", __FILE__, __LINE__);
 				throw m + e;
 			}
 		}
@@ -653,158 +859,15 @@
 	**/
 	void UniformsVarsLoader::load(Pipeline& pipeline, bool replace)
 	{
-		// Try to find a duplicate :
-		RessourceNode* ptr = NULL;
+		std::map<std::string, UniformsVarsLoader::Node>::iterator it=nodes.find(pipeline.getTypeName());
 
-		// Try to find a duplicate :
-		for(int l=0; l<ressources.size(); l++)
-		{
-			if(ressources[l]->name==pipeline.getName())
-			{
-				if(replace)
-				{
-					ressources[l]->clear();
-					ptr = ressources[l];
-					break ;
-				}
-				else
-					throw Exception("An element with the name \"" + pipeline.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
-			}
-		}
+		if(it!=nodes.end() && !replace)
+			throw Exception("UniformsVarsLoader::load - An element with the typename \"" + pipeline.getTypeName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
+		else
+			nodes.erase(it);
 
-		if(ptr==NULL)
-		{
-			ressources.push_back( new RessourceNode() );
-			ptr = ressources.back();
-		}
-
-		ptr->name = pipeline.getName();
-
-		// Load the structure :
-		processNode(pipeline, pipeline, *ptr);
-	}
-
-	void UniformsVarsLoader::processNode(std::string body, RessourceNode& root)
-	{
-		VanillaParser parser(body);
-
-		for(int k=0; k<parser.elements.size(); k++)
-		{
-			if(parser.elements[k].strKeyword==keywords[KW_UL_PIPELINE] || parser.elements[k].strKeyword==keywords[KW_UL_FILTER])
-			{
-				if( parser.elements[k].noName || parser.elements[k].name.empty() )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element must have a (non-empty) name.", __FILE__, __LINE__);
-
-				if( parser.elements[k].noBody )
-					throw Exception("From line " + to_string(parser.elements[k].startLine) + " : The element \"" + parser.elements[k].name + "\" must have a (non-empty) body.", __FILE__, __LINE__);
-
-				root.subNodes.push_back( new RessourceNode() );
-				root.subNodes.back()->name = parser.elements[k].name;
-
-				processNode(parser.elements[k].body, *root.subNodes.back());
-			}
-			else // It must be a ressource :
-			{
-				root.ressources.push_back( new Ressource() );
-				root.ressources.back()->build( parser.elements[k] );
-			}
-		}
-
-		// Separate filters from pipelines :
-		if( !root.ressources.empty() && !root.subNodes.empty())
-			throw Exception("Found sub-elements AND ressources in node \"" + root.name + "\".", __FILE__, __LINE__);
-	}
-
-	void UniformsVarsLoader::processNode(Pipeline& pipeline, __ReadOnly_PipelineLayout& current, RessourceNode& root)
-	{
-		for(int k=0; k<current.getNumElements(); k++)
-		{
-			if(current.getElementKind(k)==__ReadOnly_PipelineLayout::PIPELINE)
-			{
-				// Add node :
-				root.subNodes.push_back( new RessourceNode() );
-				root.subNodes.back()->name = current.getElementName(k);
-
-				processNode(pipeline, current.pipelineLayout(k), *root.subNodes.back());
-			}
-			else if(current.getElementKind(k)==__ReadOnly_PipelineLayout::FILTER)
-			{
-				// Add node :
-				root.subNodes.push_back( new RessourceNode() );
-				root.subNodes.back()->name = current.getElementName(k);
-
-				RessourceNode& r = *root.subNodes.back();
-
-				// Get variable list :
-				int gid = current.getElementID(k);
-				Filter& filter = pipeline[gid];
-
-				std::vector<std::string> 	vars = filter.prgm().getUniformVarsNames();
-				std::vector<GLenum> 		type = filter.prgm().getUniformVarsTypes();
-
-				for(int l=0; l<vars.size(); l++)
-				{
-					if( filter.prgm().isValid(vars[l]) )
-					{
-						r.ressources.push_back( new Ressource() );
-						r.ressources.back()->build( vars[l], type[l], filter.prgm() );
-					}
-				}
-			}
-			else
-				throw Exception("UniformsVarsLoader::processNode - Unknown element kind.", __FILE__, __LINE__);
-		}
-	}
-
-	VanillaParserSpace::Element UniformsVarsLoader::getNodeCode(const RessourceNode& node, const bool isRoot) const
-	{
-		VanillaParserSpace::Element e;
-
-		if(node.subNodes.empty() && !node.ressources.empty())
-		{
-			// Filter :
-			e.strKeyword 	= keywords[KW_UL_FILTER];
-			e.name		= node.name;
-			e.noName	= false;
-			e.arguments.clear();
-			e.noArgument	= true;
-			e.noBody	= false;
-
-			for(int k=0; k<node.ressources.size(); k++)
-			{
-				VanillaParserSpace::Element es = node.ressources[k]->getCode();
-				e.body += es.getCode();
-
-				if(k<node.ressources.size()-1)
-					e.body += "\n";
-			}
-		}
-		else if(!node.subNodes.empty() || isRoot)
-		{
-			// Pipeline :
-			e.strKeyword 	= keywords[KW_UL_PIPELINE];
-			e.name		= node.name;
-			e.noName	= false;
-			e.arguments.clear();
-			e.noArgument	= true;
-			e.noBody	= false;
-
-			for(int k=0; k<node.subNodes.size(); k++)
-			{
-				VanillaParserSpace::Element es = getNodeCode(*node.subNodes[k]);
-
-				// Don't show empty elements :
-				if(!es.body.empty())
-				{
-					e.body += es.getCode();
-
-					if(k<node.subNodes.size()-1)
-						e.body += "\n\n";
-				}
-			}
-		}
-
-		return e;
+		// Insert the new node : 
+		nodes[pipeline.getTypeName()] = Node(pipeline.getTypeName(), pipeline, pipeline);
 	}
 
 	/**
@@ -813,7 +876,7 @@
 	**/
 	void UniformsVarsLoader::clear(void)
 	{
-		ressources.clear();
+		nodes.clear();
 	}
 
 	/**
@@ -823,15 +886,12 @@
 	**/
 	void UniformsVarsLoader::clear(const std::string& name)
 	{
-		// Find element :
-		for(int k=0; k<ressources.size(); k++)
-		{
-			if(ressources[k]->name==name)
-			{
-				delete ressources[k];
-				ressources.erase( ressources.begin() + k );
-			}
-		}
+		std::map<std::string, Node>::iterator it=nodes.find(name);
+
+		if(it==nodes.end())
+			throw Exception("UniformsVarsLoader::clear - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__);
+		else
+			nodes.erase(it);
 	}
 
 	/**
@@ -842,13 +902,7 @@
 	**/
 	bool UniformsVarsLoader::hasPipeline(const std::string& name) const
 	{
-		for(int k=0; k<ressources.size(); k++)
-		{
-			if(ressources[k]->name==name)
-				return true;
-		}
-
-		return false;
+		return nodes.find(name)!=nodes.end();
 	}
 
 	/**
@@ -858,12 +912,12 @@
 	**/
 	std::vector<std::string> UniformsVarsLoader::getPipelinesTypeNames(void) const
 	{
-		std::vector<std::string> typeNames;
+		std::vector<std::string> namesList;
 
-		for(int k=0; k<ressources.size(); k++)
-			typeNames.push_back( ressources[k]->name );
+		for(std::map<std::string, Node>::const_iterator it=nodes.begin(); it!=nodes.end(); it++)
+			namesList.push_back(it->first);
 
-		return typeNames;
+		return namesList;
 	}
 
 	/**
@@ -873,71 +927,41 @@
 	**/
 	bool UniformsVarsLoader::empty(void) const
 	{
-		return ressources.empty();
+		return nodes.empty();
 	}
 
-	/**
-	\fn int UniformsVarsLoader::getNumVariables(void) const
-	\brief Get the total number of variables (scalar, vector, matrices, etc.) available in this object.
-	\return The total number of uniforms variables currently stored in this object.
-	**/
-	int UniformsVarsLoader::getNumVariables(void) const
-	{
-		int c = 0;
-
-		for(int k=0; k<ressources.size(); k++)
-			c += ressources[k]->getNumVariables();
-		
-		return c;
-	}
+	//int UniformsVarsLoader::getNumVariables(void) const
+	//int UniformsVarsLoader::getNumVariables(const std::string& name) const;
 
 	/**
-	\fn int UniformsVarsLoader::getNumVariables(const std::string& name) const
-	\brief Get the number of variables (scalar, vector, matrices, etc.) available for the pipeline of the given name.
-	\param name The name of the target pipeline (see Component::getName()).
-	\return The number of uniforms variables currently stored in this object for the pipeline of the corresponding name.
-	**/
-	int UniformsVarsLoader::getNumVariables(const std::string& name) const
-	{
-		int c = 0;	
-
-		for(int k=0; k<ressources.size(); k++)
-		{
-			if(ressources[k]->name==name)
-				c += ressources[k]->getNumVariables();
-		}
-
-		return c;
-	}
-
-	/**
-	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline)
+	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
 	\brief Copy the possibly loaded set of uniforms variables to a pipeline (for the corresponding name of the Pipeline instance).
 	\param pipeline The pipeline to which the data has to be copied (if relevant).
-	\return The total number of uniforms variables copied.
+	\param forceWrite If set to false, only the variable marked as modified will be loaded (see UniformsVarsLoader::Ressource::modified).
+	\return The total number of uniforms variables actually copied.
 	**/
-	int UniformsVarsLoader::applyTo(Pipeline& pipeline)
+	int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
 	{
-		int c = 0;
+		std::map<std::string, Node>::const_iterator it=nodes.find(pipeline.getTypeName());
 
-		try
+		if(it==nodes.end())
+			throw Exception("UniformsVarsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__);
+		else
 		{
-			// Scan the current ressources to find a corresponding name :
-			for(int k=0; k<ressources.size(); k++)
+			int c = 0;
+
+			try
 			{
-				if(ressources[k]->name==pipeline.getName())
-					c += ressources[k]->apply(pipeline, pipeline);
+			 	c = it->second.applyTo(pipeline, pipeline, forceWrite);
 			}
+			catch(Exception& e)
+			{
+				Exception m("UniformsVarsLoader::applyTo - Exception while modifying pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__);
+				throw m + e;
+			}	
 
-			HdlProgram::stopProgram();
+			return c;
 		}
-		catch(Exception& e)
-		{
-			Exception m("UniformsVarsLoader::applyTo - Exception caught while applying variables to pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__);
-			throw m + e;
-		}
-
-		return c;
 	}
 
 	/**
@@ -947,15 +971,20 @@
 	**/
 	std::string UniformsVarsLoader::getCode(void) const
 	{
-		std::string res;
+		std::string code;
 
-		for(int k=0; k<ressources.size(); k++)
+		for(std::map<std::string, Node>::const_iterator it=nodes.begin(); it!=nodes.end(); )
 		{
-			VanillaParserSpace::Element e = getNodeCode(*ressources[k], true);
-			res += e.getCode() + "\n";
+			if(!it->second.empty())
+				code += it->second.getCodeElement().getCode();
+
+			it++;
+
+			if(it!=nodes.end())
+				code += '\n';
 		}
 
-		return res;
+		return code;
 	}
 
 	/**
@@ -966,16 +995,12 @@
 	**/
 	std::string UniformsVarsLoader::getCode(const std::string& name) const
 	{
-		for(int k=0; k<ressources.size(); k++)
-		{
-			if(ressources[k]->name==name)
-			{
-				VanillaParserSpace::Element e = getNodeCode(*ressources[k], true);
-				return e.getCode();
-			}
-		}
+		std::map<std::string, Node>::const_iterator it=nodes.find(name);
 
-		throw Exception("UniformsVarsLoader::getCode - Unable to find element \"" + name + "\".", __FILE__, __LINE__);
+		if(it==nodes.end())
+			throw Exception("UniformsVarsLoader::getCode - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__);
+		else
+			it->second.getCodeElement().getCode();
 	}
 
 	/**

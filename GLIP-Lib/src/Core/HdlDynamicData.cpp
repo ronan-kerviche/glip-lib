@@ -38,12 +38,12 @@
 	{ }
 
 	/**
-	\fn const GLenum& HdlDynamicData::getType(void) const
+	\fn const GLenum& HdlDynamicData::getGLType(void) const
 	\brief Get the type of the current data as the GL identifier.
 
 	\return The GLenum corresponding to the type.
 	**/
-	const GLenum& HdlDynamicData::getType(void) const
+	const GLenum& HdlDynamicData::getGLType(void) const
 	{
 		return type;
 	}
@@ -154,10 +154,63 @@
 		#undef GENERATE_ELM
 	}
 
+	/**
+	\fn HdlDynamicData* HdlDynamicData::copy(const HdlDynamicData& cpy)
+	\brief Copy dynamic data.
+	\param cpy The original element to be copied.
+	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
+	**/
+	HdlDynamicData* HdlDynamicData::copy(const HdlDynamicData& cpy)
+	{
+		HdlDynamicData* res = NULL;
+
+		#define COPY_ELM( glType, CType, _rows, _cols) \
+			if(cpy.getGLType()== glType ) \
+			{ \
+				HdlDynamicDataSpecial< CType >* d = new HdlDynamicDataSpecial< CType >(cpy.getGLType(), _rows, _cols); \
+				std::memcpy(d->getPtr(), cpy.getPtr(), _rows * _cols * sizeof( CType )); \
+				res = reinterpret_cast<HdlDynamicData*>(d); \
+			}
+
+			COPY_ELM( GL_BYTE,			char,		1,	1 )
+		else	COPY_ELM( GL_UNSIGNED_BYTE,		unsigned char,	1,	1 )
+		else	COPY_ELM( GL_SHORT,			short,		1,	1 )
+		else	COPY_ELM( GL_UNSIGNED_SHORT,		unsigned short,	1,	1 )
+		else	COPY_ELM( GL_FLOAT, 			float, 		1,	1 )
+		else	COPY_ELM( GL_FLOAT_VEC2, 		float,		2,	1 )
+		else	COPY_ELM( GL_FLOAT_VEC3, 		float, 		3,	1 )
+		else	COPY_ELM( GL_FLOAT_VEC4,		float, 		4,	1 )
+		else	COPY_ELM( GL_DOUBLE,			double,		1,	1 )
+		else	COPY_ELM( GL_DOUBLE_VEC2,		double,		2,	1 )
+		else	COPY_ELM( GL_DOUBLE_VEC3,		double,		3,	1 )
+		else	COPY_ELM( GL_DOUBLE_VEC4,		double,		4,	1 )
+		else	COPY_ELM( GL_INT,			int,		1,	1 )
+		else	COPY_ELM( GL_INT_VEC2,			int,		2,	1 )
+		else	COPY_ELM( GL_INT_VEC3,			int,		3,	1 )
+		else	COPY_ELM( GL_INT_VEC4,			int,		4,	1 )
+		else	COPY_ELM( GL_UNSIGNED_INT,		unsigned int,	1,	1 )
+		else	COPY_ELM( GL_UNSIGNED_INT_VEC2,		unsigned int,	2,	1 )
+		else	COPY_ELM( GL_UNSIGNED_INT_VEC3,		unsigned int,	3,	1 )
+		else	COPY_ELM( GL_UNSIGNED_INT_VEC4,		unsigned int,	4,	1 )
+		else	COPY_ELM( GL_BOOL,			int,		1,	1 )
+		else	COPY_ELM( GL_BOOL_VEC2,			int,		2,	1 )
+		else	COPY_ELM( GL_BOOL_VEC3,			int,		3,	1 )
+		else	COPY_ELM( GL_BOOL_VEC4,			int,		4,	1 )
+		else	COPY_ELM( GL_FLOAT_MAT2,		float,		2,	2 )
+		else	COPY_ELM( GL_FLOAT_MAT3,		float,		3,	3 )
+		else	COPY_ELM( GL_FLOAT_MAT4,		float,		4, 	4 )
+		else
+			throw Exception("HdlDynamicData::copy - Unknown GL type identifier : \"" + glParamName(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__);
+
+		return res;
+
+		#undef COPY_ELM
+	}
+
 // Extern : 
 	std::ostream& Glip::CoreGL::operator<<(std::ostream& os, const HdlDynamicData& d)
 	{
-		os << '[' << glParamName(d.getType()) << "; " << d.getNumRows() << 'x' << d.getNumColumns() << "]" << std::endl;
+		os << '[' << glParamName(d.getGLType()) << "; " << d.getNumRows() << 'x' << d.getNumColumns() << "]" << std::endl;
 		for(int i=0; i<d.getNumRows(); i++)
 		{
 			for(int j=0; j<(d.getNumColumns()-1); j++)

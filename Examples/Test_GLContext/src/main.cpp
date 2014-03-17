@@ -26,7 +26,22 @@ int main(int argc, char** argv)
 
 		HdlDynamicData* d = HdlDynamicData::build(glFromString(test));
 
+		d->set(23.0, 0, 0);
+
 		std::cout << (*d) << std::endl;
+		
+		// Copy : 
+		HdlDynamicData* e = HdlDynamicData::copy(*d);
+
+		std::cout << (*e) << std::endl;
+
+		d->set(11.0, 0, 0);
+
+		std::cout << (*d) << std::endl;
+
+		(*e) = (*d);
+
+		std::cout << (*e) << std::endl;
 	
 		delete d;
 		// end test.

@@ -477,7 +477,7 @@ using namespace Glip::CoreGL;
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
-			if (loc==-1) \
+			if(loc==-1) \
 				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
 			 \
 			switch(t) \
@@ -502,7 +502,7 @@ using namespace Glip::CoreGL;
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
-			if (loc==-1) \
+			if(loc==-1) \
 				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
 			 \
 			switch(t) \
@@ -535,7 +535,7 @@ using namespace Glip::CoreGL;
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
-		if (loc==-1)
+		if(loc==-1)
 			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
 
 		switch(t)
@@ -554,6 +554,60 @@ using namespace Glip::CoreGL;
 
 		if(err!=GL_NO_ERROR)
 			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn void HdlProgram::modifyVar(const std::string& varName, const HdlDynamicData& data)
+	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
+
+	\param varName Name of the fragment output variable.
+	\param data The dynamic object to be used as source.
+	**/
+	void HdlProgram::modifyVar(const std::string& varName, const HdlDynamicData& data)
+	{
+		glGetError();
+		use();
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+
+		if(loc==-1)
+			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+
+		switch(data.getGLType())
+		{
+			case GL_BYTE :			glUniform1i(loc, data.get(0));								break;
+			case GL_UNSIGNED_BYTE : 	glUniform1ui(loc, data.get(0));								break;
+			case GL_SHORT :			glUniform1i(loc, data.get(0));								break;
+			case GL_UNSIGNED_SHORT :	glUniform1ui(loc, data.get(0));								break;
+			case GL_FLOAT : 		glUniform1fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
+			case GL_FLOAT_VEC2 : 		glUniform2fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
+			case GL_FLOAT_VEC3 : 		glUniform3fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
+			case GL_FLOAT_VEC4 : 		glUniform4fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
+			case GL_DOUBLE :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_INT :			glUniform1iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
+			case GL_INT_VEC2 :		glUniform2iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
+			case GL_INT_VEC3 :		glUniform3iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
+			case GL_INT_VEC4 :		glUniform4iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
+			case GL_UNSIGNED_INT :		glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
+			case GL_UNSIGNED_INT_VEC2 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
+			case GL_UNSIGNED_INT_VEC3 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
+			case GL_UNSIGNED_INT_VEC4 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
+			case GL_BOOL :			throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_FLOAT_MAT2 :		glUniformMatrix2fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
+			case GL_FLOAT_MAT3 :		glUniformMatrix3fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
+			case GL_FLOAT_MAT4 :		glUniformMatrix4fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
+			default :			throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+		}
+
+		GLenum err = glGetError();
+
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(data.getGLType()) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
 	}
 
 	/**
@@ -620,6 +674,59 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
 
 		glGetUniformfv(program, loc, ptr);
+
+		GLenum err = glGetError();
+
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+	}
+
+	/**
+	\fn void HdlProgram::getVar(const std::string& varName, HdlDynamicData& data)
+	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care.
+
+	\param varName Name of the fragment output variable.
+	\param data The dynamic object to be used as target.
+	**/
+	void HdlProgram::getVar(const std::string& varName, HdlDynamicData& data)
+	{
+		glGetError();
+		GLint loc = glGetUniformLocation(program, varName.c_str());
+
+		if(loc==-1)
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+
+		switch(data.getGLType())
+		{
+			case GL_BYTE :			throw Exception("HdlProgram::getVar - Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_UNSIGNED_BYTE : 	throw Exception("HdlProgram::getVar - Unsigned Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_SHORT :			throw Exception("HdlProgram::getVar - Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_UNSIGNED_SHORT :	throw Exception("HdlProgram::getVar - Unsigned Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_FLOAT : 		
+			case GL_FLOAT_VEC2 : 		
+			case GL_FLOAT_VEC3 : 		
+			case GL_FLOAT_VEC4 : 		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
+			case GL_DOUBLE :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_INT :			
+			case GL_INT_VEC2 :		
+			case GL_INT_VEC3 :		
+			case GL_INT_VEC4 :		glGetUniformiv(program, loc, reinterpret_cast<GLint*>(data.getPtr()));		break;
+			case GL_UNSIGNED_INT :		
+			case GL_UNSIGNED_INT_VEC2 :	
+			case GL_UNSIGNED_INT_VEC3 :	
+			case GL_UNSIGNED_INT_VEC4 :	glGetUniformuiv(program, loc, reinterpret_cast<GLuint*>(data.getPtr()));	break;
+			case GL_BOOL :			throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_FLOAT_MAT2 :		
+			case GL_FLOAT_MAT3 :		
+			case GL_FLOAT_MAT4 :		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
+			default :			throw Exception("HdlProgram::getVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+		}
 
 		GLenum err = glGetError();
 

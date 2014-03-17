@@ -28,6 +28,7 @@
 	#include "Core/LibTools.hpp"
         #include "Core/OglInclude.hpp"
         #include "Core/ShaderSource.hpp"
+	#include "Core/HdlDynamicData.hpp"
 	#include <string>
         #include <fstream>
 
@@ -95,10 +96,12 @@ namespace Glip
 				void modifyVar(const std::string& varName, GLenum type, unsigned int* v);
 				void modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0);
 				void modifyVar(const std::string& varName, GLenum type, float* v);
+				void modifyVar(const std::string& varName, const HdlDynamicData& data);
 
 				void getVar(const std::string& varName, int* ptr);
 				void getVar(const std::string& varName, unsigned int* ptr);
-				void getVar(const std::string& varName, float* ptr);				
+				void getVar(const std::string& varName, float* ptr);
+				void getVar(const std::string& varName, HdlDynamicData& data);
 
 				bool isValid(const std::string& varName);
 	

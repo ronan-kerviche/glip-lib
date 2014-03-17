@@ -282,7 +282,7 @@
 	\param name The instance name.
 	**/
 	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
-	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), program(NULL), geometry(NULL) 
+	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), prgm(NULL), geometry(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
@@ -305,13 +305,13 @@
 			// Build the shaders :
 			vertexShader	= new HdlShader(GL_VERTEX_SHADER, getVertexSource());
 			fragmentShader	= new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
-			program		= new HdlProgram(*vertexShader, *fragmentShader);
+			prgm		= new HdlProgram(*vertexShader, *fragmentShader);
 		}
 		catch(Exception& e)
 		{
 			delete vertexShader;
 			delete fragmentShader;
-			delete program;
+			delete prgm;
 
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
@@ -320,7 +320,7 @@
 		{
 			delete vertexShader;
 			delete fragmentShader;
-			delete program;
+			delete prgm;
 
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
@@ -330,21 +330,21 @@
 		{
 			// Set the names of the samplers :
 			for(int i=0; i<getNumInputPort(); i++)
-				program->modifyVar(getInputPortName(i), GL_INT, i);
+				prgm->modifyVar(getInputPortName(i), GL_INT, i);
 
 			if(!fragmentShader->requiresCompatibility())
 			{
 				for(int i=0; i<getNumOutputPort(); i++)
-					program->setFragmentLocation(getOutputPortName(i), i);
+					prgm->setFragmentLocation(getOutputPortName(i), i);
 			}
 
-			program->stopProgram();
+			prgm->stopProgram();
 		}
 		catch(Exception& e)
 		{
 			delete vertexShader;
 			delete fragmentShader;
-			delete program;
+			delete prgm;
 
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
@@ -353,7 +353,7 @@
 		{
 			delete vertexShader;
 			delete fragmentShader;
-			delete program;
+			delete prgm;
 
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
 			throw m+e;
@@ -377,7 +377,7 @@
 		if(vbo!=NULL)
 			delete vbo;*/
 
-		delete program;
+		delete prgm;
 		delete vertexShader;
 		delete fragmentShader;
 		delete geometry;
@@ -436,7 +436,7 @@
 			glLoadIdentity();
 
 		// Load the shader
-			program->use();
+			prgm->use();
 			
 		// Test on first run ; 
 			if(firstRun)
@@ -509,13 +509,13 @@
 	}
 
 	/**
-	\fn HdlProgram& Filter::prgm(void)
+	\fn HdlProgram& Filter::program(void)
 	\brief Access the program carried.
 	\return Reference to the program.
 	**/
-	HdlProgram& Filter::prgm(void)
+	HdlProgram& Filter::program(void)
 	{
-		return *program;
+		return *prgm;
 	}
 
 	/**
