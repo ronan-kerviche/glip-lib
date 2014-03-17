@@ -254,8 +254,8 @@ Processing example :
 				bool hasPipeline(const std::string& name) const;
 				std::vector<std::string> getPipelinesTypeNames(void) const;
 				bool empty(void) const;
-				int getNumVariables(void) const;
-				int getNumVariables(const std::string& name) const;
+				//int getNumVariables(void) const;
+				//int getNumVariables(const std::string& name) const;
 				int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;

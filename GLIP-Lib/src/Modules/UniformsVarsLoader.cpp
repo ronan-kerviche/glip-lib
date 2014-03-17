@@ -109,9 +109,10 @@
 	UniformsVarsLoader::Ressource::Ressource(const Ressource& cpy)
 	 : 	name(cpy.name),
 		data(NULL),
-		modified(false)
+		modified(cpy.modified)
 	{
-		data = HdlDynamicData::copy(*cpy.data);
+		if(cpy.data!=NULL)
+			data = HdlDynamicData::copy(*cpy.data);
 	}
 
 	UniformsVarsLoader::Ressource::~Ressource(void)
@@ -123,6 +124,7 @@
 	UniformsVarsLoader::Ressource& UniformsVarsLoader::Ressource::operator=(const Ressource& cpy)
 	{
 		name = cpy.name;
+		modified = cpy.modified;
 		delete data;
 		data = NULL;
 
@@ -188,7 +190,7 @@
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword 	= data->getGLType();
+		e.strKeyword 	= glParamName(data->getGLType());
 		e.name		= name;
 		e.noName	= false;
 		
@@ -1000,7 +1002,7 @@
 		if(it==nodes.end())
 			throw Exception("UniformsVarsLoader::getCode - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__);
 		else
-			it->second.getCodeElement().getCode();
+			return it->second.getCodeElement().getCode();
 	}
 
 	/**

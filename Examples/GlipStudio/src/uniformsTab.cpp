@@ -422,7 +422,7 @@
 		item->setText(0, tr("%1 [%2]").arg(name.c_str()).arg(filter.getTypeName().c_str()) );
 
 		// List the variables : 
-		for(int k=0; k<filter.prgm().getUniformVarsNames().size(); k++)
+		for(int k=0; k<filter.program().getUniformVarsNames().size(); k++)
 		{
 			bool processNewItem = true;
 
@@ -431,60 +431,60 @@
 				objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.prgm().getUniformVarsNames()[k], "(Forbidden)")) );
 			else*/
 
-			if( filter.prgm().isValid( filter.prgm().getUniformVarsNames()[k] ) )
+			if( filter.program().isValid( filter.program().getUniformVarsNames()[k] ) )
 			{
-				switch(filter.prgm().getUniformVarsTypes()[k])
+				switch(filter.program().getUniformVarsTypes()[k])
 				{
 					case GL_INT : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_INT, 1, 1, false)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_INT, 1, 1, false)) );				
 						break;
 					case GL_INT_VEC2 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_INT_VEC2, 1, 2, false)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_INT_VEC2, 1, 2, false)) );				
 						break;
 					case GL_INT_VEC3 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_INT_VEC3, 1, 3, false)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_INT_VEC3, 1, 3, false)) );				
 						break;
 					case GL_INT_VEC4 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_INT_VEC4, 1, 4, false)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_INT_VEC4, 1, 4, false)) );				
 						break;
 					case GL_UNSIGNED_INT : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_UNSIGNED_INT, 1, 1, true)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_UNSIGNED_INT, 1, 1, true)) );				
 						break;
 					case GL_UNSIGNED_INT_VEC2 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC2, 1, 2, true)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC2, 1, 2, true)) );				
 						break;
 					case GL_UNSIGNED_INT_VEC3 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC3, 1, 3, true)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC3, 1, 3, true)) );				
 						break;
 					case GL_UNSIGNED_INT_VEC4 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.prgm().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC4, 1, 4, true)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformInteger(filter.program().getUniformVarsNames()[k], GL_UNSIGNED_INT_VEC4, 1, 4, true)) );				
 						break;
 					case GL_FLOAT : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT, 1, 1)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT, 1, 1)) );				
 						break;
 					case GL_FLOAT_VEC2 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_VEC2, 1, 2)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_VEC2, 1, 2)) );				
 						break;
 					case GL_FLOAT_VEC3 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_VEC3, 1, 3)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_VEC3, 1, 3)) );				
 						break;
 					case GL_FLOAT_VEC4 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_VEC4, 1, 4)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_VEC4, 1, 4)) );				
 						break;
 					case GL_FLOAT_MAT2 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_MAT2, 2, 2)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_MAT2, 2, 2)) );				
 						break;
 					case GL_FLOAT_MAT3 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_MAT3, 3, 3)) );				
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_MAT3, 3, 3)) );				
 						break;
 					case GL_FLOAT_MAT4 : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.prgm().getUniformVarsNames()[k], GL_FLOAT_MAT4, 4, 4)) );	
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformFloat(filter.program().getUniformVarsNames()[k], GL_FLOAT_MAT4, 4, 4)) );	
 						break;
 					default : 
-						objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.prgm().getUniformVarsNames()[k], tr("Unable to generate interface for type %1").arg(glParamName(filter.prgm().getUniformVarsTypes()[k]).c_str()))) );
+						objects.push_back( reinterpret_cast<UniformObject*>(new UniformUnknown(filter.program().getUniformVarsNames()[k], tr("Unable to generate interface for type %1").arg(glParamName(filter.program().getUniformVarsTypes()[k]).c_str()))) );
 				}
 
-				objects.back()->read(filter.prgm());
+				objects.back()->read(filter.program());
 
 				item->addChild( objects.back()->treeItem() );
 				
@@ -525,7 +525,7 @@
 		for(int k=0; k<objects.size(); k++)
 		{
 			if(objects[k]->wasUpdated())
-				objects[k]->update(filter.prgm());
+				objects[k]->update(filter.program());
 		}
 	}
 
@@ -912,7 +912,8 @@
 		QAction* sender = reinterpret_cast<QAction*>(QObject::sender());
 		std::string typeName = sender->statusTip().toStdString();
 
-		QString str = tr("%1 (%2 variable/s)").arg(typeName.c_str()).arg(mainLibrary.getNumVariables(typeName));
+		//QString str = tr("%1 (%2 variable/s)").arg(typeName.c_str()).arg(mainLibrary.getNumVariables(typeName));
+		QString str = tr("%1 (<UNK> variable/s)").arg(typeName.c_str());
 
 		showDialogCode(str, mainLibrary.getCode(typeName).c_str());
 	}
@@ -960,7 +961,8 @@
 		{
 			for(int k = 0; k<els.size(); k++)
 			{
-				QString str = tr("%1 (%2 variable/s)").arg(els[k].c_str()).arg(mainLibrary.getNumVariables(els[k]));
+				//QString str = tr("%1 (%2 variable/s)").arg(els[k].c_str()).arg(mainLibrary.getNumVariables(els[k]));
+				QString str = tr("%1 (<UNK> variable/s)").arg(els[k].c_str());
 				QAction* tmp = availablePipelines.addAction( str, this, SLOT(showStoredCode()));
 				tmp->setStatusTip( els[k].c_str() );
 			}
@@ -982,8 +984,9 @@
 	{
 		if(mainLibrary.hasPipeline(pipeline.getName()))
 		{
-			int c = mainLibrary.getNumVariables(pipeline.getName());
-			infoAct.setText(tr("> %1 has %2 variables registered").arg(pipeline.getName().c_str()).arg(c));
+			//int c = mainLibrary.getNumVariables(pipeline.getName());
+			//infoAct.setText(tr("> %1 has %2 variables registered").arg(pipeline.getName().c_str()).arg(c));
+			infoAct.setText(tr("> %1 has <UNK> variables registered").arg(pipeline.getName().c_str()));
 			currentCode = mainLibrary.getCode(pipeline.getName()).c_str();
 
 			infoAct.setDisabled(false);
