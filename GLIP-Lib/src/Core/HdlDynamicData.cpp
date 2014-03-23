@@ -30,22 +30,122 @@
 // HdlDynamicDataSpecial :
 	HdlDynamicData::HdlDynamicData(const GLenum& _type, int _rows, int _columns)
 	 :	type(_type),
+		supportingType(getRelatedGLSupportingType(_type)),
 		rows(_rows),
-		columns(_columns)
+		columns(_columns),
+		floatingPointType(supportingType==GL_FLOAT || supportingType==GL_DOUBLE),
+		integerType(supportingType==GL_BYTE || supportingType==GL_UNSIGNED_BYTE || supportingType==GL_SHORT || supportingType==GL_UNSIGNED_SHORT || supportingType==GL_INT || supportingType==GL_UNSIGNED_INT),
+		booleanType(supportingType==GL_BOOL),
+		unsignedType(supportingType==GL_UNSIGNED_BYTE || supportingType==GL_UNSIGNED_SHORT || supportingType==GL_UNSIGNED_INT)
 	{ }
 
 	HdlDynamicData::~HdlDynamicData(void)
 	{ }
 
+	GLenum HdlDynamicData::getRelatedGLSupportingType(const GLenum& t)
+	{
+		switch(t)
+		{
+			case GL_BYTE :
+							return GL_BYTE;
+			case GL_UNSIGNED_BYTE :
+							return GL_UNSIGNED_BYTE;
+			case GL_SHORT :
+							return GL_SHORT;
+			case GL_UNSIGNED_SHORT :
+							return GL_UNSIGNED_SHORT;
+			case GL_FLOAT :
+			case GL_FLOAT_VEC2 :
+			case GL_FLOAT_VEC3 :
+			case GL_FLOAT_VEC4 :
+							return GL_FLOAT;
+			case GL_DOUBLE :
+			case GL_DOUBLE_VEC2 :
+			case GL_DOUBLE_VEC3 :
+			case GL_DOUBLE_VEC4 :
+							return GL_DOUBLE;
+			case GL_INT :
+			case GL_INT_VEC2 :
+			case GL_INT_VEC3 :
+			case GL_INT_VEC4 :
+							return GL_INT;
+			case GL_UNSIGNED_INT :
+			case GL_UNSIGNED_INT_VEC2 :
+			case GL_UNSIGNED_INT_VEC3 :
+			case GL_UNSIGNED_INT_VEC4 :
+							return GL_UNSIGNED_INT;
+			case GL_BOOL :
+			case GL_BOOL_VEC2 :
+			case GL_BOOL_VEC3 :
+			case GL_BOOL_VEC4 :
+							return GL_BOOL;
+			case GL_FLOAT_MAT2 : 
+			case GL_FLOAT_MAT3 :
+			case GL_FLOAT_MAT4 :
+							return GL_FLOAT;
+			default :
+				throw Exception("HdlDynamicData::getRelatedGLSupportingType - Unknown GL type identifier : \"" + glParamName(t) + "\" (internal error).", __FILE__, __LINE__);
+		}
+	}
+
 	/**
 	\fn const GLenum& HdlDynamicData::getGLType(void) const
 	\brief Get the type of the current data as the GL identifier.
-
 	\return The GLenum corresponding to the type.
 	**/
 	const GLenum& HdlDynamicData::getGLType(void) const
 	{
 		return type;
+	}
+
+	/**
+	\fn const GLenum& HdlDynamicData::getGLSupportingType(void) const
+	\brief Get the type of the current data as the GL identifier.
+	\return The GLenum corresponding to the type.
+	**/
+	const GLenum& HdlDynamicData::getGLSupportingType(void) const
+	{
+		return supportingType;
+	}
+
+	/**
+	\fn const bool& HdlDynamicData::isFloatingPointType(void) const
+	\brief Test if the content is of floating point type.
+	\return True if the content is of floating point type.
+	**/
+	const bool& HdlDynamicData::isFloatingPointType(void) const
+	{
+		return floatingPointType;
+	}
+
+	/**
+	\fn const bool& HdlDynamicData::isIntegerType(void) const
+	\brief Test if the content is of integer type.
+	\return True if the content is of integer type.
+	**/
+	const bool& HdlDynamicData::isIntegerType(void) const
+	{
+		return integerType;
+	}
+
+	/**
+	\fn const bool& HdlDynamicData::isBooleanType(void) const
+	\brief Test if the content is of boolean type.
+	\return True if the content is of boolean type.
+	**/
+	const bool& HdlDynamicData::isBooleanType(void) const
+	{
+		return booleanType;
+	}
+
+	/**
+	\fn const bool& HdlDynamicData::isUnsignedType(void) const
+	\brief Test if the content is of unsigned type.
+	\return True if the content is of unsigned type.
+	**/
+	const bool& HdlDynamicData::isUnsignedType(void) const
+	{
+		return unsignedType;
 	}
 
 	/**

@@ -873,6 +873,16 @@
 	}
 
 	/**
+	\fn bool UniformsVarsLoader::empty(void) const
+	\brief Test if this object has some data loaded.
+	\return True if there is data loaded.
+	**/
+	bool UniformsVarsLoader::empty(void) const
+	{
+		return nodes.empty();
+	}
+
+	/**
 	\fn void UniformsVarsLoader::clear(void)
 	\brief Clear the full set of data.
 	**/
@@ -891,7 +901,7 @@
 		std::map<std::string, Node>::iterator it=nodes.find(name);
 
 		if(it==nodes.end())
-			throw Exception("UniformsVarsLoader::clear - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__);
+			throw Exception("UniformsVarsLoader::clear - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
 		else
 			nodes.erase(it);
 	}
@@ -923,13 +933,36 @@
 	}
 
 	/**
-	\fn bool UniformsVarsLoader::empty(void) const
-	\brief Test if this object has some data loaded.
-	\return True if there is data loaded.
+	\fn const UniformsVarsLoader::Node& UniformsVarsLoader::getRootNode(const std::string& name) const
+	\brief Access the container node of a pipeline type.
+	\param name The type name of the targeted pipeline.
+	\return A (constant) reference to the UniformsVarsLoader::Node object of the correct typename. Raise an exception if any error occur.
 	**/
-	bool UniformsVarsLoader::empty(void) const
+	const UniformsVarsLoader::Node& UniformsVarsLoader::getRootNode(const std::string& name) const
 	{
-		return nodes.empty();
+		std::map<const std::string, Node>::const_iterator it=nodes.find(name);
+
+		if(it==nodes.end())
+			throw Exception("UniformsVarsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
+		else
+			return it->second;
+	}
+
+	/**
+	\fn UniformsVarsLoader::Node& UniformsVarsLoader::getRootNode(const std::string& name)
+	\brief Access the container node of a pipeline type.
+	\param name The type name of the targeted pipeline.
+	\return A (constant) reference to the UniformsVarsLoader::Node object of the correct typename. Raise an exception if any error occur.
+	**/
+	UniformsVarsLoader::Node& UniformsVarsLoader::getRootNode(const std::string& name)
+	{
+		
+		std::map<const std::string, Node>::iterator it=nodes.find(name);
+
+		if(it==nodes.end())
+			throw Exception("UniformsVarsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
+		else
+			return it->second;
 	}
 
 	//int UniformsVarsLoader::getNumVariables(void) const

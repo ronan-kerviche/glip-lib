@@ -64,11 +64,19 @@ delete data;
 				private : 
 					int	rows,
 						columns;
-					GLenum 	type;
+					GLenum 	type,
+						supportingType;
+					bool	floatingPointType,
+						integerType,
+						booleanType,
+						unsignedType;
 
 					// Forbidden : 
 					HdlDynamicData(const HdlDynamicData&);
 					//HdlDynamicData& operator=(const HdlDynamicData& cpy);
+
+					// Tool : 
+					static GLenum getRelatedGLSupportingType(const GLenum& t);
 
 				protected : 
 					HdlDynamicData(const GLenum& _type, int _rows=1, int _columns=1);
@@ -77,6 +85,11 @@ delete data;
 					virtual ~HdlDynamicData(void);
 
 					const GLenum& getGLType(void) const;
+					const GLenum& getGLSupportingType(void) const;
+					const bool& isFloatingPointType(void) const;
+					const bool& isIntegerType(void) const;
+					const bool& isBooleanType(void) const;
+					const bool& isUnsignedType(void) const;
 					const int& getNumRows(void) const;
 					const int& getNumColumns(void) const;
 					int getNumElements(void) const;

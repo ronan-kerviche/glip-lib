@@ -249,13 +249,13 @@ Processing example :
 
 				void load(std::string source, bool replace=false);
 				void load(Pipeline& pipeline, bool replace=false);
+				bool empty(void) const;
 				void clear(void);
 				void clear(const std::string& name);
 				bool hasPipeline(const std::string& name) const;
 				std::vector<std::string> getPipelinesTypeNames(void) const;
-				bool empty(void) const;
-				//int getNumVariables(void) const;
-				//int getNumVariables(const std::string& name) const;
+				const Node& getRootNode(const std::string& name) const;
+				Node& getRootNode(const std::string& name);
 				int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;
