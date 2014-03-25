@@ -100,8 +100,8 @@
 
 	/**
 	\fn const GLenum& HdlDynamicData::getGLSupportingType(void) const
-	\brief Get the type of the current data as the GL identifier.
-	\return The GLenum corresponding to the type.
+	\brief Get the supporting type of the current data as the GL identifier.
+	\return The GLenum corresponding to the supporting type (ex. with GL_FLOAT type, the supporting will also be GL_FLOAT, and for GL_INT_VEC2 it will be GL_INT).
 	**/
 	const GLenum& HdlDynamicData::getGLSupportingType(void) const
 	{
@@ -239,10 +239,10 @@
 		else	GENERATE_ELM( GL_UNSIGNED_INT_VEC2,	unsigned int,	2,	1 )
 		else	GENERATE_ELM( GL_UNSIGNED_INT_VEC3,	unsigned int,	3,	1 )
 		else	GENERATE_ELM( GL_UNSIGNED_INT_VEC4,	unsigned int,	4,	1 )
-		else	GENERATE_ELM( GL_BOOL,			int,		1,	1 )
-		else	GENERATE_ELM( GL_BOOL_VEC2,		int,		2,	1 )
-		else	GENERATE_ELM( GL_BOOL_VEC3,		int,		3,	1 )
-		else	GENERATE_ELM( GL_BOOL_VEC4,		int,		4,	1 )
+		else	GENERATE_ELM( GL_BOOL,			bool,		1,	1 )
+		else	GENERATE_ELM( GL_BOOL_VEC2,		bool,		2,	1 )
+		else	GENERATE_ELM( GL_BOOL_VEC3,		bool,		3,	1 )
+		else	GENERATE_ELM( GL_BOOL_VEC4,		bool,		4,	1 )
 		else	GENERATE_ELM( GL_FLOAT_MAT2,		float,		2,	2 )
 		else	GENERATE_ELM( GL_FLOAT_MAT3,		float,		3,	3 )
 		else	GENERATE_ELM( GL_FLOAT_MAT4,		float,		4, 	4 )
@@ -292,10 +292,10 @@
 		else	COPY_ELM( GL_UNSIGNED_INT_VEC2,		unsigned int,	2,	1 )
 		else	COPY_ELM( GL_UNSIGNED_INT_VEC3,		unsigned int,	3,	1 )
 		else	COPY_ELM( GL_UNSIGNED_INT_VEC4,		unsigned int,	4,	1 )
-		else	COPY_ELM( GL_BOOL,			int,		1,	1 )
-		else	COPY_ELM( GL_BOOL_VEC2,			int,		2,	1 )
-		else	COPY_ELM( GL_BOOL_VEC3,			int,		3,	1 )
-		else	COPY_ELM( GL_BOOL_VEC4,			int,		4,	1 )
+		else	COPY_ELM( GL_BOOL,			bool,		1,	1 )
+		else	COPY_ELM( GL_BOOL_VEC2,			bool,		2,	1 )
+		else	COPY_ELM( GL_BOOL_VEC3,			bool,		3,	1 )
+		else	COPY_ELM( GL_BOOL_VEC4,			bool,		4,	1 )
 		else	COPY_ELM( GL_FLOAT_MAT2,		float,		2,	2 )
 		else	COPY_ELM( GL_FLOAT_MAT3,		float,		3,	3 )
 		else	COPY_ELM( GL_FLOAT_MAT4,		float,		4, 	4 )
@@ -321,4 +321,188 @@
 
 		return os;
 	}
+
+// HdlDynamicTable :
+	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices)
+	 :	type(_type),
+		rows(_rows),
+		columns(_columns),
+		slices(_slices)
+	{ }
+
+	HdlDynamicTable::~HdlDynamicTable(void)
+	{ }
+
+	/**
+	\fn const GLenum& HdlDynamicTable::getGLType(void) const
+	\brief Get the type of the current data as the GL identifier.
+	\return The GLenum corresponding to the type.
+	**/
+	const GLenum& HdlDynamicTable::getGLType(void) const
+	{
+		return type;
+	}
+
+	/**
+	\fn const int& HdlDynamicTable::getNumRows(void) const
+	\brief Get the number of rows of the data.
+	\return The number of rows of the table.
+	**/
+	const int& HdlDynamicTable::getNumRows(void) const
+	{
+		return rows;
+	}
+
+	/**
+	\fn const int& HdlDynamicTable::getNumColumns(void) const
+	\brief Get the number of columns of the data.
+	\return The number of columns of the table.
+	**/
+	const int& HdlDynamicTable::getNumColumns(void) const
+	{
+		return columns;
+	}
+
+	/**
+	\fn const int& HdlDynamicTable::getNumSlices(void) const
+	\brief Get the number of slices of the data.
+	\return The number of slices of the table.
+	**/
+	const int& HdlDynamicTable::getNumSlices(void) const
+	{
+		return slices;
+	}
+
+	/**
+	\fn int HdlDynamicTable::getNumElements(void) const
+	\brief Get the number of elements of the table (rows times columns times slices).
+	\return The number of elements in the table.
+	**/
+	int HdlDynamicTable::getNumElements(void) const
+	{
+		return rows*columns*slices;
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isInside(const int& i, const int& j, const int& d) const
+	\brief Test if the coordinates are for a valid element inside the table.
+	\param j The index of the column.
+	\param i The index of the row.
+	\param d The index of the slice.
+	\return True if the coordinates are valid, false otherwise.
+	**/
+	bool HdlDynamicTable::isInside(const int& j, const int& i, const int& d) const
+	{
+		return (i>=0 && i<rows) && (j>=0 && j<columns) && (d>=0 && d<slices);
+	}
+
+	/**
+	\fn int HdlDynamicTable::getIndex(const int& i, const int& j, const int& d) const
+	\brief Get the linear index corresponding to these coordinates.
+	\param j The index of the column.
+	\param i The index of the row.
+	\param d The index of the slice.
+	\return The linear index.
+	**/
+	int HdlDynamicTable::getIndex(const int& j, const int& i, const int& d) const
+	{
+		return (i * columns + j) * rows + d;
+	}
+
+	/**
+	\fn HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices)
+	\brief Build dynamic data from a GL data identifier (see supported types in main description of HdlDynamicData).
+	\param type The required GL type.
+	\param _columns The number of columns of the table.
+	\param _rows The number of rows of the table.
+	\param _slices The number of slices of the table.
+	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
+	**/
+	HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices)
+	{
+		HdlDynamicTable* res = NULL;
+
+		#define GENERATE_ELM(glType, CType) \
+			if(type== glType ) \
+			{ \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(type, _columns, _rows, _slices); \
+				res = reinterpret_cast<HdlDynamicTable*>(d); \
+			}
+
+		#define ERROR_ELM(glType) \
+			if(type== glType ) \
+				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + glParamName(type) + "\" : Illegal type.", __FILE__, __LINE__);
+			
+
+			GENERATE_ELM( 	GL_BYTE,		char)
+		else	GENERATE_ELM( 	GL_UNSIGNED_BYTE,	unsigned char)
+		else	GENERATE_ELM( 	GL_SHORT,		short)
+		else	GENERATE_ELM( 	GL_UNSIGNED_SHORT,	unsigned short)
+		else	GENERATE_ELM( 	GL_FLOAT, 		float)
+		else	ERROR_ELM( 	GL_FLOAT_VEC2)
+		else	ERROR_ELM( 	GL_FLOAT_VEC3)
+		else	ERROR_ELM( 	GL_FLOAT_VEC4)
+		else	GENERATE_ELM( 	GL_DOUBLE,		double)
+		else	ERROR_ELM( 	GL_DOUBLE_VEC2)
+		else	ERROR_ELM(	GL_DOUBLE_VEC3)
+		else	ERROR_ELM( 	GL_DOUBLE_VEC4)
+		else	GENERATE_ELM( 	GL_INT,			int)
+		else	ERROR_ELM( 	GL_INT_VEC2)
+		else	ERROR_ELM( 	GL_INT_VEC3)
+		else	ERROR_ELM( 	GL_INT_VEC4)
+		else	GENERATE_ELM( 	GL_UNSIGNED_INT,	unsigned int)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC2)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC3)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC4)
+		else	GENERATE_ELM( 	GL_BOOL,		bool)
+		else	ERROR_ELM( 	GL_BOOL_VEC2)
+		else	ERROR_ELM( 	GL_BOOL_VEC3)
+		else	ERROR_ELM( 	GL_BOOL_VEC4)
+		else	ERROR_ELM( 	GL_FLOAT_MAT2)
+		else	ERROR_ELM(  	GL_FLOAT_MAT3)
+		else	ERROR_ELM( 	GL_FLOAT_MAT4)
+		else
+			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + glParamName(type) + "\".", __FILE__, __LINE__);
+
+		return res;
+
+		#undef GENERATE_ELM
+		#undef ERROR_ELM
+	}
+
+	/**
+	\fn HdlDynamicData* HdlDynamicTable::copy(const HdlDynamicData& cpy)
+	\brief Copy dynamic data.
+	\param cpy The original element to be copied.
+	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
+	**/
+	HdlDynamicTable* HdlDynamicTable::copy(const HdlDynamicTable& cpy)
+	{
+		HdlDynamicTable* res = NULL;
+
+		#define COPY_ELM( glType, CType) \
+			if(cpy.getGLType()== glType ) \
+			{ \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(cpy.getGLType(), cpy.getNumColumns(), cpy.getNumRows(), cpy.getNumSlices()); \
+				std::memcpy(d->getPtr(), cpy.getPtr(), cpy.getNumElements() * sizeof( CType )); \
+				res = reinterpret_cast<HdlDynamicTable*>(d); \
+			}
+
+			COPY_ELM( GL_BYTE,			char)
+		else	COPY_ELM( GL_UNSIGNED_BYTE,		unsigned char)
+		else	COPY_ELM( GL_SHORT,			short)
+		else	COPY_ELM( GL_UNSIGNED_SHORT,		unsigned short)
+		else	COPY_ELM( GL_FLOAT, 			float)
+		else	COPY_ELM( GL_DOUBLE,			double)
+		else	COPY_ELM( GL_INT,			int)
+		else	COPY_ELM( GL_UNSIGNED_INT,		unsigned int)
+		else	COPY_ELM( GL_BOOL,			int)
+		else
+			throw Exception("HdlDynamicTable::copy - Unknown GL type identifier : \"" + glParamName(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__);
+
+		return res;
+
+		#undef COPY_ELM
+	}
+
 
