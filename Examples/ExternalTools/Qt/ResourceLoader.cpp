@@ -421,6 +421,7 @@
 		return image;
 	}
 
+// ImageLoaderOptions
 	ImageLoaderOptions::ImageLoaderOptions(QWidget* parent, GLenum defMinFilter, GLenum defMagFilter, GLenum defSWrapping, GLenum defTWrapping, int defMaxLevel)
 	 : QGridLayout(parent), minFilterLabel("Minifaction filter"), magFilterLabel("Magnification filter"), sWrappingLabel("S Wrapping mode"), tWrappingLabel("T Wrapping mode"), maxLevelLabel("Max Mipmap Level")
 	{
@@ -521,6 +522,7 @@
 		return maxLevelSpinBox.value();
 	}
 
+// ImageLoaderOptionsDialog
 	ImageLoaderOptionsDialog::ImageLoaderOptionsDialog(QWidget* parent, GLenum defMinFilter, GLenum defMagFilter, GLenum defSWrapping, GLenum defTWrapping, int defMaxLevel)
 	 : QDialog(parent), options(this, defMinFilter, defMagFilter, defSWrapping, defTWrapping, defMaxLevel), okButton("Ok"), cancelButton("Cancel")
 	{
@@ -534,6 +536,7 @@
 	ImageLoaderOptionsDialog::~ImageLoaderOptionsDialog(void)
 	{ }
 
+// ImageLoaderInterface
 	ImageLoaderInterface::ImageLoaderInterface(QWidget* parent)
 	 : QVBoxLayout(parent), loadButton("Load images"), optionsButton("Options"), prev("<="), next("=>"), maxIndex("/ (none)"),
 	   minFilter(GL_NEAREST), magFilter(GL_NEAREST), sWrapping(GL_CLAMP), tWrapping(GL_CLAMP), maxMipmapLevel(0)
@@ -665,8 +668,55 @@
 		}
 	}
 
+// SingleUniformsVarsLoaderInterface
+	SingleUniformsVarsLoaderInterface::SingleUniformsVarsLoaderInterface(Pipeline& pipeline, QWidget* parent)
+	 : 	QWidget(parent),
+		layout(this),
+		mainItem(NULL)
+	{
+		layout.addWidget(&tree);
+
+		mainItem = new UniformsVarsLoaderInterface(23);
+
+		// Add the root item first : 
+		tree.addTopLevelItem(mainItem);
+
+		// Load the pipeline : 
+		mainItem->load(pipeline);
+
+		tree.expandAll();
+		tree.resizeColumnToContents(0);
+
+		// Set Headers :
+		QStringList listLabels;
+		listLabels.push_back("Name");
+		listLabels.push_back("Data");
+		tree.setHeaderLabels( listLabels );
+
+		hide();
+
+		QObject::connect(mainItem, SIGNAL(modified(void)), this, SIGNAL(modified(void)));
+	}
+
+	SingleUniformsVarsLoaderInterface::~SingleUniformsVarsLoaderInterface(void)
+	{
+		tree.takeTopLevelItem(tree.indexOfTopLevelItem(mainItem));
+		delete mainItem;
+	}
+
+	void SingleUniformsVarsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite)
+	{
+		mainItem->applyTo(pipeline, forceWrite);
+	}
+
+// PipelineLoaderInterface
 	PipelineLoaderInterface::PipelineLoaderInterface(void)
-	 : loadedPipeline(NULL), loadButton("Load a pipeline"), pipelineName("(No pipeline loaded)"), refreshButton("Reload")
+	 : 	loadedPipeline(NULL), 
+		uniformsInterface(NULL),
+		loadButton("Load a pipeline"), 
+		pipelineName("(No pipeline loaded)"), 
+		refreshButton("Reload"),
+		showUniformsVarsInterfaceButton("Uniform Variables")
 	{
 		outputChoice.addItem("<Original Image>");
 
@@ -674,12 +724,15 @@
 		secondaryLayout.addWidget(&loadButton);
 		secondaryLayout.addWidget(&pipelineName);
 		secondaryLayout.addWidget(&refreshButton);
+		secondaryLayout.addWidget(&showUniformsVarsInterfaceButton);
+		
 		addLayout(&secondaryLayout);
 		addWidget(&outputChoice);
 
-		QObject::connect(&loadButton,		SIGNAL(released(void)), 		this, SLOT(loadPipelineDialog(void)));
-		QObject::connect(&refreshButton,	SIGNAL(released(void)), 		this, SLOT(refreshPipeline(void)));
-		QObject::connect(&outputChoice,		SIGNAL(currentIndexChanged(int)),	this, SIGNAL(outputIndexChanged(void)));
+		QObject::connect(&loadButton,				SIGNAL(released(void)), 		this, SLOT(loadPipelineDialog(void)));
+		QObject::connect(&refreshButton,			SIGNAL(released(void)), 		this, SLOT(refreshPipeline(void)));
+		QObject::connect(&outputChoice,				SIGNAL(currentIndexChanged(int)),	this, SIGNAL(outputIndexChanged(void)));
+		QObject::connect(&showUniformsVarsInterfaceButton,	SIGNAL(released(void)), 		this, SLOT(showUniformsVarsInterface(void)));
 
 		LayoutLoaderModule::addBasicModules(layoutLoader);
 	}
@@ -687,6 +740,7 @@
 	PipelineLoaderInterface::~PipelineLoaderInterface(void)
 	{
 		delete loadedPipeline;
+		delete uniformsInterface;
 	}
 
 	bool PipelineLoaderInterface::isPipelineValid(void) const
@@ -767,7 +821,9 @@
 			if(loadedPipeline!=NULL)
 			{
 				delete loadedPipeline;
+				delete uniformsInterface;
 				loadedPipeline = NULL;
+				uniformsInterface = NULL;
 
 				// clean the outputChoice box too...
 				outputChoice.setCurrentIndex(0);
@@ -782,12 +838,17 @@
 				loadedPipeline = new Pipeline(*model, "LoadedPipeline");
 				delete model;
 				model = NULL;
+
+				uniformsInterface = new SingleUniformsVarsLoaderInterface(*loadedPipeline);
+				QObject::connect(uniformsInterface, SIGNAL(modified(void)), this, SLOT(updateUniforms(void)));
 			}
 			catch(Exception& e)
 			{
 				QMessageBox::information(parentWidget(), tr("PipelineLoaderInterface::loadPipeline - Error while creating the pipeline : "), e.what());
 				delete loadedPipeline;
+				delete uniformsInterface;
 				loadedPipeline = NULL;
+				uniformsInterface = NULL;
 				pipelineName.setText("(No pipeline loaded)");
 				pipelineName.setToolTip("");
 				return ;
@@ -829,7 +890,9 @@
 		if(loadedPipeline!=NULL)
 		{
 			delete loadedPipeline;
+			delete uniformsInterface;
 			loadedPipeline = NULL;
+			uniformsInterface = NULL;
 
 			previousFilename = "";
 
@@ -842,6 +905,22 @@
 			pipelineName.setToolTip("");
 
 			emit pipelineChanged();
+		}
+	}
+
+	void PipelineLoaderInterface::showUniformsVarsInterface(void)
+	{
+		if(uniformsInterface!=NULL && loadedPipeline!=NULL)
+			uniformsInterface->show();
+	}
+
+	void PipelineLoaderInterface::updateUniforms(void)
+	{
+		if(uniformsInterface!=NULL && loadedPipeline!=NULL)
+		{
+			uniformsInterface->applyTo(*loadedPipeline, false);
+			
+			emit requestComputingUpdate();
 		}
 	}
 

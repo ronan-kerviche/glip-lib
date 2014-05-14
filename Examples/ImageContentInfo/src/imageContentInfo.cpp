@@ -101,6 +101,8 @@
 			}
 			else
 				pipelineLoaderInterface.pipeline() << imageLoaderInterface.currentTexture() << Pipeline::Process;
+
+			updateOutput();
 		}
 	}
 

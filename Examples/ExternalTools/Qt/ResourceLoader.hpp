@@ -39,6 +39,8 @@
 	#include <QComboBox>
 	#include <QDialog>
 
+	#include "UniformsVarsLoaderInterface.hpp"
+
 	// Namespaces
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -152,19 +154,40 @@
 			void currentTextureChanged(void);
 	};
 
+	class SingleUniformsVarsLoaderInterface : public QWidget
+	{
+		Q_OBJECT
+
+		private : 
+			QVBoxLayout			layout;
+			QTreeWidget			tree;
+			UniformsVarsLoaderInterface*	mainItem;
+
+		public : 
+			SingleUniformsVarsLoaderInterface(Pipeline& pipeline, QWidget* parent=NULL);
+			~SingleUniformsVarsLoaderInterface(void);
+
+			void applyTo(Pipeline& pipeline, bool forceWrite=true);
+
+		signals : 
+			void modified(void);
+	};
+
 	class PipelineLoaderInterface : public QVBoxLayout
 	{
 		Q_OBJECT
 
 		private :
-			QString		previousFilename;
-			Pipeline*	loadedPipeline;
-			QHBoxLayout 	secondaryLayout;
-			QPushButton 	loadButton,
-					refreshButton;
-			QLineEdit	pipelineName;
-			QComboBox	outputChoice;
-			LayoutLoader	layoutLoader;
+			QString					previousFilename;
+			Pipeline				*loadedPipeline;
+			SingleUniformsVarsLoaderInterface	*uniformsInterface;
+			QHBoxLayout 				secondaryLayout;
+			QPushButton 				loadButton,
+								refreshButton,
+								showUniformsVarsInterfaceButton;
+			QLineEdit				pipelineName;
+			QComboBox				outputChoice;
+			LayoutLoader				layoutLoader;
 
 		public :
 			PipelineLoaderInterface(void);
@@ -183,6 +206,8 @@
 			void refreshPipeline(void);
 			void loadPipeline(const QString& filename);
 			void revokePipeline(void);
+			void showUniformsVarsInterface(void);
+			void updateUniforms(void);
 
 		signals :
 			void pipelineChanged(void);

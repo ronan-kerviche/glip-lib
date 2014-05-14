@@ -203,6 +203,19 @@
 	}
 
 	/**
+	\fn void HdlDynamicData::getCoordinates(const int& index, int& i, int& j) const
+	\brief Get the coordinates from the linear index.
+	\param index The linear index.
+	\param i The index of the row (as output).
+	\param j The index of the column (as output).
+	**/
+	void HdlDynamicData::getCoordinates(const int& index, int& i, int& j) const
+	{
+		i = index % rows;
+		j = index / rows;
+	}
+
+	/**
 	\fn HdlDynamicData* HdlDynamicData::build(const GLenum& type)
 	\brief Build dynamic data from a GL data identifier (see supported types in main description of HdlDynamicData).
 	\param type The required GL type.

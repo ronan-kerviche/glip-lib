@@ -140,22 +140,22 @@ Processing example :
 			public : 
 				// Prototypes : 
 				class Node;
-				class Ressource;
+				class Resource;
 
 				/// Const iterator over the nodes (refers to a std::pair, use second to access the const UniformsVarsLoader::Node& object).
 				typedef std::map<const std::string, Node>::const_iterator 	NodeConstIterator;
 				/// Iterator over the nodes (refers to a std::pair, use second to access the UniformsVarsLoader::Node& object).
 				typedef std::map<const std::string, Node>::iterator 		NodeIterator;
-				/// Const iterator over the ressources (refers to a std::pair, use second to access the const UniformsVarsLoader::Ressource& object).
-				typedef std::map<const std::string, Ressource>::const_iterator 	RessourceConstIterator;
-				/// Iterator over the ressources (refers to a std::pair, use second to access the UniformsVarsLoader::Ressource& object).
-				typedef std::map<const std::string, Ressource>::iterator 	RessourceIterator;
+				/// Const iterator over the resources (refers to a std::pair, use second to access the const UniformsVarsLoader::Resource& object).
+				typedef std::map<const std::string, Resource>::const_iterator 	ResourceConstIterator;
+				/// Iterator over the resources (refers to a std::pair, use second to access the UniformsVarsLoader::Resource& object).
+				typedef std::map<const std::string, Resource>::iterator 	ResourceIterator;
 
 /**
-\class Ressource
-\brief Ressource (variable) of a structure (filter, pipeline).
+\class Resource
+\brief Resource (variable) of a structure (filter, pipeline).
 **/
-				class GLIP_API Ressource
+				class GLIP_API Resource
 				{
 					private : 
 						std::string 	name;
@@ -165,14 +165,14 @@ Processing example :
 						/// This flag can be used to manually set the variable as modified or non modified, in order to limit driver work time.
 						bool modified;
 
-						Ressource(void);
-						Ressource(const Ressource& cpy);
-						Ressource(const VanillaParserSpace::Element& e);
-						Ressource(const std::string& _name, const HdlDynamicData& _data);
+						Resource(void);
+						Resource(const Resource& cpy);
+						Resource(const VanillaParserSpace::Element& e);
+						Resource(const std::string& _name, const HdlDynamicData& _data);
 						
-						~Ressource(void);
+						~Resource(void);
 
-						Ressource& operator=(const Ressource& cpy);
+						Resource& operator=(const Resource& cpy);
 						
 						const std::string& getName(void) const;
 						const HdlDynamicData& object(void) const;
@@ -190,7 +190,7 @@ Processing example :
 					private :
 						std::string 				name;
 						std::map<const std::string, Node> 	subNodes;
-						std::map<const std::string, Ressource>	ressources;
+						std::map<const std::string, Resource>	resources;
 
 					public :
 						Node(void);
@@ -222,17 +222,17 @@ Processing example :
 						NodeIterator nodeBegin(void);
 						NodeIterator nodeEnd(void);
 
-						int getNumRessources(void) const;
-						std::vector<std::string> getRessourcesNamesList(void) const;
-						bool ressourceExists(const std::string& ressourceName) const;
-						const Ressource& ressource(const std::string& ressourceName) const;
-						Ressource& ressource(const std::string& ressourceName);
-						//void addRessource(const Ressource& ressource);
-						void eraseRessource(const std::string& ressourceName);
-						RessourceConstIterator ressourceBegin(void) const;
-						RessourceConstIterator ressourceEnd(void) const;
-						RessourceIterator ressourceBegin(void);
-						RessourceIterator ressourceEnd(void);
+						int getNumResources(void) const;
+						std::vector<std::string> getResourcesNamesList(void) const;
+						bool resourceExists(const std::string& resourceName) const;
+						const Resource& resource(const std::string& resourceName) const;
+						Resource& resource(const std::string& resourceName);
+						//void addRssource(const Resource& resource);
+						void eraseResource(const std::string& resourceName);
+						ResourceConstIterator resourceBegin(void) const;
+						ResourceConstIterator resourceEnd(void) const;
+						ResourceIterator resourceBegin(void);
+						ResourceIterator resourceEnd(void);
 
 						int applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite=true) const;
 						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true) const;
@@ -249,6 +249,7 @@ Processing example :
 
 				void load(std::string source, bool replace=false);
 				void load(Pipeline& pipeline, bool replace=false);
+				void load(const UniformsVarsLoader& subLoader, bool replace=false);
 				bool empty(void) const;
 				void clear(void);
 				void clear(const std::string& name);
@@ -256,6 +257,10 @@ Processing example :
 				std::vector<std::string> getPipelinesTypeNames(void) const;
 				const Node& getRootNode(const std::string& name) const;
 				Node& getRootNode(const std::string& name);
+				NodeConstIterator rootNodeBegin(void) const;
+				NodeConstIterator rootNodeEnd(void) const;
+				NodeIterator rootNodeBegin(void);
+				NodeIterator rootNodeEnd(void);
 				int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;

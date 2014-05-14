@@ -11,9 +11,13 @@ SHADER_SOURCE:shader()
 	uniform sampler2D 	inText;
 	out     vec4 		outText;
 
+	// Possible variable : 
+	uniform vec2 	translation	= vec2(0.0, 0.0);
+	uniform float 	scaleCoeff	= 1.0;
+
 	void main()
 	{
-		vec4 col = textureLod(inText, gl_TexCoord[0].st*2.0-vec2(0.5,0.5), 0);
+		vec4 col = textureLod(inText, (gl_TexCoord[0].st-translation)*scaleCoeff, 0);
 
 		outText.r = col.r;
 		outText.g = col.g;
@@ -24,7 +28,7 @@ SHADER_SOURCE:shader()
 
 FILTER_LAYOUT:filter(format,shader)
 
-PIPELINE_MAIN:pMain()
+PIPELINE_MAIN:pMain
 {
 	INPUT_PORTS(i0)
 	OUTPUT_PORTS(o0)

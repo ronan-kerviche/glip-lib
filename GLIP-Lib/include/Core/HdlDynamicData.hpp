@@ -96,6 +96,7 @@ delete data;
 					int getNumElements(void) const;
 					bool isInside(const int& i, const int& j) const;
 					int getIndex(const int& i, const int& j) const;
+					void getCoordinates(const int& index, int& i, int& j) const;
 
 					/**
 					\fn virtual float getf(const int& i=0, const int& j=0) const = 0;

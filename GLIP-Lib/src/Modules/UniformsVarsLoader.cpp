@@ -61,13 +61,13 @@
 											"GL_FLOAT_MAT4"
 										};
 
-// UniformsVarsLoader::Ressource : 
-	UniformsVarsLoader::Ressource::Ressource(void)
+// UniformsVarsLoader::Resource : 
+	UniformsVarsLoader::Resource::Resource(void)
 	 : 	data(NULL),
 		modified(false)
 	{ }
 
-	UniformsVarsLoader::Ressource::Ressource(const VanillaParserSpace::Element& e)
+	UniformsVarsLoader::Resource::Resource(const VanillaParserSpace::Element& e)
 	 : 	data(NULL),
 		modified(false)
 	{
@@ -98,7 +98,7 @@
 		}
 	}
 
-	UniformsVarsLoader::Ressource::Ressource(const std::string& _name, const HdlDynamicData& _data)
+	UniformsVarsLoader::Resource::Resource(const std::string& _name, const HdlDynamicData& _data)
 	 : 	name(_name),
 		data(NULL),
 		modified(false)
@@ -106,7 +106,7 @@
 		data = HdlDynamicData::copy(_data);
 	}
 
-	UniformsVarsLoader::Ressource::Ressource(const Ressource& cpy)
+	UniformsVarsLoader::Resource::Resource(const Resource& cpy)
 	 : 	name(cpy.name),
 		data(NULL),
 		modified(cpy.modified)
@@ -115,13 +115,13 @@
 			data = HdlDynamicData::copy(*cpy.data);
 	}
 
-	UniformsVarsLoader::Ressource::~Ressource(void)
+	UniformsVarsLoader::Resource::~Resource(void)
 	{
 		delete data;
 		data = NULL;
 	}
 	
-	UniformsVarsLoader::Ressource& UniformsVarsLoader::Ressource::operator=(const Ressource& cpy)
+	UniformsVarsLoader::Resource& UniformsVarsLoader::Resource::operator=(const Resource& cpy)
 	{
 		name = cpy.name;
 		modified = cpy.modified;
@@ -135,45 +135,45 @@
 	}
 
 	/**
-	\fn const std::string& UniformsVarsLoader::Ressource::getName(void) const
-	\brief Get the name of the ressource.
-	\return Constant reference to the standard string containing the name of the Ressource.
+	\fn const std::string& UniformsVarsLoader::Resource::getName(void) const
+	\brief Get the name of the resource.
+	\return Constant reference to the standard string containing the name of the Resource.
 	**/
-	const std::string& UniformsVarsLoader::Ressource::getName(void) const
+	const std::string& UniformsVarsLoader::Resource::getName(void) const
 	{
 		return name;
 	}
 
 	/**
-	\fn const HdlDynamicData& UniformsVarsLoader::Ressource::object(void) const
-	\brief Get the object of the ressource (access to the variable itself).
+	\fn const HdlDynamicData& UniformsVarsLoader::Resource::object(void) const
+	\brief Get the object of the resource (access to the variable itself).
 	\return Constant reference to the variable.
 	**/
-	const HdlDynamicData& UniformsVarsLoader::Ressource::object(void) const
+	const HdlDynamicData& UniformsVarsLoader::Resource::object(void) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsVarsLoader::Ressource::object - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsVarsLoader::Resource::object - Data object not available.", __FILE__, __LINE__);
 		else
 			return (*data);
 	}
 
 	/**
-	\fn HdlDynamicData& UniformsVarsLoader::Ressource::object(void)
-	\brief Get the object of the ressource (access to the variable itself).
+	\fn HdlDynamicData& UniformsVarsLoader::Resource::object(void)
+	\brief Get the object of the resource (access to the variable itself).
 	\return Reference to the variable.
 	**/
-	HdlDynamicData& UniformsVarsLoader::Ressource::object(void)
+	HdlDynamicData& UniformsVarsLoader::Resource::object(void)
 	{
 		if(data==NULL)
-			throw Exception("UniformsVarsLoader::Ressource::object - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsVarsLoader::Resource::object - Data object not available.", __FILE__, __LINE__);
 		else
 			return (*data);
 	}
 
-	int UniformsVarsLoader::Ressource::applyTo(Filter& filter, bool forceWrite) const
+	int UniformsVarsLoader::Resource::applyTo(Filter& filter, bool forceWrite) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsVarsLoader::Ressource::applyTo - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsVarsLoader::Resource::applyTo - Data object not available.", __FILE__, __LINE__);
 		else if(modified || forceWrite)
 		{
 			filter.program().modifyVar(name, *data);
@@ -183,10 +183,10 @@
 			return 0;
 	}
 
-	VanillaParserSpace::Element UniformsVarsLoader::Ressource::getCodeElement(void) const
+	VanillaParserSpace::Element UniformsVarsLoader::Resource::getCodeElement(void) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsVarsLoader::Ressource::getCodeElement - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsVarsLoader::Resource::getCodeElement - Data object not available.", __FILE__, __LINE__);
 
 		VanillaParserSpace::Element e;
 
@@ -235,11 +235,11 @@
 
 			if(supposedToBeAFilter)
 			{
-				// Load all elements as ressources : 
+				// Load all elements as resources : 
 				for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 				{
-					Ressource tmp(*it);
-					ressources[tmp.getName()] = tmp;
+					Resource tmp(*it);
+					resources[tmp.getName()] = tmp;
 				}
 			}
 			else
@@ -287,8 +287,11 @@
 		HdlProgram& prgm = filter.program();
 
 		// Get the variables : 
-		const std::vector<std::string>& 	uniformVarsNames = prgm.getUniformVarsNames();
- 		const std::vector<GLenum>& 		uniformVarsTypes = prgm.getUniformVarsTypes();
+		//const std::vector<std::string>& 	uniformVarsNames = prgm.getUniformVarsNames();
+ 		//const std::vector<GLenum>& 		uniformVarsTypes = prgm.getUniformVarsTypes();
+
+		const std::vector<std::string>& 	uniformVarsNames = filter.getFragmentSource().getUniformVars();
+		const std::vector<GLenum>&		uniformVarsTypes = filter.getFragmentSource().getUniformTypes();
 
 		for(int k=0; k<uniformVarsNames.size(); k++)
 		{
@@ -296,7 +299,7 @@
 
 			prgm.getVar( uniformVarsNames[k], *data);
 
-			ressources[ uniformVarsNames[k] ] = Ressource(uniformVarsNames[k], *data);
+			resources[ uniformVarsNames[k] ] = Resource(uniformVarsNames[k], *data);
 
 			delete data;
 		}
@@ -305,20 +308,20 @@
 	UniformsVarsLoader::Node::Node(const Node& cpy)
 	 : 	name(cpy.name),
 		subNodes(cpy.subNodes),
-		ressources(cpy.ressources)
+		resources(cpy.resources)
 	{ }
 
 	UniformsVarsLoader::Node::~Node(void)
 	{
 		subNodes.clear();
-		ressources.clear();
+		resources.clear();
 	}
 
 	UniformsVarsLoader::Node& UniformsVarsLoader::Node::operator=(const Node& cpy)
 	{
 		name 		= cpy.name;
 		subNodes	= cpy.subNodes;
-		ressources	= cpy.ressources;
+		resources	= cpy.resources;
 
 		return (*this);
 	}
@@ -335,12 +338,12 @@
 
 	/**
 	\fn bool UniformsVarsLoader::Node::isFilter(void) const
-	\brief Get the name of the ressource.
-	\return True if the node is empty (no sub-node or no ressource).
+	\brief Get the name of the resource.
+	\return True if the node is empty (no sub-node or no resource).
 	**/
 	bool UniformsVarsLoader::Node::isFilter(void) const
 	{
-		return subNodes.empty() && !ressources.empty();
+		return subNodes.empty() && !resources.empty();
 	}
 
 	/**
@@ -350,33 +353,33 @@
 	**/
 	bool UniformsVarsLoader::Node::isPipeline(void) const
 	{
-		return !subNodes.empty() && ressources.empty();
+		return !subNodes.empty() && resources.empty();
 	}
 
 	/**
 	\fn bool UniformsVarsLoader::Node::empty(void) const
-	\brief Test if a Node is a filter (either the node is empty or it has ressources only).
+	\brief Test if a Node is a filter (either the node is empty or it has resources only).
 	\return True if the Node corresponds to a Filter structure.
 	**/
 	bool UniformsVarsLoader::Node::empty(void) const
 	{
-		return subNodes.empty() && ressources.empty();
+		return subNodes.empty() && resources.empty();
 	}
 
 	/**
 	\fn void UniformsVarsLoader::Node::clear(void)
-	\brief Removes all ressources and sub-nodes from this node.
+	\brief Removes all resources and sub-nodes from this node.
 	**/
 	void UniformsVarsLoader::Node::clear(void)
 	{
 		subNodes.clear();
-		ressources.clear();
+		resources.clear();
 	}
 
 	/**
 	\fn bool UniformsVarsLoader::Node::hasModifications(void) const
 	\brief Test if this branch contains modified variables.
-	\return True, if variable contained declared modification (see UniformsVarsLoader::Ressource::modified).
+	\return True, if variable contained declared modification (see UniformsVarsLoader::Resource::modified).
 	**/
 	bool UniformsVarsLoader::Node::hasModifications(void) const
 	{
@@ -385,7 +388,7 @@
 
 		bool test = false;
 
-		for(RessourceConstIterator it=ressourceBegin(); it!=ressourceEnd(); it++)
+		for(ResourceConstIterator it=resourceBegin(); it!=resourceEnd(); it++)
 			test = test || it->second.modified;
 		
 		for(NodeConstIterator it=nodeBegin(); it!=nodeEnd(); it++)
@@ -394,12 +397,12 @@
 
 	/**
 	\fn void UniformsVarsLoader::Node::clearModifiedFlags(bool value)
-	\brief Go through all sub-nodes and change any Ressource::modified flag.
+	\brief Go through all sub-nodes and change any Resource::modified flag.
 	\param value The new value to set for the flags (true, will set all the subsequent modified flags to true).
 	**/
 	void UniformsVarsLoader::Node::clearModifiedFlags(bool value)
 	{
-		for(RessourceIterator it=ressourceBegin(); it!=ressourceEnd(); it++)
+		for(ResourceIterator it=resourceBegin(); it!=resourceEnd(); it++)
 			it->second.modified = value;
 		
 		for(NodeIterator it=nodeBegin(); it!=nodeEnd(); it++)
@@ -535,131 +538,131 @@
 	}
 
 	/**
-	\fn int UniformsVarsLoader::Node::getNumRessources(void) const
-	\brief Get the number of ressources.
-	\return The number of ressources.
+	\fn int UniformsVarsLoader::Node::getNumResources(void) const
+	\brief Get the number of resources.
+	\return The number of resources.
 	**/
-	int UniformsVarsLoader::Node::getNumRessources(void) const
+	int UniformsVarsLoader::Node::getNumResources(void) const
 	{
-		return ressources.size();
+		return resources.size();
 	}
 
 	/**
-	\fn std::vector<std::string> UniformsVarsLoader::Node::getRessourcesNamesList(void) const
-	\brief Get a list of the name of all ressources.
-	\return A list of all ressources names.
+	\fn std::vector<std::string> UniformsVarsLoader::Node::getResourcesNamesList(void) const
+	\brief Get a list of the name of all resources.
+	\return A list of all resources names.
 	**/
-	std::vector<std::string> UniformsVarsLoader::Node::getRessourcesNamesList(void) const
+	std::vector<std::string> UniformsVarsLoader::Node::getResourcesNamesList(void) const
 	{
 		std::vector<std::string> namesList;
 
-		for(std::map<std::string, Ressource>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
+		for(std::map<std::string, Resource>::const_iterator it=resources.begin(); it!=resources.end(); it++)
 			namesList.push_back(it->first);
 
 		return namesList;
 	}
 
 	/**
-	\fn bool UniformsVarsLoader::Node::ressourceExists(const std::string& ressourceName) const
-	\brief Test if a ressource exist.
-	\param ressourceName The name of the targeted ressource.
-	\return True if the ressource exists, false otherwise.
+	\fn bool UniformsVarsLoader::Node::resourceExists(const std::string& resourceName) const
+	\brief Test if a resource exist.
+	\param resourceName The name of the targeted resource.
+	\return True if the resource exists, false otherwise.
 	**/
-	bool UniformsVarsLoader::Node::ressourceExists(const std::string& ressourceName) const
+	bool UniformsVarsLoader::Node::resourceExists(const std::string& resourceName) const
 	{
-		return ressources.find(ressourceName)!=ressources.end();
+		return resources.find(resourceName)!=resources.end();
 	}
 
 	/**
-	\fn const UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName) const
-	\brief Access a ressource by its name.
-	\param ressourceName The name of the targeted ressource.
-	\return A (constant) reference to the targeted ressource or raise an exception is any error occurs.
+	\fn const UniformsVarsLoader::Resource& UniformsVarsLoader::Node::resource(const std::string& resourceName) const
+	\brief Access a resource by its name.
+	\param resourceName The name of the targeted resource.
+	\return A (constant) reference to the targeted resource or raise an exception is any error occurs.
 	**/
-	const UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName) const
+	const UniformsVarsLoader::Resource& UniformsVarsLoader::Node::resource(const std::string& resourceName) const
 	{
-		std::map<std::string, Ressource>::const_iterator it = ressources.find(ressourceName);
+		std::map<std::string, Resource>::const_iterator it = resources.find(resourceName);
 
-		if(it==ressources.end())
-			throw Exception("UniformsVarsLoader::Node::ressource - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		if(it==resources.end())
+			throw Exception("UniformsVarsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
 		else
 			return it->second;
 	}
 
 	/**
-	\fn UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName)
-	\brief Access a ressource by its name.
-	\param ressourceName The name of the targeted ressource.
-	\return A reference to the targeted ressource or raise an exception is any error occurs.
+	\fn UniformsVarsLoader::Resource& UniformsVarsLoader::Node::resource(const std::string& resourceName)
+	\brief Access a resource by its name.
+	\param resourceName The name of the targeted resource.
+	\return A reference to the targeted resource or raise an exception is any error occurs.
 	**/
-	UniformsVarsLoader::Ressource& UniformsVarsLoader::Node::ressource(const std::string& ressourceName)
+	UniformsVarsLoader::Resource& UniformsVarsLoader::Node::resource(const std::string& resourceName)
 	{
-		std::map<std::string, Ressource>::iterator it = ressources.find(ressourceName);
+		std::map<std::string, Resource>::iterator it = resources.find(resourceName);
 
-		if(it==ressources.end())
-			throw Exception("UniformsVarsLoader::Node::ressource - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		if(it==resources.end())
+			throw Exception("UniformsVarsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
 		else
 			return it->second;
 	}
 
-	/*void UniformsVarsLoader::Node::addRessource(const Ressource& ressource)
+	/*void UniformsVarsLoader::Node::addResource(const Resource& resource)
 	{
-		ressources[ressource.getName()] = ressource;
+		resources[resource.getName()] = resource;
 	}*/
 
 	/**
-	\fn void UniformsVarsLoader::Node::eraseRessource(const std::string& ressourceName)
-	\brief Remove a ressource by its name or raise an exception if any error occurs.
-	\param ressourceName The name of the targeted ressource.
+	\fn void UniformsVarsLoader::Node::eraseResource(const std::string& resourceName)
+	\brief Remove a resource by its name or raise an exception if any error occurs.
+	\param resourceName The name of the targeted resource.
 	**/
-	void UniformsVarsLoader::Node::eraseRessource(const std::string& ressourceName)
+	void UniformsVarsLoader::Node::eraseResource(const std::string& resourceName)
 	{
-		std::map<std::string, Ressource>::iterator it = ressources.find(ressourceName);
+		std::map<std::string, Resource>::iterator it = resources.find(resourceName);
 
-		if(it==ressources.end())
-			throw Exception("UniformsVarsLoader::Node::eraseNode - No ressource named \"" + ressourceName + "\" is registered.", __FILE__, __LINE__);
+		if(it==resources.end())
+			throw Exception("UniformsVarsLoader::Node::eraseNode - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
 		else
-			ressources.erase(it);
+			resources.erase(it);
 	}
 
 	/**
-	\fn UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceBegin(void) const
-	\brief Get the 'begin' iterator on the ressources list.
-	\return A UniformsVarsLoader::RessourceConstIterator on 'begin'. 
+	\fn UniformsVarsLoader::ResourceConstIterator UniformsVarsLoader::Node::resourceBegin(void) const
+	\brief Get the 'begin' iterator on the resources list.
+	\return A UniformsVarsLoader::ResourceConstIterator on 'begin'. 
 	**/
-	UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceBegin(void) const
+	UniformsVarsLoader::ResourceConstIterator UniformsVarsLoader::Node::resourceBegin(void) const
 	{
-		return ressources.begin();
+		return resources.begin();
 	}
 
 	/**
-	\fn UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceEnd(void) const
-	\brief Get the 'end' iterator on the ressources list.
-	\return A UniformsVarsLoader::RessourceConstIterator on 'end'. 
+	\fn UniformsVarsLoader::ResourceConstIterator UniformsVarsLoader::Node::resourceEnd(void) const
+	\brief Get the 'end' iterator on the resources list.
+	\return A UniformsVarsLoader::ResourceConstIterator on 'end'. 
 	**/
-	UniformsVarsLoader::RessourceConstIterator UniformsVarsLoader::Node::ressourceEnd(void) const
+	UniformsVarsLoader::ResourceConstIterator UniformsVarsLoader::Node::resourceEnd(void) const
 	{
-		return ressources.end();
+		return resources.end();
 	}
 
 	/**
-	\fn UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceBegin(void)
-	\brief Get the 'begin' iterator on the ressources list.
-	\return A UniformsVarsLoader::RessourceIterator on 'begin'. 
+	\fn UniformsVarsLoader::ResourceIterator UniformsVarsLoader::Node::resourceBegin(void)
+	\brief Get the 'begin' iterator on the resources list.
+	\return A UniformsVarsLoader::ResourceIterator on 'begin'. 
 	**/
-	UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceBegin(void)
+	UniformsVarsLoader::ResourceIterator UniformsVarsLoader::Node::resourceBegin(void)
 	{
-		return ressources.begin();
+		return resources.begin();
 	}
 
 	/**
-	\fn UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceEnd(void)
-	\brief Get the 'end' iterator on the ressources list.
-	\return A UniformsVarsLoader::RessourceIterator on 'end'. 
+	\fn UniformsVarsLoader::ResourceIterator UniformsVarsLoader::Node::resourceEnd(void)
+	\brief Get the 'end' iterator on the resources list.
+	\return A UniformsVarsLoader::ResourceIterator on 'end'. 
 	**/
-	UniformsVarsLoader::RessourceIterator UniformsVarsLoader::Node::ressourceEnd(void)
+	UniformsVarsLoader::ResourceIterator UniformsVarsLoader::Node::resourceEnd(void)
 	{
-		return ressources.end();
+		return resources.end();
 	}
 
 	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite) const
@@ -702,7 +705,7 @@
 		if(!empty() && !isFilter())
 			throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__);
 
-		for(std::map<std::string, UniformsVarsLoader::Ressource>::const_iterator it=ressources.begin(); it!=ressources.end(); it++)
+		for(std::map<std::string, UniformsVarsLoader::Resource>::const_iterator it=resources.begin(); it!=resources.end(); it++)
 			c += it->second.applyTo(filter, forceWrite);
 
 		return c;
@@ -732,13 +735,13 @@
 
 		if(isFilter())
 		{
-			for(RessourceConstIterator it=ressourceBegin(); it!=ressourceEnd(); )
+			for(ResourceConstIterator it=resourceBegin(); it!=resourceEnd(); )
 			{
 				e.body += it->second.getCodeElement().getCode();
 
 				it++;
 
-				if(it!=ressourceEnd())
+				if(it!=resourceEnd())
 					e.body += '\n';
 			}
 		}
@@ -861,15 +864,38 @@
 	**/
 	void UniformsVarsLoader::load(Pipeline& pipeline, bool replace)
 	{
+		
 		std::map<std::string, UniformsVarsLoader::Node>::iterator it=nodes.find(pipeline.getTypeName());
 
 		if(it!=nodes.end() && !replace)
-			throw Exception("UniformsVarsLoader::load - An element with the typename \"" + pipeline.getTypeName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
-		else
+			throw Exception("UniformsVarsLoader::load - An element with the typename \"" + pipeline.getTypeName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);	
+		else if(it!=nodes.end())
 			nodes.erase(it);
 
 		// Insert the new node : 
 		nodes[pipeline.getTypeName()] = Node(pipeline.getTypeName(), pipeline, pipeline);
+	}
+
+	/**
+	\fn void UniformsVarsLoader::load(const UniformsVarsLoader& subLoader, bool replace=false)
+	\brief Load data from another UniformsVarsLoader object.
+	\param subLoader Other object.
+	\param replace If set to true, and in the case that variables with a similar name already exist, then the set of values is overwritten. Otherwise it will raise an Exception.
+	**/
+	void UniformsVarsLoader::load(const UniformsVarsLoader& subLoader, bool replace)
+	{
+		for(NodeConstIterator it = subLoader.nodes.begin(); it!=subLoader.nodes.end(); it++)
+		{
+			std::map<std::string, UniformsVarsLoader::Node>::iterator similarIt = nodes.find(it->first);
+			
+			if(similarIt!=nodes.end() && !replace)
+				throw Exception("UniformsVarsLoader::load - An element with the typename \"" + it->first + "\" has already been registered (replace=false).", __FILE__, __LINE__);
+			else if(it!=nodes.end())
+				nodes.erase(similarIt);
+
+			// Insert the new node as a copy : 
+			nodes[it->first] = Node(it->second);
+		}
 	}
 
 	/**
@@ -965,14 +991,51 @@
 			return it->second;
 	}
 
-	//int UniformsVarsLoader::getNumVariables(void) const
-	//int UniformsVarsLoader::getNumVariables(const std::string& name) const;
+	/**
+	\fn UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::rootNodeBegin(void) const
+	\brief Get the 'begin' iterator on the nodes list.
+	\return A UniformsVarsLoader::NodeConstIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::rootNodeBegin(void) const
+	{
+		return nodes.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::rootNodeEnd(void) const
+	\brief Get the 'end' iterator on the nodes list.
+	\return A UniformsVarsLoader::NodeConstIterator on 'end'. 
+	**/
+	UniformsVarsLoader::NodeConstIterator UniformsVarsLoader::rootNodeEnd(void) const
+	{
+		return nodes.end();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeIterator UniformsVarsLoader::rootNodeBegin(void)
+	\brief Get the 'begin' iterator on the nodes list.
+	\return A UniformsVarsLoader::NodeIterator on 'begin'. 
+	**/
+	UniformsVarsLoader::NodeIterator UniformsVarsLoader::rootNodeBegin(void)
+	{
+		return nodes.begin();
+	}
+
+	/**
+	\fn UniformsVarsLoader::NodeIterator UniformsVarsLoader::rootNodeEnd(void)
+	\brief Get the 'end' iterator on the nodes list.
+	\return A UniformsVarsLoader::NodeIterator on 'end'. 
+	**/
+	UniformsVarsLoader::NodeIterator UniformsVarsLoader::rootNodeEnd(void)
+	{
+		return nodes.end();
+	}
 
 	/**
 	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
 	\brief Copy the possibly loaded set of uniforms variables to a pipeline (for the corresponding name of the Pipeline instance).
 	\param pipeline The pipeline to which the data has to be copied (if relevant).
-	\param forceWrite If set to false, only the variable marked as modified will be loaded (see UniformsVarsLoader::Ressource::modified).
+	\param forceWrite If set to false, only the variable marked as modified will be loaded (see UniformsVarsLoader::Resource::modified).
 	\return The total number of uniforms variables actually copied.
 	**/
 	int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
