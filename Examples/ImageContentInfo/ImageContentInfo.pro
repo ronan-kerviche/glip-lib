@@ -11,12 +11,12 @@ unix: LIBS      += 	../../GLIP-Lib/lib/libglip.so
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
-HEADERS      	+= 	../ExternalTools/Qt/WindowRendering.hpp \
+HEADERS      	+= 	../ExternalTools/Qt/GLSceneWidget.hpp \
 			../ExternalTools/Qt/UniformsVarsLoaderInterface.hpp \
 			../ExternalTools/Qt/ResourceLoader.hpp \
 			./src/imageContentInfo.hpp
 SOURCES      	+= 	./src/main.cpp \
-			../ExternalTools/Qt/WindowRendering.cpp \
+			../ExternalTools/Qt/GLSceneWidget.cpp \
 			../ExternalTools/Qt/UniformsVarsLoaderInterface.cpp \
 			../ExternalTools/Qt/ResourceLoader.cpp \
 			./src/imageContentInfo.cpp

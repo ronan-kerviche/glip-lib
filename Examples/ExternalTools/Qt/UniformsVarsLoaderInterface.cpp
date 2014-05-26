@@ -24,7 +24,10 @@
 	{
 		HdlDynamicData& object = resource.object();
 
-		boxes.assign(object.getNumElements(), NULL);
+		if(object.isFloatingPointType())
+			floatBoxes.assign(object.getNumElements(), NULL);
+		else
+			integerBoxes.assign(object.getNumElements(), NULL);
 
 		// Test the type of the resource and create the interface accordingly : 
 		for(int i=0; i<object.getNumRows(); i++)
@@ -33,20 +36,54 @@
 				const int index = object.getIndex(i, j);
 
 				// Create box : 
-				boxes[index] = new QDoubleSpinBox;
+				if(object.isFloatingPointType())
+					floatBoxes[index] = new QDoubleSpinBox;
+				else
+					integerBoxes[index] = new QSpinBox;
 
 				// Settings : 
-				/// TODO
+				if(object.isFloatingPointType())
+				{
+					floatBoxes[index]->setRange(-1e16, 1e16);
+					floatBoxes[index]->setSingleStep(0.1);
+				}
+				else if(object.isBooleanType())
+				{
+					integerBoxes[index]->setRange(0, 1);
+					integerBoxes[index]->setSingleStep(1);
+				}
+				else
+				{
+					integerBoxes[index]->setRange(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+					integerBoxes[index]->setSingleStep(1);
+
+					if(object.isUnsignedType())
+						integerBoxes[index]->setMinimum(0);
+				}
 		
 				// Copy the value :
-				boxes[index]->setValue(object.get(i,j));
+				if(object.isFloatingPointType())
+					floatBoxes[index]->setValue(object.get(i,j));
+				else
+					integerBoxes[index]->setValue(object.get(i,j));
 
 				// Signal mapper : 
-				QObject::connect(boxes[index], SIGNAL(valueChanged(double)), &signalMapper, SLOT(map(void)));
-				signalMapper.setMapping(boxes[index], object.getIndex(i, j));
+				if(object.isFloatingPointType())
+				{
+					QObject::connect(floatBoxes[index], SIGNAL(valueChanged(double)), &signalMapper, SLOT(map(void)));
+					signalMapper.setMapping(floatBoxes[index], object.getIndex(i, j));
+				}
+				else
+				{
+					QObject::connect(integerBoxes[index], SIGNAL(valueChanged(double)), &signalMapper, SLOT(map(void)));
+					signalMapper.setMapping(integerBoxes[index], object.getIndex(i, j));
+				}
 	
 				// Put in the grid : 
-				layout.addWidget(boxes[index], i, j);
+				if(object.isFloatingPointType())
+					layout.addWidget(floatBoxes[index], i, j);
+				else
+					layout.addWidget(integerBoxes[index], i, j);
 			}
 
 		// Finished by conneting the SignalMapper : 
@@ -55,7 +92,8 @@
 
 	ValuesInterface::~ValuesInterface(void)
 	{
-		boxes.clear();	
+		floatBoxes.clear();
+		integerBoxes.clear();
 	}
 
 	void ValuesInterface::pushModificationToResource(int index)
@@ -66,7 +104,12 @@
 		resource.object().getCoordinates(index, i, j);
 
 		// Get data : 
-		const double v = boxes[index]->value();
+		double v = 0.0;
+
+		if(resource.object().isFloatingPointType())
+			v = floatBoxes[index]->value();
+		else
+			v = integerBoxes[index]->value();
 	
 		resource.object().set(v, i, j);
 
@@ -80,7 +123,9 @@
 // UniformsVarsLoaderInterface :
 	UniformsVarsLoaderInterface::UniformsVarsLoaderInterface(int type)
 	 : 	QTreeWidgetItem(type)
-	{ }
+	{
+		setText(0, "Uniform Variables");
+	}
 
 	UniformsVarsLoaderInterface::~UniformsVarsLoaderInterface(void)
 	{
@@ -102,7 +147,10 @@
 		QObject::connect(valuesInterface, SIGNAL(modified(void)), this, SIGNAL(modified(void)));
 
 		// Set the name : 
-		newNode->setText(0, tr("%1 [%2]").arg(resource.getName().c_str()).arg(glParamName(resource.object().getGLType()).c_str()));
+		if(resource.object().getNumRows()>1)
+			newNode->setText(0, tr("%1\n[%2]").arg(resource.getName().c_str()).arg(glParamName(resource.object().getGLType()).c_str()));
+		else
+			newNode->setText(0, tr("%1 [%2]").arg(resource.getName().c_str()).arg(glParamName(resource.object().getGLType()).c_str()));
 
 		// Add the widget : 
 		if(treeWidget()==NULL)

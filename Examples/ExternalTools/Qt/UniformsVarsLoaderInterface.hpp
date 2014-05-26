@@ -37,7 +37,8 @@
 		private : 
 			UniformsVarsLoader::Resource&	resource;
 			QGridLayout			layout;
-			std::vector<QDoubleSpinBox*>	boxes;
+			std::vector<QSpinBox*>		integerBoxes;
+			std::vector<QDoubleSpinBox*>	floatBoxes;
 			QSignalMapper			signalMapper;
 			
 		private slots :

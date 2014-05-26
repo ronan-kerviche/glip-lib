@@ -11,9 +11,76 @@
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+	TmpWidget::TmpWidget(void)
+	 : 	a("Button A"),
+		b("Button B"),
+		c("Button C"),
+		//img("/home/arkh/Pictures/mire.bmp"),
+		img("/home/arkh/Pictures/the_general_problem.png"),
+		//img("/home/arkh/Pictures/2048.png"),
+		texture(NULL),
+		view(NULL)
+	{
+		layout.addWidget(&a);
+		layout.addWidget(&b);
+		layout.addWidget(&c);
+
+		setLayout(&layout);
+
+		show();
+
+		move(128, 128);
+
+		std::cout << "Subwidget created." << std::endl;
+
+		QObject::connect(&a, SIGNAL(released(void)), this, SLOT(buttonAPressed(void)));
+		QObject::connect(&b, SIGNAL(released(void)), this, SLOT(buttonBPressed(void)));
+		QObject::connect(&c, SIGNAL(released(void)), this, SLOT(buttonCPressed(void)));
+
+		// Create the view : 
+		ImageBuffer* buffer = createImageBufferFromQImage(img);
+		texture = new HdlTexture(*buffer);
+
+		(*buffer) >> (*texture);
+
+		view = new QVGLView(texture, "NewView");
+
+		//view->setAngle(0.5465f);
+		//view->setViewCenter(0.3, 0.1);
+
+		delete buffer;
+	}
+
+	TmpWidget::~TmpWidget(void)
+	{
+		delete texture;
+		delete view;
+	}
+
+	void TmpWidget::buttonAPressed(void)
+	{
+		std::cout << "TmpWidget : Button A, add and show" << std::endl;
+
+		getQVGLParent()->addView(view);
+		view->show();
+	}
+	
+	void TmpWidget::buttonBPressed(void)
+	{
+		std::cout << "TmpWidget : Button B, close" << std::endl;
+
+		view->close();
+	}
+
+	void TmpWidget::buttonCPressed(void)
+	{
+		std::cout << "TmpWidget : Button C" << std::endl;
+	}
+
+
 // Src :
 	IHM::IHM(void)
-	 : layout(this), saveButton("Save result (RGB888)", this), window(this, 640, 480)
+	 : layout(this), saveButton("Save result (RGB888)", this), window(this)
 	{
 		log.open("./log.txt", std::fstream::out | std::fstream::trunc);
 
@@ -25,10 +92,13 @@
 
 		try
 		{
+			if(!HandleOpenGL::isInitialized())
+				throw Exception("OpenGL Context not initialized.", __FILE__, __LINE__);
+
 			// Main interface :
-			window.renderer().setKeyboardActions(true);
-			window.renderer().setMouseActions(true);
-			window.renderer().setPixelAspectRatio(1.0f);
+			//window.renderer().setKeyboardActions(true);
+			//window.renderer().setMouseActions(true);
+			//window.renderer().setPixelAspectRatio(1.0f);
 
 			// Info :
 			log << "> ImageTest" << std::endl;
@@ -48,7 +118,7 @@
 			QObject::connect(&saveButton,			SIGNAL(released(void)), 		this, SLOT(save(void)));
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(requestComputingUpdate(void)));
 			QObject::connect(&imageLoaderInterface,		SIGNAL(currentTextureChanged(void)),	this, SLOT(updateOutput(void)));
-			QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateOutput(void)));
+			//QObject::connect(&(window.renderer()),		SIGNAL(actionReceived(void)),		this, SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface, 	SIGNAL(outputIndexChanged(void)),	this, SLOT(updateOutput(void)));
 			QObject::connect(&pipelineLoaderInterface, 	SIGNAL(requestComputingUpdate(void)),	this, SLOT(requestComputingUpdate(void)));
 		}
@@ -61,6 +131,9 @@
 			QMessageBox::warning(NULL, tr("ImageTest - Error : "), e.what());
 			throw e;
 		}
+
+		TmpWidget* tmp = new TmpWidget;
+		window.addSubWidget(tmp);
 	}
 
 	IHM::~IHM(void)
@@ -115,21 +188,21 @@
 
 		lock = true;
 
-		if(imageLoaderInterface.getNumTextures()==0)
-			window.renderer().clearWindow();
-		else
-		{
+		//if(imageLoaderInterface.getNumTextures()==0)
+			//window.renderer().clearWindow();
+		//else
+		/*{
 			try
 			{
 				int 	w = pipelineLoaderInterface.currentOutput( imageLoaderInterface.currentTexture() ).getWidth(),
 					h = pipelineLoaderInterface.currentOutput( imageLoaderInterface.currentTexture() ).getHeight();
 				float 	imageAspectRatio = static_cast<float>(w)/static_cast<float>(h);
-				window.renderer().setImageAspectRatio(imageAspectRatio);
+				//window.renderer().setImageAspectRatio(imageAspectRatio);
 
 				pipelineLoaderInterface.loader().clearRequiredElements("InputFormat");
 				pipelineLoaderInterface.loader().addRequiredElement("InputFormat", imageLoaderInterface.currentTexture());
 
-				window.renderer() << pipelineLoaderInterface.currentOutput( imageLoaderInterface.currentTexture() ) << OutputDevice::Process;
+				//window.renderer() << pipelineLoaderInterface.currentOutput( imageLoaderInterface.currentTexture() ) << OutputDevice::Process;
 			}
 			catch(std::exception& e)
 			{
@@ -138,7 +211,7 @@
 				log << "IHM::updateOutput - Exception while updating : " << std::endl;
 				log << e.what() << std::endl;
 			}
-		}
+		}*/
 
 		lock = false;
 	}
@@ -168,3 +241,4 @@
 	{
 		delete ihm;
 	}
+

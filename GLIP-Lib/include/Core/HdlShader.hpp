@@ -103,7 +103,7 @@ namespace Glip
 				void getVar(const std::string& varName, float* ptr);
 				void getVar(const std::string& varName, HdlDynamicData& data);
 
-				bool isValid(const std::string& varName);
+				bool isUniformVariableValid(const std::string& varName);
 	
 				// Static tools :
 				static int maxVaryingVar(void);

@@ -132,7 +132,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    GLuint HdlShader::getShaderID(void) const
 	\brief Returns the ID of the shader for OpenGL.
-
 	\return The ID handled by the driver.
 	**/
 	GLuint HdlShader::getShaderID(void) const
@@ -143,7 +142,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    GLenum HdlShader::getType(void) const
 	\brief Returns the kind of the shader for OpenGL (either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER).
-
 	\return The Kind.
 	**/
 	GLenum HdlShader::getType(void) const
@@ -185,7 +183,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    HdlProgram::HdlProgram(const HdlShader& shd1, const HdlShader& shd2)
 	\brief HdlProgram constructor. Note that the shaders must be of different kinds.
-
 	\param shd1 The first shader to link.
 	\param shd2 The second shader to link.
 	**/
@@ -222,7 +219,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    bool HdlProgram::link(void)
 	\brief Link the program.
-
 	\return False in case of failure, true otherwise.
 	**/
 	bool HdlProgram::link(void)
@@ -309,7 +305,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::update(const HdlShader& shader, bool lnk)
 	\brief Change a shader in the program.
-
 	\param shader The shader to add.
 	\param lnk Set to true if you want the program to be linked again.
 	**/
@@ -371,8 +366,11 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
-	\brief Get access to the list of uniform variables names of supported types managed by the program (GL based).
-	\return Access to a sting based vector.
+	\brief Get access to the list of uniform variables names of supported types managed by the program (GL based). 
+
+	Some variable reported by the Driver might not be accessible. You can use HdlProgram::isUniformVariableValid to detect such variables.
+	
+	\return Access to a string based vector.
 	**/
 	const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
 	{
@@ -382,7 +380,10 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
 	\brief Get access to the list of uniform variables types corresponding to the names provided by HdlProgram::getUniformVarsNames (GL based).
-	\return Access to a sting based vector.
+
+	Some variable reported by the Driver might not be accessible. You can use HdlProgram::isUniformVariableValid to detect such variables.
+
+	\return Access to a GLenum based vector, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	**/
 	const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
 	{
@@ -392,7 +393,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	\brief Link the name of a fragment output variable to a fragment unit.
-
 	\param fragName Name of the fragment output variable.
 	\param frag     Index of the desired fragment unit.
 	**/
@@ -414,7 +414,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v0      Corresponding value to assign.
@@ -425,7 +424,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v0      Corresponding value to assign.
@@ -436,7 +434,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v0      Corresponding value to assign.
@@ -448,7 +445,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, int* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
@@ -456,7 +452,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, unsigned int* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
@@ -464,7 +459,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::modifyVar(const std::string& varName, GLenum t, float* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	\param v       Pointer to the values to assign.
@@ -559,7 +553,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn void HdlProgram::modifyVar(const std::string& varName, const HdlDynamicData& data)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
-
 	\param varName Name of the fragment output variable.
 	\param data The dynamic object to be used as source.
 	**/
@@ -613,7 +606,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::getVar(const std::string& varName, int* ptr)
 	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care.
-
 	\param varName The name of the uniform variable to read from.
 	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
 	**/
@@ -637,7 +629,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::getVar(const std::string& varName, unsigned int* ptr)
 	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care.
-
 	\param varName The name of the uniform variable to read from.
 	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
 	**/
@@ -661,7 +652,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    void HdlProgram::getVar(const std::string& varName, float* ptr)
 	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care.
-
 	\param varName The name of the uniform variable to read from.
 	\param ptr A pointer to a buffer with sufficient size in order to contain the full object (scalar, vector, matrix...).
 	**/
@@ -684,7 +674,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn void HdlProgram::getVar(const std::string& varName, HdlDynamicData& data)
 	\brief Read a uniform variable from a shader. Warning : this function does not perform any type or size check which might result in a buffer overflow if not used with care.
-
 	\param varName Name of the fragment output variable.
 	\param data The dynamic object to be used as target.
 	**/
@@ -735,13 +724,12 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool HdlProgram::isValid(const std::string& varName)
-	\brief Check if a variable name is valid.
-
+	\fn    bool HdlProgram::isUniformVariableValid(const std::string& varName)
+	\brief Check if a variable is valid from its name.
 	\param varName The name of the uniform variable to read from.
 	\return True if the name is valid (see glGetUniformLocation at http://www.opengl.org/sdk/docs/man/xhtml/glGetUniformLocation.xml) or false otherwise.
 	**/
-	bool HdlProgram::isValid(const std::string& varName)
+	bool HdlProgram::isUniformVariableValid(const std::string& varName)
 	{
 		return glGetUniformLocation(program, varName.c_str()) != -1;
 	}
@@ -771,7 +759,6 @@ using namespace Glip::CoreGL;
 	/**
 	\fn    int HdlProgram::maxVaryingVar(void)
 	\brief Returns the maximum number of varying variables available.
-
 	\return The maximum number of varying variables.
 	**/
 	int HdlProgram::maxVaryingVar(void)

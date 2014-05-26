@@ -767,13 +767,13 @@
 						if(!normalized)
 							addVertex3D(j, i, k);
 						else
-					{
-						const float 	x = static_cast<float>(j)/static_cast<float>(w-1),
-								y = static_cast<float>(i)/static_cast<float>(h-1),
-								z = static_cast<float>(k)/static_cast<float>(d-1);
+						{
+							const float 	x = static_cast<float>(j)/static_cast<float>(w-1),
+									y = static_cast<float>(i)/static_cast<float>(h-1),
+									z = static_cast<float>(k)/static_cast<float>(d-1);
 
-						addVertex2D(x,  y, z);
-					}
+							addVertex2D(x,  y, z);
+						}
 					}
 				}
 			}

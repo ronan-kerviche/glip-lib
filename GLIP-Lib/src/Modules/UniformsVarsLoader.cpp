@@ -287,21 +287,21 @@
 		HdlProgram& prgm = filter.program();
 
 		// Get the variables : 
-		//const std::vector<std::string>& 	uniformVarsNames = prgm.getUniformVarsNames();
- 		//const std::vector<GLenum>& 		uniformVarsTypes = prgm.getUniformVarsTypes();
-
-		const std::vector<std::string>& 	uniformVarsNames = filter.getFragmentSource().getUniformVars();
-		const std::vector<GLenum>&		uniformVarsTypes = filter.getFragmentSource().getUniformTypes();
+		const std::vector<std::string>& 	uniformVarsNames = prgm.getUniformVarsNames();
+ 		const std::vector<GLenum>& 		uniformVarsTypes = prgm.getUniformVarsTypes();
 
 		for(int k=0; k<uniformVarsNames.size(); k++)
 		{
-			HdlDynamicData* data = HdlDynamicData::build(uniformVarsTypes[k]);
+			if(prgm.isUniformVariableValid(uniformVarsNames[k]))
+			{
+				HdlDynamicData* data = HdlDynamicData::build(uniformVarsTypes[k]);
 
-			prgm.getVar( uniformVarsNames[k], *data);
+				prgm.getVar( uniformVarsNames[k], *data);
 
-			resources[ uniformVarsNames[k] ] = Resource(uniformVarsNames[k], *data);
+				resources[ uniformVarsNames[k] ] = Resource(uniformVarsNames[k], *data);
 
-			delete data;
+				delete data;
+			}
 		}
 	}
 

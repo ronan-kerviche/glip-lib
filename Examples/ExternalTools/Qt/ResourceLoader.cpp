@@ -45,7 +45,10 @@
 		{
 			for(int j=0; j<qimage.width(); j++)
 			{
-				QRgb col 	= qimage.pixel(j,i);
+				QRgb col 	= qimage.pixel(j,qimage.height() - i - 1);				// WARNING Shift up-down to fit texture coordinates.
+
+				//std::cout << i << ", " << j << " : " << QColor(col).name().toStdString() << std::endl;
+
 				if(descriptor.numChannels==1)
 					buffer->set(j, i, GL_LUMINANCE,	qRed(  col ));
 				else 
@@ -692,6 +695,8 @@
 		listLabels.push_back("Name");
 		listLabels.push_back("Data");
 		tree.setHeaderLabels( listLabels );
+
+		resize(512, 256);
 
 		hide();
 

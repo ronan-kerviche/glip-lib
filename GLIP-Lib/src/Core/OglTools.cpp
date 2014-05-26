@@ -127,7 +127,7 @@ using namespace Glip::CoreGL;
 		**/
 		HandleOpenGL::SupportedVendor HandleOpenGL::getVendorID(void)
 		{
-		    return vendor;
+			return vendor;
 		}
 
 		/**
