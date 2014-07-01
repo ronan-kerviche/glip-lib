@@ -21,6 +21,8 @@
 		texture(NULL),
 		view(NULL)
 	{
+		static int count = 1;
+		
 		layout.addWidget(&a);
 		layout.addWidget(&b);
 		layout.addWidget(&c);
@@ -43,12 +45,16 @@
 
 		(*buffer) >> (*texture);
 
-		view = new QVGLView(texture, "NewView");
+		view = new QVGLView(texture, tr("View %1").arg(count));
 
 		//view->setAngle(0.5465f);
 		//view->setViewCenter(0.3, 0.1);
 
 		delete buffer;
+
+		setTitle(tr("Widget %1").arg(count));
+
+		count++;
 	}
 
 	TmpWidget::~TmpWidget(void)
@@ -133,6 +139,9 @@
 		}
 
 		TmpWidget* tmp = new TmpWidget;
+		window.addSubWidget(tmp);
+
+		tmp = new TmpWidget;
 		window.addSubWidget(tmp);
 	}
 
