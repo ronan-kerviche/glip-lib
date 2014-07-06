@@ -12,7 +12,8 @@
 	using namespace Glip::Modules;
 
 	TmpWidget::TmpWidget(void)
-	 : 	a("Button A"),
+	 : 	layout(&widget),
+		a("Button A"),
 		b("Button B"),
 		c("Button C"),
 		//img("/home/arkh/Pictures/mire.bmp"),
@@ -26,8 +27,11 @@
 		layout.addWidget(&a);
 		layout.addWidget(&b);
 		layout.addWidget(&c);
+		layout.setMargin(0);
+		layout.setSpacing(1);
 
-		setLayout(&layout);
+		//setLayout(&layout);
+		setWidget(&widget);
 
 		show();
 
@@ -139,6 +143,9 @@
 		}
 
 		TmpWidget* tmp = new TmpWidget;
+		window.addSubWidget(tmp);
+
+		tmp = new TmpWidget;
 		window.addSubWidget(tmp);
 
 		tmp = new TmpWidget;

@@ -225,12 +225,16 @@
 	}
 
 // QVGLSubWidget :
-	QVGLSubWidget::QVGLSubWidget(QWidget* parent)
-	 : 	QWidget(parent),
-		layout(this),
+	QVGLSubWidget::QVGLSubWidget(void)
+	 : 	layout(this),
+		titleBar(&titleWidget),
 		titleLabel(this),
 		hideButton(this),
-		invalidMotion(true),
+		visible(false),
+		motionActive(false),
+		resizeActive(false),
+		resizeHorizontalLock(false),
+		resizeVerticalLock(false),
 		qvglParent(NULL),
 		graphicsProxy(NULL)
 	{
@@ -255,21 +259,15 @@
 		titleBar.setMargin(0);
 		titleBar.setSpacing(0);
 
+		titleWidget.setFixedHeight(h);
+
 		// Create final layout : 
-		layout.addLayout(&titleBar);
-		layout.setMargin(1);
+		layout.addWidget(&titleWidget, 0);
+		layout.setMargin(4);
 		layout.setSpacing(1);
 
 		// Connections : 
 		QObject::connect(&hideButton, SIGNAL(released(void)), this, SLOT(hide(void)));
-
-		// Background color : 
-		/*QPalette pal;
-		QBrush brush(Qt::NoBrush);
-		QColor color(Qt::transparent);
-		pal.setBrush(QPalette::Window, brush);
-		pal.setColor(QPalette::Window, color);
-		setPalette(pal);*/
 	}
 
 	QVGLSubWidget::~QVGLSubWidget(void)
@@ -285,10 +283,17 @@
 			
 			offset = event->pos();
 
-			invalidMotion = false;
-		}
+			const int borderResize = 4;
+			//resizeActive = (std::abs(event->pos().x())<borderResize || std::abs(event->pos().x()-width())<borderResize || std::abs(event->pos().y())<borderResize || std::abs(event->pos().y()-height())<borderResize); // All borders
+			resizeActive = (std::abs(event->pos().x()-width())<borderResize || std::abs(event->pos().y()-height())<borderResize);
+			motionActive = !resizeActive;
 
-		//std::cout << "GLSubWidget : Mouse click event" << std::endl;
+			if(resizeActive)
+			{
+				resizeHorizontalLock 	= (std::abs(event->pos().y()-height())>borderResize);
+				resizeVerticalLock	= (std::abs(event->pos().x()-width())>borderResize);
+			}
+		}
 
 		// Send selection signal : 
 		emit selected(this);
@@ -298,22 +303,43 @@
 	{
 		QWidget::mousePressEvent(event);
 
-		if(!event->isAccepted() && !invalidMotion && qvglParent!=NULL)
+		if(!event->isAccepted() && qvglParent!=NULL)
 		{
 			event->accept(); // Do not propagate the event hereafter.
 
-			// Get the new position : 
-			QPoint v = mapToParent(event->pos() - offset);
+			if(motionActive)
+			{
+				// Get the new position : 
+				QPoint v = mapToParent(event->pos() - offset);
 
-			// Prevent the widget from moving out of the scene : 
-			v.setX( std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x()) );
-			v.setY( std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height()), v.y()) );
+				// Prevent the widget from moving out of the scene : 
+				v.setX( std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x()) );
+				v.setY( std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()) );
 
-			v.setX( std::max(0, v.x()) );
-			v.setY( std::max(0, v.y()) );
+				v.setX( std::max(0, v.x()) );
+				v.setY( std::max(0, v.y()) );
 			
-			// Move : 
-			move(v);
+				// Move : 
+				move(v);
+			}
+			else if(resizeActive)
+			{
+				QPoint d = event->pos() - offset;
+
+				if(resizeHorizontalLock)
+					d.setY(0);
+
+				if(resizeVerticalLock)
+					d.setX(0);
+
+				d.setX( std::min(static_cast<int>(qvglParent->sceneRect().width()-x()-width()), d.x()) );
+				d.setY( std::min(static_cast<int>(qvglParent->sceneRect().height()-y()-height()), d.y()) );
+
+				resize(width()+d.x(), height()+d.y());
+
+				// Re-offset : 
+				offset = event->pos();
+			}
 		}
 
 		//std::cout << "GLSubWidget : Mouse move event" << std::endl;
@@ -327,16 +353,33 @@
 		{
 			event->accept(); // Do not propagate the event hereafter.
 			
-			invalidMotion = true;
+			motionActive = false;
+			resizeActive = false;
 		}
+	}
+
+	void QVGLSubWidget::temporaryHide(bool enabled)
+	{
+		if(enabled)
+			QWidget::hide();
+		else if(!enabled && visible)
+			QWidget::show();
+	}
+
+	void QVGLSubWidget::setWidget(QWidget* widget)
+	{
+		layout.addWidget(widget, 1);
 	}
 
 	void QVGLSubWidget::setLayout(QLayout* subLayout)
 	{
-		if(layout.count()>=2)
-			layout.takeAt(1);
+		/*if(layout.itemAt(2)!=NULL)
+		{
+			std::cout << "Remove!" << std::endl;
+			layout.takeAt(2);
+		}*/
 		
-		layout.addLayout(subLayout);
+		layout.addLayout(subLayout, 1);
 	}
 
 	QString QVGLSubWidget::getTitle(void)
@@ -360,9 +403,16 @@
 		return qvglParent;
 	}
 
+	bool QVGLSubWidget::shoudBeVisible(void) const
+	{
+		return visible;
+	}
+
 	void QVGLSubWidget::show(void)
 	{
 		QWidget::show();
+
+		visible = true;
 
 		emit showRequest(this);
 	}
@@ -371,7 +421,58 @@
 	{
 		QWidget::hide();
 
+		visible = false;
+
 		emit hideRequest(this);
+	}
+
+// QVGLPositionColorInfoMini : 
+	QVGLPositionColorInfoMini::QVGLPositionColorInfoMini(void)
+	 : bar(this)
+	{
+		colorBox.setAutoFillBackground(true);
+		QFontMetrics fontMetrics(positionLabel.font());
+
+		positionLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+		positionLabel.setFixedWidth(fontMetrics.width("00000x00000"));
+		
+		colorBox.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+		colorBox.setFixedWidth(fontMetrics.width("####"));
+
+		bar.addWidget(&positionLabel);
+		bar.addWidget(&colorBox);
+		bar.addSpacing(2);
+
+		bar.setMargin(0);
+		bar.setSpacing(0);
+
+		setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+		// Clear : 
+		updatePosition();
+		updateColor();
+	}
+
+	QVGLPositionColorInfoMini::~QVGLPositionColorInfoMini(void)
+	{ }
+
+	void QVGLPositionColorInfoMini::setWindowOpacity(qreal level)
+	{
+		QWidget::setWindowOpacity(level);
+		colorBox.setWindowOpacity(0.0);		// TODO : to fix missing solid color.
+	}
+
+	void QVGLPositionColorInfoMini::updatePosition(const QPointF& pos)
+	{
+		//positionLabel.setText("00000x00000");
+		positionLabel.setText(tr("%1x%2").arg(std::floor(pos.x())).arg(std::floor(pos.y())));
+	}
+
+	void QVGLPositionColorInfoMini::updateColor(const QColor& color)
+	{
+		QPalette palette = colorBox.palette();
+		palette.setColor(QPalette::Window, color);
+		colorBox.setPalette(palette);
 	}
 
 // QVGLTopBar
@@ -384,8 +485,8 @@
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
 		widgetsMenu("Widgets", this),
-		hideAllWidgets("Hide all widgets", this),
-		closeAllWidgets("Close all widgets", this)
+		temporaryHideAllSubWidgetsAction("Hide all widgets", this),
+		hideAllSubWidgetsAction("Close all widgets", this)
 	{
 		// Activate focus via mouse click :
 		setFocusPolicy(Qt::ClickFocus);
@@ -403,13 +504,19 @@
 		bar.addWidget(&viewsMenuButton);
 		bar.addWidget(&widgetsMenuButton);
 		bar.addWidget(&titleLabel);
+		bar.addWidget(&positionColorInfo);
 
-		bar.setMargin(1);
-		bar.setSpacing(1);
+		bar.setMargin(0);
+		bar.setSpacing(0);
 
 		// Signals connections : 
-		QObject::connect(&viewsSignalMapper, 	SIGNAL(mapped(QObject*)), this, SLOT(castViewPointer(QObject*)));
-		QObject::connect(&widgetsSignalMapper,	SIGNAL(mapped(QObject*)), this, SLOT(castSubWidgetPointer(QObject*)));
+		QObject::connect(&viewsSignalMapper, 			SIGNAL(mapped(QObject*)), 	this, SLOT(castViewPointer(QObject*)));
+		QObject::connect(&widgetsSignalMapper,			SIGNAL(mapped(QObject*)), 	this, SLOT(castSubWidgetPointer(QObject*)));
+		QObject::connect(&mainMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&viewsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&widgetsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&temporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		this, SIGNAL(temporaryHideAllSubWidgets()));
+		QObject::connect(&hideAllSubWidgetsAction,		SIGNAL(triggered()),		this, SIGNAL(hideAllSubWidgets()));
 
 		// Reset : 
 		setTitle();
@@ -445,6 +552,11 @@
 	void QVGLTopBar::castSubWidgetPointer(QObject* ptr)
 	{
 		emit showSubWidgetRequest(reinterpret_cast<QVGLSubWidget*>(ptr));
+	}
+
+	void QVGLTopBar::sendSelectedSignal(void)
+	{
+		emit selected(this);
 	}
 
 	void QVGLTopBar::setTitle(void)
@@ -515,10 +627,10 @@
 		if(!subWidgetsList.isEmpty())
 		{
 			// Add the default action : 
-			widgetsMenu.addAction(&hideAllWidgets);
-			widgetsMenu.addAction(&closeAllWidgets);
-			hideAllWidgets.setEnabled(true);
-			closeAllWidgets.setEnabled(true);
+			widgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
+			widgetsMenu.addAction(&hideAllSubWidgetsAction);
+			temporaryHideAllSubWidgetsAction.setEnabled(true);
+			hideAllSubWidgetsAction.setEnabled(true);
 
 			widgetsMenu.addSeparator();
 
@@ -532,11 +644,17 @@
 		else
 		{
 			// Add the default action : 
-			widgetsMenu.addAction(&hideAllWidgets);
-			widgetsMenu.addAction(&closeAllWidgets);
-			hideAllWidgets.setEnabled(false);
-			closeAllWidgets.setEnabled(false);
+			widgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
+			widgetsMenu.addAction(&hideAllSubWidgetsAction);
+			temporaryHideAllSubWidgetsAction.setEnabled(false);
+			hideAllSubWidgetsAction.setEnabled(false);
 		}
+	}
+
+	void QVGLTopBar::updatePositionAndColor(const QPointF& pos, const QColor& color)
+	{
+		positionColorInfo.updatePosition(pos);
+		positionColorInfo.updateColor(color);
 	}
 
 	void QVGLTopBar::setWindowOpacity(qreal level)
@@ -545,6 +663,40 @@
 		mainMenu.setWindowOpacity(level);
 		viewsMenu.setWindowOpacity(level);
 		widgetsMenu.setWindowOpacity(level);
+		positionColorInfo.setWindowOpacity(level);
+	}
+
+// QVGLBottomBar : 
+	QVGLBottomBar::QVGLBottomBar(void)
+	 : 	graphicsProxy(NULL),
+		bar(this)
+	{
+		// Activate focus via mouse click :
+		setFocusPolicy(Qt::ClickFocus);
+
+		// Bar : 
+		bar.addWidget(&toolBar);
+
+		bar.setMargin(0);
+		bar.setSpacing(0);
+
+		// Hide : 
+		hide();
+	}
+
+	QVGLBottomBar::~QVGLBottomBar(void)
+	{ }
+
+	void QVGLBottomBar::mousePressEvent(QMouseEvent* event)
+	{
+		QWidget::mousePressEvent(event);
+
+		emit selected(this);
+	}
+
+	void QVGLBottomBar::stretch(const QRectF& rect)
+	{
+		setGeometry(0, rect.height()-height(), rect.width(), height());
 	}
 
 // QVGLContextWidget :
@@ -607,7 +759,10 @@
 	QVGLKeyboardState::QVGLKeyboardState(void)
 	{
 		for(int k=0; k<QVGLNumActions; k++)
+		{
 			actionPressed[k] = false;
+			takeBackEnabled[k] = false;
+		}
 
 		resetActionsKeySequences();
 	}
@@ -636,6 +791,9 @@
 		{
 			event->accept();
 			actionPressed[a] = false;
+
+			if(isActionTakeBackEnabled(a))
+				emit actionReceived(a, true);
 		}
 	}
 
@@ -674,7 +832,23 @@
 		return QKeySequence(keysString);
 	}
 
-	void QVGLKeyboardState::setActionKeySequence(const QVGLActionID& a, const QKeySequence& keySequence)
+	bool QVGLKeyboardState::isActionTakeBackEnabled(const QVGLActionID& a) const
+	{
+		if(a>=0 && a<QVGLNumActions)
+			return takeBackEnabled[a];
+		else
+			throw Exception("QVGLKeyboardState::isActionTakenBack - Invalid QVGLActionID.", __FILE__, __LINE__);
+	}
+
+	void QVGLKeyboardState::setTakeBack(const QVGLActionID& a, bool enabled)
+	{
+		if(a>=0 && a<QVGLNumActions)
+			takeBackEnabled[a] = enabled;
+		else
+			throw Exception("QVGLKeyboardState::isActionTakenBack - Invalid QVGLActionID.", __FILE__, __LINE__);
+	}
+
+	void QVGLKeyboardState::setActionKeySequence(const QVGLActionID& a, const QKeySequence& keySequence, bool enableTakeBack)
 	{
 		// Remove all the previous sequences associated with the action : 
 		QList<QKeySequence> previousKeySequence = keysActionsAssociations.keys(a);
@@ -693,6 +867,9 @@
 			// Insert the new association : 
 			keysActionsAssociations[ks] = a;
 		}
+
+		// Take back : 
+		setTakeBack(a, enableTakeBack);
 	}
 
 	void QVGLKeyboardState::resetActionsKeySequences(void)
@@ -712,13 +889,18 @@
 		setActionKeySequence(QVGLActionNextView,			QKeySequence(Qt::CTRL + Qt::Key_Right));
 		setActionKeySequence(QVGLActionCloseView,			Qt::Key_Delete);
 		setActionKeySequence(QVGLActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
-		setActionKeySequence(QVGLActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control)); 	// The first correspond the press event, the second to the release.
-		setActionKeySequence(QVGLActionRotationModifier,		QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift));	// (the same)
+		setActionKeySequence(QVGLActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
+		setActionKeySequence(QVGLActionRotationModifier,		QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
+		setActionKeySequence(QVGLActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_R));
+		setActionKeySequence(QVGLActionPreviousSubWidget,		QKeySequence(Qt::ALT + Qt::Key_E));
+		setActionKeySequence(QVGLActionTemporaryHideAllSubWidgets,	QKeySequence(Qt::ALT + Qt::Key_T));
+		setActionKeySequence(QVGLActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::ALT + Qt::Key_Y));
+		setActionKeySequence(QVGLActionHideAllSubWidgets,		QKeySequence(Qt::ALT + Qt::Key_U));
 	}
 
 // QVGLMouseState :
 	QVGLMouseState::QVGLMouseState(void)
-	 :	functionMode(ModeMotion),
+	 :	functionMode(ModeCollection),
 		wheelDelta(0.0f)
 	{
 		// Create the maps : 
@@ -795,6 +977,8 @@
 
 		vectorIDs 	= vectors.keys();
 		colorIDs 	= colors.keys();
+
+		setFunctionMode(ModeCollection);
 	}
 
 	QVGLMouseState::~QVGLMouseState(void)
@@ -883,6 +1067,9 @@
 				setVector(VectorLastLeftClick, event->buttonDownScenePos(Qt::LeftButton), true);
 				setVector(VectorLastLeftPosition, event->scenePos(), true);
 				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
+
+				if(getFunctionMode()==ModeMotion)
+					emit mustSetMouseCursor(Qt::ClosedHandCursor);
 			}			
 
 			if(moved)
@@ -896,6 +1083,9 @@
 				setVector(VectorLastLeftRelease, event->scenePos(), true);
 				setVector(VectorLastLeftCompletedVector, event->scenePos() - invisibleGetVector(VectorLastLeftClick), true);
 				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
+
+				if(getFunctionMode()==ModeMotion)
+					emit mustSetMouseCursor(Qt::OpenHandCursor);
 			}
 
 			if(clicked || moved || released)
@@ -928,7 +1118,7 @@
 
 		// Qt::MidButton ?
 
-		// Require the widget to update all the coordinates.
+		// Require the widget to update all the coordinates and colors.
 		if(event->isAccepted())
 			emit requestExternalUpdate();
 	}
@@ -1015,11 +1205,121 @@
 	void QVGLMouseState::setFunctionMode(const FunctionMode& m)
 	{
 		functionMode = m;
+
+		// See http://qt-project.org/doc/qt-4.8/qt.html#CursorShape-enum for more cursors shapes : 
+		switch(m)
+		{
+			case ModeMotion :
+				emit mustSetMouseCursor(Qt::OpenHandCursor);
+				break;
+			case ModeCollection :
+				emit mustSetMouseCursor(Qt::CrossCursor);
+				break;
+			default : 
+				throw Exception("QVGLMouseState::setFunctionMode - Unknown function mode.", __FILE__, __LINE__);
+		}
+	}
+
+	QVGLMouseState::VectorID QVGLMouseState::validate(const VectorID& vID)
+	{
+		switch(vID)
+		{
+			case VectorLastLeftClick :
+			case VectorLastLeftClickGl :
+			case VectorLastLeftClickQuad :
+			case VectorLastLeftClickImage :
+
+			case VectorLastLeftPosition :
+			case VectorLastLeftPositionGl :
+			case VectorLastLeftPositionQuad :
+			case VectorLastLeftPositionImage :
+
+			case VectorLastLeftShift :
+			case VectorLastLeftShiftGl :
+			case VectorLastLeftShiftQuad :
+			case VectorLastLeftShiftImage :
+
+			case VectorLastLeftRelease :
+			case VectorLastLeftReleaseGl :
+			case VectorLastLeftReleaseQuad :
+			case VectorLastLeftReleaseImage :
+
+			case VectorLastLeftCompletedVector :
+			case VectorLastLeftCompletedVectorGl :
+			case VectorLastLeftCompletedVectorQuad :
+			case VectorLastLeftCompletedVectorImage :
+
+			case VectorLastRightClick :
+			case VectorLastRightClickGl :
+			case VectorLastRightClickQuad :
+			case VectorLastRightClickImage :
+
+			case VectorLastRightPosition :
+			case VectorLastRightPositionGl :
+			case VectorLastRightPositionQuad :
+			case VectorLastRightPositionImage :
+
+			case VectorLastRightShift :
+			case VectorLastRightShiftGl :
+			case VectorLastRightShiftQuad :
+			case VectorLastRightShiftImage :
+
+			case VectorLastRightRelease :
+			case VectorLastRightReleaseGl :
+			case VectorLastRightReleaseQuad :
+			case VectorLastRightReleaseImage :
+
+			case VectorLastRightCompletedVector :
+			case VectorLastRightCompletedVectorGl :
+			case VectorLastRightCompletedVectorQuad :
+			case VectorLastRightCompletedVectorImage :
+
+			case VectorLastWheelUp :
+			case VectorLastWheelUpGl :
+			case VectorLastWheelUpQuad :
+			case VectorLastWheelUpImage :
+
+			case VectorLastWheelDown :
+			case VectorLastWheelDownGl :
+			case VectorLastWheelDownQuad :
+			case VectorLastWheelDownImage :
+				return vID;
+
+			default : 
+				return InvalidVectorID;
+		}
+	}
+
+	QVGLMouseState::ColorID QVGLMouseState::validate(const ColorID& cID)
+	{
+		switch(cID)
+		{
+			case ColorUnderLastLeftClick :
+			case ColorUnderLastLeftPosition :
+			case ColorUnderLastLeftRelease :
+			case ColorUnderLastRightClick :
+			case ColorUnderLastRightPosition :
+			case ColorUnderLastRightRelease :
+				return cID;
+			
+			default : 
+				return InvalidColorID;
+		}
+	}
+
+	QVGLMouseState::VectorID QVGLMouseState::getPixelVectorID(const VectorID& vID)
+	{
+		return validate(static_cast<VectorID>(vID - (vID % NumBasis)));
 	}
 
 	QVGLMouseState::BasisID QVGLMouseState::getVectorBasis(const VectorID& vID)
 	{
-		return static_cast<QVGLMouseState::BasisID>(vID % NumBasis);
+		return static_cast<BasisID>(vID % NumBasis);
+	}
+
+	QVGLMouseState::ColorID QVGLMouseState::getCorrespondingColorID(const VectorID& vID)
+	{
+		return validate(static_cast<ColorID>(vID - (vID % NumBasis)));
 	}
 
 	bool QVGLMouseState::isBasisRelative(const BasisID& bID)
@@ -1089,11 +1389,12 @@
 							"}																\n";
 
 // QVGLSceneWidget :
-	QVGLSceneWidget::QVGLSceneWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar)
+	QVGLSceneWidget::QVGLSceneWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar)
 	 : 	qvglParent(_qvglParent),
 		quad(NULL),
 		shaderProgram(NULL),
-		topBar(_topBar)
+		topBar(_topBar),
+		bottomBar(_bottomBar)
 	{
 		// Activate focus via mouse click :
 		//setFocusPolicy(Qt::ClickFocus);
@@ -1126,6 +1427,12 @@
 		{
 			topBar->graphicsProxy = addWidget(topBar);
 			QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), topBar, SLOT(stretch(const QRectF&)));
+		}
+
+		if(bottomBar!=NULL)
+		{
+			bottomBar->graphicsProxy = addWidget(bottomBar);
+			QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), bottomBar, SLOT(stretch(const QRectF&)));
 		}
 	}
 
@@ -1263,10 +1570,8 @@
 	{
 		QGraphicsScene::mousePressEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getMouseState().processEvent(event, true, false, false);
-
 		// TMP : 
+		if(!event->isAccepted() && qvglParent!=NULL)
 		{
 			float xGl, yGl;
 			qvglParent->toGlCoordinates(event->scenePos().x(), event->scenePos().y(), xGl, yGl, false);
@@ -1281,7 +1586,15 @@
 			float xImg, yImg;
 			qvglParent->toImageCoordinates(xQuad, yQuad, xImg, yImg, false);
 			std::cout << "MousePressed - Image Coordinates : " << xImg << ", " << yImg << std::endl;
+
+			unsigned char red, green, blue;
+			qvglParent->getColorAt(event->scenePos().x(), event->scenePos().y(), red, green, blue);
+			std::cout << "MousePressed - Color             : (" << static_cast<int>(red) << "; " << static_cast<int>(green) << ", " << static_cast<int>(blue) << ")" << std::endl;
 		}
+
+		// Send the event :
+		if(!event->isAccepted() && qvglParent!=NULL)
+			qvglParent->getMouseState().processEvent(event, true, false, false);
 	}
 
 	void QVGLSceneWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
@@ -1336,7 +1649,7 @@
 	}*/
 
 // QVGLSceneViewWidget :
-	QVGLSceneViewWidget::QVGLSceneViewWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar)
+	QVGLSceneViewWidget::QVGLSceneViewWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar)
 	 : 	contextWidget(NULL),
 		sceneWidget(NULL),
 		qvglParent(_qvglParent)
@@ -1347,7 +1660,7 @@
 		setViewport(contextWidget);
 
 		// Create the scene : 
-		sceneWidget = new QVGLSceneWidget(qvglParent, _topBar);
+		sceneWidget = new QVGLSceneWidget(qvglParent, _topBar, _bottomBar);
 		setScene(sceneWidget);
 
 		// Other parameters : 	
@@ -1371,6 +1684,86 @@
 		subWidget->graphicsProxy = sceneWidget->addWidget(subWidget);
 	}
 
+	QVGLSubWidget* QVGLSceneViewWidget::getUppermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible) const
+	{
+		if(list.isEmpty())
+			return NULL;
+		else
+		{
+			QVGLSubWidget* highest = list.front();
+
+			for(QList<QVGLSubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
+			{
+				if((*it)->graphicsProxy!=NULL)
+				{
+					if(!highest->isVisible() && (*it)->isVisible() && onlyIfVisible)
+						highest = (*it);
+					else if((*it)->graphicsProxy->zValue() > highest->graphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible))
+						highest = (*it);
+				}
+			}
+
+			if(!highest->isVisible() && onlyIfVisible)
+				return NULL;
+			else			
+				return highest;
+		}
+	}
+
+	QVGLSubWidget* QVGLSceneViewWidget::getLowermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible) const
+	{
+		if(list.isEmpty())
+			return NULL;
+		else
+		{
+			QVGLSubWidget* lowest = list.front();
+
+			for(QList<QVGLSubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
+			{
+				if((*it)->graphicsProxy!=NULL)
+				{
+					if(!lowest->isVisible() && (*it)->isVisible() && onlyIfVisible)
+						lowest = (*it);
+					else if((*it)->graphicsProxy->zValue() < lowest->graphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible))
+						lowest = (*it);
+				}
+			}
+
+			if(!lowest->isVisible() && onlyIfVisible)
+				return NULL;
+			else			
+				return lowest;
+		}
+	}
+
+	void QVGLSceneViewWidget::orderSubWidgetsList(QList<QVGLSubWidget*>& list, bool onlyIfVisible) const
+	{
+		if(onlyIfVisible)
+		{
+			// Remove non-visible widgets : 
+			for(QList<QVGLSubWidget*>::iterator it=list.begin(); it!=list.end(); )
+			{
+				if(!(*it)->isVisible())
+					it = list.erase(it);
+				else
+					it++;
+			}
+		}
+
+		// Sort widget regarding their zValue : 
+		for(int p=0; p<list.size(); p++)
+		{
+			for(int q=0; q<(list.size()-1); q++)
+			{
+				if(list[q+1]->graphicsProxy!=NULL && list[q]->graphicsProxy!=NULL)
+				{
+					if(list[q+1]->graphicsProxy->zValue() > list[q]->graphicsProxy->zValue())
+						list.swap(q+1,q);
+				}
+			}
+		}
+	}
+
 	void QVGLSceneViewWidget::putItemOnTop(QGraphicsProxyWidget* graphicsProxy)
 	{
 		if(graphicsProxy!=NULL)
@@ -1381,7 +1774,7 @@
 
 			for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
 			{
-				if((*it)!=reinterpret_cast<QGraphicsItem*>(graphicsProxy))
+				if((*it)!=graphicsProxy->graphicsItem())
 				{
 					(*it)->setZValue(k);
 					k--;
@@ -1389,7 +1782,7 @@
 			}
 
 			// Raise to top : 
-			graphicsProxy->setZValue(itemsList.count()-1.0);
+			graphicsProxy->setZValue(itemsList.count()-1);
 		}
 	}
 
@@ -1403,7 +1796,7 @@
 
 			for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
 			{
-				if((*it)!=reinterpret_cast<QGraphicsItem*>(graphicsProxy))
+				if((*it)!=graphicsProxy->graphicsItem())
 				{
 					(*it)->setZValue(k);
 					k--;
@@ -1420,6 +1813,36 @@
 		contextWidget->makeCurrent();
 	}
 
+	void QVGLSceneViewWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
+	{
+		unsigned char rgb[3];
+
+		glReadBuffer( GL_BACK );
+
+		// Subtle point here : the frame buffer is verticaly flipped!
+		glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+
+		// Split : 
+		red 	= rgb[0];
+		green	= rgb[1];
+		blue	= rgb[2];
+	}
+
+	void QVGLSceneViewWidget::getColorAt(int x, int y, QColor& c)
+	{
+		unsigned char rgb[3];
+
+		glReadBuffer( GL_BACK );
+
+		// Subtle point here : the frame buffer is verticaly flipped!
+		glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+
+		// Split : 
+		c.setRed(rgb[0]);
+		c.setGreen(rgb[1]);
+		c.setBlue(rgb[2]);
+	}
+
 	void QVGLSceneViewWidget::update(void)
 	{
 		sceneWidget->update();
@@ -1430,7 +1853,7 @@
 	QVGLWidget::QVGLWidget(QWidget* parent)
 	 :	QWidget(parent), 
 		container(QBoxLayout::LeftToRight, this),
-		sceneViewWidget(this, &topBar),
+		sceneViewWidget(this, &topBar, &bottomBar),
 		currentViewIndex(-1),
 		opacityActiveSubWidget(0.8),
 		opacityIdleSubWidget(0.2),
@@ -1445,14 +1868,19 @@
 
 		// Reset bars views : 
 		barSelected(&topBar);
+		barSelected(&bottomBar);
 
 		QObject::connect(&mouseState,		SIGNAL(requestExternalUpdate(void)),		this, SLOT(updateMouseStateData(void)));
-		QObject::connect(&sceneViewWidget, 	SIGNAL(requireContainerCatch(void)), 		this, SLOT(handleCatch(void)));
-		QObject::connect(&keyboardState,	SIGNAL(actionReceived(QVGLActionID)),		this, SLOT(processAction(QVGLActionID)));
+		//QObject::connect(&sceneViewWidget, 	SIGNAL(requireContainerCatch(void)), 		this, SLOT(handleCatch(void)));			// Deprecated in current management of fullscreen.
+		QObject::connect(&keyboardState,	SIGNAL(actionReceived(QVGLActionID, bool)),	this, SLOT(processAction(QVGLActionID, bool)));
 		QObject::connect(&mouseState,		SIGNAL(updated(void)),				this, SLOT(performMouseAction(void)));
+		QObject::connect(&mouseState,		SIGNAL(mustSetMouseCursor(Qt::CursorShape)),	this, SLOT(setMouseCursor(Qt::CursorShape)));
 		QObject::connect(&topBar,		SIGNAL(selected(QVGLTopBar*)),			this, SLOT(barSelected(QVGLTopBar*)));
 		QObject::connect(&topBar,		SIGNAL(changeViewRequest(QVGLView*)),		this, SLOT(viewRequireDisplay(QVGLView*)));
 		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(QVGLSubWidget*)),	this, SLOT(showSubWidget(QVGLSubWidget*)));
+		QObject::connect(&topBar,		SIGNAL(temporaryHideAllSubWidgets(void)),	this, SLOT(temporaryHideAllSubWidgets()));
+		QObject::connect(&topBar,		SIGNAL(hideAllSubWidgets(void)),		this, SLOT(hideAllSubWidgets()));
+		QObject::connect(&bottomBar,		SIGNAL(selected(QVGLBottomBar*)),		this, SLOT(barSelected(QVGLBottomBar*)));
 	}
 
 	QVGLWidget::~QVGLWidget(void)
@@ -1469,9 +1897,11 @@
 
 		for(QList<QVGLMouseState::VectorID>::const_iterator it=vectorIDs.begin(); it!=vectorIDs.end(); it++)
 		{
-			if( mouseState.doesVectorRequireUpdate(*it) && ((QVGLMouseState::getVectorBasis(*it)==QVGLMouseState::PixelBasis) || (QVGLMouseState::getVectorBasis(*it)==QVGLMouseState::PixelRelativeBasis))) // use the first one to populate the others : 
+			const QVGLMouseState::BasisID basisID = QVGLMouseState::getVectorBasis(*it);
+
+			if( mouseState.doesVectorRequireUpdate(*it) && ((basisID==QVGLMouseState::PixelBasis) || (basisID==QVGLMouseState::PixelRelativeBasis))) // use the first one to populate the others : 
 			{
-				const bool isBasisRelative = (QVGLMouseState::getVectorBasis(*it)==QVGLMouseState::PixelRelativeBasis);
+				const bool isBasisRelative = (basisID==QVGLMouseState::PixelRelativeBasis);
 
 				float 	xGl	= 0.0f, 
 					yGl	= 0.0f, 
@@ -1490,6 +1920,24 @@
 				mouseState.setVector(static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::GlBasis), 	QPointF(xGl, yGl));
 				mouseState.setVector(static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::QuadBasis),	QPointF(xQuad, yQuad));
 				mouseState.setVector(static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::ImageBasis),	QPointF(xImg, yImg));
+
+				// Update the corresponding color : 
+				if(mouseState.getFunctionMode()==QVGLMouseState::ModeCollection)
+				{
+					QVGLMouseState::ColorID colorID = mouseState.getCorrespondingColorID(*it);
+					QColor color;
+
+					if(colorID!=QVGLMouseState::InvalidColorID)
+					{
+						getColorAt(vPixel.x(), vPixel.y(), color);
+
+						mouseState.setColor(colorID, color);
+					}
+
+					// Give the information to TopBar in the case of last left position (ONLY) : 
+					if((*it)==QVGLMouseState::VectorLastLeftPosition)
+						topBar.updatePositionAndColor(QPointF(xImg, yImg), color);
+				}
 
 				//std::cout << "Updating from " << *it << " to " << static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::GlBasis) << ", " << static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::QuadBasis) << ", " << static_cast<QVGLMouseState::VectorID>(*it + QVGLMouseState::ImageBasis) << std::endl;
 				//std::cout << "Vector : " << vPixel.x() << ", " << vPixel.y() << std::endl;
@@ -1565,6 +2013,13 @@
 				currentView->zoom(v.x(), v.y(), std::pow(1.2f, mouseState.getWheelDelta()));
 			}
 		}
+	}
+
+	void QVGLWidget::setMouseCursor(Qt::CursorShape cursorShape)
+	{
+		setCursor(cursorShape);
+		sceneViewWidget.setCursor(cursorShape);
+		sceneViewWidget.viewport()->setCursor(cursorShape);
 	}
 
 	/*void QVGLWidget::handleCatch(void)
@@ -1644,6 +2099,7 @@
 
 			// Change the opacity of the bars : 
 			topBar.setWindowOpacity(opacityIdleBar);
+			bottomBar.setWindowOpacity(opacityIdleBar);
 
 			// Change the opacity of the current subWidget : 
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
@@ -1724,6 +2180,61 @@
 		subWidgetClosed(subWidget);
 	}
 
+	void QVGLWidget::nextSubWidget(void)
+	{
+		// Get the ordered list of widgets : 
+		QList<QVGLSubWidget*> list = subWidgetsList;
+		sceneViewWidget.orderSubWidgetsList(list, true);
+
+		if(list.count()>=2)
+		{
+			sceneViewWidget.putItemOnBottom(list[0]->graphicsProxy);
+			sceneViewWidget.putItemOnTop(list[1]->graphicsProxy);
+
+			// Change opacities : 
+			for(QList<QVGLSubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				(*it)->setWindowOpacity(opacityIdleSubWidget);
+
+			topBar.setWindowOpacity(opacityIdleBar);
+			bottomBar.setWindowOpacity(opacityIdleBar);
+
+			list[1]->setWindowOpacity(opacityActiveSubWidget);			
+		}
+	}
+
+	void QVGLWidget::previousSubWidget(void)
+	{
+		// Get the ordered list of widgets : 
+		QList<QVGLSubWidget*> list = subWidgetsList;
+		sceneViewWidget.orderSubWidgetsList(list, true);
+
+		if(list.count()>=2)
+		{
+			sceneViewWidget.putItemOnTop(list.back()->graphicsProxy);
+			
+			// Change opacities : 
+			for(QList<QVGLSubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				(*it)->setWindowOpacity(opacityIdleSubWidget);
+
+			topBar.setWindowOpacity(opacityIdleBar);
+			bottomBar.setWindowOpacity(opacityIdleBar);
+
+			list.back()->setWindowOpacity(opacityActiveSubWidget);			
+		}
+	}
+
+	void QVGLWidget::temporaryHideAllSubWidgets(bool enabled)
+	{
+		for(QList<QVGLSubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			(*it)->temporaryHide(enabled);
+	}
+
+	void QVGLWidget::hideAllSubWidgets(void)
+	{
+		for(QList<QVGLSubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			(*it)->hide();
+	}
+
 	void QVGLWidget::barSelected(QVGLTopBar* bar)
 	{
 		if(bar==&topBar)
@@ -1734,10 +2245,30 @@
 
 			// Change the opacity of the bars : 
 			topBar.setWindowOpacity(opacityActiveBar);
+			bottomBar.setWindowOpacity(opacityActiveBar);
+
+			// Raise the bar : 
+			sceneViewWidget.putItemOnTop(bottomBar.graphicsProxy);
+			sceneViewWidget.putItemOnTop(topBar.graphicsProxy);		// Raise TOP on top.
+		}	
+	}
+
+	void QVGLWidget::barSelected(QVGLBottomBar* bar)
+	{
+		if(bar==&bottomBar)
+		{
+			// Change opacity of all other subWidgets : 
+			for(QList<QVGLSubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				(*it)->setWindowOpacity(opacityIdleSubWidget);
+
+			// Change the opacity of the bars : 
+			topBar.setWindowOpacity(opacityActiveBar);
+			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
 			sceneViewWidget.putItemOnTop(topBar.graphicsProxy);
-		}	
+			sceneViewWidget.putItemOnTop(bottomBar.graphicsProxy);		// Raise BOTTOM on top.
+		}
 	}
 
 	QVGLKeyboardState& QVGLWidget::getKeyboardState(void)
@@ -1782,6 +2313,8 @@
 			// Show : 
 			sceneViewWidget.update();
 		}
+		else
+			topBar.setTitle("(No View)");
 	}
 
 	void QVGLWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
@@ -1858,9 +2391,13 @@
 
 			// Scene scaling : see toGlCoordinates
 			
-			// Homothecy : 
-			x = (x - view->homothecyCenter[0])/view->homothecyScale + view->homothecyCenter[0];
-			y = (y - view->homothecyCenter[1])/view->homothecyScale + view->homothecyCenter[1];
+			// Homothecy :
+			if( view->homothecyScale!=0.0f)
+			{
+				x = (x - view->homothecyCenter[0])/view->homothecyScale + view->homothecyCenter[0];
+				y = (y - view->homothecyCenter[1])/view->homothecyScale + view->homothecyCenter[1];
+			}
+			// else : simplified.
 
 			// Translation : 
 			x -= view->viewCenter[0];
@@ -1889,8 +2426,11 @@
 			// Scene scaling : see toGlCoordinates
 
 			// Homothecy : 
-			x /= view->homothecyScale;
-			y /= view->homothecyScale;
+			if( view->homothecyScale!=0.0f)
+			{
+				x /= view->homothecyScale;
+				y /= view->homothecyScale;
+			}
 
 			// Rotation : 
 			const float 	c  = std::cos(view->angle),
@@ -1981,7 +2521,17 @@
 		return sceneViewWidget.sceneRect();
 	}
 
-	void QVGLWidget::processAction(QVGLActionID action)
+	void QVGLWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
+	{
+		QVGLWidget::sceneViewWidget.getColorAt(x, y, red, green, blue);
+	}
+
+	void QVGLWidget::getColorAt(int x, int y, QColor& c)
+	{
+		QVGLWidget::sceneViewWidget.getColorAt(x, y, c);
+	}
+
+	void QVGLWidget::processAction(QVGLActionID action, bool takenBack)
 	{
 		QVGLView* currentView = getCurrentView();
 
@@ -2070,8 +2620,30 @@
 				if(currentView!=NULL) currentView->close();
 				break;
 			case QVGLActionCloseAllViews :
+				break;
 			case QVGLActionMotionModifier :
+				if(!takenBack)
+					mouseState.setFunctionMode(QVGLMouseState::ModeMotion);
+				else
+					mouseState.setFunctionMode(QVGLMouseState::ModeCollection);
+				break;
 			case QVGLActionRotationModifier :
+				break;
+			case QVGLActionNextSubWidget :
+				nextSubWidget();
+				break;
+			case QVGLActionPreviousSubWidget :
+				previousSubWidget();
+				break;
+			case QVGLActionTemporaryHideAllSubWidgets :
+				temporaryHideAllSubWidgets(true);
+				break;
+			case QVGLActionTemporaryUnhideAllSubWidgets :
+				temporaryHideAllSubWidgets(false);
+				break;
+			case QVGLActionHideAllSubWidgets :
+				hideAllSubWidgets();
+				break;
 			case QVGLNoAction :
 				break;
 			default : 

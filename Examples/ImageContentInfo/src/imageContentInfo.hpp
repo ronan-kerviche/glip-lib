@@ -65,7 +65,8 @@
 		{
 			Q_OBJECT
 
-			private : 
+			private : 				
+				QWidget		widget;
 				QVBoxLayout 	layout;
 				QPushButton 	a, b, c;
 

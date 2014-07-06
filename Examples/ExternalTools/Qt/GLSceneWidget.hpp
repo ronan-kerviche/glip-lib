@@ -36,6 +36,7 @@
 	#include <QMessageBox>
 	#include <QLabel>
 	#include <QToolButton>
+	#include <QToolBar>
 	#include <QGraphicsScene>
 	#include <QGraphicsView>
 	#include <QGraphicsSceneMouseEvent>
@@ -43,9 +44,6 @@
 	#include <QMenu>
 	#include <QPushButton>
 	#include <QSignalMapper>
-
-	#include <QComboBox>
-	#include <QMenuBar>
 
 	// Namespaces
 	using namespace Glip;
@@ -81,6 +79,11 @@
 		QVGLActionCloseAllViews,
 		QVGLActionMotionModifier,
 		QVGLActionRotationModifier,
+		QVGLActionNextSubWidget,
+		QVGLActionPreviousSubWidget,
+		QVGLActionTemporaryHideAllSubWidgets,
+		QVGLActionTemporaryUnhideAllSubWidgets,
+		QVGLActionHideAllSubWidgets,
 		// Add new actions before this line
 		QVGLNumActions,
 		QVGLNoAction
@@ -148,15 +151,19 @@
 
 		private : 
 			QVBoxLayout		layout;
+			QWidget			titleWidget;	// For fixed size;
 			QHBoxLayout		titleBar;
 			QLabel			titleLabel;
 			QToolButton		hideButton;
 			QVGLWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
+			bool 			visible,
+						motionActive,
+						resizeActive,
+						resizeHorizontalLock,
+						resizeVerticalLock;
+			QPoint 			offset;
 
-			bool invalidMotion;
-			QPoint offset;
- 
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
@@ -164,14 +171,19 @@
 			friend class QVGLSceneViewWidget;
 			friend class QVGLWidget;
 
+		private slots :
+			void temporaryHide(bool enabled);
+
 		public : 
-			QVGLSubWidget(QWidget* parent=NULL);
+			QVGLSubWidget(void);
 			~QVGLSubWidget(void);
 
+			void setWidget(QWidget* widget);
 			void setLayout(QLayout* subLayout);
 			QString getTitle(void);
 			void setTitle(QString title);
 			QVGLWidget* getQVGLParent(void);
+			bool shoudBeVisible(void) const;
 
 		public slots :
 			// Re-implement some of the QWidget functions : 
@@ -184,35 +196,57 @@
 			void showRequest(QVGLSubWidget*);
 			void hideRequest(QVGLSubWidget*);
 	};
+		
+		class QVGLPositionColorInfoMini : public QWidget
+		{
+			Q_OBJECT
+
+			private : 
+				QHBoxLayout		bar;
+				QLabel			positionLabel,
+							colorBox;
+
+			public : 
+				QVGLPositionColorInfoMini(void);
+				~QVGLPositionColorInfoMini(void);
+
+				void setWindowOpacity(qreal level);
+
+			public slots : 
+				void updatePosition(const QPointF& pos = QPointF());
+				void updateColor(const QColor& color = Qt::black);
+		};
 
 		class QVGLTopBar : public QWidget
 		{
 			Q_OBJECT
 
 			private : 
-				QGraphicsProxyWidget 	*graphicsProxy;
-				QHBoxLayout		bar;
-				QPushButton		mainMenuButton,
-							viewsMenuButton,
-							widgetsMenuButton;
-				QMenu			mainMenu,
-							viewsMenu,
-							widgetsMenu;
-				QAction			hideAllWidgets,
-							closeAllWidgets;
-				QLabel			titleLabel;
-				QSignalMapper		viewsSignalMapper,
-							widgetsSignalMapper;
+				QGraphicsProxyWidget 		*graphicsProxy;
+				QHBoxLayout			bar;
+				QPushButton			mainMenuButton,
+								viewsMenuButton,
+								widgetsMenuButton;
+				QMenu				mainMenu,
+								viewsMenu,
+								widgetsMenu;
+				QAction				temporaryHideAllSubWidgetsAction,
+								hideAllSubWidgetsAction;
+				QLabel				titleLabel;
+				QVGLPositionColorInfoMini	positionColorInfo;
+				QSignalMapper			viewsSignalMapper,
+								widgetsSignalMapper;
 
 				void mousePressEvent(QMouseEvent* event);
 
-				friend QVGLSceneWidget;
+				friend class QVGLSceneWidget;
 				friend class QVGLWidget;
 				
 			private slots : 
 				void stretch(const QRectF& rect);
 				void castViewPointer(QObject* ptr);
 				void castSubWidgetPointer(QObject* ptr);
+				void sendSelectedSignal(void);
 
 			public :
 				QVGLTopBar(void);
@@ -223,12 +257,40 @@
 				void setTitle(const QVGLView& view);
 				void updateViewsList(const QList<QVGLView*>& viewsList);
 				void updateSubWidgetsList(const QList<QVGLSubWidget*>& subWidgetsList);
+				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
 
 			signals : 
 				void changeViewRequest(QVGLView* targetView);
 				void showSubWidgetRequest(QVGLSubWidget* targetWidget);
-				void selected(QVGLTopBar*);
+				void selected(QVGLTopBar* ptr);
+				void temporaryHideAllSubWidgets(void);
+				void hideAllSubWidgets(void);
+		};
+	
+		class QVGLBottomBar : public QWidget
+		{
+			Q_OBJECT
+			
+			private : 
+				QGraphicsProxyWidget 	*graphicsProxy;
+				QHBoxLayout		bar;
+				QToolBar		toolBar;
+				
+				void mousePressEvent(QMouseEvent* event);
+
+				friend class QVGLSceneWidget;
+				friend class QVGLWidget;
+
+			private slots : 
+				void stretch(const QRectF& rect);
+
+			public :
+				QVGLBottomBar(void);
+				~QVGLBottomBar(void);
+
+			signals : 
+				void selected(QVGLBottomBar*);
 		};
 
 	class QVGLContextWidget : public QGLWidget
@@ -253,6 +315,7 @@
 
 		private : 
 			QMap<QKeySequence, QVGLActionID> 	keysActionsAssociations;
+			bool					takeBackEnabled[QVGLNumActions];
 			bool					actionPressed[QVGLNumActions];
 	
 		protected :
@@ -268,11 +331,13 @@
 			QVGLActionID getActionAssociatedToKey(const QKeySequence& keySequence) const;
 			QVGLActionID getActionAssociatedToKey(const QKeyEvent* event) const;
 			QKeySequence getKeysAssociatedToAction(const QVGLActionID& a);
-			void setActionKeySequence(const QVGLActionID& a, const QKeySequence& keySequence);
+			bool isActionTakeBackEnabled(const QVGLActionID& a) const;
+			void setTakeBack(const QVGLActionID& a, bool enabled);
+			void setActionKeySequence(const QVGLActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
 			void resetActionsKeySequences(void);
 
 		signals : 
-			void actionReceived(QVGLActionID);
+			void actionReceived(QVGLActionID, bool takenBack=false);
 	};
 
 	class QVGLMouseState : public QObject
@@ -353,17 +418,23 @@
 				VectorLastWheelDown			= 11 * NumBasis,
 				VectorLastWheelDownGl			= VectorLastWheelDown + GlBasis,
 				VectorLastWheelDownQuad			= VectorLastWheelDown + QuadBasis,
-				VectorLastWheelDownImage		= VectorLastWheelDown + ImageBasis
+				VectorLastWheelDownImage		= VectorLastWheelDown + ImageBasis,
+		
+				InvalidVectorID				= 65535
+				// ALSO UPDATE VALIDATE
 			};
 
 			enum ColorID
 			{
-				ColorUnderLastLeftClick,
-				ColorUnderLastLeftPosition,
-				ColorUnderLastLeftRelease,
-				ColorUnderLastRightClick,
-				ColorUnderLastRightPosition,
-				ColorUnderLastRightRelease
+				ColorUnderLastLeftClick		= 0 * NumBasis,
+				ColorUnderLastLeftPosition	= 1 * NumBasis,
+				ColorUnderLastLeftRelease	= 3 * NumBasis,
+				ColorUnderLastRightClick	= 5 * NumBasis,
+				ColorUnderLastRightPosition	= 6 * NumBasis,
+				ColorUnderLastRightRelease	= 8 * NumBasis,
+
+				InvalidColorID			= 65535
+				// ALSO UPDATE VALIDATE
 			};
 
 			enum DataStatus
@@ -417,11 +488,16 @@
 			const FunctionMode& getFunctionMode(void) const;
 			void setFunctionMode(const FunctionMode& m);
 
+			static VectorID validate(const VectorID& vID);
+			static ColorID validate(const ColorID& cID);
+			static VectorID getPixelVectorID(const VectorID& vID);
 			static BasisID getVectorBasis(const VectorID& vID);
+			static ColorID getCorrespondingColorID(const VectorID& cID);
 			static bool isBasisRelative(const BasisID& bID);
 
 		signals : 
 			void requestExternalUpdate(void);
+			void mustSetMouseCursor(Qt::CursorShape cursorShape);
 			void updated(void);
 	};
 
@@ -435,6 +511,7 @@
 			GeometryInstance	*quad;
 			HdlProgram		*shaderProgram;
 			QVGLTopBar		*topBar;
+			QVGLBottomBar		*bottomBar;
 
 			// Qt events : 
 			void drawBackground(QPainter* painter, const QRectF& rect);
@@ -447,7 +524,7 @@
 			void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);	
 
 		public : 
-			QVGLSceneWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar);
+			QVGLSceneWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar);
 			~QVGLSceneWidget(void);
 
 			void addSubWidget(QVGLSubWidget* subWidget);
@@ -468,13 +545,18 @@
 			void resizeEvent(QResizeEvent *event);
 
 		public : 
-			QVGLSceneViewWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar);
+			QVGLSceneViewWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar);
 			~QVGLSceneViewWidget(void);
 
 			void addSubWidget(QVGLSubWidget* subWidget);
+			QVGLSubWidget* getUppermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
+			QVGLSubWidget* getLowermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
+			void orderSubWidgetsList(QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
 			void putItemOnTop(QGraphicsProxyWidget* graphicsProxy);				// Both subWidgets and bars.
 			void putItemOnBottom(QGraphicsProxyWidget* graphicsProxy);			// Only subWidgets (but accept bars also).
 			void makeGLContextAvailable(void);
+			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
+			void getColorAt(int x, int y, QColor& c);
 			void update(void);
 
 		// Deprecated : 
@@ -491,6 +573,7 @@
 			QVGLKeyboardState		keyboardState;
 			QVGLMouseState			mouseState;
 			QVGLTopBar			topBar;
+			QVGLBottomBar			bottomBar;
 			QVGLSceneViewWidget  		sceneViewWidget;
 			QList<QVGLView*>		viewsList;
 			QList<QVGLSubWidget*>		subWidgetsList;
@@ -504,6 +587,7 @@
 		private slots :
 			void updateMouseStateData(void);
 			void performMouseAction(void);
+			void setMouseCursor(Qt::CursorShape cursorShape);
 			//void handleCatch(void); // Deprecated.
 
 			// Views : 
@@ -523,9 +607,14 @@
 				void hideSubWidget(void);
 				void subWidgetClosed(QVGLSubWidget* subWidget);
 				void subWidgetClosed(void);
+				void nextSubWidget(void);
+				void previousSubWidget(void);
+				void temporaryHideAllSubWidgets(bool enabled = true);
+				void hideAllSubWidgets(void);
 
 			// Bars : 
 				void barSelected(QVGLTopBar* bar);
+				void barSelected(QVGLBottomBar* bar);
 
 		protected :
 			QVGLKeyboardState& getKeyboardState(void);
@@ -551,9 +640,11 @@
 			void addSubWidget(QVGLSubWidget* subWidget);
 			float getSceneRatio(void) const;
 			QRectF sceneRect(void) const;
+			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
+			void getColorAt(int x, int y, QColor& c);
 
 		public slots : 
-			void processAction(QVGLActionID action);
+			void processAction(QVGLActionID action, bool takenBack=false);
 	};
 
 #endif
