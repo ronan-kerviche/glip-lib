@@ -17,8 +17,9 @@
 		b("Button B"),
 		c("Button C"),
 		//img("/home/arkh/Pictures/mire.bmp"),
-		img("/home/arkh/Pictures/the_general_problem.png"),
+		//img("/home/arkh/Pictures/the_general_problem.png"),
 		//img("/home/arkh/Pictures/2048.png"),
+		img("/home/arkh/Pictures/Wallpaper/Konachan.com - 72806 glasses jin samurai_champloo sword weapon.jpg"),
 		texture(NULL),
 		view(NULL)
 	{
@@ -30,8 +31,7 @@
 		layout.setMargin(0);
 		layout.setSpacing(1);
 
-		//setLayout(&layout);
-		setWidget(&widget);
+		setInnerWidget(&widget);
 
 		show();
 
@@ -49,7 +49,7 @@
 
 		(*buffer) >> (*texture);
 
-		view = new QVGLView(texture, tr("View %1").arg(count));
+		view = new QVGL::View(texture, tr("View %1").arg(count));
 
 		//view->setAngle(0.5465f);
 		//view->setViewCenter(0.3, 0.1);
@@ -87,6 +87,15 @@
 		std::cout << "TmpWidget : Button C" << std::endl;
 	}
 
+// MainSubWidget :
+	CodeEditorSubWidget::CodeEditorSubWidget(void)	
+	{
+		setInnerWidget(&mainWidget);
+		setTitle("Code Editor");
+	}
+
+	CodeEditorSubWidget::~CodeEditorSubWidget(void)
+	{ }
 
 // Src :
 	IHM::IHM(void)
@@ -150,6 +159,9 @@
 
 		tmp = new TmpWidget;
 		window.addSubWidget(tmp);
+
+		CodeEditorSubWidget* editor = new CodeEditorSubWidget;
+		window.addSubWidget(editor);
 	}
 
 	IHM::~IHM(void)

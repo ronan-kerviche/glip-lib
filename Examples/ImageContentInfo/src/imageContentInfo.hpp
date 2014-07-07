@@ -6,6 +6,7 @@
 	//#include "WindowRendering.hpp"
 	#include "GLSceneWidget.hpp"
 	#include "ResourceLoader.hpp"
+	#include "CodeEditor.hpp"
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -36,7 +37,7 @@
 				ImageLoaderInterface	imageLoaderInterface;
 				PipelineLoaderInterface pipelineLoaderInterface;
 
-				QVGLWidget		window;
+				QVGL::MainWidget	window;
 
 			public :
 				IHM(void);
@@ -61,18 +62,18 @@
 		};
 
 	// TMP : 
-		class TmpWidget : public QVGLSubWidget
+		class TmpWidget : public QVGL::SubWidget
 		{
 			Q_OBJECT
 
-			private : 				
-				QWidget		widget;
+			private : 	
+				QWidget		widget;	
 				QVBoxLayout 	layout;
 				QPushButton 	a, b, c;
 
 				QImage 		img;
 				HdlTexture* 	texture;
-				QVGLView*	view;
+				QVGL::View*	view;
 
 			private slots :
 				void buttonAPressed(void);
@@ -81,6 +82,16 @@
 			public :
 				TmpWidget(void);
 				~TmpWidget(void);
+		};
+
+		class CodeEditorSubWidget : public QVGL::SubWidget
+		{
+			private :
+				QGED::MainWidget	mainWidget;
+
+			public :
+				CodeEditorSubWidget(void);
+				~CodeEditorSubWidget(void);
 		};
 
 #endif

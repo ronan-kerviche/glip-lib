@@ -7,8 +7,8 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : ResourceLoader.hpp                                                                        */
-/*     Original Date : December 28th 2012                                                                        */
+/*     File          : GLSceneWidget.hpp                                                                         */
+/*     Original Date : May 26th 2014                                                                             */
 /*                                                                                                               */
 /*     Description   : Qt interface for visualization with OpenGL.                                               */
 /*                                                                                                               */
@@ -24,6 +24,7 @@
 #ifndef __GLIPLIB_GL_SCENE_WIDGET__
 #define __GLIPLIB_GL_SCENE_WIDGET__
 
+// Includes :
 	#include <cmath>
 	#include "GLIPLib.hpp"
 	#include <QList>
@@ -45,6 +46,8 @@
 	#include <QPushButton>
 	#include <QSignalMapper>
 
+namespace QVGL
+{
 	// Namespaces
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -52,51 +55,51 @@
 	using namespace Glip::Modules;
 
 	// Prototypes : 
-	class QVGLView;
-	class QVGLSubWidget;
-	class QVGLContextWidget;
-	class QVGLKeyboardState;
-	class QVGLSceneWidget;
-	class QVGLSceneViewWidget;
-	class QVGLWidget;
+	class View;
+	class SubWidget;
+	class ContextWidget;
+	class KeyboardState;
+	class SceneWidget;
+	class SceneViewWidget;
+	class MainWidget;
 
-	enum QVGLActionID
+	enum ActionID
 	{
-		QVGLActionUp,
-		QVGLActionDown,
-		QVGLActionLeft,
-		QVGLActionRight,
-		QVGLActionZoomIn,
-		QVGLActionZoomOut,
-		QVGLActionRotationClockWise,
-		QVGLActionRotationCounterClockWise,
-		QVGLActionToggleFullscreen,
-		QVGLActionExitFullscreen,
-		QVGLActionResetView,
-		QVGLActionPreviousView,
-		QVGLActionNextView,
-		QVGLActionCloseView,
-		QVGLActionCloseAllViews,
-		QVGLActionMotionModifier,
-		QVGLActionRotationModifier,
-		QVGLActionNextSubWidget,
-		QVGLActionPreviousSubWidget,
-		QVGLActionTemporaryHideAllSubWidgets,
-		QVGLActionTemporaryUnhideAllSubWidgets,
-		QVGLActionHideAllSubWidgets,
+		ActionUp,
+		ActionDown,
+		ActionLeft,
+		ActionRight,
+		ActionZoomIn,
+		ActionZoomOut,
+		ActionRotationClockWise,
+		ActionRotationCounterClockWise,
+		ActionToggleFullscreen,
+		ActionExitFullscreen,
+		ActionResetView,
+		ActionPreviousView,
+		ActionNextView,
+		ActionCloseView,
+		ActionCloseAllViews,
+		ActionMotionModifier,
+		ActionRotationModifier,
+		ActionNextSubWidget,
+		ActionPreviousSubWidget,
+		ActionTemporaryHideAllSubWidgets,
+		ActionTemporaryUnhideAllSubWidgets,
+		ActionHideAllSubWidgets,
 		// Add new actions before this line
-		QVGLNumActions,
-		QVGLNoAction
+		NumActions,
+		NoAction
 	};
 
-	class QVGLView : public QObject	// One image, plus data
+	class View : public QObject	// One image, plus data
 	{
 		Q_OBJECT 
 
 		private :
 			HdlTexture	*texture;
 			QString		name;
-			QVGLWidget	*qvglParent;
+			MainWidget	*qvglParent;
 			float		angle,			// in Radians.
 					viewCenter[2],
 					homothecyCenter[2],
@@ -106,12 +109,12 @@
 
 			void prepareToDraw(void);
 
-			friend class QVGLSceneWidget;
-			friend class QVGLWidget;
+			friend class SceneWidget;
+			friend class MainWidget;
 
 		public : 
-			QVGLView(HdlTexture* _texture, const QString& _name);
-			~QVGLView(void);
+			View(HdlTexture* _texture, const QString& _name);
+			~View(void);
 
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			const QString& getName(void) const;
@@ -145,7 +148,7 @@
 			void closed(void);
 	};
 
-	class QVGLSubWidget : public QWidget
+	class SubWidget : public QWidget
 	{
 		Q_OBJECT
 
@@ -155,7 +158,8 @@
 			QHBoxLayout		titleBar;
 			QLabel			titleLabel;
 			QToolButton		hideButton;
-			QVGLWidget		*qvglParent;
+			QWidget			*widget;
+			MainWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
 			bool 			visible,
 						motionActive,
@@ -168,21 +172,21 @@
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
 
-			friend class QVGLSceneViewWidget;
-			friend class QVGLWidget;
+			friend class SceneViewWidget;
+			friend class MainWidget;
 
 		private slots :
 			void temporaryHide(bool enabled);
 
 		public : 
-			QVGLSubWidget(void);
-			~QVGLSubWidget(void);
+			SubWidget(void);
+			~SubWidget(void);
 
-			void setWidget(QWidget* widget);
-			void setLayout(QLayout* subLayout);
+			void setInnerWidget(QWidget* _widget);
+			QWidget* innerWidget(void);
 			QString getTitle(void);
 			void setTitle(QString title);
-			QVGLWidget* getQVGLParent(void);
+			MainWidget* getQVGLParent(void);
 			bool shoudBeVisible(void) const;
 
 		public slots :
@@ -192,12 +196,12 @@
 
 		signals  :
 			void titleChanged(void);
-			void selected(QVGLSubWidget*);
-			void showRequest(QVGLSubWidget*);
-			void hideRequest(QVGLSubWidget*);
+			void selected(SubWidget*);
+			void showRequest(SubWidget*);
+			void hideRequest(SubWidget*);
 	};
 		
-		class QVGLPositionColorInfoMini : public QWidget
+		class PositionColorInfoMini : public QWidget
 		{
 			Q_OBJECT
 
@@ -207,8 +211,8 @@
 							colorBox;
 
 			public : 
-				QVGLPositionColorInfoMini(void);
-				~QVGLPositionColorInfoMini(void);
+				PositionColorInfoMini(void);
+				~PositionColorInfoMini(void);
 
 				void setWindowOpacity(qreal level);
 
@@ -217,7 +221,7 @@
 				void updateColor(const QColor& color = Qt::black);
 		};
 
-		class QVGLTopBar : public QWidget
+		class TopBar : public QWidget
 		{
 			Q_OBJECT
 
@@ -233,14 +237,14 @@
 				QAction				temporaryHideAllSubWidgetsAction,
 								hideAllSubWidgetsAction;
 				QLabel				titleLabel;
-				QVGLPositionColorInfoMini	positionColorInfo;
+				PositionColorInfoMini	positionColorInfo;
 				QSignalMapper			viewsSignalMapper,
 								widgetsSignalMapper;
 
 				void mousePressEvent(QMouseEvent* event);
 
-				friend class QVGLSceneWidget;
-				friend class QVGLWidget;
+				friend class SceneWidget;
+				friend class MainWidget;
 				
 			private slots : 
 				void stretch(const QRectF& rect);
@@ -249,26 +253,26 @@
 				void sendSelectedSignal(void);
 
 			public :
-				QVGLTopBar(void);
-				~QVGLTopBar(void);
+				TopBar(void);
+				~TopBar(void);
 
 				void setTitle(void);
 				void setTitle(QString title);
-				void setTitle(const QVGLView& view);
-				void updateViewsList(const QList<QVGLView*>& viewsList);
-				void updateSubWidgetsList(const QList<QVGLSubWidget*>& subWidgetsList);
+				void setTitle(const View& view);
+				void updateViewsList(const QList<View*>& viewsList);
+				void updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList);
 				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
 
 			signals : 
-				void changeViewRequest(QVGLView* targetView);
-				void showSubWidgetRequest(QVGLSubWidget* targetWidget);
-				void selected(QVGLTopBar* ptr);
+				void changeViewRequest(View* targetView);
+				void showSubWidgetRequest(SubWidget* targetWidget);
+				void selected(TopBar* ptr);
 				void temporaryHideAllSubWidgets(void);
 				void hideAllSubWidgets(void);
 		};
 	
-		class QVGLBottomBar : public QWidget
+		class BottomBar : public QWidget
 		{
 			Q_OBJECT
 			
@@ -279,21 +283,21 @@
 				
 				void mousePressEvent(QMouseEvent* event);
 
-				friend class QVGLSceneWidget;
-				friend class QVGLWidget;
+				friend class SceneWidget;
+				friend class MainWidget;
 
 			private slots : 
 				void stretch(const QRectF& rect);
 
 			public :
-				QVGLBottomBar(void);
-				~QVGLBottomBar(void);
+				BottomBar(void);
+				~BottomBar(void);
 
 			signals : 
-				void selected(QVGLBottomBar*);
+				void selected(BottomBar*);
 		};
 
-	class QVGLContextWidget : public QGLWidget
+	class ContextWidget : public QGLWidget
 	{
 		private :
 			bool	glipOwnership;
@@ -305,42 +309,42 @@
 			void resizeGL(int width, int height);
 			
 		public : 
-			QVGLContextWidget(QGLContext* ctx, QWidget* parent=NULL);
-			~QVGLContextWidget(void);
+			ContextWidget(QGLContext* ctx, QWidget* parent=NULL);
+			~ContextWidget(void);
 	};
 
-	class QVGLKeyboardState : public QObject
+	class KeyboardState : public QObject
 	{
 		Q_OBJECT
 
 		private : 
-			QMap<QKeySequence, QVGLActionID> 	keysActionsAssociations;
-			bool					takeBackEnabled[QVGLNumActions];
-			bool					actionPressed[QVGLNumActions];
+			QMap<QKeySequence, ActionID> 	keysActionsAssociations;
+			bool					takeBackEnabled[NumActions];
+			bool					actionPressed[NumActions];
 	
 		protected :
-			friend class QVGLSceneWidget;
+			friend class SceneWidget;
 
 			void keyPressed(QKeyEvent* event);	
 			void keyReleased(QKeyEvent* event);
 
 		public : 
-			QVGLKeyboardState(void);
-			~QVGLKeyboardState(void);
+			KeyboardState(void);
+			~KeyboardState(void);
 
-			QVGLActionID getActionAssociatedToKey(const QKeySequence& keySequence) const;
-			QVGLActionID getActionAssociatedToKey(const QKeyEvent* event) const;
-			QKeySequence getKeysAssociatedToAction(const QVGLActionID& a);
-			bool isActionTakeBackEnabled(const QVGLActionID& a) const;
-			void setTakeBack(const QVGLActionID& a, bool enabled);
-			void setActionKeySequence(const QVGLActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
+			ActionID getActionAssociatedToKey(const QKeySequence& keySequence) const;
+			ActionID getActionAssociatedToKey(const QKeyEvent* event) const;
+			QKeySequence getKeysAssociatedToAction(const ActionID& a);
+			bool isActionTakeBackEnabled(const ActionID& a) const;
+			void setTakeBack(const ActionID& a, bool enabled);
+			void setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
 			void resetActionsKeySequences(void);
 
 		signals : 
-			void actionReceived(QVGLActionID, bool takenBack=false);
+			void actionReceived(ActionID, bool takenBack=false);
 	};
 
-	class QVGLMouseState : public QObject
+	class MouseState : public QObject
 	{
 		Q_OBJECT
 
@@ -459,8 +463,8 @@
 			float						wheelDelta;
 				
 		protected :
-			friend class QVGLSceneWidget;
-			friend class QVGLWidget;
+			friend class SceneWidget;
+			friend class MainWidget;
 
 			const QPointF& invisibleGetVector(const VectorID& id) const;
 			const QColor& invisibleGetColor(const ColorID& id) const;
@@ -473,8 +477,8 @@
 			void updateProcessCompleted(void);
 
 		public : 
-			QVGLMouseState(void);
-			~QVGLMouseState(void);
+			MouseState(void);
+			~MouseState(void);
 
 			void clear(void);
 			const QList<VectorID>& getVectorIDs(void) const;
@@ -501,17 +505,17 @@
 			void updated(void);
 	};
 
-	class QVGLSceneWidget : public QGraphicsScene
+	class SceneWidget : public QGraphicsScene
 	{
 		Q_OBJECT
 
 		private :
 			// Data : 
-			QVGLWidget		*qvglParent;
+			MainWidget		*qvglParent;
 			GeometryInstance	*quad;
 			HdlProgram		*shaderProgram;
-			QVGLTopBar		*topBar;
-			QVGLBottomBar		*bottomBar;
+			TopBar			*topBar;
+			BottomBar		*bottomBar;
 
 			// Qt events : 
 			void drawBackground(QPainter* painter, const QRectF& rect);
@@ -524,34 +528,34 @@
 			void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);	
 
 		public : 
-			QVGLSceneWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar);
-			~QVGLSceneWidget(void);
+			SceneWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			~SceneWidget(void);
 
-			void addSubWidget(QVGLSubWidget* subWidget);
+			void addSubWidget(SubWidget* subWidget);
 			void putItemOnTop(QGraphicsProxyWidget*);
 	};
 
-	class QVGLSceneViewWidget : public QGraphicsView
+	class SceneViewWidget : public QGraphicsView
 	{
 		Q_OBJECT
 
 		private : 
 			// Data :
-			QVGLContextWidget			*contextWidget;
-			QVGLSceneWidget 			*sceneWidget;
-			QVGLWidget				*qvglParent;
+			ContextWidget			*contextWidget;
+			SceneWidget 			*sceneWidget;
+			MainWidget			*qvglParent;
 
 			// Functions :
 			void resizeEvent(QResizeEvent *event);
 
 		public : 
-			QVGLSceneViewWidget(QVGLWidget* _qvglParent, QVGLTopBar* _topBar, QVGLBottomBar* _bottomBar);
-			~QVGLSceneViewWidget(void);
+			SceneViewWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			~SceneViewWidget(void);
 
-			void addSubWidget(QVGLSubWidget* subWidget);
-			QVGLSubWidget* getUppermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
-			QVGLSubWidget* getLowermostSubWidget(const QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
-			void orderSubWidgetsList(QList<QVGLSubWidget*>& list, bool onlyIfVisible=true) const;
+			void addSubWidget(SubWidget* subWidget);
+			SubWidget* getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
+			SubWidget* getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
+			void orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible=true) const;
 			void putItemOnTop(QGraphicsProxyWidget* graphicsProxy);				// Both subWidgets and bars.
 			void putItemOnBottom(QGraphicsProxyWidget* graphicsProxy);			// Only subWidgets (but accept bars also).
 			void makeGLContextAvailable(void);
@@ -564,19 +568,19 @@
 			//void requireContainerCatch(void);
 	};
 	
-	class QVGLWidget : public QWidget
+	class MainWidget : public QWidget
 	{
 		Q_OBJECT
 
 		private :
 			QBoxLayout 			container;
-			QVGLKeyboardState		keyboardState;
-			QVGLMouseState			mouseState;
-			QVGLTopBar			topBar;
-			QVGLBottomBar			bottomBar;
-			QVGLSceneViewWidget  		sceneViewWidget;
-			QList<QVGLView*>		viewsList;
-			QList<QVGLSubWidget*>		subWidgetsList;
+			KeyboardState			keyboardState;
+			MouseState			mouseState;
+			TopBar				topBar;
+			BottomBar			bottomBar;
+			SceneViewWidget  		sceneViewWidget;
+			QList<View*>			viewsList;
+			QList<SubWidget*>		subWidgetsList;
 			int				currentViewIndex;
 
 			float				opacityActiveSubWidget,
@@ -591,21 +595,21 @@
 			//void handleCatch(void); // Deprecated.
 
 			// Views : 
-				void viewRequireDisplay(QVGLView* view);
+				void viewRequireDisplay(View* view);
 				void viewRequireDisplay(void);
-				void viewUpdated(QVGLView* view);
+				void viewUpdated(View* view);
 				void viewUpdated(void);
-				void viewClosed(QVGLView* view);
+				void viewClosed(View* view);
 				void viewClosed(void);
 
 			// Widgets : 	
-				void subWidgetSelected(QVGLSubWidget* subWidget);
+				void subWidgetSelected(SubWidget* subWidget);
 				void subWidgetSelected(void);
-				void showSubWidget(QVGLSubWidget* subWidget);
+				void showSubWidget(SubWidget* subWidget);
 				void showSubWidget(void);
-				void hideSubWidget(QVGLSubWidget* subWidget);
+				void hideSubWidget(SubWidget* subWidget);
 				void hideSubWidget(void);
-				void subWidgetClosed(QVGLSubWidget* subWidget);
+				void subWidgetClosed(SubWidget* subWidget);
 				void subWidgetClosed(void);
 				void nextSubWidget(void);
 				void previousSubWidget(void);
@@ -613,39 +617,40 @@
 				void hideAllSubWidgets(void);
 
 			// Bars : 
-				void barSelected(QVGLTopBar* bar);
-				void barSelected(QVGLBottomBar* bar);
+				void barSelected(TopBar* bar);
+				void barSelected(BottomBar* bar);
 
 		protected :
-			QVGLKeyboardState& getKeyboardState(void);
-			QVGLMouseState&	getMouseState(void);
-			QVGLView* getCurrentView(void) const;
+			KeyboardState& getKeyboardState(void);
+			MouseState& getMouseState(void);
+			View* getCurrentView(void) const;
 			void changeCurrentView(int targetID);
 			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;							// correcting for the aspect ratio of the scene.
 			float getAdaptationScaling(const float& imageRatio) const;									// correcting for the image filling the scene.
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const;
-			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, QVGLView* view=NULL) const;
-			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, QVGLView* view=NULL) const;
+			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;
+			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view=NULL) const;
 
-			friend class QVGLSceneWidget;
-			friend class QVGLSceneViewWidget;
+			friend class SceneWidget;
+			friend class SceneViewWidget;
 			
 		public :
-			QVGLWidget(QWidget* parent=NULL);
-			~QVGLWidget(void);
+			MainWidget(QWidget* parent=NULL);
+			~MainWidget(void);
 
-			const QVGLKeyboardState& getKeyboardState(void) const;
-			const QVGLMouseState& getMouseState(void) const;
-			void addView(QVGLView* view);
-			void addSubWidget(QVGLSubWidget* subWidget);
+			const KeyboardState& getKeyboardState(void) const;
+			const MouseState& getMouseState(void) const;
+			void addView(View* view);
+			void addSubWidget(SubWidget* subWidget);
 			float getSceneRatio(void) const;
 			QRectF sceneRect(void) const;
 			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
 			void getColorAt(int x, int y, QColor& c);
 
 		public slots : 
-			void processAction(QVGLActionID action, bool takenBack=false);
+			void processAction(ActionID action, bool takenBack=false);
 	};
+}
 
 #endif
 
