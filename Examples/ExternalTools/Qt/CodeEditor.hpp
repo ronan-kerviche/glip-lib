@@ -47,6 +47,8 @@
 	#include <QColorDialog>
 	#include <QFontDialog>
 
+	#include <QTabBar>
+
 namespace QGED
 {
 	// Namespaces : 
@@ -392,6 +394,23 @@ namespace QGED
 		public slots : 
 			void openFile(const QString& filename);
 			void close(void);
+	};
+
+	class TestMainWidget : public QWidget
+	{
+		Q_OBJECT
+
+		private : 
+			QVBoxLayout		layout;
+			QMenu			mainMenu;
+			QTabBar			tabBar;
+
+		private slots :
+			void currentTabChanged(int idx);
+
+		public :
+			TestMainWidget(void);
+			~TestMainWidget(void);
 	};
 }
 

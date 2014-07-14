@@ -362,6 +362,65 @@ using namespace QVGL;
 		}
 	}
 
+	void SubWidget::addChild(QObject* pObject)
+	{
+		if(pObject && pObject->isWidgetType())
+		{
+			//std::cout << "SubWidget::addChild : " << this << ", " << pObject << std::endl;
+
+			pObject->installEventFilter(this);
+
+			const QObjectList& childList = pObject->children();
+			for(QObjectList::const_iterator it = childList.begin(); it!=childList.end(); it++)
+				addChild(*it);
+		}
+	}
+
+	void SubWidget::removeChild(QObject* pObject)
+	{
+		if(pObject && pObject->isWidgetType())
+		{
+			//std::cout << "SubWidget::removeChild : " << this << ", " << pObject << std::endl;
+
+			pObject->removeEventFilter(this);
+
+			const QObjectList& childList = pObject->children();
+			for(QObjectList::const_iterator it = childList.begin(); it!=childList.end(); it++)
+				removeChild(*it);
+		}
+	}
+
+	void SubWidget::childEvent(QChildEvent* e)
+	{
+		if (e->child()->isWidgetType())
+		{
+			//std::cout << "SubWidget::childEvent : " << this << std::endl;
+
+			if(e->type() == QEvent::ChildAdded)
+				addChild(e->child());
+			else if (e->type() == QEvent::ChildRemoved)
+				removeChild(e->child());
+		}
+
+		QWidget::childEvent(e);
+	}
+
+	bool SubWidget::eventFilter(QObject* target, QEvent* e)
+	{
+		//std::cout << "SubWidget::eventFilter : " << this << ", " << target << std::endl;
+
+		if(e->type()==QEvent::ChildAdded)
+			addChild(reinterpret_cast<QChildEvent*>(e)->child());	
+		else if(e->type()==QEvent::ChildRemoved)
+			removeChild(reinterpret_cast<QChildEvent*>(e)->child());
+		else if(e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease || e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)
+			emit selected(this);
+		//else
+			//std::cout << "    Other event : " << e->type() << std::endl;
+
+		return QWidget::eventFilter(target, e);
+	}
+
 	void SubWidget::temporaryHide(bool enabled)
 	{
 		if(enabled)
@@ -380,6 +439,13 @@ using namespace QVGL;
 		{
 			widget = _widget;
 			layout.addWidget(widget, 1);
+
+			// Scan widget and install event filter : 
+			widget->installEventFilter(this);
+
+			const QObjectList& childList = widget->children();
+			for(QObjectList::const_iterator it = childList.begin(); it!=childList.end(); it++)
+				addChild(*it);
 		}
 	}
 
@@ -897,28 +963,28 @@ using namespace QVGL;
 
 	void KeyboardState::resetActionsKeySequences(void)
 	{
-		setActionKeySequence(ActionUp,				Qt::Key_Up);
+		setActionKeySequence(ActionUp,					Qt::Key_Up);
 		setActionKeySequence(ActionDown,				Qt::Key_Down);
 		setActionKeySequence(ActionLeft,				Qt::Key_Left);
 		setActionKeySequence(ActionRight,				Qt::Key_Right);
 		setActionKeySequence(ActionZoomIn,				QKeySequence(Qt::Key_Plus, Qt::SHIFT + Qt::Key_Plus, Qt::KeypadModifier + Qt::Key_Plus));	// Support for keypad and shifts.
 		setActionKeySequence(ActionZoomOut,				QKeySequence(Qt::Key_Minus, Qt::SHIFT + Qt::Key_Minus, Qt::KeypadModifier + Qt::Key_Minus));	// Support for keypad and shifts.
-		setActionKeySequence(ActionRotationClockWise,		Qt::Key_F);
-		setActionKeySequence(ActionRotationCounterClockWise,	Qt::Key_D);
-		setActionKeySequence(ActionToggleFullscreen,		Qt::Key_Return);
+		setActionKeySequence(ActionRotationClockWise,			Qt::Key_F);
+		setActionKeySequence(ActionRotationCounterClockWise,		Qt::Key_D);
+		setActionKeySequence(ActionToggleFullscreen,			Qt::Key_Return);
 		setActionKeySequence(ActionExitFullscreen,			Qt::Key_Escape);
-		setActionKeySequence(ActionResetView,			Qt::Key_Space);
+		setActionKeySequence(ActionResetView,				Qt::Key_Space);
 		setActionKeySequence(ActionPreviousView,			QKeySequence(Qt::CTRL + Qt::Key_Left));
-		setActionKeySequence(ActionNextView,			QKeySequence(Qt::CTRL + Qt::Key_Right));
-		setActionKeySequence(ActionCloseView,			Qt::Key_Delete);
+		setActionKeySequence(ActionNextView,				QKeySequence(Qt::CTRL + Qt::Key_Right));
+		setActionKeySequence(ActionCloseView,				Qt::Key_Delete);
 		setActionKeySequence(ActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
 		setActionKeySequence(ActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
-		setActionKeySequence(ActionRotationModifier,		QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
+		setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
 		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_R));
-		setActionKeySequence(ActionPreviousSubWidget,		QKeySequence(Qt::ALT + Qt::Key_E));
-		setActionKeySequence(ActionTemporaryHideAllSubWidgets,	QKeySequence(Qt::ALT + Qt::Key_T));
+		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::ALT + Qt::Key_E));
+		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::ALT + Qt::Key_T));
 		setActionKeySequence(ActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::ALT + Qt::Key_Y));
-		setActionKeySequence(ActionHideAllSubWidgets,		QKeySequence(Qt::ALT + Qt::Key_U));
+		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::ALT + Qt::Key_U));
 	}
 
 // MouseState :

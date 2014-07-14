@@ -171,6 +171,12 @@ namespace QVGL
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
+			//bool eventFilter(QObject *obj, QEvent *event);
+
+			void addChild(QObject* pObject);
+			void removeChild(QObject* pObject);
+			void childEvent(QChildEvent* e);
+			bool eventFilter(QObject* target, QEvent* e);
 
 			friend class SceneViewWidget;
 			friend class MainWidget;

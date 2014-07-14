@@ -1866,3 +1866,47 @@ using namespace QGED;
 		}
 	}
 
+// TestMainWidget :
+	TestMainWidget::TestMainWidget(void)
+	 : 	layout(this),
+		mainMenu("Menu", this)
+	{
+		layout.addWidget(&tabBar);
+		layout.setMargin(0);
+		layout.setSpacing(0);
+
+		tabBar.addTab("Menu");
+		tabBar.setTabTextColor(0, QColor(255, 128, 0));
+		tabBar.addTab("Tab 2");
+		tabBar.addTab("Tab 3");
+
+		mainMenu.addAction("Action 1");
+		mainMenu.addAction("Action 2");
+		mainMenu.addAction("Action 3");
+
+		QObject::connect(&tabBar, SIGNAL(currentChanged(int)), this, SLOT(currentTabChanged(int)));
+	}
+
+	TestMainWidget::~TestMainWidget(void)
+	{ }
+
+	void TestMainWidget::currentTabChanged(int idx)
+	{
+		std::cout << "Current tab changed : " << idx << std::endl;
+
+		if(idx==0)
+		{
+			const QRect menuTabRect = tabBar.tabRect(0);
+
+			/*std::cout << "Original             : " << menuTabRect.bottomLeft().x() << "; " << menuTabRect.bottomLeft().y() << std::endl;
+			std::cout << "Map to parent        : " << mapToParent(menuTabRect.bottomLeft()).x() << "; " << mapToParent(menuTabRect.bottomLeft()).y() << std::endl;
+			std::cout << "tabBar map to parent : " << tabBar.mapToParent(menuTabRect.bottomLeft()).x() << "; " << tabBar.mapToParent(menuTabRect.bottomLeft()).y() << std::endl;
+			std::cout << "Global               : " << mapToGlobal(menuTabRect.bottomLeft()).x() << "; " << mapToGlobal(menuTabRect.bottomLeft()).y() << std::endl;
+
+			std::cout << mapToGlobal(menuTabRect.bottomLeft()).y() << std::endl;
+			std::cout << mapToGlobal(menuTabRect.topLeft()).y() << std::endl;*/
+
+			mainMenu.exec(mapToGlobal(menuTabRect.bottomLeft()));
+		}
+	}
+

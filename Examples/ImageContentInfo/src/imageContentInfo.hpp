@@ -16,6 +16,9 @@
 	#include <QMessageBox>
 	#include <QComboBox>
 
+	// Tmp : 
+	#include <QDebug>
+
 	// Prototypes :
 		class WindowRenderer;
 
@@ -87,11 +90,21 @@
 		class CodeEditorSubWidget : public QVGL::SubWidget
 		{
 			private :
-				QGED::MainWidget	mainWidget;
+				QGED::MainWidget mainWidget;
 
 			public :
 				CodeEditorSubWidget(void);
 				~CodeEditorSubWidget(void);
+		};
+
+		class TestEditorWidget : public QVGL::SubWidget
+		{	
+			private : 
+				QGED::TestMainWidget mainWidget;
+
+			public :
+				TestEditorWidget(void);
+				~TestEditorWidget(void);
 		};
 
 #endif

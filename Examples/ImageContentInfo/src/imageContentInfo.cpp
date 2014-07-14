@@ -13,16 +13,22 @@
 
 	TmpWidget::TmpWidget(void)
 	 : 	layout(&widget),
-		a("Button A"),
-		b("Button B"),
-		c("Button C"),
+		a("Button A", &widget),
+		b("Button B", &widget),
+		c("Button C", &widget),
 		//img("/home/arkh/Pictures/mire.bmp"),
 		//img("/home/arkh/Pictures/the_general_problem.png"),
-		//img("/home/arkh/Pictures/2048.png"),
-		img("/home/arkh/Pictures/Wallpaper/Konachan.com - 72806 glasses jin samurai_champloo sword weapon.jpg"),
+		img("/home/arkh/Pictures/2048.png"),
+		
 		texture(NULL),
 		view(NULL)
 	{
+		std::cout << "TmpWidget    : " << this << std::endl;
+		std::cout << "    layout   : " << (&layout) << std::endl;
+		std::cout << "    button a : " << (&a) << std::endl;
+		std::cout << "    button b : " << (&b) << std::endl;
+		std::cout << "    button c : " << (&c) << std::endl;
+
 		static int count = 1;
 		
 		layout.addWidget(&a);
@@ -30,18 +36,6 @@
 		layout.addWidget(&c);
 		layout.setMargin(0);
 		layout.setSpacing(1);
-
-		setInnerWidget(&widget);
-
-		show();
-
-		move(128, 128);
-
-		std::cout << "Subwidget created." << std::endl;
-
-		QObject::connect(&a, SIGNAL(released(void)), this, SLOT(buttonAPressed(void)));
-		QObject::connect(&b, SIGNAL(released(void)), this, SLOT(buttonBPressed(void)));
-		QObject::connect(&c, SIGNAL(released(void)), this, SLOT(buttonCPressed(void)));
 
 		// Create the view : 
 		ImageBuffer* buffer = createImageBufferFromQImage(img);
@@ -59,6 +53,18 @@
 		setTitle(tr("Widget %1").arg(count));
 
 		count++;
+
+		QObject::connect(&a, SIGNAL(released(void)), this, SLOT(buttonAPressed(void)));
+		QObject::connect(&b, SIGNAL(released(void)), this, SLOT(buttonBPressed(void)));
+		QObject::connect(&c, SIGNAL(released(void)), this, SLOT(buttonCPressed(void)));
+
+		std::cout << "Subwidget created." << std::endl;
+
+		setInnerWidget(&widget);
+
+		show();
+
+		move(128, 128);
 	}
 
 	TmpWidget::~TmpWidget(void)
@@ -95,6 +101,16 @@
 	}
 
 	CodeEditorSubWidget::~CodeEditorSubWidget(void)
+	{ }
+
+// TestEditorWidget ;
+	TestEditorWidget::TestEditorWidget(void)
+	{
+		setInnerWidget(&mainWidget);
+		setTitle("Test Code Editor");
+	}
+	
+	TestEditorWidget::~TestEditorWidget(void)
 	{ }
 
 // Src :
@@ -162,6 +178,9 @@
 
 		CodeEditorSubWidget* editor = new CodeEditorSubWidget;
 		window.addSubWidget(editor);
+
+		TestEditorWidget* editorTmp = new TestEditorWidget;
+		window.addSubWidget(editorTmp);
 	}
 
 	IHM::~IHM(void)
@@ -252,6 +271,28 @@
 		{
 			// Interface :
 			ihm = new IHM;
+
+			// Load Stylesheet : 
+			/*const QString 	stylesheetFilename = "stylesheet.css";
+			QFile 		stylesheetFile(stylesheetFilename);
+			
+			if(!stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text))
+			{
+				QString path = QDir::currentPath();
+
+				Exception e("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (" + path.toStdString() + ").", __FILE__, __LINE__); 
+
+				qCritical() << e.what();
+
+				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("The style sheet \"%1\" could not be loaded.\nIn %2. The execution will continue with default system theme (BAD).").arg(stylesheetFile.fileName()).arg(path), QMessageBox::Ok);
+				messageBox.exec();
+			}
+
+			QTextStream 	stylesheetStream(&stylesheetFile);
+			QString 	stylesheet = stylesheetStream.readAll();
+
+			// Set style : 
+			QApplication::setStyleSheet(stylesheet);*/
 		}
 		catch(std::exception& e)
 		{
