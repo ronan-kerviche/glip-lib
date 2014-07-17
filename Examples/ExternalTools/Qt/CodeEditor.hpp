@@ -47,8 +47,11 @@
 	#include <QColorDialog>
 	#include <QFontDialog>
 
+	#include <QHBoxLayout>
 	#include <QTabBar>
-
+	#include <QStackedLayout>
+	#include <QToolButton>
+	
 namespace QGED
 {
 	// Namespaces : 
@@ -98,61 +101,6 @@ namespace QGED
 			void updateSettings(const CodeEditorSettings& settings);
 	};
 
-	class CodeEditor : public QPlainTextEdit 
-	{
-		Q_OBJECT
-		
-		private : 
-			bool		firstModification,
-					documentModified,
-					documentModifiedTrigger,
-					highlightLine;
-			QString 	currentFilename;
-			QFont		font;
-			Highlighter 	*highLighter;
-			QWidget 	*lineNumberArea;
-			QList<QMenu*>	subMenus;
-
-			void 		contextMenuEvent(QContextMenuEvent* event);
-	
-		protected :
-			void resizeEvent(QResizeEvent *event);
-			void keyPressEvent(QKeyEvent* e);
-
-		private slots:
-			void updateLineNumberAreaWidth(int newBlockCount);
-			void highlightCurrentLine(void);
-			void clearHighlightOfCurrentLine(void);
-			void updateLineNumberArea(const QRect &, int);
-			void documentWasModified(void);
-			void updateSettings(void);
-			
-		public :
-			CodeEditor(QWidget *parent = 0, bool syntaxColoration=true);
-			virtual ~CodeEditor(void);
-
-			int lineNumberAreaWidth(void) const;
-			bool empty(void) const;
-			const QString& filename(void) const;
-			QString path(void) const;
-			QString getRawTitle(void) const;
-			QString getTitle(void) const;
-			std::string currentContent(void) const;
-			bool isModified(void) const;
-			bool isModifiedTrigger(void);
-			bool canBeClosed(void);
-			void setFilename(const QString& newFilename);
-			bool load(void);
-			bool save(void);
-			void insert(const QString& text);
-			void addSubMenu(QMenu* menu);
-
-			void lineNumberAreaPaintEvent(QPaintEvent *event);
-
-		signals :
-			void titleChanged(void); 
-	};
-
 	class LineNumberArea : public QWidget
 	{
 		Q_OBJECT
@@ -166,6 +114,56 @@ namespace QGED
 		public :
 			LineNumberArea(CodeEditor *editor);
 			QSize sizeHint() const;
+	};
+
+	class CodeEditor : public QPlainTextEdit 
+	{
+		Q_OBJECT
+		
+		private : 
+			bool		highlightLine;
+			QString 	currentFilename;
+			QFont		font;
+			Highlighter 	*highLighter;
+			QWidget 	*lineNumberArea;
+			QList<QMenu*>	subMenus;
+
+		protected :
+			int lineNumberAreaWidth(void) const;
+			void lineNumberAreaPaintEvent(QPaintEvent *event);
+			void resizeEvent(QResizeEvent *event);
+			void keyPressEvent(QKeyEvent* e);
+			void contextMenuEvent(QContextMenuEvent* event);
+
+			friend class LineNumberArea;
+
+		private slots:
+			void updateLineNumberAreaWidth(int newBlockCount);
+			void highlightCurrentLine(void);
+			void clearHighlightOfCurrentLine(void);
+			void updateLineNumberArea(const QRect &, int);
+			
+		public :
+			CodeEditor(QWidget *parent = 0);
+			virtual ~CodeEditor(void);
+
+			bool empty(void) const;
+			const QString& getFilename(void) const;
+			void setFilename(const QString& newFilename);
+			QString getPath(void) const;
+			QString getRawTitle(void) const;
+			QString getTitle(void) const;
+			std::string getCurrentContent(void) const;
+			bool isModified(void) const;
+			
+			void open(QString newFilename="");
+			void save(QString newFilename="");
+			void insert(const QString& text);
+			void addSubMenu(QMenu* menu);
+			void setSettings(const CodeEditorSettings& settings);
+
+		signals :
+			void modified(bool changed);
 	};
 
 	class CodeEditorSettings : public QWidget
@@ -402,15 +400,36 @@ namespace QGED
 
 		private : 
 			QVBoxLayout		layout;
+			QHBoxLayout		topBar;
+			QPushButton		mainMenuButton,
+						compileButton;
+			QToolButton		newTabButton;
 			QMenu			mainMenu;
 			QTabBar			tabBar;
-
-		private slots :
-			void currentTabChanged(int idx);
+			QStackedLayout		stack;
+			QMap<int, CodeEditor*>	editors;
+			QAction			openAction,	
+						saveAction,
+						saveAsAction,
+						saveAllAction,
+						closeAllAction;
 
 		public :
 			TestMainWidget(void);
 			~TestMainWidget(void);
+
+		private slots :
+			void changeToTab(int idx);
+			void closeTab(int idx);
+
+		public slots :
+			void addTab(void);
+			void open(const QString& filename);
+			void save(void);
+			void saveAs(const QString& filename);
+			void saveAll(void);
+			void closeCurrentTab(void);
+			void closeAll(void);
 	};
 }
 

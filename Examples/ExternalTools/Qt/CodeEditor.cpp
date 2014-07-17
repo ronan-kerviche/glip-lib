@@ -199,61 +199,46 @@ using namespace QGED;
 		rehighlight();
 	}
 
+// LineNumberArea 
+	LineNumberArea::LineNumberArea(CodeEditor *editor)
+	 : QWidget(editor), codeEditor(editor)
+	{ }
+
+	void LineNumberArea::paintEvent(QPaintEvent *event)
+	{
+		codeEditor->lineNumberAreaPaintEvent(event);
+	}
+
+	QSize LineNumberArea::sizeHint() const
+	{
+		return QSize(codeEditor->lineNumberAreaWidth(), 0);
+	}
+
 // CodeEditor
-	CodeEditor::CodeEditor(QWidget *parent, bool syntaxColoration)
+	CodeEditor::CodeEditor(QWidget *parent)
 	 : 	QPlainTextEdit(parent), 
 		currentFilename(""),
-		firstModification(true),
-		documentModified(false),
-		documentModifiedTrigger(false),
 		highlightLine(false),
+		lineNumberArea(NULL),
 		highLighter(NULL)
 	{
-		// Get settings : 
-		CodeEditorSettings& editorSettings = CodeEditorSettings::instance();
-
 		lineNumberArea = new LineNumberArea(this);
-
-		connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
-		connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
-		connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
-		connect(document(), 		SIGNAL(contentsChanged()), 		this, SLOT(documentWasModified()));
-		connect(&editorSettings,	SIGNAL(settingsModified()),		this, SLOT(updateSettings()));
-
 		updateLineNumberAreaWidth(0);
 
-		if(syntaxColoration)
-			highLighter = new Highlighter(document());
+		highLighter = new Highlighter(document());
 
-		// Update settings : 
-		updateSettings();
+		QObject::connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
+		QObject::connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
+		QObject::connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
+		QObject::connect(document(), 		SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
 	}
 
 	CodeEditor::~CodeEditor(void)
 	{
 		blockSignals(true);
 
-		Highlighter 	*tmp1 = highLighter;
-		QWidget 	*tmp2 = lineNumberArea;
-
-		highLighter	= NULL;
-		lineNumberArea	= NULL;
-
-		delete tmp1;
-		delete tmp2;
-	}
-
-	void CodeEditor::contextMenuEvent(QContextMenuEvent* event)
-	{
-		QMenu *menu = createStandardContextMenu();
-		
-		menu->addSeparator();
-
-		for(int k=0; k<subMenus.count(); k++)
-			menu->addMenu(subMenus[k]);
-
-		menu->exec(event->globalPos());
-		delete menu;
+		delete highLighter;
+		delete lineNumberArea;
 	}
 
 	int CodeEditor::lineNumberAreaWidth(void) const
@@ -264,6 +249,38 @@ using namespace QGED;
 		int space = 3 + fontMetrics().width( '0' ) * digits;
 
 		return space;
+	}
+
+	void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
+	{
+		QPainter 	painter(lineNumberArea);
+		QColor 		bg = palette().background().color().lighter(130),
+				ed = palette().text().color().lighter(70);
+
+		painter.fillRect(event->rect(), bg);
+
+		QTextBlock 	block 		= firstVisibleBlock();
+		int 		blockNumber 	= block.blockNumber();
+		int 		top 		= (int) blockBoundingGeometry(block).translated(contentOffset()).top();
+		int 		bottom 		= top + (int) blockBoundingRect(block).height();
+
+		QFontMetrics metrics(font);
+
+		while (block.isValid() && top <= event->rect().bottom())
+		{
+			if (block.isVisible() && bottom >= event->rect().top())
+			{
+				QString number = QString::number(blockNumber + 1);
+				painter.setPen(ed);
+				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
+				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
+			}
+
+			block = block.next();
+			top = bottom;
+			bottom = top + (int) blockBoundingRect(block).height();
+			++blockNumber;
+		}
 	}
 
 	void CodeEditor::updateLineNumberAreaWidth(int newBlockCount)
@@ -283,56 +300,6 @@ using namespace QGED;
 
 		if(rect.contains(viewport()->rect()))
 			updateLineNumberAreaWidth(0);
-	}
-
-	void CodeEditor::documentWasModified(void)
-	{
-		if(firstModification)
-			firstModification = false;
-		else
-		{
-			documentModifiedTrigger = true;
-
-			if(!documentModified)
-			{
-				documentModified = true;
-				emit titleChanged();
-			}
-		}
-	}
-
-	void CodeEditor::updateSettings(void)
-	{
-		// Prevent the code from sending modification signal :
-		blockSignals(true);
-		document()->blockSignals(true);
-
-		CodeEditorSettings& editorSettings = CodeEditorSettings::instance();
-
-		// Set the font : 
-		setFont(editorSettings.getEditorFont());
-		document()->setDefaultFont(editorSettings.getEditorFont());
-
-		// Set the tabulation length :
-		const int tabStop = editorSettings.getNumberOfSpacesPerTabulation();
-		QFontMetrics metrics(editorSettings.getEditorFont());
-		setTabStopWidth(tabStop * metrics.width(' '));
-
-		// Set word wrap : 
-		setWordWrapMode( editorSettings.getWrapMode() );
-
-		// Set line highlight :
-		highlightLine = editorSettings.isLineHighlightEnabled();
-
-		if(!highlightLine)
-			clearHighlightOfCurrentLine();
-
-		// Propagate : 
-		if(highLighter!=NULL)
-			highLighter->updateSettings(editorSettings);
-
-		document()->blockSignals(false);
-		blockSignals(false);
 	}
 	
 	void CodeEditor::resizeEvent(QResizeEvent *e)
@@ -401,6 +368,19 @@ using namespace QGED;
 			QPlainTextEdit::keyPressEvent(e);
 	}
 
+	void CodeEditor::contextMenuEvent(QContextMenuEvent* event)
+	{
+		QMenu *menu = createStandardContextMenu();
+		
+		menu->addSeparator();
+
+		for(int k=0; k<subMenus.count(); k++)
+			menu->addMenu(subMenus[k]);
+
+		menu->exec(event->globalPos());
+		delete menu;
+	}
+
 	void CodeEditor::highlightCurrentLine(void)
 	{
 		if(highlightLine)
@@ -448,62 +428,35 @@ using namespace QGED;
 		}
 	}
 
-	void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
-	{
-		QPainter 	painter(lineNumberArea);
-		QColor 		bg = palette().background().color().lighter(130),
-				ed = palette().text().color().lighter(70);
-
-		painter.fillRect(event->rect(), bg);
-
-		QTextBlock 	block 		= firstVisibleBlock();
-		int 		blockNumber 	= block.blockNumber();
-		int 		top 		= (int) blockBoundingGeometry(block).translated(contentOffset()).top();
-		int 		bottom 		= top + (int) blockBoundingRect(block).height();
-
-		QFontMetrics metrics(font);
-
-		while (block.isValid() && top <= event->rect().bottom())
-		{
-			if (block.isVisible() && bottom >= event->rect().top())
-			{
-				QString number = QString::number(blockNumber + 1);
-				painter.setPen(ed);
-				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
-				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
-			}
-
-			block = block.next();
-			top = bottom;
-			bottom = top + (int) blockBoundingRect(block).height();
-			++blockNumber;
-		}
-	}
-
 	bool CodeEditor::empty(void) const
 	{
 		return document()->isEmpty();
 	}
 
-	const QString& CodeEditor::filename(void) const
+	const QString& CodeEditor::getFilename(void) const
 	{
 		return currentFilename;
 	}
 
-	QString CodeEditor::path(void) const
+	void CodeEditor::setFilename(const QString& newFilename)
 	{
-		if(filename().isEmpty())
+		currentFilename = newFilename;
+	}
+
+	QString CodeEditor::getPath(void) const
+	{
+		if(currentFilename.isEmpty())
 			return "";
 		else
 		{
-			QFileInfo path(filename());
-			return path.path() + "/";
+			QFileInfo path(currentFilename);
+			return path.path();
 		}
 	}
 
 	QString CodeEditor::getRawTitle(void) const
 	{
-		QFileInfo path(filename());
+		QFileInfo path(currentFilename);
 
 		if(path.exists())
 			return path.fileName();
@@ -513,7 +466,7 @@ using namespace QGED;
 
 	QString CodeEditor::getTitle(void) const
 	{
-		QFileInfo path(filename());
+		QFileInfo path(currentFilename);
 		QString fileName;
 		
 		if(path.exists())
@@ -521,127 +474,73 @@ using namespace QGED;
 		else
 			fileName = "Unnamed.ppl";
 
-		if( documentModified )
+		/*if( documentModified )
 			return fileName + " *";
 		else
-			return fileName;
+			return fileName;*/
+
+		return fileName;
 	}
 	
-	std::string CodeEditor::currentContent(void) const
+	std::string CodeEditor::getCurrentContent(void) const
 	{
 		return toPlainText().toStdString();
 	}
 
 	bool CodeEditor::isModified(void) const
 	{
-		return documentModified;
+		return document()->isModified();
 	}
 
-	bool CodeEditor::isModifiedTrigger(void)
+	void CodeEditor::open(QString newFilename)
 	{
-		if(documentModifiedTrigger)
+		if(newFilename.isEmpty())
+			newFilename = currentFilename;
+
+		QFile file(newFilename);
+
+		if (!file.open(QFile::ReadOnly | QFile::Text))
 		{
-			documentModifiedTrigger = false;
-			return true;
-		}
-		else
-			return false;
-	}
-
-	bool CodeEditor::canBeClosed(void)
-	{
-		if(!documentModified)
-			return true;
-		else
-		{
-			QMessageBox::StandardButton ret;
-
-			if(filename().isEmpty())
-				ret = QMessageBox::warning(this, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), QMessageBox::Discard | QMessageBox::Cancel);
-			else
-				ret = QMessageBox::warning(this, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(filename()), QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-
-			if (ret == QMessageBox::Save)
-				return save();
-			else if (ret == QMessageBox::Cancel)
-				return false;
-			else
-				return true;
-		}
-	}
-
-	void CodeEditor::setFilename(const QString& newFilename)
-	{
-		currentFilename = newFilename;
-	}
-
-	bool CodeEditor::load(void)
-	{
-		if(filename().isEmpty())
-			return false;
-		else
-		{
-			QFile file(filename());
-
-			if (!file.open(QFile::ReadOnly | QFile::Text))
-			{
-				QMessageBox::warning(this, tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(filename()).arg(file.errorString()));
-				return false;
-			}
-
-			QTextStream in(&file);
-			/*#ifndef QT_NO_CURSOR
-				QApplication::setOverrideCursor(Qt::WaitCursor);
-			#endif*/
-
-			// Prevent to understand a real modification :
-			bool prevState = this->blockSignals(true);
-
-			setPlainText(in.readAll());
-
-			// Force the size of the margin :
-			setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
-
-			this->blockSignals(prevState);
-
-			/*#ifndef QT_NO_CURSOR
-				QApplication::restoreOverrideCursor();
-			#endif*/
-
-			documentModified = false;
-			emit titleChanged();
-
-			return true;
-		}
-	}
-
-	bool CodeEditor::save(void)
-	{
-		QFile file(filename());
-
-		if (!file.open(QFile::WriteOnly | QFile::Text))
-		{
-			QMessageBox::warning(this, tr("Error : "),tr("Cannot write file %1 :\n%2.").arg(filename()).arg(file.errorString()));
-			return false;
+			QMessageBox::warning(this, tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
+			return ;
 		}
 
+		QTextStream in(&file);
+
+		// Prevent to understand a real modification :
+		bool prevState = this->blockSignals(true);
+
+		setPlainText(in.readAll());
+
+		// Force the size of the margin :
+		setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+
+		// Set the filename : 
+		setFilename(newFilename);
+
+		this->blockSignals(prevState);
+	}
+
+	void CodeEditor::save(QString newFilename)
+	{
+		if(newFilename.isEmpty())
+			newFilename = currentFilename;
+
+		QFile file(newFilename);
+
+		if(!file.open(QFile::WriteOnly | QFile::Text))
+		{
+			QMessageBox::warning(this, tr("Error : "),tr("Cannot write file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
+			return ;
+		}
+
+		// Write : 
 		QTextStream out(&file);
-
-		/*#ifndef QT_NO_CURSOR
-			QApplication::setOverrideCursor(Qt::WaitCursor);
-		#endif*/
 
 		out << toPlainText();
 
-		/*#ifndef QT_NO_CURSOR
-			QApplication::restoreOverrideCursor();
-		#endif*/
-
-		documentModified = false;
-
-		emit titleChanged();
-
-		return true;
+		// Set the filename : 
+		setFilename(newFilename);
 	}
 
 	void CodeEditor::insert(const QString& text)
@@ -654,19 +553,36 @@ using namespace QGED;
 		subMenus.append(menu);
 	}
 
-// LineNumberArea 
-	LineNumberArea::LineNumberArea(CodeEditor *editor)
-	 : QWidget(editor), codeEditor(editor)
-	{ }
-
-	void LineNumberArea::paintEvent(QPaintEvent *event)
+	void CodeEditor::setSettings(const CodeEditorSettings& settings)
 	{
-		codeEditor->lineNumberAreaPaintEvent(event);
-	}
+		// Prevent the code from sending modification signal :
+		blockSignals(true);
+		document()->blockSignals(true);
 
-	QSize LineNumberArea::sizeHint() const
-	{
-		return QSize(codeEditor->lineNumberAreaWidth(), 0);
+		// Set the font : 
+		setFont(settings.getEditorFont());
+		document()->setDefaultFont(settings.getEditorFont());
+
+		// Set the tabulation length :
+		const int tabStop = settings.getNumberOfSpacesPerTabulation();
+		QFontMetrics metrics(settings.getEditorFont());
+		setTabStopWidth(tabStop * metrics.width(' '));
+
+		// Set word wrap : 
+		setWordWrapMode(settings.getWrapMode() );
+
+		// Set line highlight :
+		highlightLine = settings.isLineHighlightEnabled();
+
+		if(!highlightLine)
+			clearHighlightOfCurrentLine();
+
+		// Propagate : 
+		if(highLighter!=NULL)
+			highLighter->updateSettings(settings);
+
+		document()->blockSignals(false);
+		blockSignals(false);
 	}
 
 // CodeEditorSettings
@@ -1345,8 +1261,8 @@ using namespace QGED;
 
 			menu->addAction(tr("Include %1").arg(editor->getRawTitle()), this, SLOT(insertCalled()))->setToolTip(tr("INCLUDE_FILE(%1)\n").arg(editor->getRawTitle()));
 
-			if(!editor->path().isEmpty())
-				menu->addAction(tr("Add path..."), this, SLOT(insertCalled()))->setToolTip(tr("ADD_PATH(%1)\n").arg(editor->path()));
+			if(!editor->getPath().isEmpty())
+				menu->addAction(tr("Add path..."), this, SLOT(insertCalled()))->setToolTip(tr("ADD_PATH(%1)\n").arg(editor->getPath()));
 
 			// Load : 
 				#define MAKE_LIST( listName, name ) \
@@ -1531,6 +1447,7 @@ using namespace QGED;
 		CodeEditor* newEditor = new CodeEditor(this);
 		newEditor->addSubMenu(&templateMenu);
 		newEditor->addSubMenu(&elementsMenu);
+		newEditor->setSettings(editorSettings);
 		widgets.addTab(newEditor, newEditor->getTitle());
 		widgets.setCurrentWidget( newEditor );
 		//widgets.setCurrentTabTextColor( QColor("#BBBBBB") );
@@ -1550,7 +1467,7 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			if(e->filename().isEmpty())
+			if(e->getFilename().isEmpty())
 			{
 				/*QString filename = openSaveInterface.saveAsDialog();
 	
@@ -1637,12 +1554,12 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			if(e->canBeClosed())
-			{
+			//if(e->canBeClosed())
+			//{
 				elementsMenu.remove(e);
 				widgets.removeTab(widgets.indexOf(e));
 				delete e;
-			}
+			//}
 		}
 	}
 
@@ -1652,11 +1569,11 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
-			if(e->canBeClosed())
-			{
+			//if(e->canBeClosed())
+			//{
 				widgets.removeTab(widgets.indexOf(e));
 				delete e;
-			}
+			//}
 		}
 	}
 
@@ -1714,8 +1631,8 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
-			if(e->isModifiedTrigger())
-				updateElementsOfEditor(e);
+			//if(e->isModifiedTrigger())
+			//	updateElementsOfEditor(e);
 		}
 	}
 
@@ -1735,7 +1652,7 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			return e->filename().toStdString();
+			return e->getFilename().toStdString();
 		}
 		else
 			return "";
@@ -1747,7 +1664,7 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			return e->currentContent();
+			//return e->currentContent();
 		}
 		else
 			return "";
@@ -1759,7 +1676,7 @@ using namespace QGED;
 
 		QString toolTip = "<table>";
 			toolTip += tr("<tr><td><i>Filename</i></td><td>:</td><td>%1</td></tr>").arg(e->getTitle());
-			toolTip += tr("<tr><td><i>Path</i></td><td>:</td><td>%1</td></tr>").arg(e->path());
+			toolTip += tr("<tr><td><i>Path</i></td><td>:</td><td>%1</td></tr>").arg(e->getPath());
 		toolTip += "</table>";
 
 		widgets.setTabToolTip(widgets.currentIndex(), toolTip);
@@ -1794,7 +1711,7 @@ using namespace QGED;
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
 
 			widgets.setCurrentWidget(e);
-			test = test && e->canBeClosed();	
+			//test = test && e->canBeClosed();	
 		}
 
 		return test;
@@ -1817,8 +1734,8 @@ using namespace QGED;
 
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 	
-			e->setFilename( filename );
-			if(!e->load())
+			/*e->setFilename( filename );
+			if(!)
 				closeTab();
 			else
 			{
@@ -1832,7 +1749,9 @@ using namespace QGED;
 
 				// Scan : 
 				updateElementsOfEditor(e);
-			}
+			}*/
+
+			e->open(filename);
 		}
 	}
 
@@ -1869,44 +1788,130 @@ using namespace QGED;
 // TestMainWidget :
 	TestMainWidget::TestMainWidget(void)
 	 : 	layout(this),
-		mainMenu("Menu", this)
+		mainMenuButton("Menu"),
+		compileButton("Compile"),
+		mainMenu("Menu", this),
+		openAction("Open", this),	
+		saveAction("Save", this),
+		saveAsAction("Save as", this),
+		saveAllAction("Save all", this),
+		closeAllAction("Close all", this)
 	{
-		layout.addWidget(&tabBar);
+		// Build Menu : 
+		mainMenu.addAction(&openAction);
+		mainMenu.addAction(&saveAction);
+		mainMenu.addAction(&saveAsAction);
+		mainMenu.addAction(&saveAllAction);
+		mainMenu.addAction(&closeAllAction);
+
+		// Tab Settings : 
+		tabBar.setMovable(true);
+		tabBar.setTabsClosable(true);
+
+		// Button settings : 
+		mainMenuButton.setMenu(&mainMenu);
+		mainMenuButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		compileButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		newTabButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+		topBar.addWidget(&mainMenuButton);
+		topBar.addWidget(&compileButton);
+		topBar.addWidget(&tabBar);
+		topBar.addWidget(&newTabButton);
+
+		topBar.setMargin(0);
+		topBar.setSpacing(0);
+
+		layout.addLayout(&topBar);
+		layout.addLayout(&stack);
 		layout.setMargin(0);
 		layout.setSpacing(0);
 
-		tabBar.addTab("Menu");
-		tabBar.setTabTextColor(0, QColor(255, 128, 0));
-		tabBar.addTab("Tab 2");
-		tabBar.addTab("Tab 3");
-
-		mainMenu.addAction("Action 1");
-		mainMenu.addAction("Action 2");
-		mainMenu.addAction("Action 3");
-
-		QObject::connect(&tabBar, SIGNAL(currentChanged(int)), this, SLOT(currentTabChanged(int)));
+		// Signals : 
+		QObject::connect(&tabBar, 	SIGNAL(currentChanged(int)), 	this, SLOT(changeToTab(int)));
+		QObject::connect(&tabBar,	SIGNAL(tabCloseRequested(int)),	this, SLOT(closeTab(int)));
+		QObject::connect(&newTabButton,	SIGNAL(released(void)), 	this, SLOT(addTab(void)));		
 	}
 
 	TestMainWidget::~TestMainWidget(void)
-	{ }
-
-	void TestMainWidget::currentTabChanged(int idx)
-	{
-		std::cout << "Current tab changed : " << idx << std::endl;
-
-		if(idx==0)
+	{ 
+		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
 		{
-			const QRect menuTabRect = tabBar.tabRect(0);
-
-			/*std::cout << "Original             : " << menuTabRect.bottomLeft().x() << "; " << menuTabRect.bottomLeft().y() << std::endl;
-			std::cout << "Map to parent        : " << mapToParent(menuTabRect.bottomLeft()).x() << "; " << mapToParent(menuTabRect.bottomLeft()).y() << std::endl;
-			std::cout << "tabBar map to parent : " << tabBar.mapToParent(menuTabRect.bottomLeft()).x() << "; " << tabBar.mapToParent(menuTabRect.bottomLeft()).y() << std::endl;
-			std::cout << "Global               : " << mapToGlobal(menuTabRect.bottomLeft()).x() << "; " << mapToGlobal(menuTabRect.bottomLeft()).y() << std::endl;
-
-			std::cout << mapToGlobal(menuTabRect.bottomLeft()).y() << std::endl;
-			std::cout << mapToGlobal(menuTabRect.topLeft()).y() << std::endl;*/
-
-			mainMenu.exec(mapToGlobal(menuTabRect.bottomLeft()));
+			stack.removeWidget(*it);
+			delete (*it);
 		}
+
+		editors.clear();
+	}
+
+	void TestMainWidget::addTab(void)
+	{
+		static unsigned int counter = 0; 
+	
+		// Create the widget : 
+		CodeEditor* ptr = new CodeEditor;
+		editors[counter] = ptr;
+
+		// Create the tab :
+		stack.addWidget(ptr);
+		int c = tabBar.addTab("Unnamed.ppl");
+		tabBar.setTabData(c, counter);
+		tabBar.setCurrentIndex(c);	
+
+		counter++;
+	}
+
+	void TestMainWidget::changeToTab(int idx)
+	{
+		int w = tabBar.tabData(idx).toUInt();
+
+		if(editors.find(w)!=editors.end())
+			stack.setCurrentWidget(editors[w]);
+	}
+
+	void TestMainWidget::open(const QString& filename)
+	{
+
+	}
+
+	void TestMainWidget::save(void)
+	{
+
+	}
+
+	void TestMainWidget::saveAs(const QString& filename)
+	{
+
+	}
+
+	void TestMainWidget::saveAll(void)
+	{
+
+	}
+
+	void TestMainWidget::closeTab(int idx)
+	{
+		int w = tabBar.tabData(idx).toUInt();
+
+		QMap<int, CodeEditor*>::iterator it = editors.find(w);
+
+		// If it exists, clear : 
+		if(it!=editors.end())
+		{
+			tabBar.removeTab(idx);
+			stack.removeWidget(*it);
+			delete (*it);
+			editors.erase(it);
+		}
+	}
+
+	void TestMainWidget::closeCurrentTab(void)
+	{
+		closeTab(tabBar.currentIndex());
+	}
+	
+	void TestMainWidget::closeAll(void)
+	{
+
 	}
 

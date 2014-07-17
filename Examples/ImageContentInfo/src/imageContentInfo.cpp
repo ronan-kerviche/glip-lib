@@ -18,8 +18,8 @@
 		c("Button C", &widget),
 		//img("/home/arkh/Pictures/mire.bmp"),
 		//img("/home/arkh/Pictures/the_general_problem.png"),
-		img("/home/arkh/Pictures/2048.png"),
-		
+		//img("/home/arkh/Pictures/2048.png"),
+		img("/home/arkh/Pictures/Wallpaper/Konachan.com - 72806 glasses jin samurai_champloo sword weapon.jpg"),
 		texture(NULL),
 		view(NULL)
 	{
