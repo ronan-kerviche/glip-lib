@@ -163,7 +163,7 @@ FILTER_LAYOUT:gaussianBlurFilter(sobelOutputFormat, gaussianBlurShader)
 FILTER_LAYOUT:sobelAndDirectionFilter(sobelOutputFormat, sobelShaderAndDirection)
 FILTER_LAYOUT:nonMaximumSuppressionFilter(sobelOutputFormat, nonMaximumSuppressionShader)
 
-PIPELINE_MAIN:CannyFilter()
+PIPELINE_MAIN:CannyFilter
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(blurredTexture, sobelTexture, maximumFiltered, colorEdgesNonFiltered)
@@ -172,3 +172,4 @@ PIPELINE_MAIN:CannyFilter()
 	FILTER_INSTANCE:sobelRawFilterInstance(sobelAndDirectionFilter)
 	FILTER_INSTANCE:nonMaximumSuppressionFilterInstance(nonMaximumSuppressionFilter)
 }
+

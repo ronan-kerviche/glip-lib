@@ -25,13 +25,7 @@ using namespace QGED;
 	{
 		HighlightingRule rule;
 
-		//QFontDatabase db;
-		//QFont keyFont = db.font("Source Code Pro", "Bold", glslkeywordFormat.font().pointSize());
-
 		// GLSL Keywords :
-			//glslkeywordFormat.setForeground(QColor(255,128,0));
-			//glslkeywordFormat.setFontWeight(QFont::Bold);
-			//glslkeywordFormat.setFont(keyFont);
 			QStringList glslkeywordPatterns;
 
 			for(int i=0; i<GLSLLanguage::KW_END; i++)
@@ -48,8 +42,6 @@ using namespace QGED;
 			}
 
 		// GLSL Functions : 
-			//glslfunctionFormat.setForeground(QColor(255,128,0));
-			//glslfunctionFormat.setFont(keyFont);
 			QStringList glslfunctionPatterns;
 
 			for(int i=0; i<GLSLLanguage::FN_END; i++)
@@ -66,9 +58,6 @@ using namespace QGED;
 			}
 
 		// GLIP LayoutLoader Keywords : 
-			//glipLayoutLoaderKeywordFormat.setForeground(QColor(255, 51, 255));
-			//glipLayoutLoaderKeywordFormat.setFontWeight(QFont::Bold);
-			//glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipllkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
@@ -85,9 +74,6 @@ using namespace QGED;
 			}
 
 		// GLIP Uniform Loader Keywords : 
-			//glipUniformLoaderKeywordFormat.setForeground(QColor(51, 255, 255));
-			//glipUniformLoaderKeywordFormat.setFontWeight(QFont::Bold);
-			//glipLayoutLoaderKeywordFormat.setFont(keyFont);
 			QStringList glipulkeywordPatterns;
 
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
@@ -120,7 +106,7 @@ using namespace QGED;
 			//multiLineCommentFormat.setForeground(QColor(51,153,255));
 			commentStartExpression = QRegExp("/\\*");
 			commentEndExpression = QRegExp("\\*/");
-
+	
 		// Quotation ; 
 			/*quotationFormat.setForeground(QColor(51,255,51));
 			rule.pattern = QRegExp("\".*\"");
@@ -143,7 +129,7 @@ using namespace QGED;
 			{
 				QRegExp expression(rule.pattern);
 				int index = expression.indexIn(text);
-				while(index >= 0)
+				while(index>=0)
 				{
 					int length = expression.matchedLength();
 					setFormat(index, length, *rule.format);
@@ -152,15 +138,16 @@ using namespace QGED;
 			}
 			setCurrentBlockState(0);
 
+			// Multi-line comment : 
 			int startIndex = 0;
 			if (previousBlockState() != 1)
 				startIndex = commentStartExpression.indexIn(text);
 
-			while(startIndex >= 0)
+			while(startIndex>=0)
 			{
 				int endIndex = commentEndExpression.indexIn(text, startIndex);
 				int commentLength;
-				if(endIndex == -1)
+				if(endIndex==-1)
 				{
 					setCurrentBlockState(1);
 					commentLength = text.length() - startIndex;
@@ -170,6 +157,18 @@ using namespace QGED;
 
 				setFormat(startIndex, commentLength, multiLineCommentFormat);
 				startIndex = commentStartExpression.indexIn(text, startIndex + commentLength);
+			}
+		}
+
+		// Search expression :
+		if(!searchExpression.isEmpty())
+		{
+			int index = searchExpression.indexIn(text);
+			while(index>=0)
+			{
+				int length = searchExpression.matchedLength();
+				setFormat(index, length, searchExpressionFormat);
+				index = searchExpression.indexIn(text, index + length);
 			}
 		}
 	}
@@ -183,6 +182,7 @@ using namespace QGED;
 		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
 		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
 		multiLineCommentFormat.setForeground(		settings.getCommentsColor() );
+		searchExpressionFormat.setBackground(		settings.getSearchColor() );
 
 		// Font : 
 		glslkeywordFormat.setFont(			settings.getKeywordFont() );
@@ -194,6 +194,22 @@ using namespace QGED;
 
 		// General highlighting (only if highlight was allowed for this editor) :
 		highlightEnabled = settings.isHighlightEnabled();
+
+		// Update : 
+		rehighlight();
+	}
+
+	void Highlighter::setSearchHighlight(const QRegExp& expression)
+	{
+		searchExpression = expression;
+
+		// Update : 
+		rehighlight();
+	}	
+
+	void Highlighter::clearSearchHighlight(void)
+	{
+		searchExpression = QRegExp();
 
 		// Update : 
 		rehighlight();
@@ -411,7 +427,7 @@ using namespace QGED;
 		{
 			QList<QTextEdit::ExtraSelection> extraSelections;
 
-			if (!isReadOnly())
+			if(!isReadOnly())
 			{
 				QTextEdit::ExtraSelection selection;
 
@@ -441,6 +457,7 @@ using namespace QGED;
 	void CodeEditor::setFilename(const QString& newFilename)
 	{
 		currentFilename = newFilename;
+		emit titleChanged();
 	}
 
 	QString CodeEditor::getPath(void) const
@@ -474,10 +491,8 @@ using namespace QGED;
 		else
 			fileName = "Unnamed.ppl";
 
-		/*if( documentModified )
-			return fileName + " *";
-		else
-			return fileName;*/
+		if( isModified() )
+			fileName += " *";
 
 		return fileName;
 	}
@@ -492,6 +507,12 @@ using namespace QGED;
 		return document()->isModified();
 	}
 
+	bool CodeEditor::canBeSaved(void) const
+	{
+		QFileInfo path(currentFilename);
+		return path.isWritable();
+	}
+
 	void CodeEditor::open(QString newFilename)
 	{
 		if(newFilename.isEmpty())
@@ -499,7 +520,7 @@ using namespace QGED;
 
 		QFile file(newFilename);
 
-		if (!file.open(QFile::ReadOnly | QFile::Text))
+		if(!file.open(QFile::ReadOnly | QFile::Text))
 		{
 			QMessageBox::warning(this, tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
 			return ;
@@ -515,10 +536,10 @@ using namespace QGED;
 		// Force the size of the margin :
 		setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 
+		this->blockSignals(prevState);
+
 		// Set the filename : 
 		setFilename(newFilename);
-
-		this->blockSignals(prevState);
 	}
 
 	void CodeEditor::save(QString newFilename)
@@ -539,6 +560,10 @@ using namespace QGED;
 
 		out << toPlainText();
 
+		file.close();
+
+		document()->setModified(false);
+
 		// Set the filename : 
 		setFilename(newFilename);
 	}
@@ -553,7 +578,7 @@ using namespace QGED;
 		subMenus.append(menu);
 	}
 
-	void CodeEditor::setSettings(const CodeEditorSettings& settings)
+	void CodeEditor::updateSettings(const CodeEditorSettings& settings)
 	{
 		// Prevent the code from sending modification signal :
 		blockSignals(true);
@@ -585,10 +610,161 @@ using namespace QGED;
 		blockSignals(false);
 	}
 
-// CodeEditorSettings
-	CodeEditorSettings* CodeEditorSettings::singleton 	= NULL;
-	const std::string CodeEditorSettings::moduleName 	= "CodeEditorSettings";
+	void CodeEditor::search(QRegExp expression, QTextDocument::FindFlags flags)
+	{
+		if(highLighter!=NULL)
+			highLighter->setSearchHighlight(expression);
 
+		QTextCursor cursor = document()->find(expression, textCursor(), flags);
+		
+		// Not found, cycle around : 
+		if(cursor.isNull() && (flags & QTextDocument::FindBackward)>0)
+			cursor = document()->find(expression, document()->characterCount()-1, flags);
+		else if(cursor.isNull())
+			cursor = document()->find(expression, 0, flags);
+
+		// Move : 
+		if(!cursor.isNull())
+			setTextCursor(cursor);
+	}
+
+	void CodeEditor::replace(QRegExp expression, QTextDocument::FindFlags flags, QString text)
+	{
+		if(highLighter!=NULL)
+			highLighter->setSearchHighlight(expression);
+
+		QTextCursor currentCursor = textCursor();
+		currentCursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::MoveAnchor);
+		QTextCursor cursor = document()->find(expression, currentCursor, flags);
+
+		// Not found, cycle around : 
+		if(cursor.isNull() && (flags & QTextDocument::FindBackward)>0)
+			cursor = document()->find(expression, document()->characterCount()-1, flags);
+		else
+			cursor = document()->find(expression, 0, flags);
+
+		if(!cursor.isNull())
+		{
+			// Move : 
+			setTextCursor(cursor);
+
+			// Replace :
+			cursor.removeSelectedText();
+			cursor.insertText(text);
+		}
+	}
+
+	void CodeEditor::replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text)
+	{
+		// TODO
+	}
+
+	void CodeEditor::clearSearch(void)
+	{
+		if(highLighter!=NULL)
+			highLighter->clearSearchHighlight();
+	}
+
+// SearchAndReplaceWidget :
+	SearchAndReplaceWidget::SearchAndReplaceWidget(QWidget* parent)
+	 : 	QWidgetAction(parent),
+		widget(parent),
+		layout(&widget),
+		searchLabel("Search : ", &widget),
+		replaceLabel("Replace : ", &widget),
+		searchPattern(&widget),
+		replaceString(&widget),
+		worldOnlyCheck("World Only", &widget),
+		matchCaseCheck("Match case", &widget),
+		backwardSearchCheck("Backward search", &widget),
+		findButton("Find", &widget),
+		replaceButton("Replace", &widget),
+		replaceAllButton("Replace All", &widget),
+		clearButton("Clear", &widget)
+	{
+		layout.addWidget(&searchLabel, 		0, 0);
+		layout.addWidget(&searchPattern,	0, 1);
+		layout.addWidget(&replaceLabel,		1, 0);
+		layout.addWidget(&replaceString,	1, 1);
+		layout.addWidget(&worldOnlyCheck,	2, 0, 1, 2);
+		layout.addWidget(&matchCaseCheck,	3, 0, 1, 2);
+		layout.addWidget(&backwardSearchCheck,	4, 0, 1, 2);
+		layout.addWidget(&findButton,		5, 0);
+		layout.addWidget(&clearButton,		5, 1);
+		layout.addWidget(&replaceButton,	6, 0);
+		layout.addWidget(&replaceAllButton,	6, 1);
+		layout.addWidget(&errorString,		7, 0, 1, 2);
+
+		errorString.hide();
+
+		QObject::connect(&findButton, 		SIGNAL(released()), this, SLOT(prepareExpression()));
+		QObject::connect(&replaceButton, 	SIGNAL(released()), this, SLOT(prepareExpression()));
+		QObject::connect(&replaceAllButton, 	SIGNAL(released()), this, SLOT(prepareExpression()));
+		QObject::connect(&clearButton, 		SIGNAL(released()), this, SIGNAL(clearSearch()));
+
+		setDefaultWidget(&widget);
+	}
+	
+	SearchAndReplaceWidget::~SearchAndReplaceWidget(void)
+	{
+		releaseWidget(&widget);
+	}
+
+	void SearchAndReplaceWidget::prepareExpression(void)
+	{
+		QPushButton* 	button 		= reinterpret_cast<QPushButton*>(QObject::sender());
+		QString 	expression 	= searchPattern.text(),
+				replacement	= replaceString.text();
+
+		if(!expression.isEmpty())
+		{
+			QRegExp regExpression(expression);
+			QTextDocument::FindFlags flags = 0;
+
+			if(matchCaseCheck.isChecked())
+			{
+				regExpression.setCaseSensitivity(Qt::CaseSensitive);
+				flags = flags | QTextDocument::FindCaseSensitively;	// actually, might be useless, see QTextDocument::find with QRegExp argument.
+			}			
+			else
+				regExpression.setCaseSensitivity(Qt::CaseInsensitive);
+			
+			if(worldOnlyCheck.isChecked())
+				flags = flags | QTextDocument::FindWholeWords;
+
+			if(backwardSearchCheck.isChecked())
+				flags = flags | QTextDocument::FindBackward;
+
+			if(regExpression.isValid())
+			{
+				// No error to report : 
+				errorString.hide();
+
+				if(button==&findButton)
+				{
+					// Send the search request : 
+					emit search(regExpression, flags);
+				}
+				else if(button==&replaceButton)	
+				{
+					// Send the replace request : 
+					emit replace(regExpression, flags, replacement);
+				}
+				else if(button==&replaceAllButton)
+				{
+					// Send the replace all request : 
+					emit replaceAll(regExpression, flags, replacement);
+				}
+			}			
+			else
+			{
+				errorString.setText(tr("Error : %1").arg(regExpression.errorString()));
+				errorString.show();
+			}
+		}
+	}
+
+// CodeEditorSettings :
 	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
 	 : 	QWidget(parent),
 		layout(this),
@@ -597,6 +773,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
 		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
 		commentsColorLabel("Comments"),
+		searchColorLabel("Search"),
 		highlightKeywordsCheck("Highlight keywords"),
 		highlightCurrentLineCheck("Highlight current line"),
 		okButton("OK"),
@@ -605,140 +782,7 @@ using namespace QGED;
 		resetButton("Reset"),
 		defaultFontSize( fontInfo().pointSize() )
 	{
-		if(singleton!=NULL)
-			throw Exception("CodeEditorSettings::CodeEditorSettings - A settings widget already exists (internal error).", __FILE__, __LINE__);
-		
-		// Set the singleton : 
-		singleton = this;
-
-		// Load the data : 
-			// First, restore all to default : 
-			resetSettings();
-
-			/*// Then load settings : 
-			SettingsManager settings;
-			Element e;
-
-			e = settings.getModuleData(moduleName, "ColorGLSLKeywords");
-			if(!e.arguments.empty())
-				glslKeywordColor.setNamedColor( e.arguments.front().c_str() );
-
-			e = settings.getModuleData(moduleName, "ColorGLSLFunctions");
-			if(!e.arguments.empty())
-				glslFunctionColor.setNamedColor( e.arguments.front().c_str() );
-
-			e = settings.getModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords");
-			if(!e.arguments.empty())
-				glipLayoutLoaderKeywordColor.setNamedColor( e.arguments.front().c_str() );
-				
-			e = settings.getModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords");
-			if(!e.arguments.empty())
-				glipUniformLoaderKeywordColor.setNamedColor( e.arguments.front().c_str() );
-			
-			e = settings.getModuleData(moduleName, "ColorComments");
-			if(!e.arguments.empty())
-				commentsColor.setNamedColor( e.arguments.front().c_str() );
-
-			e = settings.getModuleData(moduleName, "TabulationLength");
-			if(!e.arguments.empty())
-				from_string(e.arguments.front(), tabNumberOfSpaces);
-
-			e = settings.getModuleData(moduleName, "HighlightEnabled");
-			if(!e.arguments.empty())
-			{
-				int tmp = 0;
-				from_string(e.arguments.front(), tmp);
-				enableHighlight = tmp>0;
-			}
-
-			e = settings.getModuleData(moduleName, "HighlightCurrentLineEnabled");
-			if(!e.arguments.empty())
-			{
-				int tmp = 0;
-				from_string(e.arguments.front(), tmp);
-				highlightCurrentLine = tmp>0;
-			}
-
-			e = settings.getModuleData(moduleName, "WordWrapEnabled");
-			if(!e.arguments.empty())
-			{
-				int tmp = 0;
-				from_string(e.arguments.front(), tmp);
-
-				if(tmp>0)
-					wrapMode = QTextOption::WordWrap;
-				else
-					wrapMode = QTextOption::NoWrap;
-			}
-
-			// Fonts :
-			QFontDatabase 	db;
-			QString 	familyName,
-					styleName;
-			int		pointSize;
-			bool		test		= true;
-			
-			e = settings.getModuleData(moduleName, "EditorFont_Family");
-			if(!e.noBody)
-				familyName = e.getCleanBody().c_str();		
-			else
-			{
-				familyName = "Source Code Pro";
-				test = false;
-			}
-
-			e = settings.getModuleData(moduleName, "EditorFont_Style");
-			if(!e.noBody)
-				styleName = e.getCleanBody().c_str();
-			else
-			{
-				styleName = "Regular";
-				test = false;
-			}
-
-			e = settings.getModuleData(moduleName, "EditorFont_PointSize");
-			if(e.arguments.size()==1)
-			{
-				if( !from_string(e.arguments.back(), pointSize) )
-					pointSize = defaultFontSize;
-			}
-			else
-				test = false;
-
-			if(test)
-				editorFont = db.font( familyName, styleName, pointSize);
-			
-			test = true;
-
-			e = settings.getModuleData(moduleName, "KeywordsFont_Family");
-			if(!e.noBody)
-				familyName = e.getCleanBody().c_str();		
-			else
-			{
-				familyName = "Source Code Pro";
-				test = false;
-			}
-
-			e = settings.getModuleData(moduleName, "KeywordsFont_Style");
-			if(!e.noBody)
-				styleName = e.getCleanBody().c_str();
-			else
-			{
-				styleName = "Regular";
-				test = false;
-			}
-
-			e = settings.getModuleData(moduleName, "KeywordsFont_PointSize");
-			if(e.arguments.size()==1)
-			{
-				if( !from_string(e.arguments.back(), pointSize) )
-					pointSize = defaultFontSize;
-			}
-			else
-				test = false;
-
-			if(test)
-				keywordFont = db.font( familyName, styleName, pointSize);*/
+		resetSettings();
 		
 		// Create the layout for the GUI : 
 			// Colors : 
@@ -747,12 +791,14 @@ using namespace QGED;
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	2, 0);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	3, 0);
 				layoutColors.addWidget(&commentsColorLabel, 			4, 0);
+				layoutColors.addWidget(&searchColorLabel, 			5, 0);
 
 				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
 				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	2, 1);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	3, 1);
 				layoutColors.addWidget(&commentsColorButton, 			4, 1);
+				layoutColors.addWidget(&searchColorButton,			5, 1);
 
 				groupColors.setTitle("Highlight colors");
 				groupColors.setLayout(&layoutColors);
@@ -763,6 +809,7 @@ using namespace QGED;
 				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&searchColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
 
 			// Font : 
 				layoutFonts.addWidget(&editorFontButton);
@@ -809,97 +856,7 @@ using namespace QGED;
 	}
 
 	CodeEditorSettings::~CodeEditorSettings(void)
-	{
-		/*if(singleton==this)
-		{
-			// Save the data : 
-			SettingsManager settings;
-			Element e;
-
-			e = settings.getModuleData(moduleName, "ColorGLSLKeywords");
-			e.arguments.clear();
-			e.arguments.push_back( glslKeywordColor.name().toStdString() );
-			settings.setModuleData(moduleName, "ColorGLSLKeywords", e);
-
-			e = settings.getModuleData(moduleName, "ColorGLSLFunctions");
-			e.arguments.clear();
-			e.arguments.push_back( glslFunctionColor.name().toStdString() );
-			settings.setModuleData(moduleName, "ColorGLSLFunctions", e);
-			
-			e = settings.getModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords");
-			e.arguments.clear();
-			e.arguments.push_back( glipLayoutLoaderKeywordColor.name().toStdString() );
-			settings.setModuleData(moduleName, "ColorGLIPLayoutLoaderKeywords", e);
-				
-			e = settings.getModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords");
-			e.arguments.clear();
-			e.arguments.push_back( glipUniformLoaderKeywordColor.name().toStdString() );
-			settings.setModuleData(moduleName, "ColorGLIPUniformsLoaderKeywords", e);
-			
-			e = settings.getModuleData(moduleName, "ColorComments");
-			e.arguments.clear();
-			e.arguments.push_back( commentsColor.name().toStdString() );
-			settings.setModuleData(moduleName, "ColorComments", e);
-
-			e = settings.getModuleData(moduleName, "TabulationLength");
-			e.arguments.clear();
-			e.arguments.push_back( to_string(tabNumberOfSpaces) );
-			settings.setModuleData(moduleName, "TabulationLength", e);
-
-			e = settings.getModuleData(moduleName, "HighlightEnabled");
-			e.arguments.clear();
-			e.arguments.push_back( to_string(static_cast<int>(enableHighlight)) );
-			settings.setModuleData(moduleName, "HighlightEnabled", e);
-			
-			e = settings.getModuleData(moduleName, "HighlightCurrentLineEnabled");
-			e.arguments.clear();
-			e.arguments.push_back( to_string(static_cast<int>(highlightCurrentLine)) );
-			settings.setModuleData(moduleName, "HighlightCurrentLineEnabled", e);
-
-			e = settings.getModuleData(moduleName, "WordWrapEnabled");
-			e.arguments.clear();
-			if(wrapMode==QTextOption::WordWrap)
-				e.arguments.push_back( to_string(static_cast<int>(true)) );
-			else
-				e.arguments.push_back( to_string(static_cast<int>(false)) );
-			settings.setModuleData(moduleName, "WordWrapEnabled", e);
-
-			// Fonts :
-			e = settings.getModuleData(moduleName, "EditorFont_Family");
-			e.body.clear();
-			e.body = editorFont.family().toStdString();
-			settings.setModuleData(moduleName, "EditorFont_Family", e);
-
-			e = settings.getModuleData(moduleName, "EditorFont_Style");
-			e.body.clear();
-			e.body = editorFont.styleName().toStdString();
-			settings.setModuleData(moduleName, "EditorFont_Style", e);
-			
-			e = settings.getModuleData(moduleName, "EditorFont_PointSize");
-			e.arguments.clear();
-			e.arguments.push_back( to_string(editorFont.pointSize()) );
-			settings.setModuleData(moduleName, "EditorFont_PointSize", e);
-			
-			e = settings.getModuleData(moduleName, "KeywordsFont_Family");
-			e.body.clear();
-			e.body = keywordFont.family().toStdString();
-			settings.setModuleData(moduleName, "KeywordsFont_Family", e);
-
-			e = settings.getModuleData(moduleName, "KeywordsFont_Style");
-			e.body.clear();
-			e.body = keywordFont.styleName().toStdString();
-			settings.setModuleData(moduleName, "KeywordsFont_Style", e);
-			
-			e = settings.getModuleData(moduleName, "KeywordsFont_PointSize");
-			e.arguments.clear();
-			e.arguments.push_back( to_string(keywordFont.pointSize()) );
-			settings.setModuleData(moduleName, "KeywordsFont_PointSize", e);
-
-			// Clear : 
-			singleton = NULL;
-		}
-		// else : do nothing.*/
-	}
+	{ }
 
 	void CodeEditorSettings::updateGUI(void)
 	{
@@ -911,6 +868,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
 		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
 		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
+		searchColorButton.setStyleSheet(			tr("background:%1;").arg(searchColor.name()) );
 
 		// Fonts : 
 		editorFontButton.setText(tr("Editor : %1 (%2)").arg(editorFont.family()).arg(editorFont.pointSize()));
@@ -936,6 +894,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
 		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
 		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
+		searchColor			= searchColorButton.palette().color(QPalette::Window);
 
 		// Fonts :
 		editorFont			= editorFontButton.font();
@@ -968,6 +927,8 @@ using namespace QGED;
 			title = "GLIP Uniforms Loader Keyword";
 		else if(target==&commentsColorButton)
 			title = "Comments Color";
+		else if(target==&searchColorButton)
+			title = "Search Color";
 		else
 			throw Exception("CodeEditorSettings::changeColor - Unknown color picker (internal error).", __FILE__, __LINE__);
 
@@ -1030,6 +991,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColor	= QColor(255, 	51, 	255);
 		glipUniformLoaderKeywordColor	= QColor(51, 	255, 	255);
 		commentsColor			= QColor(51,	153,	255);
+		searchColor			= QColor(0,	192,	192);
 
 		// Fonts : 
 		QFontDatabase db;
@@ -1058,6 +1020,7 @@ using namespace QGED;
 	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
+	const QColor& 			CodeEditorSettings::getSearchColor(void) const				{ return searchColor; }
 	const QFont&			CodeEditorSettings::getEditorFont(void) const				{ return editorFont; }
 	const QFont& 			CodeEditorSettings::getKeywordFont(void) const				{ return keywordFont; }
 	const QTextOption::WrapMode& 	CodeEditorSettings::getWrapMode(void) const				{ return wrapMode; }
@@ -1065,12 +1028,143 @@ using namespace QGED;
 	const bool& 			CodeEditorSettings::isHighlightEnabled(void) const			{ return enableHighlight; }
 	const bool&			CodeEditorSettings::isLineHighlightEnabled(void) const			{ return highlightCurrentLine; }
 
-	CodeEditorSettings& CodeEditorSettings::instance(void)
+	std::string CodeEditorSettings::getSettingsString(void) const
 	{
-		if(singleton==NULL)
-			throw Exception("CodeEditorSettings::instance - No instance is available (internal error).", __FILE__, __LINE__);
-		else
-			return *singleton;
+		std::string str;
+
+		Glip::Modules::VanillaParserSpace::Element element;
+
+		element.noName 		= true;
+		element.noArgument	= false;
+		element.noBody		= true;
+
+		#define SAVE_COLOR( varName ) \
+			element.strKeyword = STR( varName ); \
+			element.arguments.push_back( varName .name().toStdString() ); \
+			str += element.getCode() + "\n"; \
+			element.arguments.clear();
+
+		#define SAVE_NUMBER( varName ) \
+			element.strKeyword = STR( varName ); \
+			element.arguments.push_back( to_string(static_cast<int>( varName )) ); \
+			str += element.getCode() + "\n"; \
+			element.arguments.clear(); \
+
+		#define SAVE_TEST( varName, test ) \
+			element.strKeyword = STR( varName ); \
+			element.arguments.push_back( to_string(static_cast<int>( varName test )) ); \
+			str += element.getCode() + "\n"; \
+			element.arguments.clear();	
+
+		#define SAVE_FONT( varName ) \
+			element.strKeyword = STR( varName ); \
+			element.arguments.push_back( varName .family().toStdString() ); \
+			element.arguments.push_back( varName .styleName().toStdString() ); \
+			element.arguments.push_back( to_string( varName .pointSize()) ); \
+			str += element.getCode() + "\n"; \
+			element.arguments.clear();
+	
+			SAVE_COLOR( glslKeywordColor )
+			SAVE_COLOR( glslFunctionColor )
+			SAVE_COLOR( glipLayoutLoaderKeywordColor )
+			SAVE_COLOR( glipUniformLoaderKeywordColor )
+			SAVE_COLOR( commentsColor )
+
+			SAVE_NUMBER( tabNumberOfSpaces )
+			SAVE_NUMBER( enableHighlight )
+			SAVE_NUMBER( highlightCurrentLine )
+
+			SAVE_TEST( wrapMode, ==QTextOption::WordWrap )
+			
+			SAVE_FONT( editorFont )
+			SAVE_FONT( keywordFont )
+
+		#undef SAVE_COLOR
+		#undef SAVE_NUMBER
+		#undef SAVE_TEST
+		#undef SAVE_FONT
+
+		return str;
+	}
+	
+	void CodeEditorSettings::setSettingsFromString(const std::string& str)
+	{
+		Glip::Modules::VanillaParserSpace::VanillaParser parser(str);
+
+		#define READ_COLOR( varName ) \
+			if(it->strKeyword==STR( varName )) \
+			{ \
+				if( it->arguments.size()==1 ) \
+					varName .setNamedColor( it->arguments.front().c_str() ); \
+				else \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read color " STR( varName ) ".", __FILE__, __LINE__); \
+			}
+
+		#define READ_NUMBER( varName ) \
+			if(it->strKeyword==STR( varName )) \
+			{ \
+				if( it->arguments.size()==1 ) \
+				{ \
+					if(!from_string(it->arguments.front(), varName)) \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
+				} \
+				else \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+			}
+
+		#define READ_TEST( varName, valTrue, valFalse ) \
+			if(it->strKeyword==STR( varName )) \
+			{ \
+				if( it->arguments.size()==1 ) \
+				{ \
+					bool t = false; \
+					if(!from_string(it->arguments.front(), t)) \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
+					else if(t) \
+						varName = valTrue; \
+					else \
+						varName = valFalse; \
+				} \
+				else \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+			}	
+
+		#define READ_FONT( varName ) \
+			if(it->strKeyword==STR( varName )) \
+			{ \
+				if( it->arguments.size()==3 ) \
+				{ \
+					QString familyName = it->arguments[0].c_str(), \
+						styleName  = it->arguments[1].c_str(); \
+					int	pointSize; \
+					\
+					if(!from_string(it->arguments[2], pointSize)) \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read pointSize for font " STR( varName ) " : " + it->arguments[2] + ".", __FILE__, __LINE__); \
+					\
+					QFontDatabase db; \
+					varName = db.font( familyName, styleName, pointSize); \
+				} \
+				else \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+			} 
+
+		for(std::vector<Glip::Modules::VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+		{
+			READ_COLOR( glslKeywordColor )
+			READ_COLOR( glslFunctionColor )
+			READ_COLOR( glipLayoutLoaderKeywordColor )
+			READ_COLOR( glipUniformLoaderKeywordColor )
+			READ_COLOR( commentsColor )
+
+			READ_NUMBER( tabNumberOfSpaces )
+			READ_NUMBER( enableHighlight )
+			READ_NUMBER( highlightCurrentLine )
+
+			READ_TEST( wrapMode, QTextOption::WordWrap, QTextOption::NoWrap)
+			
+			READ_FONT( editorFont )
+			READ_FONT( keywordFont )
+		}
 	}
 
 // TemplateMenu : 
@@ -1156,7 +1250,9 @@ using namespace QGED;
 									};
 
 	TemplateMenu::TemplateMenu(QWidget* parent)
-	 : QMenu("Insert Template", parent), signalMapper(this),  addComments("Option : insert comments", this), lastInsertionID(tplUnknown)
+	 :	QMenu("Insert Template", parent), 
+		signalMapper(this),  
+		addComments("Option : insert comments", this)
 	{
 		addComments.setCheckable(true);
 		addAction(&addComments);
@@ -1184,29 +1280,12 @@ using namespace QGED;
 
 	void TemplateMenu::insertTemplateCalled(int k)
 	{
-		lastInsertionID = static_cast<CodeTemplates>(k);
-		emit insertTemplate();
-	}
+		CodeTemplates ct = static_cast<CodeTemplates>(k);
 
-	QString TemplateMenu::getTemplateCode(void)
-	{
-		if(lastInsertionID>=0 && lastInsertionID<numTemplates)
-		{
-			QString res;
-
-			if(addComments.isChecked())
-				res = templatesCodeWithHelp[lastInsertionID];
-			else
-				res = templatesCode[lastInsertionID];
-
-			lastInsertionID = tplUnknown;
-			return res;
-		}
+		if(addComments.isChecked())
+			emit insertTemplate(QString(templatesCodeWithHelp[ct]));
 		else
-		{
-			lastInsertionID = tplUnknown;
-			return "";
-		}
+			emit insertTemplate(QString(templatesCode[ct]));
 	}
 
 // ElementsMenu
@@ -1257,7 +1336,7 @@ using namespace QGED;
 
 		if(!editor->empty())
 		{
-			QMenu* menu = new QMenu(editor->getTitle());
+			QMenu* menu = new QMenu(editor->getTitle(), parentWidget());
 
 			menu->addAction(tr("Include %1").arg(editor->getRawTitle()), this, SLOT(insertCalled()))->setToolTip(tr("INCLUDE_FILE(%1)\n").arg(editor->getRawTitle()));
 
@@ -1354,11 +1433,14 @@ using namespace QGED;
 			removeAction(it->second->menuAction());
 			delete it->second;
 			menus.erase(it);
+
+			if(isEmpty())
+				addAction("No elements")->setEnabled(false);
 		}
 	}
 
 // MainWidget :
-	MainWidget::MainWidget(void)
+	/*MainWidget::MainWidget(void)
 	 : 	layout(this), 
 		menuBar(this), 
 		widgets(this), 
@@ -1447,12 +1529,12 @@ using namespace QGED;
 		CodeEditor* newEditor = new CodeEditor(this);
 		newEditor->addSubMenu(&templateMenu);
 		newEditor->addSubMenu(&elementsMenu);
-		newEditor->setSettings(editorSettings);
+		newEditor->updateSettings(editorSettings);
 		widgets.addTab(newEditor, newEditor->getTitle());
 		widgets.setCurrentWidget( newEditor );
 		//widgets.setCurrentTabTextColor( QColor("#BBBBBB") );
 
-		connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
+		//connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
 	}
 
 	void MainWidget::open(const QStringList& filenames)
@@ -1469,12 +1551,12 @@ using namespace QGED;
 
 			if(e->getFilename().isEmpty())
 			{
-				/*QString filename = openSaveInterface.saveAsDialog();
-	
-				if(!filename.isEmpty())			
-					e->setFilename(filename);
-				else
-					return ;*/
+				//QString filename = openSaveInterface.saveAsDialog();
+				//
+				//if(!filename.isEmpty())			
+				//	e->setFilename(filename);
+				//else
+				//	return ;
 			}
 
 			e->save();
@@ -1595,7 +1677,7 @@ using namespace QGED;
 		{
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 
-			e->insert( templateMenu.getTemplateCode() );
+			//e->insert( templateMenu.getTemplateCode() );
 		}
 	}
 
@@ -1734,22 +1816,22 @@ using namespace QGED;
 
 			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
 	
-			/*e->setFilename( filename );
-			if(!)
-				closeTab();
-			else
-			{
-				// Append the path : 
-				//pathWidget.addPath( e->path().toStdString() );
-
-				// Report : 
-				//openSaveInterface.reportSuccessfulLoad( filename );
-				//openSaveInterface.enableSave(true);
-				updateCurrentToolTip();
-
-				// Scan : 
-				updateElementsOfEditor(e);
-			}*/
+			//e->setFilename( filename );
+			//if(!)
+			//	closeTab();
+			//else
+			//{
+			//	// Append the path : 
+			//	//pathWidget.addPath( e->path().toStdString() );
+			//
+			//	// Report : 
+			//	//openSaveInterface.reportSuccessfulLoad( filename );
+			//	//openSaveInterface.enableSave(true);
+			//	updateCurrentToolTip();
+			//
+			//	// Scan : 
+			//	updateElementsOfEditor(e);
+			//}
 
 			e->open(filename);
 		}
@@ -1783,19 +1865,29 @@ using namespace QGED;
 		{
 			elementsMenu.remove(e);
 		}
-	}
+	}*/
 
-// TestMainWidget :
-	TestMainWidget::TestMainWidget(void)
-	 : 	layout(this),
-		mainMenuButton("Menu"),
-		compileButton("Compile"),
+// MainWidget :
+	MainWidget::MainWidget(void)
+	 : 	currentPath("."),
+		layout(this),
+		menuBarLeft(this),
+		menuBarRight(this),
+		//newTabButton(this),
+		//searchButton(this),
 		mainMenu("Menu", this),
+		searchContainerMenu("Find", this),
+		newAction("+", this),
 		openAction("Open", this),	
 		saveAction("Save", this),
 		saveAsAction("Save as", this),
 		saveAllAction("Save all", this),
-		closeAllAction("Close all", this)
+		closeAllAction("Close all", this),
+		settingsAction("Preferences", this),
+		compileAction("Compile", this),
+		templateMenu(this),
+		elementsMenu(this),
+		searchAndReplaceWidget(this)
 	{
 		// Build Menu : 
 		mainMenu.addAction(&openAction);
@@ -1803,24 +1895,44 @@ using namespace QGED;
 		mainMenu.addAction(&saveAsAction);
 		mainMenu.addAction(&saveAllAction);
 		mainMenu.addAction(&closeAllAction);
+		mainMenu.addSeparator();
+		mainMenu.addMenu(&templateMenu);
+		mainMenu.addMenu(&elementsMenu);
+		mainMenu.addSeparator();
+		mainMenu.addAction(&settingsAction);
+
+		// Build search menu : 
+		searchContainerMenu.addAction(&searchAndReplaceWidget);
+		/*searchButton.setMenu(&searchContainerMenu);
+		searchButton.setPopupMode(QToolButton::InstantPopup);*/
 
 		// Tab Settings : 
+		tabBar.setExpanding(false);
 		tabBar.setMovable(true);
 		tabBar.setTabsClosable(true);
 
-		// Button settings : 
-		mainMenuButton.setMenu(&mainMenu);
-		mainMenuButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-		compileButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-		newTabButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		// Button settings :
+		menuBarLeft.addMenu(&mainMenu);
+		menuBarLeft.addAction(&compileAction);
+		menuBarLeft.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+		
+		menuBarRight.addAction(&newAction);
+		menuBarRight.addMenu(&searchContainerMenu);
+		menuBarRight.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-		topBar.addWidget(&mainMenuButton);
-		topBar.addWidget(&compileButton);
+		/*newTabButton.setMinimumSize(menuBar.height()-4, menuBar.height()-4);
+		newTabButton.setMaximumSize(menuBar.height()-4, menuBar.height()-4);
+		searchButton.setMinimumSize(menuBar.height()-4, menuBar.height()-4);
+		searchButton.setMaximumSize(menuBar.height()-4, menuBar.height()-4);*/
+
+		topBar.addWidget(&menuBarLeft);
 		topBar.addWidget(&tabBar);
-		topBar.addWidget(&newTabButton);
+		topBar.addWidget(&menuBarRight);
+		//topBar.addWidget(&newTabButton);
+		//topBar.addWidget(&searchButton);
 
 		topBar.setMargin(0);
-		topBar.setSpacing(0);
+		topBar.setSpacing(1);
 
 		layout.addLayout(&topBar);
 		layout.addLayout(&stack);
@@ -1828,29 +1940,152 @@ using namespace QGED;
 		layout.setSpacing(0);
 
 		// Signals : 
-		QObject::connect(&tabBar, 	SIGNAL(currentChanged(int)), 	this, SLOT(changeToTab(int)));
-		QObject::connect(&tabBar,	SIGNAL(tabCloseRequested(int)),	this, SLOT(closeTab(int)));
-		QObject::connect(&newTabButton,	SIGNAL(released(void)), 	this, SLOT(addTab(void)));		
+		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 			 SLOT(changeToTab(int)));
+		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 			 SLOT(closeTab(int)));
+		//QObject::connect(&newTabButton,			SIGNAL(released(void)), 					this, 			 SLOT(addTab(void)));
+		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(addTab(void)));
+		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(open()));
+		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(save()));
+		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(saveAs()));
+		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(saveAll()));
+		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(closeAll()));
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settings, 		 SLOT(show()));
+		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,			 SLOT(insert(QString)));
+		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,			 SLOT(insert(QString)));
+		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,			 SLOT(updateElements(void)));
+		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,			 SLOT(updateSettings(void)));
+		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(transferSourceCompilation(void)));
+		//QObject::connect(&searchContainerMenu,		SIGNAL(aboutToShow(void)),					&searchAndReplaceWidget, SLOT(aboutToShow(void))); // Would give the focus to the search bu breaks the position of the menu...
+		QObject::connect(&searchAndReplaceWidget,	SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,			 SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
+		QObject::connect(&searchAndReplaceWidget,	SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceWidget,	SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceWidget,	SIGNAL(clearSearch(void)),					this,			 SLOT(transferClearSearchRequest(void)));
+
+		// Create a new tab by default : 
+		addTab();
 	}
 
-	TestMainWidget::~TestMainWidget(void)
+	MainWidget::~MainWidget(void)
 	{ 
-		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
-		{
-			stack.removeWidget(*it);
-			delete (*it);
-		}
-
-		editors.clear();
+		while(tabBar.count()>0)
+			closeTab(0, true);
 	}
 
-	void TestMainWidget::addTab(void)
+	CodeEditor* MainWidget::getCurrentEditor(void)
+	{
+		int tabID = tabBar.currentIndex();
+
+		if(tabID<0)
+			return NULL;
+
+		QMap<int, CodeEditor*>::iterator it = editors.find(tabBar.tabData(tabID).toUInt());
+
+		if(it!=editors.end())
+			return (*it);
+		else
+			return NULL;
+	}
+
+	int MainWidget::getTabIndex(CodeEditor* editor)
+	{
+		if(editor==NULL || tabBar.count()==0)
+			return -1;
+		else
+		{
+			int c = 0;
+
+			for( ; c<tabBar.count(); c++)
+			{
+				int idx = tabBar.tabData(c).toUInt();
+
+				QMap<int, CodeEditor*>::iterator it = editors.find(idx);
+
+				if(it!=editors.end())
+					if((*it)==editor)
+						return c;
+			}
+		
+			return -1;
+		}
+	}
+
+	void MainWidget::setCurrentPath(QString path)
+	{
+		QFileInfo info(path);
+		currentPath = info.path();
+	}
+
+	void MainWidget::save(CodeEditor* editor)
+	{
+		if(editor==NULL)
+			editor = getCurrentEditor();
+
+		if(editor==NULL)
+			return ;
+
+		if(editor->canBeSaved())
+		{
+			editor->save();
+			setCurrentPath(editor->getFilename());
+		}
+		else 
+			saveAs(editor);
+	}
+
+	void MainWidget::saveAs(CodeEditor* editor, QString filename)
+	{
+		if(editor==NULL)
+			editor = getCurrentEditor();
+
+		if(editor==NULL)
+			return ;
+
+		if(filename.isEmpty())
+			filename = QFileDialog::getSaveFileName(NULL, tr("Save Source File as ..."), currentPath, "Source (*.ppl *.shr *.uvd *.txt)");
+
+		if(filename.isEmpty())
+			return ;
+		else
+		{
+			editor->save(filename);
+			setCurrentPath(filename);
+		}
+	}
+
+	void MainWidget::closeEvent(QCloseEvent* event)
+	{
+		std::cout << "Close event!" << std::endl;
+		event->accept();
+	}
+
+	LayoutLoader::PipelineScriptElements MainWidget::scanSource(const std::string& code) const
+	{
+		LayoutLoader layoutLoader;
+		LayoutLoader::PipelineScriptElements  elements;
+
+		try
+		{
+			elements = layoutLoader.listElements(code);
+		}
+		catch(Glip::Exception& e)
+		{ } // Forget it.
+
+		return elements;
+	}
+
+	void MainWidget::addTab(const QString& filename)
 	{
 		static unsigned int counter = 0; 
 	
 		// Create the widget : 
 		CodeEditor* ptr = new CodeEditor;
 		editors[counter] = ptr;
+		ptr->updateSettings(settings);
+		ptr->addSubMenu(&templateMenu);
+		ptr->addSubMenu(&elementsMenu);
+
+		QObject::connect(ptr, SIGNAL(titleChanged(void)),	this, SLOT(tabTitleChanged(void)));
+		QObject::connect(ptr, SIGNAL(modified(bool)), 		this, SLOT(documentModified(bool)));
 
 		// Create the tab :
 		stack.addWidget(ptr);
@@ -1859,59 +2094,191 @@ using namespace QGED;
 		tabBar.setCurrentIndex(c);	
 
 		counter++;
+
+		if(!filename.isEmpty())
+		{
+			ptr->open(filename);
+			LayoutLoader::PipelineScriptElements elements = scanSource(ptr->getCurrentContent());
+			elementsMenu.scan(ptr, elements);
+		}
 	}
 
-	void TestMainWidget::changeToTab(int idx)
+	void MainWidget::tabTitleChanged(void)
 	{
-		int w = tabBar.tabData(idx).toUInt();
+		CodeEditor* ptr = reinterpret_cast<CodeEditor*>(QObject::sender());
+
+		int tabID = getTabIndex(ptr);
+
+		if(ptr!=NULL && tabID>=0)
+		{
+			tabBar.setTabText(tabID, ptr->getTitle());
+
+			QString toolTip = "<table>";
+			toolTip += tr("<tr><td><i>Filename</i></td><td>:</td><td>%1</td></tr>").arg(ptr->getRawTitle());
+			toolTip += tr("<tr><td><i>Path</i></td><td>:</td><td>%1</td></tr>").arg(ptr->getPath());
+			toolTip += "</table>";
+
+			tabBar.setTabToolTip(tabID, toolTip);
+		}
+	}
+
+	void MainWidget::documentModified(bool changed)
+	{
+		CodeEditor* ptr = reinterpret_cast<CodeEditor*>(QObject::sender());
+
+		int tabID = getTabIndex(ptr);
+
+		if(ptr!=NULL && tabID>=0)
+			tabBar.setTabText(tabID, ptr->getTitle());
+	}
+
+	void MainWidget::insert(QString str)
+	{
+		CodeEditor* editor = getCurrentEditor();
+
+		if(editor!=NULL)
+			editor->insert(str);
+	}
+
+	void MainWidget::updateElements(void)
+	{
+		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+		{
+			LayoutLoader::PipelineScriptElements elements = scanSource((*it)->getCurrentContent());
+			elementsMenu.scan(*it, elements);
+		}
+	}
+
+	void MainWidget::changeToTab(int tabID)
+	{
+		int w = tabBar.tabData(tabID).toUInt();
 
 		if(editors.find(w)!=editors.end())
 			stack.setCurrentWidget(editors[w]);
 	}
 
-	void TestMainWidget::open(const QString& filename)
+	void MainWidget::open(QStringList filenameList)
 	{
+		if(filenameList.empty())
+			filenameList = QFileDialog::getOpenFileNames(NULL, "Open Source File(s)", currentPath, "Source Files (*.ppl *.shr *.uvd *.txt)");
 
+		if(!filenameList.empty())
+		{
+			for(QStringList::iterator it=filenameList.begin(); it!=filenameList.end(); it++)
+				addTab(*it);
+
+			setCurrentPath(filenameList.front());
+		}
 	}
 
-	void TestMainWidget::save(void)
+	void MainWidget::save(void)
 	{
-
+		save(getCurrentEditor());
 	}
 
-	void TestMainWidget::saveAs(const QString& filename)
+	void MainWidget::saveAs(const QString& filename)
 	{
-
+		saveAs(getCurrentEditor());
 	}
 
-	void TestMainWidget::saveAll(void)
+	void MainWidget::saveAll(void)
 	{
-
+		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+			save(*it);
 	}
 
-	void TestMainWidget::closeTab(int idx)
+	void MainWidget::updateSettings(void)
 	{
-		int w = tabBar.tabData(idx).toUInt();
+		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+			(*it)->updateSettings(settings);
+	}
 
-		QMap<int, CodeEditor*>::iterator it = editors.find(w);
+	void MainWidget::transferSourceCompilation(void)
+	{
+		CodeEditor* editor = getCurrentEditor();
+
+		if(editor!=NULL)
+			emit compileSource(editor->getCurrentContent(), reinterpret_cast<void*>(editor));
+	}
+
+	void MainWidget::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)
+	{
+		CodeEditor* editor = getCurrentEditor();
+
+		if(editor!=NULL)
+			editor->search(expression, flags);
+	}
+
+	void MainWidget::transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
+	{
+		CodeEditor* editor = getCurrentEditor();
+
+		if(editor!=NULL)
+			editor->replace(expression, flags, replacement);
+	}
+
+	void MainWidget::transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
+	{
+		CodeEditor* editor = getCurrentEditor();
+
+		if(editor!=NULL)
+			editor->replaceAll(expression, flags, replacement);
+	}
+
+	void MainWidget::transferClearSearchRequest(void)
+	{
+		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+			(*it)->clearSearch();
+	}
+
+	void MainWidget::closeTab(int tabID, bool imperative)
+	{
+		int idx = tabBar.tabData(tabID).toUInt();
+
+		QMap<int, CodeEditor*>::iterator it = editors.find(idx);
 
 		// If it exists, clear : 
 		if(it!=editors.end())
 		{
-			tabBar.removeTab(idx);
+			if((*it)->isModified())
+			{
+				changeToTab(tabID);
+
+				QMessageBox::StandardButton 	returnedButton;
+				QMessageBox::StandardButtons	buttons;
+
+				if(imperative)
+					buttons = QMessageBox::Save | QMessageBox::Discard;
+				else
+					buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
+
+				if((*it)->getFilename().isEmpty())
+					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), buttons);
+				else
+					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg((*it)->getFilename()), buttons);
+
+				if(returnedButton==QMessageBox::Save)
+					return save(*it);
+				else if(returnedButton == QMessageBox::Cancel)
+					return ; // exit
+			}
+
+			elementsMenu.remove(*it);
+			tabBar.removeTab(tabID);
 			stack.removeWidget(*it);
 			delete (*it);
 			editors.erase(it);
 		}
 	}
 
-	void TestMainWidget::closeCurrentTab(void)
+	void MainWidget::closeTab(void)
 	{
 		closeTab(tabBar.currentIndex());
 	}
 	
-	void TestMainWidget::closeAll(void)
+	void MainWidget::closeAll(void)
 	{
-
+		while(tabBar.count()>0)
+			closeTab(0);
 	}
 

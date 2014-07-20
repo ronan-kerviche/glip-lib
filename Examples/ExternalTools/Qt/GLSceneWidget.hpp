@@ -43,8 +43,10 @@
 	#include <QGraphicsSceneMouseEvent>
 	#include <QGraphicsProxyWidget>
 	#include <QMenu>
-	#include <QPushButton>
+	#include <QMenuBar>
 	#include <QSignalMapper>
+
+	
 
 namespace QVGL
 {
@@ -171,7 +173,6 @@ namespace QVGL
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
-			//bool eventFilter(QObject *obj, QEvent *event);
 
 			void addChild(QObject* pObject);
 			void removeChild(QObject* pObject);
@@ -232,11 +233,10 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
+				static TopBar*			singleton;
 				QGraphicsProxyWidget 		*graphicsProxy;
 				QHBoxLayout			bar;
-				QPushButton			mainMenuButton,
-								viewsMenuButton,
-								widgetsMenuButton;
+				QMenuBar			menuBar;
 				QMenu				mainMenu,
 								viewsMenu,
 								widgetsMenu;
@@ -269,6 +269,9 @@ namespace QVGL
 				void updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList);
 				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
+
+				static int getHeight(void); 
+				
 
 			signals : 
 				void changeViewRequest(View* targetView);

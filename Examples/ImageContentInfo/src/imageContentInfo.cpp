@@ -93,24 +93,14 @@
 		std::cout << "TmpWidget : Button C" << std::endl;
 	}
 
-// MainSubWidget :
-	CodeEditorSubWidget::CodeEditorSubWidget(void)	
-	{
-		setInnerWidget(&mainWidget);
-		setTitle("Code Editor");
-	}
-
-	CodeEditorSubWidget::~CodeEditorSubWidget(void)
-	{ }
-
 // TestEditorWidget ;
-	TestEditorWidget::TestEditorWidget(void)
+	CodeEditorSubWidget::CodeEditorSubWidget(void)
 	{
 		setInnerWidget(&mainWidget);
 		setTitle("Test Code Editor");
 	}
 	
-	TestEditorWidget::~TestEditorWidget(void)
+	CodeEditorSubWidget::~CodeEditorSubWidget(void)
 	{ }
 
 // Src :
@@ -178,9 +168,6 @@
 
 		CodeEditorSubWidget* editor = new CodeEditorSubWidget;
 		window.addSubWidget(editor);
-
-		TestEditorWidget* editorTmp = new TestEditorWidget;
-		window.addSubWidget(editorTmp);
 	}
 
 	IHM::~IHM(void)
@@ -273,7 +260,7 @@
 			ihm = new IHM;
 
 			// Load Stylesheet : 
-			/*const QString 	stylesheetFilename = "stylesheet.css";
+			const QString 	stylesheetFilename = "stylesheet.css";
 			QFile 		stylesheetFile(stylesheetFilename);
 			
 			if(!stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -292,7 +279,7 @@
 			QString 	stylesheet = stylesheetStream.readAll();
 
 			// Set style : 
-			QApplication::setStyleSheet(stylesheet);*/
+			QApplication::setStyleSheet(stylesheet);
 		}
 		catch(std::exception& e)
 		{

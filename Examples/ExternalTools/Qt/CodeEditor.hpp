@@ -51,7 +51,10 @@
 	#include <QTabBar>
 	#include <QStackedLayout>
 	#include <QToolButton>
-	
+	#include <QFileDialog>
+	#include <QLineEdit>
+	#include <QWidgetAction>
+
 namespace QGED
 {
 	// Namespaces : 
@@ -78,8 +81,9 @@ namespace QGED
 
 			QVector<HighlightingRule> highlightingRules;
 
-			QRegExp commentStartExpression;
-			QRegExp commentEndExpression;
+			QRegExp commentStartExpression,
+				commentEndExpression,
+				searchExpression;
 
 			bool		highlightEnabled;
 			QTextCharFormat glslkeywordFormat,
@@ -87,7 +91,8 @@ namespace QGED
 					glipLayoutLoaderKeywordFormat,
 					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
-					multiLineCommentFormat;
+					multiLineCommentFormat,
+					searchExpressionFormat;
 					//quotationFormat,
 					//classFormat,
 					//functionFormat;
@@ -99,6 +104,8 @@ namespace QGED
 			Highlighter(QTextDocument *parent = 0);
 
 			void updateSettings(const CodeEditorSettings& settings);
+			void setSearchHighlight(const QRegExp& expression);
+			void clearSearchHighlight(void);
 	};
 
 	class LineNumberArea : public QWidget
@@ -155,15 +162,56 @@ namespace QGED
 			QString getTitle(void) const;
 			std::string getCurrentContent(void) const;
 			bool isModified(void) const;
+			bool canBeSaved(void) const;
 			
 			void open(QString newFilename="");
 			void save(QString newFilename="");
 			void insert(const QString& text);
 			void addSubMenu(QMenu* menu);
-			void setSettings(const CodeEditorSettings& settings);
+			void updateSettings(const CodeEditorSettings& settings);
+
+			void search(QRegExp expression, QTextDocument::FindFlags flags);
+			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString text);
+			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text);
+			void clearSearch(void);
 
 		signals :
+			void titleChanged(void);
 			void modified(bool changed);
+	};
+
+	class SearchAndReplaceWidget : public QWidgetAction
+	{
+		Q_OBJECT 
+
+		private :
+			QWidget		widget;
+			QGridLayout	layout;
+			QLabel		searchLabel,
+					replaceLabel;
+			QLineEdit	searchPattern,
+					replaceString;
+			QCheckBox	worldOnlyCheck,
+					matchCaseCheck,
+					backwardSearchCheck;
+			QPushButton	findButton,
+					replaceButton,
+					replaceAllButton,
+					clearButton;
+			QLabel		errorString;
+
+		private slots : 
+			void prepareExpression(void);
+
+		public :
+			SearchAndReplaceWidget(QWidget* parent=NULL);
+			~SearchAndReplaceWidget(void);
+
+		signals :
+			void search(QRegExp expression, QTextDocument::FindFlags flags);
+			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
+			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
+			void clearSearch(void);
 	};
 
 	class CodeEditorSettings : public QWidget
@@ -171,16 +219,14 @@ namespace QGED
 		Q_OBJECT
 
 		private :
-			static CodeEditorSettings* 	singleton;
-			static const std::string	moduleName;
-
 			// Data : 
 			const int		defaultFontSize;
 			QColor 			glslKeywordColor,
 						glslFunctionColor,
 						glipLayoutLoaderKeywordColor,
 						glipUniformLoaderKeywordColor,
-						commentsColor;
+						commentsColor,
+						searchColor;
 			QFont			editorFont,
 						keywordFont;
 			QTextOption::WrapMode	wrapMode;
@@ -200,12 +246,14 @@ namespace QGED
 						glslFunctionColorLabel,
 						glipLayoutLoaderKeywordColorLabel,
 						glipUniformLoaderKeywordColorLabel,
-						commentsColorLabel;
+						commentsColorLabel,
+						searchColorLabel;
 			QPushButton		glslKeywordColorButton,
 						glslFunctionColorButton,
 						glipLayoutLoaderKeywordColorButton,
 						glipUniformLoaderKeywordColorButton,
 						commentsColorButton,
+						searchColorButton,
 						editorFontButton,
 						keywordFontButton,
 						okButton,
@@ -235,14 +283,16 @@ namespace QGED
 			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
 			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
 			const QColor& getCommentsColor(void) const;
+			const QColor& getSearchColor(void) const;
 			const QFont& getEditorFont(void) const;
 			const QFont& getKeywordFont(void) const;
 			const QTextOption::WrapMode& getWrapMode(void) const;
 			const int& getNumberOfSpacesPerTabulation(void) const;
 			const bool& isHighlightEnabled(void) const;
 			const bool& isLineHighlightEnabled(void) const;
-
-			static CodeEditorSettings& instance(void);
+		
+			std::string getSettingsString(void) const;
+			void setSettingsFromString(const std::string& str);
 
 		public slots :
 			void resetSettings(void);
@@ -291,7 +341,6 @@ namespace QGED
 			static const char* templatesCode[numTemplates];
 			static const char* templatesCodeWithHelp[numTemplates];
 
-			CodeTemplates lastInsertionID;
 			QSignalMapper signalMapper;
 			QAction addComments;
 			QAction* templatesActions[numTemplates];
@@ -303,10 +352,9 @@ namespace QGED
 			TemplateMenu(QWidget* parent=NULL);
 			virtual ~TemplateMenu(void);
 
-			QString getTemplateCode(void);
-
 		signals : 
-			void insertTemplate(void);
+			//void insertTemplate(void);
+			void insertTemplate(QString str);
 	};
 
 	class ElementsMenu : public QMenu
@@ -331,10 +379,10 @@ namespace QGED
 
 		signals :
 			void updateElements(void);
-			void insertElement(const QString& element);
+			void insertElement(QString element);
 	};
 
-	class MainWidget : public QWidget
+	/*class MainWidget : public QWidget
 	{
 		Q_OBJECT
  		
@@ -392,44 +440,75 @@ namespace QGED
 		public slots : 
 			void openFile(const QString& filename);
 			void close(void);
-	};
+	};*/
 
-	class TestMainWidget : public QWidget
+	class MainWidget : public QWidget
 	{
 		Q_OBJECT
 
 		private : 
+			QString			currentPath;
 			QVBoxLayout		layout;
 			QHBoxLayout		topBar;
-			QPushButton		mainMenuButton,
-						compileButton;
-			QToolButton		newTabButton;
-			QMenu			mainMenu;
+			QMenuBar		menuBarLeft,
+						menuBarRight;
+			QMenu			mainMenu,
+						searchContainerMenu;
 			QTabBar			tabBar;
 			QStackedLayout		stack;
 			QMap<int, CodeEditor*>	editors;
-			QAction			openAction,	
+			QAction			newAction,
+						openAction,	
 						saveAction,
 						saveAsAction,
 						saveAllAction,
-						closeAllAction;
+						closeAllAction,
+						settingsAction,
+						compileAction;
+			TemplateMenu		templateMenu;
+			ElementsMenu		elementsMenu;
+			CodeEditorSettings	settings;
+			SearchAndReplaceWidget	searchAndReplaceWidget;
+
+			CodeEditor* getCurrentEditor(void);
+			int getTabIndex(CodeEditor* editor);
+			void setCurrentPath(QString path);
+			void save(CodeEditor* editor);
+			void saveAs(CodeEditor* editor, QString filename="");
+			void closeEvent(QCloseEvent* event);
+
+		protected :
+			virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;
 
 		public :
-			TestMainWidget(void);
-			~TestMainWidget(void);
+			MainWidget(void);
+			~MainWidget(void);
 
 		private slots :
-			void changeToTab(int idx);
-			void closeTab(int idx);
+			void tabTitleChanged(void);
+			void documentModified(bool changed);
+			void insert(QString str);
+			void updateElements(void);
+			void changeToTab(int tabID);
+			void closeTab(int tabID, bool imperative=false);
+			void updateSettings(void);
+			void transferSourceCompilation(void);
+			void transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags);
+			void transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
+			void transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
+			void transferClearSearchRequest(void);
 
 		public slots :
-			void addTab(void);
-			void open(const QString& filename);
+			void addTab(const QString& filename="");
+			void open(QStringList filenameList = QStringList());
 			void save(void);
-			void saveAs(const QString& filename);
+			void saveAs(const QString& filename="");
 			void saveAll(void);
-			void closeCurrentTab(void);
+			void closeTab(void);
 			void closeAll(void);
+
+		signals :
+			void compileSource(std::string source, void* identifier);
 	};
 }
 

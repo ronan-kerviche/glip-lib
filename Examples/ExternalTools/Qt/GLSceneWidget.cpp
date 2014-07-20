@@ -318,7 +318,7 @@ using namespace QVGL;
 
 				// Prevent the widget from moving out of the scene : 
 				v.setX( std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x()) );
-				v.setY( std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()) );
+				v.setY( std::max(std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()), TopBar::getHeight()) ); // 16 is TopBar height
 
 				v.setX( std::max(0, v.x()) );
 				v.setY( std::max(0, v.y()) );
@@ -454,23 +454,6 @@ using namespace QVGL;
 		return widget;
 	}
 
-	// Deprecated : 
-	/*void SubWidget::setWidget(QWidget* widget)
-	{
-		layout.addWidget(widget, 1);
-	}
-
-	void SubWidget::setLayout(QLayout* subLayout)
-	{
-		//if(layout.itemAt(2)!=NULL)
-		//{
-		//	std::cout << "Remove!" << std::endl;
-		//	layout.takeAt(2);
-		//}
-		
-		layout.addLayout(subLayout, 1);
-	}*/
-
 	QString SubWidget::getTitle(void)
 	{
 		return titleLabel.text();
@@ -565,33 +548,33 @@ using namespace QVGL;
 	}
 
 // TopBar
+	TopBar* TopBar::singleton = NULL;
+
 	TopBar::TopBar(void)
 	 : 	graphicsProxy(NULL),
 		bar(this),
-		mainMenuButton("Menu"),
-		viewsMenuButton("Views"),
-		widgetsMenuButton("Widgets"),
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
 		widgetsMenu("Widgets", this),
 		temporaryHideAllSubWidgetsAction("Hide all widgets", this),
-		hideAllSubWidgetsAction("Close all widgets", this)
+		hideAllSubWidgetsAction("Close all widgets", this),
+		menuBar(this)
 	{
+		if(singleton==NULL)
+			singleton = this;
+		else
+			throw Glip::Exception("TopBar::TopBar - Only one instance of TopBar is tolerated.", __FILE__, __LINE__);
+
 		// Activate focus via mouse click :
 		setFocusPolicy(Qt::ClickFocus);
 
-		// Menus : 
-		mainMenuButton.setMenu(&mainMenu);
-		viewsMenuButton.setMenu(&viewsMenu);
-		widgetsMenuButton.setMenu(&widgetsMenu);
+		// Menu :
+		menuBar.addMenu(&mainMenu);
+		menuBar.addMenu(&viewsMenu);
+		menuBar.addMenu(&widgetsMenu);
+		menuBar.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-		mainMenuButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-		viewsMenuButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-		widgetsMenuButton.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-
-		bar.addWidget(&mainMenuButton);
-		bar.addWidget(&viewsMenuButton);
-		bar.addWidget(&widgetsMenuButton);
+		bar.addWidget(&menuBar);
 		bar.addWidget(&titleLabel);
 		bar.addWidget(&positionColorInfo);
 
@@ -619,7 +602,10 @@ using namespace QVGL;
 	}
 
 	TopBar::~TopBar(void)
-	{ }
+	{
+		if(singleton==this)
+			singleton = NULL;
+	}
 
 	void TopBar::mousePressEvent(QMouseEvent* event)
 	{
@@ -753,6 +739,14 @@ using namespace QVGL;
 		viewsMenu.setWindowOpacity(level);
 		widgetsMenu.setWindowOpacity(level);
 		positionColorInfo.setWindowOpacity(level);
+	}
+
+	int TopBar::getHeight(void)
+	{
+		if(singleton==NULL)
+			return 0;
+		else
+			return singleton->height();
 	}
 
 // BottomBar : 
@@ -1961,7 +1955,7 @@ using namespace QVGL;
 
 		QObject::connect(&mouseState,		SIGNAL(requestExternalUpdate(void)),		this, SLOT(updateMouseStateData(void)));
 		//QObject::connect(&sceneViewWidget, 	SIGNAL(requireContainerCatch(void)), 		this, SLOT(handleCatch(void)));			// Deprecated in current management of fullscreen.
-		QObject::connect(&keyboardState,	SIGNAL(actionReceived(ActionID, bool)),	this, SLOT(processAction(ActionID, bool)));
+		QObject::connect(&keyboardState,	SIGNAL(actionReceived(ActionID, bool)),		this, SLOT(processAction(ActionID, bool)));
 		QObject::connect(&mouseState,		SIGNAL(updated(void)),				this, SLOT(performMouseAction(void)));
 		QObject::connect(&mouseState,		SIGNAL(mustSetMouseCursor(Qt::CursorShape)),	this, SLOT(setMouseCursor(Qt::CursorShape)));
 		QObject::connect(&topBar,		SIGNAL(selected(TopBar*)),			this, SLOT(barSelected(TopBar*)));
@@ -1969,7 +1963,7 @@ using namespace QVGL;
 		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
 		QObject::connect(&topBar,		SIGNAL(temporaryHideAllSubWidgets(void)),	this, SLOT(temporaryHideAllSubWidgets()));
 		QObject::connect(&topBar,		SIGNAL(hideAllSubWidgets(void)),		this, SLOT(hideAllSubWidgets()));
-		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),		this, SLOT(barSelected(BottomBar*)));
+		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, SLOT(barSelected(BottomBar*)));
 	}
 
 	MainWidget::~MainWidget(void)
@@ -2101,6 +2095,12 @@ using namespace QVGL;
 
 				currentView->zoom(v.x(), v.y(), std::pow(1.2f, mouseState.getWheelDelta()));
 			}
+		}
+		else
+		{
+			// Clear wheel state : 
+			if(mouseState.isWheelDeltaModified())
+				mouseState.getWheelDelta();
 		}
 	}
 
@@ -2583,10 +2583,10 @@ using namespace QVGL;
 			sceneViewWidget.addSubWidget(subWidget);
 			
 			// Connect : 
-			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 		this, SLOT(subWidgetSelected(SubWidget*)));
+			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 	this, SLOT(subWidgetSelected(SubWidget*)));
 			QObject::connect(subWidget, SIGNAL(showRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
 			QObject::connect(subWidget, SIGNAL(hideRequest(SubWidget*)),	this, SLOT(hideSubWidget(SubWidget*)));
-			QObject::connect(subWidget, SIGNAL(destroyed(void)),			this, SLOT(subWidgetClosed(void)));
+			QObject::connect(subWidget, SIGNAL(destroyed(void)),		this, SLOT(subWidgetClosed(void)));
 
 			// Save link : 
 			subWidget->qvglParent = this;
@@ -2595,7 +2595,8 @@ using namespace QVGL;
 			// Update widgets list : 
 			topBar.updateSubWidgetsList(subWidgetsList);
 
-			// Show : 
+			// Move and show : 
+			subWidget->move(0, topBar.height());
 			subWidget->show();
 		}
 	}

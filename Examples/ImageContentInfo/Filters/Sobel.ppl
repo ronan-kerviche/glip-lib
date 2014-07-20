@@ -31,7 +31,7 @@ SHARED_SOURCE:Sobel
 }
 
 // The Sobel Shader :
-SHADER_SOURCE:sobelShaderPlusVisualization()
+SHADER_SOURCE:sobelShaderPlusVisualization
 {
 	#version 130
 
@@ -57,7 +57,7 @@ SHADER_SOURCE:sobelShaderPlusVisualization()
 // Filter :
 FILTER_LAYOUT:sobelFilter(sobelOutputFormat, sobelShaderPlusVisualization)
 
-PIPELINE_MAIN:sobelPipeline()
+PIPELINE_MAIN:sobelPipeline
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(sobelTexture,visualization)
