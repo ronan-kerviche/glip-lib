@@ -180,11 +180,12 @@ namespace QGED
 			void modified(bool changed);
 	};
 
-	class SearchAndReplaceWidget : public QWidgetAction
+	class SearchAndReplaceMenu : public QMenu
 	{
 		Q_OBJECT 
 
 		private :
+			QWidgetAction	widgetAction;
 			QWidget		widget;
 			QGridLayout	layout;
 			QLabel		searchLabel,
@@ -194,24 +195,28 @@ namespace QGED
 			QCheckBox	worldOnlyCheck,
 					matchCaseCheck,
 					backwardSearchCheck;
-			QPushButton	findButton,
-					replaceButton,
-					replaceAllButton,
-					clearButton;
+			QAction		openMenuAction,
+					findNextAction,
+					replaceNextAction,
+					replaceAllAction,
+					clearHighlightAction;
 			QLabel		errorString;
 
 		private slots : 
 			void prepareExpression(void);
+			void openMenu(void);
 
 		public :
-			SearchAndReplaceWidget(QWidget* parent=NULL);
-			~SearchAndReplaceWidget(void);
+			SearchAndReplaceMenu(QWidget* parent=NULL);
+			~SearchAndReplaceMenu(void);
+
+			QAction* getAction(void);
 
 		signals :
 			void search(QRegExp expression, QTextDocument::FindFlags flags);
 			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
 			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
-			void clearSearch(void);
+			void clearSearchHighlight(void);
 	};
 
 	class CodeEditorSettings : public QWidget
@@ -353,7 +358,6 @@ namespace QGED
 			virtual ~TemplateMenu(void);
 
 		signals : 
-			//void insertTemplate(void);
 			void insertTemplate(QString str);
 	};
 
@@ -382,66 +386,6 @@ namespace QGED
 			void insertElement(QString element);
 	};
 
-	/*class MainWidget : public QWidget
-	{
-		Q_OBJECT
- 		
-		private : 
-			QVBoxLayout		layout;
-			QTabWidget		widgets;
-			QMenuBar 		menuBar;
-			QMenu			fileMenu;
-			//OpenSaveInterface	openSaveInterface;
-			TemplateMenu		templateMenu;
-			ElementsMenu		elementsMenu;
-			QAction 		newTabAction,
-						saveAllAction,
-						refreshAction,
-						closeTabAction,
-						closeAllAction,
-						showPathWidgetAction,
-						showEditorSettingsAction,
-						aboutAction;
-			//PathWidget		pathWidget;
-			CodeEditorSettings	editorSettings;
-
-			bool canBeClosed(void);
-			std::string getCurrentFilename(void);
-			std::string getCurrentCode(void);
-			void updateCurrentToolTip(void);
-			const std::vector<std::string>& getPaths(void);
-			void preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos);
-			void closeEvent(QEvent* event);
-			void updateElementsOfEditor(CodeEditor* e);
-			
-		private slots : 	
-			void newTab(void);
-			void open(const QStringList& filenames);
-			void save(void);
-			void save(const QString& filename);
-			void saveAs(const QString& filename);
-			void saveAll(void);
-			void refresh(void);
-			void closeTab(void);
-			void closeAll(void);
-			void switchPathWidget(void);
-			void updateTitle(void);
-			void insertTemplate(void);
-			void showEditorSettings(void);
-			void aboutMessage(void);
-			void tabChanged(int c);
-			void updateElements(void);
-			void insertElement(const QString& element);
-
-		public :
-			MainWidget(void);
-			~MainWidget(void);
-
-		public slots : 
-			void openFile(const QString& filename);
-			void close(void);
-	};*/
-
 	class MainWidget : public QWidget
 	{
 		Q_OBJECT
@@ -462,20 +406,21 @@ namespace QGED
 						saveAction,
 						saveAsAction,
 						saveAllAction,
+						closeAction,
 						closeAllAction,
 						settingsAction,
 						compileAction;
 			TemplateMenu		templateMenu;
 			ElementsMenu		elementsMenu;
 			CodeEditorSettings	settings;
-			SearchAndReplaceWidget	searchAndReplaceWidget;
+			SearchAndReplaceMenu	searchAndReplaceMenu;
 
 			CodeEditor* getCurrentEditor(void);
 			int getTabIndex(CodeEditor* editor);
 			void setCurrentPath(QString path);
 			void save(CodeEditor* editor);
 			void saveAs(CodeEditor* editor, QString filename="");
-			void closeEvent(QCloseEvent* event);
+			void wheelEvent(QWheelEvent* event);
 
 		protected :
 			virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;

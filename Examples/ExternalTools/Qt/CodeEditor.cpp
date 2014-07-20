@@ -665,10 +665,11 @@ using namespace QGED;
 			highLighter->clearSearchHighlight();
 	}
 
-// SearchAndReplaceWidget :
-	SearchAndReplaceWidget::SearchAndReplaceWidget(QWidget* parent)
-	 : 	QWidgetAction(parent),
-		widget(parent),
+// SearchAndReplaceMenu :
+	SearchAndReplaceMenu::SearchAndReplaceMenu(QWidget* parent)
+	 : 	QMenu(parent),
+		widgetAction(this),
+		widget(this),
 		layout(&widget),
 		searchLabel("Search : ", &widget),
 		replaceLabel("Replace : ", &widget),
@@ -677,10 +678,11 @@ using namespace QGED;
 		worldOnlyCheck("World Only", &widget),
 		matchCaseCheck("Match case", &widget),
 		backwardSearchCheck("Backward search", &widget),
-		findButton("Find", &widget),
-		replaceButton("Replace", &widget),
-		replaceAllButton("Replace All", &widget),
-		clearButton("Clear", &widget)
+		openMenuAction("Find", this),
+		findNextAction("Find Next", this),
+		replaceNextAction("Replace Next", this),
+		replaceAllAction("Replace All", this),
+		clearHighlightAction("Clear Highlight", this)
 	{
 		layout.addWidget(&searchLabel, 		0, 0);
 		layout.addWidget(&searchPattern,	0, 1);
@@ -689,30 +691,50 @@ using namespace QGED;
 		layout.addWidget(&worldOnlyCheck,	2, 0, 1, 2);
 		layout.addWidget(&matchCaseCheck,	3, 0, 1, 2);
 		layout.addWidget(&backwardSearchCheck,	4, 0, 1, 2);
-		layout.addWidget(&findButton,		5, 0);
-		layout.addWidget(&clearButton,		5, 1);
-		layout.addWidget(&replaceButton,	6, 0);
-		layout.addWidget(&replaceAllButton,	6, 1);
-		layout.addWidget(&errorString,		7, 0, 1, 2);
+		layout.addWidget(&errorString,		5, 0, 1, 2);
 
 		errorString.hide();
 
-		QObject::connect(&findButton, 		SIGNAL(released()), this, SLOT(prepareExpression()));
-		QObject::connect(&replaceButton, 	SIGNAL(released()), this, SLOT(prepareExpression()));
-		QObject::connect(&replaceAllButton, 	SIGNAL(released()), this, SLOT(prepareExpression()));
-		QObject::connect(&clearButton, 		SIGNAL(released()), this, SIGNAL(clearSearch()));
+		widgetAction.setDefaultWidget(&widget);
 
-		setDefaultWidget(&widget);
+		addAction(&widgetAction);
+		addAction(&findNextAction);
+		addAction(&replaceNextAction);
+		addAction(&replaceAllAction);
+		addAction(&clearHighlightAction);
+
+		QObject::connect(&searchPattern,	SIGNAL(returnPressed()), &findNextAction, 	SLOT(trigger()));
+		QObject::connect(&findNextAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
+		QObject::connect(&replaceNextAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
+		QObject::connect(&replaceAllAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
+		QObject::connect(&clearHighlightAction, SIGNAL(triggered()),	 this, 			SIGNAL(clearSearchHighlight()));
+
+		QObject::connect(&openMenuAction, SIGNAL(triggered()), this, SLOT(openMenu()));
+
+		// Shortcuts : 
+		openMenuAction.setShortcuts(QKeySequence::Find);
+		findNextAction.setShortcuts(QKeySequence::FindNext);
+		replaceNextAction.setShortcuts(QKeySequence::Replace);
+
+		QList<QKeySequence> keyList;
+		keyList.append(QKeySequence(Qt::CTRL + Qt::Key_K));
+		clearHighlightAction.setShortcuts(keyList);
+
+		// Add action to parent : 
+		parent->addAction(&findNextAction);
+		parent->addAction(&replaceNextAction);
+		parent->addAction(&replaceAllAction);
+		parent->addAction(&clearHighlightAction);
 	}
 	
-	SearchAndReplaceWidget::~SearchAndReplaceWidget(void)
+	SearchAndReplaceMenu::~SearchAndReplaceMenu(void)
 	{
-		releaseWidget(&widget);
+		widgetAction.releaseWidget(&widget);
 	}
 
-	void SearchAndReplaceWidget::prepareExpression(void)
+	void SearchAndReplaceMenu::prepareExpression(void)
 	{
-		QPushButton* 	button 		= reinterpret_cast<QPushButton*>(QObject::sender());
+		QAction* 	action 		= reinterpret_cast<QAction*>(QObject::sender());
 		QString 	expression 	= searchPattern.text(),
 				replacement	= replaceString.text();
 
@@ -740,17 +762,17 @@ using namespace QGED;
 				// No error to report : 
 				errorString.hide();
 
-				if(button==&findButton)
+				if(action==&findNextAction)
 				{
 					// Send the search request : 
 					emit search(regExpression, flags);
 				}
-				else if(button==&replaceButton)	
+				else if(action==&replaceNextAction)	
 				{
 					// Send the replace request : 
 					emit replace(regExpression, flags, replacement);
 				}
-				else if(button==&replaceAllButton)
+				else if(action==&replaceAllAction)
 				{
 					// Send the replace all request : 
 					emit replaceAll(regExpression, flags, replacement);
@@ -762,6 +784,25 @@ using namespace QGED;
 				errorString.show();
 			}
 		}
+	}
+
+	void SearchAndReplaceMenu::openMenu(void)
+	{
+		QList<QWidget*> associatedWidgets = openMenuAction.associatedWidgets();
+
+		if(!associatedWidgets.isEmpty())
+		{
+			searchPattern.clear();
+			searchPattern.setFocus(Qt::PopupFocusReason);
+
+			QPoint execPoint = associatedWidgets.front()->mapToGlobal(QPoint(0,0)) + QPoint(associatedWidgets.front()->width() - width(), associatedWidgets.front()->height());
+			exec(execPoint);
+		}
+	}
+
+	QAction* SearchAndReplaceMenu::getAction(void)
+	{
+		return &openMenuAction;
 	}
 
 // CodeEditorSettings :
@@ -1440,441 +1481,11 @@ using namespace QGED;
 	}
 
 // MainWidget :
-	/*MainWidget::MainWidget(void)
-	 : 	layout(this), 
-		menuBar(this), 
-		widgets(this), 
-		fileMenu("File", this), 
-		//openSaveInterface("CodePannel", "File", "*.ppl *.glsl *.ext *.uvd *.txt"),
-		templateMenu(this), 
-		elementsMenu(this),
-	  	newTabAction(tr("&New tab"), this),
-		saveAllAction("Save all", this),
-		refreshAction("Compile", this),
-		closeTabAction(tr("&Close"), this),
-		showPathWidgetAction("Paths",this),
-		//pathWidget(this),
-		showEditorSettingsAction("Editor Settings", this),
-		closeAllAction("Close all", this),
-		aboutAction("About", this)
-	{
-		// Add the actions : 
-		newTabAction.setShortcuts(QKeySequence::New);
-		//openSaveInterface.enableShortcuts(true);
-
-		connect(&newTabAction, 			SIGNAL(triggered()), 			this, SLOT(newTab()));
-		//connect(&openSaveInterface, 		SIGNAL(openFile(const QStringList&)), 	this, SLOT(open(const QStringList&)));
-		//connect(&openSaveInterface, 		SIGNAL(saveFile(void)), 		this, SLOT(save(void)));
-		//connect(&openSaveInterface, 		SIGNAL(saveFileAs(const QString&)), 	this, SLOT(saveAs(const QString&)));
-		connect(&saveAllAction, 		SIGNAL(triggered()), 			this, SLOT(saveAll()));
-		connect(&closeAllAction, 		SIGNAL(triggered()), 			this, SLOT(closeAll()));
-		connect(&templateMenu, 			SIGNAL(insertTemplate()), 		this, SLOT(insertTemplate()));
-		connect(&elementsMenu,			SIGNAL(updateElements()),		this, SLOT(updateElements()));
-		connect(&elementsMenu,			SIGNAL(insertElement(const QString&)),	this, SLOT(insertElement(const QString&)));
-
-		QKeySequence qs(Qt::CTRL + Qt::Key_R);
-		refreshAction.setShortcut(qs);
-		refreshAction.setText(refreshAction.text() + " (" + qs.toString() + ")");
-		connect(&refreshAction, 		SIGNAL(triggered()), 			this, SLOT(refresh()));
-
-		closeTabAction.setStatusTip(tr("Close"));
-		closeTabAction.setShortcuts(QKeySequence::Close);
-		connect(&closeTabAction, 		SIGNAL(triggered()), 			this, SLOT(closeTab()));
-
-		showPathWidgetAction.setStatusTip(tr("Show paths"));
-		connect(&showPathWidgetAction, 		SIGNAL(triggered()), 			this, SLOT(switchPathWidget()));
-
-		connect(&showEditorSettingsAction,	SIGNAL(triggered()), 			this, SLOT(showEditorSettings()));
-		connect(&aboutAction, 			SIGNAL(triggered()), 			this, SLOT(aboutMessage()));
-
-		connect(&widgets, 			SIGNAL(currentChanged(int)), 		this, SLOT(tabChanged(int)));
-
-		// Movable : 	
-		widgets.setMovable(true);
-
-		// Menus :
-		fileMenu.addAction(&newTabAction);
-		//openSaveInterface.addToMenu(fileMenu);
-		fileMenu.addAction(&saveAllAction);
-		fileMenu.addAction(&closeTabAction);
-		fileMenu.addAction(&closeAllAction);
-	
-		menuBar.addMenu(&fileMenu);
-		menuBar.addMenu(&templateMenu);
-		menuBar.addMenu(&elementsMenu);
-		menuBar.addAction(&refreshAction);
-		menuBar.addAction(&showPathWidgetAction);
-		menuBar.addAction(&showEditorSettingsAction);
-		menuBar.addAction(&aboutAction);
-
-		// Add the first tab : 
-		newTab();
-
-		// Hide paths : 
-		//pathWidget.hide();
-
-		layout.addWidget(&menuBar);	
-		layout.addWidget(&widgets);
-		layout.setMargin(0);
-		layout.setSpacing(0);
-	}
-
-	MainWidget::~MainWidget(void)
-	{
-		editorSettings.close();
-	}
-
-	void MainWidget::newTab(void)
-	{
-		CodeEditor* newEditor = new CodeEditor(this);
-		newEditor->addSubMenu(&templateMenu);
-		newEditor->addSubMenu(&elementsMenu);
-		newEditor->updateSettings(editorSettings);
-		widgets.addTab(newEditor, newEditor->getTitle());
-		widgets.setCurrentWidget( newEditor );
-		//widgets.setCurrentTabTextColor( QColor("#BBBBBB") );
-
-		//connect(newEditor, SIGNAL(titleChanged()), this, SLOT(updateTitle()));
-	}
-
-	void MainWidget::open(const QStringList& filenames)
-	{
-		for(int k=0; k<filenames.count(); k++)
-			openFile( filenames[k] );
-	}
-
-	void MainWidget::save(void)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			if(e->getFilename().isEmpty())
-			{
-				//QString filename = openSaveInterface.saveAsDialog();
-				//
-				//if(!filename.isEmpty())			
-				//	e->setFilename(filename);
-				//else
-				//	return ;
-			}
-
-			e->save();
-
-			//openSaveInterface.reportSuccessfulSave(e->filename());
-
-			updateCurrentToolTip();
-		}
-	}
-
-	void MainWidget::save(const QString& filename)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			e->setFilename(filename);
-			e->save();
-
-			//openSaveInterface.reportSuccessfulSave(filename);
-
-			updateCurrentToolTip();
-		}
-	}
-
-	void MainWidget::saveAs(const QString& filename)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			e->setFilename(filename);
-			e->save();
-
-			//openSaveInterface.reportSuccessfulSave(filename);
-			//openSaveInterface.enableSave(true);
-
-			updateCurrentToolTip();
-		}
-	}
-
-	void MainWidget::saveAll(void)
-	{
-		CodeEditor* original = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-		for(int k=0; k<widgets.count(); k++)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
-
-			widgets.setCurrentWidget(e);
-			save();
-		}
-
-		if(widgets.count() > 0)
-			widgets.setCurrentWidget(original);
-	}
-
-	void MainWidget::refresh(void)
-	{
-		if(widgets.count()>0)
-		{
-			// Update colors : 
-			//widgets.setTabsTextColor(QColor("#BBBBBB") );
-				
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-			//if(!e->empty())
-				//widgets.setCurrentTabTextColor(Qt::white);
-
-			// Send code : 
-			//requirePipelineCreation(getCurrentCode() + "\n");
-		}
-	}
-
-	void MainWidget::closeTab(void)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			//if(e->canBeClosed())
-			//{
-				elementsMenu.remove(e);
-				widgets.removeTab(widgets.indexOf(e));
-				delete e;
-			//}
-		}
-	}
-
-	void MainWidget::closeAll(void)
-	{
-		for(int k=0; k<widgets.count(); k++)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
-
-			//if(e->canBeClosed())
-			//{
-				widgets.removeTab(widgets.indexOf(e));
-				delete e;
-			//}
-		}
-	}
-
-	void MainWidget::switchPathWidget(void)
-	{
-		//pathWidget.show();
-	}
-
-	void MainWidget::updateTitle(void)
-	{
-		CodeEditor* e = reinterpret_cast<CodeEditor*>( QObject::sender() );
-
-		widgets.setTabText( widgets.indexOf(e), tr("   %1   ").arg(e->getTitle()));
-	}
-
-	void MainWidget::insertTemplate(void)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			//e->insert( templateMenu.getTemplateCode() );
-		}
-	}
-
-	void MainWidget::showEditorSettings(void)
-	{
-		editorSettings.show();
-	}
-
-	void MainWidget::aboutMessage(void)
-	{
-		int pointSize = font().pointSize();
-
-		QMessageBox::about(this, "GlipStudio", tr("<center><p style=\"font-family: times, serif; font-size:%2pt; font-style:bold\">GlipStudio</p></center><p style=\"font-family: times, serif; font-size:%1pt; font-style:bold\">GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library). Find more information, documentation and examples at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p><center><p style=\"font-size:%3pt; font-style:italic\">Copyright &copy; 2013, Ronan Kerviche, MIT License</p></center><p style=\"font-size:%4pt;\"> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: <BR> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. <BR> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p><table><tr><td><b><i>Binary build date</i></b> : </td><td>%5; %6</td></tr><tr><td><b><i>Hardware vendor : </i></b></td><td>%7</td></tr><tr><td><b><i>Renderer : </i></b></td><td>%8</td></tr><tr><td><b><i>OpenGL version : </i></b></td><td>%9</td></tr><tr><td><b><i>GLSL version : </i></b></td><td>%10</td></tr></table>").arg(pointSize).arg(pointSize+4).arg(pointSize+1).arg(pointSize-2).arg(__DATE__).arg(__TIME__).arg(HandleOpenGL::getVendorName().c_str()).arg(HandleOpenGL::getRendererName().c_str()).arg(HandleOpenGL::getVersion().c_str()).arg(HandleOpenGL::getGLSLVersion().c_str()));
-	}
-
-	void MainWidget::tabChanged(int c)
-	{
-		if(widgets.count() > 0)
-		{
-			//openSaveInterface.enableSave(true);
-			saveAllAction.setEnabled(true);
-		}
-		else
-		{
-			//openSaveInterface.enableSave(false);
-			saveAllAction.setEnabled(false);
-		}	
-	}
-
-	void MainWidget::updateElements(void)
-	{
-		for(int k=0; k<widgets.count(); k++)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
-
-			//if(e->isModifiedTrigger())
-			//	updateElementsOfEditor(e);
-		}
-	}
-
-	void MainWidget::insertElement(const QString& element)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			e->insert( element );
-		}
-	}
-
-	std::string MainWidget::getCurrentFilename(void)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			return e->getFilename().toStdString();
-		}
-		else
-			return "";
-	}
-
-	std::string MainWidget::getCurrentCode(void)
-	{
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			//return e->currentContent();
-		}
-		else
-			return "";
-	}
-
-	void MainWidget::updateCurrentToolTip(void)
-	{
-		CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-		QString toolTip = "<table>";
-			toolTip += tr("<tr><td><i>Filename</i></td><td>:</td><td>%1</td></tr>").arg(e->getTitle());
-			toolTip += tr("<tr><td><i>Path</i></td><td>:</td><td>%1</td></tr>").arg(e->getPath());
-		toolTip += "</table>";
-
-		widgets.setTabToolTip(widgets.currentIndex(), toolTip);
-	}
-
-	const std::vector<std::string>& MainWidget::getPaths(void)
-	{
-		// Make sure the list of path contains the one of the current pipeline :
-		if(widgets.count() > 0)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-
-			//pathWidget.addPath( e->path().toStdString() );
-		}
-
-		//return pathWidget.getPaths();
-	}
-
-	void MainWidget::preparePipelineLoading(LayoutLoader& loader, const LayoutLoader::PipelineScriptElements& infos)
-	{
-		// Add path : 
-		loader.clearPaths();
-		loader.addToPaths( getPaths() );
-	}
-
-	bool MainWidget::canBeClosed(void)
-	{
-		bool test = true;
-
-		for(int k=0; k<widgets.count() && test; k++)
-		{
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.widget(k));
-
-			widgets.setCurrentWidget(e);
-			//test = test && e->canBeClosed();	
-		}
-
-		return test;
-	}
-
-	void MainWidget::openFile(const QString& filename)
-	{
-		QFileInfo info( filename );
-
-		if(info.exists())
-		{
-			if(widgets.count() > 0)
-			{
-				CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-				if(!e->empty())
-					newTab();
-			}
-			else
-				newTab();
-
-			CodeEditor* e = reinterpret_cast<CodeEditor*>(widgets.currentWidget());
-	
-			//e->setFilename( filename );
-			//if(!)
-			//	closeTab();
-			//else
-			//{
-			//	// Append the path : 
-			//	//pathWidget.addPath( e->path().toStdString() );
-			//
-			//	// Report : 
-			//	//openSaveInterface.reportSuccessfulLoad( filename );
-			//	//openSaveInterface.enableSave(true);
-			//	updateCurrentToolTip();
-			//
-			//	// Scan : 
-			//	updateElementsOfEditor(e);
-			//}
-
-			e->open(filename);
-		}
-	}
-
-	void MainWidget::closeEvent(QEvent* event)
-	{
-		//pathWidget.close();
-		editorSettings.close();
-
-		event->accept();
-	}
-
-	void MainWidget::close(void)
-	{
-		//pathWidget.close();
-		editorSettings.close();
-
-		QWidget::close();
-	}
-
-	void MainWidget::updateElementsOfEditor(CodeEditor* e)
-	{
-		try
-		{
-			//LayoutLoader::PipelineScriptElements elements = scan(e->currentContent() + "\n");
-
-			//elementsMenu.scan(e, elements);
-		}
-		catch(Exception& err)
-		{
-			elementsMenu.remove(e);
-		}
-	}*/
-
-// MainWidget :
 	MainWidget::MainWidget(void)
 	 : 	currentPath("."),
 		layout(this),
 		menuBarLeft(this),
 		menuBarRight(this),
-		//newTabButton(this),
-		//searchButton(this),
 		mainMenu("Menu", this),
 		searchContainerMenu("Find", this),
 		newAction("+", this),
@@ -1882,12 +1493,13 @@ using namespace QGED;
 		saveAction("Save", this),
 		saveAsAction("Save as", this),
 		saveAllAction("Save all", this),
+		closeAction("Close", this),
 		closeAllAction("Close all", this),
 		settingsAction("Preferences", this),
 		compileAction("Compile", this),
 		templateMenu(this),
 		elementsMenu(this),
-		searchAndReplaceWidget(this)
+		searchAndReplaceMenu(this)
 	{
 		// Build Menu : 
 		mainMenu.addAction(&openAction);
@@ -1901,35 +1513,23 @@ using namespace QGED;
 		mainMenu.addSeparator();
 		mainMenu.addAction(&settingsAction);
 
-		// Build search menu : 
-		searchContainerMenu.addAction(&searchAndReplaceWidget);
-		/*searchButton.setMenu(&searchContainerMenu);
-		searchButton.setPopupMode(QToolButton::InstantPopup);*/
-
 		// Tab Settings : 
 		tabBar.setExpanding(false);
 		tabBar.setMovable(true);
 		tabBar.setTabsClosable(true);
 
-		// Button settings :
+		// Actions settings :
 		menuBarLeft.addMenu(&mainMenu);
 		menuBarLeft.addAction(&compileAction);
 		menuBarLeft.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 		
 		menuBarRight.addAction(&newAction);
-		menuBarRight.addMenu(&searchContainerMenu);
+		menuBarRight.addAction(searchAndReplaceMenu.getAction());
 		menuBarRight.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-
-		/*newTabButton.setMinimumSize(menuBar.height()-4, menuBar.height()-4);
-		newTabButton.setMaximumSize(menuBar.height()-4, menuBar.height()-4);
-		searchButton.setMinimumSize(menuBar.height()-4, menuBar.height()-4);
-		searchButton.setMaximumSize(menuBar.height()-4, menuBar.height()-4);*/
 
 		topBar.addWidget(&menuBarLeft);
 		topBar.addWidget(&tabBar);
 		topBar.addWidget(&menuBarRight);
-		//topBar.addWidget(&newTabButton);
-		//topBar.addWidget(&searchButton);
 
 		topBar.setMargin(0);
 		topBar.setSpacing(1);
@@ -1939,15 +1539,17 @@ using namespace QGED;
 		layout.setMargin(0);
 		layout.setSpacing(0);
 
+		addAction(&closeAction);
+
 		// Signals : 
 		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 			 SLOT(changeToTab(int)));
 		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 			 SLOT(closeTab(int)));
-		//QObject::connect(&newTabButton,			SIGNAL(released(void)), 					this, 			 SLOT(addTab(void)));
 		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(addTab(void)));
 		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(open()));
 		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(save()));
 		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(saveAs()));
 		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(saveAll()));
+		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(closeTab()));
 		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(closeAll()));
 		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settings, 		 SLOT(show()));
 		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,			 SLOT(insert(QString)));
@@ -1955,11 +1557,20 @@ using namespace QGED;
 		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,			 SLOT(updateElements(void)));
 		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,			 SLOT(updateSettings(void)));
 		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(transferSourceCompilation(void)));
-		//QObject::connect(&searchContainerMenu,		SIGNAL(aboutToShow(void)),					&searchAndReplaceWidget, SLOT(aboutToShow(void))); // Would give the focus to the search bu breaks the position of the menu...
-		QObject::connect(&searchAndReplaceWidget,	SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,			 SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
-		QObject::connect(&searchAndReplaceWidget,	SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceWidget,	SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceWidget,	SIGNAL(clearSearch(void)),					this,			 SLOT(transferClearSearchRequest(void)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,			 SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(clearSearchHighlight(void)),				this,			 SLOT(transferClearSearchRequest(void)));
+
+		// Shortcuts : 
+		newAction.setShortcuts(		QKeySequence::New );
+		openAction.setShortcuts(	QKeySequence::Open );
+		saveAction.setShortcuts(	QKeySequence::Save );
+		saveAsAction.setShortcuts(	QKeySequence::SaveAs );
+		//saveAllAction.setShortcuts	TODO
+		closeAction.setShortcuts(	QKeySequence::Close );
+		//closeAllAction.setShortcuts	TODO
+		compileAction.setShortcuts(	QKeySequence::Refresh );
 
 		// Create a new tab by default : 
 		addTab();
@@ -2052,9 +1663,9 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::closeEvent(QCloseEvent* event)
+	void MainWidget::wheelEvent(QWheelEvent* event)
 	{
-		std::cout << "Close event!" << std::endl;
+		// Accept possibly outgoing wheel events : 
 		event->accept();
 	}
 
