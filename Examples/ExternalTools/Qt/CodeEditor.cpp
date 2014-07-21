@@ -1480,6 +1480,82 @@ using namespace QGED;
 		}
 	}
 
+// RecentFileMenu ;
+	RecentFilesMenu::RecentFilesMenu(QWidget* parent)
+	 : 	QMenu("Recent files", parent),
+		clearAction("Clear", this)
+	{
+		QObject::connect(&signalMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(openRequest(const QString&)));
+		QObject::connect(&clearAction,	SIGNAL(triggered()),		this, SLOT(clear()));
+
+		buildMenu();
+	}
+
+	RecentFilesMenu::~RecentFilesMenu(void)
+	{ }
+
+	void RecentFilesMenu::buildMenu(void)
+	{
+		// Remove clear action : 
+		removeAction(&clearAction);
+
+		// Delete all other actions : 
+		QMenu::clear();
+
+		if(recentFiles.isEmpty())
+			addAction("(None)")->setEnabled(false);
+		else
+		{
+			for(QList<QString>::const_iterator it=recentFiles.begin(); it!=recentFiles.end(); it++)
+			{
+				QFileInfo info(*it);
+				QAction* action = addAction(info.fileName(), &signalMapper, SLOT(map()));
+				signalMapper.setMapping(action, *it);
+			}
+
+			addSeparator();
+			addAction(&clearAction);
+		}
+	}
+
+	const QList<QString>& RecentFilesMenu::getList(void) const
+	{
+		return recentFiles;
+	}
+
+	void RecentFilesMenu::append(const QString& filename, bool updateMenuNow)
+	{
+		int c = recentFiles.indexOf(filename);
+
+		if(c<0)
+			recentFiles.removeAt(c);
+	
+		QFileInfo info(filename);
+
+		if(info.exists())
+		{
+			recentFiles.prepend(filename);
+
+			if(updateMenuNow)
+				buildMenu();
+		}
+	}
+
+	void RecentFilesMenu::append(const QList<QString>& filenames)
+	{
+		for(QList<QString>::const_iterator it=filenames.begin(); it!=filenames.end(); it++)
+			append(*it);
+
+		buildMenu();
+	}
+
+	void RecentFilesMenu::clear(void)
+	{
+		recentFiles.clear();
+
+		buildMenu();
+	}
+
 // MainWidget :
 	MainWidget::MainWidget(void)
 	 : 	currentPath("."),
@@ -1499,10 +1575,12 @@ using namespace QGED;
 		compileAction("Compile", this),
 		templateMenu(this),
 		elementsMenu(this),
-		searchAndReplaceMenu(this)
+		searchAndReplaceMenu(this),
+		recentFilesMenu(this)
 	{
 		// Build Menu : 
 		mainMenu.addAction(&openAction);
+		mainMenu.addMenu(&recentFilesMenu);
 		mainMenu.addAction(&saveAction);
 		mainMenu.addAction(&saveAsAction);
 		mainMenu.addAction(&saveAllAction);
@@ -1542,25 +1620,26 @@ using namespace QGED;
 		addAction(&closeAction);
 
 		// Signals : 
-		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 			 SLOT(changeToTab(int)));
-		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 			 SLOT(closeTab(int)));
-		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(addTab(void)));
-		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(open()));
-		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(save()));
-		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(saveAs()));
-		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(saveAll()));
-		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 			 SLOT(closeTab()));
-		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(closeAll()));
-		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settings, 		 SLOT(show()));
-		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,			 SLOT(insert(QString)));
-		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,			 SLOT(insert(QString)));
-		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,			 SLOT(updateElements(void)));
-		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,			 SLOT(updateSettings(void)));
-		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 			 SLOT(transferSourceCompilation(void)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,			 SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,			 SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(clearSearchHighlight(void)),				this,			 SLOT(transferClearSearchRequest(void)));
+		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 		SLOT(changeToTab(int)));
+		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 		SLOT(closeTab(int)));
+		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 		SLOT(addTab(void)));
+		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 		SLOT(open()));
+		QObject::connect(&recentFilesMenu,		SIGNAL(openRequest(const QString&)),				this,		SLOT(open(const QString&)));
+		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 		SLOT(save()));
+		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 		SLOT(saveAs()));
+		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(saveAll()));
+		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 		SLOT(closeTab()));
+		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(closeAll()));
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settings, 	SLOT(show()));
+		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,		SLOT(insert(QString)));
+		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,		SLOT(insert(QString)));
+		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,		SLOT(updateElements(void)));
+		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
+		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 		SLOT(transferSourceCompilation(void)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,		SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(&searchAndReplaceMenu,		SIGNAL(clearSearchHighlight(void)),				this,		SLOT(transferClearSearchRequest(void)));
 
 		// Shortcuts : 
 		newAction.setShortcuts(		QKeySequence::New );
@@ -1638,6 +1717,7 @@ using namespace QGED;
 		{
 			editor->save();
 			setCurrentPath(editor->getFilename());
+			recentFilesMenu.append(editor->getFilename());
 		}
 		else 
 			saveAs(editor);
@@ -1660,6 +1740,7 @@ using namespace QGED;
 		{
 			editor->save(filename);
 			setCurrentPath(filename);
+			recentFilesMenu.append(editor->getFilename());
 		}
 	}
 
@@ -1776,10 +1857,19 @@ using namespace QGED;
 		if(!filenameList.empty())
 		{
 			for(QStringList::iterator it=filenameList.begin(); it!=filenameList.end(); it++)
+			{
 				addTab(*it);
+				recentFilesMenu.append(*it);
+			}
 
 			setCurrentPath(filenameList.front());
 		}
+	}
+
+	void MainWidget::open(const QString& filename)
+	{
+		QStringList list(filename);
+		open(list);
 	}
 
 	void MainWidget::save(void)

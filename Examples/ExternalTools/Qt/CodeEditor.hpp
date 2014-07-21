@@ -386,6 +386,32 @@ namespace QGED
 			void insertElement(QString element);
 	};
 
+	class RecentFilesMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private :
+			QList<QString>	recentFiles;
+			QSignalMapper	signalMapper;
+			QAction		clearAction;
+
+			void buildMenu(void);
+
+		public :
+			RecentFilesMenu(QWidget* parent=NULL);
+			~RecentFilesMenu(void);
+
+			const QList<QString>& getList(void) const;
+
+		public slots :
+			void append(const QString& filename, bool updateMenuNow=true);
+			void append(const QList<QString>& filenames);
+			void clear(void);
+
+		signals : 
+			void openRequest(const QString& filename);
+	};
+
 	class MainWidget : public QWidget
 	{
 		Q_OBJECT
@@ -414,6 +440,7 @@ namespace QGED
 			ElementsMenu		elementsMenu;
 			CodeEditorSettings	settings;
 			SearchAndReplaceMenu	searchAndReplaceMenu;
+			RecentFilesMenu		recentFilesMenu;
 
 			CodeEditor* getCurrentEditor(void);
 			int getTabIndex(CodeEditor* editor);
@@ -446,6 +473,7 @@ namespace QGED
 		public slots :
 			void addTab(const QString& filename="");
 			void open(QStringList filenameList = QStringList());
+			void open(const QString& filename);
 			void save(void);
 			void saveAs(const QString& filename="");
 			void saveAll(void);

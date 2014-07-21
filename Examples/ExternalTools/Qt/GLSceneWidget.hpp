@@ -248,6 +248,9 @@ namespace QVGL
 								widgetsSignalMapper;
 
 				void mousePressEvent(QMouseEvent* event);
+				void mouseDoubleClickEvent(QMouseEvent* event);
+				void mouseMoveEvent(QMouseEvent* event);
+				void mouseReleaseEvent(QMouseEvent* event);
 
 				friend class SceneWidget;
 				friend class MainWidget;

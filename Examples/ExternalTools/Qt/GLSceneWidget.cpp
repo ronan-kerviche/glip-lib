@@ -256,6 +256,7 @@ using namespace QVGL;
 				h = 16;
 		hideButton.setMinimumSize(w, h);
 		hideButton.setMaximumSize(w, h);
+		hideButton.setArrowType(Qt::UpArrow);
 
 		titleBar.addWidget(&titleLabel);
 		titleBar.addWidget(&hideButton);
@@ -266,7 +267,6 @@ using namespace QVGL;
 
 		// Create final layout : 
 		layout.addWidget(&titleWidget, 0);
-		//layout.addWidget(widget, 1);
 		layout.setMargin(4);
 		layout.setSpacing(1);
 
@@ -438,6 +438,7 @@ using namespace QVGL;
 		else
 		{
 			widget = _widget;
+			widget->setParent(this);
 			layout.addWidget(widget, 1);
 
 			// Scan widget and install event filter : 
@@ -531,7 +532,7 @@ using namespace QVGL;
 	void PositionColorInfoMini::setWindowOpacity(qreal level)
 	{
 		QWidget::setWindowOpacity(level);
-		colorBox.setWindowOpacity(0.0);		// TODO : to fix missing solid color.
+		colorBox.setWindowOpacity(1.0);		// TODO : to fix missing solid color.
 	}
 
 	void PositionColorInfoMini::updatePosition(const QPointF& pos)
@@ -611,7 +612,38 @@ using namespace QVGL;
 	{
 		QWidget::mousePressEvent(event);
 
+		// Absorb :
+		if(!event->isAccepted())
+			event->accept();
+
 		emit selected(this);
+	}
+
+	void TopBar::mouseDoubleClickEvent(QMouseEvent* event)
+	{
+		QWidget::mouseDoubleClickEvent(event);
+
+		// Absorb :
+		if(!event->isAccepted())
+			event->accept();
+	}
+
+	void TopBar::mouseMoveEvent(QMouseEvent* event)
+	{
+		QWidget::mouseMoveEvent(event);
+
+		// Absorb :
+		if(!event->isAccepted())
+			event->accept();
+	}
+
+	void TopBar::mouseReleaseEvent(QMouseEvent* event)
+	{
+		QWidget::mouseReleaseEvent(event);
+
+		// Absorb :
+		if(!event->isAccepted())
+			event->accept();
 	}
 
 	void TopBar::stretch(const QRectF& rect)
