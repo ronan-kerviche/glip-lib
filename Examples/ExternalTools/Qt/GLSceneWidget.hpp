@@ -149,6 +149,71 @@ namespace QVGL
 			void nameChanged(void);
 			void closed(void);
 	};
+		
+	class ViewsTable : public QObject
+	{
+		Q_OBJECT
+
+		public : 
+			struct VignetteFrame : public QGraphicsRectItem
+			{
+				protected : 
+					void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
+					void dragEnterEvent(QGraphicsSceneDragDropEvent* event);
+					void dragLeaveEvent(QGraphicsSceneDragDropEvent* event);
+					void dragMoveEvent(QGraphicsSceneDragDropEvent* event);
+					void dropEvent(QGraphicsSceneDragDropEvent* event);
+					void focusInEvent(QFocusEvent* event);
+					void focusOutEvent(QFocusEvent* event);
+					void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);
+
+				public : 
+					VignetteFrame(qreal x, qreal y, qreal width, qreal height);
+					~VignetteFrame(void);
+			};
+
+			struct Vignette
+			{
+				private : 
+					int				i, j;
+					View*				view;
+					VignetteFrame*			rect;	// Also has the coordinates of the vignette.
+					QGraphicsSimpleTextItem*	title;
+				
+					Vignette(void);
+					Vignette(const Vignette& v);
+
+				public : 
+					Vignette(const int& _i, const int& _j, View* _view, SceneViewWidget& sceneViewWidget, int w, int h);
+					~Vignette(void);
+
+					View* getView(void);
+					int getX(void) const;
+					int getY(void) const;
+					int getWidth(void) const;
+					int getHeight(void) const;
+					void move(const int& x, const int& y);
+					void move(const QPoint& p);
+					void resize(const int& w, const int& h);
+			};
+	
+		private :
+			QList<Vignette*>	vignettesList;
+			int 			a, b, w, h, H, topBarHeight;
+			float 			u, v;			
+
+		public :
+			ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget);
+			~ViewsTable(void);
+
+			QList<Vignette*>::iterator begin(void);
+			QList<Vignette*>::const_iterator begin(void) const;
+			QList<Vignette*>::iterator end(void);
+			QList<Vignette*>::const_iterator end(void) const;
+
+			QPoint getScenePosition(const int& i, const int& j) const;
+			void sceneResized(const SceneViewWidget& sceneViewWidget, int N=-1, const float& rho=0.05);
+	};
 
 	class SubWidget : public QWidget
 	{
@@ -233,19 +298,22 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
-				static TopBar*			singleton;
-				QGraphicsProxyWidget 		*graphicsProxy;
-				QHBoxLayout			bar;
-				QMenuBar			menuBar;
-				QMenu				mainMenu,
-								viewsMenu,
-								widgetsMenu;
-				QAction				temporaryHideAllSubWidgetsAction,
-								hideAllSubWidgetsAction;
-				QLabel				titleLabel;
+				static TopBar*		singleton;
+				QGraphicsProxyWidget 	*graphicsProxy;
+				QHBoxLayout		bar;
+				QMenuBar		menuBar;
+				QMenu			mainMenu,
+							viewsMenu,
+							widgetsMenu;
+				QAction			closeCurrentViewAction,	
+							closeAllViewsAction,
+							temporaryHideAllSubWidgetsAction,
+							hideAllSubWidgetsAction;
+				QSignalMapper		signalMapper;
+				QLabel			titleLabel;
 				PositionColorInfoMini	positionColorInfo;
-				QSignalMapper			viewsSignalMapper,
-								widgetsSignalMapper;
+				QSignalMapper		viewsSignalMapper,
+							widgetsSignalMapper;
 
 				void mousePressEvent(QMouseEvent* event);
 				void mouseDoubleClickEvent(QMouseEvent* event);
@@ -260,6 +328,7 @@ namespace QVGL
 				void castViewPointer(QObject* ptr);
 				void castSubWidgetPointer(QObject* ptr);
 				void sendSelectedSignal(void);
+				void transferActionSignal(int actionID);
 
 			public :
 				TopBar(void);
@@ -274,14 +343,12 @@ namespace QVGL
 				void setWindowOpacity(qreal level);
 
 				static int getHeight(void); 
-				
 
 			signals : 
 				void changeViewRequest(View* targetView);
+				void requestAction(ActionID);
 				void showSubWidgetRequest(SubWidget* targetWidget);
 				void selected(TopBar* ptr);
-				void temporaryHideAllSubWidgets(void);
-				void hideAllSubWidgets(void);
 		};
 	
 		class BottomBar : public QWidget
@@ -331,8 +398,8 @@ namespace QVGL
 
 		private : 
 			QMap<QKeySequence, ActionID> 	keysActionsAssociations;
-			bool					takeBackEnabled[NumActions];
-			bool					actionPressed[NumActions];
+			bool				takeBackEnabled[NumActions];
+			bool				actionPressed[NumActions];
 	
 		protected :
 			friend class SceneWidget;
@@ -529,6 +596,12 @@ namespace QVGL
 			TopBar			*topBar;
 			BottomBar		*bottomBar;
 
+			// Tools : 
+			void drawView(View* view);
+			void drawView(View* view, const int& x, const int& y, const int& w, const int& h);
+			void drawViewsTable(ViewsTable* viewsTable);
+			//void getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const;
+
 			// Qt events : 
 			void drawBackground(QPainter* painter, const QRectF& rect);
 			void keyPressEvent(QKeyEvent* event);
@@ -565,6 +638,7 @@ namespace QVGL
 			~SceneViewWidget(void);
 
 			void addSubWidget(SubWidget* subWidget);
+			void addItem(QGraphicsItem* item);
 			SubWidget* getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
 			SubWidget* getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
 			void orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible=true) const;
@@ -594,6 +668,7 @@ namespace QVGL
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
 			int				currentViewIndex;
+			ViewsTable*			viewsTable;
 
 			float				opacityActiveSubWidget,
 							opacityIdleSubWidget,
@@ -613,6 +688,7 @@ namespace QVGL
 				void viewUpdated(void);
 				void viewClosed(View* view);
 				void viewClosed(void);
+				void closeAllViews(void);
 
 			// Widgets : 	
 				void subWidgetSelected(SubWidget* subWidget);
@@ -636,8 +712,13 @@ namespace QVGL
 			KeyboardState& getKeyboardState(void);
 			MouseState& getMouseState(void);
 			View* getCurrentView(void) const;
+			QList<View*>& getCurrentViewList(void); // To be removed in the future?
+			ViewsTable* getCurrentViewsTable(void);
+			void changeCurrentView(void);
 			void changeCurrentView(int targetID);
+			void getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const;
 			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;							// correcting for the aspect ratio of the scene.
+			float getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const;
 			float getAdaptationScaling(const float& imageRatio) const;									// correcting for the image filling the scene.
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const;
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;

@@ -226,6 +226,194 @@ using namespace QVGL;
 			return "0 B";
 	}
 
+// ViewsTable ;
+	// VignetteFrame ;
+		ViewsTable::VignetteFrame::VignetteFrame(qreal x, qreal y, qreal width, qreal height)
+		 : QGraphicsRectItem(x, y, width, height)
+		{
+			QPen pen(QColor(128, 128, 128), 3.0);
+			setPen(pen);
+		}
+
+		ViewsTable::VignetteFrame::~VignetteFrame(void)
+		{ }
+
+		void ViewsTable::VignetteFrame::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::contextMenuEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragEnterEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragLeaveEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragMoveEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::dropEvent(QGraphicsSceneDragDropEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dropEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::focusInEvent(QFocusEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::focusInEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::focusOutEvent(QFocusEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::focusOutEvent" << std::endl;
+		}
+
+		void ViewsTable::VignetteFrame::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
+		{
+			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::mouseDoubleClickEvent" << std::endl;
+		}
+
+	// Vignette
+		ViewsTable::Vignette::Vignette(const int& _i, const int& _j, View* _view, SceneViewWidget& sceneViewWidget, int w, int h)
+		 : 	i(_i),
+			j(_j),
+			view(_view),
+			rect(NULL),
+			title(NULL)
+		{
+			rect = new VignetteFrame(0, 0, w, h);
+			title = new QGraphicsSimpleTextItem(view->getName());
+			title->setPos(0, 0);
+
+			sceneViewWidget.addItem(reinterpret_cast<QGraphicsItem*>(rect));
+			sceneViewWidget.addItem(reinterpret_cast<QGraphicsItem*>(title));
+		}
+
+		ViewsTable::Vignette::~Vignette(void)
+		{
+			delete rect;
+			delete title;
+			rect = NULL;
+			title = NULL;
+		}
+
+
+		View* ViewsTable::Vignette::getView(void)
+		{
+			return view;
+		}
+
+		int ViewsTable::Vignette::getX(void) const	{ return rect->rect().x(); }
+		int ViewsTable::Vignette::getY(void) const	{ return rect->rect().y(); }
+		int ViewsTable::Vignette::getWidth(void) const	{ return rect->rect().width(); }
+		int ViewsTable::Vignette::getHeight(void) const	{ return rect->rect().height(); }
+
+		void ViewsTable::Vignette::move(const int& x, const int& y)
+		{
+			rect->setRect(x, y, getWidth(), getHeight());
+			title->setPos(x + 4, y + 4);
+		}
+
+		void ViewsTable::Vignette::move(const QPoint& p)
+		{
+			move(p.x(), p.y());
+		}
+
+		void ViewsTable::Vignette::resize(const int& w, const int& h)
+		{
+			rect->rect().setWidth(w);
+			rect->rect().setHeight(h);
+		}
+	
+	ViewsTable::ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget)
+	{
+		// Compute the quasi-optimal parameters of the table : 
+		sceneResized(sceneViewWidget, viewsList.size());
+
+		// Build the vignettes :
+		int 	i = 0,
+			j = 0;
+		for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+		{
+			Vignette* v = new Vignette(i, j, *it, sceneViewWidget, w, h);
+			v->move(getScenePosition(i, j));
+			vignettesList.append(v);
+
+			j++;
+			if(j>=a)
+			{
+				j = 0;
+				i++;
+			}
+		}
+	}
+
+	ViewsTable::~ViewsTable(void)
+	{
+		while(!vignettesList.isEmpty())
+		{
+			delete vignettesList.front();
+			vignettesList.removeFirst();
+		}
+	}
+
+	QList<ViewsTable::Vignette*>::iterator		ViewsTable::begin(void)		{ return vignettesList.begin(); }
+	QList<ViewsTable::Vignette*>::const_iterator	ViewsTable::begin(void) const	{ return vignettesList.begin(); }
+	QList<ViewsTable::Vignette*>::iterator		ViewsTable::end(void)		{ return vignettesList.end(); }
+	QList<ViewsTable::Vignette*>::const_iterator	ViewsTable::end(void) const	{ return vignettesList.end(); }
+
+	QPoint ViewsTable::getScenePosition(const int& i, const int& j) const
+	{
+		const int 	x = static_cast<int>(static_cast<float>(j) * (static_cast<float>(w) + u) + u),
+				y = H - static_cast<int>(static_cast<float>(i) * (static_cast<float>(h) + v) + v) - h + topBarHeight;
+
+		return QPoint(x, y);
+	}
+
+	void ViewsTable::sceneResized(const SceneViewWidget& sceneViewWidget, int N, const float& rho)
+	{
+		// IN
+		// W 	: width of the scene.
+		// H	: height of the scene.
+		// N 	: number of elements to display.
+		// rho 	: percentage of spacing.
+		// OUT
+		// a 	: number of columns of the table.
+		// b 	: number of rows of the table.
+		// w	: width of each vignette.
+		// h 	: height of each vignette.
+		// u 	: horizontal spacing, adjusted.
+		// v 	: vertical spacing, adjusted.
+
+		if(N<1)
+			N = vignettesList.size();
+
+		topBarHeight = TopBar::getHeight();
+
+		const int 	W = sceneViewWidget.sceneRect().width();
+				H = sceneViewWidget.sceneRect().height() - topBarHeight;
+
+		const float sceneRatio = static_cast<float>(W)/static_cast<float>(H);
+
+		// ROUND REQUIRES : 
+		// QT <= 4 : QMAKE_CXXFLAGS += -std=c++11
+		// QT >= 5 : CONFIG += c++11
+
+		a = std::round(std::sqrt(sceneRatio*static_cast<float>(N)));
+		b = std::ceil(static_cast<float>(N)/static_cast<float>(a));
+
+		w = static_cast<int>((1.0f - rho) * static_cast<float>(W) / static_cast<float>(a));
+		h = static_cast<int>((1.0f - rho) * static_cast<float>(H) / static_cast<float>(b));
+
+		u = static_cast<float>(W - a*w) / static_cast<float>(a + 1);
+		v = static_cast<float>(H - b*h) / static_cast<float>(b + 1);
+	}
+
 // SubWidget :
 	SubWidget::SubWidget(void)
 	 : 	layout(this),
@@ -257,6 +445,7 @@ using namespace QVGL;
 		hideButton.setMinimumSize(w, h);
 		hideButton.setMaximumSize(w, h);
 		hideButton.setArrowType(Qt::UpArrow);
+		hideButton.setToolTip("Hide");
 
 		titleBar.addWidget(&titleLabel);
 		titleBar.addWidget(&hideButton);
@@ -557,8 +746,11 @@ using namespace QVGL;
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
 		widgetsMenu("Widgets", this),
+		closeCurrentViewAction("Close view", this),	
+		closeAllViewsAction("Close all views", this),
 		temporaryHideAllSubWidgetsAction("Hide all widgets", this),
 		hideAllSubWidgetsAction("Close all widgets", this),
+		signalMapper(this),
 		menuBar(this)
 	{
 		if(singleton==NULL)
@@ -588,8 +780,18 @@ using namespace QVGL;
 		QObject::connect(&mainMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&viewsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&widgetsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
-		QObject::connect(&temporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		this, SIGNAL(temporaryHideAllSubWidgets()));
-		QObject::connect(&hideAllSubWidgetsAction,		SIGNAL(triggered()),		this, SIGNAL(hideAllSubWidgets()));
+		QObject::connect(&signalMapper,				SIGNAL(mapped(int)),		this, SLOT(transferActionSignal(int)));
+
+		// Signals mapping : 
+		QObject::connect(&closeCurrentViewAction,		SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&closeAllViewsAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&temporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&hideAllSubWidgetsAction,		SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+
+		signalMapper.setMapping(&closeCurrentViewAction, 		ActionCloseView);
+		signalMapper.setMapping(&closeAllViewsAction,			ActionCloseAllViews);
+		signalMapper.setMapping(&temporaryHideAllSubWidgetsAction,	ActionTemporaryHideAllSubWidgets);
+		signalMapper.setMapping(&hideAllSubWidgetsAction,		ActionHideAllSubWidgets);
 
 		// Reset : 
 		setTitle();
@@ -604,6 +806,15 @@ using namespace QVGL;
 
 	TopBar::~TopBar(void)
 	{
+		// Clear the menus : 
+		viewsMenu.removeAction(&closeCurrentViewAction);
+		viewsMenu.removeAction(&closeAllViewsAction);
+		viewsMenu.clear();
+
+		widgetsMenu.removeAction(&temporaryHideAllSubWidgetsAction);
+		widgetsMenu.removeAction(&hideAllSubWidgetsAction);		
+		widgetsMenu.clear();
+
 		if(singleton==this)
 			singleton = NULL;
 	}
@@ -665,6 +876,11 @@ using namespace QVGL;
 	{
 		emit selected(this);
 	}
+	
+	void TopBar::transferActionSignal(int actionID)
+	{
+		emit requestAction(static_cast<ActionID>(actionID));
+	}
 
 	void TopBar::setTitle(void)
 	{
@@ -710,7 +926,9 @@ using namespace QVGL;
 
 	void TopBar::updateViewsList(const QList<View*>& viewsList)
 	{
-		// Clear previous list : 
+		// Clear previous list :
+		viewsMenu.removeAction(&closeCurrentViewAction);
+		viewsMenu.removeAction(&closeAllViewsAction);
 		viewsMenu.clear();
 
 		if(!viewsList.isEmpty())
@@ -724,21 +942,29 @@ using namespace QVGL;
 		}
 		else
 			viewsMenu.addAction("(No Views)");
+
+		viewsMenu.addSeparator();
+		viewsMenu.addAction(&closeCurrentViewAction);
+		viewsMenu.addAction(&closeAllViewsAction);
+		closeCurrentViewAction.setEnabled(!viewsList.isEmpty());
+		closeAllViewsAction.setEnabled(!viewsList.isEmpty());
 	}
 
 	void TopBar::updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList)
 	{
-		// Clear the previous list : 
+		// Clear the previous list :
+		widgetsMenu.removeAction(&temporaryHideAllSubWidgetsAction);
+		widgetsMenu.removeAction(&hideAllSubWidgetsAction);
 		widgetsMenu.clear();
+
+		// Add the default action : 
+		widgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
+		widgetsMenu.addAction(&hideAllSubWidgetsAction);
+		temporaryHideAllSubWidgetsAction.setEnabled(!subWidgetsList.isEmpty());
+		hideAllSubWidgetsAction.setEnabled(!subWidgetsList.isEmpty());
 
 		if(!subWidgetsList.isEmpty())
 		{
-			// Add the default action : 
-			widgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
-			widgetsMenu.addAction(&hideAllSubWidgetsAction);
-			temporaryHideAllSubWidgetsAction.setEnabled(true);
-			hideAllSubWidgetsAction.setEnabled(true);
-
 			widgetsMenu.addSeparator();
 
 			for(QList<SubWidget*>::const_iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -747,14 +973,6 @@ using namespace QVGL;
 				QAction* tmpAction = widgetsMenu.addAction((*it)->getTitle(), &widgetsSignalMapper, SLOT(map()));
 				widgetsSignalMapper.setMapping(tmpAction, reinterpret_cast<QObject*>(*it));
 			}
-		}
-		else
-		{
-			// Add the default action : 
-			widgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
-			widgetsMenu.addAction(&hideAllSubWidgetsAction);
-			temporaryHideAllSubWidgetsAction.setEnabled(false);
-			hideAllSubWidgetsAction.setEnabled(false);
 		}
 	}
 
@@ -846,10 +1064,6 @@ using namespace QVGL;
 			// re-throw :
 			throw e;
 		}
-		
-		/*setAttribute(Qt::WA_PaintOnScreen);
-		setAttribute(Qt::WA_NoSystemBackground);
-		setAttribute(Qt::WA_OpaquePaintEvent);*/
 	}
 
 	ContextWidget::~ContextWidget(void)
@@ -867,6 +1081,7 @@ using namespace QVGL;
 
 	void ContextWidget::resizeGL(int width, int height)
 	{
+		// TODO : this is never called, to be removed?.
 		glViewport(0, 0, width, height);
 	}
 
@@ -1006,11 +1221,11 @@ using namespace QVGL;
 		setActionKeySequence(ActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
 		setActionKeySequence(ActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
 		setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
-		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_R));
-		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::ALT + Qt::Key_E));
-		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::ALT + Qt::Key_T));
-		setActionKeySequence(ActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::ALT + Qt::Key_Y));
-		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::ALT + Qt::Key_U));
+		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::CTRL + Qt::Key_R));
+		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::CTRL + Qt::Key_E));
+		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::CTRL + Qt::Key_T));
+		setActionKeySequence(ActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::CTRL + Qt::Key_Y));
+		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::CTRL + Qt::Key_U));
 	}
 
 // MouseState :
@@ -1557,16 +1772,177 @@ using namespace QVGL;
 		delete shaderProgram;
 	}
 
+	void SceneWidget::drawView(View* view)
+	{
+		float 	imageScale[2],
+			sceneScale[2],
+			adaptationScale;
+
+		// Get the various scales : 
+		view->getAspectRatioScaling(imageScale[0], imageScale[1]);
+		qvglParent->getSceneRatioScaling(sceneScale[0], sceneScale[1]);
+		adaptationScale = qvglParent->getAdaptationScaling(view->getImageRatio());
+
+		// Load the data : 
+		shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
+		shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
+		shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
+		shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
+		shaderProgram->modifyVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
+		shaderProgram->modifyVar("angle",		GL_FLOAT,	view->angle);
+		shaderProgram->modifyVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+
+		// Draw : 
+		view->prepareToDraw();
+
+		quad->draw();
+	}
+
+	void SceneWidget::drawView(View* view, const int& x, const int& y, const int& w, const int& h)
+	{
+		glViewport(x, y, w, h);
+
+		const float sceneRatio = static_cast<float>(w) / static_cast<float>(h);
+		float 	imageScale[2],
+			sceneScale[2],
+			adaptationScale;
+
+		// Get the various scales : 
+		view->getAspectRatioScaling(imageScale[0], imageScale[1]);
+		qvglParent->getSceneRatioScaling(sceneRatio, sceneScale[0], sceneScale[1]);
+		adaptationScale = qvglParent->getAdaptationScaling(sceneRatio, view->getImageRatio());
+
+		// Load the data : 
+		shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
+		shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
+		shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
+		shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
+		shaderProgram->modifyVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
+		shaderProgram->modifyVar("angle",		GL_FLOAT,	view->angle);
+		shaderProgram->modifyVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+
+		// Draw : 
+		view->prepareToDraw();
+
+		quad->draw();
+	}
+
+	void SceneWidget::drawViewsTable(ViewsTable* viewsTable)
+	{
+		std::cout << "Drawing table : " << std::endl;
+		for(QList<ViewsTable::Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
+		{
+			std::cout << "    At : " << (*it)->getX() << 'x' << (*it)->getY() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
+			drawView((*it)->getView(), (*it)->getX(), (*it)->getY(), (*it)->getWidth(), (*it)->getHeight());
+		}
+
+		// Restore view port : 
+		glViewport(0, 0, width(), height());
+	}
+
+	/*void SceneWidget::getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const
+	{
+		// W 	: width of the scene.
+		// H	: height of the scene.
+		// N 	: number of elements to display.
+		// rho 	: percentage of spacing.
+		// a 	: number of columns of the table.
+		// b 	: number of rows of the table.
+		// w	: width of each vignette.
+		// h 	: height of each vignette.
+		// u 	: horizontal spacing, adjusted.
+		// v 	: vertical spacing, adjusted.
+		
+		const float sceneRatio = static_cast<float>(W)/static_cast<float>(H);
+
+		// ROUND REQUIRES : 
+		// QT <= 4 : QMAKE_CXXFLAGS += -std=c++11
+		// QT >= 5 : CONFIG += c++11
+
+		a = std::round(std::sqrt(sceneRatio*static_cast<float>(N)));
+		b = std::ceil(static_cast<float>(N)/static_cast<float>(a));
+
+		w = static_cast<int>((1.0f - rho) * static_cast<float>(W) / static_cast<float>(a));
+		h = static_cast<int>((1.0f - rho) * static_cast<float>(H) / static_cast<float>(b));
+
+		u = static_cast<float>(W - a*w) / static_cast<float>(a + 1);
+		v = static_cast<float>(H - b*h) / static_cast<float>(b + 1);
+	}*/
+
 	void SceneWidget::drawBackground(QPainter* painter, const QRectF& rect)
 	{
 		HdlTexture::unbind();
 
-		glClearColor( 0.1, 0.1, 0.1, 1.0);
+		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
 
-		View* currentView = qvglParent->getCurrentView();
+		ViewsTable* viewsTable = qvglParent->getCurrentViewsTable();
 
+		if(viewsTable!=NULL)
+			drawViewsTable(viewsTable);
+		else
+		{
+			// ORIGINAL
+			View* currentView = qvglParent->getCurrentView();
+
+			if(currentView!=NULL)
+				drawView(currentView);
+		}
+
+		/*if(qvglParent->getCurrentViewList().size()<2)
+		{
+			// ORIGINAL
+			View* currentView = qvglParent->getCurrentView();
+
+			if(currentView!=NULL)
+				drawView(currentView);
+		}
+		else
+		{
+			QList<View*>& viewsList = qvglParent->getCurrentViewList();
+			QRectF sceneRect = qvglParent->sceneRect();
+
+			int a, b, w, h;
+			float u, v;
+			getTableParameters(sceneRect.width(), sceneRect.height() - TopBar::getHeight(), viewsList.size(), 0.05, a, b, w, h, u, v);
+
+			//std::cout << "Table : " << std::endl;
+			//std::cout << "    WIDTH     : " << sceneRect.width() << std::endl;
+			//std::cout << "    HEIGHT    : " << sceneRect.height() << std::endl;
+			//std::cout << "    Columns   : " << a << std::endl;
+			//std::cout << "    Rows      : " << b << std::endl;
+			//std::cout << "    Width     : " << w << std::endl;
+			//std::cout << "    Height    : " << h << std::endl;
+			//std::cout << "    H Spacing : " << u << std::endl;
+			//std::cout << "    V Spacing : " << v << std::endl;
+
+			//std::cout << "Drawing : " << std::endl;
+
+			int i = 0, j = 0;
+			for(QList<View*>::iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+			{
+				const int 	x = static_cast<int>(static_cast<float>(j) * (static_cast<float>(w) + u) + u),
+						y = sceneRect.height() - static_cast<int>(static_cast<float>(i) * (static_cast<float>(h) + v) + v) - h - TopBar::getHeight();
+
+				//std::cout << "    " << x << 'x' << y << std::endl;
+
+				drawView(*it, x, y, w, h);
+
+				// Increase : 
+				j++;
+				if(j>=a)
+				{
+					j = 0;
+					i++;
+				}
+			}
+
+			// Restore view port : 
+			glViewport(0, 0, sceneRect.width(), sceneRect.height());
+		}*/
+	
+		/* ORIGINAL
 		if(currentView!=NULL)
 		{
 			shaderProgram->use();
@@ -1581,7 +1957,7 @@ using namespace QVGL;
 			adaptationScale = qvglParent->getAdaptationScaling(currentView->getImageRatio());
 
 			// Load the data : 
-			shaderProgram->modifyVar("imageScale", 	GL_FLOAT_VEC2,	imageScale);
+			shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
 			shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
 			shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
 			shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	currentView->viewCenter);
@@ -1599,7 +1975,7 @@ using namespace QVGL;
 			//std::cout << "Scene      : " << Parent->getSceneRatio() << std::endl;
 			//std::cout << "Adaptation : " << adaptationScale << std::endl;
 			//std::cout << "Angle      : " << currentView->getAngle() << std::endl;
-		}		
+		}*/	
 		//else
 		//	std::cout << "Nothing to draw!" << std::endl;
 
@@ -1643,6 +2019,9 @@ using namespace QVGL;
 				glVertex2f(a,-a);
 			glEnd();
 		}*/
+
+		HdlProgram::stopProgram();
+		HdlTexture::unbind();
 	}
 
 	void SceneWidget::keyPressEvent(QKeyEvent* event)
@@ -1732,37 +2111,6 @@ using namespace QVGL;
 		std::cout << "TODO - line " << __LINE__ << " : add double click event process." << std::endl;
 	}
 
-	/*void SceneWidget::addSubWidget(SubWidget* subWidget)
-	{
-		subWidget->graphicsProxy = addWidget(subWidget);
-
-		// Connect : 
-		// TODO : TO REMOVE
-		QObject::con//nect(subWidget, SIGNAL(selected(SubWidget*)), this, SLOT(reorderItems(SubWidget*)));
-	}
-
-	void SceneWidget::putItemOnTop(QGraphicsProxyWidget* graphicsProxy)
-	{
-		if(graphicsProxy!=NULL)
-		{
-			QList<QGraphicsItem*> itemsList = items();
-
-			qreal k = itemsList.count()-2;
-
-			for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
-			{
-				if((*it)!=reinterpret_cast<QGraphicsItem*>(selectedWidget->graphicsProxy))
-				{
-					(*it)->setZValue(k);
-					k--;
-				}
-			}
-
-			// Raise to top : 
-			graphicsProxy->setZValue(itemsList.count()-1.0);
-		}
-	}*/
-
 // SceneViewWidget :
 	SceneViewWidget::SceneViewWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
 	 : 	contextWidget(NULL),
@@ -1797,6 +2145,11 @@ using namespace QVGL;
 	void SceneViewWidget::addSubWidget(SubWidget* subWidget)
 	{
 		subWidget->graphicsProxy = sceneWidget->addWidget(subWidget);
+	}
+
+	void SceneViewWidget::addItem(QGraphicsItem* item)
+	{
+		sceneWidget->addItem(item);
 	}
 
 	SubWidget* SceneViewWidget::getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
@@ -1970,6 +2323,7 @@ using namespace QVGL;
 		container(QBoxLayout::LeftToRight, this),
 		sceneViewWidget(this, &topBar, &bottomBar),
 		currentViewIndex(-1),
+		viewsTable(NULL),
 		opacityActiveSubWidget(0.8),
 		opacityIdleSubWidget(0.2),
 		opacityActiveBar(0.8),
@@ -1986,21 +2340,22 @@ using namespace QVGL;
 		barSelected(&bottomBar);
 
 		QObject::connect(&mouseState,		SIGNAL(requestExternalUpdate(void)),		this, SLOT(updateMouseStateData(void)));
-		//QObject::connect(&sceneViewWidget, 	SIGNAL(requireContainerCatch(void)), 		this, SLOT(handleCatch(void)));			// Deprecated in current management of fullscreen.
 		QObject::connect(&keyboardState,	SIGNAL(actionReceived(ActionID, bool)),		this, SLOT(processAction(ActionID, bool)));
 		QObject::connect(&mouseState,		SIGNAL(updated(void)),				this, SLOT(performMouseAction(void)));
 		QObject::connect(&mouseState,		SIGNAL(mustSetMouseCursor(Qt::CursorShape)),	this, SLOT(setMouseCursor(Qt::CursorShape)));
 		QObject::connect(&topBar,		SIGNAL(selected(TopBar*)),			this, SLOT(barSelected(TopBar*)));
 		QObject::connect(&topBar,		SIGNAL(changeViewRequest(View*)),		this, SLOT(viewRequireDisplay(View*)));
+		QObject::connect(&topBar,		SIGNAL(requestAction(ActionID)),		this, SLOT(processAction(ActionID)));
 		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
-		QObject::connect(&topBar,		SIGNAL(temporaryHideAllSubWidgets(void)),	this, SLOT(temporaryHideAllSubWidgets()));
-		QObject::connect(&topBar,		SIGNAL(hideAllSubWidgets(void)),		this, SLOT(hideAllSubWidgets()));
 		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, SLOT(barSelected(BottomBar*)));
 	}
 
 	MainWidget::~MainWidget(void)
 	{
 		disconnect();
+
+		delete viewsTable;
+		viewsTable = NULL;
 
 		for(QList<View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
 			(*it)->qvglParent = NULL;
@@ -2143,12 +2498,6 @@ using namespace QVGL;
 		sceneViewWidget.viewport()->setCursor(cursorShape);
 	}
 
-	/*void MainWidget::handleCatch(void)
-	{
-		container.removeWidget(&sceneViewWidget);
-		container.addWidget(&sceneViewWidget);
-	}*/
-
 	void MainWidget::viewRequireDisplay(View* view)
 	{
 		int idx = viewsList.indexOf(view);
@@ -2208,6 +2557,22 @@ using namespace QVGL;
 		View* view = reinterpret_cast<View*>(QObject::sender());
 		
 		viewClosed(view);
+	}
+
+	void MainWidget::closeAllViews(void)
+	{
+		while(!viewsList.isEmpty())
+		{
+			View* view = viewsList.front();
+			viewsList.removeFirst();
+			
+			view->disconnect(this);
+			view->qvglParent = NULL;
+		}
+
+		// Update : 
+		changeCurrentView();
+		topBar.updateViewsList(viewsList);
 	}
 
 	void MainWidget::subWidgetSelected(SubWidget* subWidget)
@@ -2420,6 +2785,22 @@ using namespace QVGL;
 			return NULL;
 	}
 
+	QList<View*>& MainWidget::getCurrentViewList(void)
+	{
+		return viewsList;
+	}
+
+	ViewsTable* MainWidget::getCurrentViewsTable(void)
+	{
+		return viewsTable;
+	}
+
+	void MainWidget::changeCurrentView(void)
+	{
+		topBar.setTitle("(No View)");
+		sceneViewWidget.update();		
+	}
+
 	void MainWidget::changeCurrentView(int targetID)
 	{
 		currentViewIndex = std::min(std::max(targetID, 0), viewsList.size()-1);
@@ -2438,16 +2819,46 @@ using namespace QVGL;
 			topBar.setTitle("(No View)");
 	}
 
-	void MainWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
+	void MainWidget::getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const
 	{
-		const float sceneRatio = getSceneRatio();
-
 		xSceneScale = std::min(1.0f, 1.0f/sceneRatio);
 		ySceneScale = std::min(1.0f, sceneRatio); 	// The minus sign set the orientation of the GL axis to be the same as Qt.
 	}
 
+	void MainWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
+	{
+		/* ORIGINAL
+		const float sceneRatio = getSceneRatio();
+
+		xSceneScale = std::min(1.0f, 1.0f/sceneRatio);
+		ySceneScale = std::min(1.0f, sceneRatio); 	// The minus sign set the orientation of the GL axis to be the same as Qt.*/
+
+		getSceneRatioScaling(getSceneRatio(), xSceneScale, ySceneScale);
+	}
+
+	float MainWidget::getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const
+	{
+		if((sceneRatio<=1.0f && imageRatio>=1.0f) || (sceneRatio>=1.0f && imageRatio<=1.0f))	// Opposite aspect ratios : do not do anything.
+			return 1.0f;
+		else if(imageRatio<=1.0f)	// Portrait
+		{
+			if(sceneRatio>imageRatio)
+				return std::max(sceneRatio, 1.0f/sceneRatio);
+			else
+				return std::max(imageRatio, 1.0f/imageRatio);
+		}
+		else //if(imageRatio>1.0f)	// Landscape
+		{
+			if(sceneRatio>imageRatio)
+				return std::max(imageRatio, 1.0f/imageRatio);
+			else
+				return std::max(sceneRatio, 1.0f/sceneRatio);
+		}
+	}
+
 	float MainWidget::getAdaptationScaling(const float& imageRatio) const
 	{
+		/* ORIGINAL
 		const float sceneRatio = getSceneRatio();
 
 		if((sceneRatio<=1.0f && imageRatio>=1.0f) || (sceneRatio>=1.0f && imageRatio<=1.0f))	// Opposite aspect ratios : do not do anything.
@@ -2465,7 +2876,9 @@ using namespace QVGL;
 				return std::max(imageRatio, 1.0f/imageRatio);
 			else
 				return std::max(sceneRatio, 1.0f/sceneRatio);
-		}
+		}*/
+
+		return getAdaptationScaling(getSceneRatio(), imageRatio);
 	}
 
 	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const
@@ -2605,6 +3018,16 @@ using namespace QVGL;
 
 			// Update views list : 
 			topBar.updateViewsList(viewsList);
+
+			// TODO - Temp to remove : 
+			std::cout << "[" << __LINE__ << "] Testing ViewsTable, to be removed." << std::endl;
+			if(viewsList.size()>=3)
+			{
+				std::cout << "Creating table..." << std::endl;
+				delete viewsTable;
+				viewsTable = new ViewsTable(viewsList, sceneViewWidget);
+				std::cout << "    Table : " << viewsTable << std::endl;
+			}
 		}
 	}
 
@@ -2742,6 +3165,7 @@ using namespace QVGL;
 				if(currentView!=NULL) currentView->close();
 				break;
 			case ActionCloseAllViews :
+				closeAllViews();
 				break;
 			case ActionMotionModifier :
 				if(!takenBack)
@@ -2750,6 +3174,7 @@ using namespace QVGL;
 					mouseState.setFunctionMode(MouseState::ModeCollection);
 				break;
 			case ActionRotationModifier :
+				std::cout << '[' << __LINE__ << "] ActionRotationModifier not available." << std::endl;
 				break;
 			case ActionNextSubWidget :
 				nextSubWidget();
