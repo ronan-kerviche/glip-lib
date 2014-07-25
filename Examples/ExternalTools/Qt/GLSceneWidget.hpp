@@ -150,12 +150,41 @@ namespace QVGL
 			void closed(void);
 	};
 		
+		class Vignette : public QObject, public QGraphicsItemGroup
+		{
+			Q_OBJECT
+
+			private : 
+				View*			view;
+				QGraphicsRectItem	frame,
+							titleBar;
+				QGraphicsSimpleTextItem	title,
+							infos;
+			
+				Vignette(void);
+				Vignette(const Vignette& v);
+				void setTitleBarHeight(void);
+
+			public : 
+				Vignette(View* _view);
+				virtual ~Vignette(void);
+
+				View* getView(void);
+				int getWidth(void) const;
+				int getHeight(void) const;
+				void resize(const QSize& size);
+			
+			public slots :
+				void updateTitle(void);
+				void updateInfos(void);
+		};
+
 	class ViewsTable : public QObject
 	{
 		Q_OBJECT
 
 		public : 
-			struct VignetteFrame : public QGraphicsRectItem
+			/*class VignetteFrame : public QGraphicsRectItem
 			{
 				protected : 
 					void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
@@ -170,37 +199,20 @@ namespace QVGL
 				public : 
 					VignetteFrame(qreal x, qreal y, qreal width, qreal height);
 					~VignetteFrame(void);
-			};
-
-			struct Vignette
-			{
-				private : 
-					int				i, j;
-					View*				view;
-					VignetteFrame*			rect;	// Also has the coordinates of the vignette.
-					QGraphicsSimpleTextItem*	title;
-				
-					Vignette(void);
-					Vignette(const Vignette& v);
-
-				public : 
-					Vignette(const int& _i, const int& _j, View* _view, SceneViewWidget& sceneViewWidget, int w, int h);
-					~Vignette(void);
-
-					View* getView(void);
-					int getX(void) const;
-					int getY(void) const;
-					int getWidth(void) const;
-					int getHeight(void) const;
-					void move(const int& x, const int& y);
-					void move(const QPoint& p);
-					void resize(const int& w, const int& h);
-			};
+			};*/
 	
 		private :
 			QList<Vignette*>	vignettesList;
 			int 			a, b, w, h, H, topBarHeight;
 			float 			u, v;			
+
+			void computeTableParameters(const QSize& sceneViewWidget, int N=-1, const float& rho=0.05);
+			void getIndices(const Vignette* vignette, int& i, int& j) const;
+			QPoint getScenePosition(const int& i, const int& j) const;
+			QPoint getScenePosition(const Vignette* vignette) const;
+
+		private slots : 
+			void resize(QSize size);
 
 		public :
 			ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget);
@@ -211,8 +223,7 @@ namespace QVGL
 			QList<Vignette*>::iterator end(void);
 			QList<Vignette*>::const_iterator end(void) const;
 
-			QPoint getScenePosition(const int& i, const int& j) const;
-			void sceneResized(const SceneViewWidget& sceneViewWidget, int N=-1, const float& rho=0.05);
+			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
 	};
 
 	class SubWidget : public QWidget
@@ -649,9 +660,8 @@ namespace QVGL
 			void getColorAt(int x, int y, QColor& c);
 			void update(void);
 
-		// Deprecated : 
-		//signals :
-			//void requireContainerCatch(void);
+		signals : 
+			void resized(QSize newSize);
 	};
 	
 	class MainWidget : public QWidget

@@ -226,131 +226,132 @@ using namespace QVGL;
 			return "0 B";
 	}
 
-// ViewsTable ;
-	// VignetteFrame ;
-		ViewsTable::VignetteFrame::VignetteFrame(qreal x, qreal y, qreal width, qreal height)
-		 : QGraphicsRectItem(x, y, width, height)
-		{
-			QPen pen(QColor(128, 128, 128), 3.0);
-			setPen(pen);
-		}
-
-		ViewsTable::VignetteFrame::~VignetteFrame(void)
-		{ }
-
-		void ViewsTable::VignetteFrame::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::contextMenuEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragEnterEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragLeaveEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dragMoveEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::dropEvent(QGraphicsSceneDragDropEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::dropEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::focusInEvent(QFocusEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::focusInEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::focusOutEvent(QFocusEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::focusOutEvent" << std::endl;
-		}
-
-		void ViewsTable::VignetteFrame::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
-		{
-			std::cout << "[" << __LINE__ << "] TODO : ViewsTable::VignetteFrame::mouseDoubleClickEvent" << std::endl;
-		}
-
-	// Vignette
-		ViewsTable::Vignette::Vignette(const int& _i, const int& _j, View* _view, SceneViewWidget& sceneViewWidget, int w, int h)
-		 : 	i(_i),
-			j(_j),
+// Vignette :
+		Vignette::Vignette(View* _view)
+		 : 	QObject(NULL),
+			QGraphicsItemGroup(NULL),
 			view(_view),
-			rect(NULL),
-			title(NULL)
+			frame(0, 0, 1, 1),
+			titleBar(0, 0, 1, 1)
 		{
-			rect = new VignetteFrame(0, 0, w, h);
-			title = new QGraphicsSimpleTextItem(view->getName());
-			title->setPos(0, 0);
+			addToGroup(&titleBar);
+			addToGroup(&frame);			
+			addToGroup(&title);
+			addToGroup(&infos);
 
-			sceneViewWidget.addItem(reinterpret_cast<QGraphicsItem*>(rect));
-			sceneViewWidget.addItem(reinterpret_cast<QGraphicsItem*>(title));
+			// Title positions : 
+			title.setPos(4, 0);
+
+			// Set colors : 
+			QPen pen(QColor(128, 128, 128), 3.0);
+			frame.setPen(pen);
+			
+			QBrush brush(QColor(32, 32, 32, 128));
+			titleBar.setBrush(brush);
+			titleBar.setPen(Qt::NoPen);
+
+			title.setBrush(QColor(224, 224, 224));
+			infos.setBrush(QColor(160, 160, 160));
+
+			// Other settings : 
+			setAcceptDrops(true);
+
+			// Update content : 
+			updateTitle();
+			updateInfos();
+	
+			// Connect : 
+			QObject::connect(view, SIGNAL(nameChanged(void)), 	this, SLOT(updateTitle(void)));
+			QObject::connect(view, SIGNAL(updated(void)), 		this, SLOT(updateInfos(void)));
 		}
 
-		ViewsTable::Vignette::~Vignette(void)
+		Vignette::~Vignette(void)
 		{
-			delete rect;
-			delete title;
-			rect = NULL;
-			title = NULL;
+			removeFromGroup(&frame);
+			removeFromGroup(&titleBar);
+			removeFromGroup(&title);
 		}
 
+		void Vignette::setTitleBarHeight(void)
+		{
+			QRectF titleRect = titleBar.rect();
 
-		View* ViewsTable::Vignette::getView(void)
+			int hRect = std::max(title.boundingRect().height(), infos.boundingRect().height());
+
+			titleRect.setHeight(hRect);
+			titleBar.setRect(titleRect);
+		}
+
+		View* Vignette::getView(void)
 		{
 			return view;
 		}
 
-		int ViewsTable::Vignette::getX(void) const	{ return rect->rect().x(); }
-		int ViewsTable::Vignette::getY(void) const	{ return rect->rect().y(); }
-		int ViewsTable::Vignette::getWidth(void) const	{ return rect->rect().width(); }
-		int ViewsTable::Vignette::getHeight(void) const	{ return rect->rect().height(); }
-
-		void ViewsTable::Vignette::move(const int& x, const int& y)
+		int Vignette::getWidth(void) const
 		{
-			rect->setRect(x, y, getWidth(), getHeight());
-			title->setPos(x + 4, y + 4);
-		}
-
-		void ViewsTable::Vignette::move(const QPoint& p)
-		{
-			move(p.x(), p.y());
-		}
-
-		void ViewsTable::Vignette::resize(const int& w, const int& h)
-		{
-			rect->rect().setWidth(w);
-			rect->rect().setHeight(h);
+			return frame.rect().width();
 		}
 	
+		int Vignette::getHeight(void) const
+		{
+			return frame.rect().height();
+		}
+
+		void Vignette::resize(const QSize& size)
+		{
+			QRectF frameRect = frame.rect();
+			frameRect.setSize(size);
+			frame.setRect(frameRect);
+
+			QRectF titleBarRect = titleBar.rect();
+			titleBarRect.setWidth(size.width());
+			titleBar.setRect(titleBarRect);
+
+			// Force the update of title and infos to fit the news sizes :
+			updateTitle();
+			updateInfos();
+		}
+
+		void Vignette::updateTitle(void)
+		{
+			QString titleStr = view->getName();
+
+			// Compute the maximum number of characters to fill 80% max :
+			QFontMetrics metrics(title.font());
+			int maxCharacters = static_cast<int>(0.8f * static_cast<float>(getWidth())/static_cast<float>(metrics.maxWidth()));
+
+			if(titleStr.size()>maxCharacters)
+				titleStr = tr("%1...").arg(titleStr.left(maxCharacters-3));
+
+			title.setText(titleStr);
+			setTitleBarHeight();
+		}
+
+		void Vignette::updateInfos(void)
+		{
+			QString text = tr("%1x%2").arg(view->getFormat().getWidth()).arg(view->getFormat().getHeight());
+			QFontMetrics metrics(infos.font());
+			infos.setText(text);
+			infos.setPos(getWidth() - metrics.width(text) - 4, 0);
+
+			setTitleBarHeight();
+		}
+	
+// ViewsTable :
 	ViewsTable::ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget)
 	{
-		// Compute the quasi-optimal parameters of the table : 
-		sceneResized(sceneViewWidget, viewsList.size());
-
 		// Build the vignettes :
-		int 	i = 0,
-			j = 0;
 		for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
 		{
-			Vignette* v = new Vignette(i, j, *it, sceneViewWidget, w, h);
-			v->move(getScenePosition(i, j));
+			Vignette* v = new Vignette(*it);
+			sceneViewWidget.addItem(v);
 			vignettesList.append(v);
-
-			j++;
-			if(j>=a)
-			{
-				j = 0;
-				i++;
-			}
 		}
+
+		resize(sceneViewWidget.size());
+
+		// Connect : 
+		QObject::connect(&sceneViewWidget, SIGNAL(resized(QSize)), this, SLOT(resize(QSize)));
 	}
 
 	ViewsTable::~ViewsTable(void)
@@ -362,20 +363,7 @@ using namespace QVGL;
 		}
 	}
 
-	QList<ViewsTable::Vignette*>::iterator		ViewsTable::begin(void)		{ return vignettesList.begin(); }
-	QList<ViewsTable::Vignette*>::const_iterator	ViewsTable::begin(void) const	{ return vignettesList.begin(); }
-	QList<ViewsTable::Vignette*>::iterator		ViewsTable::end(void)		{ return vignettesList.end(); }
-	QList<ViewsTable::Vignette*>::const_iterator	ViewsTable::end(void) const	{ return vignettesList.end(); }
-
-	QPoint ViewsTable::getScenePosition(const int& i, const int& j) const
-	{
-		const int 	x = static_cast<int>(static_cast<float>(j) * (static_cast<float>(w) + u) + u),
-				y = H - static_cast<int>(static_cast<float>(i) * (static_cast<float>(h) + v) + v) - h + topBarHeight;
-
-		return QPoint(x, y);
-	}
-
-	void ViewsTable::sceneResized(const SceneViewWidget& sceneViewWidget, int N, const float& rho)
+	void ViewsTable::computeTableParameters(const QSize& size, int N, const float& rho)
 	{
 		// IN
 		// W 	: width of the scene.
@@ -395,8 +383,8 @@ using namespace QVGL;
 
 		topBarHeight = TopBar::getHeight();
 
-		const int 	W = sceneViewWidget.sceneRect().width();
-				H = sceneViewWidget.sceneRect().height() - topBarHeight;
+		const int 	W = size.width();
+				H = size.height() - topBarHeight;
 
 		const float sceneRatio = static_cast<float>(W)/static_cast<float>(H);
 
@@ -412,6 +400,71 @@ using namespace QVGL;
 
 		u = static_cast<float>(W - a*w) / static_cast<float>(a + 1);
 		v = static_cast<float>(H - b*h) / static_cast<float>(b + 1);
+	}
+
+	void ViewsTable::getIndices(const Vignette* vignette, int& i, int& j) const
+	{
+		int idx = vignettesList.indexOf(const_cast<Vignette*>(vignette));
+
+		if(idx<0)
+			throw Exception("ViewsTable::getIndices - Vignette not listed.", __FILE__, __LINE__);
+		else
+		{
+			j = idx % a;
+			i = (idx - j) / a;
+		}
+	}
+
+	QPoint ViewsTable::getScenePosition(const int& i, const int& j) const
+	{
+		const int 	x = static_cast<int>(static_cast<float>(j) * (static_cast<float>(w) + u) + u),
+				y = static_cast<int>(static_cast<float>(i) * (static_cast<float>(h) + v) + v) + topBarHeight;
+
+		return QPoint(x, y);
+	}
+
+	QPoint ViewsTable::getScenePosition(const Vignette* vignette) const
+	{
+		int i, j;
+
+		getIndices(vignette, i, j);
+
+		return getScenePosition(i, j);
+	}
+
+	void ViewsTable::resize(QSize size)
+	{
+		std::cout << "Resize to : " << size.width() << 'x' << size.height() << std::endl;
+
+		// Recompute parameters : 
+		computeTableParameters(size);
+
+		// Propagate to the vignettes : 
+		const QSize vignetteSize(w, h);
+		for(QList<Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+		{
+			(*it)->resize(vignetteSize);
+			(*it)->setPos(getScenePosition(*it));
+		}
+	}
+
+	QList<Vignette*>::iterator		ViewsTable::begin(void)		{ return vignettesList.begin(); }
+	QList<Vignette*>::const_iterator	ViewsTable::begin(void) const	{ return vignettesList.begin(); }
+	QList<Vignette*>::iterator		ViewsTable::end(void)		{ return vignettesList.end(); }
+	QList<Vignette*>::const_iterator	ViewsTable::end(void) const	{ return vignettesList.end(); }
+
+	void ViewsTable::getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const
+	{
+		if(vignette==NULL)
+		{
+			x = 0;
+			y = 0;
+		}
+		else
+		{
+			x = vignette->x();
+			y = H - vignette->y() - h + topBarHeight;
+		}
 	}
 
 // SubWidget :
@@ -1830,10 +1883,13 @@ using namespace QVGL;
 	void SceneWidget::drawViewsTable(ViewsTable* viewsTable)
 	{
 		std::cout << "Drawing table : " << std::endl;
-		for(QList<ViewsTable::Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
+		for(QList<Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 		{
-			std::cout << "    At : " << (*it)->getX() << 'x' << (*it)->getY() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
-			drawView((*it)->getView(), (*it)->getX(), (*it)->getY(), (*it)->getWidth(), (*it)->getHeight());
+			std::cout << "    At : " << (*it)->x() << 'x' << (*it)->y() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
+
+			int x, y;
+			viewsTable->getGLPositionOfVignette(*it, x, y);
+			drawView((*it)->getView(), x, y, (*it)->getWidth(), (*it)->getHeight());
 		}
 
 		// Restore view port : 
@@ -2136,8 +2192,11 @@ using namespace QVGL;
 
 	void SceneViewWidget::resizeEvent(QResizeEvent *event)
 	{
-		if(scene())
+		if(scene()!=NULL)
+		{
 			scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));
+			emit resized(event->size());
+		}
 
 		QGraphicsView::resizeEvent(event);
    	}
