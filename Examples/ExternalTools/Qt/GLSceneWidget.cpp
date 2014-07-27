@@ -227,34 +227,42 @@ using namespace QVGL;
 	}
 
 // Vignette :
+		QColor	Vignette::frameColor		= QColor(128, 	128, 	128),
+			Vignette::selectedFrameColor	= QColor(192, 	192, 	192),
+			Vignette::titleBarColor		= QColor(32, 	 32, 	 32, static_cast<unsigned char>(titleBarOpacity * 255.0f)),
+			Vignette::titleColor		= QColor(224, 	224, 	224),
+			Vignette::infosColor		= QColor(160, 	160,	160);
+		float	Vignette::frameThickness	= 3.0f,
+			Vignette::titleBarOpacity	= 0.75f;
+
 		Vignette::Vignette(View* _view)
 		 : 	QObject(NULL),
 			QGraphicsItemGroup(NULL),
+			selected(false),			
 			view(_view),
 			frame(0, 0, 1, 1),
 			titleBar(0, 0, 1, 1)
 		{
+			setFiltersChildEvents(true);
+			setAcceptHoverEvents(true);
+
 			addToGroup(&titleBar);
 			addToGroup(&frame);			
 			addToGroup(&title);
 			addToGroup(&infos);
 
 			// Title positions : 
-			title.setPos(4, 0);
+			title.setPos(6, 0);
 
 			// Set colors : 
-			QPen pen(QColor(128, 128, 128), 3.0);
-			frame.setPen(pen);
+			setSelection(false);
 			
-			QBrush brush(QColor(32, 32, 32, 128));
+			QBrush brush(titleBarColor);
 			titleBar.setBrush(brush);
 			titleBar.setPen(Qt::NoPen);
 
-			title.setBrush(QColor(224, 224, 224));
-			infos.setBrush(QColor(160, 160, 160));
-
-			// Other settings : 
-			setAcceptDrops(true);
+			title.setBrush(titleColor);
+			infos.setBrush(infosColor);
 
 			// Update content : 
 			updateTitle();
@@ -281,6 +289,40 @@ using namespace QVGL;
 			titleRect.setHeight(hRect);
 			titleBar.setRect(titleRect);
 		}
+
+		void Vignette::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
+		{
+			if(view!=NULL)
+			{
+				event->accept();
+				emit showView(view);
+			}
+			else
+				event->ignore();
+		}
+
+		/*void Vignette::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+		{
+			std::cout << "Vignette::mouseMoveEvent" << std::endl;
+			event->ignore();
+		}*/
+
+		void Vignette::mousePressEvent(QGraphicsSceneMouseEvent* event)
+		{
+			if(!selected)
+			{
+				emit selection();
+				event->accept();
+			}
+			else
+				event->ignore();
+		}
+
+		/*void Vignette::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+		{
+			std::cout << "Vignette::mouseReleaseEvent" << std::endl;
+			event->ignore();
+		}*/
 
 		View* Vignette::getView(void)
 		{
@@ -312,6 +354,32 @@ using namespace QVGL;
 			updateInfos();
 		}
 
+		bool Vignette::isSelected(void) const
+		{
+			return selected;
+		}
+
+		void Vignette::setSelection(bool enabled)
+		{
+			if(enabled)
+			{
+				selected = true;
+				frame.setPen(QPen(selectedFrameColor, frameThickness));
+			}
+			else
+			{
+				selected = false;
+				frame.setPen(QPen(frameColor, frameThickness));
+			}
+		}
+
+		QRectF Vignette::boundingRect(void) const
+		{
+			QRectF rect = frame.rect();
+			rect.moveTo(scenePos());
+			return rect;
+		}
+
 		void Vignette::updateTitle(void)
 		{
 			QString titleStr = view->getName();
@@ -332,38 +400,35 @@ using namespace QVGL;
 			QString text = tr("%1x%2").arg(view->getFormat().getWidth()).arg(view->getFormat().getHeight());
 			QFontMetrics metrics(infos.font());
 			infos.setText(text);
-			infos.setPos(getWidth() - metrics.width(text) - 4, 0);
+			infos.setPos(getWidth() - metrics.width(text) - 6, 0);
 
 			setTitleBarHeight();
 		}
 	
 // ViewsTable :
-	ViewsTable::ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget)
-	{
-		// Build the vignettes :
-		for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
-		{
-			Vignette* v = new Vignette(*it);
-			sceneViewWidget.addItem(v);
-			vignettesList.append(v);
-		}
+	float ViewsTable::rho = 0.04;
 
-		resize(sceneViewWidget.size());
+	ViewsTable::ViewsTable(const QString& tableName, SceneViewWidget* _sceneViewWidget)
+	 :	name(tableName),
+		sceneViewWidget(_sceneViewWidget)
+	{
+		if(sceneViewWidget==NULL)
+			throw Exception("ViewsTable::ViewsTable - Cannot accept NULL scene.", __FILE__, __LINE__);
+
+		resize(sceneViewWidget->size());
 
 		// Connect : 
-		QObject::connect(&sceneViewWidget, SIGNAL(resized(QSize)), this, SLOT(resize(QSize)));
+		QObject::connect(sceneViewWidget, SIGNAL(resized(QSize)), this, SLOT(resize(QSize)));
+		QObject::connect(sceneViewWidget, SIGNAL(destroyed(void)),this, SLOT(sceneDestroyed(void)));
 	}
 
 	ViewsTable::~ViewsTable(void)
 	{
-		while(!vignettesList.isEmpty())
-		{
-			delete vignettesList.front();
-			vignettesList.removeFirst();
-		}
+		clear();
+		emit closed();
 	}
 
-	void ViewsTable::computeTableParameters(const QSize& size, int N, const float& rho)
+	void ViewsTable::computeTableParameters(const QSize& size, int N)
 	{
 		// IN
 		// W 	: width of the scene.
@@ -404,7 +469,20 @@ using namespace QVGL;
 
 	void ViewsTable::getIndices(const Vignette* vignette, int& i, int& j) const
 	{
-		int idx = vignettesList.indexOf(const_cast<Vignette*>(vignette));
+		int 	idx 	= -1,
+			k 	= 0;
+
+		// Find the index of the Vignette as a value of the map : 
+		for(QMap<View*, Vignette*>::const_iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+		{
+			if(it.value()==vignette)
+			{
+				idx = k;
+				break;
+			}
+			else
+				k++;
+		}			
 
 		if(idx<0)
 			throw Exception("ViewsTable::getIndices - Vignette not listed.", __FILE__, __LINE__);
@@ -434,24 +512,118 @@ using namespace QVGL;
 
 	void ViewsTable::resize(QSize size)
 	{
-		std::cout << "Resize to : " << size.width() << 'x' << size.height() << std::endl;
-
 		// Recompute parameters : 
 		computeTableParameters(size);
 
 		// Propagate to the vignettes : 
 		const QSize vignetteSize(w, h);
-		for(QList<Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
 		{
 			(*it)->resize(vignetteSize);
 			(*it)->setPos(getScenePosition(*it));
 		}
 	}
 
-	QList<Vignette*>::iterator		ViewsTable::begin(void)		{ return vignettesList.begin(); }
-	QList<Vignette*>::const_iterator	ViewsTable::begin(void) const	{ return vignettesList.begin(); }
-	QList<Vignette*>::iterator		ViewsTable::end(void)		{ return vignettesList.end(); }
-	QList<Vignette*>::const_iterator	ViewsTable::end(void) const	{ return vignettesList.end(); }
+	void ViewsTable::updateSelection(void)
+	{
+		Vignette* sender = reinterpret_cast<Vignette*>(QObject::sender());
+
+		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+		{
+			if((*it)->isSelected() && (*it)!=sender)
+				(*it)->setSelection(false);
+			else if((*it)==sender)
+				(*it)->setSelection(true);
+		}
+
+		emit viewSelection(sender->getView());
+	}
+
+	void ViewsTable::viewClosed(void)
+	{
+		View* view = reinterpret_cast<View*>(QObject::sender());
+
+		removeView(view);
+	}
+
+	void ViewsTable::sceneDestroyed(void)
+	{
+		sceneViewWidget = NULL;
+	}
+
+	QMap<View*, Vignette*>::iterator	ViewsTable::begin(void)		{ return vignettesList.begin(); }
+	QMap<View*, Vignette*>::const_iterator	ViewsTable::begin(void) const	{ return vignettesList.begin(); }
+	QMap<View*, Vignette*>::iterator	ViewsTable::end(void)		{ return vignettesList.end(); }
+	QMap<View*, Vignette*>::const_iterator	ViewsTable::end(void) const	{ return vignettesList.end(); }
+
+	const QString& ViewsTable::getName(void) const
+	{
+		return name;
+	}
+
+	void ViewsTable::addView(View* view, bool resizeNow)
+	{
+		if(sceneViewWidget==NULL || view==NULL)
+			return ;
+		
+		if(!vignettesList.contains(view))
+		{
+			Vignette* v = new Vignette(view);
+			sceneViewWidget->addItem(v);
+			vignettesList[view] = v;
+
+			v->setVisible(visible);
+
+			QObject::connect(v, 	SIGNAL(selection(void)), 	this, SLOT(updateSelection(void)));
+			QObject::connect(v, 	SIGNAL(showView(View*)),	this, SIGNAL(showView(View*)));
+			QObject::connect(view, 	SIGNAL(closed(void)),		this, SLOT(viewClosed(void)));
+
+			if(resizeNow)
+				resize(sceneViewWidget->size());
+		}
+	}
+
+	void ViewsTable::addViews(const QList<View*>& viewsList)
+	{
+		if(sceneViewWidget==NULL)
+			return ;
+
+		// Build the vignettes :
+		for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+			addView(*it, false);
+
+		resize(sceneViewWidget->size());
+	}
+
+	void ViewsTable::removeView(View* view, bool resizeNow)
+	{
+		if(vignettesList.contains(view))
+		{
+			if(sceneViewWidget!=NULL && sceneViewWidget->scene()!=NULL)
+				sceneViewWidget->removeItem(vignettesList[view]);
+
+			delete vignettesList[view];
+			vignettesList.remove(view);
+
+			if(resizeNow && sceneViewWidget!=NULL)
+				resize(sceneViewWidget->size());
+		}
+	}
+
+	void ViewsTable::removeViews(const QList<View*>& viewsList)
+	{
+		for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+			removeView(*it, false);
+
+		if(sceneViewWidget!=NULL)
+			resize(sceneViewWidget->size());
+	}
+
+	void ViewsTable::clear(void)
+	{
+		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+			removeView(it.key());
+	}
 
 	void ViewsTable::getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const
 	{
@@ -465,6 +637,23 @@ using namespace QVGL;
 			x = vignette->x();
 			y = H - vignette->y() - h + topBarHeight;
 		}
+	}
+	
+	QRectF ViewsTable::getVignetteFrame(View* view) const
+	{
+		QMap<View*, Vignette*>::const_iterator it = vignettesList.find(view);
+
+		if(it!=vignettesList.end())
+			return it.value()->boundingRect();
+		else
+			return QRectF(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	void ViewsTable::setVisible(bool enabled)
+	{
+		visible = enabled;
+		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
+			it.value()->setVisible(enabled);
 	}
 
 // SubWidget :
@@ -799,8 +988,12 @@ using namespace QVGL;
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
 		widgetsMenu("Widgets", this),
+		viewsSeprator(NULL),
 		closeCurrentViewAction("Close view", this),	
 		closeAllViewsAction("Close all views", this),
+		viewsTablesSeparator(NULL),
+		closeCurrentViewsTableAction("Close table", this), 
+		closeAllViewsTableAction("Close all tables", this),
 		temporaryHideAllSubWidgetsAction("Hide all widgets", this),
 		hideAllSubWidgetsAction("Close all widgets", this),
 		signalMapper(this),
@@ -829,6 +1022,7 @@ using namespace QVGL;
 
 		// Signals connections : 
 		QObject::connect(&viewsSignalMapper, 			SIGNAL(mapped(QObject*)), 	this, SLOT(castViewPointer(QObject*)));
+		QObject::connect(&viewsTablesSignalMapper,		SIGNAL(mapped(QObject*)), 	this, SLOT(castViewsTablePointer(QObject*)));
 		QObject::connect(&widgetsSignalMapper,			SIGNAL(mapped(QObject*)), 	this, SLOT(castSubWidgetPointer(QObject*)));
 		QObject::connect(&mainMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&viewsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
@@ -843,12 +1037,22 @@ using namespace QVGL;
 
 		signalMapper.setMapping(&closeCurrentViewAction, 		ActionCloseView);
 		signalMapper.setMapping(&closeAllViewsAction,			ActionCloseAllViews);
+		signalMapper.setMapping(&closeCurrentViewsTableAction, 		ActionCloseViewsTable);
+		signalMapper.setMapping(&closeAllViewsTableAction,		ActionCloseAllViewsTables);
 		signalMapper.setMapping(&temporaryHideAllSubWidgetsAction,	ActionTemporaryHideAllSubWidgets);
 		signalMapper.setMapping(&hideAllSubWidgetsAction,		ActionHideAllSubWidgets);
 
+		// Init views menu : 
+		viewsSeprator = viewsMenu.addSeparator();
+		viewsMenu.addAction(&closeCurrentViewAction);	
+		viewsMenu.addAction(&closeAllViewsAction);
+		viewsMenu.addSeparator();
+		viewsTablesSeparator = viewsMenu.addSeparator();
+		viewsMenu.addAction(&closeCurrentViewsTableAction);
+		viewsMenu.addAction(&closeAllViewsTableAction);
+
 		// Reset : 
 		setTitle();
-		updateViewsList(QList<View*>());
 		updateSubWidgetsList(QList<SubWidget*>());
 
 		// TEST :
@@ -860,13 +1064,13 @@ using namespace QVGL;
 	TopBar::~TopBar(void)
 	{
 		// Clear the menus : 
+		viewsActions.clear();
+		viewsTablesActions.clear();
+
 		viewsMenu.removeAction(&closeCurrentViewAction);
 		viewsMenu.removeAction(&closeAllViewsAction);
-		viewsMenu.clear();
-
 		widgetsMenu.removeAction(&temporaryHideAllSubWidgetsAction);
-		widgetsMenu.removeAction(&hideAllSubWidgetsAction);		
-		widgetsMenu.clear();
+		widgetsMenu.removeAction(&hideAllSubWidgetsAction);
 
 		if(singleton==this)
 			singleton = NULL;
@@ -920,6 +1124,11 @@ using namespace QVGL;
 		emit changeViewRequest(reinterpret_cast<View*>(ptr));
 	}
 
+	void TopBar::castViewsTablePointer(QObject* ptr)
+	{
+		emit changeViewsTableRequest(reinterpret_cast<ViewsTable*>(ptr));
+	}
+
 	void TopBar::castSubWidgetPointer(QObject* ptr)
 	{
 		emit showSubWidgetRequest(reinterpret_cast<SubWidget*>(ptr));
@@ -933,6 +1142,34 @@ using namespace QVGL;
 	void TopBar::transferActionSignal(int actionID)
 	{
 		emit requestAction(static_cast<ActionID>(actionID));
+	}
+
+	void TopBar::viewClosed(void)
+	{
+		View* view = reinterpret_cast<View*>(QObject::sender());
+	
+		QMap<View*, QAction*>::iterator it = viewsActions.find(view);
+
+		if(view!=NULL && it!=viewsActions.end())
+		{
+			viewsMenu.removeAction(it.value());
+			delete it.value();
+			viewsActions.erase(it);
+		}
+	}
+
+	void TopBar::viewsTableClosed(void)
+	{
+		ViewsTable* viewTable = reinterpret_cast<ViewsTable*>(QObject::sender());
+	
+		QMap<ViewsTable*, QAction*>::iterator it = viewsTablesActions.find(viewTable);
+
+		if(viewTable!=NULL && it!=viewsTablesActions.end())
+		{
+			viewsMenu.removeAction(it.value());
+			delete it.value();
+			viewsTablesActions.erase(it);
+		}
 	}
 
 	void TopBar::setTitle(void)
@@ -977,30 +1214,47 @@ using namespace QVGL;
 		titleLabel.setToolTip(toolTip);
 	}
 
-	void TopBar::updateViewsList(const QList<View*>& viewsList)
+	void TopBar::setTitle(const ViewsTable& table)
 	{
-		// Clear previous list :
-		viewsMenu.removeAction(&closeCurrentViewAction);
-		viewsMenu.removeAction(&closeAllViewsAction);
-		viewsMenu.clear();
+		// Set title : 
+		titleLabel.setText(table.getName());
+		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
-		if(!viewsList.isEmpty())
+		// No tooltip : 
+		titleLabel.setToolTip("");
+
+		// TODO add possible description
+	}
+
+	void TopBar::addView(View* view)
+	{
+		if(view!=NULL && !viewsActions.contains(view))
 		{
-			for(QList<View*>::const_iterator it=viewsList.begin(); it!=viewsList.end(); it++)
-			{
-				// Create the action and set the mapping : 	
-				QAction* tmpAction = viewsMenu.addAction((*it)->getName(), &viewsSignalMapper, SLOT(map()));
-				viewsSignalMapper.setMapping(tmpAction, reinterpret_cast<QObject*>(*it));
-			}
+			QAction* action = new QAction(view->getName(), this);
+			viewsActions[view] = action;
+			viewsMenu.insertAction(viewsSeprator, action);
+			
+			// Signals : 
+			viewsSignalMapper.setMapping(action, reinterpret_cast<QObject*>(view));
+			QObject::connect(action,	SIGNAL(triggered(void)), 	&viewsSignalMapper, 	SLOT(map()));
+			QObject::connect(view, 		SIGNAL(closed(void)), 		this, 			SLOT(viewClosed(void)));
 		}
-		else
-			viewsMenu.addAction("(No Views)");
+	}
 
-		viewsMenu.addSeparator();
-		viewsMenu.addAction(&closeCurrentViewAction);
-		viewsMenu.addAction(&closeAllViewsAction);
-		closeCurrentViewAction.setEnabled(!viewsList.isEmpty());
-		closeAllViewsAction.setEnabled(!viewsList.isEmpty());
+	void TopBar::addViewsTable(ViewsTable* viewsTable)
+	{
+		if(viewsTable!=NULL && !viewsTablesActions.contains(viewsTable))
+		{
+			QAction* action = new QAction(viewsTable->getName(), this);
+			viewsTablesActions[viewsTable] = action;
+			viewsMenu.insertAction(viewsTablesSeparator, action);
+			
+			// Signals : 
+			viewsTablesSignalMapper.setMapping(action, reinterpret_cast<QObject*>(viewsTable));
+			QObject::connect(action,	SIGNAL(triggered(void)), 	&viewsTablesSignalMapper, 	SLOT(map()));
+			
+			QObject::connect(viewsTable, 	SIGNAL(closed(void)), 		this, 				SLOT(viewsTableClosed(void)));
+		}
 	}
 
 	void TopBar::updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList)
@@ -1882,14 +2136,14 @@ using namespace QVGL;
 
 	void SceneWidget::drawViewsTable(ViewsTable* viewsTable)
 	{
-		std::cout << "Drawing table : " << std::endl;
-		for(QList<Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
+		//std::cout << "Drawing table : " << std::endl;
+		for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 		{
-			std::cout << "    At : " << (*it)->x() << 'x' << (*it)->y() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
-
 			int x, y;
 			viewsTable->getGLPositionOfVignette(*it, x, y);
 			drawView((*it)->getView(), x, y, (*it)->getWidth(), (*it)->getHeight());
+
+			//std::cout << "    At : " << (*it)->x() << 'x' << (*it)->y() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
 		}
 
 		// Restore view port : 
@@ -2155,17 +2409,20 @@ using namespace QVGL;
 			qvglParent->getMouseState().processEvent(event, false, false, true);
 	}
 
-	void SceneWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
+	/*void SceneWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 	{
 		QGraphicsScene::mouseDoubleClickEvent(event);
 
 		if(!event->isAccepted())
-			event->accept();
+		{
+			std::cout << "TODO - line " << __LINE__ << " : add double click event process." << std::endl;
 
-		// TODO
+			// TODO
 			//qvglParent->getMouseState().processEvent(event);
-		std::cout << "TODO - line " << __LINE__ << " : add double click event process." << std::endl;
-	}
+
+			event->accept();
+		}
+	}*/
 
 // SceneViewWidget :
 	SceneViewWidget::SceneViewWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
@@ -2209,6 +2466,11 @@ using namespace QVGL;
 	void SceneViewWidget::addItem(QGraphicsItem* item)
 	{
 		sceneWidget->addItem(item);
+	}
+
+	void SceneViewWidget::removeItem(QGraphicsItem* item)
+	{
+		sceneWidget->removeItem(item);
 	}
 
 	SubWidget* SceneViewWidget::getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
@@ -2382,7 +2644,7 @@ using namespace QVGL;
 		container(QBoxLayout::LeftToRight, this),
 		sceneViewWidget(this, &topBar, &bottomBar),
 		currentViewIndex(-1),
-		viewsTable(NULL),
+		currentViewsTableIndex(-1),
 		opacityActiveSubWidget(0.8),
 		opacityIdleSubWidget(0.2),
 		opacityActiveBar(0.8),
@@ -2398,12 +2660,19 @@ using namespace QVGL;
 		barSelected(&topBar);
 		barSelected(&bottomBar);
 
+		// Create main table view : 
+		createViewsTable("Main Table");
+
+		std::cout << '[' << __LINE__ << "] Temporary, always showing table." << std::endl;
+		changeCurrentViewsTable(0);
+
 		QObject::connect(&mouseState,		SIGNAL(requestExternalUpdate(void)),		this, SLOT(updateMouseStateData(void)));
 		QObject::connect(&keyboardState,	SIGNAL(actionReceived(ActionID, bool)),		this, SLOT(processAction(ActionID, bool)));
 		QObject::connect(&mouseState,		SIGNAL(updated(void)),				this, SLOT(performMouseAction(void)));
 		QObject::connect(&mouseState,		SIGNAL(mustSetMouseCursor(Qt::CursorShape)),	this, SLOT(setMouseCursor(Qt::CursorShape)));
 		QObject::connect(&topBar,		SIGNAL(selected(TopBar*)),			this, SLOT(barSelected(TopBar*)));
 		QObject::connect(&topBar,		SIGNAL(changeViewRequest(View*)),		this, SLOT(viewRequireDisplay(View*)));
+		QObject::connect(&topBar,		SIGNAL(changeViewsTableRequest(ViewsTable*)),	this, SLOT(viewsTableRequireDisplay(ViewsTable*)));
 		QObject::connect(&topBar,		SIGNAL(requestAction(ActionID)),		this, SLOT(processAction(ActionID)));
 		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
 		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, SLOT(barSelected(BottomBar*)));
@@ -2413,11 +2682,15 @@ using namespace QVGL;
 	{
 		disconnect();
 
-		delete viewsTable;
-		viewsTable = NULL;
+		for(QList<ViewsTable*>::Iterator it=viewsTablesList.begin(); it!=viewsTablesList.end(); it++)
+			delete (*it);
+
+		viewsTablesList.clear();
 
 		for(QList<View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
 			(*it)->qvglParent = NULL;
+
+		viewsList.clear();
 	}
 
 	void MainWidget::updateMouseStateData(void)
@@ -2441,9 +2714,25 @@ using namespace QVGL;
 
 				QPointF vPixel = mouseState.invisibleGetVector(*it);
 
-				toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative);
-				toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative);
-				toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
+				View* currentView = getCurrentView();
+				ViewsTable* currentViewsTable = getCurrentViewsTable();
+
+				if(currentView!=NULL && currentViewsTable==NULL)
+				{	
+					// Full scene : 
+					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative);
+					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative);
+					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
+				}
+				else if(currentView!=NULL)
+				{
+					// Restricted to the vignette frame : 
+					QRectF rect = currentViewsTable->getVignetteFrame(currentView);
+
+					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative, rect);
+					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative, rect, currentView);
+					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
+				}
 
 				mouseState.setVector(*it, vPixel); // Clear the require update flag.
 				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::GlBasis), 	QPointF(xGl, yGl));
@@ -2487,10 +2776,25 @@ using namespace QVGL;
 
 	void MainWidget::performMouseAction(void)
 	{
-		View* currentView = getCurrentView();
+		View* 		currentView 		= getCurrentView();
+		ViewsTable* 	currentViewsTable 	= getCurrentViewsTable();
 
 		if(currentView!=NULL && mouseState.getFunctionMode()==MouseState::ModeMotion)
 		{
+			QRectF sceneRect;
+	
+			if(currentViewsTable!=NULL)
+				sceneRect = currentViewsTable->getVignetteFrame(currentView);
+
+			// Get adaptation scale (full screen or frame) :
+			float adaptationScale;
+
+			if(currentViewsTable==NULL)
+				adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+			else
+				adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());
+
+
 			if(mouseState.isVectorModified(MouseState::VectorLastLeftShiftGl))
 			{
 				QPointF v = mouseState.getVector(MouseState::VectorLastLeftShiftGl);
@@ -2498,7 +2802,15 @@ using namespace QVGL;
 				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
 
 				// Adaptation scaling : 
-				const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+
+				/*float adaptationScale;
+
+				if(currentViewsTable==NULL)
+					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				else
+					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
+
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
 
@@ -2521,7 +2833,15 @@ using namespace QVGL;
 				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
 
 				// Adaptation scaling : 
-				const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+
+				/*float adaptationScale;
+
+				if(currentViewsTable==NULL)
+					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				else
+					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
+
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
 
@@ -2535,7 +2855,15 @@ using namespace QVGL;
 				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
 
 				// Adaptation scaling : 
-				const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+
+				/*float adaptationScale;
+
+				if(currentViewsTable==NULL)
+					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+				else
+					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
+
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
 
@@ -2573,6 +2901,14 @@ using namespace QVGL;
 		viewRequireDisplay(view);
 	}
 
+	void MainWidget::viewChangeSelection(View* view)
+	{
+		int idx = viewsList.indexOf(view);
+
+		if(idx>=0 && idx<viewsList.size())
+			changeCurrentView(idx, false);
+	}
+
 	void MainWidget::viewUpdated(View* view)
 	{
 		if(view==getCurrentView() && view!=NULL)
@@ -2600,13 +2936,14 @@ using namespace QVGL;
 			// Disconnect : 
 			view->disconnect(this);
 			view->qvglParent = NULL;
+			view->close();
 				
 			// Change current view if needed :
 			if(currentViewIndex==idx)
 				changeCurrentView(currentViewIndex);
 
-			// Update views list : 
-			topBar.updateViewsList(viewsList);
+			// Update views list : TODO to be removed
+			//topBar.updateViewsList(viewsList);
 		}
 	}
 
@@ -2627,11 +2964,46 @@ using namespace QVGL;
 			
 			view->disconnect(this);
 			view->qvglParent = NULL;
+			view->close();
 		}
 
 		// Update : 
 		changeCurrentView();
-		topBar.updateViewsList(viewsList);
+		// TODO - to be removed : topBar.updateViewsList(viewsList);
+	}
+
+	void MainWidget::viewsTableRequireDisplay(ViewsTable* viewsTable)
+	{
+		int idx = viewsTablesList.indexOf(viewsTable);
+
+		if(idx>=0 && idx<viewsTablesList.size())
+			changeCurrentViewsTable(idx);
+	}
+
+	void MainWidget::viewsTableRequireDisplay(void)
+	{
+		// Get the emitter : 
+		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
+
+		viewsTableRequireDisplay(viewsTable);
+	}
+
+	void MainWidget::viewsTableClosed(ViewsTable* viewsTable)
+	{
+		std::cout << "MainWidget::viewsTableClosed : Delete table" << std::endl;
+	}
+
+	void MainWidget::viewsTableClosed(void)
+	{
+		// Get the emitter : 
+		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
+
+		viewsTableClosed(viewsTable);
+	}
+
+	void MainWidget::closeAllViewsTables(void)
+	{
+		std::cout << "MainWidget::closeAllViewsTables : Delete table" << std::endl;
 	}
 
 	void MainWidget::subWidgetSelected(SubWidget* subWidget)
@@ -2851,31 +3223,66 @@ using namespace QVGL;
 
 	ViewsTable* MainWidget::getCurrentViewsTable(void)
 	{
-		return viewsTable;
+		if(currentViewsTableIndex>=0 && currentViewsTableIndex<viewsTablesList.size())
+			return viewsTablesList[currentViewsTableIndex];
+		else
+			return NULL;
 	}
 
 	void MainWidget::changeCurrentView(void)
 	{
 		topBar.setTitle("(No View)");
+		currentViewIndex = -1;
 		sceneViewWidget.update();		
 	}
 
-	void MainWidget::changeCurrentView(int targetID)
+	void MainWidget::changeCurrentView(int targetID, bool showNow)
 	{
 		currentViewIndex = std::min(std::max(targetID, 0), viewsList.size()-1);
 
-		// Change title : 
 		View* currentView = getCurrentView();
 
-		if(currentView!=NULL)
+		if(currentView!=NULL && showNow)
 		{
+			// Change title : 
 			topBar.setTitle(*currentView);
+
+			// Hide current Table : 
+			hideCurrentViewsTable();
 
 			// Show : 
 			sceneViewWidget.update();
 		}
-		else
+		else if(currentView==NULL)
 			topBar.setTitle("(No View)");
+	}
+
+	void MainWidget::changeCurrentViewsTable(int targetID)
+	{
+		currentViewsTableIndex = std::min(std::max(targetID, 0), viewsTablesList.size()-1);
+
+		ViewsTable* currentTable = getCurrentViewsTable();
+
+		if(currentTable!=NULL)
+		{
+			// Change title : 
+			topBar.setTitle(*currentTable);
+
+			// Show : 
+			currentTable->setVisible(true);
+			sceneViewWidget.update();
+		}
+	}
+
+	void MainWidget::hideCurrentViewsTable(void)
+	{
+		ViewsTable* currentTable = getCurrentViewsTable();
+
+		if(currentTable!=NULL)
+		{
+			currentViewsTableIndex = -1;
+			currentTable->setVisible(false);
+		}
 	}
 
 	void MainWidget::getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const
@@ -2940,8 +3347,31 @@ using namespace QVGL;
 		return getAdaptationScaling(getSceneRatio(), imageRatio);
 	}
 
+	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const
+	{
+		if(!isRelative)
+		{
+			xGl = (static_cast<float>(x) - rect.x()) * 2.0f / rect.width() - 1.0f;
+			yGl = 1.0f - (static_cast<float>(y) - rect.y()) * 2.0f / rect.height();
+		}
+		else
+		{
+			xGl = static_cast<float>(x) * 2.0f / rect.width();
+			yGl = - static_cast<float>(y) * 2.0f / rect.height();
+		}
+
+		// Scene scaling : 
+		float xSceneScale, ySceneScale;
+		// ORIGINAL : getSceneRatioScaling(xSceneScale, ySceneScale);
+		getSceneRatioScaling(rect.width() / rect.height(), xSceneScale, ySceneScale);
+
+		xGl /= xSceneScale;
+		yGl /= ySceneScale;
+	}
+
 	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const
 	{
+		/* ORIGINAL
 		QRectF rect = sceneRect();
 
 		if(!isRelative)
@@ -2960,10 +3390,12 @@ using namespace QVGL;
 		getSceneRatioScaling(xSceneScale, ySceneScale);	
 
 		xGl /= xSceneScale;
-		yGl /= ySceneScale;
+		yGl /= ySceneScale;*/
+
+		toGlCoordinates(x, y, xGl, yGl, isRelative, sceneRect());
 	}
 
-	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view) const
+	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view) const
 	{
 		// Input coordinates are assumed relative in the window.
 
@@ -2978,7 +3410,8 @@ using namespace QVGL;
 		else if(!isRelative)
 		{
 			// Adaptation scaling : 
-			const float adaptationScale = getAdaptationScaling(view->getImageRatio());
+			// ORIGINAL : const float adaptationScale = getAdaptationScaling(view->getImageRatio());
+			const float adaptationScale = getAdaptationScaling(rect.width() / rect.height(), view->getImageRatio());
 			float 	x = xGl / adaptationScale,
 				y = yGl / adaptationScale;
 
@@ -3012,7 +3445,8 @@ using namespace QVGL;
 		else
 		{
 			// Adaptation scaling : 
-			const float adaptationScale = getAdaptationScaling(view->getImageRatio());
+			// ORIGINAL : const float adaptationScale = getAdaptationScaling(view->getImageRatio());
+			const float adaptationScale = getAdaptationScaling(rect.width() / rect.height(), view->getImageRatio());
 			float 	x = xGl / adaptationScale,
 				y = yGl / adaptationScale;
 
@@ -3038,6 +3472,11 @@ using namespace QVGL;
 			xQuad = x2 / xImgScale;
 			yQuad = y2 / yImgScale;
 		}
+	}
+
+	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view) const
+	{
+		toQuadCoordinates(xGl, yGl, xQuad, yQuad, isRelative, sceneRect(), view);
 	}
 
 	void MainWidget::toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view) const
@@ -3076,18 +3515,24 @@ using namespace QVGL;
 			QObject::connect(view, SIGNAL(closed()), 		this, SLOT(viewClosed()));
 
 			// Update views list : 
-			topBar.updateViewsList(viewsList);
+			//topBar.updateViewsList(viewsList);
+			topBar.addView(view);
 
-			// TODO - Temp to remove : 
-			std::cout << "[" << __LINE__ << "] Testing ViewsTable, to be removed." << std::endl;
-			if(viewsList.size()>=3)
-			{
-				std::cout << "Creating table..." << std::endl;
-				delete viewsTable;
-				viewsTable = new ViewsTable(viewsList, sceneViewWidget);
-				std::cout << "    Table : " << viewsTable << std::endl;
-			}
+			// Add to main view : 
+			if(!viewsTablesList.isEmpty())
+				viewsTablesList.front()->addView(view);
 		}
+	}
+
+	void MainWidget::createViewsTable(const QString& tableName)
+	{	
+		ViewsTable* newTable = new ViewsTable(tableName, &sceneViewWidget);
+		viewsTablesList.append(newTable);
+
+		topBar.addViewsTable(newTable);
+
+		QObject::connect(newTable, SIGNAL(showView(View*)), 		this, SLOT(viewRequireDisplay(View*)));
+		QObject::connect(newTable, SIGNAL(viewSelection(View*)),	this, SLOT(viewChangeSelection(View*)));
 	}
 
 	void MainWidget::addSubWidget(SubWidget* subWidget)
@@ -3117,7 +3562,8 @@ using namespace QVGL;
 
 	float MainWidget::getSceneRatio(void) const
 	{
-		return sceneRect().width() / sceneRect().height();
+		QRectF rect = sceneRect();
+		return rect.width() / rect.height();
 	}
 
 	QRectF MainWidget::sceneRect(void) const

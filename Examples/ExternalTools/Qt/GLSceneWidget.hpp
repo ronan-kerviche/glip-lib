@@ -82,6 +82,8 @@ namespace QVGL
 		ActionNextView,
 		ActionCloseView,
 		ActionCloseAllViews,
+		ActionCloseViewsTable,
+		ActionCloseAllViewsTables,
 		ActionMotionModifier,
 		ActionRotationModifier,
 		ActionNextSubWidget,
@@ -155,6 +157,15 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
+				static QColor		frameColor,
+							selectedFrameColor,
+							titleBarColor,
+							titleColor,
+							infosColor;
+				static float		frameThickness,
+							titleBarOpacity;
+
+				bool			selected;
 				View*			view;
 				QGraphicsRectItem	frame,
 							titleBar;
@@ -165,6 +176,9 @@ namespace QVGL
 				Vignette(const Vignette& v);
 				void setTitleBarHeight(void);
 
+				void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);
+				void mousePressEvent(QGraphicsSceneMouseEvent* event);
+
 			public : 
 				Vignette(View* _view);
 				virtual ~Vignette(void);
@@ -173,57 +187,68 @@ namespace QVGL
 				int getWidth(void) const;
 				int getHeight(void) const;
 				void resize(const QSize& size);
+				bool isSelected(void) const;
+				void setSelection(bool enabled);
+				QRectF boundingRect(void) const;
 			
 			public slots :
 				void updateTitle(void);
 				void updateInfos(void);
+
+			signals : 
+				void selection(void);
+				void showView(View* view);
 		};
 
 	class ViewsTable : public QObject
 	{
 		Q_OBJECT
 
-		public : 
-			/*class VignetteFrame : public QGraphicsRectItem
-			{
-				protected : 
-					void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
-					void dragEnterEvent(QGraphicsSceneDragDropEvent* event);
-					void dragLeaveEvent(QGraphicsSceneDragDropEvent* event);
-					void dragMoveEvent(QGraphicsSceneDragDropEvent* event);
-					void dropEvent(QGraphicsSceneDragDropEvent* event);
-					void focusInEvent(QFocusEvent* event);
-					void focusOutEvent(QFocusEvent* event);
-					void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);
-
-				public : 
-					VignetteFrame(qreal x, qreal y, qreal width, qreal height);
-					~VignetteFrame(void);
-			};*/
-	
 		private :
-			QList<Vignette*>	vignettesList;
+			static float		rho;
+			QString			name;
+			QMap<View*, Vignette*>	vignettesList;
 			int 			a, b, w, h, H, topBarHeight;
-			float 			u, v;			
+			float 			u, v;
+			SceneViewWidget*	sceneViewWidget;
+			bool 			visible;
 
-			void computeTableParameters(const QSize& sceneViewWidget, int N=-1, const float& rho=0.05);
+			void computeTableParameters(const QSize& sceneViewWidget, int N=-1);
 			void getIndices(const Vignette* vignette, int& i, int& j) const;
 			QPoint getScenePosition(const int& i, const int& j) const;
 			QPoint getScenePosition(const Vignette* vignette) const;
 
 		private slots : 
 			void resize(QSize size);
+			void updateSelection(void);
+			void viewClosed(void);
+			void sceneDestroyed(void);
 
 		public :
-			ViewsTable(const QList<View*>& viewsList, SceneViewWidget& sceneViewWidget);
+			ViewsTable(const QString& tableName, SceneViewWidget* _sceneViewWidget);
 			~ViewsTable(void);
 
-			QList<Vignette*>::iterator begin(void);
-			QList<Vignette*>::const_iterator begin(void) const;
-			QList<Vignette*>::iterator end(void);
-			QList<Vignette*>::const_iterator end(void) const;
+			QMap<View*, Vignette*>::iterator begin(void);
+			QMap<View*, Vignette*>::const_iterator begin(void) const;
+			QMap<View*, Vignette*>::iterator end(void);
+			QMap<View*, Vignette*>::const_iterator end(void) const;
 
+			const QString& getName(void) const;
+			void addView(View* view, bool resizeNow=true);
+			void addViews(const QList<View*>& viewsList);
+			void removeView(View* view, bool resizeNow=true);
+			void removeViews(const QList<View*>& viewsList);
+			void clear(void);
+			View* getCurrentSelectedView(void) const;
 			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
+			QRectF getVignetteFrame(View* view) const;
+			void setVisible(bool enabled);
+			bool isVisible(void);
+
+		signals :
+			void viewSelection(View* view);
+			void showView(View* view);
+			void closed(void);
 	};
 
 	class SubWidget : public QWidget
@@ -309,22 +334,29 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
-				static TopBar*		singleton;
-				QGraphicsProxyWidget 	*graphicsProxy;
-				QHBoxLayout		bar;
-				QMenuBar		menuBar;
-				QMenu			mainMenu,
-							viewsMenu,
-							widgetsMenu;
-				QAction			closeCurrentViewAction,	
-							closeAllViewsAction,
-							temporaryHideAllSubWidgetsAction,
-							hideAllSubWidgetsAction;
-				QSignalMapper		signalMapper;
-				QLabel			titleLabel;
-				PositionColorInfoMini	positionColorInfo;
-				QSignalMapper		viewsSignalMapper,
-							widgetsSignalMapper;
+				static TopBar*			singleton;
+				QGraphicsProxyWidget 		*graphicsProxy;
+				QHBoxLayout			bar;
+				QMenuBar			menuBar;
+				QMenu				mainMenu,
+								viewsMenu,
+								widgetsMenu;
+				QAction				*viewsSeprator,
+								closeCurrentViewAction,	
+								closeAllViewsAction,
+								*viewsTablesSeparator,
+								closeCurrentViewsTableAction,
+								closeAllViewsTableAction,
+								temporaryHideAllSubWidgetsAction,
+								hideAllSubWidgetsAction;
+				QSignalMapper			signalMapper;
+				QLabel				titleLabel;
+				PositionColorInfoMini		positionColorInfo;
+				QSignalMapper			viewsSignalMapper,
+								viewsTablesSignalMapper,
+								widgetsSignalMapper;
+				QMap<View*, QAction*>		viewsActions;
+				QMap<ViewsTable*, QAction*>	viewsTablesActions;
 
 				void mousePressEvent(QMouseEvent* event);
 				void mouseDoubleClickEvent(QMouseEvent* event);
@@ -337,9 +369,12 @@ namespace QVGL
 			private slots : 
 				void stretch(const QRectF& rect);
 				void castViewPointer(QObject* ptr);
+				void castViewsTablePointer(QObject* ptr);
 				void castSubWidgetPointer(QObject* ptr);
 				void sendSelectedSignal(void);
 				void transferActionSignal(int actionID);
+				void viewClosed(void);
+				void viewsTableClosed(void);
 
 			public :
 				TopBar(void);
@@ -348,7 +383,10 @@ namespace QVGL
 				void setTitle(void);
 				void setTitle(QString title);
 				void setTitle(const View& view);
-				void updateViewsList(const QList<View*>& viewsList);
+				void setTitle(const ViewsTable& table);
+				//void updateViewsList(const QList<View*>& viewsList);
+				void addView(View* view);
+				void addViewsTable(ViewsTable* table);
 				void updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList);
 				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
@@ -357,6 +395,7 @@ namespace QVGL
 
 			signals : 
 				void changeViewRequest(View* targetView);
+				void changeViewsTableRequest(ViewsTable* targetViewsTable);
 				void requestAction(ActionID);
 				void showSubWidgetRequest(SubWidget* targetWidget);
 				void selected(TopBar* ptr);
@@ -621,7 +660,7 @@ namespace QVGL
 			void wheelEvent(QGraphicsSceneWheelEvent* event);
 			void mousePressEvent(QGraphicsSceneMouseEvent* event);
 			void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
-			void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);	
+			//void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);	
 
 		public : 
 			SceneWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
@@ -650,6 +689,7 @@ namespace QVGL
 
 			void addSubWidget(SubWidget* subWidget);
 			void addItem(QGraphicsItem* item);
+			void removeItem(QGraphicsItem* item);
 			SubWidget* getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
 			SubWidget* getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
 			void orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible=true) const;
@@ -677,8 +717,9 @@ namespace QVGL
 			SceneViewWidget  		sceneViewWidget;
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
-			int				currentViewIndex;
-			ViewsTable*			viewsTable;
+			QList<ViewsTable*>		viewsTablesList;
+			int				currentViewIndex,
+							currentViewsTableIndex;
 
 			float				opacityActiveSubWidget,
 							opacityIdleSubWidget,
@@ -689,16 +730,23 @@ namespace QVGL
 			void updateMouseStateData(void);
 			void performMouseAction(void);
 			void setMouseCursor(Qt::CursorShape cursorShape);
-			//void handleCatch(void); // Deprecated.
 
 			// Views : 
 				void viewRequireDisplay(View* view);
 				void viewRequireDisplay(void);
+				void viewChangeSelection(View* view);
 				void viewUpdated(View* view);
 				void viewUpdated(void);
 				void viewClosed(View* view);
 				void viewClosed(void);
 				void closeAllViews(void);
+
+			// ViewsTable :
+				void viewsTableRequireDisplay(ViewsTable* viewsTable);
+				void viewsTableRequireDisplay(void);
+				void viewsTableClosed(ViewsTable* viewsTable);
+				void viewsTableClosed(void);
+				void closeAllViewsTables(void);
 
 			// Widgets : 	
 				void subWidgetSelected(SubWidget* subWidget);
@@ -725,12 +773,16 @@ namespace QVGL
 			QList<View*>& getCurrentViewList(void); // To be removed in the future?
 			ViewsTable* getCurrentViewsTable(void);
 			void changeCurrentView(void);
-			void changeCurrentView(int targetID);
+			void changeCurrentView(int targetID, bool showNow=true);
+			void changeCurrentViewsTable(int targetID);
+			void hideCurrentViewsTable(void);
 			void getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const;
 			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;							// correcting for the aspect ratio of the scene.
 			float getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const;
 			float getAdaptationScaling(const float& imageRatio) const;									// correcting for the image filling the scene.
+			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const;
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const;
+			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view=NULL) const;
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;
 			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view=NULL) const;
 
@@ -744,6 +796,7 @@ namespace QVGL
 			const KeyboardState& getKeyboardState(void) const;
 			const MouseState& getMouseState(void) const;
 			void addView(View* view);
+			void createViewsTable(const QString& tableName);
 			void addSubWidget(SubWidget* subWidget);
 			float getSceneRatio(void) const;
 			QRectF sceneRect(void) const;
