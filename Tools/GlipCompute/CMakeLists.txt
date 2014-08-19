@@ -1,9 +1,12 @@
 # When using QT, make sure it includes the library before OpenGL!
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
+
+# Remove relative path warnings :
+cmake_policy(SET CMP0015 NEW)
 
 #Project name
-project(GLIP)
+project(GLIPCOMPUTE)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -34,12 +37,21 @@ else() # Linux psecifics
 	#For Cleaning purpose : set(CMAKE_CXX_FLAGS "-pedantic -Wall")
 endif()
 
-set(LIBRARY_OUTPUT_PATH lib/)
+set(EXECUTABLE_OUTPUT_PATH .)
 
+# Requirements: 
+find_package(OpenGL REQUIRED)
+
+
+# Includes paths :
 include_directories(
-		./include/
-		./include/Core/
-		./include/Modules/
+		./src/
+		../../GLIP-Lib/include/
+		)
+
+# Link paths : 
+link_directories(
+		../../GLIP-Lib/lib/
 		)
 
 # Generate the list of source files : 
@@ -47,13 +59,14 @@ file(
 		GLOB_RECURSE
 		source_files
 		src/*
-		include/*
 )
 
 # Executable : 
-add_library(
-		glip
-		#STATIC
-		SHARED
+add_executable(
+		glip-compute
 		${source_files}
 )
+
+# Link : 
+target_link_libraries(glip-compute GL freeimageplus glip)
+

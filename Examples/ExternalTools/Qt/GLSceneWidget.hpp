@@ -46,7 +46,10 @@
 	#include <QMenuBar>
 	#include <QSignalMapper>
 
-	
+	#include <QLineEdit>
+	#include <QComboBox>
+	#include <QListWidget>
+	#include <QDialogButtonBox>
 
 namespace QVGL
 {
@@ -211,6 +214,7 @@ namespace QVGL
 			int 			a, b, w, h, H, topBarHeight;
 			float 			u, v;
 			SceneViewWidget*	sceneViewWidget;
+			QGraphicsSimpleTextItem	emptyNotification;
 			bool 			visible;
 
 			void computeTableParameters(const QSize& sceneViewWidget, int N=-1);
@@ -234,16 +238,19 @@ namespace QVGL
 			QMap<View*, Vignette*>::const_iterator end(void) const;
 
 			const QString& getName(void) const;
+			View* getCurrentSelectedView(void) const;
+			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
+			QRectF getVignetteFrame(View* view) const;
+			bool isVisible(void) const;
+
+		public slots :
 			void addView(View* view, bool resizeNow=true);
 			void addViews(const QList<View*>& viewsList);
 			void removeView(View* view, bool resizeNow=true);
 			void removeViews(const QList<View*>& viewsList);
 			void clear(void);
-			View* getCurrentSelectedView(void) const;
-			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
-			QRectF getVignetteFrame(View* view) const;
 			void setVisible(bool enabled);
-			bool isVisible(void);
+			void close(void);
 
 		signals :
 			void viewSelection(View* view);
@@ -307,6 +314,7 @@ namespace QVGL
 			void selected(SubWidget*);
 			void showRequest(SubWidget*);
 			void hideRequest(SubWidget*);
+			void closed(void);
 	};
 		
 		class PositionColorInfoMini : public QWidget
@@ -340,23 +348,25 @@ namespace QVGL
 				QMenuBar			menuBar;
 				QMenu				mainMenu,
 								viewsMenu,
-								widgetsMenu;
-				QAction				*viewsSeprator,
+								subWidgetsMenu;
+				QAction				*viewsSeparator,
 								closeCurrentViewAction,	
 								closeAllViewsAction,
 								*viewsTablesSeparator,
 								closeCurrentViewsTableAction,
 								closeAllViewsTableAction,
 								temporaryHideAllSubWidgetsAction,
-								hideAllSubWidgetsAction;
-				QSignalMapper			signalMapper;
+								hideAllSubWidgetsAction,
+								*subWidgetsSeparator;
 				QLabel				titleLabel;
 				PositionColorInfoMini		positionColorInfo;
-				QSignalMapper			viewsSignalMapper,
+				QSignalMapper			signalMapper,
+								viewsSignalMapper,
 								viewsTablesSignalMapper,
 								widgetsSignalMapper;
 				QMap<View*, QAction*>		viewsActions;
 				QMap<ViewsTable*, QAction*>	viewsTablesActions;
+				QMap<SubWidget*, QAction*>	subWidgetsActions;
 
 				void mousePressEvent(QMouseEvent* event);
 				void mouseDoubleClickEvent(QMouseEvent* event);
@@ -375,6 +385,7 @@ namespace QVGL
 				void transferActionSignal(int actionID);
 				void viewClosed(void);
 				void viewsTableClosed(void);
+				void subWidgetClosed(void);
 
 			public :
 				TopBar(void);
@@ -384,14 +395,15 @@ namespace QVGL
 				void setTitle(QString title);
 				void setTitle(const View& view);
 				void setTitle(const ViewsTable& table);
-				//void updateViewsList(const QList<View*>& viewsList);
-				void addView(View* view);
-				void addViewsTable(ViewsTable* table);
-				void updateSubWidgetsList(const QList<SubWidget*>& subWidgetsList);
 				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
 
 				static int getHeight(void); 
+
+			public slots : 
+				void addView(View*);
+				void addViewsTable(ViewsTable*);
+				void addSubWidget(SubWidget*);
 
 			signals : 
 				void changeViewRequest(View* targetView);
@@ -453,9 +465,11 @@ namespace QVGL
 	
 		protected :
 			friend class SceneWidget;
+			friend class MainWidget;
 
 			void keyPressed(QKeyEvent* event);	
 			void keyReleased(QKeyEvent* event);
+			void forceRelease(void);
 
 		public : 
 			KeyboardState(void);
@@ -772,8 +786,8 @@ namespace QVGL
 			View* getCurrentView(void) const;
 			QList<View*>& getCurrentViewList(void); // To be removed in the future?
 			ViewsTable* getCurrentViewsTable(void);
-			void changeCurrentView(void);
 			void changeCurrentView(int targetID, bool showNow=true);
+			void hideCurrentView(void);
 			void changeCurrentViewsTable(int targetID);
 			void hideCurrentViewsTable(void);
 			void getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const;
@@ -805,6 +819,11 @@ namespace QVGL
 
 		public slots : 
 			void processAction(ActionID action, bool takenBack=false);
+
+		signals :
+			void viewAdded(View*);
+			void viewsTableAdded(ViewsTable*);
+			void subWidgetAdded(SubWidget*);
 	};
 }
 

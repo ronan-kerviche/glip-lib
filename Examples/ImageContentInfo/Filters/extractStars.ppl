@@ -1,6 +1,6 @@
-TEXTURE_FORMAT:imageFormat(4272,2848,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:imageFormat(4272,2848,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
 
-SHADER_SOURCE:threshold()
+SHADER_SOURCE:threshold
 {
 	#version 130
 
@@ -21,7 +21,7 @@ SHADER_SOURCE:threshold()
 	}
 }
 
-SHADER_SOURCE:extract()
+SHADER_SOURCE:extract
 {
 	#version 130
 
@@ -66,17 +66,17 @@ SHADER_SOURCE:extract()
 	}
 }
 
-FILTER_LAYOUT:threshold_filter(imageFormat,threshold);
-FILTER_LAYOUT:extract_filter(imageFormat,extract);
+FILTER_LAYOUT:threshold_filter(imageFormat,threshold)
+FILTER_LAYOUT:extract_filter(imageFormat,extract)
 
-PIPELINE_MAIN:pExtract()
+PIPELINE_MAIN:pExtract
 {
-	INPUT_PORTS(i0);
-	OUTPUT_PORTS(o0, o1);
-	FILTER_INSTANCE:inst_thresh(threshold_filter);
-	FILTER_INSTANCE:inst_extrac(extract_filter);
-	CONNECTION(THIS,i0,inst_thresh,inText);
-	CONNECTION(inst_thresh,outText,inst_extrac,inText);
-	CONNECTION(inst_extrac,outText,THIS,o0);
-	CONNECTION(inst_thresh,outText,THIS,o1);
+	INPUT_PORTS(i0)
+	OUTPUT_PORTS(o0, o1)
+	FILTER_INSTANCE:inst_thresh(threshold_filter)
+	FILTER_INSTANCE:inst_extrac(extract_filter)
+	CONNECTION(THIS,i0,inst_thresh,inText)
+	CONNECTION(inst_thresh,outText,inst_extrac,inText)
+	CONNECTION(inst_extrac,outText,THIS,o0)
+	CONNECTION(inst_thresh,outText,THIS,o1)
 }
