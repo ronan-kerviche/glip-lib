@@ -53,7 +53,7 @@ void createWindowlessContext(void)
 	XFree( fbConfigs );
 	XSync( display, False );
 
-	if ( !glXMakeContextCurrent( display, pbuffer, pbuffer, openGLContext ) )
-		std::cerr << "Something went wrong!" << std::endl;
+	if( !glXMakeContextCurrent(display, pbuffer, pbuffer, openGLContext) )
+		throw Glip::Exception("createWindowlessContext - Could not setup GL context.", __FILE__, __LINE__);
 }
 

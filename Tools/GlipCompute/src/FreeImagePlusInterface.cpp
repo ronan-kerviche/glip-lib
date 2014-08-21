@@ -84,8 +84,7 @@
 				buffer.set(x, y, GL_BLUE, 	pixel.rgbBlue);
 			
 				if(planes>=4)
-				//	buffer.set(x, y, GL_ALPHA, pixel.rgbAlpha);
-					throw Glip::Exception("Alpha layer unsupported.", __FILE__, __LINE__);
+					buffer.set(x, y, GL_ALPHA, pixel.rgbReserved);
 			}	
 		}
 
@@ -120,8 +119,7 @@
 				pixel.rgbBlue	= buffer.get(x, y, GL_BLUE);
 
 				if(descriptor.numChannels>=4)
-				//	buffer.set(x, y, GL_ALPHA, pixel.rgbAlpha);
-					throw Glip::Exception("Alpha layer unsupported.", __FILE__, __LINE__);
+					buffer.set(x, y, GL_ALPHA, pixel.rgbReserved);
 
 				outputImage.setPixelColor(x, y, &pixel);
 			}	
