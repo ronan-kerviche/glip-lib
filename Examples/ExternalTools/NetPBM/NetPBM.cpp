@@ -1,4 +1,4 @@
-#include "netpbm.hpp"
+#include "NetPBM.hpp"
 #include <cstring>
 #include <cmath>
 

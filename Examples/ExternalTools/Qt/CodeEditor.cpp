@@ -1983,3 +1983,15 @@ using namespace QGED;
 			closeTab(0);
 	}
 
+// CodeEditorSubWidget
+#ifdef __USE_QVGL__
+	CodeEditorSubWidget::CodeEditorSubWidget(void)
+	{
+		setInnerWidget(&mainWidget);
+		setTitle("GLIP-Lib Code Editor");
+	}
+	
+	CodeEditorSubWidget::~CodeEditorSubWidget(void)
+	{ }
+#endif
+

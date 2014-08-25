@@ -203,7 +203,7 @@ namespace QVGL
 				void showView(View* view);
 		};
 
-	class ViewsTable : public QObject
+	class ViewsTable : public QObject, public QGraphicsItemGroup
 	{
 		Q_OBJECT
 
@@ -213,23 +213,26 @@ namespace QVGL
 			QMap<View*, Vignette*>	vignettesList;
 			int 			a, b, w, h, H, topBarHeight;
 			float 			u, v;
-			SceneViewWidget*	sceneViewWidget;
 			QGraphicsSimpleTextItem	emptyNotification;
-			bool 			visible;
+			//bool 			visible;
 
-			void computeTableParameters(const QSize& sceneViewWidget, int N=-1);
+			void computeTableParameters(const QRectF& sceneViewWidget, int N=-1);
 			void getIndices(const Vignette* vignette, int& i, int& j) const;
 			QPoint getScenePosition(const int& i, const int& j) const;
 			QPoint getScenePosition(const Vignette* vignette) const;
+			QVariant itemChange(GraphicsItemChange change, const QVariant& value);
+			//void setVisible(bool enabled);
+
+			//friend class MainWidget;
 
 		private slots : 
-			void resize(QSize size);
+			void resize(const QRectF& size);
+			void resize(void);
 			void updateSelection(void);
 			void viewClosed(void);
-			void sceneDestroyed(void);
 
 		public :
-			ViewsTable(const QString& tableName, SceneViewWidget* _sceneViewWidget);
+			ViewsTable(const QString& tableName);
 			~ViewsTable(void);
 
 			QMap<View*, Vignette*>::iterator begin(void);
@@ -241,7 +244,10 @@ namespace QVGL
 			View* getCurrentSelectedView(void) const;
 			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
 			QRectF getVignetteFrame(View* view) const;
-			bool isVisible(void) const;
+			//bool isVisible(void) const;
+			bool isClosed(void) const;
+
+			//void setVisible(bool enabled); // TEST, TO REMOVE
 
 		public slots :
 			void addView(View* view, bool resizeNow=true);
@@ -249,12 +255,13 @@ namespace QVGL
 			void removeView(View* view, bool resizeNow=true);
 			void removeViews(const QList<View*>& viewsList);
 			void clear(void);
-			void setVisible(bool enabled);
+			void show(void);
 			void close(void);
 
 		signals :
+			void requireDisplay(void);
 			void viewSelection(View* view);
-			void showView(View* view);
+			void showView(View* view);			
 			void closed(void);
 	};
 
@@ -295,7 +302,7 @@ namespace QVGL
 
 		public : 
 			SubWidget(void);
-			~SubWidget(void);
+			virtual ~SubWidget(void);
 
 			void setInnerWidget(QWidget* _widget);
 			QWidget* innerWidget(void);
@@ -714,8 +721,8 @@ namespace QVGL
 			void getColorAt(int x, int y, QColor& c);
 			void update(void);
 
-		signals : 
-			void resized(QSize newSize);
+		//signals : 
+			//void resized(QSize newSize);
 	};
 	
 	class MainWidget : public QWidget
@@ -734,6 +741,7 @@ namespace QVGL
 			QList<ViewsTable*>		viewsTablesList;
 			int				currentViewIndex,
 							currentViewsTableIndex;
+			ViewsTable*			mainViewsTable;
 
 			float				opacityActiveSubWidget,
 							opacityIdleSubWidget,
@@ -753,6 +761,7 @@ namespace QVGL
 				void viewUpdated(void);
 				void viewClosed(View* view);
 				void viewClosed(void);
+				void viewDestroyed(void);
 				void closeAllViews(void);
 
 			// ViewsTable :
@@ -760,6 +769,7 @@ namespace QVGL
 				void viewsTableRequireDisplay(void);
 				void viewsTableClosed(ViewsTable* viewsTable);
 				void viewsTableClosed(void);
+				void viewsTableDestroyed(void);
 				void closeAllViewsTables(void);
 
 			// Widgets : 	
@@ -771,6 +781,7 @@ namespace QVGL
 				void hideSubWidget(void);
 				void subWidgetClosed(SubWidget* subWidget);
 				void subWidgetClosed(void);
+				void subWidgetDestroyed(void);
 				void nextSubWidget(void);
 				void previousSubWidget(void);
 				void temporaryHideAllSubWidgets(bool enabled = true);
@@ -809,15 +820,15 @@ namespace QVGL
 
 			const KeyboardState& getKeyboardState(void) const;
 			const MouseState& getMouseState(void) const;
-			void addView(View* view);
-			void createViewsTable(const QString& tableName);
-			void addSubWidget(SubWidget* subWidget);
 			float getSceneRatio(void) const;
 			QRectF sceneRect(void) const;
 			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
 			void getColorAt(int x, int y, QColor& c);
 
 		public slots : 
+			void addView(QVGL::View* view);
+			void addViewsTable(QVGL::ViewsTable* newTable);
+			void addSubWidget(QVGL::SubWidget* subWidget);
 			void processAction(ActionID action, bool takenBack=false);
 
 		signals :

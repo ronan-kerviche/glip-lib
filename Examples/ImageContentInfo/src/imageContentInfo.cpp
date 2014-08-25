@@ -93,14 +93,14 @@
 	}
 
 // TestEditorWidget ;
-	CodeEditorSubWidget::CodeEditorSubWidget(void)
+	/*CodeEditorSubWidget::CodeEditorSubWidget(void)
 	{
 		setInnerWidget(&mainWidget);
 		setTitle("Test Code Editor");
 	}
 	
 	CodeEditorSubWidget::~CodeEditorSubWidget(void)
-	{ }
+	{ }*/
 
 // Src :
 	IHM::IHM(void)
@@ -165,8 +165,12 @@
 		tmp = new TmpWidget;
 		window.addSubWidget(tmp);
 
-		CodeEditorSubWidget* editor = new CodeEditorSubWidget;
-		window.addSubWidget(editor);
+		window.addSubWidget(new QGED::CodeEditorSubWidget);
+
+		QGIC::ImageItemsCollectionSubWidget* collection = new QGIC::ImageItemsCollectionSubWidget;
+		window.addSubWidget(collection);
+		window.addViewsTable(collection->getMainViewsTablePtr());
+		QObject::connect(collection, SIGNAL(addView(QVGL::View*)), &window, SLOT(addView(QVGL::View*)));
 	}
 
 	IHM::~IHM(void)
@@ -276,6 +280,8 @@
 
 			QTextStream 	stylesheetStream(&stylesheetFile);
 			QString 	stylesheet = stylesheetStream.readAll();
+
+			//std::cout << "Stylesheet : " << stylesheet.toStdString() << std::endl;
 
 			// Set style : 
 			QApplication::setStyleSheet(stylesheet);

@@ -7,42 +7,22 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : main.cpp                                                                                  */
+/*     File          : GlipCompute.hpp                                                                           */
 /*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : Main function.                                                                            */
+/*     Description   : FreeImage3 interface for image input/output.                                              */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-	/*
-	TODO 
-		- Versions of OpenGL adapted to driver/hardware for maximum functionalities.
-		- Alpha layer with freeimage library.
-		- Uniforms variables to load from file.
-		- Orientation//=coordinates inside the images (flip the horizontal axis?).
-		- Load external modules.
-		- Write the help.
-	*/
+#ifndef __GLIPCOMPUTE__
+#define __GLIPCOMPUTE__
 
-// Includes : 
-	#include "GlipCompute.hpp"
+	// Includes : 
+	#include "CreateWindowlessContext.hpp"
+	#include "FreeImagePlusInterface.hpp"
 
-// Main :
-	int main(int argc, char** argv)
-	{
-		int returnCode = 0;
+	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, std::string& uniformsFilename, std::string& inputFormatString, std::map<std::string, std::string>& inputs, std::map<std::string, std::string>& outputs);
+	extern int compute(const std::string& pipelineFilename, const std::string& uniformsFilename, const std::string& inputFormatString, const std::map<std::string, std::string>& inputs, const std::map<std::string, std::string>& outputs);
 
-		std::string 				pipelineFilename,
-							uniformsFilename,
-							inputFormatString;
-		std::map<std::string, std::string>	inputs,
-							outputs;
-
-		returnCode = parseArguments(argc, argv, pipelineFilename, uniformsFilename, inputFormatString, inputs, outputs);
-	
-		if(returnCode==0)
-			returnCode = compute(pipelineFilename, uniformsFilename, inputFormatString, inputs, outputs);
-
-		return returnCode;
-	}
+#endif
 

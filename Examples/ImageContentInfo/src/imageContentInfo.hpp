@@ -5,8 +5,9 @@
 	#include <fstream>
 	//#include "WindowRendering.hpp"
 	#include "GLSceneWidget.hpp"
-	#include "ResourceLoader.hpp"
+	#include "ImageItem.hpp"
 	#include "CodeEditor.hpp"
+	#include "ResourceLoader.hpp"	
 	#include "GLIPLib.hpp"
 	#include <QApplication>
 	#include <QWidget>
@@ -87,7 +88,7 @@
 				~TmpWidget(void);
 		};
 
-		class CodeEditorSubWidget : public QVGL::SubWidget
+		/*class CodeEditorSubWidget : public QVGL::SubWidget
 		{	
 			private : 
 				QGED::MainWidget mainWidget;
@@ -95,6 +96,6 @@
 			public :
 				CodeEditorSubWidget(void);
 				~CodeEditorSubWidget(void);
-		};
+		};*/
 
 #endif

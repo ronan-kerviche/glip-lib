@@ -17,6 +17,10 @@
 #ifndef __GLIPLIB_CODE_EDITOR__
 #define __GLIPLIB_CODE_EDITOR__
 
+// Settings : 
+	// Use QVGL::SubWidget definition :  
+	#define __USE_QVGL__
+
 // Includes :
 	#include "GLIPLib.hpp"
 	#include <cmath>
@@ -55,14 +59,18 @@
 	#include <QLineEdit>
 	#include <QWidgetAction>
 
-namespace QGED
-{
+	#ifdef __USE_QVGL__
+		#include "GLSceneWidget.hpp"
+	#endif 
+
 	// Namespaces : 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+namespace QGED
+{
 	// Protypes : 
 	class CodeEditor;
 	class LineNumberArea;
@@ -483,6 +491,18 @@ namespace QGED
 		signals :
 			void compileSource(std::string source, void* identifier);
 	};
+
+	#ifdef __USE_QVGL__
+	class CodeEditorSubWidget : public QVGL::SubWidget
+	{	
+		private : 
+			MainWidget mainWidget;
+
+		public :
+			CodeEditorSubWidget(void);
+			~CodeEditorSubWidget(void);
+	};
+	#endif
 }
 
 #endif
