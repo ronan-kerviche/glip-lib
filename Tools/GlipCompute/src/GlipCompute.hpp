@@ -21,8 +21,16 @@
 	#include "CreateWindowlessContext.hpp"
 	#include "FreeImagePlusInterface.hpp"
 
-	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, std::string& uniformsFilename, std::string& inputFormatString, std::map<std::string, std::string>& inputs, std::map<std::string, std::string>& outputs);
-	extern int compute(const std::string& pipelineFilename, const std::string& uniformsFilename, const std::string& inputFormatString, const std::map<std::string, std::string>& inputs, const std::map<std::string, std::string>& outputs);
+	struct ProcessCommand
+	{
+		std::string						name;
+		std::vector< std::pair<std::string, std::string> >	inputFilenames,
+									outputFilenames;
+		std::string						uniformVariables;
+	};
+
+	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, std::string& inputFormatString, std::vector<ProcessCommand>& commands);
+	extern int compute(const std::string& pipelineFilename, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands);
 
 #endif
 

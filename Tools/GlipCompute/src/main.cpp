@@ -33,15 +33,13 @@
 		int returnCode = 0;
 
 		std::string 				pipelineFilename,
-							uniformsFilename,
 							inputFormatString;
-		std::map<std::string, std::string>	inputs,
-							outputs;
+		std::vector<ProcessCommand> 		commands;
 
-		returnCode = parseArguments(argc, argv, pipelineFilename, uniformsFilename, inputFormatString, inputs, outputs);
+		returnCode = parseArguments(argc, argv, pipelineFilename, inputFormatString, commands);
 	
 		if(returnCode==0)
-			returnCode = compute(pipelineFilename, uniformsFilename, inputFormatString, inputs, outputs);
+			returnCode = compute(pipelineFilename, inputFormatString, commands);
 
 		return returnCode;
 	}
