@@ -206,10 +206,12 @@
 			throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
 		else
 		{
+			// Bind ; 
+			texture.bind();
+
 			glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-			// Read the texture : 
-			texture.bind();
+			// Read : 
 			glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), reinterpret_cast<GLvoid*>(buffer));
 			
 			GLenum err = glGetError();
@@ -275,7 +277,7 @@
 			throw Exception("ImageBuffer::operator>> - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
 		else
 		{
-			// Bind it
+			// Bind : 
 			texture.bind();
 
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -614,7 +616,7 @@
 	void ImageBuffer::write(const std::string& filename, const std::string& comment) const
 	{
 		if(comment.size()>maxCommentLength)
-			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\" : the comment is too long (it cannot exceed " + to_string(maxCommentLength) + " characters).", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\" : the comment is too long (it cannot exceed " + toString(maxCommentLength) + " characters).", __FILE__, __LINE__);
 
 		// Try to open for read : 
 		std::fstream file;

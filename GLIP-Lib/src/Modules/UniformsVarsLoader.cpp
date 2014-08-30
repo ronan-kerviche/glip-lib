@@ -72,10 +72,10 @@
 		modified(false)
 	{
 		if(e.noName || e.name.empty())
-			throw Exception("From line " + to_string(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
 
 		if(!e.noBody)
-			throw Exception("From line " + to_string(e.startLine) + " : Element \"" + e.name + "\" should not have a body.", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" should not have a body.", __FILE__, __LINE__);
 
 		// Set the name :
 		name = e.name;
@@ -83,6 +83,16 @@
 		// Create the data : 
 		data = HdlDynamicData::build(glFromString(e.strKeyword));
 
+		// Test : 
+		if(data->getNumElements()!=e.arguments.size())
+		{
+			const int expectedArgs = data->getNumElements();
+			delete data;
+			data = NULL;
+			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" of type \"" + e.strKeyword + "\" has " + toString(e.arguments.size()) + " arguments while it should have exactly " + toString(expectedArgs) + ".", __FILE__, __LINE__);
+		}
+
+		// Fill : 
 		for(int j=0; j<data->getNumColumns(); j++)
 		{	
 			for(int i=0; i<data->getNumRows(); i++)
@@ -90,8 +100,8 @@
 				const int k = data->getIndex(i, j);
 				double 	val = 0.0;
 		
-				if( !from_string( e.arguments[k], val ) )
-					throw Exception("From line " + to_string(e.startLine) + " : Unable to read parameter " + to_string(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__);
+				if( !fromString( e.arguments[k], val ) )
+					throw Exception("From line " + toString(e.startLine) + " : Unable to read parameter " + toString(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__);
 				else
 					data->set( val, i, j);
 			}
@@ -202,7 +212,7 @@
 			{
 				const int k = data->getIndex(i, j);
 	
-				e.arguments[k] = to_string( data->get(i, j) );
+				e.arguments[k] = toString( data->get(i, j) );
 			}
 		}
 
@@ -220,10 +230,10 @@
 	UniformsVarsLoader::Node::Node(const VanillaParserSpace::Element& e)
 	{
 		if(e.noName || e.name.empty())
-			throw Exception("From line " + to_string(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
 
 		if(e.strKeyword!=keywords[KW_UL_FILTER] && e.strKeyword!=keywords[KW_UL_PIPELINE])
-			throw Exception("From line " + to_string(e.startLine) + " : Unknown element type : \"" + e.strKeyword + "\".", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : Unknown element type : \"" + e.strKeyword + "\".", __FILE__, __LINE__);
 
 		name = e.name;
 
@@ -231,7 +241,7 @@
 					
 		if(!e.noBody && !e.body.empty())
 		{
-			VanillaParser parser(e.body);
+			VanillaParser parser(e.body, e.bodyLine);
 
 			if(supposedToBeAFilter)
 			{
@@ -788,8 +798,9 @@
 	\brief Loads a set of uniforms variables for one, or multiple, pipelines.
 	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\\n').
 	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
+	\param lineOffset Set the line number offset for error reporting. 
 	**/
-	void UniformsVarsLoader::load(std::string source, bool replace)
+	void UniformsVarsLoader::load(std::string source, bool replace, int lineOffset)
 	{
 		std::string filename;
 
@@ -820,13 +831,16 @@
 			}
 
 			file.close();
+
+			// Clear the line offset, start counting in the file : 
+			lineOffset = 1;
 		}
 		// else : "already loaded"
 
 		// Load :
 		try
 		{
-			VanillaParser parser(source);
+			VanillaParser parser(source, lineOffset);
 
 			for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 			{
@@ -837,7 +851,7 @@
 					if(!hasPipeline(tmp.getName()) || replace)
 						nodes[tmp.getName()] = tmp;
 					else
-						throw Exception("From line " + to_string(it->startLine) + " : An element with the typename \"" + tmp.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
+						throw Exception("From line " + toString(it->startLine) + " : An element with the typename \"" + tmp.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
 				}
 			}
 		}
@@ -1133,6 +1147,6 @@
 		else if(k==UL_UnknownKeyword)
 			return "<Unknown Keyword>";
 		else
-			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + to_string(k) + ".", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + toString(k) + ".", __FILE__, __LINE__);
 	}
 

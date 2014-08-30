@@ -204,7 +204,7 @@ using namespace Glip::CoreGL;
 			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
 			Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer (possible incompatibility with texture format)")
 			case GL_NO_ERROR : 				return "(No error)";
-			default          : 				return "Unknown error (Code : " + to_string(err) + ")";
+			default          : 				return "Unknown error (Code : " + toString(err) + ")";
 		}
 		#undef Err
 	}

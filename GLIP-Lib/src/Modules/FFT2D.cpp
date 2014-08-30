@@ -48,10 +48,10 @@
 			test2 = h & (h - 1);
 
 		if( test1 || test2)
-			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2 (" + to_string(w) + "x" + to_string(h) + ").", __FILE__, __LINE__);
+			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__);
 
 		if(w<4 || h<4)
-			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4 (" + to_string(w) + "x" + to_string(h) + ").", __FILE__, __LINE__);
+			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__);
 
 		// Fill bit reversal :
 			// Width :
@@ -150,7 +150,7 @@
 			for(int i=1; i<=w/2; i*=2)
 			{
 				ShaderSource shader(generateCode(i,coeffp,true));
-				std::string name = "Wfilter"+to_string(i);
+				std::string name = "Wfilter"+toString(i);
 				FilterLayout fl("WRadix2", widthfmt, shader);
 				playout.add(fl,name);
 
@@ -186,7 +186,7 @@
 			for(int i=1; i<=h/2; i*=2)
 			{
 				ShaderSource shader(generateCode(i,coeffp,false));
-				std::string name = "Hfilter"+to_string(i);
+				std::string name = "Hfilter"+toString(i);
 				FilterLayout fl("HRadix2", heightfmt, shader);
 				playout.add(fl,name);
 

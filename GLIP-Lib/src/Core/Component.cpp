@@ -100,7 +100,7 @@
 	void __ReadOnly_ComponentLayout::checkInputPort(int i) const
 	{
 		if(i<0 || i>=getNumInputPort())
-			throw Exception("ComponentLayout - Bad input port ID for "  + getFullName() + " (ID = " + to_string(i) + ").", __FILE__, __LINE__);
+			throw Exception("ComponentLayout - Bad input port ID for "  + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
 	}
 
 	/**
@@ -111,7 +111,7 @@
 	void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
 	{
 		if(i<0 || i>=getNumOutputPort())
-			throw Exception("ComponentLayout - Bad output port ID for " + getFullName() + " (ID = " + to_string(i) + ").", __FILE__, __LINE__);
+			throw Exception("ComponentLayout - Bad output port ID for " + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
 	}
 
 	/**

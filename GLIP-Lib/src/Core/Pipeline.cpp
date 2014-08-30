@@ -108,7 +108,7 @@
 		checkElement(i);
 
 		if(elementsID[i]==ELEMENT_NOT_ASSOCIATED)
-			throw Exception("__ReadOnly_PipelineLayout::getElementID - Element " + to_string(i) + " is not associated. Is this object part of a Pipeline?", __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::getElementID - Element " + toString(i) + " is not associated. Is this object part of a Pipeline?", __FILE__, __LINE__);
 
 		return elementsID[i];
 	}
@@ -145,7 +145,7 @@
 	__ReadOnly_PipelineLayout::Connection __ReadOnly_PipelineLayout::getConnection(int i) const
 	{
 		if(i<0 || i>=connections.size())
-			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getFullName() + ", ID : " + to_string(i), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::getConnection - Bad connection ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
 		return connections[i];
 	}
 
@@ -157,7 +157,7 @@
 	void __ReadOnly_PipelineLayout::checkElement(int i) const
 	{
 		if(i<0 || i>=elementsLayout.size())
-			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getFullName() + ", ID : " + to_string(i), __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::checkElement - Bad element ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
 	}
 
 	/**
@@ -338,7 +338,7 @@
 		//std::cout << "ACCESSING FILTER (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=FILTER)
-			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element of index " + to_string(i) + " exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::filterLayout - The element of index " + toString(i) + " exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_FilterLayout*>(elementsLayout[i]);
 	}
 
@@ -368,7 +368,7 @@
 		//std::cout << "ACCESSING PIPELINE (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=PIPELINE)
-			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element of index " + to_string(i) + " exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("__ReadOnly_PipelineLayout::pipelineLayout - The element of index " + toString(i) + " exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
 		return *reinterpret_cast<__ReadOnly_PipelineLayout*>(elementsLayout[i]);
 	}
 
@@ -449,10 +449,10 @@
 		if(id!=THIS_PIPELINE)
 		{
 			__ReadOnly_ComponentLayout& src = componentLayout(id);
-			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + to_string(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + toString(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__);
 		}
 		else
-			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + to_string(p) + ").", __FILE__, __LINE__);
+			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__);
 	}
 
 	/**
@@ -1134,7 +1134,7 @@
 
 					// Manage a possible error :
 					if(idx<0)
-						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getFullName() + ", port : " + to_string(c.portOut) + ".", __FILE__, __LINE__);
+						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getFullName() + ", port : " + toString(c.portOut) + ".", __FILE__, __LINE__);
 
 					// Finally : shorten the connection :
 					c.idOut = innerOutputConnections[idx].idOut;
@@ -1356,7 +1356,7 @@
 					actionsList.push_back( tmpActions[ fIdx ] );
 				}
 				else
-					throw Exception("Internal error : Unkown action decision (" + to_string(currentDecision) + ").", __FILE__, __LINE__);
+					throw Exception("Internal error : Unkown action decision (" + toString(currentDecision) + ").", __FILE__, __LINE__);
 
 				// Find all the buffers read by the current actions and decrease their occupancy :
 				for(int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
@@ -1478,7 +1478,7 @@
 				fsize = bufferFormats.formats[i].getSize();
 
 			#ifdef __GLIPLIB_VERBOSE__
-				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << bufferFormats.formats[i]->getWidth() << ", H:" << bufferFormats.formats[i]->getHeight() << ",T:" << bufferFormats.outputCounts[i] << ')' << std::endl;
+				std::cout << "    - Buffer " << i << " : " << fsize/(1024.0*1024.0) << "MB (W:" << bufferFormats.formats[i].getWidth() << ", H:" << bufferFormats.formats[i].getHeight() << ",T:" << bufferFormats.outputCounts[i] << ')' << std::endl;
 			#endif
 			size += fsize;
 		}
@@ -1697,7 +1697,7 @@
 			std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 			if(it==cells.end())
-				throw Exception("Pipeline::out - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+				throw Exception("Pipeline::out - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
 			else
 				return (*(*it->second->buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
 		}
@@ -1730,12 +1730,12 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::operator[int] - Error while processing request on filter ID : " + to_string(filterID) + ".", __FILE__, __LINE__);
+			Exception m("Pipeline::operator[int] - Error while processing request on filter ID : " + toString(filterID) + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + to_string(filterID) + ".", __FILE__, __LINE__);
+			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + toString(filterID) + ".", __FILE__, __LINE__);
 			throw m+e;
 		}
 	}
@@ -1844,7 +1844,7 @@
 		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 		if(it==cells.end())
-			throw Exception("Pipeline::changeTargetBufferCell - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+			throw Exception("Pipeline::changeTargetBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
 		else
 			currentCell = it->second;
 	}
@@ -1859,7 +1859,7 @@
 		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 		if(it==cells.end())
-			throw Exception("Pipeline::removeBufferCell - The cell ID " + to_string(it->first) + " does not exist.", __FILE__, __LINE__);
+			throw Exception("Pipeline::removeBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
 		else
 		{
 			if(currentCell==it->second)

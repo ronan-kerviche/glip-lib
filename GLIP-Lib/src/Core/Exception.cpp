@@ -95,9 +95,9 @@
 				std::string header = subErrors[i].header(showHeader);
 
 				if(!header.empty())
-					headers.back() = "[ " + to_string(subErrors.size()-i+1) + " | " + header + " ";
+					headers.back() = "[ " + toString(subErrors.size()-i+1) + " | " + header + " ";
 				else
-					headers.back() = "[ " + to_string(subErrors.size()-i+1) + " ";
+					headers.back() = "[ " + toString(subErrors.size()-i+1) + " ";
 
 				messages.push_back(subErrors[i].msg);
 
@@ -110,10 +110,13 @@
 
 			for(int k=0; k<headers.size(); k++)
 			{
+				if(k>0)
+					completeMsg += "\n";
+
 				padded = blank;
 				padded.replace(0, headers[k].size(), headers[k]);
 				padded += "] ";
-				completeMsg += padded + messages[k] + "\n";
+				completeMsg += padded + messages[k];
 			}
 		}
 	}
@@ -165,7 +168,7 @@
 		else
 		{
 			if(line!=0)
-				return filename + "; " + to_string(line);
+				return filename + "; " + toString(line);
 			else
 				return filename;
 		}
@@ -225,7 +228,7 @@
 	const Exception& Exception::subError(int i)
 	{
 		if(i<0 || i>numSubError())
-			throw Exception("Exception::subError - Index out of bounds (" + to_string(i) + " out of [0;" + to_string(numSubError()) + "].", __FILE__, __LINE__);
+			throw Exception("Exception::subError - Index out of bounds (" + toString(i) + " out of [0;" + toString(numSubError()) + "].", __FILE__, __LINE__);
 
 		else
 			return subErrors[i];

@@ -191,7 +191,7 @@
 	HdlTexture& ImageLoader::texture(int id)
 	{
 		if(id<0 || id>=getNumTextures())
-			throw Exception("ImageLoader::texture - Index " + to_string(id) + " is out of bounds.", __FILE__, __LINE__);
+			throw Exception("ImageLoader::texture - Index " + toString(id) + " is out of bounds.", __FILE__, __LINE__);
 		else
 			return *textures[id];
 	}
@@ -199,7 +199,7 @@
 	const std::string& ImageLoader::filename(int id)
 	{
 		if(id<0 || id>=getNumTextures())
-			throw Exception("ImageLoader::filename - Index " + to_string(id) + " is out of bounds.", __FILE__, __LINE__);
+			throw Exception("ImageLoader::filename - Index " + toString(id) + " is out of bounds.", __FILE__, __LINE__);
 		else
 			return filenamesList[id];
 	}
@@ -630,7 +630,7 @@
 
 	void ImageLoaderInterface::updateLoadToolTip(void)
 	{
-		std::string tip = "Images will be loaded with the following parameters :\n    Minification filter \t : " + glParamName(minFilter) + "\n    Magnification filter \t : " + glParamName(magFilter) + "\n    S wrapping mode \t : " + glParamName(sWrapping) + "\n    T wrapping mode \t : " + glParamName(tWrapping) + "\n    Max Mipmap level \t : " + to_string(maxMipmapLevel);
+		std::string tip = "Images will be loaded with the following parameters :\n    Minification filter \t : " + glParamName(minFilter) + "\n    Magnification filter \t : " + glParamName(magFilter) + "\n    S wrapping mode \t : " + glParamName(sWrapping) + "\n    T wrapping mode \t : " + glParamName(tWrapping) + "\n    Max Mipmap level \t : " + toString(maxMipmapLevel);
 		loadButton.setToolTip(tip.c_str());
 	}
 
@@ -638,7 +638,7 @@
 	{
 		if(getNumTextures()>0 && currentIndex.value()>0)
 		{
-			std::string tip = "Current image have the following parameters :\n    Minification filter \t : " + glParamName(currentTexture().getMinFilter()) + "\n    Magnification filter \t : " + glParamName(currentTexture().getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(currentTexture().getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(currentTexture().getTWrapping()) + "\n    Max Mipmap level \t : " + to_string(currentTexture().getMaxLevel());
+			std::string tip = "Current image have the following parameters :\n    Minification filter \t : " + glParamName(currentTexture().getMinFilter()) + "\n    Magnification filter \t : " + glParamName(currentTexture().getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(currentTexture().getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(currentTexture().getTWrapping()) + "\n    Max Mipmap level \t : " + toString(currentTexture().getMaxLevel());
 			maxIndex.setToolTip(tip.c_str());
 		}
 		else
@@ -881,7 +881,7 @@
 			// Update the box :
 			for(int i=0; i<loadedPipeline->getNumOutputPort(); i++)
 			{
-				std::string portName = loadedPipeline->getOutputPortName(i) + " (" + to_string(loadedPipeline->out(i).getWidth()) + "x" + to_string(loadedPipeline->out(i).getHeight()) + "; " + glParamName(loadedPipeline->out(i).getGLMode()) + "; " + glParamName(loadedPipeline->out(i).getGLDepth()) + ")";
+				std::string portName = loadedPipeline->getOutputPortName(i) + " (" + toString(loadedPipeline->out(i).getWidth()) + "x" + toString(loadedPipeline->out(i).getHeight()) + "; " + glParamName(loadedPipeline->out(i).getGLMode()) + "; " + glParamName(loadedPipeline->out(i).getGLDepth()) + ")";
 				outputChoice.addItem(portName.c_str());
 			}
 

@@ -142,9 +142,10 @@
 					int	getSizeOnGPU(int m=0);
 					void	bind(GLenum unit=GL_TEXTURE0_ARB);
 					void	bind(int unit);
-					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);
-					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO);
+					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
+					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
 					void	fill(char dataByte);
+					void	read(GLvoid *data, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
 					GLenum	getInternalMode(void);
 					bool	checkForConsistency(bool verbose = false);
 					void	setMinFilter(GLenum mf);

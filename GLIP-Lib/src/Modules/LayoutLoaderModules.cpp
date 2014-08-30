@@ -174,7 +174,7 @@
 				newFmt.setHeight(h);
 
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-					throw Exception("The new format is not valid (size : " + to_string(newFmt.getWidth()) + "x" + to_string(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -197,7 +197,7 @@
 				{
 					CAST_ARGUMENT( 1, double, s) 	
 					if(s<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (s = " + to_string(s) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (s = " + toString(s) + ").", __FILE__, __LINE__);
 		
 					newFmt.setWidth( std::max(newFmt.getWidth() * s, 1.0) );
 					newFmt.setHeight( std::max(newFmt.getHeight() * s, 1.0) );
@@ -207,9 +207,9 @@
 					CAST_ARGUMENT( 1, double, sx)
 					CAST_ARGUMENT( 2, double, sy)
 					if(sx<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (sx = " + to_string(sx) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (sx = " + toString(sx) + ").", __FILE__, __LINE__);
 					if(sy<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (sy = " + to_string(sy) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (sy = " + toString(sy) + ").", __FILE__, __LINE__);
 		
 					newFmt.setWidth( std::max(newFmt.getWidth() * sx, 1.0) );
 					newFmt.setHeight( std::max(newFmt.getHeight() * sy, 1.0) );
@@ -217,7 +217,7 @@
 
 				// Test : 
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-					throw Exception("The new format is not valid (size : " + to_string(newFmt.getWidth()) + "x" + to_string(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -538,7 +538,7 @@
 				// Special cast : 
 				unsigned int value;
 
-				if(!from_string(arguments[2], value))
+				if(!fromString(arguments[2], value))
 					value = glFromString( arguments[2] );
 
 				// Get the cases : 
@@ -567,7 +567,7 @@
 				// Special cast : 
 				unsigned int value;
 
-				if(!from_string(arguments[2], value))
+				if(!fromString(arguments[2], value))
 					value = glFromString( arguments[2] );
 
 				// Get the cases : 
@@ -655,7 +655,7 @@
 					VanillaParserSpace::Element requirement;
 				
 					requirement.strKeyword	= LayoutLoader::getKeyword(KW_LL_REQUIRED_PIPELINE);
-					requirement.name	= arguments[k] + "_required" + to_string(k-startPipelines);
+					requirement.name	= arguments[k] + "_required" + toString(k-startPipelines);
 					requirement.noName	= false;
 					requirement.arguments.push_back(arguments[k]);
 					requirement.noArgument	= false;
@@ -666,7 +666,7 @@
 					VanillaParserSpace::Element instance;
 				
 					instance.strKeyword 	= LayoutLoader::getKeyword(KW_LL_PIPELINE_INSTANCE);
-					instance.name		= arguments[k] + "_instance" + to_string(k-startPipelines);
+					instance.name		= arguments[k] + "_instance" + toString(k-startPipelines);
 					instance.noName		= false;
 					instance.arguments.push_back(requirement.name);
 					instance.noArgument	= false;
@@ -705,11 +705,11 @@
 					{
 						// Standard check : 
 						if(itCurrentPipeline->second.getNumInputPort() > outputPortNames.size())
-							throw Exception("The pipeline " + instance.name + " has " + to_string(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + to_string(outputPortNames.size()) + " output ports.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + toString(outputPortNames.size()) + " output ports.", __FILE__, __LINE__);
 
 						// Check the previous number of output : 
 						if(isStrict && itCurrentPipeline->second.getNumInputPort() != outputPortNames.size())
-							throw Exception("The pipeline " + instance.name + " has " + to_string(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + to_string(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + toString(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", __FILE__, __LINE__);
 
 						// Make the connections : 
 						for(int k=0; k<itCurrentPipeline->second.getNumInputPort(); k++)

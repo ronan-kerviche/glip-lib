@@ -498,7 +498,7 @@ using namespace Glip::CoreGL;
 
 		// Test :
 		if(getBaseLevel()>getMaxLevel())
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + to_string(getBaseLevel()) + ") is greater than maximum mipmap level (" + to_string(getMaxLevel()) + ").", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__);
 
 		glEnable(GL_TEXTURE_2D);
 
@@ -531,7 +531,7 @@ using namespace Glip::CoreGL;
 		GLenum err = glGetError();
 
 		if(err)
-			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + to_string(getBaseLevel()) + ", MaxLevel = " + to_string(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + toString(getBaseLevel()) + ", MaxLevel = " + toString(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__);
 
 		HdlTexture::unbind();
 	}
@@ -686,8 +686,9 @@ using namespace Glip::CoreGL;
 	\param texData The pointer to the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
+	\param alignment Byte alignment of the input data.
 	**/
-	void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
+	void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth, int alignment)
 	{
 		if(pixelFormat==GL_ZERO)
 			pixelFormat = mode;
@@ -700,9 +701,9 @@ using namespace Glip::CoreGL;
 		// Bind it :
 		glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-		//write :
+		// Write :
 		glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -726,8 +727,9 @@ using namespace Glip::CoreGL;
 	\param size The size in bytes of the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
+	\param alignment Byte alignment of the input data.
 	**/
-	void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth)
+	void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth, int alignment)
 	{
 		if(pixelFormat==GL_ZERO)
 			pixelFormat = mode;
@@ -738,9 +740,9 @@ using namespace Glip::CoreGL;
 		// Bind it
 		glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 
-		//write
+		// Write
 		//glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0,  static_cast<GLsizei>(size), texData);
 
@@ -778,6 +780,37 @@ using namespace Glip::CoreGL;
 		write(reinterpret_cast<GLvoid*>(tmp));
 
 		delete[] tmp;
+	}
+
+	/**
+	\fn void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	\brief Read data from a classical texture using classical glGetTexImage method. WARNING : this function does not perform error checking.
+	\param data The pointer to the data.
+	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
+	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
+	\param alignment Byte alignment of the input data.
+	**/
+	void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	{
+		if(pixelFormat==GL_ZERO)
+			pixelFormat = mode;
+
+		if(pixelDepth==GL_ZERO)
+			pixelDepth = depth;
+
+		pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
+
+		// Bind it :
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+
+		// Read :
+		glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat, pixelDepth, data);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlTexture::write", "glGetTexImage()")
+		#endif
 	}
 
 	/**

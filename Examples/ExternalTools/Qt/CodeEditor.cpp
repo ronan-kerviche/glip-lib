@@ -1087,13 +1087,13 @@ using namespace QGED;
 
 		#define SAVE_NUMBER( varName ) \
 			element.strKeyword = STR( varName ); \
-			element.arguments.push_back( to_string(static_cast<int>( varName )) ); \
+			element.arguments.push_back( toString(static_cast<int>( varName )) ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear(); \
 
 		#define SAVE_TEST( varName, test ) \
 			element.strKeyword = STR( varName ); \
-			element.arguments.push_back( to_string(static_cast<int>( varName test )) ); \
+			element.arguments.push_back( toString(static_cast<int>( varName test )) ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear();	
 
@@ -1101,7 +1101,7 @@ using namespace QGED;
 			element.strKeyword = STR( varName ); \
 			element.arguments.push_back( varName .family().toStdString() ); \
 			element.arguments.push_back( varName .styleName().toStdString() ); \
-			element.arguments.push_back( to_string( varName .pointSize()) ); \
+			element.arguments.push_back( toString( varName .pointSize()) ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear();
 	
@@ -1146,7 +1146,7 @@ using namespace QGED;
 			{ \
 				if( it->arguments.size()==1 ) \
 				{ \
-					if(!from_string(it->arguments.front(), varName)) \
+					if(!fromString(it->arguments.front(), varName)) \
 						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
 				} \
 				else \
@@ -1159,7 +1159,7 @@ using namespace QGED;
 				if( it->arguments.size()==1 ) \
 				{ \
 					bool t = false; \
-					if(!from_string(it->arguments.front(), t)) \
+					if(!fromString(it->arguments.front(), t)) \
 						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
 					else if(t) \
 						varName = valTrue; \
@@ -1179,7 +1179,7 @@ using namespace QGED;
 						styleName  = it->arguments[1].c_str(); \
 					int	pointSize; \
 					\
-					if(!from_string(it->arguments[2], pointSize)) \
+					if(!fromString(it->arguments[2], pointSize)) \
 						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read pointSize for font " STR( varName ) " : " + it->arguments[2] + ".", __FILE__, __LINE__); \
 					\
 					QFontDatabase db; \

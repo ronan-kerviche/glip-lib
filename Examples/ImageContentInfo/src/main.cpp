@@ -16,8 +16,9 @@ int main(int argc, char** argv)
 	}
 	catch(std::exception& e)
 	{
-		std::cout << "Exception caught : " << std::endl;
-		std::cout << e.what() << std::endl;
+		std::cerr << "Exception caught : " << std::endl;
+		std::cerr << e.what() << std::endl;
+		return -1;
 	}
 }
 

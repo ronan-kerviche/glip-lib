@@ -127,7 +127,7 @@ Example, creating a simple Module :
 
 			// Check the size : 
 			if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-				throw Exception("The new format is not valid (size : " + to_string(newFmt.getWidth()) + "x" + to_string(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+				throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
 
 			// Append the new format under the right name :
 			APPEND_NEW_FORMAT( arguments.back(), newFmt )
@@ -136,7 +136,7 @@ Example, creating a simple Module :
 
 	Use in a script : 
 	\code 
-		MODULE_CALL: MyAdditionModule (someFormat, 128)
+		MODULE_CALL: MyAdditionModule (someFormat, 128, newLargerFormat)
 	\endcode
 	
 **/
@@ -348,7 +348,7 @@ Example, creating a simple Module :
 			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
 			
 			/** CAST_ARGUMENT( argID, type, varName ) 				Cast the argument arguments[argID] to some type (and create the variable varName). Raise an exception if the cast fails. **/
-			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!from_string(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + to_string( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", __FILE__, __LINE__);
+			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", __FILE__, __LINE__);
 
 		// Basic Modules : 
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_SIZE )

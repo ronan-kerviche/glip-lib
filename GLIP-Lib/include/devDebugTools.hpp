@@ -37,11 +37,11 @@
 		#define OPENGL_ERROR_TRACKER(functionName, callLine) \
 			{ \
 				bool caughtError; \
-				std::string errDescription = glErrorToString(&caughtError); \
+				std::string errDescription = Glip::CoreGL::glErrorToString(&caughtError); \
 				if(caughtError) \
 				{ \
 					std::cout << functionName << " / " << callLine << " - Opengl error : " << errDescription << std::endl; \
-					glDebug(); \
+					Glip::CoreGL::glDebug(); \
 				} \
 			}
 

@@ -7,34 +7,35 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : GlipCompute.hpp                                                                           */
+/*     File          : DeviceMemoryManager.hpp                                                                   */
 /*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : FreeImage3 interface for image input/output.                                              */
+/*     Description   : Device Memory Manager / Storage Manager for fast resource access.                         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#ifndef __GLIPCOMPUTE__
-#define __GLIPCOMPUTE__
+#ifndef __GLIPCOMPUTE_DEVICEMEMORYMANAGER__
+#define __GLIPCOMPUTE_DEVICEMEMORYMANAGER__
 
-	// Includes : 
-	#include "CreateWindowlessContext.hpp"
-	#include "DeviceMemoryManager.hpp"
+	#include <list>
+	#include "FreeImagePlusInterface.hpp"
 
-	struct ProcessCommand
+	class DeviceMemoryManager
 	{
-		int							line;
-		std::string						name;
-		std::vector< std::pair<std::string, std::string> >	inputFilenames,
-									outputFilenames;
-		int							uniformsLine;
-		std::string						uniformVariables;
+		private : 
+			size_t 							maxMemory,
+										currentMemory;
+			std::map<std::string, Glip::CoreGL::HdlTexture*>	resources;
+			std::list<Glip::CoreGL::HdlTexture*>			history;
 
-		ProcessCommand(void);
+			void remember(Glip::CoreGL::HdlTexture* ptr);
+			void forget(size_t oblivionSize);
+		public : 
+			DeviceMemoryManager(const size_t& _maxMemory);
+			~DeviceMemoryManager(void);
+
+			Glip::CoreGL::HdlTexture* get(const std::string& filename);
 	};
-
-	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, std::string& inputFormatString, std::vector<ProcessCommand>& commands);
-	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands);
 
 #endif
 

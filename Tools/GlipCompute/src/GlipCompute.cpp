@@ -66,7 +66,15 @@ Other options : \n\
 		indicating the use of the port name instead.\n\
 		E.g. : -f inputFormat%d\n\
 		       -f someName_%s\n\
+ -m, --memory	Set the amount of memory (given in MB) available to \n\
+		be reusable on the device. This helps reduce significantly\n\
+		the overhead induced by loading the image files (textures\n\
+		are conserved as long as possible on device, depending on\n\
+		their usage frequency).\n\
+		Default is 128 MB.\n\
  -h, --help	Show this help and stops.\n\
+ -t, --template	Show a list of templates script (Pipeline, Uniforms and \n\
+		Command) and stops.\n\
  -v, --version	Show the version and stops.\n\
 \n\
 PROCESSING COMMANDS\n\
@@ -89,7 +97,7 @@ of the command :\n\
 \n\
 UNIFORMS( filename.uvd )\n\
 \n\
-  The second assing the code directly via the body :\n\
+  The second adding the code directly via the body :\n\
 \n\
 UNIFORMS\n\
 {\n\
@@ -99,6 +107,88 @@ UNIFORMS\n\
 glip-compute is part of the GLIP-Lib project.\n\
 Link : <http://glip-lib.sourceforge.net/>\
 ";
+
+	const std::string templateString = 
+"GLIP-Lib, Blank structures / Templates\n\
+--------------------------------------------------------------------------------\n\
+BLANK PIPELINE COMPONENTS\n\
+\n\
+REQUIRED_FORMAT: /* name to use */( /* required format name */ )\n\
+\n\
+TEXTURE_FORMAT: /* name */ ( /* width */, /* height */, GL_RGB, \n\
+	GL_UNSIGNED_BYTE)\n\
+\n\
+SHADER_SOURCE: /* name */\n\
+{\n\
+	#version 130\n\
+\n\
+	uniform sampler2D /* input texture name */;\n\
+	out vec4 /* output texture name */;\n\
+\n\
+	// uniform vec3 someVar= vec3(0.0, 0.0, 0.0);\n\
+\n\
+	void main()\n\
+	{\n\
+		// The current fragment position :\n\
+		vec2 pos = gl_TexCoord[0].st;\n\
+		// Read the base level of the texture :\n\
+		vec4 col = textureLod(/* input texture name */, pos, 0);\n\
+\n\
+		/* output texture name */ = col;\n\
+	}\n\
+}\n\
+\n\
+FILTER_LAYOUT: /* name */ ( /* output format name */, /* shader name */)\n\
+\n\
+PIPELINE_MAIN: /* name */\n\
+{\n\
+	INPUT_PORTS( /* list of ports names */ )\n\
+	OUTPUT_PORTS( /* list of ports names */ )\n\
+\n\
+	FILTER_INSTANCE: /* instance name */ ( /* layout name */ )\n\
+}\n\
+\n\
+--------------------------------------------------------------------------------\n\
+BLANK UNIFORMS : \n\
+\n\
+PIPELINE:/* pipeline name */\n\
+{\n\
+	FILTER:/* filter instance */\n\
+	{\n\
+		/* GL Type */ : /* name */ ( /*values */ )\n\
+		// E.g. :\n\
+		GL_FLOAT_MAT3:M(0.3, 0.3, 0.4, 0.3, 0.3, 0.4, 0.3, 0.3, 0.4)\n\
+	}\n\
+}\n\
+\n\
+--------------------------------------------------------------------------------\n\
+BLANK PROCESSING COMMANDS : \n\
+\n\
+PROCESS : /* name, optional */\n\
+{\n\
+	INPUT( /* inputs */)\n\
+	OUTPUT( /* outputs */)\n\
+	UNIFORMS\n\
+	{\n\
+		/* Uniforms */\n\
+	}\n\
+}\n\
+\n\
+PROCESS : /* name, optional */\n\
+{\n\
+	INPUT( /* inputs */)\n\
+	OUTPUT( /* outputs */)\n\
+	UNIFORMS( /* filename */ )\n\
+}\n\
+\n\
+--------------------------------------------------------------------------------\n\
+glip-compute is part of the GLIP-Lib project.\n\
+Link : <http://glip-lib.sourceforge.net/>\
+";
+	ProcessCommand::ProcessCommand(void)
+	 : 	line(1),
+		uniformsLine(1)
+	{ }
 
 // Tools : 
 	std::string loadUniforms(const std::string& str)
@@ -159,9 +249,9 @@ Link : <http://glip-lib.sourceforge.net/>\
 			{
 				// Test : 
 				if(!it->noArgument)
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have an argument list (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have an argument list (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 				if(it->noBody || it->body.empty())
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" does not have a body (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" does not have a body (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 				ProcessCommand command;
 
@@ -178,15 +268,15 @@ Link : <http://glip-lib.sourceforge.net/>\
 					{
 						// Test : 
 						if(itSub->strKeyword=="INPUT" && !command.inputFilenames.empty())
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(itSub->strKeyword=="OUTPUT" && !command.outputFilenames.empty())
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(!itSub->noName)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a name (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a name (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(itSub->noArgument)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" must have an argument list (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" must have an argument list (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(!itSub->noBody)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a body (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a body (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 						// Load : 
 						std::vector< std::pair<std::string, std::string> > filenamesList;
@@ -203,44 +293,48 @@ Link : <http://glip-lib.sourceforge.net/>\
 					else if(itSub->strKeyword=="UNIFORMS")
 					{
 						if(!command.uniformVariables.empty())
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(!itSub->noName)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a name (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a name (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(itSub->noArgument && itSub->noBody)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" misses content in body or filename in argument (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" misses content in body or filename in argument (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 						if(!itSub->noArgument && !itSub->noBody)
-							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have both body and arguments (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have both body and arguments (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 							
 						if(!itSub->noArgument) // Filename to load
 						{
 							if(itSub->arguments.size()!=1)
-								throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" only take one argument (line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+								throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" only take one argument (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 							std::fstream file;
 
 							file.open(itSub->arguments.front().c_str(), std::fstream::in);
 
 							if(!file.is_open())
-								throw Glip::Exception("readProcessCommandFile - Cannot open file \"" + str + "\" to read uniform variables (from line " + Glip::to_string(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+								throw Glip::Exception("readProcessCommandFile - Cannot open file \"" + str + "\" to read uniform variables (from line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 							std::stringstream sstr;
 							sstr << file.rdbuf();
 							command.uniformVariables = sstr.str();
+							command.uniformsLine = 1;
 
 							file.close();
 						}
 						else // Body to copy : 
-							command.uniformVariables = itSub->body;
+						{
+							command.uniformVariables = itSub->body + "\n";
+							command.uniformsLine = itSub->startLine;
+						}
 					}
 					else
-						throw Glip::Exception("readProcessCommandFile - Unknown property : \"" + itSub->strKeyword + "\" (line " + Glip::to_string(itSub->startLine) + ").", __FILE__, __LINE__);
+						throw Glip::Exception("readProcessCommandFile - Unknown property : \"" + itSub->strKeyword + "\" (line " + Glip::toString(itSub->startLine) + ").", __FILE__, __LINE__);
 				}
 
 				// Test command nature : 
 				if(command.inputFilenames.empty())
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses inputs list (line " + Glip::to_string(it->startLine) + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses inputs list (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__);
 				if(command.outputFilenames.empty())
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses outputs list (line " + Glip::to_string(it->startLine) + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses outputs list (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__);
 				if(command.uniformVariables.empty())
 					command.uniformVariables = defaultUniformVariables;
 
@@ -249,23 +343,23 @@ Link : <http://glip-lib.sourceforge.net/>\
 			else if(it->strKeyword=="DEFAULT_UNIFORMS")
 			{
 				if(!it->noName)
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have a name (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have a name (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 				if(it->noArgument && it->noBody)
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses content in body or filename in argument (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses content in body or filename in argument (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 				if(!it->noArgument && !it->noBody)
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have both body and arguments (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have both body and arguments (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 				
 				if(!it->noArgument) // Filename to load
 				{
 					if(it->arguments.size()!=1)
-						throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" only take one argument (line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+						throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" only take one argument (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 					std::fstream file;
 
 					file.open(it->arguments.front().c_str(), std::fstream::in);
 
 					if(!file.is_open())
-						throw Glip::Exception("readProcessCommandFile - Cannot open file \"" + str + "\" to read uniform variables (from line " + Glip::to_string(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
+						throw Glip::Exception("readProcessCommandFile - Cannot open file \"" + str + "\" to read uniform variables (from line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__);
 
 					std::stringstream sstr;
 					sstr << file.rdbuf();
@@ -277,7 +371,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 					defaultUniformVariables = it->body;
 			}
 			else
-				throw Glip::Exception("readProcessCommandFile - Unknown command : \"" + it->strKeyword + "\" (line " + Glip::to_string(it->startLine) + ").", __FILE__, __LINE__);
+				throw Glip::Exception("readProcessCommandFile - Unknown command : \"" + it->strKeyword + "\" (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__);
 		}
 	}
 
@@ -291,7 +385,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 		return ((fp != NULL) && isatty(fileno(fp)));
 	}
 
-	int parseArguments(int argc, char** argv, std::string& pipelineFilename, std::string& inputFormatString, std::vector<ProcessCommand>& commands)
+	int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, std::string& inputFormatString, std::vector<ProcessCommand>& commands)
 	{
 		#define RETURN_ERROR( code, str ) { std::cerr << str << std::endl; return code ; }
 
@@ -311,6 +405,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 			arguments.push_back(argv[k]);
 
 		// Init and defaults :
+		memorySize = 134217728; // 128 MB
 		ProcessCommand singleCommand; 
 		pipelineFilename.clear();
 		commands.clear();
@@ -329,6 +424,11 @@ Link : <http://glip-lib.sourceforge.net/>\
 			else if(arg=="-h" || arg=="--help")
 			{
 				std::cout << helpString << std::endl;
+				return 1;
+			}
+			else if(arg=="-t" || arg=="--template")
+			{
+				std::cout << templateString << std::endl;
 				return 1;
 			}
 			else if(arg=="-p" || arg=="--pipeline")
@@ -391,6 +491,21 @@ Link : <http://glip-lib.sourceforge.net/>\
 				{
 					RETURN_ERROR(-1, e.what());
 				}
+			}
+			else if(arg=="-m" || arg=="--memory")
+			{
+				std::string memoryStr;
+
+				it++;
+				if(it!=arguments.end())
+					memoryStr = *it;
+				else
+					RETURN_ERROR(-1, "Missing filename for argument " << arg << ".")
+
+				if(!Glip::fromString(memoryStr, memorySize))
+					RETURN_ERROR(-1, "Cannot read memory size : \"" << memoryStr << "\".")
+				else
+					memorySize = memorySize * 1024 * 1024; // Transfer to MB
 			}
 			else if(arg=="-f" || arg=="--format")
 			{
@@ -470,12 +585,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				if(id<0)
 				{
-					if(!Glip::from_string(it->first, id))	
+					if(!Glip::fromString(it->first, id))	
 						throw Glip::Exception("The pipeline " + elements.mainPipeline + " has no input ports named (or indexed as) \"" + it->first + "\".", __FILE__, __LINE__);
 				}
 
 				if(id<0 || id>=elements.mainPipelineInputs.size())
-					throw Glip::Exception("Input port index " + Glip::to_string(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::to_string(elements.mainPipelineInputs.size()) + " input port(s), indexing start at 0).", __FILE__, __LINE__);
+					throw Glip::Exception("Input port index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s), indexing start at 0).", __FILE__, __LINE__);
 			}
 			
 			// Set : 
@@ -508,12 +623,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 				if(id<0)
 				{
 					// Try to identify it as a number : 
-					if(!Glip::from_string(it->first, id))	
+					if(!Glip::fromString(it->first, id))	
 						throw Glip::Exception("The pipeline " + elements.mainPipeline + " has no output ports named (or indexed as) \"" + it->first + "\".", __FILE__, __LINE__);
 				}
 
 				if(id<0 || id>=elements.mainPipelineOutputs.size())
-					throw Glip::Exception("Output port index " + Glip::to_string(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::to_string(elements.mainPipelineOutputs.size()) + " output port(s), indexing start at 0).", __FILE__, __LINE__);
+					throw Glip::Exception("Output port index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s), indexing start at 0).", __FILE__, __LINE__);
 			}
 			
 			// Set : 
@@ -523,12 +638,13 @@ Link : <http://glip-lib.sourceforge.net/>\
 		}
 	}
 
-	int compute(const std::string& pipelineFilename, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands)
+	int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands)
 	{
 		int returnCode = 0;
 
 		Glip::CorePipeline::Pipeline* pipeline = NULL;
 		std::vector<Glip::CoreGL::HdlTexture*> inputTextures;
+		DeviceMemoryManager* deviceMemoryManager = NULL;
 
 		try
 		{
@@ -547,6 +663,8 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 			// Analyze the pipeline : 
 			Glip::Modules::LayoutLoader::PipelineScriptElements elements = lloader.listElements(pipelineFilename);
+
+			deviceMemoryManager = new DeviceMemoryManager(memorySize);
 	
 			for(std::vector<ProcessCommand>::const_iterator itCommand = commands.begin(); itCommand!=commands.end(); itCommand++)
 			{
@@ -557,9 +675,9 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				// Test number of outputs : 
 				if(elements.mainPipelineInputs.size()>itCommand->inputFilenames.size())
-					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::to_string(elements.mainPipelineInputs.size()) + " input port(s) but only " + Glip::to_string(itCommand->inputFilenames.size()) + " input filenames were given" + commandName + ".", __FILE__, __LINE__);
+					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s) but only " + Glip::toString(itCommand->inputFilenames.size()) + " input filenames were given" + commandName + ".", __FILE__, __LINE__);
 				if(elements.mainPipelineOutputs.size()>itCommand->outputFilenames.size())
-					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::to_string(elements.mainPipelineOutputs.size()) + " output port(s) but only " + Glip::to_string(itCommand->outputFilenames.size()) + " output filenames were given" + commandName + ".", __FILE__, __LINE__);
+					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s) but only " + Glip::toString(itCommand->outputFilenames.size()) + " output filenames were given" + commandName + ".", __FILE__, __LINE__);
 
 				// Sort : 
 				std::vector<std::string> 	inputsSorted,
@@ -568,7 +686,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				// Load the input images in the correct order :
 				for(std::vector<std::string>::iterator it=inputsSorted.begin(); it!=inputsSorted.end(); it++)
-					inputTextures.push_back(loadImage(*it));
+					inputTextures.push_back(deviceMemoryManager->get(*it));
 
 				// Set the variables :
 				const int maxSize = 1024;
@@ -590,7 +708,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				// Uniforms : 
 				if(!itCommand->uniformVariables.empty())
-					uloader.load(itCommand->uniformVariables);
+					uloader.load(itCommand->uniformVariables, false, itCommand->uniformsLine);
 
 				// Load : 
 				Glip::CorePipeline::__ReadOnly_PipelineLayout pLayout = lloader(pipelineFilename);
@@ -619,8 +737,6 @@ Link : <http://glip-lib.sourceforge.net/>\
 				// Clean : 
 				delete pipeline;
 				pipeline = NULL;
-				for(std::vector<Glip::CoreGL::HdlTexture*>::iterator it=inputTextures.begin(); it!=inputTextures.end(); it++)
-					delete (*it);
 				inputTextures.clear();
 
 				lloader.clearRequiredElements();
@@ -629,13 +745,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 		}
 		catch(Glip::Exception& e)
 		{
-			std::cerr << e.what() << std::cerr;
+			std::cerr << e.what() << std::endl;
 			returnCode = -1;
 		}
 
+		delete deviceMemoryManager;
 		delete pipeline;
-		for(std::vector<Glip::CoreGL::HdlTexture*>::iterator it=inputTextures.begin(); it!=inputTextures.end(); it++)
-			delete (*it);
 
 		return returnCode;
 	}

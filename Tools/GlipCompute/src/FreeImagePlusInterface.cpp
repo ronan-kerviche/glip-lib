@@ -10,7 +10,7 @@
 /*     File          : FreeImagePlusInterface.cpp                                                                */
 /*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : FreeImage3 interface for image input/output.                                               */
+/*     Description   : FreeImage3 interface for image input/output.                                              */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
@@ -27,17 +27,20 @@
 
 		FREE_IMAGE_COLOR_TYPE fipColorFormat = inputImage.getColorType();
 
-		GLenum 	mode 	= GL_NONE;
+		GLenum 	mode 	= GL_NONE,
+			fipMode	= GL_NONE;
 		int 	planes	= 0;
 		
 		switch(fipColorFormat)
 		{
 			case FIC_RGB :
 				mode 	= GL_RGB;
+				fipMode	= GL_BGR;
 				planes 	= 3;
 				break;
 			case FIC_RGBALPHA :
 				mode 	= GL_RGBA;
+				fipMode	= GL_BGRA;
 				planes 	= 4;
 				break;
 			default : 
@@ -67,29 +70,13 @@
 
 		Glip::CoreGL::HdlTextureFormat format(inputImage.getWidth(), inputImage.getHeight(), mode, depth);
 
-		Glip::Modules::ImageBuffer buffer(format);
-
-		// Copy : 
-		RGBQUAD pixel;
-		for(unsigned int y=0; y<format.getHeight(); y++)
-		{
-			for(unsigned int x=0; x<format.getWidth(); x++)
-			{
-				//height = in.getHeight();
-				//in.getPixelColor(50, height-1-50, &pixel);
-
-				inputImage.getPixelColor(x, y, &pixel);
-				buffer.set(x, y, GL_RED, 	pixel.rgbRed);
-				buffer.set(x, y, GL_GREEN, 	pixel.rgbGreen);
-				buffer.set(x, y, GL_BLUE, 	pixel.rgbBlue);
-			
-				if(planes>=4)
-					buffer.set(x, y, GL_ALPHA, pixel.rgbReserved);
-			}	
-		}
-
 		Glip::CoreGL::HdlTexture* texture = new Glip::CoreGL::HdlTexture(format);
-		buffer >> (*texture);
+
+		texture->write(inputImage.accessPixels(), fipMode, GL_ZERO, 4);
+
+		// Test : 
+		//Glip::Modules::ImageBuffer testBuffer(*texture);
+		//testBuffer.write("testBuffer.raw");
 
 		return texture;
 	}
@@ -103,29 +90,31 @@
 			bpp = descriptor.numChannels * Glip::CoreGL::HdlTextureFormatDescriptorsList::getTypeDepth(texture.getGLDepth())*8;
 
 		fipImage outputImage(FIT_BITMAP, texture.getWidth(), texture.getHeight(), bpp);
-		Glip::Modules::ImageBuffer buffer(texture);
-
+		
 		if(!outputImage.isValid())
 			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible.", __FILE__, __LINE__);
 
-		// Copy : 
-		RGBQUAD pixel;
-		for(unsigned int y=0; y<texture.getHeight(); y++)
+		GLenum 	fipMode	= GL_NONE;
+
+		// Flip the channels : 
+		switch(texture.getGLMode())
 		{
-			for(unsigned int x=0; x<texture.getWidth(); x++)
-			{
-				pixel.rgbRed 	= buffer.get(x, y, GL_RED);
-				pixel.rgbGreen	= buffer.get(x, y, GL_GREEN);
-				pixel.rgbBlue	= buffer.get(x, y, GL_BLUE);
-
-				if(descriptor.numChannels>=4)
-					buffer.set(x, y, GL_ALPHA, pixel.rgbReserved);
-
-				outputImage.setPixelColor(x, y, &pixel);
-			}	
+			case GL_RGB:
+				fipMode = GL_BGR;
+				break;
+			case GL_RGBA:
+				fipMode = GL_BGRA;
+				break;
+			default : 
+				throw Glip::Exception("[INTERNAL ERROR] Cannot swap channels for type : " + Glip::CoreGL::glParamName(texture.getGLMode()) + ".", __FILE__, __LINE__);
 		}
 
+		texture.read(outputImage.accessPixels(), fipMode, GL_ZERO, 4);
+
 		// Save : 
-		outputImage.save(filename.c_str());
+		bool test = outputImage.save(filename.c_str());
+
+		if(!test)
+			throw Glip::Exception("Could not save image to \"" + filename + "\".", __FILE__, __LINE__);
 	}
 

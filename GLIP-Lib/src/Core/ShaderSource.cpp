@@ -396,7 +396,7 @@
 				previousWasOut = true;
 			else if(previousWasVersion)
 			{
-				if(!from_string(split[k], versionNumber))
+				if(!fromString(split[k], versionNumber))
 					throw Exception("ShaderSource::parseCode - GLSL version number cannot be read from string \"" + split[k] + "\".", __FILE__, __LINE__);
 			}
 			else if(previousWasUniform && !readingVarNames && k<split.size()-1)
@@ -494,7 +494,7 @@
 				case HandleOpenGL::vd_NVIDIA :
 					one = line.find('(') + 1;
 					two = line.find(')');
-					if(from_string(line.substr(one, two-one), incriminatedLine))
+					if(fromString(line.substr(one, two-one), incriminatedLine))
 						buggyLine = getLine(incriminatedLine-1);
 					break;
 				case HandleOpenGL::vd_INTEL :
@@ -504,7 +504,7 @@
 					{
 						two = line.find(':',one+delimAMDATI.size()+1);
 						if(two!=std::string::npos)
-							if(from_string(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
+							if(fromString(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
 							{
 								buggyLine = getLine(incriminatedLine-1);
 								prevLineEnhancement = true;

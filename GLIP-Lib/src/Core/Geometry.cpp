@@ -42,7 +42,7 @@
 	 : type(_type), dim(_dim), numVerticesPerEl(getNumVerticesFromPrimitive(_primitiveGL)), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
 	{
 		if(dim!=2 && dim!=3)
-			throw Exception("GeometryModel::GeometryModel - Dimension must be either 2 or 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::GeometryModel - Dimension must be either 2 or 3 (current : " + toString(dim) + ").", __FILE__, __LINE__);
 	}
 
 	/**
@@ -73,7 +73,7 @@
 	GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=2)
-			throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__);
 
 		pos.push_back(x);
 		pos.push_back(y);
@@ -100,7 +100,7 @@
 	GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=3)
-			throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + to_string(dim) + ").", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__);
 
 		pos.push_back(x);
 		pos.push_back(y);
@@ -126,7 +126,7 @@
 		const int expectedNumberOfVertices = 1;
 
 		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
 			elements.push_back(a);
@@ -146,7 +146,7 @@
 		const int expectedNumberOfVertices = 2;
 
 		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
 			elements.push_back(a);
@@ -168,7 +168,7 @@
 		const int expectedNumberOfVertices = 3;
 
 		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
 			elements.push_back(a);
@@ -192,7 +192,7 @@
 		const int expectedNumberOfVertices = 4;
 
 		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
 			elements.push_back(a);
@@ -212,7 +212,7 @@
 	GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
 	{
 		if(numVerticesPerEl!=indices.size())
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + to_string(indices.size()) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
 			elements.insert(elements.end(), indices.begin(), indices.end());
@@ -251,7 +251,7 @@
 	GLfloat& GeometryModel::z(GLuint i)
 	{
 		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__);
 
 		return pos[i*dim+2];
 	}
@@ -295,7 +295,7 @@
 		const GLuint expectedNumberOfVertices = 1;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 0];
 	}
@@ -311,7 +311,7 @@
 		const GLuint expectedNumberOfVertices = 2;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 1];
 	}
@@ -327,7 +327,7 @@
 		const GLuint expectedNumberOfVertices = 3;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 2];
 	}
@@ -343,7 +343,7 @@
 		const GLuint expectedNumberOfVertices = 4;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 3];
 	}
@@ -379,7 +379,7 @@
 	const GLfloat& GeometryModel::z(GLuint i) const
 	{
 		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + to_string(dim) + " dimensions.", __FILE__, __LINE__);
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__);
 
 		return pos[i*dim+2];
 	}
@@ -423,7 +423,7 @@
 		const int expectedNumberOfVertices = 1;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 0];
 	}
@@ -439,7 +439,7 @@
 		const int expectedNumberOfVertices = 2;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 1];
 	}
@@ -455,7 +455,7 @@
 		const int expectedNumberOfVertices = 3;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 2];
 	}
@@ -471,7 +471,7 @@
 		const int expectedNumberOfVertices = 4;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + to_string(expectedNumberOfVertices) + " argument(s) received, " + to_string(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 			return elements[i * numVerticesPerEl + 3];
 	}

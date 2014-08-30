@@ -73,27 +73,27 @@
 
 		// Tools
 		/**
-		\fn template<typename TYPE> bool from_string(const std::string & Str, TYPE& Dest)
+		\fn template<typename TYPE> bool fromString(const std::string & Str, TYPE& Dest)
 		\brief Conversion, from string to data.
 		\param Str Input string.
 		\param Dest Output.
 		\return true if conversion was successful.
 		**/
 		template<typename TYPE>
-		bool from_string(const std::string & Str, TYPE& Dest)
+		bool fromString(const std::string & Str, TYPE& Dest)
 		{
 			std::istringstream iss( Str );
 			return iss >> Dest != 0;
 		}
 
 		/**
-		\fn template<typename TYPE> std::string to_string(const TYPE& Value )
+		\fn template<typename TYPE> std::string toString(const TYPE& Value )
 		\brief Conversion, from data to string.
 		\param Value Input data.
 		\return Standard string.
 		**/
 		template<typename TYPE>
-		std::string to_string(const TYPE& Value )
+		std::string toString(const TYPE& Value )
 		{
 			std::ostringstream oss;
 			oss << Value;

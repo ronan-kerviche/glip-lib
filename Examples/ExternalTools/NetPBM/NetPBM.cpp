@@ -37,7 +37,7 @@
 
 		p += k;
 
-		return from_string(value, val);
+		return fromString(value, val);
 	}
 
 	ImageBuffer* NetPBM::loadNetPBMFile(const std::string& filename)
@@ -116,7 +116,7 @@
 			format.setGLDepth(GL_UNSIGNED_SHORT);
 		}		
 		else
-			throw Exception("NetPBM::loadNetPBMFile - Unable to create buffer for a precision of " + to_string(precision) + " bits.", __FILE__, __LINE__);
+			throw Exception("NetPBM::loadNetPBMFile - Unable to create buffer for a precision of " + toString(precision) + " bits.", __FILE__, __LINE__);
 
 		p++;
 
@@ -124,7 +124,7 @@
 		if(length-p!=format.getSize())
 		{
 			delete[] buffer;
-			throw Exception("NetPBM::loadNetPBMFile - Body size mismatch (expectation : " + to_string(format.getSize()) + "; File : " + to_string(length-p) + ").", __FILE__, __LINE__);
+			throw Exception("NetPBM::loadNetPBMFile - Body size mismatch (expectation : " + toString(format.getSize()) + "; File : " + toString(length-p) + ").", __FILE__, __LINE__);
 		}
 
 		// Change endianess (see http://netpbm.sourceforge.net/doc/pamendian.html) :
@@ -167,7 +167,7 @@
 		}
 
 		header += "#GlipLib NetPBM Writer\n";
-		header += to_string(image.getWidth()) + " " + to_string(image.getHeight()) + "\n";
+		header += toString(image.getWidth()) + " " + toString(image.getHeight()) + "\n";
 
 		if(image.getChannelDepth()<=1)
 			header += "255\n";

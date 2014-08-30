@@ -247,7 +247,7 @@ Processing example :
 				UniformsVarsLoader(const UniformsVarsLoader& cpy);
 				~UniformsVarsLoader(void);
 
-				void load(std::string source, bool replace=false);
+				void load(std::string source, bool replace=false, int lineOffset=1);
 				void load(Pipeline& pipeline, bool replace=false);
 				void load(const UniformsVarsLoader& subLoader, bool replace=false);
 				bool empty(void) const;

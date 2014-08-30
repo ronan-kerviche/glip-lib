@@ -128,7 +128,7 @@ using namespace Glip::CoreGL;
 	int HdlFBO::addTarget(void)
 	{
 		if(targets.size()>=getMaximumColorAttachment())
-			throw Exception("HdlFBO::addTarget - Can't add more target, limit reached : " + to_string(getMaximumColorAttachment()) + " textures.", __FILE__, __LINE__);
+			throw Exception("HdlFBO::addTarget - Can't add more target, limit reached : " + toString(getMaximumColorAttachment()) + " textures.", __FILE__, __LINE__);
 		else
 		{
 			int i = targets.size();
@@ -166,7 +166,7 @@ using namespace Glip::CoreGL;
 			usedTarget = targets.size();
 
 		if(usedTarget>targets.size())
-			throw Exception("HdlFBO::beginRendering - Can't render to " + to_string(usedTarget) + " textures because the current number of targets is " + to_string(targets.size()), __FILE__, __LINE__);
+			throw Exception("HdlFBO::beginRendering - Can't render to " + toString(usedTarget) + " textures because the current number of targets is " + toString(targets.size()), __FILE__, __LINE__);
 
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
@@ -228,7 +228,7 @@ using namespace Glip::CoreGL;
 	HdlTexture* HdlFBO::operator[](int i)
 	{
 		if(i<0 || i>targets.size())
-			throw Exception("HdlFBO::operator[] - Invalid index : " + to_string(i) + " of " + to_string(targets.size()), __FILE__, __LINE__);
+			throw Exception("HdlFBO::operator[] - Invalid index : " + toString(i) + " of " + toString(targets.size()), __FILE__, __LINE__);
 		else
 			return targets[i];
 	}

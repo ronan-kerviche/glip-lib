@@ -520,6 +520,8 @@ using namespace QVGL;
 		{
 			resize();
 			QObject::connect(scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(resize(const QRectF&)));
+
+			return value;
 		}
 		else
 			return QGraphicsItem::itemChange(change, value);
@@ -3860,7 +3862,7 @@ using namespace QVGL;
 			case NoAction :
 				break;
 			default : 
-				throw Exception("MainWidget::processAction - Unknown action (code : " + to_string(action) + ").", __FILE__, __LINE__);
+				throw Exception("MainWidget::processAction - Unknown action (code : " + toString(action) + ").", __FILE__, __LINE__);
 		}
 	}
 

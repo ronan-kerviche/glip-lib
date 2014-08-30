@@ -100,7 +100,7 @@
 	double TextureReader::operator()(int x, int y, int c)
 	{
 		if(x<0 || x>=getWidth() || y<0 || y>=getHeight() || c<0 || c>=getNumChannels())
-			throw Exception("TextureReader::operator() - Pixel " + to_string(x) + "x" + to_string(y) + "x" + to_string(c) + " is out of bound (" + to_string(getWidth()) + "x" + to_string(getHeight()) + "x" + to_string(getNumChannels()) + ").", __FILE__, __LINE__);
+			throw Exception("TextureReader::operator() - Pixel " + toString(x) + "x" + toString(y) + "x" + toString(c) + " is out of bound (" + toString(getWidth()) + "x" + toString(getHeight()) + "x" + toString(getNumChannels()) + ").", __FILE__, __LINE__);
 
 		if(xFlip) x = getWidth()-x-1;
 		if(yFlip) y = getHeight()-y-1;

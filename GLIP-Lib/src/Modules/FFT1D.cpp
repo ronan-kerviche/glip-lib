@@ -101,7 +101,7 @@
 			for(int i=1; i<=size/2; i*=2)
 			{
 				ShaderSource shader(generateCode(i,coeffp));
-				std::string name = "filter"+to_string(i);
+				std::string name = "filter"+ toString(i);
 				FilterLayout fl("Radix2", fmt, shader);
 				playout.add(fl,name);
 

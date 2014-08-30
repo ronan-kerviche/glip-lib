@@ -18,7 +18,7 @@
 		c("Button C", &widget),
 		//img("/home/arkh/Pictures/mire.bmp"),
 		//img("/home/arkh/Pictures/the_general_problem.png"),
-		img("/home/arkh/0.jpg"),
+		img("0.jpg"),
 		texture(NULL),
 		view(NULL)
 	{

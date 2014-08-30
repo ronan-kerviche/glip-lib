@@ -317,7 +317,7 @@
 			else if(code[k]==':')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ':' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ':' when parsing arguments.", __FILE__, __LINE__);
 
 				testAndSaveCurrentElement(currentField, Element::Name, el);
 				el.noName = false;
@@ -327,7 +327,7 @@
 			else if(code[k]=='{')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '{' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '{' when parsing arguments.", __FILE__, __LINE__);
 
 				testAndSaveCurrentElement(currentField, Element::Body, el);
 				el.noBody = false;
@@ -341,12 +341,12 @@
 			}
 			else if(code[k]=='}')
 			{
-				throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '}'.", __FILE__, __LINE__);
+				throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '}'.", __FILE__, __LINE__);
 			}
 			else if(code[k]=='(')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character '(' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '(' when parsing arguments.", __FILE__, __LINE__);
 
 				testAndSaveCurrentElement(currentField, Element::Arguments, el);
 				el.noArgument = false;
@@ -356,7 +356,7 @@
 			else if(code[k]==',')
 			{
 				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ','.", __FILE__, __LINE__);
+					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ','.", __FILE__, __LINE__);
 				else
 					el.arguments.push_back("");
 
@@ -366,7 +366,7 @@
 			else if(code[k]==')')
 			{
 				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : unexpected character ')'.", __FILE__, __LINE__);
+					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ')'.", __FILE__, __LINE__);
 				else
 					currentField = Element::AfterArguments;
 
@@ -387,7 +387,7 @@
 			}
 			else if(!isSpacer && after && currentField==Element::Arguments)
 			{
-				throw Exception("VanillaParser::VanillaParser - From line " + to_string(currentLine) + " : missing delimiter ','.", __FILE__, __LINE__);
+				throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : missing delimiter ','.", __FILE__, __LINE__);
 			}
 			else if(!isSpacer && after)
 			{

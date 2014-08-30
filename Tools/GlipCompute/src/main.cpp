@@ -32,14 +32,15 @@
 	{
 		int returnCode = 0;
 
-		std::string 				pipelineFilename,
-							inputFormatString;
-		std::vector<ProcessCommand> 		commands;
+		size_t				memorySize;	
+		std::string 			pipelineFilename,
+						inputFormatString;
+		std::vector<ProcessCommand> 	commands;
 
-		returnCode = parseArguments(argc, argv, pipelineFilename, inputFormatString, commands);
+		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, inputFormatString, commands);
 	
 		if(returnCode==0)
-			returnCode = compute(pipelineFilename, inputFormatString, commands);
+			returnCode = compute(pipelineFilename, memorySize, inputFormatString, commands);
 
 		return returnCode;
 	}
