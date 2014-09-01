@@ -30,6 +30,8 @@
 	#include <QTreeWidget>
 	#include <QVBoxLayout>
 	#include <QMenuBar>
+	#include <QApplication>
+	#include <QClipboard>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
@@ -88,15 +90,20 @@ namespace QGIC
 			QString getName(void) const;
 			void setName(const QString& newName);
 			
+			const ImageBuffer& getImageBuffer(void) const;
+			ImageBuffer& getImageBuffer(void);
+			ImageBuffer* getImageBufferPtr(void);
 			HdlTexture& getTexture(void);
 			HdlTexture* getTexturePtr(void);
 
 			bool isSaved(void) const;
 			void save(QString _filename="");
+			void copyToClipboard(void);
 
 			void remove(void);
 
 			static QString getSizeString(size_t size);
+			static ImageItem* pasteImageFromClipboard(void);
 
 		signals : 
 			void formatModified(void);
@@ -245,6 +252,11 @@ namespace QGIC
 			QString					currentPath;
 			QVBoxLayout				layout;
 			QMenuBar				menuBar;
+			QAction					*copyAction,
+								*saveAction,
+								*saveAsAction,
+								*removeAction,
+								*removeAllAction;
 			QMenu					imagesMenu;
 			FilterMenu				filterMenu;
 			WrappingMenu				wrappingMenu;
@@ -253,6 +265,7 @@ namespace QGIC
 			static ImageItem* getImageItem(const QTreeWidgetItem& treeWidgetItem);
 			void add(ImageItem* imageItem);
 			void updateAlternateColors(void);
+			void updateColumnSize(void);
 			const QTreeWidgetItem* getTreeItem(ImageItem* imageItem) const;
 			QTreeWidgetItem* getTreeItem(ImageItem* imageItem);
 			QList<ImageItem*> getSelectedImageItems(void);
@@ -269,14 +282,18 @@ namespace QGIC
 
 			// Action : 
 			void open(void);
+			void copy(void);
+			void paste(void);
 			void save(void);
 			void saveAs(void);
 			void removeImageItem(void);
+			void removeAllImageItem(void);
 
 			// Interaction : 
 			void currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
 			void itemActivated(QTreeWidgetItem * item, int column);
 			void itemSelectionChanged(void);
+			void openContextMenu(const QPoint& pos);
 			void changeMinFilter(GLenum minFilter);
 			void changeMagFilter(GLenum magFilter);
 			void changeSWrapping(GLenum sWrapping);
@@ -289,6 +306,7 @@ namespace QGIC
 			void addActionToMenu(QAction* action);
 
 		signals :
+			void imageItemAdded(ImageItem* imageItem);
 			void show(ImageItem* imageItem);
 	};
 
@@ -324,6 +342,7 @@ namespace QGIC
 			~ImageItemsCollectionSubWidget(void);	
 
 			QVGL::ViewsTable* getMainViewsTablePtr(void);
+			ImageItemsCollection* getCollectionPtr(void);
 
 		signals :
 			void addView(QVGL::View* view);	

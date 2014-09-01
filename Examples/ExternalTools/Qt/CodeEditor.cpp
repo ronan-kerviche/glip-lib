@@ -1899,7 +1899,7 @@ using namespace QGED;
 		CodeEditor* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			emit compileSource(editor->getCurrentContent(), reinterpret_cast<void*>(editor));
+			emit compileSource(editor->getCurrentContent(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this), SLOT(compilationFailureNotification(void*, Exception)));
 	}
 
 	void MainWidget::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)

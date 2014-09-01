@@ -51,14 +51,14 @@
 	#include <QListWidget>
 	#include <QDialogButtonBox>
 
-namespace QVGL
-{
-	// Namespaces
+// Namespaces :
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+namespace QVGL
+{
 	// Prototypes : 
 	class View;
 	class SubWidget;

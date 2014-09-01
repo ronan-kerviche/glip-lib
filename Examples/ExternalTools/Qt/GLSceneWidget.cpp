@@ -310,10 +310,14 @@ using namespace QVGL;
 
 		void Vignette::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		{
-			if(!selected)
-			{
-				//std::cout << "Vignette::mousePressEvent : " << view->getName().toStdString() << std::endl;
+			const QRectF rectF = boundingRect();
 
+			// It seems Qt is sending event to items for which the event is actually outside the bounding rectangle.
+			// Not sure if a bug, but it is simple to test and prevent : 
+			if(!rectF.contains(event->scenePos()))
+				event->ignore();
+			else if(!selected)
+			{
 				emit selection();
 				event->accept();
 			}
@@ -344,6 +348,8 @@ using namespace QVGL;
 
 		void Vignette::resize(const QSize& size)
 		{
+			prepareGeometryChange();
+
 			QRectF frameRect = frame.rect();
 			frameRect.setSize(size);
 			frame.setRect(frameRect);
@@ -364,16 +370,12 @@ using namespace QVGL;
 
 		void Vignette::setSelection(bool enabled)
 		{
+			selected = enabled;
+
 			if(enabled)
-			{
-				selected = true;
 				frame.setPen(QPen(selectedFrameColor, frameThickness));
-			}
 			else
-			{
-				selected = false;
 				frame.setPen(QPen(frameColor, frameThickness));
-			}
 		}
 
 		QRectF Vignette::boundingRect(void) const
@@ -563,10 +565,10 @@ using namespace QVGL;
 
 		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
 		{
-			if((*it)->isSelected() && (*it)!=sender)
-				(*it)->setSelection(false);
-			else if((*it)==sender)
-				(*it)->setSelection(true);
+			if(it.value()->isSelected() && it.value()!=sender)
+				it.value()->setSelection(false);
+			else if(it.value()==sender)
+				it.value()->setSelection(true);
 		}
 
 		emit viewSelection(sender->getView());

@@ -355,6 +355,27 @@ using namespace QGIC;
 		emit nameModified();
 	}
 	
+	const ImageBuffer& ImageItem::getImageBuffer(void) const
+	{
+		if(imageBuffer==NULL)
+			throw Exception("ImageItem::getImageBuffer - No buffer allocated.", __FILE__, __LINE__);
+		else
+			return (*imageBuffer);
+	}
+
+	ImageBuffer& ImageItem::getImageBuffer(void)
+	{
+		if(imageBuffer==NULL)
+			throw Exception("ImageItem::getImageBuffer - No buffer allocated.", __FILE__, __LINE__);
+		else
+			return (*imageBuffer);
+	}
+
+	ImageBuffer* ImageItem::getImageBufferPtr(void)
+	{
+		return imageBuffer;
+	}
+
 	HdlTexture& ImageItem::getTexture(void)
 	{
 		if(texture==NULL)
@@ -409,6 +430,27 @@ using namespace QGIC;
 		emit savedToDisk();
 	}
 
+	void ImageItem::copyToClipboard(void)
+	{
+		QClipboard *clipboard = QApplication::clipboard();
+
+		QImage* qimage = NULL;
+
+		if(clipboard==NULL)
+			throw Exception("ImageItem::copyToClipboard - Cannot access the clipboard.", __FILE__, __LINE__);
+		else if(imageBuffer==NULL)
+			throw Exception("ImageItem::copyToClipboard - No buffer allocated.", __FILE__, __LINE__);
+		else
+		{
+			toQImage(*imageBuffer, qimage);
+
+			// Copy to cliboard : 
+			clipboard->setImage(*qimage);
+
+			delete qimage;
+		}
+	}
+
 	void ImageItem::remove(void)
 	{
 		lockToDevice(false);
@@ -431,6 +473,25 @@ using namespace QGIC;
 			return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/KB)) );
 		else 
 			return tr("%1 B").arg( size );
+	}
+
+	ImageItem* ImageItem::pasteImageFromClipboard(void)
+	{
+		QClipboard *clipboard = QApplication::clipboard();
+	
+		if(clipboard==NULL)
+			throw Exception("ImageItem::copyToClipboard - Cannot access the clipboard.", __FILE__, __LINE__);
+
+		QImage qimage = clipboard->image();
+
+		if(qimage.isNull())
+			return NULL;
+		else
+		{
+			ImageItem* imageItem = new ImageItem(qimage, "untitled-from-clipboard");
+
+			return imageItem;
+		}
 	}
 
 // ImageItemsStorage :
@@ -534,6 +595,8 @@ using namespace QGIC;
 					(*canBeFreed) += s;
 			}
 		}
+
+		return occupancy;
 	}
 
 	void ImageItemsStorage::cleanThisStorage(void)
@@ -561,6 +624,8 @@ using namespace QGIC;
 			if(canBeFreed!=NULL)
 				(*canBeFreed) += thisStorageCanBeFreed;
 		}
+
+		return totalOccupancy;
 	}
 
 	void ImageItemsStorage::cleanStorages(void)
@@ -1065,6 +1130,9 @@ using namespace QGIC;
 	ImageItemsCollection::ImageItemsCollection(void)
 	 : 	layout(this),
 		menuBar(this),
+		saveAction(NULL),
+		saveAsAction(NULL),
+		removeAction(NULL),
 		imagesMenu("Images", this),
 		filterMenu(this),
 		wrappingMenu(this),
@@ -1075,10 +1143,13 @@ using namespace QGIC;
 		layout.setMargin(0);
 		layout.setSpacing(0);
 
-		imagesMenu.addAction("Open", 	this, SLOT(open()));
-		imagesMenu.addAction("Save", 	this, SLOT(save()));
-		imagesMenu.addAction("Save as", this, SLOT(saveAs()));
-		imagesMenu.addAction("Remove", 	this, SLOT(removeImageItem()));
+				  imagesMenu.addAction("Open",		this, SLOT(open()));
+				  imagesMenu.addAction("Paste",		this, SLOT(paste()));
+		copyAction	= imagesMenu.addAction("Copy",		this, SLOT(copy()));
+		saveAction 	= imagesMenu.addAction("Save",		this, SLOT(save()));
+		saveAsAction	= imagesMenu.addAction("Save as",	this, SLOT(saveAs()));
+		removeAction	= imagesMenu.addAction("Remove",	this, SLOT(removeImageItem()));
+		removeAllAction	= imagesMenu.addAction("Remove all",	this, SLOT(removeAllImageItem()));
 
 		menuBar.addMenu(&imagesMenu);
 		menuBar.addMenu(&filterMenu);
@@ -1121,6 +1192,7 @@ using namespace QGIC;
 		QObject::connect(&treeWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
 		QObject::connect(&treeWidget, 	SIGNAL(itemActivated(QTreeWidgetItem*,int)),			this, SLOT(itemActivated(QTreeWidgetItem*,int)));
 		QObject::connect(&treeWidget, 	SIGNAL(itemSelectionChanged()),					this, SLOT(itemSelectionChanged()));
+		QObject::connect(&treeWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),		this, SLOT(openContextMenu(const QPoint&)));
 		QObject::connect(&filterMenu, 	SIGNAL(changeMinFilter(GLenum)),				this, SLOT(changeMinFilter(GLenum)));
 		QObject::connect(&filterMenu, 	SIGNAL(changeMagFilter(GLenum)),				this, SLOT(changeMagFilter(GLenum)));
 		QObject::connect(&wrappingMenu,	SIGNAL(changeSWrapping(GLenum)),				this, SLOT(changeSWrapping(GLenum)));
@@ -1137,30 +1209,37 @@ using namespace QGIC;
 
 	void ImageItemsCollection::add(ImageItem* imageItem)
 	{
-		storage.add(imageItem);
+		if(imageItem!=NULL)
+		{
+			storage.add(imageItem);
 
-		// Create item :
-		QTreeWidgetItem* item = new QTreeWidgetItem;
+			// Create item :
+			QTreeWidgetItem* item = new QTreeWidgetItem;
 
-		// Set the link :
-		item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(imageItem)));
+			// Set the link :
+			item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(imageItem)));
 
-		// Register :
-		treeWidget.addTopLevelItem(item);
-		items[imageItem] = item;
+			// Register :
+			treeWidget.addTopLevelItem(item);
+			items[imageItem] = item;
 
-		// Update the info : 
-		updateImageItem(imageItem);
+			// Update the info : 
+			updateImageItem(imageItem);
+			updateAlternateColors();
+			updateColumnSize();
 
-		// Connect : 
-		QObject::connect(imageItem, SIGNAL(formatModified()),		this, SLOT(imageItemFormatModified()));
-		QObject::connect(imageItem, SIGNAL(nameModified()),		this, SLOT(imageItemNameModified()));
-		QObject::connect(imageItem, SIGNAL(filenameModified()),		this, SLOT(imageItemFilenameModified()));
-		QObject::connect(imageItem, SIGNAL(loadedOnDevice()),		this, SLOT(imageItemStatusChanged()));
-		QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemStatusChanged()));
-		QObject::connect(imageItem, SIGNAL(savedToDisk()),		this, SLOT(imageItemNameModified()));
-		QObject::connect(imageItem, SIGNAL(removed()),			this, SLOT(imageItemRemoved()));
-		QObject::connect(imageItem, SIGNAL(destroyed()),		this, SLOT(imageItemRemoved()));
+			// Connect : 
+			QObject::connect(imageItem, SIGNAL(formatModified()),		this, SLOT(imageItemFormatModified()));
+			QObject::connect(imageItem, SIGNAL(nameModified()),		this, SLOT(imageItemNameModified()));
+			QObject::connect(imageItem, SIGNAL(filenameModified()),		this, SLOT(imageItemFilenameModified()));
+			QObject::connect(imageItem, SIGNAL(loadedOnDevice()),		this, SLOT(imageItemStatusChanged()));
+			QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemStatusChanged()));
+			QObject::connect(imageItem, SIGNAL(savedToDisk()),		this, SLOT(imageItemNameModified()));
+			QObject::connect(imageItem, SIGNAL(removed()),			this, SLOT(imageItemRemoved()));
+			QObject::connect(imageItem, SIGNAL(destroyed()),		this, SLOT(imageItemRemoved()));
+
+			emit imageItemAdded(imageItem);
+		}
 	}
 
 	void ImageItemsCollection::updateAlternateColors(void)
@@ -1180,6 +1259,12 @@ using namespace QGIC;
 			for(int l=0; l<treeWidget.columnCount(); l++)
 				treeWidget.topLevelItem(k)->setBackground(l, QBrush(*ptr));
 		}
+	}
+
+	void ImageItemsCollection::updateColumnSize(void)
+	{
+		for(int k=NameColumn; k<NumColumns; k++)
+			treeWidget.resizeColumnToContents(k);
 	}
 
 	const QTreeWidgetItem* ImageItemsCollection::getTreeItem(ImageItem* imageItem) const
@@ -1226,7 +1311,7 @@ using namespace QGIC;
 		return result;
 	}
 
-	#define GET_ITEM_SAFE( itemName ) \	
+	#define GET_ITEM_SAFE( itemName ) \
 				if(imageItem==NULL) \
 					imageItem = reinterpret_cast<ImageItem*>(QObject::sender()); \
 				QTreeWidgetItem* itemName = getTreeItem(imageItem); \
@@ -1367,17 +1452,45 @@ using namespace QGIC;
 		}
 	} 
 
+	void ImageItemsCollection::copy(void)
+	{
+		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
+
+		if(selectedImageItems.size()==1)
+			selectedImageItems.front()->copyToClipboard();
+	}
+
+	void ImageItemsCollection::paste(void)
+	{
+		ImageItem* imageItem = ImageItem::pasteImageFromClipboard();
+
+		if(imageItem!=NULL)
+			add(imageItem);
+	}
+
 	void ImageItemsCollection::save(void)
-	{ }
+	{
+		std::cerr << "ImageItemsCollection::save not imlemented." << std::endl;
+	}
 
 	void ImageItemsCollection::saveAs(void)
-	{ } 
+	{
+		std::cerr << "ImageItemsCollection::saveAs not imlemented." << std::endl;
+	} 
 
 	void ImageItemsCollection::removeImageItem(void)
 	{
 		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
 		
 		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
+			(*it)->remove();
+	}
+
+	void ImageItemsCollection::removeAllImageItem(void)
+	{
+		QList<ImageItem*> imageItems = items.keys();
+
+		for(QList<ImageItem*>::iterator it=imageItems.begin(); it!=imageItems.end(); it++)
 			(*it)->remove();
 	}
 
@@ -1400,6 +1513,20 @@ using namespace QGIC;
 
 		filterMenu.update(formats);
 		wrappingMenu.update(formats);
+	}
+	
+	void ImageItemsCollection::openContextMenu(const QPoint& pos)
+	{
+		QMenu menu(&treeWidget);
+		
+		menu.addMenu(&filterMenu);
+		menu.addMenu(&wrappingMenu);
+		menu.addAction(copyAction);
+		menu.addAction(saveAction);
+		menu.addAction(saveAsAction);
+		menu.addAction(removeAction);		
+
+		menu.exec(treeWidget.viewport()->mapToGlobal(pos));
 	}
 
 	void ImageItemsCollection::changeMinFilter(GLenum minFilter)
@@ -1606,6 +1733,11 @@ using namespace QGIC;
 	QVGL::ViewsTable* ImageItemsCollectionSubWidget::getMainViewsTablePtr(void)
 	{
 		return &mainViewsTable;
+	}
+
+	ImageItemsCollection* ImageItemsCollectionSubWidget::getCollectionPtr(void)
+	{
+		return &collectionWidget;
 	}
 
 #endif 
