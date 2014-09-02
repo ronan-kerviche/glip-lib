@@ -7,6 +7,7 @@
 	#include "GLSceneWidget.hpp"
 	#include "ImageItem.hpp"
 	#include "CodeEditor.hpp"
+	#include "PipelineManager.hpp"
 	#include "ResourceLoader.hpp"	
 	#include "GLIPLib.hpp"
 	#include <QApplication>

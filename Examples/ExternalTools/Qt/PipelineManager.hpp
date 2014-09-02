@@ -36,19 +36,38 @@ namespace QGPM
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+	// Special enums : 
+	enum
+	{
+		PipelineHeaderItemType,
+		InputsHeaderItemType,
+		InputItem,
+		OutputsHeaderItemType,
+		OutputItem,
+		UniformsHeaderItemType
+	};
+
+	// Prototypes : 
+	class Connection;
+	class ConnectionToImageItem;
+	class ConnectionToPipelineOutput;
+	class PipelineItem;
+	class PipelineManager;
+
 	// Classes : 
 	class Connection : public QObject
 	{
 		Q_OBJECT
 
 		private :
-			void Connection(void);			// No constructor
-			void Connection(const Connection&);	// No copy constructor
+			Connection(const Connection&);	// No copy constructor.
 
 		public :
+			Connection(void);
 			virtual ~Connection(void);
 
 			virtual bool isValid(void) const = 0;
+			virtual bool selfTest(PipelineItem* _pipelineItem) const = 0;
 			virtual const __ReadOnly_HdlTextureFormat& getFormat(void) const = 0;
 			virtual HdlTexture& getTexture(void) = 0;
 	
@@ -73,6 +92,7 @@ namespace QGPM
 			~ConnectionToImageItem(void);
 
 			bool isValid(void) const;
+			bool selfTest(PipelineItem* _pipelineItem) const;
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
 	};
@@ -90,16 +110,19 @@ namespace QGPM
 			void pipelineItemDestroyed(void);
 
 		public :
-			ConnectionToPipleineOutput(PipelineItem* _pipelineItem, int _outputIdx);
+			ConnectionToPipelineOutput(PipelineItem* _pipelineItem, int _outputIdx);
 			~ConnectionToPipelineOutput(void);
 
 			bool isValid(void) const;
+			bool selfTest(PipelineItem* _pipelineItem) const;
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
 	};
 
-	class PipelineItem : public QTreeWidgetItem
+	class PipelineItem : public QObject, public QTreeWidgetItem
 	{
+		Q_OBJECT
+
 		private : 
 			const QObject*				referrer;
 			LayoutLoader				loader;
@@ -137,13 +160,13 @@ namespace QGPM
 			void updateSource(const std::string& _source);
 
 			bool isValid(void) const;
-			const __ReadOnly__HdlTextureFormat& getOutputFormat(int idx);
+			const __ReadOnly_HdlTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
 	
 			void remove(void);
 
 		public slots :
-			void makeConnection(QTreeWidgetItem* inputItem, Connection* connection);
+			void makeConnection(QMap<QTreeWidgetItem*, Connection*> connectionsMap);
 
 		signals : 	
 			void statusChanged(void);
@@ -154,16 +177,17 @@ namespace QGPM
 
 	class PipelineManager : public QWidget
 	{
-		private : 	
-			QMap<void*, PipelinItem*>	pipelineItems;
-			QList<QGIC::ImageItem*>		imageItems;
-			QVBoxLayout			layout;
-			QMenuBar			menuBar;
-			QTreeWidget			treeWidget;
+		Q_OBJECT
 
-			void compile(void);
-			void compute(void);
-			void updatePipelineStatus(void);
+		private : 	
+			QMap<void*, PipelineItem*>		pipelineItems;
+			QList<QGIC::ImageItem*>			imageItems;
+			QVBoxLayout				layout;
+			QMenuBar				menuBar;
+			QTreeWidget				treeWidget;
+
+		private slots : 
+			void imageItemDestroyed(void);
 
 		public : 
 			PipelineManager(void);
@@ -172,12 +196,14 @@ namespace QGPM
 		public slots : 
 			void addImageItem(QGIC::ImageItem* imageItem); 
 			void compileSource(std::string _source, void* _identifier, const QObject* referrer, const char* notificationMember);
-			void removeSource(void* _identifier);	
+			void removeSource(void* _identifier);
 	};
 
 	#ifdef __USE_QVGL__
-	class PipelineManagerSubWidget : public SubWidget
+	class PipelineManagerSubWidget : public QVGL::SubWidget
 	{
+		Q_OBJECT
+
 		private : 
 			PipelineManager	manager;
 

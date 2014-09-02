@@ -33,6 +33,12 @@
 		
 		switch(fipColorFormat)
 		{
+			case FIC_MINISBLACK :
+			case FIC_MINISWHITE :
+				mode 	= GL_LUMINANCE;
+				fipMode	= GL_LUMINANCE;
+				planes 	= 1;
+				break;
 			case FIC_RGB :
 				mode 	= GL_RGB;
 				fipMode	= GL_BGR;
@@ -99,6 +105,12 @@
 		// Flip the channels : 
 		switch(texture.getGLMode())
 		{
+			case GL_RED:
+				fipMode = GL_RED;
+				break;
+			case GL_LUMINANCE:
+				fipMode = GL_LUMINANCE;
+				break;
 			case GL_RGB:
 				fipMode = GL_BGR;
 				break;

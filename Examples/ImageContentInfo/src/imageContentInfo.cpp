@@ -165,12 +165,17 @@
 		tmp = new TmpWidget;
 		window.addSubWidget(tmp);
 
-		window.addSubWidget(new QGED::CodeEditorSubWidget);
+		QGED::CodeEditorTabsSubWidget* codeEditorTabs = new QGED::CodeEditorTabsSubWidget;
+		window.addSubWidget(codeEditorTabs);
 
 		QGIC::ImageItemsCollectionSubWidget* collection = new QGIC::ImageItemsCollectionSubWidget;
 		window.addSubWidget(collection);
 		window.addViewsTable(collection->getMainViewsTablePtr());
 		QObject::connect(collection, SIGNAL(addView(QVGL::View*)), &window, SLOT(addView(QVGL::View*)));
+
+		QGPM::PipelineManagerSubWidget* manager = new QGPM::PipelineManagerSubWidget;
+		window.addSubWidget(manager);
+		QObject::connect(codeEditorTabs->getCodeEditorPtr(), SIGNAL(compileSource(std::string, void*, const QObject*, const char*)), manager->getManagerPtr(), SLOT(compileSource(std::string, void*, const QObject*, const char*)));
 	}
 
 	IHM::~IHM(void)

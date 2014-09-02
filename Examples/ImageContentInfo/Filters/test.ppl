@@ -80,7 +80,7 @@ SHADER_SOURCE:ampl()
 FILTER_LAYOUT:gradFilter(format,gradient)
 FILTER_LAYOUT:amplFilter(formatOut,ampl)
 
-PIPELINE_MAIN:pMainGradient()
+PIPELINE_MAIN:pMainGradient
 {
 	INPUT_PORTS(i0)
 	OUTPUT_PORTS(o0)

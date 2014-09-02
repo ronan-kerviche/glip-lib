@@ -19,8 +19,11 @@
 using namespace QGPM;
 
 // Connection : 
+	Connection::Connection(void)
+	{ }
+
 	Connection::~Connection(void)
-	{ }
+	{ }
 
 // ConnectionToImageItem : 
 	ConnectionToImageItem::ConnectionToImageItem(QGIC::ImageItem* _imageItem)
@@ -33,6 +36,7 @@ using namespace QGPM;
 		imageItem->loadToDevice();
 		imageItem->lockToDevice(true);
 
+		QObject::connect(imageItem, SIGNAL(formatModified()),		this, SIGNAL(Connection::modified()));
 		QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemDestroyed()));
 		QObject::connect(imageItem, SIGNAL(removed()), 			this, SLOT(imageItemDestroyed()));
 		QObject::connect(imageItem, SIGNAL(destroyed()), 		this, SLOT(imageItemDestroyed()));
@@ -58,7 +62,12 @@ using namespace QGPM;
 		return (imageItem!=NULL);
 	}
 
-	void const __ReadOnly_HdlTextureFormat& ConnectionToImageItem::getFormat(void)
+	bool ConnectionToImageItem::selfTest(PipelineItem* _pipelineItem) const
+	{
+		return false;
+	}
+
+	const __ReadOnly_HdlTextureFormat& ConnectionToImageItem::getFormat(void) const
 	{
 		if(!isValid())
 			throw Exception("ConnectionToImageItem::getFormat - Connection is invalid.", __FILE__, __LINE__);
@@ -75,7 +84,7 @@ using namespace QGPM;
 	}
 
 // ConnectionToPipelineOutput :
-	ConnectionToPipleineOutput::ConnectionToPipleineOutput(PipelineItem* _pipelineItem, int _outputIdx)
+	ConnectionToPipelineOutput::ConnectionToPipelineOutput(PipelineItem* _pipelineItem, int _outputIdx)
 	 : 	pipelineItem(_pipelineItem),
 		outputIdx(_outputIdx)
 	{
@@ -87,19 +96,19 @@ using namespace QGPM;
 		QObject::connect(pipelineItem, SIGNAL(destroyed()),	this, 	SLOT(pipelineItemDestroyed()));
 	}
 
-	ConnectionToPipleineOutput::~ConnectionToPipelineOutput(void)
+	ConnectionToPipelineOutput::~ConnectionToPipelineOutput(void)
 	{
 		pipelineItem	= NULL;
 		outputIdx	= -1;
 	}
 
-	void ConnectionToPipleineOutput::pipelineItemStatusChanged(void)
+	void ConnectionToPipelineOutput::pipelineItemStatusChanged(void)
 	{
 		if(pipelineItem!=NULL)
 			emit Connection::statusChanged(pipelineItem->isValid());
 	}
 
-	void ConnectionToPipleineOutput::pipelineItemDestroyed(void)
+	void ConnectionToPipelineOutput::pipelineItemDestroyed(void)
 	{
 		pipelineItem	= NULL;
 		outputIdx	= -1;
@@ -107,7 +116,7 @@ using namespace QGPM;
 		emit Connection::connectionClosed();
 	}
 
-	bool ConnectionToPipleineOutput::isValid(void) const
+	bool ConnectionToPipelineOutput::isValid(void) const
 	{
 		if(pipelineItem==NULL)
 			return false;
@@ -115,7 +124,12 @@ using namespace QGPM;
 			return pipelineItem->isValid();
 	}
 
-	const __ReadOnly_HdlTextureFormat& ConnectionToPipleineOutput::getFormat(void) const
+	bool ConnectionToPipelineOutput::selfTest(PipelineItem* _pipelineItem) const
+	{
+		return (_pipelineItem==pipelineItem);
+	}
+
+	const __ReadOnly_HdlTextureFormat& ConnectionToPipelineOutput::getFormat(void) const
 	{
 		if(!isValid())
 			throw Exception("ConnectionToPipleineOutput::getFormat - Connection is invalid.", __FILE__, __LINE__);
@@ -123,7 +137,7 @@ using namespace QGPM;
 			return pipelineItem->getOutputFormat(outputIdx);
 	}
 
-	HdlTexture& ConnectionToPipleineOutput::getTexture(void)	
+	HdlTexture& ConnectionToPipelineOutput::getTexture(void)	
 	{
 		if(!isValid())
 			throw Exception("ConnectionToPipleineOutput::getFormat - Connection is invalid.", __FILE__, __LINE__);
@@ -133,7 +147,8 @@ using namespace QGPM;
 
 // PipelineItem :
 	PipelineItem::PipelineItem(const std::string& _source, void* _identifier, const QObject* _referrer, const char* notificationMember)
-	 : 	referrer(_referrer),
+	 : 	QTreeWidgetItem(PipelineHeaderItemType),
+		referrer(_referrer),
 		source(_source),
 		inputFormatString("inputFormat%d"),
 		identifier(NULL),
@@ -141,13 +156,23 @@ using namespace QGPM;
 		pipeline(NULL),
 		cellA(-1),
 		cellB(-1),
-		computeCount(0)
+		computeCount(0),
+		inputsNode(InputsHeaderItemType),
+		outputsNode(OutputsHeaderItemType)
 	{
+		inputsNode.setText(0, "Inputs");
+		outputsNode.setText(0, "Outputs");
+
 		addChild(&inputsNode);
 		addChild(&outputsNode);
 
+		setExpanded(true);
+
 		QObject::connect(this, SIGNAL(referrerShowUp()),					referrer, SLOT(showUp()));
 		QObject::connect(this, SIGNAL(compilationFailureNotification(void*, Exception)),	referrer, SLOT(compilationFailureNotification(void*, Exception)));
+
+		// Start build : 
+		preInterpret();
 	}
 
 	PipelineItem::~PipelineItem(void)
@@ -180,7 +205,7 @@ using namespace QGPM;
 			QString result = inputFormatString;
 
 			result.replace("%s", elements.mainPipelineInputs[idx].c_str());
-			result.replace("%d", idx);
+			result.replace("%d", QString(idx));
 
 			return result.toStdString();
 		}
@@ -188,6 +213,11 @@ using namespace QGPM;
 
 	void PipelineItem::preInterpret(void)
 	{
+		delete pipelineLayout;
+		pipelineLayout = NULL;
+		delete pipeline;
+		pipeline = NULL;
+
 		try
 		{
 			elements = loader.listElements(source);
@@ -206,25 +236,37 @@ using namespace QGPM;
 			delete (*it);
 		outputItems.clear();
 
-		// Add inputs : 
+		// Add inputs :
+		int kInput = 0; 
 		for(std::vector<std::string>::iterator it=elements.mainPipelineInputs.begin(); it!=elements.mainPipelineInputs.end(); it++)
 		{
-			QTreeWidgetItem* item = new QTreeWidgetItem(1);
+			QTreeWidgetItem* item = new QTreeWidgetItem(InputItem);
 			item->setText(0, it->c_str());
+			item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
+			item->setData(1, Qt::UserRole, kInput);
 
 			inputsNode.addChild(item);
 			inputItems.push_back(item);
+
+			kInput++;
 		}
+		inputsNode.setExpanded(true);
 
 		// Add outputs : 
+		int kOutput = 0; 
 		for(std::vector<std::string>::iterator it=elements.mainPipelineOutputs.begin(); it!=elements.mainPipelineOutputs.end(); it++)
 		{
-			QTreeWidgetItem* item = new QTreeWidgetItem(2);
+			QTreeWidgetItem* item = new QTreeWidgetItem(OutputItem);
 			item->setText(0, it->c_str());
+			item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
+			item->setData(1, Qt::UserRole, kOutput);
 
 			outputsNode.addChild(item);
 			outputItems.push_back(item);
+
+			kOutput++;
 		}
+		outputsNode.setExpanded(true);
 
 		// Set name : 
 		setText(0, elements.mainPipeline.c_str());
@@ -261,11 +303,11 @@ using namespace QGPM;
 			// Set the inputs format : 
 			loader.clearRequiredElements();
 
-			for(int k<=0; k<elements.mainPipelineInputs.size(); k++)
+			for(int k=0; k<elements.mainPipelineInputs.size(); k++)
 			{
 				std::string name = getInputFormatName(k);
 
-				if(k<inputConnectionsList.size() && inputConnectionsList[k]!=NULL && inputConnectionsList[k].isValid())
+				if(k<inputConnectionsList.size() && inputConnectionsList[k]!=NULL && inputConnectionsList[k]->isValid())
 					loader.addRequiredElement(name, inputConnectionsList[k]->getFormat());
 			}
 
@@ -280,14 +322,14 @@ using namespace QGPM;
 	void PipelineItem::compile(void)
 	{
 		if(pipelineLayout==NULL)
-			return NULL;
+			return ;
 
 		delete pipeline;
 		pipeline = NULL;
 
 		try
 		{
-			pipeline = new Pipeline(*pipelineLayout);
+			pipeline = new Pipeline(*pipelineLayout, "Pipeline");
 		}
 		catch(Exception& e)
 		{
@@ -306,9 +348,9 @@ using namespace QGPM;
 		{
 			(*pipeline) << Pipeline::Reset;
 
-			for(int k<=0; k<pipeline->getNumInputPorts(); k++)
+			for(int k=0; k<pipeline->getNumInputPort(); k++)
 			{
-				if(k<inputConnectionsList.size() && inputConnectionsList[k]!=NULL && inputConnectionsList[k].isValid())
+				if(k<inputConnectionsList.size() && inputConnectionsList[k]!=NULL && inputConnectionsList[k]->isValid())
 					(*pipeline) << inputConnectionsList[k]->getTexture();
 			}
 
@@ -321,11 +363,6 @@ using namespace QGPM;
 			std::cerr << "Exception caught : " << std::endl;
 			std::cerr << e.what() << std::endl;
 		}
-	}
-
-	void PipelineItem::updateEngine(void)
-	{
-
 	}
 
 	void PipelineItem::connectionStatusChanged(bool validity)
@@ -348,7 +385,7 @@ using namespace QGPM;
 		return (pipeline!=NULL);
 	}
 
-	const __ReadOnly__HdlTextureFormat& PipelineItem::getOutputFormat(int idx)
+	const __ReadOnly_HdlTextureFormat& PipelineItem::getOutputFormat(int idx)
 	{
 		if(!isValid())
 			throw Exception("PipelineItem::getOutputFormat - Item is not valid.", __FILE__, __LINE__);
@@ -369,17 +406,14 @@ using namespace QGPM;
 		emit removed();
 	}
 
-	void PipelineItem::makeConnection(QTreeWidgetItem* inputItem, Connection* connection)
+	void PipelineItem::makeConnection(QMap<QTreeWidgetItem*, Connection*> connectionsMap)
 	{
 		
 	}
 
 // PipelineManager :
 	PipelineManager::PipelineManager(void)
-	 : 	identifier(NULL),
-		pipelineLayout(NULL),
-		pipeline(NULL),
-		layout(this),
+	 : 	layout(this),
 		menuBar(this)
 	{
 		layout.addWidget(&menuBar);
@@ -390,12 +424,43 @@ using namespace QGPM;
 
 	PipelineManager::~PipelineManager(void)
 	{
-		delete pipeline;
-		pipeline = NULL;
+		for(QMap<void*, PipelineItem*>::iterator it=pipelineItems.begin(); it!=pipelineItems.end(); it++)
+			delete it.value();
+		pipelineItems.clear();
 	}
 
 	void PipelineManager::addImageItem(QGIC::ImageItem* imageItem)
-	void PipelineManager::compileSource(std::string _source, void* _identifier)
+	{
+		
+	}
+
+	void PipelineManager::compileSource(std::string _source, void* _identifier, const QObject* referrer, const char* notificationMember)
+	{
+		// Test if identifier already exists : 
+		QMap<void*, PipelineItem*>::iterator it = pipelineItems.find(_identifier);
+
+		// Update : 
+		if(it!=pipelineItems.end())
+			it.value()->updateSource(_source);
+		else
+		{
+			// Create a new pipeline : 
+			PipelineItem* pipelineItem = new PipelineItem(_source, _identifier, referrer, notificationMember);
+			pipelineItems[_identifier] = pipelineItem;
+			treeWidget.addTopLevelItem(pipelineItem);
+		}
+	}
+
+	void PipelineManager::removeSource(void* _identifier)
+	{
+		QMap<void*, PipelineItem*>::iterator it = pipelineItems.find(_identifier);
+		
+		if(it!=pipelineItems.end())
+		{
+			delete it.value();
+			pipelineItems.erase(it);
+		}
+	}
 
 // PipelineManagerSubWidget :
 #ifdef __USE_QVGL__

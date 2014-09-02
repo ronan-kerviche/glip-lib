@@ -21,6 +21,7 @@ INCLUDEPATH +=	../ExternalTools/Qt \
 HEADERS += 	../ExternalTools/Qt/GLSceneWidget.hpp \	
 		../ExternalTools/NetPBM/NetPBM.hpp \ 	
 		../ExternalTools/Qt/ImageItem.hpp \ 
+		../ExternalTools/Qt/PipelineManager.hpp \
 		../ExternalTools/Qt/UniformsVarsLoaderInterface.hpp \
 		../ExternalTools/Qt/ResourceLoader.hpp \
 		../ExternalTools/Qt/GLSLKeywords.hpp \
@@ -30,6 +31,7 @@ SOURCES += 	./src/main.cpp \
 		../ExternalTools/Qt/GLSceneWidget.cpp \	
 		../ExternalTools/NetPBM/NetPBM.cpp \	
 		../ExternalTools/Qt/ImageItem.cpp \
+		../ExternalTools/Qt/PipelineManager.cpp \
 		../ExternalTools/Qt/UniformsVarsLoaderInterface.cpp \
 		../ExternalTools/Qt/ResourceLoader.cpp \
 		../ExternalTools/Qt/GLSLKeywords.cpp \

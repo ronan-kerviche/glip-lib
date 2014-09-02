@@ -420,7 +420,7 @@ namespace QGED
 			void openRequest(const QString& filename);
 	};
 
-	class MainWidget : public QWidget
+	class CodeEditorTabs : public QWidget
 	{
 		Q_OBJECT
 
@@ -461,8 +461,8 @@ namespace QGED
 			virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;
 
 		public :
-			MainWidget(void);
-			~MainWidget(void);
+			CodeEditorTabs(void);
+			~CodeEditorTabs(void);
 
 		private slots :
 			void tabTitleChanged(void);
@@ -487,20 +487,23 @@ namespace QGED
 			void saveAll(void);
 			void closeTab(void);
 			void closeAll(void);
+			void compilationFailureNotification(void* identifier, Exception compilationError);
 
 		signals :
 			void compileSource(std::string source, void* identifier, const QObject* referrer, const char* notificationMember);
 	};
 
 	#ifdef __USE_QVGL__
-	class CodeEditorSubWidget : public QVGL::SubWidget
+	class CodeEditorTabsSubWidget : public QVGL::SubWidget
 	{	
 		private : 
-			MainWidget mainWidget;
+			CodeEditorTabs codeEditorTabs;
 
 		public :
-			CodeEditorSubWidget(void);
-			~CodeEditorSubWidget(void);
+			CodeEditorTabsSubWidget(void);
+			~CodeEditorTabsSubWidget(void);
+
+			CodeEditorTabs* getCodeEditorPtr(void);
 	};
 	#endif
 }

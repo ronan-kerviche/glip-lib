@@ -1556,8 +1556,8 @@ using namespace QGED;
 		buildMenu();
 	}
 
-// MainWidget :
-	MainWidget::MainWidget(void)
+// CodeEditorTabs :
+	CodeEditorTabs::CodeEditorTabs(void)
 	 : 	currentPath("."),
 		layout(this),
 		menuBarLeft(this),
@@ -1655,13 +1655,13 @@ using namespace QGED;
 		addTab();
 	}
 
-	MainWidget::~MainWidget(void)
+	CodeEditorTabs::~CodeEditorTabs(void)
 	{ 
 		while(tabBar.count()>0)
 			closeTab(0, true);
 	}
 
-	CodeEditor* MainWidget::getCurrentEditor(void)
+	CodeEditor* CodeEditorTabs::getCurrentEditor(void)
 	{
 		int tabID = tabBar.currentIndex();
 
@@ -1676,7 +1676,7 @@ using namespace QGED;
 			return NULL;
 	}
 
-	int MainWidget::getTabIndex(CodeEditor* editor)
+	int CodeEditorTabs::getTabIndex(CodeEditor* editor)
 	{
 		if(editor==NULL || tabBar.count()==0)
 			return -1;
@@ -1699,13 +1699,13 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::setCurrentPath(QString path)
+	void CodeEditorTabs::setCurrentPath(QString path)
 	{
 		QFileInfo info(path);
 		currentPath = info.path();
 	}
 
-	void MainWidget::save(CodeEditor* editor)
+	void CodeEditorTabs::save(CodeEditor* editor)
 	{
 		if(editor==NULL)
 			editor = getCurrentEditor();
@@ -1723,7 +1723,7 @@ using namespace QGED;
 			saveAs(editor);
 	}
 
-	void MainWidget::saveAs(CodeEditor* editor, QString filename)
+	void CodeEditorTabs::saveAs(CodeEditor* editor, QString filename)
 	{
 		if(editor==NULL)
 			editor = getCurrentEditor();
@@ -1744,13 +1744,13 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::wheelEvent(QWheelEvent* event)
+	void CodeEditorTabs::wheelEvent(QWheelEvent* event)
 	{
 		// Accept possibly outgoing wheel events : 
 		event->accept();
 	}
 
-	LayoutLoader::PipelineScriptElements MainWidget::scanSource(const std::string& code) const
+	LayoutLoader::PipelineScriptElements CodeEditorTabs::scanSource(const std::string& code) const
 	{
 		LayoutLoader layoutLoader;
 		LayoutLoader::PipelineScriptElements  elements;
@@ -1765,7 +1765,7 @@ using namespace QGED;
 		return elements;
 	}
 
-	void MainWidget::addTab(const QString& filename)
+	void CodeEditorTabs::addTab(const QString& filename)
 	{
 		static unsigned int counter = 0; 
 	
@@ -1795,7 +1795,7 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::tabTitleChanged(void)
+	void CodeEditorTabs::tabTitleChanged(void)
 	{
 		CodeEditor* ptr = reinterpret_cast<CodeEditor*>(QObject::sender());
 
@@ -1814,7 +1814,7 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::documentModified(bool changed)
+	void CodeEditorTabs::documentModified(bool changed)
 	{
 		CodeEditor* ptr = reinterpret_cast<CodeEditor*>(QObject::sender());
 
@@ -1824,7 +1824,7 @@ using namespace QGED;
 			tabBar.setTabText(tabID, ptr->getTitle());
 	}
 
-	void MainWidget::insert(QString str)
+	void CodeEditorTabs::insert(QString str)
 	{
 		CodeEditor* editor = getCurrentEditor();
 
@@ -1832,7 +1832,7 @@ using namespace QGED;
 			editor->insert(str);
 	}
 
-	void MainWidget::updateElements(void)
+	void CodeEditorTabs::updateElements(void)
 	{
 		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
 		{
@@ -1841,7 +1841,7 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::changeToTab(int tabID)
+	void CodeEditorTabs::changeToTab(int tabID)
 	{
 		int w = tabBar.tabData(tabID).toUInt();
 
@@ -1849,7 +1849,7 @@ using namespace QGED;
 			stack.setCurrentWidget(editors[w]);
 	}
 
-	void MainWidget::open(QStringList filenameList)
+	void CodeEditorTabs::open(QStringList filenameList)
 	{
 		if(filenameList.empty())
 			filenameList = QFileDialog::getOpenFileNames(NULL, "Open Source File(s)", currentPath, "Source Files (*.ppl *.shr *.uvd *.txt)");
@@ -1866,35 +1866,35 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::open(const QString& filename)
+	void CodeEditorTabs::open(const QString& filename)
 	{
 		QStringList list(filename);
 		open(list);
 	}
 
-	void MainWidget::save(void)
+	void CodeEditorTabs::save(void)
 	{
 		save(getCurrentEditor());
 	}
 
-	void MainWidget::saveAs(const QString& filename)
+	void CodeEditorTabs::saveAs(const QString& filename)
 	{
 		saveAs(getCurrentEditor());
 	}
 
-	void MainWidget::saveAll(void)
+	void CodeEditorTabs::saveAll(void)
 	{
 		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
 			save(*it);
 	}
 
-	void MainWidget::updateSettings(void)
+	void CodeEditorTabs::updateSettings(void)
 	{
 		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
 			(*it)->updateSettings(settings);
 	}
 
-	void MainWidget::transferSourceCompilation(void)
+	void CodeEditorTabs::transferSourceCompilation(void)
 	{
 		CodeEditor* editor = getCurrentEditor();
 
@@ -1902,7 +1902,7 @@ using namespace QGED;
 			emit compileSource(editor->getCurrentContent(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this), SLOT(compilationFailureNotification(void*, Exception)));
 	}
 
-	void MainWidget::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)
+	void CodeEditorTabs::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)
 	{
 		CodeEditor* editor = getCurrentEditor();
 
@@ -1910,7 +1910,7 @@ using namespace QGED;
 			editor->search(expression, flags);
 	}
 
-	void MainWidget::transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
+	void CodeEditorTabs::transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
 	{
 		CodeEditor* editor = getCurrentEditor();
 
@@ -1918,7 +1918,7 @@ using namespace QGED;
 			editor->replace(expression, flags, replacement);
 	}
 
-	void MainWidget::transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
+	void CodeEditorTabs::transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
 	{
 		CodeEditor* editor = getCurrentEditor();
 
@@ -1926,13 +1926,13 @@ using namespace QGED;
 			editor->replaceAll(expression, flags, replacement);
 	}
 
-	void MainWidget::transferClearSearchRequest(void)
+	void CodeEditorTabs::transferClearSearchRequest(void)
 	{
 		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
 			(*it)->clearSearch();
 	}
 
-	void MainWidget::closeTab(int tabID, bool imperative)
+	void CodeEditorTabs::closeTab(int tabID, bool imperative)
 	{
 		int idx = tabBar.tabData(tabID).toUInt();
 
@@ -1972,26 +1972,37 @@ using namespace QGED;
 		}
 	}
 
-	void MainWidget::closeTab(void)
+	void CodeEditorTabs::closeTab(void)
 	{
 		closeTab(tabBar.currentIndex());
 	}
 	
-	void MainWidget::closeAll(void)
+	void CodeEditorTabs::closeAll(void)
 	{
 		while(tabBar.count()>0)
 			closeTab(0);
 	}
 
+	void CodeEditorTabs::compilationFailureNotification(void* identifier, Exception compilationError)
+	{
+		std::cout << "CodeEditorTabs::compilationFailureNotification - Temporary error message : " << std::endl;
+		std::cout << compilationError.what() << std::endl;
+	}
+
 // CodeEditorSubWidget
 #ifdef __USE_QVGL__
-	CodeEditorSubWidget::CodeEditorSubWidget(void)
+	CodeEditorTabsSubWidget::CodeEditorTabsSubWidget(void)
 	{
-		setInnerWidget(&mainWidget);
+		setInnerWidget(&codeEditorTabs);
 		setTitle("GLIP-Lib Code Editor");
 	}
 	
-	CodeEditorSubWidget::~CodeEditorSubWidget(void)
+	CodeEditorTabsSubWidget::~CodeEditorTabsSubWidget(void)
 	{ }
+
+	CodeEditorTabs* CodeEditorTabsSubWidget::getCodeEditorPtr(void)
+	{
+		return &codeEditorTabs;
+	}
 #endif
 

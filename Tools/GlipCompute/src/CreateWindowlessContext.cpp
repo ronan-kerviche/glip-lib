@@ -25,7 +25,7 @@ void createWindowlessContext(void)
 	Display* display = XOpenDisplay( displayName );
 
 	if(display==NULL)
-		throw Glip::Exception("createWindowlessContext - Could open a display.", __FILE__, __LINE__);
+		throw Glip::Exception("createWindowlessContext - Could not open a display.", __FILE__, __LINE__);
 
 	static int visualAttribs[] = { None };
 	int numberOfFramebufferConfigurations = 0;
