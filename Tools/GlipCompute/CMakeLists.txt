@@ -33,7 +33,7 @@ if(WIN32) # Windows specifics
 
 	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
 
-else() # Linux psecifics
+else() # Linux specifics
 	#For Cleaning purpose : set(CMAKE_CXX_FLAGS "-pedantic -Wall")
 endif()
 
@@ -41,7 +41,6 @@ set(EXECUTABLE_OUTPUT_PATH .)
 
 # Requirements: 
 find_package(OpenGL REQUIRED)
-
 
 # Includes paths :
 include_directories(
@@ -68,5 +67,5 @@ add_executable(
 )
 
 # Link : 
-target_link_libraries(glip-compute GL freeimageplus glip)
+target_link_libraries(glip-compute X11 GL freeimageplus glip)
 
