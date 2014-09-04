@@ -176,6 +176,7 @@
 		QGPM::PipelineManagerSubWidget* manager = new QGPM::PipelineManagerSubWidget;
 		window.addSubWidget(manager);
 		QObject::connect(codeEditorTabs->getCodeEditorPtr(), SIGNAL(compileSource(std::string, void*, const QObject*, const char*)), manager->getManagerPtr(), SLOT(compileSource(std::string, void*, const QObject*, const char*)));
+		QObject::connect(collection->getCollectionPtr(), SIGNAL(imageItemAdded(QGIC::ImageItem*)), manager->getManagerPtr(), SLOT(addImageItem(QGIC::ImageItem*)));
 	}
 
 	IHM::~IHM(void)

@@ -306,8 +306,8 @@ namespace QGIC
 			void addActionToMenu(QAction* action);
 
 		signals :
-			void imageItemAdded(ImageItem* imageItem);
-			void show(ImageItem* imageItem);
+			void imageItemAdded(QGIC::ImageItem* imageItem);
+			void show(QGIC::ImageItem* imageItem);
 	};
 
 	#ifdef __USE_QVGL__
@@ -324,7 +324,7 @@ namespace QGIC
 			ImageItem* reversedSearch(QVGL::View* view);
 
 		private slots :
-			void showImageItem(ImageItem* imageItem);
+			void showImageItem(QGIC::ImageItem* imageItem);
 			void showImageItem(void);
 			//void updateImageItem(void);
 			void imageItemViewRemoved(void);

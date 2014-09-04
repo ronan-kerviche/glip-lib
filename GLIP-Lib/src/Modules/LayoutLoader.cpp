@@ -1458,7 +1458,7 @@
 		}
 		catch(Exception& ex)
 		{
-			Exception m("Exception caught while processing pipeline file : ", __FILE__, __LINE__);
+			Exception m("Exception caught while processing pipeline script : ", __FILE__, __LINE__);
 			throw m + ex;
 		}
 	}

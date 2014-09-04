@@ -1,5 +1,5 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
-REQUIRED_FORMAT:format(textureInput)
+REQUIRED_FORMAT:format(inputFormat0)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
 SHADER_SOURCE:HelloWorld()

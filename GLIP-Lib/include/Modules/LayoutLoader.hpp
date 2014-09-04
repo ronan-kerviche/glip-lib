@@ -261,7 +261,7 @@ Loading Example :
 		// For a single pipeline :
 		Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");
 
-		// use them, see Glip::Core::Pipeline documentation...
+		// use them, see Glip::CorePipeline::Pipeline documentation...
 
 		// Clean all :
 		delete myPipeline1;
@@ -409,7 +409,7 @@ Loading Example :
 \class LayoutWriter
 \brief Get equivalent pipeline code from a pipeline layout.
 
-The layout writer enables you to write a pipeline to a Pipeline Script file. Note that the uniforms values might be lost a loading. In order to avoid this problem, you have to use a UniformsVarsLoader to store and then load the correct profile (all the uniforms values).
+The layout writer enables you to write a pipeline to a Pipeline Script file. Note that the uniforms values might be lost at loading. In order to avoid this problem, you have to use a UniformsVarsLoader to store and then load the correct profile (all the uniforms values).
 \code
 	LayoutWriter writer;
 	

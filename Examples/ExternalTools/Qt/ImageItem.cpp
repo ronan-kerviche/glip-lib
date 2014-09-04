@@ -1593,7 +1593,7 @@ using namespace QGIC;
 
 		collectionWidget.addActionToMenu(&mainViewsTableAction);
 
-		QObject::connect(&collectionWidget, 	SIGNAL(show(ImageItem*)), 	this, SLOT(showImageItem(ImageItem*)));
+		QObject::connect(&collectionWidget, 	SIGNAL(show(QGIC::ImageItem*)), this, SLOT(showImageItem(QGIC::ImageItem*)));
 		QObject::connect(&mainViewsTableAction,	SIGNAL(triggered()),		this, SLOT(showMainViewsTable()));
 	}
 
@@ -1613,7 +1613,7 @@ using namespace QGIC;
 			return key.front();
 	}
 
-	void ImageItemsCollectionSubWidget::showImageItem(ImageItem* imageItem)
+	void ImageItemsCollectionSubWidget::showImageItem(QGIC::ImageItem* imageItem)
 	{
 		QMap<ImageItem*, QVGL::View*>::iterator it = views.find(imageItem);
 

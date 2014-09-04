@@ -41,9 +41,9 @@ namespace QGPM
 	{
 		PipelineHeaderItemType,
 		InputsHeaderItemType,
-		InputItem,
+		InputItemType,
 		OutputsHeaderItemType,
-		OutputItem,
+		OutputItemType,
 		UniformsHeaderItemType
 	};
 
@@ -70,7 +70,7 @@ namespace QGPM
 			virtual bool selfTest(PipelineItem* _pipelineItem) const = 0;
 			virtual const __ReadOnly_HdlTextureFormat& getFormat(void) const = 0;
 			virtual HdlTexture& getTexture(void) = 0;
-	
+
 		signals :
 			void modified(void);
 			void statusChanged(bool valid);
@@ -117,6 +117,66 @@ namespace QGPM
 			bool selfTest(PipelineItem* _pipelineItem) const;
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
+
+		public slots :
+			void safetyFuse(void);
+	};
+
+	class InputPortItem : public QObject, public QTreeWidgetItem
+	{
+		Q_OBJECT
+
+		private : 
+			PipelineItem*	parentPipelineItem;
+			int		portIdx;
+			Connection*	connection;
+
+		private slots : 
+			void connectionModified(void);
+			void connectionStatusChanged(bool validity);
+			void connectionDestroyed(void);
+
+		public :
+			InputPortItem(PipelineItem* _parentPipeline, int _portIdx);
+			~InputPortItem(void);
+
+			PipelineItem* getParentPipelineItem(void) const;
+			QString getName(void) const;
+			bool isConnected(void) const;
+			void connect(Connection* _connection); // Takes ownership of the connection.
+			Connection* getConnection(void); // Returns the current connection (possibly NULL).
+			void setName(std::string& name);
+
+			static InputPortItem* getPtrFromGenericItem(QTreeWidgetItem* item);
+
+		signals : 
+			void connectionAdded(int portIdx);
+			void connectionContentModified(int portIdx);
+			void connectionStatusChanged(int portIdx, bool validity);			
+			void connectionClosed(int portIdx);
+	};
+
+	class OutputPortItem : public QObject, public QTreeWidgetItem
+	{
+		Q_OBJECT
+
+		private : 
+			PipelineItem*	parentPipelineItem;
+			int		portIdx;
+
+		public : 
+			OutputPortItem(PipelineItem* _parentPipeline, int _portIdx);
+			~OutputPortItem(void);
+
+			PipelineItem* getParentPipelineItem(void) const;
+			QString getName(void) const;
+			ConnectionToPipelineOutput* getConnection(void); // Returns a new connection to this output.
+			void setName(std::string& name);
+
+			static OutputPortItem* getPtrFromGenericItem(QTreeWidgetItem* item);
+
+		signals : 
+			void discardConnection(void);			
 	};
 
 	class PipelineItem : public QObject, public QTreeWidgetItem
@@ -132,47 +192,92 @@ namespace QGPM
 			LayoutLoader::PipelineScriptElements	elements;
 			PipelineLayout*				pipelineLayout;
 			Pipeline*				pipeline;
-			QVector<Connection*>			inputConnectionsList;
+			QTreeWidgetItem				inputsNode,
+								outputsNode;
+			QVector<InputPortItem*>			inputPortItems;
+			QVector<OutputPortItem*>		outputPortItems;
 			int					cellA,
 								cellB,
 								computeCount;
-			QTreeWidgetItem				inputsNode,
-								outputsNode;
-			QList<QTreeWidgetItem*>			inputItems,
-								outputItems;
+			
 
 			std::string getInputFormatName(int idx);
 
 			void preInterpret(void);
+			void refurnishPortItems(void);
 			bool checkConnections(void);
-			void interpret(void);
 			void compile(void);
 			void compute(void);
 
 		private slots : 
-			void connectionStatusChanged(bool validity);
-			void connectionDestroyed(void);
+			void connectionAdded(int portIdx);
+			void connectionContentModified(int portIdx);
+			void connectionStatusChanged(int portIdx, bool validity);			
+			void connectionClosed(int portIdx);
 
 		public : 
 			PipelineItem(const std::string& _source, void* _identifier, const QObject* _referrer, const char* notificationMember);
 			~PipelineItem(void);
 
+			QString getName(void) const;
 			void updateSource(const std::string& _source);
-
 			bool isValid(void) const;
+			const QVector<OutputPortItem*>&	getOutputPortItems(void) const;
+			QString getInputPortName(int idx) const;
+			QString getOutputPortName(int idx) const;
 			const __ReadOnly_HdlTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
 	
 			void remove(void);
-
-		public slots :
-			void makeConnection(QMap<QTreeWidgetItem*, Connection*> connectionsMap);
 
 		signals : 	
 			void statusChanged(void);
 			void removed(void);
 			void referrerShowUp(void);
 			void compilationFailureNotification(void* identifier, Exception compilationError);
+			void pipelineInputPortAdded(InputPortItem* inputPortItem);
+			void pipelineOutputPortAdded(OutputPortItem* outputPortItem);
+	};
+
+	class ConnectionsMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private : 
+			struct PotentialConnectionMap
+			{
+				QMap<InputPortItem*, Connection*> connectionsMap;
+				
+				PotentialConnectionMap(void);
+				~PotentialConnectionMap(void);
+
+				void add(InputPortItem* inputPortItem, QGIC::ImageItem* imageItem);
+				void add(InputPortItem* inputPortItem, PipelineItem* pipelineItem, int outputIdx);
+				void apply(void);
+			};
+
+			QAction					noImageConnectionAction,
+								noPipelineConnectionAction;
+			QMenu					imageItemsMenu,
+								pipelineItemsMenu;
+			QList<QGIC::ImageItem*>			imageItems;
+			QList<PipelineItem*>			pipelineItems;
+			QMap<QAction*, PotentialConnectionMap*>	potentialConnectionsMapMap;
+	
+		private slots : 
+			void imageItemDestroyed(void);
+			void pipelineItemDestroyed(void);
+			void actionTriggered(void);
+			void actionDestroyed(void);
+
+		public : 
+			ConnectionsMenu(QWidget* parent=NULL);
+			~ConnectionsMenu(void);
+		
+		public slots :
+			void addImageItem(QGIC::ImageItem* imageItem);
+			void addPipelineItem(QGPM::PipelineItem* pipelineItem);
+			void updateToSelection(QList<QTreeWidgetItem*>& selection);
 	};
 
 	class PipelineManager : public QWidget
@@ -184,10 +289,11 @@ namespace QGPM
 			QList<QGIC::ImageItem*>			imageItems;
 			QVBoxLayout				layout;
 			QMenuBar				menuBar;
+			ConnectionsMenu				connectionsMenu;
 			QTreeWidget				treeWidget;
 
 		private slots : 
-			void imageItemDestroyed(void);
+			void itemSelectionChanged(void);
 
 		public : 
 			PipelineManager(void);
@@ -197,6 +303,9 @@ namespace QGPM
 			void addImageItem(QGIC::ImageItem* imageItem); 
 			void compileSource(std::string _source, void* _identifier, const QObject* referrer, const char* notificationMember);
 			void removeSource(void* _identifier);
+
+		signals : 
+			void pipelineItemAdded(QGPM::PipelineItem* pipelineItem);
 	};
 
 	#ifdef __USE_QVGL__
