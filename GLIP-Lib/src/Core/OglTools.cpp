@@ -193,18 +193,24 @@ using namespace Glip::CoreGL;
 		#define Err( errorcode, message) case errorcode: return message ;
 		switch(err)
 		{
-			Err( GL_INVALID_ENUM,				"Invalid Enum")
-			Err( GL_INVALID_VALUE,				"Invalid Value")
-			Err( GL_INVALID_OPERATION, 			"Invalid Operation")
-			Err( GL_STACK_OVERFLOW,				"Stack OverFlow")
-			Err( GL_STACK_UNDERFLOW,			"Stack UnderFlow")
-			Err( GL_OUT_OF_MEMORY,				"Out of Memory")
-			Err( GL_TABLE_TOO_LARGE,			"Table too large")
-			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation (possible incomplete texture)")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
-			Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer (possible incompatibility with texture format)")
-			case GL_NO_ERROR : 				return "(No error)";
-			default          : 				return "Unknown error (Code : " + toString(err) + ")";
+			Err( GL_INVALID_ENUM,					"Invalid Enum")
+			Err( GL_INVALID_VALUE,					"Invalid Value")
+			Err( GL_INVALID_OPERATION, 				"Invalid Operation")
+			Err( GL_STACK_OVERFLOW,					"Stack OverFlow")
+			Err( GL_STACK_UNDERFLOW,				"Stack UnderFlow")
+			Err( GL_OUT_OF_MEMORY,					"Out of Memory")
+			Err( GL_TABLE_TOO_LARGE,				"Table too large")
+			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,		"Invalid framebuffer operation (possible incomplete texture)")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,		"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,	"The framebuffer does not have at least one image attached to it.")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,		"The value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER,		"GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,		"Either the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers; if the value of GL_TEXTURE_SAMPLES is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of GL_TEXTURE_SAMPLES or  if the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not the same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not GL_TRUE for all attached textures.")
+			Err( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,		"Any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.")
+			Err( GL_FRAMEBUFFER_UNSUPPORTED,			"Unsupported framebuffer (possible incompatibility with texture format)")
+			case GL_FRAMEBUFFER_COMPLETE :				return "(Framebuffer complete)";
+			case GL_NO_ERROR : 					return "(No error)";
+			default          : 					return "Unknown error (Code : " + toString(err) + ")";
 		}
 		#undef Err
 	}
@@ -226,19 +232,24 @@ using namespace Glip::CoreGL;
 			#define Err( errorcode, message) case errorcode: std::cout << "OpenGL error : " << message << std::endl; break;
 			switch(err)
 			{
-				Err( GL_INVALID_ENUM,				"Invalid Enum")
-				Err( GL_INVALID_VALUE,				"Invalid Value")
-				Err( GL_INVALID_OPERATION, 			"Invalid Operation")
-				Err( GL_STACK_OVERFLOW,				"Stack OverFlow")
-				Err( GL_STACK_UNDERFLOW,			"Stack UnderFlow")
-				Err( GL_OUT_OF_MEMORY,				"Out of Memory")
-				Err( GL_TABLE_TOO_LARGE,			"Table too large")
-				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,	"Invalid framebuffer operation (possible incomplete texture)")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,	"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
-				Err( GL_FRAMEBUFFER_UNSUPPORTED,		"Unsupported framebuffer (possible incompatibility with texture format)")
-
-				case GL_NO_ERROR : if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
-				default          :                       std::cout << "OpenGL error : Unknown error (Code : " << err << ')' << std::endl; break;
+				Err( GL_INVALID_ENUM,					"Invalid Enum")
+				Err( GL_INVALID_VALUE,					"Invalid Value")
+				Err( GL_INVALID_OPERATION, 				"Invalid Operation")
+				Err( GL_STACK_OVERFLOW,					"Stack OverFlow")
+				Err( GL_STACK_UNDERFLOW,				"Stack UnderFlow")
+				Err( GL_OUT_OF_MEMORY,					"Out of Memory")
+				Err( GL_TABLE_TOO_LARGE,				"Table too large")
+				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,		"Invalid framebuffer operation (possible incomplete texture)")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,		"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,	"The framebuffer does not have at least one image attached to it.")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,		"The value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER,		"GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,		"Either the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers; if the value of GL_TEXTURE_SAMPLES is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of GL_TEXTURE_SAMPLES or  if the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not the same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not GL_TRUE for all attached textures.")
+				Err( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,		"Any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.")
+				Err( GL_FRAMEBUFFER_UNSUPPORTED,			"Unsupported framebuffer (possible incompatibility with texture format)")
+				case GL_FRAMEBUFFER_COMPLETE :				if(quietSituations){ std::cout << "OpenGL error : Framebuffer complete" << std::endl; } break;
+				case GL_NO_ERROR : 					if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
+				default          :                       		std::cout << "OpenGL error : Unknown error (Code : " << err << ')' << std::endl; break;
 			}
 			#undef Err
 		}
@@ -638,7 +649,7 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_NEAREST_MIPMAP_LINEAR )
 		KEYWORD_PAIR( GL_LINEAR_MIPMAP_LINEAR )
 
-		// Errors
+		// Errors, no-error
 		KEYWORD_PAIR( GL_INVALID_ENUM )
 		KEYWORD_PAIR( GL_INVALID_VALUE )
 		KEYWORD_PAIR( GL_INVALID_OPERATION )
@@ -647,8 +658,15 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_OUT_OF_MEMORY )
 		KEYWORD_PAIR( GL_TABLE_TOO_LARGE )
 		KEYWORD_PAIR( GL_INVALID_FRAMEBUFFER_OPERATION_EXT )
+
+		KEYWORD_PAIR( GL_FRAMEBUFFER_COMPLETE )
 		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT )
+		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT )
+		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER )
+		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER )
 		KEYWORD_PAIR( GL_FRAMEBUFFER_UNSUPPORTED )
+		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE )
+		KEYWORD_PAIR( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS )
 
 		// GeBO packing
 		KEYWORD_PAIR( GL_PIXEL_PACK_BUFFER )

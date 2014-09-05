@@ -407,9 +407,9 @@
 		if(renderer.getAttachmentCount()<getNumOutputPort())
 			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getFullName() + " has outputs.", __FILE__, __LINE__);
 
-		// Prepare the renderer
+		// Prepare the renderer	
 			renderer.beginRendering(getNumOutputPort());
-			
+	
 		// Enable states
 			if(isBlendingEnabled())
 			{
@@ -438,7 +438,7 @@
 		// Load the shader
 			prgm->use();
 			
-		// Test on first run ; 
+		// Test on first run : 
 			if(firstRun)
 			{
 				const GLenum err = glGetError();

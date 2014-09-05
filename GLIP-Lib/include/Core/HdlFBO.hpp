@@ -72,6 +72,7 @@
 					void		bind(void);
 					HdlTexture* 	operator[](int i);
 					int		getSize(bool askDriver = false);
+					GLenum		test(void);
 
 					// Static tools :
 					static int    getMaximumColorAttachment(void);

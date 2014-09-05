@@ -260,6 +260,22 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
+	\fn     int HdlFBO::test(void)
+	\brief  Test the validity of a FBO object
+	\return A error code among : GL_FRAMEBUFFER_COMPLETE, GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT, GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT, GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER, GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER, GL_FRAMEBUFFER_UNSUPPORTED, GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE, GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS. See https://www.opengl.org/wiki/GLAPI/glCheckFramebufferStatus for more information.
+	**/
+	GLenum HdlFBO::test(void)
+	{
+		bind();
+
+		GLenum returnCode = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		HdlFBO::unbind();
+
+		return returnCode;
+	}
+
+	/**
 	\fn     int HdlFBO::getMaximumColorAttachment(void)
 	\brief  Get the maximum number of attachment points.
 	\return The maximum number of attachment points.
