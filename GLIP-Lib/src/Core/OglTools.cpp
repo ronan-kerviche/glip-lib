@@ -716,7 +716,7 @@ using namespace Glip::CoreGL;
 	\fn GLenum Glip::CoreGL::glFromString(const std::string& name)
 	\brief Get the parameter from its name in a string.
 	\param name The GLenum parameter name.
-	\return The corresponding enum.
+	\return The corresponding enum or GL_FALSE if no enum was found (which might be a valid answer).
 	**/
 	GLenum Glip::CoreGL::glFromString(const std::string& name)
 	{

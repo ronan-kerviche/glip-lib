@@ -90,7 +90,15 @@ PROCESS\n\
 \n\
   This description must match the number of input of the pipeline, and be\n\
 given in the correct order. As for the outputs, it is possible to discard\n\
-one by using the keyword VOID instead of a filename. It is also possible\n\
+one by using the keyword VOID instead of a filename. Filtering can be\n\
+specified per input with the following set of commands :\n\
+\n\
+GL_TEXTURE_MIN_FILTER( filterForInput0, filterForInput1, ...)\n\
+GL_TEXTURE_MAG_FILTER( filterForInput0, filterForInput1, ...)\n\
+GL_TEXTURE_WRAP_S( filterForInput0, filterForInput1, ...)\n\
+GL_TEXTURE_WRAP_T( filterForInput0, filterForInput1, ...)\n\
+\n\
+It is also possible\n\
 to supply specific Uniforms variables on a per command basis via two\n\
 methods. The first, from a file, by adding the following line in the body\n\
 of the command :\n\
@@ -189,6 +197,22 @@ Link : <http://glip-lib.sourceforge.net/>\
 	 : 	line(1),
 		uniformsLine(1)
 	{ }
+
+	void ProcessCommand::setSafeParameterSettings(void)
+	{
+		#define TEST_AND_FILL( targetVector, defaultValue ) \
+			if(! targetVector .empty() && targetVector.size()!=inputFilenames.size()) \
+				throw Glip::Exception("ProcessCommand::setSafeParameterSettings - " STR(targetVector) " is not empty but does not contain the same number of elements as the inputs list (internal error).", __FILE__, __LINE__); \
+			else if( targetVector .empty()) \
+				targetVector .assign(inputFilenames.size(), defaultValue );
+			
+			TEST_AND_FILL( inputMinFilterSettings , GL_NEAREST )
+			TEST_AND_FILL( inputMagFilterSettings ,GL_NEAREST )
+			TEST_AND_FILL( inputWrapSSettings , GL_CLAMP )
+			TEST_AND_FILL( inputWrapTSettings , GL_CLAMP )
+
+		#undef TEST_AND_FILL
+	}
 
 // Tools : 
 	std::string loadUniforms(const std::string& str)
@@ -289,6 +313,51 @@ Link : <http://glip-lib.sourceforge.net/>\
 							command.inputFilenames = filenamesList;
 						else
 							command.outputFilenames = filenamesList;
+					}
+					else if(itSub->strKeyword==Glip::glParamName(GL_TEXTURE_MAG_FILTER) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_MIN_FILTER) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_WRAP_S) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_WRAP_T))
+					{
+						// Test :
+						if(command.inputFilenames.empty())
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" was defined before the INPUT command.", __FILE__, __LINE__);
+						if(itSub->arguments.size()!=command.inputFilenames.size())
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" contains " + Glip::toString(itSub->arguments.size()) + " arguments while " + Glip::toString(command.inputFilenames.size()) + " inputs were defined.", __FILE__, __LINE__);
+
+						// Find the target :
+						GLenum targetIndex = Glip::glFromString(itSub->strKeyword);
+						std::vector<unsigned int>* target = NULL;
+
+						// Test the target :		
+						switch(targetIndex)
+						{
+							case GL_TEXTURE_MAG_FILTER :
+								target = &command.inputMinFilterSettings;
+								break;
+							case GL_TEXTURE_MIN_FILTER :
+								target = &command.inputMagFilterSettings;
+								break;
+							case GL_TEXTURE_WRAP_S :
+								target = &command.inputWrapSSettings;
+								break;
+							case GL_TEXTURE_WRAP_T :
+								target = &command.inputWrapTSettings;
+								break;
+							default :
+								throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" is not referenced (internal error).", __FILE__, __LINE__);
+						}
+		
+						if(!target->empty())
+							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\", data was already set.", __FILE__, __LINE__);
+
+						// Load the values :
+						for(std::vector<std::string>::iterator itArg=itSub->arguments.begin(); itArg!=itSub->arguments.end(); itArg++)
+						{
+							GLenum glArg = Glip::glFromString(*itArg);
+	
+							if(glArg==GL_FALSE)
+								throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\", cannot read argument : \"" + (*itArg) + "\".", __FILE__, __LINE__);
+							else
+								target->push_back(glArg);			
+						}
 					}
 					else if(itSub->strKeyword=="UNIFORMS")
 					{
@@ -590,7 +659,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 				}
 
 				if(id<0 || id>=elements.mainPipelineInputs.size())
-					throw Glip::Exception("Input port index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s), indexing start at 0).", __FILE__, __LINE__);
+					throw Glip::Exception("Input port of index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s), indexing start at 0).", __FILE__, __LINE__);
 			}
 			
 			// Set : 
@@ -628,7 +697,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 				}
 
 				if(id<0 || id>=elements.mainPipelineOutputs.size())
-					throw Glip::Exception("Output port index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s), indexing start at 0).", __FILE__, __LINE__);
+					throw Glip::Exception("Output port of index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s), indexing start at 0).", __FILE__, __LINE__);
 			}
 			
 			// Set : 
@@ -638,7 +707,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 		}
 	}
 
-	int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands)
+	int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, std::vector<ProcessCommand>& commands)
 	{
 		int returnCode = 0;
 
@@ -666,12 +735,15 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 			deviceMemoryManager = new DeviceMemoryManager(memorySize);
 	
-			for(std::vector<ProcessCommand>::const_iterator itCommand = commands.begin(); itCommand!=commands.end(); itCommand++)
+			for(std::vector<ProcessCommand>::iterator itCommand = commands.begin(); itCommand!=commands.end(); itCommand++)
 			{
 				std::string commandName;
 	
 				if(!itCommand->name.empty())
 					commandName = " in command " + itCommand->name;
+
+				// Fill in the filter settings :
+				itCommand->setSafeParameterSettings();
 
 				// Test number of outputs : 
 				if(elements.mainPipelineInputs.size()>itCommand->inputFilenames.size())
@@ -685,8 +757,15 @@ Link : <http://glip-lib.sourceforge.net/>\
 				sortPorts(elements, *itCommand, inputsSorted, outputsSorted);
 
 				// Load the input images in the correct order :
-				for(std::vector<std::string>::iterator it=inputsSorted.begin(); it!=inputsSorted.end(); it++)
-					inputTextures.push_back(deviceMemoryManager->get(*it));
+				for(int k=0; k<inputsSorted.size(); k++)
+				{
+					Glip::CoreGL::HdlTexture* texture = deviceMemoryManager->get(inputsSorted[k]); 
+					inputTextures.push_back(texture);
+					texture->setSetting(GL_TEXTURE_MIN_FILTER, 	itCommand->inputMinFilterSettings[k]);
+					texture->setSetting(GL_TEXTURE_MAG_FILTER, 	itCommand->inputMagFilterSettings[k]);
+					texture->setSetting(GL_TEXTURE_WRAP_S, 		itCommand->inputWrapSSettings[k]);
+					texture->setSetting(GL_TEXTURE_WRAP_T, 		itCommand->inputWrapTSettings[k]);
+				}
 
 				// Set the variables :
 				const int maxSize = 1024;

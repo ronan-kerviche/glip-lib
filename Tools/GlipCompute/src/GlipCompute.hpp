@@ -25,16 +25,21 @@
 	{
 		int							line;
 		std::string						name;
-		std::vector< std::pair<std::string, std::string> >	inputFilenames,
-									outputFilenames;
+		std::vector< std::pair<std::string, std::string> >	inputFilenames,		// First String is either the name or the index of the port.
+									outputFilenames;	// The second is the name of the resource to plug there.
+		std::vector<unsigned int>				inputMinFilterSettings,
+									inputMagFilterSettings,
+									inputWrapSSettings,
+									inputWrapTSettings;
 		int							uniformsLine;
 		std::string						uniformVariables;
 
 		ProcessCommand(void);
+		void setSafeParameterSettings(void);
 	};
 
 	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, std::string& inputFormatString, std::vector<ProcessCommand>& commands);
-	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::vector<ProcessCommand>& commands);
+	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, std::vector<ProcessCommand>& commands);
 
 #endif
 
