@@ -43,12 +43,13 @@
 			{
 				protected :
 					// Data
-					int	imgW, imgH; 						// Image parameters.
+					int	width, height; 						// Image parameters.
 					GLenum	mode, depth, minFilter, magFilter, wraps, wrapt;  	// Image format, texture filtering and wrapping modes.
-					int	baseLevel, maxLevel;                			// MipMap information.
+					int	baseLevel, maxLevel;                			// MipMap information.	
+					size_t	alignment;
 
 					// Protected constructors : 
-					__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
 
 				public :
@@ -59,6 +60,8 @@
 					int	getNumPixels	(void) const;
 					int	getNumChannels  (void) const;
 					int	getNumElements	(void) const;
+					int	getAlignment	(void) const;
+				virtual size_t	getLineSize	(void) const;
 				virtual size_t	getSize     	(void) const;
 					int	getChannelDepth (void) const;
 					GLenum	getGLMode   	(void) const;
@@ -98,7 +101,7 @@
 			{
 				public :
 					// reproduce constructor :
-					HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt);
 
 					// Writing Functions
@@ -142,10 +145,10 @@
 					int	getSizeOnGPU(int m=0);
 					void	bind(GLenum unit=GL_TEXTURE0_ARB);
 					void	bind(int unit);
-					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
-					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
+					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=-1);
+					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=-1);
 					void	fill(char dataByte);
-					void	read(GLvoid *data, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=1);
+					void	read(GLvoid *data, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=-1);
 					GLenum	getInternalMode(void);
 					bool	checkForConsistency(bool verbose = false);
 					void	setMinFilter(GLenum mf);

@@ -142,17 +142,22 @@
 	**/
 	unsigned int ImageBuffer::getIndex(unsigned int x, unsigned int y, GLenum channel) const
 	{
-		return getPixelIndex(x,y)*descriptor.numChannels + getChannelIndex(channel);
+		return getPixelIndex(x,y)*descriptor.numChannels() + getChannelIndex(channel);
+	}
+
+	size_t ImageBuffer::getPosition(unsigned int x, unsigned int y, GLenum channel) const
+	{
+		return (y*getLineSize() + x*descriptor.numChannels()) + getChannelIndex(channel);
 	}
 
 	/**
-	\fn unsigned int ImageBuffer::getRowLength(void) const
+	\fn unsigned int ImageBuffer::getLineLength(void) const
 	\brief Get the row length (number of pixels on a row times the number of components).
 	\return The row length, in number of components actually present on a row.
 	**/
-	unsigned int ImageBuffer::getRowLength(void) const
+	unsigned int ImageBuffer::getLineLength(void) const
 	{
-		return getWidth()*descriptor.numChannels;
+		return getWidth()*descriptor.numChannels();
 	}
 
 	/**

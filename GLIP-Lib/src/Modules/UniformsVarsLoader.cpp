@@ -804,7 +804,7 @@
 	}
 
 	/**
-	\fn void UniformsVarsLoader::load(std::string source, bool replace)
+	\fn void UniformsVarsLoader::load(std::string source, bool replace, int lineOffset)
 	\brief Loads a set of uniforms variables for one, or multiple, pipelines.
 	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\\n').
 	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
@@ -1060,6 +1060,7 @@
 	\brief Copy the possibly loaded set of uniforms variables to a pipeline (for the corresponding name of the Pipeline instance).
 	\param pipeline The pipeline to which the data has to be copied (if relevant).
 	\param forceWrite If set to false, only the variable marked as modified will be loaded (see UniformsVarsLoader::Resource::modified).
+	\param silent If true, no exception will be reported (aside from internal exception).
 	\return The total number of uniforms variables actually copied.
 	**/
 	int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const

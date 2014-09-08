@@ -38,7 +38,76 @@ namespace Glip
 
 	namespace Modules
 	{
-		// Structure :
+		// Structures :
+/*
+\class PixelIterator
+\brief Iterator on pixels.
+*/
+		/*class GLIP_API PixelIterator : public __ReadOnly_HdlTextureFormat
+		{
+			public : 
+				enum Direction
+				{
+					/// Go right, then down.
+					RightDown,
+					/// Go left, then down.
+					LeftDown,
+					/// Go right, then up.
+					RightUp,
+					/// Go left, then up.
+					LeftUp
+				};
+
+				enum Motion
+				{
+					/// Next pixel.
+					Next,
+					/// Previous pixel.
+					Previous,
+					/// Start of the current line.
+					StartOfLine,
+					/// End of the current line.
+					EndOfLine,
+					/// Start of the image.
+					StartOfImage,
+					/// End of the image.
+					EndOfImage
+				};
+
+			private : 
+				Direction				direction;
+				int 					x, y;
+				unsigned char				*origin,
+									*position;
+				const HdlTextureFormatDescriptor&	descriptor;
+				std::map<GLenum, int> 			offsets;
+
+			public : 
+				PixelIterator(const __ReadOnly_HdlTextureFormat& format, unsigned char* _origin, const Direction& _direction=RightDown);
+
+				// Information : 
+				bool isValid(void) const;
+				unsigned int& getX(void) const;
+				unsigned int& getY(void) const;
+
+				// Movement : 
+				void move(const Motion& motion);
+				void next(void);
+				void previous(void);
+				void statOfLine(void);
+				void endOfLine(void);
+				void jump(int _x, int _y);
+				
+				// Read : 
+				signed long long read(GLenum channel, GLenum depth=GL_NONE) const;
+				float readNormalized(GLenum channel) const;	
+
+				// Write : 
+				void write(GLenum channel, signed long long value, GLenum depth=GL_NONE);
+				void writeNormalized(GLenum channel, float value);
+				void write(const PixelIterator& iterator, int xSource, int ySource);
+		};*/
+
 /**
 \class ImageBuffer
 \brief Host-side image buffer.
@@ -64,7 +133,8 @@ namespace Glip
 				unsigned int getPixelIndex(unsigned int x, unsigned int y) const;
 				unsigned int getChannelIndex(GLenum channel) const;
 				unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const;
-				unsigned int getRowLength(void) const;
+				size_t getPosition(unsigned int x, unsigned int y, GLenum channel) const;
+				unsigned int getLineLength(void) const;
 				unsigned char* getBuffer(void);
 				const unsigned char* getBuffer(void) const;
 

@@ -336,11 +336,13 @@
 	}
 
 // HdlDynamicTable :
-	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices)
+	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices, int _alignment, bool _proxy)
 	 :	type(_type),
 		rows(_rows),
 		columns(_columns),
-		slices(_slices)
+		slices(_slices),
+		alignment(_alignment),
+		proxy(_proxy)
 	{ }
 
 	HdlDynamicTable::~HdlDynamicTable(void)
@@ -354,6 +356,46 @@
 	const GLenum& HdlDynamicTable::getGLType(void) const
 	{
 		return type;
+	}
+	
+	/**
+	\fn bool HdlDynamicTable::isFloatingPointType(void) const
+	\brief Test if the data is floatting point.
+	\return True if the data is floatting point.
+	**/
+	bool HdlDynamicTable::isFloatingPointType(void) const
+	{
+		return (type==GL_FLOAT) || (type==GL_DOUBLE);
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isIntegerType(void) const
+	\brief Test if the data is integer.
+	\return True if the data is integer.
+	**/
+	bool HdlDynamicTable::isIntegerType(void) const
+	{
+		return (type==GL_BYTE) && (type==GL_UNSIGNED_BYTE) && (type==GL_SHORT) && (type==GL_UNSIGNED_SHORT) && (type==GL_INT) && (type==GL_UNSIGNED_INT);
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isFloatingPointType(void) const
+	\brief Test if the data is boolean.
+	\return True if the data is boolean.
+	**/
+	bool HdlDynamicTable::isBooleanType(void) const
+	{
+		return (type==GL_BOOL);
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isFloatingPointType(void) const
+	\brief Test if the data is unsigned.
+	\return True if the data is unsigned.
+	**/
+	bool HdlDynamicTable::isUnsignedType(void) const
+	{
+		return (type==GL_UNSIGNED_BYTE) || (type==GL_UNSIGNED_SHORT) || (type==GL_UNSIGNED_INT);
 	}
 
 	/**
@@ -397,6 +439,26 @@
 	}
 
 	/**
+	\fn const int& HdlDynamicTable::getAlignment(void) const
+	\brief Get the data alignment.
+	\return The row alignment in memory, in bytes.
+	**/
+	const int& HdlDynamicTable::getAlignment(void) const
+	{
+		return alignment;
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isProxy(void) const
+	\brief Test if the table is actually a proxy.
+	\return True if this table is a proxy to some data.
+	**/
+	bool HdlDynamicTable::isProxy(void) const
+	{
+		return proxy;
+	}
+
+	/**
 	\fn bool HdlDynamicTable::isInside(const int& i, const int& j, const int& d) const
 	\brief Test if the coordinates are for a valid element inside the table.
 	\param j The index of the column.
@@ -423,22 +485,86 @@
 	}
 
 	/**
-	\fn HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices)
+	\fn HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
 	\brief Build dynamic data from a GL data identifier (see supported types in main description of HdlDynamicData).
 	\param type The required GL type.
 	\param _columns The number of columns of the table.
 	\param _rows The number of rows of the table.
 	\param _slices The number of slices of the table.
+	\param _alignment Data alignment (per row, should be either 1, 4, or 8).
 	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
 	**/
-	HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices)
+	HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
 	{
 		HdlDynamicTable* res = NULL;
 
 		#define GENERATE_ELM(glType, CType) \
 			if(type== glType ) \
 			{ \
-				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(type, _columns, _rows, _slices); \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(type, _columns, _rows, _slices, _alignment); \
+				res = reinterpret_cast<HdlDynamicTable*>(d); \
+			}
+
+		#define ERROR_ELM(glType) \
+			if(type== glType ) \
+				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + glParamName(type) + "\" : Illegal type.", __FILE__, __LINE__);
+			
+
+			GENERATE_ELM( 	GL_BYTE,		char)
+		else	GENERATE_ELM( 	GL_UNSIGNED_BYTE,	unsigned char)
+		else	GENERATE_ELM( 	GL_SHORT,		short)
+		else	GENERATE_ELM( 	GL_UNSIGNED_SHORT,	unsigned short)
+		else	GENERATE_ELM( 	GL_FLOAT, 		float)
+		else	ERROR_ELM( 	GL_FLOAT_VEC2)
+		else	ERROR_ELM( 	GL_FLOAT_VEC3)
+		else	ERROR_ELM( 	GL_FLOAT_VEC4)
+		else	GENERATE_ELM( 	GL_DOUBLE,		double)
+		else	ERROR_ELM( 	GL_DOUBLE_VEC2)
+		else	ERROR_ELM(	GL_DOUBLE_VEC3)
+		else	ERROR_ELM( 	GL_DOUBLE_VEC4)
+		else	GENERATE_ELM( 	GL_INT,			int)
+		else	ERROR_ELM( 	GL_INT_VEC2)
+		else	ERROR_ELM( 	GL_INT_VEC3)
+		else	ERROR_ELM( 	GL_INT_VEC4)
+		else	GENERATE_ELM( 	GL_UNSIGNED_INT,	unsigned int)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC2)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC3)
+		else	ERROR_ELM( 	GL_UNSIGNED_INT_VEC4)
+		else	GENERATE_ELM( 	GL_BOOL,		bool)
+		else	ERROR_ELM( 	GL_BOOL_VEC2)
+		else	ERROR_ELM( 	GL_BOOL_VEC3)
+		else	ERROR_ELM( 	GL_BOOL_VEC4)
+		else	ERROR_ELM( 	GL_FLOAT_MAT2)
+		else	ERROR_ELM(  	GL_FLOAT_MAT3)
+		else	ERROR_ELM( 	GL_FLOAT_MAT4)
+		else
+			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + glParamName(type) + "\".", __FILE__, __LINE__);
+
+		return res;
+
+		#undef GENERATE_ELM
+		#undef ERROR_ELM
+	}
+
+	/**
+	\fn HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	\brief Build dynamic data proxy from a GL data identifier and a buffer pointer (see supported types in main description of HdlDynamicData).
+	\param buffer The original data (will not be deleted, the user must guarantee that this object is destroyed when the original data is).
+	\param type The required GL type.
+	\param _columns The number of columns of the table.
+	\param _rows The number of rows of the table.
+	\param _slices The number of slices of the table.
+	\param _alignment Data alignment (per row, should be either 1, 4, or 8).
+	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
+	**/
+	HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	{
+		HdlDynamicTable* res = NULL;
+
+		#define GENERATE_ELM(glType, CType) \
+			if(type== glType ) \
+			{ \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(buffer, type, _columns, _rows, _slices, _alignment); \
 				res = reinterpret_cast<HdlDynamicTable*>(d); \
 			}
 
@@ -518,4 +644,395 @@
 		#undef COPY_ELM
 	}
 
+// HdlDynamicTableIterator :
+	/**
+	\fn HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
+	\brief Create an iterator over a table. Table must exist at all time.
+	\param _table The table to run over.
+	**/
+	HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
+	 :	table(_table),
+		i(0),
+		j(0),
+		d(0),
+		position(reinterpret_cast<unsigned char*>(_table.getPtr()))
+	{ }
+
+	/**
+	\fn HdlDynamicTableIterator::HdlDynamicTableIterator(const HdlDynamicTableIterator& copy)
+	\brief Copy constructor.
+	\param copy Original iterator.
+	**/
+	HdlDynamicTableIterator::HdlDynamicTableIterator(const HdlDynamicTableIterator& copy)
+	 :	table(copy.table),
+		i(copy.i),
+		j(copy.j),
+		d(copy.d),
+		position(copy.position)
+	{ }
+
+	HdlDynamicTableIterator::~HdlDynamicTableIterator(void)
+	{ }
+
+	void HdlDynamicTableIterator::checkSliceUpperBorder(void)
+	{
+		if(d>=table.getNumSlices())
+		{
+			d = 0;
+			j++;
+		}
+	}
+
+	void HdlDynamicTableIterator::checkSliceLowerBorder(void)
+	{
+		if(d<0)
+		{
+			d = table.getNumSlices()-1;
+			j--;
+		}
+	}
+
+	void HdlDynamicTableIterator::checkRowUpperBorder(void)
+	{
+		if(j>=table.getNumColumns())
+		{
+			j = 0;
+			i++;
+
+			position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
+		}
+	}
+
+	void HdlDynamicTableIterator::checkRowLowerBorder(void)
+	{
+		if(j<0)
+		{
+			j = table.getNumColumns()-1;
+			i--;
+
+			position = reinterpret_cast<unsigned char*>(table.getRowPtr(i)) + static_cast<size_t>(table.getNumColumns() * table.getNumSlices() - 1) * table.getElementSize();
+		}
+	}
+	
+	/**
+	\fn const HdlDynamicTable& HdlDynamicTableIterator::getTable(void) const
+	\brief Access the parent table.
+	\return A constant reference to the parent table of this iterator.
+	**/
+	const HdlDynamicTable& HdlDynamicTableIterator::getTable(void) const
+	{
+		return table;
+	}
+
+	/**
+	\fn HdlDynamicTable& HdlDynamicTableIterator::getTable(void)
+	\brief Access the parent table.
+	\return A reference to the parent table of this iterator.
+	**/
+	HdlDynamicTable& HdlDynamicTableIterator::getTable(void)
+	{
+		return table;
+	}
+
+	/**
+	\fn bool HdlDynamicTableIterator::isValid(void) const
+	\brief Check if the iterator is still valid.
+	\return True if the iterator is valid (can be used for I/O operation).
+	**/
+	bool HdlDynamicTableIterator::isValid(void) const
+	{
+		return table.isInside(j, i, d);
+	}
+
+	/**
+	\fn const int& HdlDynamicTableIterator::getRowIndex(void) const
+	\brief Get the current row index.
+	\return The current row index (might not be inside the table).
+	**/
+	const int& HdlDynamicTableIterator::getRowIndex(void) const
+	{
+		return i;
+	}
+
+	/**
+	\fn const int& HdlDynamicTableIterator::getColumnIndex(void) const
+	\brief Get the current column index.
+	\return The current column index (might not be inside the table).
+	**/
+	const int& HdlDynamicTableIterator::getColumnIndex(void) const
+	{
+		return j;
+	}
+
+	/**
+	\fn const int& HdlDynamicTableIterator::getSliceIndex(void) const
+	\brief Get the current slice index.
+	\return The current slice index (might not be inside the table).
+	**/
+	const int& HdlDynamicTableIterator::getSliceIndex(void) const
+	{
+		return d;
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::nextElement(void)
+	\brief Move to the next element.
+	**/
+	void HdlDynamicTableIterator::nextElement(void)
+	{
+		d++;
+		position += table.getElementSize();
+		
+		checkSliceUpperBorder();
+		checkRowUpperBorder();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::previousElement(void)
+	\brief Move to the previous element.
+	**/
+	void HdlDynamicTableIterator::previousElement(void)
+	{
+		d--;
+		position -= table.getElementSize();
+
+		checkSliceLowerBorder();
+		checkRowLowerBorder();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::nextSlice(void)
+	\brief Move to the beginning of the next slice.
+	**/
+	void HdlDynamicTableIterator::nextSlice(void)
+	{
+		position += static_cast<size_t>(table.getNumSlices()-d) * table.getElementSize();
+		d = 0;
+		j++;
+		
+		checkSliceUpperBorder();
+		checkRowUpperBorder();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::previousSlice(void)
+	\brief Move to the beginning of the previous slice.
+	**/
+	void HdlDynamicTableIterator::previousSlice(void)
+	{
+		position -= static_cast<size_t>(table.getNumSlices() + d) * table.getElementSize();
+		d = 0;
+		j--;
+		
+		checkSliceLowerBorder();
+		checkRowLowerBorder();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::sliceBegin(void)
+	\brief Move to the beginning of the current slice.
+	**/
+	void HdlDynamicTableIterator::sliceBegin(void)
+	{
+		position -= static_cast<size_t>(d) * table.getElementSize();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::sliceEnd(void)
+	\brief Move to the end of the current slice (last element).
+	**/
+	void HdlDynamicTableIterator::sliceEnd(void)
+	{
+		position += static_cast<size_t>(table.getNumSlices()-d-1) * table.getElementSize();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::nextRow(void)
+	\brief Move to the beginning of the next row.
+	**/
+	void HdlDynamicTableIterator::nextRow(void)
+	{
+		d = 0;
+		j = 0;
+		i++;
+		
+		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::previousRow(void)
+	\brief Move to the beginning of the previous row
+	**/
+	void HdlDynamicTableIterator::previousRow(void)
+	{
+		d = 0;
+		j = 0;
+		i--;
+		
+		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::rowBegin(void)
+	\brief Move to the beginning of the current row.
+	**/
+	void HdlDynamicTableIterator::rowBegin(void)
+	{
+		d = 0;
+		j = 0;
+		
+		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::rowEnd(void)
+	\brief Move to the end of the current row (last element).
+	**/
+	void HdlDynamicTableIterator::rowEnd(void)
+	{
+		d = 0;
+		j = 0;
+		
+		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i)) + static_cast<size_t>(table.getNumColumns() * table.getNumSlices() - 1) * table.getElementSize();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::tableBegin(void)
+	\brief Move to the beginning of the table.
+	**/
+	void HdlDynamicTableIterator::tableBegin(void)
+	{
+		i = 0;
+		j = 0;
+		d = 0;
+
+		position = reinterpret_cast<unsigned char*>(table.getPtr());
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::tableEnd(void)
+	\brief Move to the end of the table (last element).
+	**/
+	void HdlDynamicTableIterator::tableEnd(void)
+	{
+		i = table.getNumRows()-1;
+		j = table.getNumColumns()-1;
+		d = table.getNumSlices()-1;
+
+		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getSize() - table.getElementSize();
+	}
+
+	/**
+	\fn void* HdlDynamicTableIterator::getPtr(void) const
+	\brief Get the pointer to the current position.
+	\return Pointer to the current position.
+	**/
+	void* HdlDynamicTableIterator::getPtr(void) const
+	{
+		return reinterpret_cast<void*>(position);
+	}
+
+	/**
+	\fn float HdlDynamicTableIterator::readf(void) const
+	\brief Read the current value as a floatting point value
+	\return The current value casted as a float.
+	**/
+	float HdlDynamicTableIterator::readf(void) const
+	{
+		return table.readf(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writef(const float& value)
+	\brief Write a floatting point value to the current position.
+	\param value The floatting point value to write.
+	**/
+	void HdlDynamicTableIterator::writef(const float& value)
+	{
+		table.writef(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn double HdlDynamicTableIterator::readd(void) const
+	\brief Read the current value as a floatting point value
+	\return The current value casted as a double.
+	**/
+	double HdlDynamicTableIterator::readd(void) const
+	{
+		return table.readd(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writed(const double& value)
+	\brief Write a floatting point value to the current position.
+	\param value The floatting point value to write.
+	**/
+	void HdlDynamicTableIterator::writed(const double& value)
+	{
+		table.writed(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn long long HdlDynamicTableIterator::readl(void) const
+	\brief Read the current value as an integer value
+	\return The current value casted as a long long.
+	**/
+	long long HdlDynamicTableIterator::readl(void) const
+	{
+		return table.readl(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writel(const long long& value)
+	\brief Write an integer value to the current position.
+	\param value The integer value to write.
+	**/
+	void HdlDynamicTableIterator::writel(const long long& value)
+	{
+		table.writel(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn int HdlDynamicTableIterator::readi(void) const
+	\brief Read the current value as an integer value
+	\return The current value casted as an int.
+	**/
+	int HdlDynamicTableIterator::readi(void) const
+	{
+		return table.readi(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writei(const int& value)
+	\brief Write an integer value to the current position.
+	\param value The integer value to write.
+	**/
+	void HdlDynamicTableIterator::writei(const int& value)
+	{
+		table.writei(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::write(void* value)
+	\brief Write shapless data to the current position (assuming same type as the table).
+	\param value The shapeless value to write. 
+	**/
+	void HdlDynamicTableIterator::write(void* value)
+	{
+		table.write(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::write(const HdlDynamicTableIterator& it)
+	\brief Write the content from another iterator.
+	\param it Other iterator to copy from.
+	**/
+	void HdlDynamicTableIterator::write(const HdlDynamicTableIterator& it)
+	{
+		// Test elligibility to fast copy : 
+		if(it.getTable().getGLType()==getTable().getGLType())
+			write(it.getPtr());
+		else
+			writed(it.readd());
+	}
 

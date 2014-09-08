@@ -29,22 +29,23 @@ using namespace Glip::CoreGL;
 
 // HdlTextureFormat - Functions
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	\brief __ReadOnly_HdlTextureFormat Construtor.
 
-	\param w           Width of the texture.
-	\param h           Height of the texture.
-	\param _mode       Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
-	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
-	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
-	\param _magFilter  Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
-	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
-	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
-	\param _baseLevel  Base for the mipmaps (default is 0).
-	\param _maxLevel   Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
+	\param _width		Width of the texture.
+	\param _height		Height of the texture.
+	\param _mode		Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
+	\param _depth		Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
+	\param _minFilter	Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
+	\param _magFilter	Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
+	\param _wraps		Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _wrapt		Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _baseLevel	Base for the mipmaps (default is 0).
+	\param _maxLevel	Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
-	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	 : imgW(w), imgH(h), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt)
+	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	 : 	width(_width), height(_height), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt),
+		alignment(1)
 	{ }
 
 	/**
@@ -54,18 +55,18 @@ using namespace Glip::CoreGL;
 	\param copy Copy this format.
 	**/
 	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy)
-	{
-		imgW      = copy.imgW;
-		imgH      = copy.imgH;
-		mode      = copy.mode;
-		depth     = copy.depth;
-		minFilter = copy.minFilter;
-		magFilter = copy.magFilter;
-		baseLevel = copy.baseLevel;
-		maxLevel  = copy.maxLevel;
-		wraps     = copy.wraps;
-		wrapt     = copy.wrapt;
-	}
+	 : 	width(copy.width),
+		height(copy.height),
+		mode(copy.mode),
+		depth(copy.depth),
+		minFilter(copy.minFilter),
+		magFilter(copy.magFilter),
+		baseLevel(copy.baseLevel),
+		maxLevel(copy.maxLevel),
+		wraps(copy.wraps),
+		wrapt(copy.wrapt),
+		alignment(copy.alignment)
+	{ }
 
 	__ReadOnly_HdlTextureFormat::~__ReadOnly_HdlTextureFormat(void)
 	{ }
@@ -107,13 +108,15 @@ using namespace Glip::CoreGL;
 	\fn     bool __ReadOnly_HdlTextureFormat::isFloatingPoint(void) const
 	\return True if the texture is of floatting point type.
 	**/
-	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return imgW; }
-	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return imgH; }
-	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return imgH*imgW; }
-	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels; }
+	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return width; }
+	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return height; }
+	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return width*height; }
+	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels(); }
 	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
-	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return imgH*imgW*getNumChannels(); }
-	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getWidth()) * static_cast<size_t>(getHeight()) * static_cast<size_t>(getNumChannels()) * static_cast<size_t>(getChannelDepth()); }
+	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
+	int	__ReadOnly_HdlTextureFormat::getAlignment	(void) const { return alignment; }
+	size_t	__ReadOnly_HdlTextureFormat::getLineSize	(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~alignment; }
+	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getHeight()) * getLineSize(); }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
 	GLenum	__ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
@@ -131,7 +134,17 @@ using namespace Glip::CoreGL;
 	**/
 	const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
 	{
-		return HdlTextureFormatDescriptorsList::get(mode);
+		// Manage sparse changes :
+		static GLenum oldMode = GL_NONE;
+		static HdlTextureFormatDescriptor* descriptor=NULL;
+
+		if(mode!=oldMode || descriptor==NULL)
+		{
+			descriptor = const_cast<HdlTextureFormatDescriptor*>(&HdlTextureFormatDescriptorsList::get(mode));
+			oldMode = mode;
+		}
+
+		return (*descriptor);
 	}
 
 	/**
@@ -141,8 +154,8 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		return  (imgW			== f.imgW)		&&
-			(imgH			== f.imgH)		&&
+		return  (width			== f.width)		&&
+			(height			== f.height)		&&
 			(getNumChannels()	== f.getNumChannels())	&&
 			(getChannelDepth()	== f.getChannelDepth())	&&
 			(getSize()		== f.getSize())		&&
@@ -174,8 +187,8 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		return  (imgW			== f.imgW)		&&
-			(imgH			== f.imgH)		&&
+		return  (width			== f.width)		&&
+			(height			== f.height)		&&
 			(getNumChannels()	== f.getNumChannels())	&&
 			(getChannelDepth()	== f.getChannelDepth())	&&
 			(getSize()		== f.getSize())		&&
@@ -227,8 +240,8 @@ using namespace Glip::CoreGL;
 	**/
 	bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
 	{
-		bool test = 	(imgW			== f.imgW)		&&
-				(imgH			== f.imgH)		&&
+		bool test = 	(width			== f.width)		&&
+				(height			== f.height)		&&
 				(getNumChannels()	== f.getNumChannels())	&&
 				(getChannelDepth()	== f.getChannelDepth())	&&
 				(getSize()		== f.getSize())		&&
@@ -304,10 +317,10 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
 			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
-			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel, 	redType )
-			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel, 	greenType )
-			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel, 	blueType )
-			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel, 	alphaType )
+			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
+			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
+			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel(), blueType )
+			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )
 			default : 				throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
 		}
 
@@ -327,22 +340,22 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	\fn    HdlTextureFormat::HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	\brief HdlTextureFormat Construtor.
 
-	\param w           Width of the texture.
-	\param h           Height of the texture.
-	\param _mode       Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
-	\param _depth      Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
-	\param _minFilter  Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
-	\param _magFilter  Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
-	\param _wraps      Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
-	\param _wrapt      Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
-	\param _baseLevel  Base for the mipmaps (default is 0).
-	\param _maxLevel   Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
+	\param _width		Width of the texture.
+	\param _height		Height of the texture.
+	\param _mode		Mode for the texture (e.g. GL_RGB, GL_RGBA, GL_BGRA, etc.).
+	\param _depth		Depth for the texture (e.g. GL_FLOAT, GL_UNSIGNED_BYTE, GL_INT, etc.).
+	\param _minFilter	Minification filter (e.g. GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST or GL_LINEAR_MIPMAP_LINEAR).
+	\param _magFilter	Magnification filter (e.g. GL_NEAREST or GL_LINEAR, only these two options are accepted).
+	\param _wraps		Wrapping S parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _wrapt		Wrapping T parameter (GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT).
+	\param _baseLevel	Base for the mipmaps (default is 0).
+	\param _maxLevel	Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
-	HdlTextureFormat::HdlTextureFormat(int w, int h, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	 : __ReadOnly_HdlTextureFormat(w, h, _mode, _depth, _minFilter, _magFilter, _wraps, _wrapt, _baseLevel, _maxLevel)
+	HdlTextureFormat::HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	 : __ReadOnly_HdlTextureFormat(_width, _height, _mode, _depth, _minFilter, _magFilter, _wraps, _wrapt, _baseLevel, _maxLevel)
 	{ }
 
 	/**
@@ -390,18 +403,18 @@ using namespace Glip::CoreGL;
 	\brief Sets the texture's T wrapping parameter.
 	\param m The new T wrapping parameter (e.g. GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT)
 	**/
-	void HdlTextureFormat::setWidth    (int w)		{ imgW      = w;  }
-	void HdlTextureFormat::setHeight   (int h)		{ imgH      = h;  }
-	void HdlTextureFormat::setSize     (int w, int h)	{ imgW     = w;
-								  imgH     = h;   }
-	void HdlTextureFormat::setGLMode   (GLenum md)		{ mode      = md; }
-	void HdlTextureFormat::setGLDepth  (GLenum dp)		{ depth     = dp; }
-	void HdlTextureFormat::setMinFilter(GLenum mf)		{ minFilter = mf; }
-	void HdlTextureFormat::setMagFilter(GLenum mf)		{ magFilter = mf; }
-	void HdlTextureFormat::setBaseLevel(int l)		{ baseLevel = l;  }
-	void HdlTextureFormat::setMaxLevel (int l)		{ maxLevel  = l;  }
-	void HdlTextureFormat::setSWrapping(GLenum m)		{ wraps     = m;  }
-	void HdlTextureFormat::setTWrapping(GLenum m)		{ wrapt     = m;  }
+	void HdlTextureFormat::setWidth    (int w)		{ width		= w;  }
+	void HdlTextureFormat::setHeight   (int h)		{ height	= h;  }
+	void HdlTextureFormat::setSize     (int w, int h)	{ width		= w;
+								  height	= h;  }
+	void HdlTextureFormat::setGLMode   (GLenum md)		{ mode		= md; }
+	void HdlTextureFormat::setGLDepth  (GLenum dp)		{ depth		= dp; }
+	void HdlTextureFormat::setMinFilter(GLenum mf)		{ minFilter	= mf; }
+	void HdlTextureFormat::setMagFilter(GLenum mf)		{ magFilter	= mf; }
+	void HdlTextureFormat::setBaseLevel(int l)		{ baseLevel	= l;  }
+	void HdlTextureFormat::setMaxLevel (int l)		{ maxLevel	= l;  }
+	void HdlTextureFormat::setSWrapping(GLenum m)		{ wraps		= m;  }
+	void HdlTextureFormat::setTWrapping(GLenum m)		{ wrapt		= m;  }
 
 	/**
 	\fn const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
@@ -411,8 +424,8 @@ using namespace Glip::CoreGL;
 	**/
 	const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
 	{
-		imgW      = copy.getWidth();
-		imgH      = copy.getHeight();
+		width      = copy.getWidth();
+		height      = copy.getHeight();
 		mode      = copy.getGLMode();
 		depth     = copy.getGLDepth();
 		minFilter = copy.getMinFilter();
@@ -681,14 +694,14 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth)
+	\fn void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	\brief Write data to a texture using classical glTexImage method. In the case that the texture is compressed and the input data is not of the compressed format, you MUST specify pixelFormat and pixelDepth. WARNING : this function does not perform error checking.
 	\param texData The pointer to the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
-	\param alignment Byte alignment of the input data.
+	\param _alignment Byte alignment of the input data.
 	**/
-	void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	void HdlTexture::write(GLvoid *texData, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	{
 		if(pixelFormat==GL_ZERO)
 			pixelFormat = mode;
@@ -696,15 +709,18 @@ using namespace Glip::CoreGL;
 		if(pixelDepth==GL_ZERO)
 			pixelDepth = depth;
 
+		if(_alignment<0)
+			_alignment = getAlignment();
+
 		pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
 
 		// Bind it :
 		glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, _alignment);
 
 		// Write :
-		glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
+		glTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0, pixelFormat, pixelDepth, texData);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlTexture::write", "glTexImage2D()")
@@ -721,15 +737,15 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth)
+	\fn void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	\brief Write compressed data to a texture using glCompressedTexImage2D method.
 	\param texData The pointer to the data.
 	\param size The size in bytes of the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
-	\param alignment Byte alignment of the input data.
+	\param _alignment Byte alignment of the input data.
 	**/
-	void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	void HdlTexture::writeCompressed(GLvoid *texData, int size, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	{
 		if(pixelFormat==GL_ZERO)
 			pixelFormat = mode;
@@ -737,14 +753,17 @@ using namespace Glip::CoreGL;
 		if(pixelDepth==GL_ZERO)
 			pixelDepth = depth;
 
+		if(_alignment<0)
+			_alignment = getAlignment();
+
 		// Bind it
 		glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, _alignment);
 
 		// Write
-		//glTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0, pixelFormat, pixelDepth, texData);
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, imgW, imgH, 0,  static_cast<GLsizei>(size), texData);
+		//glTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0, pixelFormat, pixelDepth, texData);
+		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0,  static_cast<GLsizei>(size), texData);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlTexture::writeCompressed", "glCompressedTexImage2D()")
@@ -783,14 +802,14 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	\fn void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	\brief Read data from a classical texture using classical glGetTexImage method. WARNING : this function does not perform error checking.
 	\param data The pointer to the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
-	\param alignment Byte alignment of the input data.
+	\param _alignment Byte alignment of the input data.
 	**/
-	void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int alignment)
+	void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	{
 		if(pixelFormat==GL_ZERO)
 			pixelFormat = mode;
@@ -798,12 +817,15 @@ using namespace Glip::CoreGL;
 		if(pixelDepth==GL_ZERO)
 			pixelDepth = depth;
 
+		if(_alignment<0)
+			_alignment = getAlignment();
+
 		pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
 
 		// Bind it :
 		glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_PACK_ALIGNMENT, alignment);
+		glPixelStorei(GL_PACK_ALIGNMENT, _alignment);
 
 		// Read :
 		glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat, pixelDepth, data);
