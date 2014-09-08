@@ -232,7 +232,7 @@ using namespace QGED;
 
 // CodeEditor
 	CodeEditor::CodeEditor(QWidget *parent)
-	 : 	QPlainTextEdit(parent), 
+	 : 	QPlainTextEdit(parent),
 		currentFilename(""),
 		highlightLine(false),
 		lineNumberArea(NULL),
@@ -663,6 +663,57 @@ using namespace QGED;
 	{
 		if(highLighter!=NULL)
 			highLighter->clearSearchHighlight();
+	}
+
+// CodeEditorContainer :
+	CodeEditorContainer::CodeEditorContainer(QWidget* parent)
+	 : 	QWidget(parent),
+		layout(this),
+		splitterLayout(Qt::Vertical, this),
+		editor(this),
+		errorsList(this)
+	{		
+		splitterLayout.addWidget(&editor);
+		splitterLayout.addWidget(&errorsList);
+		layout.addWidget(&splitterLayout);
+
+		layout.setMargin(0);
+		layout.setSpacing(0);
+
+		clearErrors();
+	}
+
+	CodeEditorContainer::~CodeEditorContainer(void)
+	{ }
+
+	const CodeEditor& CodeEditorContainer::getEditor(void) const
+	{
+		return editor;
+	}
+
+	CodeEditor& CodeEditorContainer::getEditor(void)
+	{
+		return editor;
+	}
+
+	void CodeEditorContainer::clearErrors(void)
+	{
+		errorsList.clear();
+		errorsList.hide();
+	}
+
+	void CodeEditorContainer::showErrors(Exception compilationError)
+	{
+		errorsList.clear();
+
+		compilationError.hideHeader(true);
+		std::string line;
+		std::istringstream stream(compilationError.what());
+
+		while( std::getline(stream, line) )
+			errorsList.addItem( QString::fromStdString(line) );
+
+		errorsList.show();
 	}
 
 // SearchAndReplaceMenu :
@@ -1661,19 +1712,42 @@ using namespace QGED;
 			closeTab(0, true);
 	}
 
-	CodeEditor* CodeEditorTabs::getCurrentEditor(void)
+	CodeEditorContainer* CodeEditorTabs::getCurrentEditor(void)
 	{
 		int tabID = tabBar.currentIndex();
 
 		if(tabID<0)
 			return NULL;
 
-		QMap<int, CodeEditor*>::iterator it = editors.find(tabBar.tabData(tabID).toUInt());
+		QMap<int, CodeEditorContainer*>::iterator it = editors.find(tabBar.tabData(tabID).toUInt());
 
 		if(it!=editors.end())
 			return (*it);
 		else
 			return NULL;
+	}
+
+	int CodeEditorTabs::getTabIndex(CodeEditorContainer* editor)
+	{
+		if(editor==NULL || tabBar.count()==0)
+			return -1;
+		else
+		{
+			int c = 0;
+
+			for( ; c<tabBar.count(); c++)
+			{
+				int idx = tabBar.tabData(c).toUInt();
+
+				QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
+
+				if(it!=editors.end())
+					if((*it)==editor)
+						return c;
+			}
+		
+			return -1;
+		}
 	}
 
 	int CodeEditorTabs::getTabIndex(CodeEditor* editor)
@@ -1688,10 +1762,10 @@ using namespace QGED;
 			{
 				int idx = tabBar.tabData(c).toUInt();
 
-				QMap<int, CodeEditor*>::iterator it = editors.find(idx);
+				QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
 
 				if(it!=editors.end())
-					if((*it)==editor)
+					if(&(*it)->getEditor()==editor)
 						return c;
 			}
 		
@@ -1705,7 +1779,7 @@ using namespace QGED;
 		currentPath = info.path();
 	}
 
-	void CodeEditorTabs::save(CodeEditor* editor)
+	void CodeEditorTabs::save(CodeEditorContainer* editor)
 	{
 		if(editor==NULL)
 			editor = getCurrentEditor();
@@ -1713,17 +1787,17 @@ using namespace QGED;
 		if(editor==NULL)
 			return ;
 
-		if(editor->canBeSaved())
+		if(editor->getEditor().canBeSaved())
 		{
-			editor->save();
-			setCurrentPath(editor->getFilename());
-			recentFilesMenu.append(editor->getFilename());
+			editor->getEditor().save();
+			setCurrentPath(editor->getEditor().getFilename());
+			recentFilesMenu.append(editor->getEditor().getFilename());
 		}
 		else 
 			saveAs(editor);
 	}
 
-	void CodeEditorTabs::saveAs(CodeEditor* editor, QString filename)
+	void CodeEditorTabs::saveAs(CodeEditorContainer* editor, QString filename)
 	{
 		if(editor==NULL)
 			editor = getCurrentEditor();
@@ -1738,9 +1812,9 @@ using namespace QGED;
 			return ;
 		else
 		{
-			editor->save(filename);
+			editor->getEditor().save(filename);
 			setCurrentPath(filename);
-			recentFilesMenu.append(editor->getFilename());
+			recentFilesMenu.append(editor->getEditor().getFilename());
 		}
 	}
 
@@ -1770,14 +1844,14 @@ using namespace QGED;
 		static unsigned int counter = 0; 
 	
 		// Create the widget : 
-		CodeEditor* ptr = new CodeEditor;
+		CodeEditorContainer* ptr = new CodeEditorContainer(this);
 		editors[counter] = ptr;
-		ptr->updateSettings(settings);
-		ptr->addSubMenu(&templateMenu);
-		ptr->addSubMenu(&elementsMenu);
+		ptr->getEditor().updateSettings(settings);
+		ptr->getEditor().addSubMenu(&templateMenu);
+		ptr->getEditor().addSubMenu(&elementsMenu);
 
-		QObject::connect(ptr, SIGNAL(titleChanged(void)),	this, SLOT(tabTitleChanged(void)));
-		QObject::connect(ptr, SIGNAL(modified(bool)), 		this, SLOT(documentModified(bool)));
+		QObject::connect(&ptr->getEditor(), SIGNAL(titleChanged(void)),	this, SLOT(tabTitleChanged(void)));
+		QObject::connect(&ptr->getEditor(), SIGNAL(modified(bool)), 	this, SLOT(documentModified(bool)));
 
 		// Create the tab :
 		stack.addWidget(ptr);
@@ -1789,9 +1863,9 @@ using namespace QGED;
 
 		if(!filename.isEmpty())
 		{
-			ptr->open(filename);
-			LayoutLoader::PipelineScriptElements elements = scanSource(ptr->getCurrentContent());
-			elementsMenu.scan(ptr, elements);
+			ptr->getEditor().open(filename);
+			LayoutLoader::PipelineScriptElements elements = scanSource(ptr->getEditor().getCurrentContent());
+			elementsMenu.scan(&ptr->getEditor(), elements);
 		}
 	}
 
@@ -1826,18 +1900,18 @@ using namespace QGED;
 
 	void CodeEditorTabs::insert(QString str)
 	{
-		CodeEditor* editor = getCurrentEditor();
+		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			editor->insert(str);
+			editor->getEditor().insert(str);
 	}
 
 	void CodeEditorTabs::updateElements(void)
 	{
-		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
 		{
-			LayoutLoader::PipelineScriptElements elements = scanSource((*it)->getCurrentContent());
-			elementsMenu.scan(*it, elements);
+			LayoutLoader::PipelineScriptElements elements = scanSource((*it)->getEditor().getCurrentContent());
+			elementsMenu.scan(&(*it)->getEditor(), elements);
 		}
 	}
 
@@ -1884,64 +1958,64 @@ using namespace QGED;
 
 	void CodeEditorTabs::saveAll(void)
 	{
-		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
+		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
 			save(*it);
 	}
 
 	void CodeEditorTabs::updateSettings(void)
 	{
-		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
-			(*it)->updateSettings(settings);
+		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
+			(*it)->getEditor().updateSettings(settings);
 	}
 
 	void CodeEditorTabs::transferSourceCompilation(void)
 	{
-		CodeEditor* editor = getCurrentEditor();
+		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			emit compileSource(editor->getCurrentContent(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this), SLOT(compilationFailureNotification(void*, Exception)));
+			emit compileSource(editor->getEditor().getCurrentContent(), editor->getEditor().getPath().toStdString(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this));
 	}
 
 	void CodeEditorTabs::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)
 	{
-		CodeEditor* editor = getCurrentEditor();
+		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			editor->search(expression, flags);
+			editor->getEditor().search(expression, flags);
 	}
 
 	void CodeEditorTabs::transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
 	{
-		CodeEditor* editor = getCurrentEditor();
+		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			editor->replace(expression, flags, replacement);
+			editor->getEditor().replace(expression, flags, replacement);
 	}
 
 	void CodeEditorTabs::transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
 	{
-		CodeEditor* editor = getCurrentEditor();
+		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			editor->replaceAll(expression, flags, replacement);
+			editor->getEditor().replaceAll(expression, flags, replacement);
 	}
 
 	void CodeEditorTabs::transferClearSearchRequest(void)
 	{
-		for(QMap<int, CodeEditor*>::iterator it=editors.begin(); it!=editors.end(); it++)
-			(*it)->clearSearch();
+		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
+			(*it)->getEditor().clearSearch();
 	}
 
 	void CodeEditorTabs::closeTab(int tabID, bool imperative)
 	{
 		int idx = tabBar.tabData(tabID).toUInt();
 
-		QMap<int, CodeEditor*>::iterator it = editors.find(idx);
+		QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
 
 		// If it exists, clear : 
 		if(it!=editors.end())
 		{
-			if((*it)->isModified())
+			if((*it)->getEditor().isModified())
 			{
 				changeToTab(tabID);
 
@@ -1953,10 +2027,10 @@ using namespace QGED;
 				else
 					buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
 
-				if((*it)->getFilename().isEmpty())
+				if((*it)->getEditor().getFilename().isEmpty())
 					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), buttons);
 				else
-					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg((*it)->getFilename()), buttons);
+					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg((*it)->getEditor().getFilename()), buttons);
 
 				if(returnedButton==QMessageBox::Save)
 					return save(*it);
@@ -1964,11 +2038,34 @@ using namespace QGED;
 					return ; // exit
 			}
 
-			elementsMenu.remove(*it);
+			elementsMenu.remove(&(*it)->getEditor());
 			tabBar.removeTab(tabID);
 			stack.removeWidget(*it);
 			delete (*it);
 			editors.erase(it);
+		}
+	}
+
+	void CodeEditorTabs::compilationSuccessNotification(void* identifier)
+	{
+		CodeEditorContainer* editor = reinterpret_cast<CodeEditorContainer*>(identifier);
+
+		if(getTabIndex(editor)>=0)
+			editor->clearErrors();
+	}
+
+	void CodeEditorTabs::compilationFailureNotification(void* identifier, Exception compilationError)
+	{
+		CodeEditorContainer* editor = reinterpret_cast<CodeEditorContainer*>(identifier);
+
+		if(getTabIndex(editor)>=0)
+			editor->showErrors(compilationError);
+		else
+		{
+			// Warning :
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught. However, you might be able to continue execution."), QMessageBox::Ok);
+			messageBox.setDetailedText(compilationError.what());
+			messageBox.exec();
 		}
 	}
 
@@ -1983,18 +2080,13 @@ using namespace QGED;
 			closeTab(0);
 	}
 
-	void CodeEditorTabs::compilationFailureNotification(void* identifier, Exception compilationError)
-	{
-		std::cout << "CodeEditorTabs::compilationFailureNotification - Temporary error message : " << std::endl;
-		std::cout << compilationError.what() << std::endl;
-	}
-
 // CodeEditorSubWidget
 #ifdef __USE_QVGL__
 	CodeEditorTabsSubWidget::CodeEditorTabsSubWidget(void)
 	{
 		setInnerWidget(&codeEditorTabs);
 		setTitle("GLIP-Lib Code Editor");
+		resize(512, 512);
 	}
 	
 	CodeEditorTabsSubWidget::~CodeEditorTabsSubWidget(void)

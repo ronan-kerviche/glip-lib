@@ -234,8 +234,8 @@ Processing example :
 						ResourceIterator resourceBegin(void);
 						ResourceIterator resourceEnd(void);
 
-						int applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite=true) const;
-						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true) const;
+						int applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite=true, bool silent=false) const;
+						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true, bool silent=false) const;
 						VanillaParserSpace::Element getCodeElement(void) const;
 				};
 
@@ -261,7 +261,7 @@ Processing example :
 				NodeConstIterator rootNodeEnd(void) const;
 				NodeIterator rootNodeBegin(void);
 				NodeIterator rootNodeEnd(void);
-				int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
+				int applyTo(Pipeline& pipeline, bool forceWrite=true, bool silent=false) const;
 				std::string getCode(void) const;
 				std::string getCode(const std::string& name) const;
 				void writeToFile(const std::string& filename) const;

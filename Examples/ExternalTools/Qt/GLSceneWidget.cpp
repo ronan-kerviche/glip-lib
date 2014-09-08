@@ -19,6 +19,18 @@
 using namespace QVGL;
 
 // View :
+	View::View(const QString& _name)
+	 : 	texture(NULL),
+		name(_name),
+		qvglParent(NULL),
+		angle(0.0f),
+		homothecyScale(1.0f),
+		flipUpDown(false),
+		flipLeftRight(false)
+	{
+		reset();
+	}
+
 	View::View(HdlTexture* _texture, const QString& _name)
 	 : 	texture(_texture),
 		name(_name),
@@ -29,9 +41,6 @@ using namespace QVGL;
 		flipLeftRight(false)
 	{
 		reset();
-
-		if(texture==NULL)
-			throw Exception("View::View - Texture pointer is NULL.", __FILE__, __LINE__);
 	}
 
 	View::~View(void)
@@ -42,12 +51,21 @@ using namespace QVGL;
 
 	void View::prepareToDraw(void)
 	{
-		texture->bind();
+		if(texture!=NULL)
+			texture->bind();
+	}
+
+	bool View::isValid(void) const
+	{
+		return (texture!=NULL);
 	}
 
 	const __ReadOnly_HdlTextureFormat& View::getFormat(void) const
 	{
-		return *texture; // TODO : fix the return temporary warning.
+		if(texture==NULL)
+			throw Exception("View::getFormat - View is invalid.", __FILE__, __LINE__);
+		else
+			return *texture;
 	}
 
 	const QString& View::getName(void) const
@@ -60,6 +78,13 @@ using namespace QVGL;
 		name = newName;
 
 		emit nameChanged();
+	}
+
+	void View::setTexture(HdlTexture* _texture)
+	{
+		texture = _texture;
+	
+		emit updated();
 	}
 
 	float View::getAngle(void) const
@@ -402,7 +427,12 @@ using namespace QVGL;
 
 		void Vignette::updateInfos(void)
 		{
-			QString text = tr("%1x%2").arg(view->getFormat().getWidth()).arg(view->getFormat().getHeight());
+			QString text;
+			if(view->isValid())
+				text = tr("%1x%2").arg(view->getFormat().getWidth()).arg(view->getFormat().getHeight());
+			else
+				text = "(Invalid View)";
+			
 			QFontMetrics metrics(infos.font());
 			infos.setText(text);
 			infos.setPos(getWidth() - metrics.width(text) - 6, 0);
@@ -589,6 +619,13 @@ using namespace QVGL;
 	const QString& ViewsTable::getName(void) const
 	{
 		return name;
+	}
+
+	void ViewsTable::setName(const QString& newName)
+	{
+		name = newName;
+
+		emit nameChanged();
 	}
 
 	void ViewsTable::getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const
@@ -1278,14 +1315,19 @@ using namespace QVGL;
 		// Set tooltip info :
 		QString toolTip;
 
-		toolTip += "<table>";
-			toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(view.getFormat().getWidth()).arg(view.getFormat().getHeight()).arg(view.getSizeString());
-			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLMode() ).c_str());
-			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLDepth() ).c_str());
-			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getMinFilter() ).c_str()).arg(glParamName( view.getFormat().getMagFilter() ).c_str());
-			toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getSWrapping() ).c_str()).arg(glParamName( view.getFormat().getTWrapping() ).c_str());
-			toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(view.getFormat().getBaseLevel()).arg(view.getFormat().getMaxLevel());
-		toolTip += "</table>"; 
+		if(view.isValid())
+		{
+			toolTip += "<table>";
+				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(view.getFormat().getWidth()).arg(view.getFormat().getHeight()).arg(view.getSizeString());
+				toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLMode() ).c_str());
+				toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLDepth() ).c_str());
+				toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getMinFilter() ).c_str()).arg(glParamName( view.getFormat().getMagFilter() ).c_str());
+				toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getSWrapping() ).c_str()).arg(glParamName( view.getFormat().getTWrapping() ).c_str());
+				toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(view.getFormat().getBaseLevel()).arg(view.getFormat().getMaxLevel());
+			toolTip += "</table>";
+		}
+		else
+			toolTip = "<i>Invalid View</i>";
 
 		titleLabel.setToolTip(toolTip);
 	}
@@ -3634,7 +3676,7 @@ using namespace QVGL;
 		if(view==NULL)
 			view = getCurrentView();
 
-		if(view==NULL)
+		if(view==NULL || !view->isValid())
 		{
 			xImg = 0.0f;
 			yImg = 0.0f;
@@ -3679,6 +3721,8 @@ using namespace QVGL;
 			viewsList.append(view);
 
 			view->qvglParent = this;
+
+			std::cout << "QVGL::MainWidget::addView : " << view << std::endl;
 
 			// Connect actions : 
 			QObject::connect(view, SIGNAL(requireDisplay()),	this, SLOT(viewRequireDisplay()));

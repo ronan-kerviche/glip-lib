@@ -50,6 +50,8 @@
 	#include <QTextStream>
 	#include <QColorDialog>
 	#include <QFontDialog>
+	#include <QSplitter>
+	#include <QListWidget>
 
 	#include <QHBoxLayout>
 	#include <QTabBar>
@@ -131,7 +133,7 @@ namespace QGED
 			QSize sizeHint() const;
 	};
 
-	class CodeEditor : public QPlainTextEdit 
+	class CodeEditor : public QPlainTextEdit
 	{
 		Q_OBJECT
 		
@@ -186,6 +188,28 @@ namespace QGED
 		signals :
 			void titleChanged(void);
 			void modified(bool changed);
+	};
+
+	class CodeEditorContainer : public QWidget
+	{
+		Q_OBJECT
+
+		private : 
+			QVBoxLayout	layout;
+			QSplitter 	splitterLayout;
+			CodeEditor	editor;
+			QListWidget	errorsList;
+
+		public : 
+			CodeEditorContainer(QWidget* parent);
+			~CodeEditorContainer(void);
+
+			const CodeEditor& getEditor(void) const;
+			CodeEditor& getEditor(void);
+
+		public slots : 
+			void clearErrors(void);
+			void showErrors(Exception compilationError);
 	};
 
 	class SearchAndReplaceMenu : public QMenu
@@ -425,36 +449,37 @@ namespace QGED
 		Q_OBJECT
 
 		private : 
-			QString			currentPath;
-			QVBoxLayout		layout;
-			QHBoxLayout		topBar;
-			QMenuBar		menuBarLeft,
-						menuBarRight;
-			QMenu			mainMenu,
-						searchContainerMenu;
-			QTabBar			tabBar;
-			QStackedLayout		stack;
-			QMap<int, CodeEditor*>	editors;
-			QAction			newAction,
-						openAction,	
-						saveAction,
-						saveAsAction,
-						saveAllAction,
-						closeAction,
-						closeAllAction,
-						settingsAction,
-						compileAction;
-			TemplateMenu		templateMenu;
-			ElementsMenu		elementsMenu;
-			CodeEditorSettings	settings;
-			SearchAndReplaceMenu	searchAndReplaceMenu;
-			RecentFilesMenu		recentFilesMenu;
+			QString				currentPath;
+			QVBoxLayout			layout;
+			QHBoxLayout			topBar;
+			QMenuBar			menuBarLeft,
+							menuBarRight;
+			QMenu				mainMenu,
+							searchContainerMenu;
+			QTabBar				tabBar;
+			QStackedLayout			stack;
+			QMap<int, CodeEditorContainer*>	editors;
+			QAction				newAction,
+							openAction,	
+							saveAction,
+							saveAsAction,
+							saveAllAction,
+							closeAction,
+							closeAllAction,
+							settingsAction,
+							compileAction;
+			TemplateMenu			templateMenu;
+			ElementsMenu			elementsMenu;
+			CodeEditorSettings		settings;
+			SearchAndReplaceMenu		searchAndReplaceMenu;
+			RecentFilesMenu			recentFilesMenu;
 
-			CodeEditor* getCurrentEditor(void);
+			CodeEditorContainer* getCurrentEditor(void);
+			int getTabIndex(CodeEditorContainer* editor);
 			int getTabIndex(CodeEditor* editor);
 			void setCurrentPath(QString path);
-			void save(CodeEditor* editor);
-			void saveAs(CodeEditor* editor, QString filename="");
+			void save(CodeEditorContainer* editor);
+			void saveAs(CodeEditorContainer* editor, QString filename="");
 			void wheelEvent(QWheelEvent* event);
 
 		protected :
@@ -485,12 +510,13 @@ namespace QGED
 			void save(void);
 			void saveAs(const QString& filename="");
 			void saveAll(void);
+			void compilationSuccessNotification(void* identifier);
+			void compilationFailureNotification(void* identifier, Exception compilationError);
 			void closeTab(void);
 			void closeAll(void);
-			void compilationFailureNotification(void* identifier, Exception compilationError);
 
 		signals :
-			void compileSource(std::string source, void* identifier, const QObject* referrer, const char* notificationMember);
+			void compileSource(std::string source, std::string path, void* identifier, const QObject* referrer);
 	};
 
 	#ifdef __USE_QVGL__

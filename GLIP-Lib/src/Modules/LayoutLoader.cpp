@@ -385,7 +385,7 @@
 			throw Exception("From line " + toString(e.startLine) + " : Path is empty.", __FILE__, __LINE__);
 
 		if( resultingPath[resultingPath.size()-1]!='/' )
-			throw Exception("From line " + toString(e.startLine) + " : Path should be ended by delimiter '/' (current : \"" + e.arguments[0] + "\").", __FILE__, __LINE__);
+			resultingPath.push_back('/');
 
 		// Test if it is already in the dynamic path list :
 		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
@@ -1552,14 +1552,18 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addToPaths(const std::string& p)
+	\fn void LayoutLoader::addToPaths(std::string p)
 	\brief Add a path.
 	\param p The path (might be invalid, avoid input of non-canonical paths which might results in ambiguous links errors).
 	**/
-	void LayoutLoader::addToPaths(const std::string& p)
+	void LayoutLoader::addToPaths(std::string p)
 	{
 		if(!p.empty() && p!="./")
 		{
+			// Force the folder delimiter : 
+			if(p[p.size()-1]!='/')
+				p.push_back('/');
+
 			removeFromPaths(p);
 			staticPaths.push_back(p);
 		}

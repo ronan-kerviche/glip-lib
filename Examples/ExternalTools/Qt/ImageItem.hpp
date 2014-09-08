@@ -133,7 +133,8 @@ namespace QGIC
 			ImageItemsStorage(void);
 			~ImageItemsStorage(void);
 
-			void add(ImageItem* imageItem);
+			bool hasImageItem(ImageItem* imageItem) const;
+			void addImageItem(ImageItem* imageItem);
 
 			// Manage the storage : 
 			size_t getMaxOccupancy(void);
@@ -230,6 +231,15 @@ namespace QGIC
 			void changeTWrapping(GLenum tWrapping);
 	};
 
+	class CollectionWidget : public QTreeWidget
+	{
+		Q_OBJECT 
+
+		public : 
+			CollectionWidget(QWidget* parent=NULL);
+			~CollectionWidget(void);
+	};
+
 	class ImageItemsCollection : public QWidget
 	{
 		Q_OBJECT
@@ -260,10 +270,8 @@ namespace QGIC
 			QMenu					imagesMenu;
 			FilterMenu				filterMenu;
 			WrappingMenu				wrappingMenu;
-			QTreeWidget				treeWidget;
+			CollectionWidget			collectionWidget;
 
-			static ImageItem* getImageItem(const QTreeWidgetItem& treeWidgetItem);
-			void add(ImageItem* imageItem);
 			void updateAlternateColors(void);
 			void updateColumnSize(void);
 			const QTreeWidgetItem* getTreeItem(ImageItem* imageItem) const;
@@ -305,6 +313,11 @@ namespace QGIC
 
 			void addActionToMenu(QAction* action);
 
+			static ImageItem* getImageItem(const QTreeWidgetItem& treeWidgetItem);
+	
+		public slots : 
+			void addImageItem(QGIC::ImageItem* imageItem);
+
 		signals :
 			void imageItemAdded(QGIC::ImageItem* imageItem);
 			void show(QGIC::ImageItem* imageItem);
@@ -316,7 +329,7 @@ namespace QGIC
 		Q_OBJECT
 
 		private : 
-			ImageItemsCollection			collectionWidget;
+			ImageItemsCollection			imageItemsCollection;
 			QMap<ImageItem*, QVGL::View*>		views;
 			QVGL::ViewsTable			mainViewsTable;
 			QAction					mainViewsTableAction;
@@ -326,7 +339,6 @@ namespace QGIC
 		private slots :
 			void showImageItem(QGIC::ImageItem* imageItem);
 			void showImageItem(void);
-			//void updateImageItem(void);
 			void imageItemViewRemoved(void);
 
 			void viewRemoved(ImageItem* imageItem);
@@ -345,7 +357,7 @@ namespace QGIC
 			ImageItemsCollection* getCollectionPtr(void);
 
 		signals :
-			void addView(QVGL::View* view);	
+			void addViewRequest(QVGL::View* view);	
 	};
 	#endif
 }

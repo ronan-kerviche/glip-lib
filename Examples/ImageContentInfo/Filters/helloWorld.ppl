@@ -8,6 +8,7 @@ SHADER_SOURCE:HelloWorld()
 
 	uniform sampler2D	textureInput;
 	out     vec4 		textureOutput;
+        uniform float scale = 1.5;
 
 	void main()
 	{
@@ -17,7 +18,7 @@ SHADER_SOURCE:HelloWorld()
 		/*if(col.a>0.0)
 			col.ba = vec2(0.5,0.1);*/
 
-		col.rgb = (col.rrr + col.ggg + col.bbb)/3.0;
+		col.rgb = (col.rrr + col.ggg + col.bbb)/3.0*scale;
 
 		// Write the output data :
 		textureOutput = col;

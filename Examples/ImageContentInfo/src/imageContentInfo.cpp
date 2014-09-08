@@ -136,7 +136,7 @@
 			layout.addWidget(&window);
 			layout.addWidget(&saveButton);
 
-			setGeometry(1000, 100, 800, 700);
+			setGeometry(1000, 100, 1200, 800);
 			show();
 
 			QObject::connect(&saveButton,			SIGNAL(released(void)), 		this, SLOT(save(void)));
@@ -171,12 +171,15 @@
 		QGIC::ImageItemsCollectionSubWidget* collection = new QGIC::ImageItemsCollectionSubWidget;
 		window.addSubWidget(collection);
 		window.addViewsTable(collection->getMainViewsTablePtr());
-		QObject::connect(collection, SIGNAL(addView(QVGL::View*)), &window, SLOT(addView(QVGL::View*)));
+		QObject::connect(collection, SIGNAL(addViewRequest(QVGL::View*)), &window, SLOT(addView(QVGL::View*)));
 
 		QGPM::PipelineManagerSubWidget* manager = new QGPM::PipelineManagerSubWidget;
 		window.addSubWidget(manager);
-		QObject::connect(codeEditorTabs->getCodeEditorPtr(), SIGNAL(compileSource(std::string, void*, const QObject*, const char*)), manager->getManagerPtr(), SLOT(compileSource(std::string, void*, const QObject*, const char*)));
-		QObject::connect(collection->getCollectionPtr(), SIGNAL(imageItemAdded(QGIC::ImageItem*)), manager->getManagerPtr(), SLOT(addImageItem(QGIC::ImageItem*)));
+		QObject::connect(codeEditorTabs->getCodeEditorPtr(), 	SIGNAL(compileSource(std::string, std::string, void*, const QObject*)), manager->getManagerPtr(), 	SLOT(compileSource(std::string, std::string, void*, const QObject*)));
+		QObject::connect(collection->getCollectionPtr(), 	SIGNAL(imageItemAdded(QGIC::ImageItem*)), 				manager->getManagerPtr(), 	SLOT(addImageItem(QGIC::ImageItem*)));
+		QObject::connect(manager->getManagerPtr(), 		SIGNAL(addViewRequest(QVGL::View*)), 					&window, 			SLOT(addView(QVGL::View*)));
+		QObject::connect(manager->getManagerPtr(), 		SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),			&window, 			SLOT(addViewsTable(QVGL::ViewsTable*)));
+		QObject::connect(manager->getManagerPtr(), 		SIGNAL(addImageItemRequest(QGIC::ImageItem*)),				collection->getCollectionPtr(),	SLOT(addImageItem(QGIC::ImageItem*)));
 	}
 
 	IHM::~IHM(void)

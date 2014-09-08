@@ -543,10 +543,17 @@ using namespace QGIC;
 		}
 	}
 
-	void ImageItemsStorage::add(ImageItem* imageItem)
+	bool ImageItemsStorage::hasImageItem(ImageItem* imageItem) const
+	{
+		int idx = imageItemsList.indexOf(imageItem);
+
+		return (idx>=0);
+	}
+
+	void ImageItemsStorage::addImageItem(QGIC::ImageItem* imageItem)
 	{
 		if(imageItem->isOnDevice())
-			throw Exception("ImageItemsStorage::add - Cannot store an image which is alredy loaded on the device.", __FILE__, __LINE__);
+			throw Exception("ImageItemsStorage::addImageItem - Cannot store an image which is alredy loaded on the device.", __FILE__, __LINE__);
 
 		int idx = imageItemsList.indexOf(imageItem);
 
@@ -1126,6 +1133,19 @@ using namespace QGIC;
 		}
 	}
 
+// CollectionWidget :
+	CollectionWidget::CollectionWidget(QWidget* parent)
+	 : 	QTreeWidget(parent)
+	{
+		setIndentation(2);
+		setSelectionBehavior(QAbstractItemView::SelectRows);
+		setSelectionMode(QAbstractItemView::ContiguousSelection);
+		setContextMenuPolicy(Qt::CustomContextMenu);
+	}
+
+	CollectionWidget::~CollectionWidget(void)
+	{ }
+
 // ImageItemsCollection : 
 	ImageItemsCollection::ImageItemsCollection(void)
 	 : 	layout(this),
@@ -1136,10 +1156,10 @@ using namespace QGIC;
 		imagesMenu("Images", this),
 		filterMenu(this),
 		wrappingMenu(this),
-		treeWidget(this)
+		collectionWidget(this)
 	{
 		layout.addWidget(&menuBar);
-		layout.addWidget(&treeWidget);
+		layout.addWidget(&collectionWidget);
 		layout.setMargin(0);
 		layout.setSpacing(0);
 
@@ -1154,11 +1174,6 @@ using namespace QGIC;
 		menuBar.addMenu(&imagesMenu);
 		menuBar.addMenu(&filterMenu);
 		menuBar.addMenu(&wrappingMenu);
-
-		// Init the TreeView : 
-		treeWidget.setIndentation(2);
-		treeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
-		treeWidget.setContextMenuPolicy(Qt::CustomContextMenu);
 
 		QStringList listLabels;
 
@@ -1186,85 +1201,45 @@ using namespace QGIC;
 			}
 		}
 		
-		treeWidget.setHeaderLabels( listLabels );
+		collectionWidget.setHeaderLabels( listLabels );
 
 		// Connections :
-		QObject::connect(&treeWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
-		QObject::connect(&treeWidget, 	SIGNAL(itemActivated(QTreeWidgetItem*,int)),			this, SLOT(itemActivated(QTreeWidgetItem*,int)));
-		QObject::connect(&treeWidget, 	SIGNAL(itemSelectionChanged()),					this, SLOT(itemSelectionChanged()));
-		QObject::connect(&treeWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),		this, SLOT(openContextMenu(const QPoint&)));
-		QObject::connect(&filterMenu, 	SIGNAL(changeMinFilter(GLenum)),				this, SLOT(changeMinFilter(GLenum)));
-		QObject::connect(&filterMenu, 	SIGNAL(changeMagFilter(GLenum)),				this, SLOT(changeMagFilter(GLenum)));
-		QObject::connect(&wrappingMenu,	SIGNAL(changeSWrapping(GLenum)),				this, SLOT(changeSWrapping(GLenum)));
-		QObject::connect(&wrappingMenu,	SIGNAL(changeTWrapping(GLenum)),				this, SLOT(changeTWrapping(GLenum)));
+		QObject::connect(&collectionWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
+		QObject::connect(&collectionWidget, 	SIGNAL(itemActivated(QTreeWidgetItem*,int)),			this, SLOT(itemActivated(QTreeWidgetItem*,int)));
+		QObject::connect(&collectionWidget, 	SIGNAL(itemSelectionChanged()),					this, SLOT(itemSelectionChanged()));
+		QObject::connect(&collectionWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),		this, SLOT(openContextMenu(const QPoint&)));
+		QObject::connect(&filterMenu, 		SIGNAL(changeMinFilter(GLenum)),				this, SLOT(changeMinFilter(GLenum)));
+		QObject::connect(&filterMenu, 		SIGNAL(changeMagFilter(GLenum)),				this, SLOT(changeMagFilter(GLenum)));
+		QObject::connect(&wrappingMenu,		SIGNAL(changeSWrapping(GLenum)),				this, SLOT(changeSWrapping(GLenum)));
+		QObject::connect(&wrappingMenu,		SIGNAL(changeTWrapping(GLenum)),				this, SLOT(changeTWrapping(GLenum)));
 	}
 
 	ImageItemsCollection::~ImageItemsCollection(void)
 	{ }
 
-	ImageItem* ImageItemsCollection::getImageItem(const QTreeWidgetItem& treeWidgetItem)
-	{
-		return reinterpret_cast<ImageItem*>(treeWidgetItem.data(0, Qt::UserRole).value<void*>());
-	}
-
-	void ImageItemsCollection::add(ImageItem* imageItem)
-	{
-		if(imageItem!=NULL)
-		{
-			storage.add(imageItem);
-
-			// Create item :
-			QTreeWidgetItem* item = new QTreeWidgetItem;
-
-			// Set the link :
-			item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(imageItem)));
-
-			// Register :
-			treeWidget.addTopLevelItem(item);
-			items[imageItem] = item;
-
-			// Update the info : 
-			updateImageItem(imageItem);
-			updateAlternateColors();
-			updateColumnSize();
-
-			// Connect : 
-			QObject::connect(imageItem, SIGNAL(formatModified()),		this, SLOT(imageItemFormatModified()));
-			QObject::connect(imageItem, SIGNAL(nameModified()),		this, SLOT(imageItemNameModified()));
-			QObject::connect(imageItem, SIGNAL(filenameModified()),		this, SLOT(imageItemFilenameModified()));
-			QObject::connect(imageItem, SIGNAL(loadedOnDevice()),		this, SLOT(imageItemStatusChanged()));
-			QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemStatusChanged()));
-			QObject::connect(imageItem, SIGNAL(savedToDisk()),		this, SLOT(imageItemNameModified()));
-			QObject::connect(imageItem, SIGNAL(removed()),			this, SLOT(imageItemRemoved()));
-			QObject::connect(imageItem, SIGNAL(destroyed()),		this, SLOT(imageItemRemoved()));
-
-			emit imageItemAdded(imageItem);
-		}
-	}
-
 	void ImageItemsCollection::updateAlternateColors(void)
 	{
-		QBrush 	original 	= treeWidget.palette().background().color(),
+		QBrush 	original 	= collectionWidget.palette().background().color(),
 			darker		= QBrush(original.color().lighter(90)),
 			lighter		= QBrush(original.color().lighter(110));
 		
 		QBrush* ptr = NULL;
-		for(int k=0; k<treeWidget.topLevelItemCount(); k++)
+		for(int k=0; k<collectionWidget.topLevelItemCount(); k++)
 		{
 			if(k%2==0)
 				ptr = &lighter;
 			else
 				ptr = &darker;
 
-			for(int l=0; l<treeWidget.columnCount(); l++)
-				treeWidget.topLevelItem(k)->setBackground(l, QBrush(*ptr));
+			for(int l=0; l<collectionWidget.columnCount(); l++)
+				collectionWidget.topLevelItem(k)->setBackground(l, QBrush(*ptr));
 		}
 	}
 
 	void ImageItemsCollection::updateColumnSize(void)
 	{
 		for(int k=NameColumn; k<NumColumns; k++)
-			treeWidget.resizeColumnToContents(k);
+			collectionWidget.resizeColumnToContents(k);
 	}
 
 	const QTreeWidgetItem* ImageItemsCollection::getTreeItem(ImageItem* imageItem) const
@@ -1289,7 +1264,7 @@ using namespace QGIC;
 
 	QList<ImageItem*> ImageItemsCollection::getSelectedImageItems(void)
 	{
-		QList<QTreeWidgetItem*> selectedItems = treeWidget.selectedItems();
+		QList<QTreeWidgetItem*> selectedItems = collectionWidget.selectedItems();
 
 		QList<ImageItem*> result;
 
@@ -1438,7 +1413,7 @@ using namespace QGIC;
 				{
 					ImageItem* imageItem = new ImageItem(*it);
 
-					add(imageItem);
+					addImageItem(imageItem);
 				}
 				catch(Exception& e)
 				{
@@ -1465,7 +1440,7 @@ using namespace QGIC;
 		ImageItem* imageItem = ImageItem::pasteImageFromClipboard();
 
 		if(imageItem!=NULL)
-			add(imageItem);
+			addImageItem(imageItem);
 	}
 
 	void ImageItemsCollection::save(void)
@@ -1517,7 +1492,7 @@ using namespace QGIC;
 	
 	void ImageItemsCollection::openContextMenu(const QPoint& pos)
 	{
-		QMenu menu(&treeWidget);
+		QMenu menu(&collectionWidget);
 		
 		menu.addMenu(&filterMenu);
 		menu.addMenu(&wrappingMenu);
@@ -1526,7 +1501,7 @@ using namespace QGIC;
 		menu.addAction(saveAsAction);
 		menu.addAction(removeAction);		
 
-		menu.exec(treeWidget.viewport()->mapToGlobal(pos));
+		menu.exec(collectionWidget.viewport()->mapToGlobal(pos));
 	}
 
 	void ImageItemsCollection::changeMinFilter(GLenum minFilter)
@@ -1582,18 +1557,59 @@ using namespace QGIC;
 		menuBar.addAction(action);
 	}
 
+	ImageItem* ImageItemsCollection::getImageItem(const QTreeWidgetItem& treeWidgetItem)
+	{
+		return reinterpret_cast<ImageItem*>(treeWidgetItem.data(0, Qt::UserRole).value<void*>());
+	}
+
+	void ImageItemsCollection::addImageItem(ImageItem* imageItem)
+	{
+		if(imageItem!=NULL && !storage.hasImageItem(imageItem))
+		{
+			storage.addImageItem(imageItem);
+
+			// Create item :
+			QTreeWidgetItem* item = new QTreeWidgetItem;
+
+			// Set the link :
+			item->setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(imageItem)));
+			item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
+
+			// Register :
+			collectionWidget.addTopLevelItem(item);
+			items[imageItem] = item;
+
+			// Update the info : 
+			updateImageItem(imageItem);
+			updateAlternateColors();
+			updateColumnSize();
+
+			// Connect : 
+			QObject::connect(imageItem, SIGNAL(formatModified()),		this, SLOT(imageItemFormatModified()));
+			QObject::connect(imageItem, SIGNAL(nameModified()),		this, SLOT(imageItemNameModified()));
+			QObject::connect(imageItem, SIGNAL(filenameModified()),		this, SLOT(imageItemFilenameModified()));
+			QObject::connect(imageItem, SIGNAL(loadedOnDevice()),		this, SLOT(imageItemStatusChanged()));
+			QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemStatusChanged()));
+			QObject::connect(imageItem, SIGNAL(savedToDisk()),		this, SLOT(imageItemNameModified()));
+			QObject::connect(imageItem, SIGNAL(removed()),			this, SLOT(imageItemRemoved()));
+			QObject::connect(imageItem, SIGNAL(destroyed()),		this, SLOT(imageItemRemoved()));
+
+			emit imageItemAdded(imageItem);
+		}
+	}
+
 // ImageItemsCollectionSubWidget :
 #ifdef __USE_QVGL__
 	ImageItemsCollectionSubWidget::ImageItemsCollectionSubWidget(void)
 	 : 	mainViewsTable("Collection - Main Table"),
 		mainViewsTableAction("Views Table", this)
 	{
-		setInnerWidget(&collectionWidget);
+		setInnerWidget(&imageItemsCollection);
 		setTitle("Collection");
 
-		collectionWidget.addActionToMenu(&mainViewsTableAction);
+		imageItemsCollection.addActionToMenu(&mainViewsTableAction);
 
-		QObject::connect(&collectionWidget, 	SIGNAL(show(QGIC::ImageItem*)), this, SLOT(showImageItem(QGIC::ImageItem*)));
+		QObject::connect(&imageItemsCollection, SIGNAL(show(QGIC::ImageItem*)), this, SLOT(showImageItem(QGIC::ImageItem*)));
 		QObject::connect(&mainViewsTableAction,	SIGNAL(triggered()),		this, SLOT(showMainViewsTable()));
 	}
 
@@ -1626,7 +1642,6 @@ using namespace QGIC;
 				QVGL::View* view = new QVGL::View(imageItem->getTexturePtr(), imageItem->getName());
 				views[imageItem] = view;
 
-				//QObject::connect(imageItem,	SIGNAL(formatModified()),	this, SLOT(imageItemUpdated()));
 				QObject::connect(imageItem,	SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemViewRemoved()));
 				QObject::connect(imageItem,	SIGNAL(removed()),		this, SLOT(imageItemViewRemoved()));
 				QObject::connect(imageItem,	SIGNAL(destroyed()),		this, SLOT(imageItemViewRemoved()));
@@ -1635,7 +1650,7 @@ using namespace QGIC;
 				
 				mainViewsTable.addView(view);
 
-				emit addView(view);
+				emit addViewRequest(view);
 				view->show();
 			}
 			else
@@ -1651,30 +1666,6 @@ using namespace QGIC;
 
 		showImageItem(imageItem);
 	}
-
-	/*void ImageItemsCollectionSubWidget::updateImageItem(void)
-	{
-		///ImageItem* imageItem = reinterpret_cast<ImageItem*>(QObject::sender());
-
-		//QMap<ImageItem*, QVGL::View*>::iterator it = views.find(imageItem);
-
-		//if(it!=views.end())
-		//	emit it.value()->updated();
-	}
-
-	void ImageItemsCollectionSubWidget::imageItemUnloadedFromDevice(void)
-	{
-		ImageItem* imageItem = reinterpret_cast<ImageItem*>(QObject::sender());
-
-		clearView(imageItem);
-	}
-
-	void ImageItemsCollectionSubWidget::imageItemRemoved(void)
-	{
-		ImageItem* imageItem = reinterpret_cast<ImageItem*>(QObject::sender());
-
-		clearView(imageItem);
-	}*/
 
 	void ImageItemsCollectionSubWidget::imageItemViewRemoved(void)
 	{
@@ -1737,7 +1728,7 @@ using namespace QGIC;
 
 	ImageItemsCollection* ImageItemsCollectionSubWidget::getCollectionPtr(void)
 	{
-		return &collectionWidget;
+		return &imageItemsCollection;
 	}
 
 #endif 

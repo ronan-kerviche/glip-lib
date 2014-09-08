@@ -1,6 +1,6 @@
 // The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
 //TEXTURE_FORMAT:format(597,750,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
-REQUIRED_FORMAT:format(texture1)
+REQUIRED_FORMAT:format(inputFormat0)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
 SHADER_SOURCE:mixTwoImagesShader
@@ -41,7 +41,7 @@ FILTER_LAYOUT:mixFilter(format,mixTwoImagesShader)
 // The filter layout will have one input port and one output port, which names are respectively texInput and texOutput.
 // This information is gathered from the shader source HelloWorld, by analyzing the variables declared as uniform sampler2D for inputs and out vec4 for outputs.
 
-PIPELINE_MAIN:pMainMixTwoImages()
+PIPELINE_MAIN:pMainMixTwoImages
 {
 	// Declare some input and output ports for this pipeline ::
 	INPUT_PORTS(texture1, texture2)

@@ -75,7 +75,7 @@
 			void load(std::string source);
 			void load(Pipeline& pipeline);
 			bool hasPipeline(const std::string& name) const;
-			int applyTo(Pipeline& pipeline, bool forceWrite=true) const;
+			int applyTo(Pipeline& pipeline, bool forceWrite=true, bool silent=false) const;
 
 		signals : 
 			void modified(void);

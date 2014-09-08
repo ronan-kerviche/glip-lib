@@ -675,45 +675,55 @@
 		return resources.end();
 	}
 
-	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite) const
+	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite, bool silent) const
 	{
 		int c = 0;
 
 		for(std::map<std::string, UniformsVarsLoader::Node>::const_iterator it=subNodes.begin(); it!=subNodes.end(); it++)
 		{
 			if(!current.doesElementExist(it->second.getName()))
-				throw Exception("Missing element \"" + it->second.getName() + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
-
-			int id = current.getElementIndex(it->second.getName());
-	
-			const __ReadOnly_PipelineLayout::ComponentKind kind = current.getElementKind(id);
-	
-			switch(kind)
 			{
-				case __ReadOnly_PipelineLayout::FILTER :
-					{
-						int gid = current.getElementID(id);
-						Filter& filter = pipeline[gid];	
-						c += it->second.applyTo(pipeline, filter, forceWrite);
-					}
-					break;
-				case __ReadOnly_PipelineLayout::PIPELINE :
-					c += it->second.applyTo(pipeline, current.pipelineLayout(id), forceWrite);
-					break;
-				default : 
-					throw Exception("Unknown element type (internal error).", __FILE__, __LINE__);
+				if(!silent)
+					throw Exception("Missing element \"" + it->second.getName() + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
+			}
+			else
+			{
+				int id = current.getElementIndex(it->second.getName());
+	
+				const __ReadOnly_PipelineLayout::ComponentKind kind = current.getElementKind(id);
+	
+				switch(kind)
+				{
+					case __ReadOnly_PipelineLayout::FILTER :
+						{
+							int gid = current.getElementID(id);
+							Filter& filter = pipeline[gid];	
+							c += it->second.applyTo(pipeline, filter, forceWrite);
+						}
+						break;
+					case __ReadOnly_PipelineLayout::PIPELINE :
+						c += it->second.applyTo(pipeline, current.pipelineLayout(id), forceWrite);
+						break;
+					default : 
+						throw Exception("Unknown element type (internal error).", __FILE__, __LINE__);
+				}
 			}
 		}
 
 		return c;
 	}
 
-	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite) const
+	int UniformsVarsLoader::Node::applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite, bool silent) const
 	{
 		int c = 0;
 
 		if(!empty() && !isFilter())
-			throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__);
+		{
+			if(!silent)
+				throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__);
+			else
+				return 0;
+		}
 
 		for(std::map<std::string, UniformsVarsLoader::Resource>::const_iterator it=resources.begin(); it!=resources.end(); it++)
 			c += it->second.applyTo(filter, forceWrite);
@@ -1046,18 +1056,23 @@
 	}
 
 	/**
-	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
+	\fn int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	\brief Copy the possibly loaded set of uniforms variables to a pipeline (for the corresponding name of the Pipeline instance).
 	\param pipeline The pipeline to which the data has to be copied (if relevant).
 	\param forceWrite If set to false, only the variable marked as modified will be loaded (see UniformsVarsLoader::Resource::modified).
 	\return The total number of uniforms variables actually copied.
 	**/
-	int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite) const
+	int UniformsVarsLoader::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	{
 		std::map<std::string, Node>::const_iterator it=nodes.find(pipeline.getTypeName());
 
 		if(it==nodes.end())
-			throw Exception("UniformsVarsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__);
+		{
+			if(!silent)
+				throw Exception("UniformsVarsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__);
+			else
+				return 0;
+		}
 		else
 		{
 			int c = 0;
@@ -1068,8 +1083,11 @@
 			}
 			catch(Exception& e)
 			{
-				Exception m("UniformsVarsLoader::applyTo - Exception while modifying pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__);
-				throw m + e;
+				if(!silent)
+				{
+					Exception m("UniformsVarsLoader::applyTo - Exception while modifying pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__);
+					throw m + e;
+				}
 			}	
 
 			return c;

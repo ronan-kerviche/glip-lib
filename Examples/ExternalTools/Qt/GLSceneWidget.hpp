@@ -120,12 +120,15 @@ namespace QVGL
 			friend class MainWidget;
 
 		public : 
+			View(const QString& _name);
 			View(HdlTexture* _texture, const QString& _name);
 			~View(void);
 
+			bool isValid(void) const;
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			const QString& getName(void) const;
 			void setName(const QString& newName);
+			void setTexture(HdlTexture* texture);
 			float getAngle(void) const;
 			void setAngle(const float& a);
 			void rotate(const float& a);
@@ -241,6 +244,7 @@ namespace QVGL
 			QMap<View*, Vignette*>::const_iterator end(void) const;
 
 			const QString& getName(void) const;
+			void setName(const QString& newName);
 			View* getCurrentSelectedView(void) const;
 			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
 			QRectF getVignetteFrame(View* view) const;
@@ -262,6 +266,7 @@ namespace QVGL
 			void requireDisplay(void);
 			void viewSelection(View* view);
 			void showView(View* view);			
+			void nameChanged(void);
 			void closed(void);
 	};
 

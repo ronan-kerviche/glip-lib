@@ -180,6 +180,8 @@
 		for(UniformsVarsLoader::ResourceIterator it=node.resourceBegin(); it!=node.resourceEnd(); it++)
 			addResource(it->second, newNode);
 
+		newNode->setExpanded(true);
+
 		return newNode;
 	}
 
@@ -195,6 +197,9 @@
 
 	void UniformsVarsLoaderInterface::scanLoader(void)
 	{
+		if(treeWidget()==NULL)
+			throw Exception("UniformsVarsLoaderInterface::scanLoader - Internal error : no tree widget associated.", __FILE__, __LINE__);
+
 		for(UniformsVarsLoader::NodeIterator it=loader.rootNodeBegin(); it!=loader.rootNodeEnd(); it++)
 		{
 			if(!isNodeListed(it->first))
@@ -203,17 +208,18 @@
 				itemRoots[it->first] = addNodeAsRoot(it->second);
 			}
 		}
+		setExpanded(true);
 	}
 
 	// Public Tools : 
 	void UniformsVarsLoaderInterface::load(std::string source)
 	{
-
+		std::cout << "UniformsVarsLoaderInterface::load - TODO" << std::endl;
 	}	
 
 	void UniformsVarsLoaderInterface::load(Pipeline& pipeline)
 	{
-		loader.load(pipeline, false);
+		loader.load(pipeline, true);
 		scanLoader();
 	}
 
@@ -222,8 +228,8 @@
 		return false;
 	}
 
-	int UniformsVarsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite) const
+	int UniformsVarsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	{
-		return loader.applyTo(pipeline, forceWrite);
+		return loader.applyTo(pipeline, forceWrite, silent);
 	}
 

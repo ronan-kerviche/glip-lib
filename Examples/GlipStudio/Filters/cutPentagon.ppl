@@ -1,4 +1,4 @@
-REQUIRED_FORMAT:outputFormat(inputTexture)
+REQUIRED_FORMAT:outputFormat(inputFormat0)
 
 GEOMETRY:pentagon(CUSTOM_MODEL, GL_TRIANGLES, true)
 {

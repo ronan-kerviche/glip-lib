@@ -382,7 +382,7 @@ Loading Example :
 
 				const std::vector<std::string>& paths(void) const;
 				void clearPaths(void);
-				void addToPaths(const std::string& p);
+				void addToPaths(std::string p);
 				void addToPaths(const std::vector<std::string>& paths);
 				bool removeFromPaths(const std::string& p);
 

@@ -1,4 +1,5 @@
-REQUIRED_FORMAT:mainFmt(inputTexture)
+ADD_PATH(../GlipStudio/Filters/)
+REQUIRED_FORMAT:mainFmt(inputFormat0)
 
 INCLUDE_FILE(histogram.ppl)
 
@@ -29,8 +30,7 @@ FILTER_LAYOUT:sigmoidFilter(mainFmt, sigmoidShader)
 PIPELINE_MAIN:sigmoidSeparatePipeline
 {
 	INPUT_PORTS(inputTexture)
-	//OUTPUT_PORTS(outputTexture, histogramBins, histogramShow)
-	OUTPUT_PORTS(outputTexture, histogramShow)
+	OUTPUT_PORTS(outputTexture, histogramShow, histogramBins)
 
 	FILTER_INSTANCE:sigmoid(sigmoidFilter)
 	PIPELINE_INSTANCE:histogram(pipelineHistogram)
@@ -39,6 +39,6 @@ PIPELINE_MAIN:sigmoidSeparatePipeline
 	CONNECTION(sigmoid, *, THIS, outputTexture)
 
 	CONNECTION(sigmoid, *, histogram, *)
-	//CONNECTION(histogram, histogramBins, THIS, histogramBins)
+	CONNECTION(histogram, histogramBins, THIS, histogramBins)
 	CONNECTION(histogram, outputTexture, THIS, histogramShow)
 }
