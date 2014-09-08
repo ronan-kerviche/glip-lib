@@ -37,7 +37,7 @@ using namespace QGIC;
 		timer.start();
 
 		// Create the format : 
-		GLenum mode = GL_NONE;
+		/*GLenum mode = GL_NONE;
 
 		if(qimage.allGray())
 			mode = GL_LUMINANCE;
@@ -80,10 +80,10 @@ using namespace QGIC;
 					if(descriptor.numChannels()>3)	imageBuffer->set(j, i, GL_ALPHA,	qAlpha( col ));
 				}
 			}
-		}
+		}*/
 
 		// Second method, test : 
-		/*HdlDynamicTable* 	original 	= HdlDynamicTable::buildProxy(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), 4);
+		HdlDynamicTable* 	original 	= HdlDynamicTable::buildProxy(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), 4);
 					imageBuffer 	= new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGB, GL_UNSIGNED_BYTE));
 		HdlDynamicTable* 	buffer 		= HdlDynamicTable::buildProxy(imageBuffer->getBuffer(), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), 3);
 
@@ -105,22 +105,35 @@ using namespace QGIC;
 				dest.write(green); 	dest.nextElement();
 				dest.write(blue); 	dest.nextElement();
 			}
-			else
+			else if(true)
 			{
 				// Per pixel (twice faster than the previous case): 
-				unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr()); source.nextSlice();
+				unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr());
+				source.nextSlice();
 
 				unsigned char data[3] = {*(pixel+2), *(pixel+1), *(pixel+0)};	
 
-				std::memcpy(dest.getPtr(), data, 3);
+				//std::memcpy(dest.getPtr(), data, 3);
+				dest.writeBytes(data, 3);
+				dest.nextSlice();
+			}
+			else
+			{
+				unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr());
+				source.nextSlice();
+				source.nextSlice();
+
+				unsigned char data[6] = {*(pixel+2), *(pixel+1), *(pixel+0), *(pixel+6), *(pixel+5), *(pixel+4)};	
+
+				dest.writeBytes(data, 6);
+				dest.nextSlice();
 				dest.nextSlice();
 			}
 		} 
 
 		delete original;
-		delete buffer;*/
+		delete buffer;
 
-		
 		// Fastest : 
 		/*imageBuffer 	= new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGBA, GL_UNSIGNED_BYTE));
 		std::memcpy(imageBuffer->getBuffer(), const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), imageBuffer->getSize());*/

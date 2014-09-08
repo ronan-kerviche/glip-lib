@@ -336,11 +336,12 @@
 	}
 
 // HdlDynamicTable :
-	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices, int _alignment, bool _proxy)
+	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices, bool _normalized, int _alignment, bool _proxy)
 	 :	type(_type),
 		rows(_rows),
 		columns(_columns),
 		slices(_slices),
+		normalized(_normalized),
 		alignment(_alignment),
 		proxy(_proxy)
 	{ }
@@ -449,6 +450,49 @@
 	}
 
 	/**
+	\fn size_t HdlDynamicTable::getSliceSize(void) const
+	\brief Get the size of one slice, in bytes.
+	\return The size of one slice, or HdlDynamicTable::getNumSlices times HdlDynamicTable::getElementSize, in bytes.
+	**/
+	size_t HdlDynamicTable::getSliceSize(void) const
+	{
+		return static_cast<size_t>(getNumSlices())*getElementSize();
+	}
+
+	/**
+	\fn size_t HdlDynamicTable::getRowSize(void) const
+	\brief Get the size of one row, in bytes.
+	\return The size of one row, in bytes, and accounting for the alignment.
+	**/
+	size_t HdlDynamicTable::getRowSize(void) const
+	{
+		return static_cast<size_t>(getNumColumns()*getNumSlices()*getElementSize() + (getAlignment()-1)) & ~static_cast<size_t>(getAlignment());
+	}
+
+	/**
+	\fn size_t HdlDynamicTable::getSize(void) const
+	\brief Get the size of whole table, in bytes.
+	\return The size of the whole table, in bytes, and accounting for the alignment.
+	**/
+	size_t HdlDynamicTable::getSize(void) const
+	{
+		return static_cast<size_t>(getNumRows()) * getRowSize();
+	}
+
+	/**
+	\fn size_t HdlDynamicTable::getPosition(const int& j, const int& i, const int& d) const
+	\brief Get the distance in memory, from the beginning of the table to the targeted element.
+	\param j The index of the column.
+	\param i The index of the row.
+	\param d The index of the slice.
+	\return The distance to the beginning of the table in bytes.
+	**/
+	size_t HdlDynamicTable::getPosition(const int& j, const int& i, const int& d) const
+	{
+		return static_cast<size_t>(i)*getRowSize() + static_cast<size_t>(j*getNumSlices() + d)*getElementSize();
+	}
+
+	/**
 	\fn bool HdlDynamicTable::isProxy(void) const
 	\brief Test if the table is actually a proxy.
 	\return True if this table is a proxy to some data.
@@ -456,6 +500,16 @@
 	bool HdlDynamicTable::isProxy(void) const
 	{
 		return proxy;
+	}
+
+	/**
+	\fn bool HdlDynamicTable::isNormalized(void) const
+	\brief Test if the table is normalized.
+	\return True if this table is normalized (floatting point data in the range [0, 1]).
+	**/
+	bool HdlDynamicTable::isNormalized(void) const
+	{
+		return normalized;
 	}
 
 	/**
@@ -485,23 +539,38 @@
 	}
 
 	/**
-	\fn HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	\fn void HdlDynamicTable::writeBytes(const void* value, size_t length, void* position)
+	\brief Write a shapeless value array at the given position.
+	\param value Shapeless value.
+	\param length The amount of data to write (in bytes).
+	\param position Position in the table (direct data access).
+	**/
+	void HdlDynamicTable::writeBytes(const void* value, size_t length, void* position)
+	{
+		std::memcpy(position, value, length);
+	}
+
+	/**
+	\fn HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized, int _alignment)
 	\brief Build dynamic data from a GL data identifier (see supported types in main description of HdlDynamicData).
 	\param type The required GL type.
 	\param _columns The number of columns of the table.
 	\param _rows The number of rows of the table.
 	\param _slices The number of slices of the table.
+	\param _normalized True if the data is normalized.
 	\param _alignment Data alignment (per row, should be either 1, 4, or 8).
 	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
 	**/
-	HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	HdlDynamicTable* HdlDynamicTable::build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized, int _alignment)
 	{
 		HdlDynamicTable* res = NULL;
+
+		_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
 
 		#define GENERATE_ELM(glType, CType) \
 			if(type== glType ) \
 			{ \
-				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(type, _columns, _rows, _slices, _alignment); \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(type, _columns, _rows, _slices, _normalized, _alignment); \
 				res = reinterpret_cast<HdlDynamicTable*>(d); \
 			}
 
@@ -547,24 +616,27 @@
 	}
 
 	/**
-	\fn HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	\fn HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized, int _alignment)
 	\brief Build dynamic data proxy from a GL data identifier and a buffer pointer (see supported types in main description of HdlDynamicData).
 	\param buffer The original data (will not be deleted, the user must guarantee that this object is destroyed when the original data is).
 	\param type The required GL type.
 	\param _columns The number of columns of the table.
 	\param _rows The number of rows of the table.
 	\param _slices The number of slices of the table.
+	\param _normalized True if the data is normalized.
 	\param _alignment Data alignment (per row, should be either 1, 4, or 8).
 	\return A data object allocated on the stack, that the user will have to delete once used. Raise an exception if any error occurs.
 	**/
-	HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, int _alignment)
+	HdlDynamicTable* HdlDynamicTable::buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized, int _alignment)
 	{
 		HdlDynamicTable* res = NULL;
+
+		_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
 
 		#define GENERATE_ELM(glType, CType) \
 			if(type== glType ) \
 			{ \
-				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(buffer, type, _columns, _rows, _slices, _alignment); \
+				HdlDynamicTableSpecial< CType >* d = new HdlDynamicTableSpecial< CType >(buffer, type, _columns, _rows, _slices, _normalized, _alignment); \
 				res = reinterpret_cast<HdlDynamicTable*>(d); \
 			}
 
@@ -890,8 +962,8 @@
 	**/
 	void HdlDynamicTableIterator::rowEnd(void)
 	{
-		d = 0;
-		j = 0;
+		d = table.getNumSlices()-1;
+		j = table.getNumColumns()-1;
 		
 		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i)) + static_cast<size_t>(table.getNumColumns() * table.getNumSlices() - 1) * table.getElementSize();
 	}
@@ -920,6 +992,18 @@
 		d = table.getNumSlices()-1;
 
 		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getSize() - table.getElementSize();
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::jumpTo(const int& _j, const int& _i, const int& _d)
+	\brief Jump to a different element.
+	\param _j The index of the column.
+	\param _i The index of the row.
+	\param _d The index of the slice.
+	**/
+	void HdlDynamicTableIterator::jumpTo(const int& _j, const int& _i, const int& _d)
+	{
+		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getPosition(j, i, d);
 	}
 
 	/**
@@ -1013,13 +1097,64 @@
 	}
 
 	/**
-	\fn void HdlDynamicTableIterator::write(void* value)
+	\fn unsigned char HdlDynamicTableIterator::readb(void) const
+	\brief Read the current value as an integer value
+	\return The current value casted as an int.
+	**/
+	unsigned char HdlDynamicTableIterator::readb(void) const
+	{
+		return table.readb(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writeb(const unsigned char& value)
+	\brief Write an integer value to the current position.
+	\param value The integer value to write.
+	**/
+	void HdlDynamicTableIterator::writeb(const unsigned char& value)
+	{
+		table.writeb(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn float HdlDynamicTableIterator::readNormalized(void) const
+	\brief Read the current value as a normalized value. 
+	\return he current value casted in a normalized range.
+	**/
+	float HdlDynamicTableIterator::readNormalized(void) const
+	{
+		return table.readNormalized(reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writeNormalized(const float& value)
+	\brief Write a normalized value to the current position.
+	\param value The normalized value to write.
+	**/
+	void HdlDynamicTableIterator::writeNormalized(const float& value)
+	{
+		table.writeNormalized(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::write(const void* value)
 	\brief Write shapless data to the current position (assuming same type as the table).
 	\param value The shapeless value to write. 
 	**/
-	void HdlDynamicTableIterator::write(void* value)
+	void HdlDynamicTableIterator::write(const void* value)
 	{
 		table.write(value, reinterpret_cast<void*>(position));
+	}
+
+	/**
+	\fn void HdlDynamicTableIterator::writeBytes(void* value, size_t length)
+	\brief Write a shapeless value array at the given position.
+	\param value Shapeless value array.
+	\param length The amount of data to write (in bytes).
+	**/
+	void HdlDynamicTableIterator::writeBytes(const void* value, size_t length)
+	{
+		table.writeBytes(value, length, reinterpret_cast<void*>(position));
 	}
 
 	/**
