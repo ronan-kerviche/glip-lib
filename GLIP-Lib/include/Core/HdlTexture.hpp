@@ -41,16 +41,21 @@
 			**/
 			class GLIP_API __ReadOnly_HdlTextureFormat
 			{
+				private :
+					int	alignment;						// Alignment in memory (on 1, 4 or 8 bytes).
+
 				protected :
 					// Data
 					int	width, height; 						// Image parameters.
 					GLenum	mode, depth, minFilter, magFilter, wraps, wrapt;  	// Image format, texture filtering and wrapping modes.
 					int	baseLevel, maxLevel;                			// MipMap information.	
-					size_t	alignment;
 
 					// Protected constructors : 
 					__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
 					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
+
+					// Protected function : 
+					void setAlignment(int _alignment);
 
 				public :
 				virtual ~__ReadOnly_HdlTextureFormat(void);

@@ -71,6 +71,19 @@ using namespace Glip::CoreGL;
 	__ReadOnly_HdlTextureFormat::~__ReadOnly_HdlTextureFormat(void)
 	{ }
 
+	/**
+	\fn void __ReadOnly_HdlTextureFormat::setAlignment(int _alignment)
+	\brief Set the alignment for this format.
+	\param _alignment The new alignment value. It must be either 1, 4 or 8 bytes. Any other values will result in an exception.
+	**/
+	void __ReadOnly_HdlTextureFormat::setAlignment(int _alignment)
+	{
+		if(_alignment!=1 && _alignment!=4 && _alignment!=8)
+			throw Exception("__ReadOnly_HdlTextureFormat::setAlignment - Alignment value must be either 1, 4 or 8 (received : " + toString(_alignment) + ").", __FILE__, __LINE__);
+		else
+			alignment = _alignment; 
+	}
+
 // Public Tools
 	/**
 	\fn     int __ReadOnly_HdlTextureFormat::getWidth(void) const
@@ -115,7 +128,7 @@ using namespace Glip::CoreGL;
 	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
 	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
 	int	__ReadOnly_HdlTextureFormat::getAlignment	(void) const { return alignment; }
-	size_t	__ReadOnly_HdlTextureFormat::getLineSize	(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~alignment; }
+	size_t	__ReadOnly_HdlTextureFormat::getLineSize	(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~static_cast<size_t>(alignment-1); }
 	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getHeight()) * getLineSize(); }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
 	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
@@ -191,7 +204,7 @@ using namespace Glip::CoreGL;
 			(height			== f.height)		&&
 			(getNumChannels()	== f.getNumChannels())	&&
 			(getChannelDepth()	== f.getChannelDepth())	&&
-			(getSize()		== f.getSize())		&&
+			//(getSize()		== f.getSize())		&&	// Removed so that textures and images with different alignment are considered compatible.
 			(mode			== f.mode)		&&
 			(depth			== f.depth)		&&
 			(baseLevel		== f.baseLevel)		&&

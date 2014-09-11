@@ -25,6 +25,7 @@
 #define __GLIPLIB_GEOMETRY__
 
 	// Includes
+	#include <map>
 	#include "devDebugTools.hpp"
 	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
@@ -56,6 +57,8 @@
 						CustomModel,
 						/// Standard quad, covering the area between (-1,-1) and (1,1).
 						StandardQuad,
+						/// Reversed quad, covering the area between (-1,-1) and (1,1).
+						ReversedQuad, 
 						/// 2D grid of dots.
 						PointsGrid2D,
 						/// 3D grid of dots.
@@ -132,9 +135,10 @@
 			{
 				private :
 					// Static memory bank :
-					static std::vector<HdlVBO*> 		vbos;
-					static std::vector<GeometryModel*>	models;
-					static std::vector<int>			counters;
+					static int nextIndex;
+					static std::map<int, HdlVBO*> 		vbos;
+					static std::map<int, GeometryModel*>	models;
+					static std::map<int, int>		counters;
 
 					// Current :
 					int id;
@@ -160,6 +164,16 @@
 				{
 					public :
 						StandardQuad(void);
+				};
+
+				/**
+				\class ReversedQuad
+				\brief Geometry : the reversed quad, covering the area between (-1,-1) and (1,1).
+				**/
+				class GLIP_API ReversedQuad : public GeometryModel
+				{
+					public :
+						ReversedQuad(void);
 				};
 
 				/**

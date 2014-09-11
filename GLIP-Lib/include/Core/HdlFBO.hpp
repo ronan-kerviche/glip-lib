@@ -49,8 +49,9 @@
 			{
 				private :
 					// Data
-					std::vector<HdlTexture*> targets;
-					GLuint                   fboID;
+					std::vector<HdlTexture*>	targets;
+					GLuint				fboID;
+					bool				firstRendering;
 
 					// Tools
 					void bindTextureToFBO(int i);

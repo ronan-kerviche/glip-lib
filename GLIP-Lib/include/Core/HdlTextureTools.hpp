@@ -97,6 +97,7 @@
 				unsigned int channelSizeInBits(GLenum channel) const;
 				GLenum channelType(GLenum channel) const;
 				int channelIndex(GLenum channel) const;
+				GLenum channelAtIndex(int idx) const;
 				std::vector<GLenum> getChannelsList(void) const;
 				std::vector<int> getOffsetsList(void) const;
 				GLenum getCompressedMode(void) const;

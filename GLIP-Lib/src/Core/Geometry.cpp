@@ -578,9 +578,10 @@
 	}
 
 // GeometryInstance
-	std::vector<HdlVBO*> 		GeometryInstance::vbos;
-	std::vector<GeometryModel*>	GeometryInstance::models;
-	std::vector<int>		GeometryInstance::counters;
+	int GeometryInstance::nextIndex = 0;
+	std::map<int, HdlVBO*> 		GeometryInstance::vbos;
+	std::map<int, GeometryModel*>	GeometryInstance::models;
+	std::map<int, int>		GeometryInstance::counters;
 
 	/**
 	\fn GeometryInstance::GeometryInstance(const GeometryModel& mdl, GLenum freq)
@@ -592,7 +593,7 @@
 	 : id(-1)
 	{
 		// Find if a similar model exist :
-		int 	k	= 0,
+		/*int 	k	= 0,
 			kNull 	= -1;
 		for(; k<models.size(); k++)
 		{
@@ -629,6 +630,29 @@
 			counters[kNull]	= 1;
 
 			id = kNull;
+		}*/
+
+		// Find if a similar model exist : 
+		for(std::map<int, GeometryModel*>::iterator it=models.begin(); it!=models.end(); it++)
+		{
+			if(it->second!=NULL && (*it->second)==mdl)
+			{
+				// Found!
+				id = it->first;
+				counters[id]++;
+				break;
+			}
+		}
+
+		if(id<0)
+		{
+			// No item found, create : 
+			id = nextIndex;
+			nextIndex++;
+
+			vbos[id] 	= mdl.getVBO(freq);
+			models[id] 	= new GeometryModel(mdl);
+			counters[id] 	= 1;
 		}
 	}
 
@@ -648,12 +672,22 @@
 		counters[id]--;
 
 		// If there is no reference anymore :
-		if(counters[id]<=0)
+		/*if(counters[id]<=0)
 		{
 			delete vbos[id];
 			vbos[id] = NULL;
 			delete models[id];
 			models[id] = NULL;
+		}*/
+
+		if(counters[id]<=0)
+		{
+			delete vbos[id];
+			delete models[id];
+
+			vbos.erase(id);
+			models.erase(id);
+			counters.erase(id);
 		}
 	}
 
@@ -705,18 +739,26 @@
 
 			addElement(0, 1, 3);
 			addElement(1, 2, 3);
-
-			/* OLD : GL_QUAD
-			addVertex2D(-1.0,  1.0, 0.0, 1.0);
-			addVertex2D(-1.0, -1.0, 0.0, 0.0);
-			addVertex2D( 1.0,  1.0, 1.0, 1.0);
-			addVertex2D( 1.0, -1.0, 1.0, 0.0);
-
-			elements.push_back(0);
-			elements.push_back(1);
-			elements.push_back(3);
-			elements.push_back(2);*/
 		}
+
+	// Reversed quad :
+		/**
+		\fn ReversedQuad::ReversedQuad(void)
+		\brief ReversedQuad constructor.
+		**/
+		ReversedQuad::ReversedQuad(void)
+		 : GeometryModel(GeometryModel::ReversedQuad, 2, GL_TRIANGLES, true)
+		{
+			// Create the geometry :			
+			addVertex2D(-1.0,  1.0, 0.0, 0.0);
+			addVertex2D( 1.0,  1.0, 1.0, 0.0);
+			addVertex2D( 1.0, -1.0, 1.0, 1.0);
+			addVertex2D(-1.0, -1.0, 0.0, 1.0);
+
+			addElement(0, 1, 3);
+			addElement(1, 2, 3);
+		}
+	
 
 	// 2D Grid of points
 		/**

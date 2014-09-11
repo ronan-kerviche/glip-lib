@@ -37,7 +37,7 @@ using namespace QGIC;
 		timer.start();
 
 		// Create the format : 
-		/*GLenum mode = GL_NONE;
+		GLenum mode = GL_NONE;
 
 		if(qimage.allGray())
 			mode = GL_LUMINANCE;
@@ -53,116 +53,99 @@ using namespace QGIC;
 		if(imageBuffer==NULL)
 		{
 			// Create buffer : 
-			imageBuffer = new ImageBuffer(textureFormat);
+			imageBuffer = new ImageBuffer(textureFormat, 4); // 4 bytes alignment
 		}
 		else
 		{
 			if((*imageBuffer)!=textureFormat)
 				throw Exception("toImageBuffer - imageBuffer has an incompatible format.", __FILE__, __LINE__);
 		}
+	
+		// Qt as either GL_BGRA, GL_UNSIGNED_BYTE or GL_LUMINANCE and GL_UNSIGNED_BYTE internal representation
 
-		// Copy : 
-		for(int i=0; i<qimage.height(); i++)
-		{
-			for(int j=0; j<qimage.width(); j++)
-			{
-				QRgb col 	= qimage.pixel(j,qimage.height() - i - 1); // WARNING Shift up-down to fit texture coordinates.
-
-				//std::cout << i << ", " << j << " : " << QColor(col).name().toStdString() << std::endl;
-
-				if(descriptor.numChannels()==1)
-					imageBuffer->set(j, i, GL_LUMINANCE,	qRed(  col ));
-				else 
-				{
-									imageBuffer->set(j, i, GL_RED, 		qRed( col ));
-					if(descriptor.numChannels()>1)	imageBuffer->set(j, i, GL_GREEN,	qGreen( col ));
-					if(descriptor.numChannels()>2)	imageBuffer->set(j, i, GL_BLUE,		qBlue( col ));
-					if(descriptor.numChannels()>3)	imageBuffer->set(j, i, GL_ALPHA,	qAlpha( col ));
-				}
-			}
-		}*/
-
-		// Second method, test : 
-		HdlDynamicTable* 	original 	= HdlDynamicTable::buildProxy(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), 4);
-					imageBuffer 	= new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGB, GL_UNSIGNED_BYTE));
-		HdlDynamicTable* 	buffer 		= HdlDynamicTable::buildProxy(imageBuffer->getBuffer(), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), 3);
+		// Prepare the copy :
+		const int 		nChannels 	= imageBuffer->getNumChannels();
+		HdlDynamicTable 	*original 	= HdlDynamicTable::buildProxy(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), qimage.bytesPerLine()/qimage.width(), false, 4), 
+					*buffer		= HdlDynamicTable::buildProxy(imageBuffer->getPtr(), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), nChannels, false, 4); // not normalized, 4 byes alignment
 
 		// Iterators : 
 		HdlDynamicTableIterator source(*original),
 					dest(*buffer);
 
-		while(source.isValid())
-		{			
-			if(false)
-			{
-				// Per component :
-				void* 	blue	= source.getPtr(); source.nextElement();
-				void* 	green	= source.getPtr(); source.nextElement();
-				void* 	red	= source.getPtr(); source.nextElement();
-				void* 	alpha	= source.getPtr(); source.nextElement();
-			
-				dest.write(red); 	dest.nextElement();
-				dest.write(green); 	dest.nextElement();
-				dest.write(blue); 	dest.nextElement();
-			}
-			else if(true)
-			{
-				// Per pixel (twice faster than the previous case): 
-				unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr());
-				source.nextSlice();
+		std::cout << "ImageBuffer row size : " << imageBuffer->getTable().getRowSize() << std::endl;
+		std::cout << "            size     : " << imageBuffer->getSize() << std::endl;
 
-				unsigned char data[3] = {*(pixel+2), *(pixel+1), *(pixel+0)};	
+		if(original->getNumSlices()==1)
+		{
+			// all gray :
+			std::memcpy(imageBuffer->getPtr(), qimage.bits(), imageBuffer->getSize());
+		}
+		else
+		{
+			#define SHUFFLE_AND_COPY( ... ) \
+				{ \
+					while(source.isValid()) \
+					{ \
+						const unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr()); \
+						source.nextSlice(); \
+						const unsigned char data[4] = __VA_ARGS__ ; \
+						dest.writeBytes(reinterpret_cast<const void*>(data), nChannels); \
+						dest.nextSlice(); \
+					} \
+				}
 
-				//std::memcpy(dest.getPtr(), data, 3);
-				dest.writeBytes(data, 3);
-				dest.nextSlice();
-			}
-			else
-			{
-				unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr());
-				source.nextSlice();
-				source.nextSlice();
+			if(nChannels==1)	SHUFFLE_AND_COPY( {*(pixel+2), 	0, 		0, 		0} )
+			else if(nChannels==2)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	0, 		0} )
+			else if(nChannels==3)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	*(pixel+0), 	0} )
+			else if(nChannels==4)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	*(pixel+0), 	*(pixel+3)} )
 
-				unsigned char data[6] = {*(pixel+2), *(pixel+1), *(pixel+0), *(pixel+6), *(pixel+5), *(pixel+4)};	
-
-				dest.writeBytes(data, 6);
-				dest.nextSlice();
-				dest.nextSlice();
-			}
-		} 
+			#undef SHUFFLE_AND_COPY
+		}
 
 		delete original;
 		delete buffer;
 
-		// Fastest : 
+		// Fastest (but consume too much memory) : 
 		/*imageBuffer 	= new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGBA, GL_UNSIGNED_BYTE));
 		std::memcpy(imageBuffer->getBuffer(), const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), imageBuffer->getSize());*/
 
-		std::cout << "The slow operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		// Third method, cleanest, but a bit slow because the shuffling is decided dynamically :
+		/*ImageBuffer source(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), HdlTextureFormat(qimage.width(), qimage.height(), GL_BGRA, GL_UNSIGNED_BYTE));
+		imageBuffer = new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGB, GL_UNSIGNED_BYTE));
+
+		PixelIterator 	itSrc(source),
+				itDst(*imageBuffer);
+
+		itDst.blit(itSrc);*/
+
+		std::cout << "The loading operation took " << timer.elapsed() << " milliseconds" << std::endl;
 	}
 
-	void toQImage(const ImageBuffer& buffer, QImage*& qimage)
+	void toQImage(ImageBuffer& imageBuffer, QImage*& qimage)
 	{
+		QElapsedTimer timer;
+		timer.start();
+
 		// Get the mode :
-		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( buffer.getGLMode() );
-		const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( buffer.getGLDepth() );
+		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( imageBuffer.getGLMode() );
+		const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( imageBuffer.getGLDepth() );
 
 		if(qimage==NULL)
 		{
 			// Create : 
 			if( descriptor.hasLuminanceChannel() && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
-				qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_RGB888);
+				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_RGB888);
 			else if( descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && !descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
-				qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_RGB888);
+				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_RGB888);
 			else if(descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
-				qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_ARGB32);		
+				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_ARGB32);		
 			else
 				throw Exception("toQImage - Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 		}
 		else
 		{
 			// Check : 
-			if(qimage->width()!=buffer.getWidth() || qimage->height()!=buffer.getHeight())
+			if(qimage->width()!=imageBuffer.getWidth() || qimage->height()!=imageBuffer.getHeight())
 				throw Exception("toQImage - qimage has an incompatible size.", __FILE__, __LINE__);
 			else if( (descriptor.hasLuminanceChannel() && (descriptor.luminanceDepthInBits==8 || depthBytes==1)) && qimage->format()!=QImage::Format_RGB888 )
 				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
@@ -174,42 +157,31 @@ using namespace QGIC;
 				throw Exception("toQImage - Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 		}
 
-		// Copy to QImage : 
-		QColor value;
-		for(int y=0; y<buffer.getHeight(); y++)
-		{
-			for(int x=0; x<buffer.getWidth(); x++)
-			{
-				if(descriptor.numChannels()>=4)
-					value.setAlpha( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_ALPHA) ) );
-				if(descriptor.numChannels()>=3)
-					value.setBlue( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_BLUE) ) );
-				if(descriptor.numChannels()>=2)
-				{
-					value.setRed( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_RED) ) );
-					value.setGreen( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_GREEN) ) );
-					
-				}
-				else if(descriptor.numChannels()==1)
-				{
-					value.setRed( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
-					value.setGreen( ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
-					value.setBlue( 	ImageBuffer::clampValue<unsigned char>( buffer.get(x, y, GL_LUMINANCE) ) );
-				}
-				else
-				{
-					delete qimage;
-					throw Exception("Internal error : unknown mode ID.", __FILE__, __LINE__);
-				}
+		const int nChannels = qimage->bytesPerLine()/qimage->width();
+		GLenum mode;
+		if(nChannels==1)
+			mode = GL_LUMINANCE;
+		else if(nChannels==2)
+			mode = GL_RG;
+		else if(nChannels==3)
+			mode = GL_RGB;
+		else
+			mode = GL_BGRA;
 
-				qimage->setPixel(x, y, value.rgba());
-			}
-		}
+		ImageBuffer 	destination(reinterpret_cast<void*>(qimage->bits()), HdlTextureFormat(qimage->width(), qimage->height(), mode, GL_UNSIGNED_BYTE), 4);
+
+		PixelIterator 	itSrc(imageBuffer),
+				itDst(destination);
+
+		itDst.blit(itSrc);
+
+		std::cout << "The slow operation took " << timer.elapsed() << " milliseconds" << std::endl;
 	}
 
 // ImageItem : 
 	ImageItem::ImageItem(const ImageItem& imageItem)
-	 : 	saved(false),
+	 : 	QObject(),
+		saved(false),
 		lockedToDevice(false),
 		name(tr("copy_of_%1").arg(imageItem.getName())),
 		filename(""),

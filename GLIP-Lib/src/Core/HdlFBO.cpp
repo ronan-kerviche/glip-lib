@@ -35,7 +35,8 @@ using namespace Glip::CoreGL;
 	\param numTarget Number of targets to be built by the constructor.
 	**/
 	HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
-	 : __ReadOnly_HdlTextureFormat(f)
+	 : 	__ReadOnly_HdlTextureFormat(f),
+		firstRendering(true)
 	{
 		NEED_EXTENSION(GL_ARB_framebuffer_object)
 		FIX_MISSING_GLEW_CALL(glGenFramebuffers, glGenFramebuffersEXT)
@@ -167,6 +168,16 @@ using namespace Glip::CoreGL;
 
 		if(usedTarget>targets.size())
 			throw Exception("HdlFBO::beginRendering - Can't render to " + toString(usedTarget) + " textures because the current number of targets is " + toString(targets.size()), __FILE__, __LINE__);
+
+		// First run test : 
+		if(firstRendering) 
+		{
+			GLenum t = test();
+			if(t!=GL_FRAMEBUFFER_COMPLETE)
+				throw Exception("HdlFBO::beginRendering - FBO is incomplete, cannot render to target : " + glParamName(t) + ".", __FILE__, __LINE__);
+			
+			firstRendering = false;
+		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 

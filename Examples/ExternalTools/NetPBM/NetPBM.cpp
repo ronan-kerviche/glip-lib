@@ -178,7 +178,7 @@
 
 		// Write : 
 		file.write(header.c_str(), header.size());
-		file.write(reinterpret_cast<const char*>(image.getBuffer()), image.getSize());
+		file.write(reinterpret_cast<const char*>(image.getPtr()), image.getSize());
 	
 		file.close();
 	}

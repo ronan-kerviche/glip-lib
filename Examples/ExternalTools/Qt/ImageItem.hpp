@@ -45,7 +45,7 @@
 
 // Tools : 
 	extern void toImageBuffer(const QImage& qimage, ImageBuffer*& imageBuffer);
-	extern void toQImage(const ImageBuffer& buffer, QImage*& qimage);
+	extern void toQImage(ImageBuffer& imageBuffer, QImage*& qimage);
 
 namespace QGIC
 {

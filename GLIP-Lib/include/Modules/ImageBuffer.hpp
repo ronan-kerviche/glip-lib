@@ -28,6 +28,7 @@
 	#include <limits>
 	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
+	#include "Core/HdlDynamicData.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Exception.hpp"
 
@@ -39,75 +40,6 @@ namespace Glip
 	namespace Modules
 	{
 		// Structures :
-/*
-\class PixelIterator
-\brief Iterator on pixels.
-*/
-		/*class GLIP_API PixelIterator : public __ReadOnly_HdlTextureFormat
-		{
-			public : 
-				enum Direction
-				{
-					/// Go right, then down.
-					RightDown,
-					/// Go left, then down.
-					LeftDown,
-					/// Go right, then up.
-					RightUp,
-					/// Go left, then up.
-					LeftUp
-				};
-
-				enum Motion
-				{
-					/// Next pixel.
-					Next,
-					/// Previous pixel.
-					Previous,
-					/// Start of the current line.
-					StartOfLine,
-					/// End of the current line.
-					EndOfLine,
-					/// Start of the image.
-					StartOfImage,
-					/// End of the image.
-					EndOfImage
-				};
-
-			private : 
-				Direction				direction;
-				int 					x, y;
-				unsigned char				*origin,
-									*position;
-				const HdlTextureFormatDescriptor&	descriptor;
-				std::map<GLenum, int> 			offsets;
-
-			public : 
-				PixelIterator(const __ReadOnly_HdlTextureFormat& format, unsigned char* _origin, const Direction& _direction=RightDown);
-
-				// Information : 
-				bool isValid(void) const;
-				unsigned int& getX(void) const;
-				unsigned int& getY(void) const;
-
-				// Movement : 
-				void move(const Motion& motion);
-				void next(void);
-				void previous(void);
-				void statOfLine(void);
-				void endOfLine(void);
-				void jump(int _x, int _y);
-				
-				// Read : 
-				signed long long read(GLenum channel, GLenum depth=GL_NONE) const;
-				float readNormalized(GLenum channel) const;	
-
-				// Write : 
-				void write(GLenum channel, signed long long value, GLenum depth=GL_NONE);
-				void writeNormalized(GLenum channel, float value);
-				void write(const PixelIterator& iterator, int xSource, int ySource);
-		};*/
-
 /**
 \class ImageBuffer
 \brief Host-side image buffer.
@@ -119,24 +51,21 @@ namespace Glip
 				static const unsigned int maxCommentLength;
 				static const std::string headerSignature;
 
-				const HdlTextureFormatDescriptor	descriptor;
-				unsigned char				*buffer;
-
+				const HdlTextureFormatDescriptor&	descriptor;
+				HdlDynamicTable*			table;
+		
 			public : 
-				ImageBuffer(const __ReadOnly_HdlTextureFormat& format);
-				ImageBuffer(HdlTexture& texture);
+				ImageBuffer(const __ReadOnly_HdlTextureFormat& format, int _alignment=1);
+				ImageBuffer(void* buffer, const __ReadOnly_HdlTextureFormat& format, int _alignment=1);
+				ImageBuffer(HdlTexture& texture, int _alignment=1);
 				ImageBuffer(const ImageBuffer& image);
 				~ImageBuffer(void);
 
 				const HdlTextureFormatDescriptor& getDescriptor(void) const;
-				bool isInside(unsigned int x, unsigned int y, GLenum channel=GL_NONE) const;
-				unsigned int getPixelIndex(unsigned int x, unsigned int y) const;
-				unsigned int getChannelIndex(GLenum channel) const;
-				unsigned int getIndex(unsigned int x, unsigned int y, GLenum channel) const;
-				size_t getPosition(unsigned int x, unsigned int y, GLenum channel) const;
-				unsigned int getLineLength(void) const;
-				unsigned char* getBuffer(void);
-				const unsigned char* getBuffer(void) const;
+				void* getPtr(void);
+				const void* getPtr(void) const;
+				HdlDynamicTable& getTable(void);
+				const HdlDynamicTable& getTable(void) const;
 
 				void setMinFilter(GLenum mf);
 				void setMagFilter(GLenum mf);
@@ -150,139 +79,56 @@ namespace Glip
 				const ImageBuffer& operator>>(ImageBuffer& image) const;
 				const ImageBuffer& operator>>(void* bytes) const;
 
-				template<typename T>
-				T* reinterpret(unsigned int x, unsigned int y, GLenum channel);
-
-				template<typename T>
-				const T* reinterpret(unsigned int x, unsigned int y, GLenum channel) const;
-
-				signed long long get(unsigned int x, unsigned int y, GLenum channel) const;
-				ImageBuffer& set(unsigned int x, unsigned int y, GLenum channel, const signed long long& value);
-				float getNormalized(unsigned int x, unsigned int y, GLenum channel) const;
-				ImageBuffer& setNormalized(unsigned int x, unsigned int y, GLenum channel, const float& value);
-
-				// Static tools : 
-				template<typename T>
-				static float getRangeMax(void);
-		
-				template<typename T>
-				static float getRangeMin(void);
-
-				template<typename T>
-				static float getDynamicRange(void);
-
-				template<typename T>
-				static float getNormalizedValue(const T& v);
-
-				template<typename T>
-				static T getDenormalizedValue(const float& v);
-
-				template<typename T>
-				static T clampValue(const signed long long& v);
+				long long get(const int& x, const int& y, const GLenum& channel) const;
+				void set(const long long& value, const int& x, const int& y, const GLenum& channel);
+				float getNormalized(const int& x, const int& y, const GLenum& channel) const;
+				void setNormalized(const float& value, const int& x, const int& y, const GLenum& channel);
 
 				static ImageBuffer* load(const std::string& filename, std::string* comment=NULL);
 				void write(const std::string& filename, const std::string& comment="") const;
 		};
 
-		// Template functions : 
-			/**
-			\fn T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel)
-			\brief Reinterpret the buffer to some given type.
-			\param x X-axis coordinate (along the width).
-			\param y Y-axis coordinate (along the height).
-			\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
-			\return The buffer at the requested component position, reinterpreted to the requested type.
-			**/
-			template<typename T>
-			T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel)
-			{
-				unsigned int pos = getIndex(x, y, channel) * getChannelDepth();
-				return reinterpret_cast<T*>(buffer + pos);
-			}
+/**
+\class PixelIterator
+\brief Iterator-like element for ImageBuffer
+**/
+		class PixelIterator : protected HdlDynamicTableIterator
+		{
+			private :
+				ImageBuffer& image;
 
-			/**
-			\fn const T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel) const
-			\brief Reinterpret the buffer to some given type.
-			\param x X-axis coordinate (along the width).
-			\param y Y-axis coordinate (along the height).
-			\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
-			\return The buffer at the requested component position, reinterpreted to the requested type.
-			**/
-			template<typename T>
-			const T* ImageBuffer::reinterpret(unsigned int x, unsigned int y, GLenum channel) const
-			{
-				unsigned int pos = getIndex(x, y, channel) * getChannelDepth();
-				return reinterpret_cast<T*>(buffer + pos);
-			}
+			public : 
+				PixelIterator(ImageBuffer& _image);
+				PixelIterator(const PixelIterator& copy);
+				~PixelIterator(void);
 
-			/**
-			\fn float ImageBuffer::getRangeMax(void)
-			\brief Get the maximum of a given type.
-			\return The maximum of the type, in single precision floating point format.
-			**/
-			template<typename T>
-			float ImageBuffer::getRangeMax(void)
-			{
-				return static_cast<float>(std::numeric_limits<T>::max());
-			}
-		
-			/**
-			\fn float ImageBuffer::getRangeMin(void)
-			\brief Get the minimum of a given type.
-			\return The minimum of the type, in single precision floating point format.
-			**/
-			template<typename T>
-			float ImageBuffer::getRangeMin(void)
-			{
-				return static_cast<float>(std::numeric_limits<T>::min());
-			}
-
-			/**
-			\fn float ImageBuffer::getDynamicRange(void)
-			\brief Get the dynamic range of a given type.
-			\return The range of the type, in single precision floating point format.
-			**/
-			template<typename T>
-			float ImageBuffer::getDynamicRange(void)
-			{
-				return getRangeMax<T>() - getRangeMin<T>();
-			}
+				const ImageBuffer& getImage(void) const;
+				ImageBuffer& getImage(void);
+				bool isValid(void) const;
+				size_t getPixelSize(void) const;
+				int getX(void) const;
+				int getY(void) const;
+				int getDistanceToBottomBorder(void) const;
+				int getDistanceToRightBorder(void) const;
+				
+				void nextPixel(void);
+				void previousPixel(void);
+				void nextLine(void);
+				void previousLine(void);
+				void lineBegin(void);
+				void lineEnd(void);
+				void imageBegin(void);
+				void imageEnd(void);
+				void jumpTo(const int& x, const int& y);
 	
-			/**
-			\fn float ImageBuffer::getNormalizedValue(const T& v)
-			\brief Get the normalized value conversion. Assume the full dynamic range of the input type is used.
-			\param v Input value.
-			\return The normalized value in single precision floating point format (in the [0.0f, 1.0f] range).
-			**/
-			template<typename T>
-			float ImageBuffer::getNormalizedValue(const T& v)
-			{
-				return static_cast<float>(v) / getDynamicRange<T>();
-			}
+				const void* getPtr(void) const;
+				void* getPtr(void);
+				float readNormalized(const GLenum& channel) const;
+				void writeNormalized(const float& value, const GLenum& channel);
+				void writePixel(PixelIterator& it);
 
-			/**
-			\fn T ImageBuffer::getDenormalizedValue(const float& v)
-			\brief Get the denormalized value conversion. Clamp the input to the [0.0f, 1.0f] range.
-			\param v Input value.
-			\return The denormalized value expressed in the full dynamic range of the requested output type.
-			**/
-			template<typename T>
-			T ImageBuffer::getDenormalizedValue(const float& v)
-			{
-				return static_cast<T>( std::min( std::max(v, 0.0f), 1.0f)  * getDynamicRange<T>() - getRangeMin<T>() );
-			}
-
-			/**
-			\fn T ImageBuffer::clampValue(const signed long long& v)
-			\brief Clamp the value to the full dynamic range of the output type.
-			\param v Input value.
-			\return The clamped value.
-			**/
-			template<typename T>
-			T ImageBuffer::clampValue(const signed long long& v)
-			{
-				return static_cast<T>(  std::min( std::max(v, static_cast<signed long long>(std::numeric_limits<T>::min())), static_cast<signed long long>(std::numeric_limits<T>::max()) ));
-			}
+				void blit(PixelIterator& src, int maxWidth=-1, int maxHeight=-1);
+		};
 	}
 }
 

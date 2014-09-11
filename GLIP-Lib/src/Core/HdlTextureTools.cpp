@@ -305,8 +305,8 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	/**
 	\fn int HdlTextureFormatDescriptor::channelIndex(GLenum channel) const
 	\brief Returns the channel index or raise an exception if the channel is unknown.
-	\param channel The channel name (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
-	\return Returns the channel index.
+	\param channel The channel name (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA, GL_LUMINANCE or GL_NONE).
+	\return Returns the channel index (-1 for GL_NONE or if the channel does not exist in the current format).
 	**/
 	int HdlTextureFormatDescriptor::channelIndex(GLenum channel) const
 	{
@@ -317,9 +317,27 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			case GL_BLUE:		return indexBlue;
 			case GL_ALPHA:		return indexAlpha;
 			case GL_LUMINANCE:	return indexLuminance;
+			case GL_NONE:		return -1;
 			default :
 				throw Exception("HdlTextureFormatDescriptor::channelIndex - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__);
 		}
+	}
+
+	/**
+	\fn GLenum HdlTextureFormatDescriptor::channelAtIndex(int idx) const
+	\brief Get the channel name at the specified index.
+	\param idx The targeted index.
+	\return The channel name (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE) or GL_NONE if none was found.
+	**/
+	GLenum HdlTextureFormatDescriptor::channelAtIndex(int idx) const
+	{
+		if(idx==indexRed)	return GL_RED;
+		if(idx==indexGreen) 	return GL_GREEN;
+		if(idx==indexBlue) 	return GL_BLUE;
+		if(idx==indexAlpha) 	return GL_ALPHA;
+		if(idx==indexLuminance) return GL_LUMINANCE; 
+		
+		return GL_NONE;
 	}
 
 	/**

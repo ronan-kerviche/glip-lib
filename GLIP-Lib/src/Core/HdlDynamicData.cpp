@@ -466,7 +466,7 @@
 	**/
 	size_t HdlDynamicTable::getRowSize(void) const
 	{
-		return static_cast<size_t>(getNumColumns()*getNumSlices()*getElementSize() + (getAlignment()-1)) & ~static_cast<size_t>(getAlignment());
+		return static_cast<size_t>(getNumColumns()*getNumSlices()*getElementSize() + (getAlignment()-1)) & ~static_cast<size_t>(getAlignment() - 1);
 	}
 
 	/**
@@ -716,10 +716,40 @@
 		#undef COPY_ELM
 	}
 
+	namespace Glip
+	{
+		namespace CoreGL
+		{
+			template<>
+			float HdlDynamicTableSpecial<float>::normalize(const float& t)
+			{
+				return t;
+			}
+
+			template<>
+			float HdlDynamicTableSpecial<double>::normalize(const double& t)
+			{
+				return t;
+			}
+
+			template<>
+			float HdlDynamicTableSpecial<float>::denormalize(const float& t)
+			{
+				return t;
+			}
+
+			template<>
+			double HdlDynamicTableSpecial<double>::denormalize(const float& t)
+			{
+				return t;
+			}
+		}
+	}
+
 // HdlDynamicTableIterator :
 	/**
 	\fn HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
-	\brief Create an iterator over a table. Table must exist at all time.
+	\brief Create an iterator over a table. Table must exist at all time. The iterator is initialized to the beginning of the table.
 	\param _table The table to run over.
 	**/
 	HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
@@ -844,6 +874,26 @@
 	const int& HdlDynamicTableIterator::getSliceIndex(void) const
 	{
 		return d;
+	}
+
+	/**
+	\fn int HdlDynamicTableIterator::getDistanceToBottomBorder(void) const
+	\brief Get the number of elements between the current position and the bottom border (this element is included).
+	\return Height minus current row index.
+	**/
+	int HdlDynamicTableIterator::getDistanceToBottomBorder(void) const
+	{
+		return table.getNumRows() - getRowIndex();
+	}
+
+	/**
+	\fn int HdlDynamicTableIterator::getDistanceToRightBorder(void) const
+	\brief Get the number of elements between the current position and the right border (this element is included).
+	\return Width minus current column index.
+	**/
+	int HdlDynamicTableIterator::getDistanceToRightBorder(void) const
+	{
+		return table.getNumColumns() - getColumnIndex();
 	}
 
 	/**
@@ -1007,11 +1057,21 @@
 	}
 
 	/**
-	\fn void* HdlDynamicTableIterator::getPtr(void) const
+	\fn const void* HdlDynamicTableIterator::getPtr(void) const
 	\brief Get the pointer to the current position.
 	\return Pointer to the current position.
 	**/
-	void* HdlDynamicTableIterator::getPtr(void) const
+	const void* HdlDynamicTableIterator::getPtr(void) const
+	{
+		return reinterpret_cast<void*>(position);
+	}
+
+	/**
+	\fn void* HdlDynamicTableIterator::getPtr(void)
+	\brief Get the pointer to the current position.
+	\return Pointer to the current position.
+	**/
+	void* HdlDynamicTableIterator::getPtr(void)
 	{
 		return reinterpret_cast<void*>(position);
 	}
@@ -1168,6 +1228,6 @@
 		if(it.getTable().getGLType()==getTable().getGLType())
 			write(it.getPtr());
 		else
-			writed(it.readd());
+			writeNormalized(it.readNormalized());
 	}
 

@@ -23,7 +23,7 @@
 // QImage tools : 
 	ImageBuffer* createImageBufferFromQImage(const QImage& qimage)
 	{
-		// Create the format : 
+		/*// Create the format : 
 		GLenum mode = GL_NONE;
 
 		if(qimage.allGray())
@@ -61,14 +61,15 @@
 			}
 		}
 
-		return buffer;
+		return buffer;*/
+		return NULL;
 	}
 
 	QImage* createQImageFromImageBuffer(const ImageBuffer& buffer)
 	{
 		QImage* qimage = NULL;
 
-		// Get the mode :
+		/*// Get the mode :
 		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( buffer.getGLMode() );
 		const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( buffer.getGLDepth() );
 
@@ -111,7 +112,7 @@
 
 				qimage->setPixel(x, y, value.rgba());
 			}
-		}
+		}*/
 
 		return qimage;
 	}

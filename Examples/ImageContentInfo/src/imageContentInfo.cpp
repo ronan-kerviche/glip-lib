@@ -38,16 +38,19 @@
 
 		// Create the view : 
 		ImageBuffer* buffer = createImageBufferFromQImage(img);
-		texture = new HdlTexture(*buffer);
+		if(buffer!=NULL)
+		{
+			texture = new HdlTexture(*buffer);
 
-		(*buffer) >> (*texture);
+			(*buffer) >> (*texture);
 
-		view = new QVGL::View(texture, tr("View %1").arg(count));
+			view = new QVGL::View(texture, tr("View %1").arg(count));
 
-		//view->setAngle(0.5465f);
-		//view->setViewCenter(0.3, 0.1);
+			//view->setAngle(0.5465f);
+			//view->setViewCenter(0.3, 0.1);
 
-		delete buffer;
+			delete buffer;
+		}
 
 		setTitle(tr("Widget %1").arg(count));
 
@@ -76,15 +79,19 @@
 	{
 		std::cout << "TmpWidget : Button A, add and show" << std::endl;
 
-		getQVGLParent()->addView(view);
-		view->show();
+		if(view!=NULL)
+		{
+			getQVGLParent()->addView(view);
+			view->show();
+		}
 	}
 	
 	void TmpWidget::buttonBPressed(void)
 	{
 		std::cout << "TmpWidget : Button B, close" << std::endl;
 
-		view->close();
+		if(view!=NULL)
+			view->close();
 	}
 
 	void TmpWidget::buttonCPressed(void)

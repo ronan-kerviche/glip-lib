@@ -477,12 +477,12 @@ delete data;
 					virtual void set(void* value, const int& j=0, const int& i=0, const int& d=0) const = 0;
 
 					/**
-					\fn virtual float readf(void* position) const = 0;
+					\fn virtual float readf(const void* position) const = 0;
 					\brief Reading a floatting point value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to float.
 					**/
-					virtual float readf(void* position) const = 0;
+					virtual float readf(const void* position) const = 0;
 
 					/**
 					\fn virtual void writef(const float& value, void* position) = 0;
@@ -493,12 +493,12 @@ delete data;
 					virtual void writef(const float& value, void* position) = 0;
 
 					/**
-					\fn virtual double readd(void* position) const = 0;
+					\fn virtual double readd(const void* position) const = 0;
 					\brief Reading a floatting point value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to double.
 					**/
-					virtual double readd(void* position) const = 0;
+					virtual double readd(const void* position) const = 0;
 
 					/**
 					\fn virtual void writed(const double& value, void* position) = 0;
@@ -509,12 +509,12 @@ delete data;
 					virtual void writed(const double& value, void* position) = 0;
 
 					/**
-					\fn virtual long long readl(void* position) const = 0;
+					\fn virtual long long readl(const void* position) const = 0;
 					\brief Reading an integer value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to long long.
 					**/
-					virtual long long readl(void* position) const = 0;
+					virtual long long readl(const void* position) const = 0;
 
 					/**
 					\fn virtual void writel(const long long& value, void* position) = 0;
@@ -525,12 +525,12 @@ delete data;
 					virtual void writel(const long long& value, void* position) = 0;
 
 					/**
-					\fn virtual int readi(void* position) const = 0;
+					\fn virtual int readi(const void* position) const = 0;
 					\brief Reading an integer value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to int.
 					**/
-					virtual int readi(void* position) const = 0;
+					virtual int readi(const void* position) const = 0;
 
 					/**
 					\fn virtual void writei(const int& value, void* position) = 0;
@@ -541,12 +541,12 @@ delete data;
 					virtual void writei(const int& value, void* position) = 0;
 
 					/**
-					\fn virtual unsigned char readb(void* position) const = 0;
+					\fn virtual unsigned char readb(const void* position) const = 0;
 					\brief Reading an integer value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to unsigned char.
 					**/
-					virtual unsigned char readb(void* position) const = 0;
+					virtual unsigned char readb(const void* position) const = 0;
 
 					/**
 					\fn virtual void writeb(const unsigned char& value, void* position) = 0;
@@ -557,12 +557,12 @@ delete data;
 					virtual void writeb(const unsigned char& value, void* position) = 0;
 
 					/**
-					\fn virtual float readNormalized(void* position) const = 0;
+					\fn virtual float readNormalized(const void* position) const = 0;
 					\brief Reading an integer value from the given position (presumed within the table).
 					\param position Position in the table (direct data access).
 					\return Value at the given position, casted to a normalized range.
 					**/
-					virtual float readNormalized(void* position) const = 0;
+					virtual float readNormalized(const void* position) const = 0;
 
 					/**
 					\fn virtual void writeNormalized(const float& value, void* position) = 0;
@@ -661,17 +661,17 @@ delete data;
 					void* get(const int& j=0, const int& i=0, const int& d=0) const;
 					void set(void* value, const int& j=0, const int& i=0, const int& d=0) const ;
 
-					float readf(void* position) const;
+					float readf(const void* position) const;
 					void writef(const float& value, void* position);
-					double readd(void* position) const;
+					double readd(const void* position) const;
 					void writed(const double& value, void* position);
-					long long readl(void* position) const;
+					long long readl(const void* position) const;
 					void writel(const long long& value, void* position);
-					int readi(void* position) const;
+					int readi(const void* position) const;
 					void writei(const int& value, void* position);
-					unsigned char readb(void* position) const;
+					unsigned char readb(const void* position) const;
 					void writeb(const unsigned char& value, void* position);
-					float readNormalized(void* position) const;
+					float readNormalized(const void* position) const;
 					void writeNormalized(const float& value, void* position);
 					void write(const void* value, void* position);
 
@@ -840,12 +840,12 @@ delete data;
 				}
 
 				template<typename T>
-				float HdlDynamicTableSpecial<T>::readf(void* position) const
+				float HdlDynamicTableSpecial<T>::readf(const void* position) const
 				{
 					if(!isNormalized())
-						return static_cast<float>(*reinterpret_cast<T*>(position));
+						return static_cast<float>(*reinterpret_cast<const T*>(position));
 					else
-						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<const T*>(position));
 				}
 
 				template<typename T>
@@ -858,12 +858,12 @@ delete data;
 				}
 		
 				template<typename T>
-				double HdlDynamicTableSpecial<T>::readd(void* position) const
+				double HdlDynamicTableSpecial<T>::readd(const void* position) const
 				{
 					if(!isNormalized())
-						return static_cast<double>(*reinterpret_cast<T*>(position));
+						return static_cast<double>(*reinterpret_cast<const T*>(position));
 					else
-						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<const T*>(position));
 				}
 		
 				template<typename T>
@@ -876,12 +876,12 @@ delete data;
 				}
 
 				template<typename T>
-				long long HdlDynamicTableSpecial<T>::readl(void* position) const
+				long long HdlDynamicTableSpecial<T>::readl(const void* position) const
 				{
 					if(!isNormalized())
-						return static_cast<long long>(*reinterpret_cast<T*>(position));
+						return static_cast<long long>(*reinterpret_cast<const T*>(position));
 					else
-						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<const T*>(position));
 				}
 
 				template<typename T>
@@ -894,12 +894,12 @@ delete data;
 				}
 
 				template<typename T>
-				int HdlDynamicTableSpecial<T>::readi(void* position) const
+				int HdlDynamicTableSpecial<T>::readi(const void* position) const
 				{
 					if(!isNormalized())
-						return static_cast<int>(*reinterpret_cast<T*>(position));
+						return static_cast<int>(*reinterpret_cast<const T*>(position));
 					else
-						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<const T*>(position));
 				}
 
 				template<typename T>
@@ -912,12 +912,12 @@ delete data;
 				}
 
 				template<typename T>
-				unsigned char HdlDynamicTableSpecial<T>::readb(void* position) const
+				unsigned char HdlDynamicTableSpecial<T>::readb(const void* position) const
 				{
 					if(!isNormalized())
-						return static_cast<unsigned char>(*reinterpret_cast<T*>(position));
+						return static_cast<unsigned char>(*reinterpret_cast<const T*>(position));
 					else
-						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<const T*>(position));
 				}
 
 				template<typename T>
@@ -930,12 +930,12 @@ delete data;
 				}
 
 				template<typename T>
-				float HdlDynamicTableSpecial<T>::readNormalized(void* position) const
+				float HdlDynamicTableSpecial<T>::readNormalized(const void* position) const
 				{
 					if(!isNormalized())
-						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<T*>(position));
+						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<const T*>(position));
 					else
-						return static_cast<float>(*reinterpret_cast<T*>(position));
+						return static_cast<float>(*reinterpret_cast<const T*>(position));
 				}
 
 				template<typename T>
@@ -991,7 +991,7 @@ delete data;
 					{
 						// Scan every row : 
 						for(int i=0; i<cpy.getNumRows(); i++)
-							std::memcpy(getRowPtr(i), cpy.getRowPtr(i), getRowSize());
+							std::memcpy(getRowPtr(i), cpy.getRowPtr(i), std::min(getRowSize(), cpy.getRowSize()));
 					}
 				
 					return (*this);
@@ -1030,7 +1030,7 @@ delete data;
 				public : 
 					HdlDynamicTableIterator(HdlDynamicTable& _table);
 					HdlDynamicTableIterator(const HdlDynamicTableIterator& copy);
-					~HdlDynamicTableIterator(void);
+					virtual ~HdlDynamicTableIterator(void);
 
 					// Information : 
 					const HdlDynamicTable& getTable(void) const;
@@ -1039,6 +1039,8 @@ delete data;
 					const int& getRowIndex(void) const;
 					const int& getColumnIndex(void) const;
 					const int& getSliceIndex(void) const;
+					int getDistanceToBottomBorder(void) const;
+					int getDistanceToRightBorder(void) const;					
 
 					// Move : 
 					void nextElement(void);
@@ -1056,7 +1058,8 @@ delete data;
 					void jumpTo(const int& _j, const int& _i, const int& _d);
 
 					// Read/write : 
-					void* getPtr(void) const;
+					const void* getPtr(void) const;
+					void* getPtr(void);
 					float readf(void) const;
 					void writef(const float& value);
 					double readd(void) const;

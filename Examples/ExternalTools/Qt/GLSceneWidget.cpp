@@ -2154,7 +2154,7 @@ using namespace QVGL;
 
 		try
 		{	
-			quad = new GeometryInstance(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
+			quad = new GeometryInstance(GeometryPrimitives::ReversedQuad(), GL_STATIC_DRAW_ARB);
 
 			ShaderSource 	sourceVertex(vertexShaderSource),
 					sourcePixel(fragmentShaderSource);

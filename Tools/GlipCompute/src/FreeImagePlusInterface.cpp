@@ -93,7 +93,7 @@
 
 		int bpp = descriptor.pixelSizeInBits;
 		if(bpp==0)
-			bpp = descriptor.numChannels * Glip::CoreGL::HdlTextureFormatDescriptorsList::getTypeDepth(texture.getGLDepth())*8;
+			bpp = descriptor.numChannels() * Glip::CoreGL::HdlTextureFormatDescriptorsList::getTypeDepth(texture.getGLDepth())*8;
 
 		fipImage outputImage(FIT_BITMAP, texture.getWidth(), texture.getHeight(), bpp);
 		
