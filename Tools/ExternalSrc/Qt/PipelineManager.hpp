@@ -78,6 +78,7 @@ namespace QGPM
 
 		signals :
 			void modified(void);
+			void formatModified(void);
 			void statusChanged(bool valid);
 			void connectionClosed(void);			
 	};
@@ -146,6 +147,7 @@ namespace QGPM
 
 		private slots : 
 			void connectionModified(void);
+			void connectionFormatModified(void);
 			void connectionStatusChanged(bool validity);
 			void connectionDestroyed(void);
 			void viewClosed(void);
@@ -169,6 +171,7 @@ namespace QGPM
 		signals : 
 			void connectionAdded(int portIdx);
 			void connectionContentModified(int portIdx);
+			void connectionContentFormatModified(int portIdx);
 			void connectionStatusChanged(int portIdx, bool validity);			
 			void connectionClosed(int portIdx);
 			void addViewRequest(QVGL::View* view);
@@ -258,6 +261,7 @@ namespace QGPM
 		private slots : 
 			void connectionAdded(int portIdx);
 			void connectionContentModified(int portIdx);
+			void connectionContentFormatModified(int portIdx);
 			void connectionStatusChanged(int portIdx, bool validity);			
 			void connectionClosed(int portIdx);
 			void uniformsModified(void);
@@ -270,7 +274,9 @@ namespace QGPM
 			void updateSource(const std::string& _source, const std::string& path);
 			bool isValid(void) const;
 			const QVector<OutputPortItem*>&	getOutputPortItems(void) const;
+			int getNumInputPorts(void) const;
 			QString getInputPortName(int idx) const;
+			int getNumOutputPorts(void) const;
 			QString getOutputPortName(int idx) const;
 			const __ReadOnly_HdlTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
@@ -309,6 +315,7 @@ namespace QGPM
 				void apply(void);
 			};
 
+			QList<InputPortItem*>			selectedInputPortItems;
 			QAction					noImageConnectionAction,
 								noPipelineConnectionAction;
 			QMenu					imageItemsMenu,
@@ -317,6 +324,8 @@ namespace QGPM
 			QList<PipelineItem*>			pipelineItems;
 			QMap<QAction*, PotentialConnectionMap*>	potentialConnectionsMapMap;
 	
+			void buildMenu(void);
+
 		private slots : 
 			void imageItemDestroyed(void);
 			void pipelineItemDestroyed(void);
@@ -338,7 +347,7 @@ namespace QGPM
 		Q_OBJECT 
 
 		private : 
-			QList<OutputPortItem*>		selectedOutputPortItem;
+			QList<OutputPortItem*>		selectedOutputPortItems;
 			QAction				*saveAction,
 							*saveAsAction,
 							*copyAsNewImageItemAction,

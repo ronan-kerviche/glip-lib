@@ -537,7 +537,7 @@ using namespace QGIC;
 	}
 
 // ImageItemsStorage :
-	size_t ImageItemsStorage::maxOccupancy = 512 * 1024 * 1024; // 512 MB
+	size_t ImageItemsStorage::maxOccupancy = 850 * 1024 * 1024; // 850 MB
 	QVector<ImageItemsStorage*> ImageItemsStorage::storagesList;
 
 	ImageItemsStorage::ImageItemsStorage(void)
@@ -1176,17 +1176,92 @@ using namespace QGIC;
 	}
 
 // CollectionWidget :
+	CollectionWidget::ComparisonFunctor::ComparisonFunctor(CollectionWidget* _treeWidget, bool _reversed)
+	 :	treeWidget(_treeWidget),
+		reversed(_reversed)
+	{ }
+
+	bool CollectionWidget::ComparisonFunctor::operator()(QTreeWidgetItem* a, QTreeWidgetItem* b) //const, indexOfTopLevelItem is not/does not take const in Qt 4.8?
+	{
+		const bool test = (treeWidget->indexOfTopLevelItem(a)<treeWidget->indexOfTopLevelItem(b));
+		return (reversed && !test) || (!reversed && test); // logical XOR
+	}
+
 	CollectionWidget::CollectionWidget(QWidget* parent)
-	 : 	QTreeWidget(parent)
+	 : 	QTreeWidget(parent),
+		moveUpAction("Up", this),
+		moveDownAction("Down", this)
 	{
 		setIndentation(2);
 		setSelectionBehavior(QAbstractItemView::SelectRows);
-		setSelectionMode(QAbstractItemView::ContiguousSelection);
+		setSelectionMode(QAbstractItemView::ExtendedSelection);
 		setContextMenuPolicy(Qt::CustomContextMenu);
+
+		QObject::connect(this,			SIGNAL(itemSelectionChanged(void)),	this, SLOT(selectionChanged(void)));
+		QObject::connect(&moveUpAction,		SIGNAL(triggered(void)), 		this, SLOT(moveSelectionUp(void)));
+		QObject::connect(&moveDownAction,	SIGNAL(triggered(void)), 		this, SLOT(moveSelectionDown(void)));
+
+		selectionChanged();
 	}
 
 	CollectionWidget::~CollectionWidget(void)
 	{ }
+
+	void CollectionWidget::selectionChanged(void)
+	{
+		const bool state = !selectedItems().isEmpty();
+
+		moveUpAction.setEnabled(state);
+		moveDownAction.setEnabled(state);
+	}
+
+	void CollectionWidget::moveSelectionUp(void)
+	{
+		QList<QTreeWidgetItem*> currentSelection = selectedItems();
+		
+		bool blocked = false;
+
+		// Sort from top to bottom : 
+		std::sort(currentSelection.begin(), currentSelection.end(), ComparisonFunctor(this, false));
+
+		for(QList<QTreeWidgetItem*>::iterator it=currentSelection.begin(); it!=currentSelection.end() && !blocked; it++)
+		{
+			int originalIndex = indexOfTopLevelItem(*it);
+
+			if(originalIndex>0)
+			{
+				QTreeWidgetItem* item = takeTopLevelItem(originalIndex);
+				insertTopLevelItem(originalIndex-1, item);
+				item->setSelected(true);
+			}
+			else	
+				blocked = true;
+		}
+	}
+
+	void CollectionWidget::moveSelectionDown(void)
+	{
+		QList<QTreeWidgetItem*> currentSelection = selectedItems();
+		
+		bool blocked = false;
+
+		// Sort from bottom to top : 
+		std::sort(currentSelection.begin(), currentSelection.end(), ComparisonFunctor(this, true));
+
+		for(QList<QTreeWidgetItem*>::iterator it=currentSelection.begin(); it!=currentSelection.end() && !blocked; it++)
+		{
+			int originalIndex = indexOfTopLevelItem(*it);
+
+			if(originalIndex>=0 && originalIndex<topLevelItemCount()-1)
+			{
+				QTreeWidgetItem* item = takeTopLevelItem(originalIndex);
+				insertTopLevelItem(originalIndex+1, item);
+				item->setSelected(true);
+			}
+			else	
+				blocked = true;
+		}
+	}
 
 // ImageItemsCollection : 
 	ImageItemsCollection::ImageItemsCollection(void)
@@ -1216,6 +1291,8 @@ using namespace QGIC;
 		menuBar.addMenu(&imagesMenu);
 		menuBar.addMenu(&filterMenu);
 		menuBar.addMenu(&wrappingMenu);
+		menuBar.addAction(&collectionWidget.moveUpAction);
+		menuBar.addAction(&collectionWidget.moveDownAction);
 
 		QStringList listLabels;
 
@@ -1246,7 +1323,7 @@ using namespace QGIC;
 		collectionWidget.setHeaderLabels( listLabels );
 
 		// Connections :
-		QObject::connect(&collectionWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
+		//QObject::connect(&collectionWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
 		QObject::connect(&collectionWidget, 	SIGNAL(itemActivated(QTreeWidgetItem*,int)),			this, SLOT(itemActivated(QTreeWidgetItem*,int)));
 		QObject::connect(&collectionWidget, 	SIGNAL(itemSelectionChanged()),					this, SLOT(itemSelectionChanged()));
 		QObject::connect(&collectionWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),		this, SLOT(openContextMenu(const QPoint&)));
@@ -1511,10 +1588,10 @@ using namespace QGIC;
 			(*it)->remove();
 	}
 
-	void ImageItemsCollection::currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+	/*void ImageItemsCollection::currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 	{
 		std::cerr << "ImageItemsCollection::currentItemChanged - TODO" << std::endl;
-	}
+	}*/
 
 	void ImageItemsCollection::itemActivated(QTreeWidgetItem* item, int column)
 	{

@@ -35,7 +35,7 @@ using namespace QGPM;
 		if(imageItem==NULL)
 			throw Exception("ConnectionToImageItem::ConnectionToImageItem - Image item is invalid (NULL).", __FILE__, __LINE__);
 
-		QObject::connect(imageItem, SIGNAL(formatModified()),		this, SIGNAL(modified()));
+		QObject::connect(imageItem, SIGNAL(formatModified()),		this, SIGNAL(formatModified()));
 		QObject::connect(imageItem, SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemDestroyed()));
 		QObject::connect(imageItem, SIGNAL(removed()), 			this, SLOT(imageItemDestroyed()));
 		QObject::connect(imageItem, SIGNAL(destroyed()), 		this, SLOT(imageItemDestroyed()));
@@ -122,9 +122,10 @@ using namespace QGPM;
 		if(pipelineItem==NULL)
 			throw Exception("ConnectionToPipleineOutput::ConnectionToPipleineOutput - Pipeline item is invalid (NULL).", __FILE__, __LINE__);
 
-		QObject::connect(pipelineItem, SIGNAL(statusChanged()),	this,	SLOT(pipelineItemStatusChanged()));
-		QObject::connect(pipelineItem, SIGNAL(removed()),	this, 	SLOT(pipelineItemDestroyed()));
-		QObject::connect(pipelineItem, SIGNAL(destroyed()),	this, 	SLOT(pipelineItemDestroyed()));
+		QObject::connect(pipelineItem, SIGNAL(computationFinished(int)),	this,	SIGNAL(modified(void)));
+		QObject::connect(pipelineItem, SIGNAL(statusChanged()),			this,	SLOT(pipelineItemStatusChanged()));
+		QObject::connect(pipelineItem, SIGNAL(removed()),			this, 	SLOT(pipelineItemDestroyed()));
+		QObject::connect(pipelineItem, SIGNAL(destroyed()),			this, 	SLOT(pipelineItemDestroyed()));
 	}
 
 	ConnectionToPipelineOutput::~ConnectionToPipelineOutput(void)
@@ -167,7 +168,7 @@ using namespace QGPM;
 	QString ConnectionToPipelineOutput::getName(void) const
 	{
 		if(isValid())
-			return pipelineItem->getOutputPortName(outputIdx);
+			return tr("%1 (Pipeline : %2)").arg(pipelineItem->getOutputPortName(outputIdx)).arg(pipelineItem->getName());
 		else
 			return "(invalid connection)";
 	}
@@ -234,6 +235,11 @@ using namespace QGPM;
 		emit connectionContentModified(portIdx);
 	}
 
+	void InputPortItem::connectionFormatModified(void)
+	{
+		emit connectionContentFormatModified(portIdx);
+	}
+
 	void InputPortItem::connectionStatusChanged(bool validity)
 	{
 		emit connectionStatusChanged(portIdx, validity);
@@ -286,6 +292,7 @@ using namespace QGPM;
 		if(connection!=NULL)
 		{
 			QObject::connect(connection, SIGNAL(modified(void)),		this, SLOT(connectionModified(void)));
+			QObject::connect(connection, SIGNAL(formatModified(void)),	this, SLOT(connectionFormatModified(void)));
 			QObject::connect(connection, SIGNAL(statusChanged(bool)),	this, SLOT(connectionStatusChanged(bool)));
 			QObject::connect(connection, SIGNAL(connectionClosed(void)), 	this, SLOT(connectionDestroyed(void)));
 
@@ -374,6 +381,7 @@ using namespace QGPM;
 			emit discardConnection();
 
 		setText(0, name.c_str());
+		setText(1, "(invalid)");
 	}
 
 	void OutputPortItem::viewClosed(void)
@@ -418,6 +426,8 @@ using namespace QGPM;
 
 	HdlTexture& OutputPortItem::out(void)
 	{
+		std::cout << "OutputPortItem::out - Index : " << portIdx << std::endl;
+
 		if(!isValid())
 			throw Exception("OutputPortItem::out - Output port is invalid.", __FILE__, __LINE__);
 		else
@@ -441,15 +451,25 @@ using namespace QGPM;
 	{
 		if(view!=NULL)
 			view->setTexture(NULL);
+		
+		// Update the infos : 
 		setForeground(0, QBrush(Qt::red));
+		setText(1, tr("(invalid)"));
 	}
 
 	void OutputPortItem::computationFinished(int computeCount)
 	{
+		std::cout << "OutputPortItem::computationFinished - Index : " << portIdx << std::endl;
+
 		// Update the texture link, if necessary : 
 		if(view!=NULL && parentPipelineItem!=NULL && parentPipelineItem->isValid())
 			view->setTexture(&parentPipelineItem->out(portIdx));
+	
+		// Update the infos : 
 		setForeground(0, QBrush(Qt::green));
+
+		if(parentPipelineItem!=NULL && parentPipelineItem->isValid())
+			setText(1, tr("%1x%2 (%3)").arg(parentPipelineItem->out(portIdx).getWidth()).arg(parentPipelineItem->out(portIdx).getHeight()).arg(QGIC::ImageItem::getSizeString(parentPipelineItem->out(portIdx).getSize())));
 	}
 
 	void OutputPortItem::doubleClicked(int column)
@@ -597,6 +617,7 @@ using namespace QGPM;
 			
 			QObject::connect(inputPortItem, SIGNAL(connectionAdded(int)),			this, 		SLOT(connectionAdded(int)));
 			QObject::connect(inputPortItem, SIGNAL(connectionContentModified(int)),		this, 		SLOT(connectionContentModified(int)));
+			QObject::connect(inputPortItem, SIGNAL(connectionContentFormatModified(int)),	this, 		SLOT(connectionContentFormatModified(int)));
 			QObject::connect(inputPortItem, SIGNAL(connectionStatusChanged(int,bool)),	this, 		SLOT(connectionStatusChanged(int,bool)));
 			QObject::connect(inputPortItem, SIGNAL(connectionClosed(int)),			this, 		SLOT(connectionClosed(int)));
 			QObject::connect(inputPortItem, SIGNAL(addViewRequest(QVGL::View*)),		this, 		SIGNAL(addViewRequest(QVGL::View*)));
@@ -637,14 +658,18 @@ using namespace QGPM;
 
 	bool PipelineItem::checkConnections(void)
 	{
+		bool allToSelf = true;
+
 		// Check that all connections are available : 
 		for(QVector<InputPortItem*>::iterator it=inputPortItems.begin(); it!=inputPortItems.end(); it++)
 		{
 			if((*it)==NULL || (*it)->getConnection()==NULL || !(*it)->getConnection()->isValid())
 				return false;
+			else 
+				allToSelf = allToSelf && (*it)->getConnection()->selfTest(this);
 		}
 
-		return true;
+		return !allToSelf;
 	}
 
 	void PipelineItem::compile(void)
@@ -720,7 +745,7 @@ using namespace QGPM;
 					(*pipeline) << inputPortItems[k]->getConnection()->getTexture();
 				}
 				else 
-					throw Exception("PipelineItem::compute -  Cannot use connection for port \"" + pipeline->getOutputPortName(k) + "\" of " + pipeline->getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineItem::compute -  Cannot use connection for port \"" + pipeline->getInputPortName(k) + "\" of " + pipeline->getFullName() + ".", __FILE__, __LINE__);
 			}
 
 			// Compute : 
@@ -733,7 +758,7 @@ using namespace QGPM;
 		catch(Exception& e)
 		{
 			// TODO : error message.
-			std::cerr << "Exception caught : " << std::endl;
+			std::cerr << "PipelineItem::compute - Exception caught : " << std::endl;
 			std::cerr << e.what() << std::endl;
 		}
 	}
@@ -758,6 +783,15 @@ using namespace QGPM;
 	}
 
 	void PipelineItem::connectionContentModified(int portIdx)
+	{
+		if(checkConnections())
+		{
+			// Run : 
+			compute();
+		}
+	}
+
+	void PipelineItem::connectionContentFormatModified(int portIdx)
 	{
 		if(checkConnections())
 		{
@@ -795,6 +829,11 @@ using namespace QGPM;
 			return QString("(Untitled Pipeline)");
 	}
 
+	int PipelineItem::getNumInputPorts(void) const
+	{
+		return elements.mainPipelineInputs.size();
+	}
+
 	QString PipelineItem::getInputPortName(int idx) const
 	{
 		QString res;
@@ -805,6 +844,11 @@ using namespace QGPM;
 			res = tr("(Untitled input port #%1)").arg(idx);
 
 		return res;
+	}
+
+	int PipelineItem::getNumOutputPorts(void) const
+	{
+		return elements.mainPipelineOutputs.size();
 	}
 
 	QString PipelineItem::getOutputPortName(int idx) const
@@ -849,6 +893,8 @@ using namespace QGPM;
 
 	const __ReadOnly_HdlTextureFormat& PipelineItem::getOutputFormat(int idx)
 	{
+		std::cout << "PipelineItem::getOutputFormat - Index : " << idx << std::endl;
+
 		if(!isValid())
 			throw Exception("PipelineItem::getOutputFormat - Item is not valid.", __FILE__, __LINE__);
 		else
@@ -857,6 +903,8 @@ using namespace QGPM;
 
 	HdlTexture& PipelineItem::out(int idx)
 	{
+		std::cout << "PipelineItem::out - Index : " << idx << std::endl;
+
 		if(!isValid())
 			throw Exception("PipelineItem::getOutputFormat - Item is not valid.", __FILE__, __LINE__);
 		else
@@ -928,6 +976,97 @@ using namespace QGPM;
 		potentialConnectionsMapMap.clear();
 	}
 
+	void ConnectionsMenu::buildMenu(void)
+	{
+		if(selectedInputPortItems.isEmpty())
+		{
+			imageItemsMenu.clear();
+			pipelineItemsMenu.clear();
+			setEnabled(false);
+		}
+		else
+		{
+			// Build Image Menus :
+			imageItemsMenu.clear(); 
+
+			if((imageItems.size() - selectedInputPortItems.size() + 1)<=0)
+				imageItemsMenu.addAction(&noImageConnectionAction); // No possible actions corresponding to the input selection.
+			else
+			{
+				for(int p=0; p<(imageItems.size() - selectedInputPortItems.size() + 1); p++)
+				{
+					QString title;
+	
+					if(selectedInputPortItems.size()==1)
+						title = imageItems[p]->getName();
+					else
+						title = tr("Starting at %1...").arg(imageItems[p]->getName());
+		
+					QAction* action = imageItemsMenu.addAction(title);
+	
+					// Construct the potential connection map : 
+					PotentialConnectionMap* potentialConnectionMap = new PotentialConnectionMap;
+
+					for(int q=0; q<selectedInputPortItems.size(); q++)
+						potentialConnectionMap->add(InputPortItem::getPtrFromGenericItem(selectedInputPortItems[q]), imageItems[p+q]);
+
+					// Set the data : 		
+					potentialConnectionsMapMap[action] = potentialConnectionMap;
+
+					// Connect : 
+					QObject::connect(action, SIGNAL(triggered(void)), this, SLOT(actionTriggered(void)));
+					QObject::connect(action, SIGNAL(destroyed(void)), this, SLOT(actionDestroyed(void)));
+				}
+			}
+
+			// Build pipeline menu : 
+			pipelineItemsMenu.clear();
+			int itemsCount = 0;
+
+			for(QList<PipelineItem*>::iterator it=pipelineItems.begin(); it!=pipelineItems.end(); it++)
+			{
+				QMenu* subMenu = new QMenu((*it)->getName(), &pipelineItemsMenu);
+
+				for(int p=0; p<((*it)->getNumOutputPorts() - selectedInputPortItems.size() + 1); p++)
+				{
+					QString title;
+	
+					if(selectedInputPortItems.size()==1)
+						title = (*it)->getOutputPortName(p);
+					else
+						title = tr("Starting at %1...").arg((*it)->getOutputPortName(p));
+		
+					QAction* action = subMenu->addAction(title);
+	
+					// Construct the potential connection map : 
+					PotentialConnectionMap* potentialConnectionMap = new PotentialConnectionMap;
+
+					for(int q=0; q<selectedInputPortItems.size(); q++)
+						potentialConnectionMap->add(InputPortItem::getPtrFromGenericItem(selectedInputPortItems[q]), (*it), p+q);
+
+					// Set the data : 		
+					potentialConnectionsMapMap[action] = potentialConnectionMap;
+
+					// Connect : 
+					QObject::connect(action, SIGNAL(triggered(void)), this, SLOT(actionTriggered(void)));
+					QObject::connect(action, SIGNAL(destroyed(void)), this, SLOT(actionDestroyed(void)));
+
+					itemsCount++;
+				}
+
+				if(!subMenu->actions().isEmpty())
+					pipelineItemsMenu.addMenu(subMenu);
+				else
+					delete subMenu;
+			}
+
+			if(itemsCount==0)
+				pipelineItemsMenu.addAction(&noPipelineConnectionAction);
+
+			setEnabled(true);
+		}
+	}
+
 	void ConnectionsMenu::imageItemDestroyed(void)
 	{
 		QGIC::ImageItem* imageItem = reinterpret_cast<QGIC::ImageItem*>(QObject::sender());
@@ -938,7 +1077,10 @@ using namespace QGPM;
 		int idx = imageItems.indexOf(imageItem);
 
 		if(idx>=0)
+		{
 			imageItems.erase(imageItems.begin() + idx);
+			buildMenu();
+		}
 	}
 	
 	void ConnectionsMenu::pipelineItemDestroyed(void)
@@ -951,7 +1093,10 @@ using namespace QGPM;
 		int idx = pipelineItems.indexOf(pipelineItem);
 
 		if(idx>=0)
+		{
 			pipelineItems.erase(pipelineItems.begin() + idx);
+			buildMenu();
+		}
 	}
 
 	void ConnectionsMenu::actionTriggered(void)
@@ -996,6 +1141,8 @@ using namespace QGPM;
 		QObject::connect(imageItem, SIGNAL(destroyed(void)), 	this, SLOT(imageItemDestroyed(void)));
 
 		imageItems.push_back(imageItem);
+
+		buildMenu();
 	}
 
 	void ConnectionsMenu::addPipelineItem(QGPM::PipelineItem* pipelineItem)
@@ -1007,6 +1154,8 @@ using namespace QGPM;
 		QObject::connect(pipelineItem, SIGNAL(destroyed(void)), this, SLOT(pipelineItemDestroyed(void)));
 
 		pipelineItems.push_back(pipelineItem);
+
+		buildMenu();
 	}
 
 	void ConnectionsMenu::updateToSelection(QList<QTreeWidgetItem*>& selection)
@@ -1016,55 +1165,18 @@ using namespace QGPM;
 		for(QList<QTreeWidgetItem*>::iterator it=selection.begin(); it!=selection.end(); it++)
 			allInput = allInput && ((*it)->type()==InputItemType);
 		
-		if(!allInput)
+		selectedInputPortItems.clear();
+
+		if(allInput)
 		{
-			imageItemsMenu.clear();
-			pipelineItemsMenu.clear();
-			setEnabled(false);
+			for(QList<QTreeWidgetItem*>::iterator it=selection.begin(); it!=selection.end(); it++)
+				selectedInputPortItems.push_back(InputPortItem::getPtrFromGenericItem(*it));
 		}
-		else
-		{
-			// Build Image Menus :
-			imageItemsMenu.clear(); 
-
-			if((imageItems.size() - selection.size() + 1)<0)
-				imageItemsMenu.addAction(&noImageConnectionAction); // No possible actions corresponding to the input selection.
-			else
-			{
-				for(int p=0; p<(imageItems.size() - selection.size() + 1); p++)
-				{
-					QString title;
+		// Else : already cleared.
 	
-					if(selection.size()==1)
-						title = imageItems[p]->getName();
-					else
-						title = tr("Starting at %1...").arg(imageItems[p]->getName());
-		
-					QAction* action = imageItemsMenu.addAction(title);
-	
-					// Construct the potential connection map : 
-					PotentialConnectionMap* potentialConnectionMap = new PotentialConnectionMap;
+		std::cout << "ConnectionsMenu::updateToSelection - allInput : " << allInput << std::endl;
 
-					for(int q=0; q<selection.size(); q++)
-						potentialConnectionMap->add(InputPortItem::getPtrFromGenericItem(selection[q]), imageItems[p+q]);
-
-					// Set the data : 		
-					potentialConnectionsMapMap[action] = potentialConnectionMap;
-
-					// Connect : 
-					QObject::connect(action, SIGNAL(triggered(void)), this, SLOT(actionTriggered(void)));
-					QObject::connect(action, SIGNAL(destroyed(void)), this, SLOT(actionDestroyed(void)));
-				}
-			}
-
-			// Build pipeline menu : 
-			pipelineItemsMenu.clear();
-			pipelineItemsMenu.addAction(&noPipelineConnectionAction);
-			// TODO
-
-			// Activate : 
-			setEnabled(true);
-		}
+		buildMenu();
 	}
 
 // OutputsMenu :
@@ -1091,10 +1203,10 @@ using namespace QGPM;
 	{
 		OutputPortItem* outputPortItem = reinterpret_cast<OutputPortItem*>(QObject::sender());
 
-		int idx = selectedOutputPortItem.indexOf(outputPortItem);
+		int idx = selectedOutputPortItems.indexOf(outputPortItem);
 
 		if(idx>=0)
-			selectedOutputPortItem.removeAt(idx);
+			selectedOutputPortItems.removeAt(idx);
 	}
 
 	void OutputsMenu::save(OutputPortItem* outputPortItem)
@@ -1110,7 +1222,7 @@ using namespace QGPM;
 
 	void OutputsMenu::save(void)
 	{
-		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItem.begin(); it!=selectedOutputPortItem.end(); it++)
+		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItems.begin(); it!=selectedOutputPortItems.end(); it++)
 			save(*it);
 	}
 
@@ -1121,7 +1233,7 @@ using namespace QGPM;
 
 	void OutputsMenu::saveAs(void)
 	{
-		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItem.begin(); it!=selectedOutputPortItem.end(); it++)
+		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItems.begin(); it!=selectedOutputPortItems.end(); it++)
 			saveAs(*it);
 	}
 	
@@ -1132,7 +1244,7 @@ using namespace QGPM;
 
 	void OutputsMenu::copyAsNewImageItem(void)
 	{
-		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItem.begin(); it!=selectedOutputPortItem.end(); it++)
+		for(QList<OutputPortItem*>::iterator it=selectedOutputPortItems.begin(); it!=selectedOutputPortItems.end(); it++)
 			copyAsNewImageItem(*it);
 	}
 
@@ -1150,8 +1262,8 @@ using namespace QGPM;
 
 	void OutputsMenu::copy(void)
 	{
-		if(selectedOutputPortItem.size()==1)
-			copy(selectedOutputPortItem.front());
+		if(selectedOutputPortItems.size()==1)
+			copy(selectedOutputPortItems.front());
 	}
 
 	void OutputsMenu::updateToSelection(QList<QTreeWidgetItem*>& selection)
@@ -1161,17 +1273,14 @@ using namespace QGPM;
 		for(QList<QTreeWidgetItem*>::iterator it=selection.begin(); it!=selection.end(); it++)
 			allOutput = allOutput && ((*it)->type()==OutputItemType) && OutputPortItem::getPtrFromGenericItem(*it)!=NULL && OutputPortItem::getPtrFromGenericItem(*it)->isValid();
 		
+		selectedOutputPortItems.clear();
+
 		if(!allOutput)
-		{
-			selectedOutputPortItem.clear();
 			setEnabled(false);
-		}
 		else
 		{
-			selectedOutputPortItem.clear();
-
 			for(QList<QTreeWidgetItem*>::iterator it=selection.begin(); it!=selection.end(); it++)
-				selectedOutputPortItem.push_back(OutputPortItem::getPtrFromGenericItem(*it));
+				selectedOutputPortItems.push_back(OutputPortItem::getPtrFromGenericItem(*it));
 
 			setEnabled(true);
 		}

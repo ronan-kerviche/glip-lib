@@ -686,6 +686,19 @@ delete data;
 					static T denormalize(const float& t);
 			};
 
+			// Avoid "specialization after instantiation" on some compilers (old g++) :
+				template<>
+				float HdlDynamicTableSpecial<float>::normalize(const float& t);
+
+				template<>
+				float HdlDynamicTableSpecial<double>::normalize(const double& t);
+
+				template<>
+				float HdlDynamicTableSpecial<float>::denormalize(const float& t);
+
+				template<>
+				double HdlDynamicTableSpecial<double>::denormalize(const float& t);
+
 			// Template implementation :
 				template<typename T>
 				HdlDynamicTableSpecial<T>::HdlDynamicTableSpecial(const GLenum& _type, int _columns, int _rows, int _slices, bool _normalized, int _alignment)

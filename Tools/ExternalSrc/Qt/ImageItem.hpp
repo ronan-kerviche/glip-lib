@@ -235,9 +235,28 @@ namespace QGIC
 	{
 		Q_OBJECT 
 
-		public : 
+		private : 
+			struct ComparisonFunctor
+			{ 
+				CollectionWidget* treeWidget;
+				const bool reversed;
+
+				ComparisonFunctor(CollectionWidget* _treeWidget, bool _reversed=false);
+
+				bool operator()(QTreeWidgetItem* a, QTreeWidgetItem* b);
+			};
+
+		private slots:
+			void selectionChanged(void);
+			void moveSelectionUp(void);
+			void moveSelectionDown(void);
+
+		public :
+			QAction moveUpAction,
+				moveDownAction;
+ 
 			CollectionWidget(QWidget* parent=NULL);
-			~CollectionWidget(void);
+			~CollectionWidget(void);		
 	};
 
 	class ImageItemsCollection : public QWidget
@@ -298,7 +317,7 @@ namespace QGIC
 			void removeAllImageItem(void);
 
 			// Interaction : 
-			void currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+			//void currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
 			void itemActivated(QTreeWidgetItem * item, int column);
 			void itemSelectionChanged(void);
 			void openContextMenu(const QPoint& pos);

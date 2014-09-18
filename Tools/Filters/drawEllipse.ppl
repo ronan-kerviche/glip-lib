@@ -1,0 +1,50 @@
+/*
+	Draw an ellipse of variable size, position and color onto the image.
+*/
+
+REQUIRED_FORMAT:outputFormat0(inputFormat0)
+
+SHADER_SOURCE:drawEllipseShader
+{
+	#version 130
+	
+	uniform sampler2D inputTexture;
+	out vec4 outputTexture;
+	
+	uniform vec2 	center		= vec2(0.0f,0.0f),
+			radii		= vec2(1.0f,1.0f);
+	uniform float	thickness	= 0.02f;
+	uniform vec3	color 		= vec3(1.0f, 0.0f, 0.0f);
+	
+	void main()
+	{
+		// The current fragment position : 
+		vec2 pos = gl_TexCoord[0].st;
+
+		// Read the base level of the texture at the current position : 
+		vec4 col = textureLod(inputTexture, pos, 0);
+	
+		vec2	c	= vec2(center.x,-center.y)/2.0f+vec2(0.5f,0.5f),
+			r	= radii/2.0;
+		vec2	v	= pos-c;
+			v.x	/= r.x;
+			v.y	/= r.y;
+		float 	val 	= dot(v,v);
+
+		if(val<=1.0f && val+thickness>=1.0f)
+			col.rgb = color;
+
+		outputTexture = col;
+	}
+}
+
+FILTER_LAYOUT:drawEllipseFilter(outputFormat0, drawEllipseShader)
+
+PIPELINE_MAIN:drawEllipsePipeline
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture)
+
+	FILTER_INSTANCE:drawEllipseFilter(drawEllipseFilter)
+}
+

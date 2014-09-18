@@ -1,0 +1,55 @@
+/*
+	Transfer the image in HSV to apply some corrections, and transfer back to RGB.
+*/
+
+REQUIRED_FORMAT:outputFormat0(inputFormat0)
+
+INCLUDE_FILE(colors.ppl)
+
+SHADER_SOURCE:ChangeHSVShader
+{
+	#version 130
+
+	uniform sampler2D	textureInput;
+	out     vec4 		textureChangedHSV;
+	
+	INCLUDE_SHARED_SOURCE:ColorPrimitives
+
+	uniform float vScal = 1.0, sScal = 1.0, hRot;
+
+	void main()
+	{
+		// Get the input data :
+		vec4 col  = textureLod(textureInput, gl_TexCoord[0].st, 0.0);
+
+		vec3 	rgb = col.rgb,
+			hsv;
+
+		// To HSV
+		RGBToHSV(rgb, hsv);
+
+		// Modifications : 
+		hsv.z = hsv.z * vScal;
+		hsv.y = hsv.y * sScal;
+		hsv.x = mod(hsv.x + hRot * 360.0, 360);
+
+		// Back to RGB
+		HSVToRGB(hsv, rgb);
+
+		// Write the output data :
+		textureChangedHSV.rgb = rgb;
+		textureChangedHSV.a = col.a;
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:ChangeHSVFilter(outputFormat0,ChangeHSVShader)
+
+PIPELINE_MAIN:ChangeHSVPipeline
+{
+	// Declare some input and output ports for this pipeline ::
+	INPUT_PORTS(textureInput)
+	OUTPUT_PORTS(textureChangedHSV)
+
+	FILTER_INSTANCE:ChangeHSVFilter(ChangeHSVFilter)
+}

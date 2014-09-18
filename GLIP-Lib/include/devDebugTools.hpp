@@ -32,7 +32,7 @@
 	// Tools
 		#define STR_EXPAND(tok) 	#tok
 		#define STR(tok) 		STR_EXPAND(tok)
-		#define __HERE__		"["STR(__FUNCTION__)" at "STR(__FILE__)" : "STR(__LINE__)"] "
+		#define __HERE__		"[" STR(__FUNCTION__) " at " STR(__FILE__) " : " STR(__LINE__) "] "
 
 		#define OPENGL_ERROR_TRACKER(functionName, callLine) \
 			{ \
