@@ -713,6 +713,24 @@ using namespace QGED;
 		while( std::getline(stream, line) )
 			errorsList.addItem( QString::fromStdString(line) );
 
+		QListWidgetItem* firstItem = errorsList.item(0);
+		if(errorsList.count()>0 && firstItem!=NULL)
+		{
+			QFontMetrics metrics(firstItem->font());
+			int newHeight = errorsList.count() * metrics.lineSpacing() * 1.3; // This factor is adhoc... and yes it is ugly.
+
+			QList<int> sizes = splitterLayout.sizes();
+
+			int totalHeight = std::accumulate(sizes.begin(), sizes.end(), 0);
+			
+			sizes[0] = totalHeight - newHeight;
+			sizes[1] = newHeight;
+
+			splitterLayout.setSizes(sizes);
+		}
+		else
+			errorsList.addItem("(unspecified error)");
+
 		errorsList.show();
 	}
 
@@ -1578,24 +1596,22 @@ using namespace QGED;
 	{
 		int c = recentFiles.indexOf(filename);
 
-		if(c<0)
+		if(c>=0)
 			recentFiles.removeAt(c);
 	
 		QFileInfo info(filename);
 
 		if(info.exists())
-		{
 			recentFiles.prepend(filename);
 
-			if(updateMenuNow)
-				buildMenu();
-		}
+		if(updateMenuNow)
+			buildMenu();
 	}
 
 	void RecentFilesMenu::append(const QList<QString>& filenames)
 	{
 		for(QList<QString>::const_iterator it=filenames.begin(); it!=filenames.end(); it++)
-			append(*it);
+			append(*it, false);
 
 		buildMenu();
 	}

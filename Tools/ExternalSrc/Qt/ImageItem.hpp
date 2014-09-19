@@ -103,6 +103,7 @@ namespace QGIC
 			void remove(void);
 
 			static QString getSizeString(size_t size);
+			static QString getFormatToolTip(const __ReadOnly_HdlTextureFormat& format, const QString& name="");
 			static ImageItem* pasteImageFromClipboard(void);
 
 		signals : 

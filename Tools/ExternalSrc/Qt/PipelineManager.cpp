@@ -237,6 +237,11 @@ using namespace QGPM;
 
 	void InputPortItem::connectionFormatModified(void)
 	{
+		if(connection!=NULL && connection->isValid())
+			setToolTip(1, QGIC::ImageItem::getFormatToolTip(connection->getFormat(), connection->getName()));
+		else
+			setToolTip(1, "");
+
 		emit connectionContentFormatModified(portIdx);
 	}
 
@@ -255,6 +260,7 @@ using namespace QGPM;
 	
 		setText(1, "");
 		setForeground(0, QBrush(Qt::red));
+		setToolTip(1, "");
 
 		emit connectionClosed(portIdx);
 	}
@@ -301,6 +307,11 @@ using namespace QGPM;
 			setText(1, connection->getName());
 			setForeground(0, QBrush(Qt::green));
 
+			if(connection->isValid())
+				setToolTip(1, QGIC::ImageItem::getFormatToolTip(connection->getFormat(), connection->getName()));
+			else
+				setToolTip(1, "");
+
 			emit connectionAdded(portIdx);
 		}
 	}
@@ -332,9 +343,9 @@ using namespace QGPM;
 
 	void InputPortItem::doubleClicked(int column)
 	{
-		if(view==NULL && isConnected() && connection->isReady())
+		if(view==NULL && isConnected() && connection->isReady() && parentPipelineItem!=NULL)
 		{
-			view = new QVGL::View(&connection->getTexture(), text(0));
+			view = new QVGL::View(&connection->getTexture(), tr("%1 (Input %2 of %3)").arg(text(0)).arg(portIdx).arg(parentPipelineItem->getName()));
 
 			QObject::connect(view, SIGNAL(closed(void)), this, SLOT(viewClosed(void)));
 
@@ -455,6 +466,7 @@ using namespace QGPM;
 		// Update the infos : 
 		setForeground(0, QBrush(Qt::red));
 		setText(1, tr("(invalid)"));
+		setToolTip(1, "");
 	}
 
 	void OutputPortItem::computationFinished(int computeCount)
@@ -469,14 +481,19 @@ using namespace QGPM;
 		setForeground(0, QBrush(Qt::green));
 
 		if(parentPipelineItem!=NULL && parentPipelineItem->isValid())
-			setText(1, tr("%1x%2 (%3)").arg(parentPipelineItem->out(portIdx).getWidth()).arg(parentPipelineItem->out(portIdx).getHeight()).arg(QGIC::ImageItem::getSizeString(parentPipelineItem->out(portIdx).getSize())));
+		{
+			const HdlTexture& outputTexture = parentPipelineItem->out(portIdx);
+
+			setText(1, tr("%1x%2 (%3)").arg(outputTexture.getWidth()).arg(outputTexture.getHeight()).arg(QGIC::ImageItem::getSizeString(outputTexture.getSize())));
+			setToolTip(1, QGIC::ImageItem::getFormatToolTip(outputTexture, parentPipelineItem->getOutputPortName(portIdx)));
+		}
 	}
 
 	void OutputPortItem::doubleClicked(int column)
 	{
 		if(view==NULL && parentPipelineItem!=NULL && parentPipelineItem->isValid() && parentPipelineItem->getComputationCount()>0)
 		{
-			view = new QVGL::View(&parentPipelineItem->out(portIdx), text(0));
+			view = new QVGL::View(&parentPipelineItem->out(portIdx), tr("%1 (Output %2 of %3)").arg(text(0)).arg(portIdx).arg(parentPipelineItem->getName()));
 
 			QObject::connect(view, SIGNAL(closed(void)), this, SLOT(viewClosed(void)));
 
@@ -574,8 +591,6 @@ using namespace QGPM;
 		{
 			emit compilationFailureNotification(identifier, e);
 		}
-
-		// TODO : special update in the case of a failure.
 
 		// Update ports : 
 		refurnishPortItems();

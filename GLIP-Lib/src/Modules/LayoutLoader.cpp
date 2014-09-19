@@ -213,10 +213,17 @@
 
 		if(possiblePaths.empty())
 		{
-			std::string msg = "Unable to load file \"" + filename + "\" from the following locations : ";
+			std::string msg;
 
-			for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
-				msg  += "\n-> " + *it;
+			if(dynamicPaths.empty())
+				msg = "Unable to load file \"" + filename + "\" from the current location.";
+			else
+			{			
+				msg = "Unable to load file \"" + filename + "\" from the following locations : ";
+
+				for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+					msg  += "\n-> " + *it;
+			}
 
 			throw Exception(msg, __FILE__, __LINE__);
 		}

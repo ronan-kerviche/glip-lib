@@ -282,12 +282,13 @@
 		color: #FFFFFF;
 	}
 
-	/*QTreeView::branch:has-children:!has-siblings:closed,
+	/* Temporary */
+	QTreeView::branch:has-children:!has-siblings:closed,
 	QTreeView::branch:closed:has-children:has-siblings
 	{
 		background: #222222;
 		border-image: none;
-		image: url(branch-closed.png);
+		image: url(Resources/branch-closed.png);
 	}
 
 	QTreeView::branch:open:has-children:!has-siblings,
@@ -295,8 +296,9 @@
 	{
 		background: #222222;
 		border-image: none;
-		image: url(branch-open.png);
-	}*/
+		image: url(Resources/branch-open.png);
+	}
+	/* End of temporary */
 
 	QHeaderView::section
 	{

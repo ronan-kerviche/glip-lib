@@ -32,6 +32,9 @@ using namespace QGIC;
 		std::cout << "  width          : " << qimage.width() << std::endl;
 		std::cout << "  bytes per line : " << qimage.bytesPerLine() << std::endl;
 		std::cout << "  size           : " << qimage.byteCount() << std::endl;
+		std::cout << "  allGray        : " << qimage.allGray() << std::endl;
+		std::cout << "  isGrayscale    : " << qimage.isGrayscale() << std::endl;
+		std::cout << "  hasAlpha       : " << qimage.hasAlphaChannel() << std::endl;
 
 		QElapsedTimer timer;
 		timer.start();
@@ -175,7 +178,7 @@ using namespace QGIC;
 
 		itDst.blit(itSrc);
 
-		std::cout << "The slow operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		std::cout << "The writing operation took " << timer.elapsed() << " milliseconds" << std::endl;
 	}
 
 // ImageItem : 
@@ -517,6 +520,26 @@ using namespace QGIC;
 			return tr("%1 B").arg( size );
 	}
 
+	QString ImageItem::getFormatToolTip(const __ReadOnly_HdlTextureFormat& format, const QString& name)
+	{
+		QString toolTip;
+
+		toolTip += "<table>";
+
+		if(!name.isEmpty())
+			toolTip += tr("<tr><td><i>Name</i></td><td>:</td><td>%1</td></tr>").arg(name);
+
+		toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(format.getWidth()).arg(format.getHeight()).arg(getSizeString(format.getSize()));
+		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(format.getGLMode() ).c_str());
+		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(format.getGLDepth() ).c_str());
+		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getMinFilter() ).c_str()).arg(glParamName(format.getMagFilter() ).c_str());
+		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getSWrapping() ).c_str()).arg(glParamName(format.getTWrapping() ).c_str());
+		toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(format.getBaseLevel()).arg(format.getMaxLevel());
+		toolTip += "</table>";
+
+		return toolTip;
+	}
+
 	ImageItem* ImageItem::pasteImageFromClipboard(void)
 	{
 		QClipboard *clipboard = QApplication::clipboard();
@@ -550,7 +573,11 @@ using namespace QGIC;
 	{
 		// Clear the list : 
 		for(QVector<ImageItem*>::iterator it=imageItemsList.begin(); it!=imageItemsList.end(); it++)
+		{
+			(*it)->disconnect(this);
+			disconnect(*it);
 			delete (*it);
+		}
 
 		imageItemsList.clear();
 
@@ -1334,7 +1361,11 @@ using namespace QGIC;
 	}
 
 	ImageItemsCollection::~ImageItemsCollection(void)
-	{ }
+	{
+		// Clear image before the storage does (avoid segfault because of remaining connections) :
+		while(!items.isEmpty())
+			delete items.begin().key();
+	}
 
 	void ImageItemsCollection::updateAlternateColors(void)
 	{
@@ -1536,11 +1567,14 @@ using namespace QGIC;
 				}
 				catch(Exception& e)
 				{
-					// TODO : Add an exception
-					std::cerr << e.what() << std::endl;
+					// Warning :
+					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Failed to open image file at \"%1\".").arg(*it), QMessageBox::Ok);
+					messageBox.setDetailedText(e.what());
+					messageBox.exec();
 				}
 			}
 
+			// Remember the working directory : 
 			QFileInfo path(filenameList.front());
 			currentPath = path.path();
 		}

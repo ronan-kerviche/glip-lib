@@ -2303,6 +2303,9 @@ using namespace QVGL;
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
 
+		// Enable transparency on the background :
+		glEnable(GL_BLEND);
+
 		ViewsTable* viewsTable = qvglParent->getCurrentViewsTable();
 
 		if(viewsTable!=NULL)
