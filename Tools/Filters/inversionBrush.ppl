@@ -1,0 +1,39 @@
+REQUIRED_FORMAT:outputFormat(inputFormat0)
+
+SHADER_SOURCE:inversionBrushShader
+{
+	#version 130
+	
+	uniform sampler2D inputTexture, inputMask;
+	out vec4 outputTexture, outputMask;
+	
+	uniform vec2 	mouse_pos = vec2(0.5, 0.5);
+	uniform float	radius = 0.01;
+	
+	void main()
+	{ 
+		vec2 	pos 	= gl_TexCoord[0].st;
+		vec4 	color 	= textureLod(inputTexture, pos, 0),
+			mask	= textureLod(inputMask, pos, 0);
+
+		if(distance(pos, mouse_pos)<=radius)
+			mask.r = 1.0;
+	
+		if(mask.r==1.0)
+			color.rgb = vec3(1.0, 1.0, 1.0) - color.rgb;
+
+		outputTexture = color;
+		outputMask = mask;
+	}
+}
+
+FILTER_LAYOUT:inversionBrushFilter(outputFormat, inversionBrushShader)
+
+PIPELINE_MAIN:inversionBrushPipeline
+{
+	INPUT_PORTS(inputTexture, inputMask)
+	OUTPUT_PORTS(outputTexture, outputMask)
+
+	FILTER_INSTANCE:inversionBrushFilter(inversionBrushFilter)
+}
+
