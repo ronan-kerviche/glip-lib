@@ -14,10 +14,11 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#include "UniformsVarsLoaderInterface.hpp"
+#include "UniformsLoaderInterface.hpp"
+#include <QMessageBox>
 
 // ValuesInterface :
-	ValuesInterface::ValuesInterface(UniformsVarsLoader::Resource& _resource)
+	ValuesInterface::ValuesInterface(UniformsLoader::Resource& _resource)
 	 : 	resource(_resource),
 		layout(this),
 		signalMapper(this)
@@ -120,20 +121,42 @@
 		emit modified();
 	}
 
-// UniformsVarsLoaderInterface :
-	UniformsVarsLoaderInterface::UniformsVarsLoaderInterface(int type)
+	void ValuesInterface::pullModificationToResource(void)
+	{
+		blockSignals(true);
+
+		for(int j=0; j<resource.object().getNumColumns(); j++)
+		{
+			for(int i=0; i<resource.object().getNumRows(); i++)
+			{
+				int index = resource.object().getIndex(i, j);
+	
+				if(resource.object().isFloatingPointType())
+					floatBoxes[index]->setValue(resource.object().get(i, j));
+				else
+					integerBoxes[index]->setValue(resource.object().get(i, j));
+
+				resource.modified = true;
+			}
+		}
+
+		blockSignals(false);
+	}
+
+// UniformsLoaderInterface :
+	UniformsLoaderInterface::UniformsLoaderInterface(int type)
 	 : 	QTreeWidgetItem(type)
 	{
 		setText(0, "Uniform Variables");
 	}
 
-	UniformsVarsLoaderInterface::~UniformsVarsLoaderInterface(void)
+	UniformsLoaderInterface::~UniformsLoaderInterface(void)
 	{
 		itemRoots.clear();
 	}
 
 	// Private Tools : 
-	QTreeWidgetItem* UniformsVarsLoaderInterface::addResource(UniformsVarsLoader::Resource& resource, QTreeWidgetItem* root)
+	QTreeWidgetItem* UniformsLoaderInterface::addResource(UniformsLoader::Resource& resource, QTreeWidgetItem* root)
 	{
 		// Create the node : 
 		QTreeWidgetItem* newNode = new QTreeWidgetItem(type());
@@ -148,20 +171,22 @@
 
 		// Set the name : 
 		if(resource.object().getNumRows()>1)
-			newNode->setText(0, tr("%1\n[%2]").arg(resource.getName().c_str()).arg(glParamName(resource.object().getGLType()).c_str()));
+			newNode->setText(0, tr("%1\n[%2]").arg(QString::fromStdString(resource.getName())).arg(glParamName(resource.object().getGLType()).c_str()));
 		else
-			newNode->setText(0, tr("%1 [%2]").arg(resource.getName().c_str()).arg(glParamName(resource.object().getGLType()).c_str()));
+			newNode->setText(0, tr("%1 [%2]").arg(QString::fromStdString(resource.getName())).arg(glParamName(resource.object().getGLType()).c_str()));
+
+		newNode->setData(0, Qt::UserRole, QString::fromStdString(resource.getName()));
 
 		// Add the widget : 
 		if(treeWidget()==NULL)
-			throw Exception("UniformsVarsLoaderInterface::addResource - Internal error : no tree widget associated.", __FILE__, __LINE__);
+			throw Exception("UniformsLoaderInterface::addResource - Internal error : no tree widget associated.", __FILE__, __LINE__);
 		else
 			treeWidget()->setItemWidget(newNode, 1, valuesInterface);
 
 		return newNode;
 	}
 
-	QTreeWidgetItem* UniformsVarsLoaderInterface::addNode(UniformsVarsLoader::Node& node, QTreeWidgetItem* root)
+	QTreeWidgetItem* UniformsLoaderInterface::addNode(UniformsLoader::Node& node, QTreeWidgetItem* root)
 	{
 		// Create the node : 
 		QTreeWidgetItem* newNode = new QTreeWidgetItem(type());
@@ -173,11 +198,11 @@
 		root->addChild(newNode);
 
 		// Add all the sub-nodes : 
-		for(UniformsVarsLoader::NodeIterator it=node.nodeBegin(); it!=node.nodeEnd(); it++)
+		for(UniformsLoader::NodeIterator it=node.nodeBegin(); it!=node.nodeEnd(); it++)
 			addNode(it->second, newNode);
 
 		// Add all the resources : 
-		for(UniformsVarsLoader::ResourceIterator it=node.resourceBegin(); it!=node.resourceEnd(); it++)
+		for(UniformsLoader::ResourceIterator it=node.resourceBegin(); it!=node.resourceEnd(); it++)
 			addResource(it->second, newNode);
 
 		newNode->setExpanded(true);
@@ -185,50 +210,145 @@
 		return newNode;
 	}
 
-	QTreeWidgetItem* UniformsVarsLoaderInterface::addNodeAsRoot(UniformsVarsLoader::Node& node)
+	QTreeWidgetItem* UniformsLoaderInterface::addNodeAsRoot(UniformsLoader::Node& node)
 	{
 		return addNode(node, this);
 	}
 
-	bool UniformsVarsLoaderInterface::isNodeListed(const std::string& name) const
+	int UniformsLoaderInterface::updateNode(UniformsLoader::Node& node, QTreeWidgetItem* nodeItem, bool updateOnly)
+	{
+		int count = 0;
+		QList<QTreeWidgetItem*> children = nodeItem->takeChildren();
+
+		for(QList<QTreeWidgetItem*>::iterator it=children.begin(); it!=children.end(); it++)
+		{
+			// Is a node itself : 
+			if((*it)->childCount()>0)
+			{
+				const std::string name = (*it)->text(0).toStdString();
+
+				std::cout << "    Subnode : " << name << std::endl;
+
+				// Try to find the corresponding data node : 
+				if(node.subNodeExists(name))
+					count += updateNode(node.subNode(name), *it, updateOnly);
+			}
+			else // Is a leaf :
+			{
+				const std::string name = (*it)->data(0, Qt::UserRole).toString().toStdString();
+
+				std::cout << "    Subresource : " << name << std::endl;
+
+				// Try to find the corresponding data resource : 
+				if(node.resourceExists(name))
+				{
+					if(treeWidget()==NULL)
+						throw Exception("UniformsLoaderInterface::updateNode - Internal error : no tree widget associated.", __FILE__, __LINE__);
+					else
+					{
+						std::cout << "UniformsLoaderInterface::updateNode - updating node : " << nodeItem << std::endl;
+						delete (*it);
+						
+						(*it) = addResource(node.resource(name), nodeItem);
+	
+						count++;
+					}
+				}
+			}
+		}
+
+		nodeItem->insertChildren(0, children);
+		nodeItem->setExpanded(true);
+
+		return count;
+	}
+
+	bool UniformsLoaderInterface::isNodeListed(const std::string& name) const
 	{
 		return (itemRoots.find(name)!=itemRoots.end());
 	}
 
-	void UniformsVarsLoaderInterface::scanLoader(void)
+	void UniformsLoaderInterface::scanLoader(bool updateOnly)
 	{
-		if(treeWidget()==NULL)
-			throw Exception("UniformsVarsLoaderInterface::scanLoader - Internal error : no tree widget associated.", __FILE__, __LINE__);
+		std::cout << "UniformsLoaderInterface::scanLoader - updateOnly : " << updateOnly << std::endl;
 
-		for(UniformsVarsLoader::NodeIterator it=loader.rootNodeBegin(); it!=loader.rootNodeEnd(); it++)
+		if(treeWidget()==NULL)
+			throw Exception("UniformsLoaderInterface::scanLoader - Internal error : no tree widget associated.", __FILE__, __LINE__);
+
+		for(UniformsLoader::NodeIterator it=loader.rootNodeBegin(); it!=loader.rootNodeEnd(); it++)
 		{
-			if(!isNodeListed(it->first))
+			const bool test = isNodeListed(it->first);
+			std::cout << "  Node : " << it->first << std::endl;
+
+			if(!test && !updateOnly)
 			{
 				// Add node : 
 				itemRoots[it->first] = addNodeAsRoot(it->second);
+			}
+			else if(test)
+			{
+				std::cout << "  Updating..." << std::endl;
+
+				// Update node : 
+				std::map<const std::string, QTreeWidgetItem*>::iterator itInternal = itemRoots.find(it->first);
+				int c = updateNode(it->second, itInternal->second, updateOnly);
+
+				std::cout << "  Count : " << c << std::endl;
+
+				if(c>0)
+				{
+					emit modified();
+					itInternal->second->setExpanded(true);
+				}
 			}
 		}
 		setExpanded(true);
 	}
 
 	// Public Tools : 
-	void UniformsVarsLoaderInterface::load(std::string source)
+	void UniformsLoaderInterface::load(Pipeline& pipeline)
 	{
-		std::cout << "UniformsVarsLoaderInterface::load - TODO" << std::endl;
-	}	
-
-	void UniformsVarsLoaderInterface::load(Pipeline& pipeline)
-	{
-		loader.load(pipeline, true);
-		scanLoader();
+		try
+		{
+			loader.load(pipeline, true);
+			scanLoader();
+		}
+		catch(Exception& e)
+		{
+			// Warning :
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from a pipeline."), QMessageBox::Ok);
+			messageBox.setDetailedText(e.what());
+			messageBox.exec();
+		}
 	}
 
-	bool UniformsVarsLoaderInterface::hasPipeline(const std::string& name) const
+	void UniformsLoaderInterface::load(const QString& filename, bool updateOnly)
+	{
+		try
+		{
+			loader.load(filename.toStdString(), true); // Replace values.
+			scanLoader(updateOnly);
+		}
+		catch(Exception& e)
+		{
+			// Warning :
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from file : \"%1\"").arg(filename), QMessageBox::Ok);
+			messageBox.setDetailedText(e.what());
+			messageBox.exec();
+		}
+	}
+
+	bool UniformsLoaderInterface::hasPipeline(const std::string& name) const
 	{
 		return false;
 	}
 
-	int UniformsVarsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
+	void UniformsLoaderInterface::save(const QString& filename)
+	{
+		loader.writeToFile(filename.toStdString());
+	}
+
+	int UniformsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	{
 		return loader.applyTo(pipeline, forceWrite, silent);
 	}

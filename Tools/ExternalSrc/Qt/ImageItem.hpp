@@ -270,7 +270,6 @@ namespace QGIC
 				NameColumn,
 				SizeColumn,
 				StatusColumn,
-				ConnectionColumn,
 				FilteringColumn,
 				// Add new Column here
 				NumColumns,

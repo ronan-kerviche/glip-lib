@@ -86,8 +86,8 @@ namespace Glip
 				void update(const HdlShader& shader, bool lnk = true);
 				void use(void);
 
-				const std::vector<std::string>& getUniformVarsNames(void) const;
-				const std::vector<GLenum>& getUniformVarsTypes(void) const;
+				const std::vector<std::string>& getUniformsNames(void) const;
+				const std::vector<GLenum>& getUniformsTypes(void) const;
 
 				void setFragmentLocation(const std::string& fragName, int frag);
 				void modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0);

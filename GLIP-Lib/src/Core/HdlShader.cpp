@@ -365,27 +365,27 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
+	\fn    const std::vector<std::string>& HdlProgram::getUniformsNames(void) const
 	\brief Get access to the list of uniform variables names of supported types managed by the program (GL based). 
 
 	Some variable reported by the Driver might not be accessible. You can use HdlProgram::isUniformVariableValid to detect such variables.
 	
 	\return Access to a string based vector.
 	**/
-	const std::vector<std::string>& HdlProgram::getUniformVarsNames(void) const
+	const std::vector<std::string>& HdlProgram::getUniformsNames(void) const
 	{
 		return activeUniforms;
 	}
 
 	/**
-	\fn    const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
-	\brief Get access to the list of uniform variables types corresponding to the names provided by HdlProgram::getUniformVarsNames (GL based).
+	\fn    const std::vector<GLenum>& HdlProgram::getUniformsTypes(void) const
+	\brief Get access to the list of uniform variables types corresponding to the names provided by HdlProgram::getUniformsNames (GL based).
 
 	Some variable reported by the Driver might not be accessible. You can use HdlProgram::isUniformVariableValid to detect such variables.
 
 	\return Access to a GLenum based vector, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
 	**/
-	const std::vector<GLenum>& HdlProgram::getUniformVarsTypes(void) const
+	const std::vector<GLenum>& HdlProgram::getUniformsTypes(void) const
 	{
 		return activeTypes;
 	}

@@ -409,7 +409,7 @@ Loading Example :
 \class LayoutWriter
 \brief Get equivalent pipeline code from a pipeline layout.
 
-The layout writer enables you to write a pipeline to a Pipeline Script file. Note that the uniforms values might be lost at loading. In order to avoid this problem, you have to use a UniformsVarsLoader to store and then load the correct profile (all the uniforms values).
+The layout writer enables you to write a pipeline to a Pipeline Script file. Note that the uniforms values might be lost at loading. In order to avoid this problem, you have to use a UniformsLoader to store and then load the correct profile (all the uniforms values).
 \code
 	LayoutWriter writer;
 	

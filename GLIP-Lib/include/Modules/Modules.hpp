@@ -25,7 +25,7 @@
 #define __GLIP_LIB_MODULES_LIBRARY_INCLUDE__
 
 	#include "Modules/LayoutLoader.hpp"
-	#include "Modules/UniformsVarsLoader.hpp"
+	#include "Modules/UniformsLoader.hpp"
 	#include "Modules/ImageBuffer.hpp"
 	#include "Modules/TextureReader.hpp"
 	#include "Modules/ProceduralInput.hpp"

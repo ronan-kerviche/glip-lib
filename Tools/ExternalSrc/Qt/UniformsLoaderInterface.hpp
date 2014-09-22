@@ -14,8 +14,8 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#ifndef __GLIPLIB_UNIFORM_VARS_LOADER_INTERFACE__
-#define __GLIPLIB_UNIFORM_VARS_LOADER_INTERFACE__
+#ifndef __GLIPLIB_UNIFORM_LOADER_INTERFACE__
+#define __GLIPLIB_UNIFORM_LOADER_INTERFACE__
 	
 	#include "GLIPLib.hpp"
 	#include <QWidget>
@@ -35,7 +35,7 @@
 		Q_OBJECT
 
 		private : 
-			UniformsVarsLoader::Resource&	resource;
+			UniformsLoader::Resource&	resource;
 			QGridLayout			layout;
 			std::vector<QSpinBox*>		integerBoxes;
 			std::vector<QDoubleSpinBox*>	floatBoxes;
@@ -45,35 +45,39 @@
 			void pushModificationToResource(int index);
 
 		public : 
-			ValuesInterface(UniformsVarsLoader::Resource& _resource);
+			ValuesInterface(UniformsLoader::Resource& _resource);
 			~ValuesInterface(void);
 			
+			void pullModificationToResource(void);
+
 		signals : 
 			void modified(void);
 	};
 
-	class UniformsVarsLoaderInterface : public QObject, public QTreeWidgetItem
+	class UniformsLoaderInterface : public QObject, public QTreeWidgetItem
 	{
 		Q_OBJECT
 
 		private : 
 			// Data : 
-			UniformsVarsLoader 				loader;
+			UniformsLoader 					loader;
 			std::map<const std::string, QTreeWidgetItem*>	itemRoots;
 
 			// Tools : 
-			QTreeWidgetItem* addResource(UniformsVarsLoader::Resource& resource, QTreeWidgetItem* root);
-			QTreeWidgetItem* addNode(UniformsVarsLoader::Node& node, QTreeWidgetItem* root);
-			QTreeWidgetItem* addNodeAsRoot(UniformsVarsLoader::Node& node);
+			QTreeWidgetItem* addResource(UniformsLoader::Resource& resource, QTreeWidgetItem* root);
+			QTreeWidgetItem* addNode(UniformsLoader::Node& node, QTreeWidgetItem* root);
+			QTreeWidgetItem* addNodeAsRoot(UniformsLoader::Node& node);
+			int updateNode(UniformsLoader::Node& node, QTreeWidgetItem* nodeItem, bool updateOnly);
 			bool isNodeListed(const std::string& name) const;
-			void scanLoader(void);
+			void scanLoader(bool updateOnly=false);
 
 		public : 
-			UniformsVarsLoaderInterface(int type);
-			virtual ~UniformsVarsLoaderInterface(void);
+			UniformsLoaderInterface(int type);
+			virtual ~UniformsLoaderInterface(void);
 
-			void load(std::string source);
 			void load(Pipeline& pipeline);
+			void load(const QString& filename, bool updateOnly=true);
+			void save(const QString& filename);
 			bool hasPipeline(const std::string& name) const;
 			int applyTo(Pipeline& pipeline, bool forceWrite=true, bool silent=false) const;
 

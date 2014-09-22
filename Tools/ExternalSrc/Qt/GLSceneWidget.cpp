@@ -2305,6 +2305,7 @@ using namespace QVGL;
 
 		// Enable transparency on the background :
 		glEnable(GL_BLEND);
+		// TODO : reset blend function.
 
 		ViewsTable* viewsTable = qvglParent->getCurrentViewsTable();
 

@@ -1336,11 +1336,8 @@ using namespace QGIC;
 				case StatusColumn:
 					listLabels << " Status "; // The extra spaces ensure the extra-long content is not trunctated in the column.
 					break;
-				case ConnectionColumn:
-					listLabels << "Connection";
-					break;
 				case FilteringColumn:
-					listLabels << "Filter";
+					listLabels << "Filtering";
 					break;
 				default : 
 					throw Exception("ImageItemsCollection::ImageItemsCollection - Missing column declaration [Internal Error].", __FILE__, __LINE__);
@@ -1598,12 +1595,12 @@ using namespace QGIC;
 
 	void ImageItemsCollection::save(void)
 	{
-		std::cerr << "ImageItemsCollection::save not imlemented." << std::endl;
+		std::cerr << "ImageItemsCollection::save not implemented." << std::endl;
 	}
 
 	void ImageItemsCollection::saveAs(void)
 	{
-		std::cerr << "ImageItemsCollection::saveAs not imlemented." << std::endl;
+		std::cerr << "ImageItemsCollection::saveAs not implemented." << std::endl;
 	} 
 
 	void ImageItemsCollection::removeImageItem(void)

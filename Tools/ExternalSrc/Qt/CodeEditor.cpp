@@ -78,7 +78,7 @@ using namespace QGED;
 
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + UniformsVarsLoader::getKeyword(static_cast<UniformVarsLoaderKeyword>(i)) + "\\b";
+				std::string str = std::string("\\b") + UniformsLoader::getKeyword(static_cast<UniformsLoaderKeyword>(i)) + "\\b";
 				glipulkeywordPatterns << str.c_str();
 			}
 

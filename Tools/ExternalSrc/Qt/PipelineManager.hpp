@@ -23,7 +23,7 @@
 // Includes :
 	#include "GLIPLib.hpp"
 	#include "ImageItem.hpp"
-	#include "UniformsVarsLoaderInterface.hpp"
+	#include "UniformsLoaderInterface.hpp"
 	#include <QHeaderView>
 
 	#ifdef __USE_QVGL__
@@ -75,9 +75,10 @@ namespace QGPM
 			virtual const __ReadOnly_HdlTextureFormat& getFormat(void) const = 0;
 			virtual HdlTexture& getTexture(void) = 0;
 			virtual void lock(bool enabled);
+			virtual const void* getIdentification(void) const = 0;
 
 		signals :
-			void modified(void);
+			void modified(QVector<const void*> resourceChain);
 			void formatModified(void);
 			void statusChanged(bool valid);
 			void connectionClosed(void);			
@@ -104,6 +105,7 @@ namespace QGPM
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
 			void lock(bool enabled);
+			const void* getIdentification(void) const;
 	};
 
 	class ConnectionToPipelineOutput : public Connection
@@ -115,6 +117,7 @@ namespace QGPM
 			int		outputIdx;
 
 		private slots : 
+			void pipelineComputationFinished(int count, QVector<const void*> resourceChain);
 			void pipelineItemStatusChanged(void);
 			void pipelineItemDestroyed(void);
 
@@ -128,6 +131,7 @@ namespace QGPM
 			bool selfTest(PipelineItem* _pipelineItem) const;
 			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
+			const void* getIdentification(void) const;
 
 		public slots :
 			void safetyFuse(void);
@@ -146,7 +150,7 @@ namespace QGPM
 			void setText(int column, const QString& text);
 
 		private slots : 
-			void connectionModified(void);
+			void connectionModified(QVector<const void*> resourceChain);
 			void connectionFormatModified(void);
 			void connectionStatusChanged(bool validity);
 			void connectionDestroyed(void);
@@ -170,7 +174,7 @@ namespace QGPM
 
 		signals : 
 			void connectionAdded(int portIdx);
-			void connectionContentModified(int portIdx);
+			void connectionContentModified(int portIdx, QVector<const void*> resourceChain);
 			void connectionContentFormatModified(int portIdx);
 			void connectionStatusChanged(int portIdx, bool validity);			
 			void connectionClosed(int portIdx);
@@ -216,7 +220,7 @@ namespace QGPM
 
 		public slots : 
 			void pipelineDestroyed(void);
-			void computationFinished(int computeCount);
+			void computationFinished(int computeCount, QVector<const void*> resourceChain);
 			void doubleClicked(int column);
 
 		signals : 
@@ -240,12 +244,13 @@ namespace QGPM
 			Pipeline*				pipeline;
 			QTreeWidgetItem				inputsNode,
 								outputsNode;
-			UniformsVarsLoaderInterface*		uniformsNode;
+			UniformsLoaderInterface*		uniformsNode;
 			QVector<InputPortItem*>			inputPortItems;
 			QVector<OutputPortItem*>		outputPortItems;
 			int					cellA,
 								cellB,
 								computationCount;
+			QString					uniformsFilename;
 
 			void setText(int column, const QString & text);
 			std::string getInputFormatName(int idx);
@@ -254,13 +259,14 @@ namespace QGPM
 			void refurnishPortItems(void);
 			bool checkConnections(void);
 			void compile(void);
-			void compute(void);
+			void compute(QVector<const void*> resourceChain = QVector<const void*>());
 			void checkUniforms(void);
+			void checkCells(void);
 			void deletePipeline(void);
 
 		private slots : 
 			void connectionAdded(int portIdx);
-			void connectionContentModified(int portIdx);
+			void connectionContentModified(int portIdx, QVector<const void*> resourceChain);
 			void connectionContentFormatModified(int portIdx);
 			void connectionStatusChanged(int portIdx, bool validity);			
 			void connectionClosed(int portIdx);
@@ -282,19 +288,22 @@ namespace QGPM
 			HdlTexture& out(int idx);
 			int getComputationCount(void) const;
 
-			void remove(void);
+			const QString& getUniformsFilename(void) const;
+			void loadUniforms(QString filename="");
+			void saveUniforms(QString filename="");
+
+			static PipelineItem* getPtrFromGenericItem(QTreeWidgetItem* item);
 
 		signals : 	
 			void statusChanged(void);
 			void pipelineDestroyed(void);
-			void removed(void);
 			void showIdentifierWidget(void* identifier);
 			void compilationSuccessNotification(void* identifier);
 			void compilationFailureNotification(void* identifier, Exception compilationError);
 			void pipelineInputPortAdded(InputPortItem* inputPortItem);
 			void pipelineOutputPortAdded(OutputPortItem* outputPortItem);
 			void addViewRequest(QVGL::View* view);
-			void computationFinished(int computeCount);
+			void computationFinished(int computeCount, QVector<const void*> resourceChain);
 			void updateColumnSize(void);
 	};
 
@@ -335,6 +344,8 @@ namespace QGPM
 		public : 
 			ConnectionsMenu(QWidget* parent=NULL);
 			~ConnectionsMenu(void);
+
+			void addToMenu(QMenu& menu);
 		
 		public slots :
 			void addImageItem(QGIC::ImageItem* imageItem);
@@ -368,11 +379,43 @@ namespace QGPM
 			OutputsMenu(QWidget* parent=NULL);
 			~OutputsMenu(void);
 
+			void addToMenu(QMenu& menu);
+
 		public slots : 
 			void updateToSelection(QList<QTreeWidgetItem*>& selection);
 
 		signals : 
 			void addImageItemRequest(QGIC::ImageItem* imageItem);
+	};
+
+	class PipelineMenu : public QMenu
+	{
+		Q_OBJECT
+
+		private :
+			QAction		*removePipelineAction,
+					*loadUniformsAction,
+					*saveUniformsAction,
+					*saveUniformsAsAction;
+			PipelineItem	*currentPipelineItem;
+
+		private slots : 
+			void removePipeline(void);
+			void loadUniforms(void);
+			void saveUniforms(void);
+			void saveUniformsAs(void);
+
+		public : 
+			PipelineMenu(QWidget* parent=NULL);
+			~PipelineMenu(void);
+
+			void addToMenu(QMenu& menu);
+
+		public slots :
+			void updateToSelection(QList<QTreeWidgetItem*>& selection);
+
+		signals :
+			void removePipeline(PipelineItem* pipelineItem);
 	};
 
 	class PipelineManager : public QWidget
@@ -384,17 +427,22 @@ namespace QGPM
 			QList<QGIC::ImageItem*>			imageItems;
 			QVBoxLayout				layout;
 			QMenuBar				menuBar;
+			PipelineMenu				pipelineMenu;
 			ConnectionsMenu				connectionsMenu;
 			OutputsMenu				outputsMenu;
 			QTreeWidget				treeWidget;
 
-		private slots : 
+		private slots :
 			void itemSelectionChanged(void);
 			void itemDoubleClicked(QTreeWidgetItem* item, int column);
+			void execCustomContextMenu(const QPoint& pos); 
+			void removePipeline(PipelineItem* pipelineItem);
 
 		public : 
 			PipelineManager(void);
 			~PipelineManager(void);
+
+			static QTreeWidgetItem* getRoot(QTreeWidgetItem* item);
 
 		public slots : 
 			void addImageItem(QGIC::ImageItem* imageItem); 

@@ -7,7 +7,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : UniformsVarsLoader.hpp                                                                    */
+/*     File          : UniformsLoader.hpp                                                                        */
 /*     Original Date : June 8th 2013                                                                             */
 /*                                                                                                               */
 /*     Description   : Uniforms variables save/load.                                                             */
@@ -15,7 +15,7 @@
 /* ************************************************************************************************************* */
 
 /**
- * \file    UniformsVarsLoader.hpp
+ * \file    UniformsLoader.hpp
  * \brief   Uniforms variables save/load.
  * \author  R. KERVICHE
  * \date    June 8th 2013
@@ -40,8 +40,8 @@ namespace Glip
 
 	namespace Modules
 	{
-		/// Keywords used by UniformVarsLoader. Use UniformsVarsLoader::getKeyword() to get the actual string.
-		enum UniformVarsLoaderKeyword
+		/// Keywords used by UniformsLoader. Use UniformsLoader::getKeyword() to get the actual string.
+		enum UniformsLoaderKeyword
 		{
 			KW_UL_PIPELINE,
 			KW_UL_FILTER,
@@ -73,7 +73,7 @@ namespace Glip
 		};
 
 /**
-\class UniformsVarsLoader
+\class UniformsLoader
 \brief Loads and writes a set of uniforms variables values from a file or a string.
 
 Load, store and manage set of uniforms values for one, or multiple pipelines. The code is set to be human readable : <BR>
@@ -106,7 +106,7 @@ PIPELINE:myPipeline
 
 Processing example : 
 \code
-	UniformsVarsLoader uLoader;
+	UniformsLoader uLoader;
 
 	// Load values from a current Pipeline, replace existing values :
 	uLoader.load(mainPipeline, true);
@@ -132,7 +132,7 @@ Processing example :
 	std::cout << c << " variables were loaded." << std::endl;
 \endcode
 **/
-		class GLIP_API UniformsVarsLoader
+		class GLIP_API UniformsLoader
 		{
 			private :
 				static const char* keywords[UL_NumKeywords];
@@ -142,13 +142,13 @@ Processing example :
 				class Node;
 				class Resource;
 
-				/// Const iterator over the nodes (refers to a std::pair, use second to access the const UniformsVarsLoader::Node& object).
+				/// Const iterator over the nodes (refers to a std::pair, use second to access the const UniformsLoader::Node& object).
 				typedef std::map<const std::string, Node>::const_iterator 	NodeConstIterator;
-				/// Iterator over the nodes (refers to a std::pair, use second to access the UniformsVarsLoader::Node& object).
+				/// Iterator over the nodes (refers to a std::pair, use second to access the UniformsLoader::Node& object).
 				typedef std::map<const std::string, Node>::iterator 		NodeIterator;
-				/// Const iterator over the resources (refers to a std::pair, use second to access the const UniformsVarsLoader::Resource& object).
+				/// Const iterator over the resources (refers to a std::pair, use second to access the const UniformsLoader::Resource& object).
 				typedef std::map<const std::string, Resource>::const_iterator 	ResourceConstIterator;
-				/// Iterator over the resources (refers to a std::pair, use second to access the UniformsVarsLoader::Resource& object).
+				/// Iterator over the resources (refers to a std::pair, use second to access the UniformsLoader::Resource& object).
 				typedef std::map<const std::string, Resource>::iterator 	ResourceIterator;
 
 /**
@@ -243,13 +243,13 @@ Processing example :
 				std::map<const std::string, Node> nodes;
 
 			public :
-				UniformsVarsLoader(void);
-				UniformsVarsLoader(const UniformsVarsLoader& cpy);
-				~UniformsVarsLoader(void);
+				UniformsLoader(void);
+				UniformsLoader(const UniformsLoader& cpy);
+				~UniformsLoader(void);
 
 				void load(std::string source, bool replace=false, int lineOffset=1);
 				void load(Pipeline& pipeline, bool replace=false);
-				void load(const UniformsVarsLoader& subLoader, bool replace=false);
+				void load(const UniformsLoader& subLoader, bool replace=false);
 				bool empty(void) const;
 				void clear(void);
 				void clear(const std::string& name);
@@ -266,7 +266,7 @@ Processing example :
 				std::string getCode(const std::string& name) const;
 				void writeToFile(const std::string& filename) const;
 
-				static const char* getKeyword(UniformVarsLoaderKeyword k);
+				static const char* getKeyword(UniformsLoaderKeyword k);
 		};
 	}
 }
