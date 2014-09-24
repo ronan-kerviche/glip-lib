@@ -16,6 +16,7 @@
 
 #include "CodeEditor.hpp"
 #include "GLSLKeywords.hpp"
+#include "QMenuTools.hpp"
 
 using namespace QGED;
 
@@ -382,16 +383,19 @@ using namespace QGED;
 		}
 		else // Otherwise, propagate : 
 			QPlainTextEdit::keyPressEvent(e);
-	}
+	}	
 
 	void CodeEditor::contextMenuEvent(QContextMenuEvent* event)
 	{
-		QMenu *menu = createStandardContextMenu();
+		QMenu* menu = createStandardContextMenu();
 		
 		menu->addSeparator();
 
+		//for(int k=0; k<subMenus.count(); k++)
+		//	menu->addMenu(subMenus[k]);
+	
 		for(int k=0; k<subMenus.count(); k++)
-			menu->addMenu(subMenus[k]);
+			duplicateMenu(menu, *subMenus[k]);
 
 		menu->exec(event->globalPos());
 		delete menu;
@@ -1110,7 +1114,7 @@ using namespace QGED;
 		editorFont.setFixedPitch(true);
 
 		keywordFont = db.font("Source Code Pro", "Bold", defaultFontSize);
-		editorFont.setFixedPitch(true);
+		keywordFont.setFixedPitch(true);
 
 		// Set the tabulation length :
 		tabNumberOfSpaces = 8;

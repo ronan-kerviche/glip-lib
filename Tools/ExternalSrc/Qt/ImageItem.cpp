@@ -18,6 +18,7 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include "NetPBM.hpp"
+#include "QMenuTools.hpp"
 
 // To remove : 
 #include <QElapsedTimer>
@@ -1644,8 +1645,10 @@ using namespace QGIC;
 	{
 		QMenu menu(&collectionWidget);
 		
-		menu.addMenu(&filterMenu);
-		menu.addMenu(&wrappingMenu);
+		//menu.addMenu(&filterMenu);
+		//menu.addMenu(&wrappingMenu);
+		duplicateMenu(&menu, filterMenu);
+		duplicateMenu(&menu, wrappingMenu);
 		menu.addAction(copyAction);
 		menu.addAction(saveAction);
 		menu.addAction(saveAsAction);

@@ -713,7 +713,7 @@ using namespace QVGL;
 			delete vignettesList[view];
 			vignettesList.remove(view);
 
-			if(resizeNow);
+			if(resizeNow)
 				resize();
 
 			if(vignettesList.empty())
@@ -1654,10 +1654,11 @@ using namespace QVGL;
 // MouseState :
 	MouseState::MouseState(void)
 	 :	functionMode(ModeCollection),
-		wheelDelta(0.0f)
+		wheelDelta(0.0f),
+		minActionDelta_ms(15)
 	{
 		// Create the maps : 
-		#define ADD_VECTOR( ID ) vectors.insert( ID , QPair<DataStatus, QPointF>(NotModified, QPointF(0.0, 0.0)));
+		#define ADD_VECTOR( ID ) vectors.insert( ID , QPair<int, QPointF>(1, QPointF(0.0, 0.0)));
 			ADD_VECTOR( VectorLastLeftClick )
 			ADD_VECTOR( VectorLastLeftClickGl )
 			ADD_VECTOR( VectorLastLeftClickQuad )
@@ -1719,7 +1720,7 @@ using namespace QVGL;
 			ADD_VECTOR( VectorLastWheelDownImage )
 		#undef ADD_VECTOR
 
-		#define ADD_COLOR( ID ) colors.insert( ID , QPair<DataStatus, QColor>(NotModified, QColor(Qt::black)));
+		#define ADD_COLOR( ID ) colors.insert( ID , QPair<int, QColor>(1, QColor(Qt::black)));
 			ADD_COLOR( ColorUnderLastLeftClick )
 			ADD_COLOR( ColorUnderLastLeftPosition )
 			ADD_COLOR( ColorUnderLastLeftRelease )
@@ -1732,12 +1733,15 @@ using namespace QVGL;
 		colorIDs 	= colors.keys();
 
 		setFunctionMode(ModeCollection);
+
+		// Start the function timer :
+		elapsedTimer.start();
 	}
 
 	MouseState::~MouseState(void)
 	{ }
 	
-	const QPointF& MouseState::invisibleGetVector(const VectorID& id) const
+	/*const QPointF& MouseState::invisibleGetVector(const VectorID& id) const
 	{
 		QMap<VectorID, QPair<DataStatus, QPointF> >::const_iterator it = vectors.find(id);
 
@@ -1745,9 +1749,9 @@ using namespace QVGL;
 			return it->second;
 		else
 			throw Exception("MouseState::getVector - Unknown VectorID (invisible access).", __FILE__, __LINE__);
-	}
+	}*/
 
-	const QColor& MouseState::invisibleGetColor(const ColorID& id) const
+	/*const QColor& MouseState::invisibleGetColor(const ColorID& id) const
 	{
 		QMap<ColorID,  QPair<DataStatus, QColor> >::const_iterator it = colors.find(id);
 
@@ -1755,23 +1759,33 @@ using namespace QVGL;
 			return it->second;
 		else
 			throw Exception("MouseState::getColor - Unknown ColorID (invisible access).", __FILE__, __LINE__);
+	}*/
+
+	void MouseState::incrementEventCounters(void)
+	{
+		// Increment only if the value is not waiting for an update (0) :
+		for(QMap<VectorID, QPair<int, QPointF> >::iterator it=vectors.begin(); it!=vectors.end(); it++)
+			it.value().first += (it.value().first>=1) ? 1 : 0;
+
+		for(QMap<ColorID,  QPair<int, QColor> >::iterator it=colors.begin(); it!=colors.end(); it++)
+			it.value().first += (it.value().first>=1) ? 1 : 0;
 	}
 
 	bool MouseState::doesVectorRequireUpdate(const VectorID& id) const
 	{
-		return vectors[id].first == RequireUpdate;
+		return vectors[id].first==0;
 	}
 
 	bool MouseState::doesColorRequirepdate(const ColorID& id) const
 	{
-		return colors[id].first == RequireUpdate;
+		return colors[id].first==0;
 	}
 
 	void MouseState::setVector(const VectorID& id, const QPointF& v, const bool requireUpdate)
 	{
 		if(vectors.contains(id))
 		{
-			vectors[id].first 	= (requireUpdate ? RequireUpdate : Modified);
+			vectors[id].first 	= requireUpdate ? 0 : 1; //(requireUpdate ? RequireUpdate : Modified);
 			vectors[id].second 	= v;
 		}
 		else
@@ -1782,7 +1796,7 @@ using namespace QVGL;
 	{
 		if(colors.contains(id))
 		{
-			colors[id].first 	= Modified;
+			colors[id].first 	= 1; // Modified
 			colors[id].second	= c;
 		}
 		else
@@ -1791,6 +1805,9 @@ using namespace QVGL;
 
 	void MouseState::processEvent(QGraphicsSceneWheelEvent* event)
 	{
+		if(elapsedTimer.elapsed()<=minActionDelta_ms)
+			return ;
+
 		if(event->delta()!=0 && event->orientation()==Qt::Vertical)
 		{
 			wheelDelta += static_cast<float>(event->delta())/(8.0f*15.0f);
@@ -1804,12 +1821,17 @@ using namespace QVGL;
 				setVector(VectorLastWheelDown, event->scenePos(), true);
 
 			event->accept();
+			incrementEventCounters();
 			emit requestExternalUpdate();
+			elapsedTimer.restart();
 		}
 	}
 
 	void MouseState::processEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released)
 	{
+		if(elapsedTimer.elapsed()<=minActionDelta_ms)
+			return ;
+
 		// event->button()  : The button which triggered the event (empty during drag).
 		// event->buttons() : The buttons currently pressed (might not contain the previous in the case of a click).
 
@@ -1834,7 +1856,8 @@ using namespace QVGL;
 			if(released)
 			{
 				setVector(VectorLastLeftRelease, event->scenePos(), true);
-				setVector(VectorLastLeftCompletedVector, event->scenePos() - invisibleGetVector(VectorLastLeftClick), true);
+				setVector(VectorLastLeftCompletedVector, event->scenePos() - getVector(VectorLastLeftClick), true);
+				//setVector(VectorLastLeftCompletedVector, event->scenePos() - invisibleGetVector(VectorLastLeftClick), true);
 				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
 
 				if(getFunctionMode()==ModeMotion)
@@ -1862,7 +1885,8 @@ using namespace QVGL;
 			if(released)
 			{
 				setVector(VectorLastRightRelease, event->scenePos(), true);
-				setVector(VectorLastRightCompletedVector, event->scenePos() - invisibleGetVector(VectorLastRightClick), true);
+				setVector(VectorLastRightCompletedVector, event->scenePos() - getVector(VectorLastRightClick), true);
+				//setVector(VectorLastRightCompletedVector, event->scenePos() - invisibleGetVector(VectorLastRightClick), true);
 			}
 
 			if(clicked || moved || released)
@@ -1873,7 +1897,11 @@ using namespace QVGL;
 
 		// Require the widget to update all the coordinates and colors.
 		if(event->isAccepted())
+		{
+			incrementEventCounters();
 			emit requestExternalUpdate();
+			elapsedTimer.restart();
+		}
 	}
 
 	void MouseState::updateProcessCompleted(void)
@@ -1883,15 +1911,15 @@ using namespace QVGL;
 
 	void MouseState::clear(void)
 	{
-		for(QMap<VectorID, QPair<DataStatus, QPointF> >::Iterator it=vectors.begin(); it!=vectors.end(); it++)
+		for(QMap<VectorID, QPair<int, QPointF> >::Iterator it=vectors.begin(); it!=vectors.end(); it++)
 		{
-			it.value().first 	= NotModified;
+			it.value().first 	= 1;
 			it.value().second 	= QPointF(0.0, 0.0);
 		}
 
-		for(QMap<ColorID, QPair<DataStatus, QColor> >::Iterator it=colors.begin(); it!=colors.end(); it++)
+		for(QMap<ColorID, QPair<int, QColor> >::Iterator it=colors.begin(); it!=colors.end(); it++)
 		{
-			it.value().first 	= NotModified;
+			it.value().first 	= 1;
 			it.value().second 	= Qt::black;
 		}
 	}
@@ -1908,30 +1936,30 @@ using namespace QVGL;
 
 	bool MouseState::isVectorModified(const VectorID& id) const
 	{
-		return (vectors[id].first==Modified);
+		return (vectors[id].first==1);
 	}
 
 	bool MouseState::isColorModified(const ColorID& id) const 
 	{
-		return (colors[id].first==Modified);
+		return (colors[id].first==1);
 	}
 
-	const QPointF& MouseState::getVector(const VectorID& id)
+	const QPointF& MouseState::getVector(const VectorID& id) const
 	{
 		if(vectors.contains(id))
 		{
-			vectors[id].first = ((vectors[id].first==Modified) ? NotModified : vectors[id].first);
+			//vectors[id].first = ((vectors[id].first==Modified) ? NotModified : vectors[id].first);
 			return vectors[id].second;
 		}
 		else
 			throw Exception("MouseState::getVector - Unknown VectorID.", __FILE__, __LINE__);
 	}
 
-	const QColor& MouseState::getColor(const ColorID& id)
+	const QColor& MouseState::getColor(const ColorID& id) const
 	{
 		if(colors.contains(id))
 		{
-			colors[id].first = ((colors[id].first==Modified) ? NotModified : colors[id].first);
+			//colors[id].first = ((colors[id].first==Modified) ? NotModified : colors[id].first);
 			return colors[id].second;
 		}
 		else
@@ -2058,6 +2086,91 @@ using namespace QVGL;
 			default : 
 				return InvalidColorID;
 		}
+	}
+
+	MouseState::VectorID MouseState::getVectorIDFromName(const std::string& name)
+	{
+		#define NAME_MAP( id ) if(STR(id)==name) return id;
+
+			NAME_MAP( VectorLastLeftClick )
+			NAME_MAP( VectorLastLeftClickGl )
+			NAME_MAP( VectorLastLeftClickQuad )
+			NAME_MAP( VectorLastLeftClickImage )
+
+			NAME_MAP( VectorLastLeftPosition )
+			NAME_MAP( VectorLastLeftPositionGl )
+			NAME_MAP( VectorLastLeftPositionQuad )
+			NAME_MAP( VectorLastLeftPositionImage )
+
+			NAME_MAP( VectorLastLeftShift )
+			NAME_MAP( VectorLastLeftShiftGl )
+			NAME_MAP( VectorLastLeftShiftQuad )
+			NAME_MAP( VectorLastLeftShiftImage )
+
+			NAME_MAP( VectorLastLeftRelease )
+			NAME_MAP( VectorLastLeftReleaseGl )
+			NAME_MAP( VectorLastLeftReleaseQuad )
+			NAME_MAP( VectorLastLeftReleaseImage )
+
+			NAME_MAP( VectorLastLeftCompletedVector )
+			NAME_MAP( VectorLastLeftCompletedVectorGl )
+			NAME_MAP( VectorLastLeftCompletedVectorQuad )
+			NAME_MAP( VectorLastLeftCompletedVectorImage )
+
+			NAME_MAP( VectorLastRightClick )
+			NAME_MAP( VectorLastRightClickGl )
+			NAME_MAP( VectorLastRightClickQuad )
+			NAME_MAP( VectorLastRightClickImage )
+
+			NAME_MAP( VectorLastRightPosition )
+			NAME_MAP( VectorLastRightPositionGl )
+			NAME_MAP( VectorLastRightPositionQuad )
+			NAME_MAP( VectorLastRightPositionImage )
+
+			NAME_MAP( VectorLastRightShift )
+			NAME_MAP( VectorLastRightShiftGl )
+			NAME_MAP( VectorLastRightShiftQuad )
+			NAME_MAP( VectorLastRightShiftImage )
+
+			NAME_MAP( VectorLastRightRelease )
+			NAME_MAP( VectorLastRightReleaseGl )
+			NAME_MAP( VectorLastRightReleaseQuad )
+			NAME_MAP( VectorLastRightReleaseImage )
+
+			NAME_MAP( VectorLastRightCompletedVector )
+			NAME_MAP( VectorLastRightCompletedVectorGl )
+			NAME_MAP( VectorLastRightCompletedVectorQuad )
+			NAME_MAP( VectorLastRightCompletedVectorImage )
+
+			NAME_MAP( VectorLastWheelUp )
+			NAME_MAP( VectorLastWheelUpGl )
+			NAME_MAP( VectorLastWheelUpQuad )
+			NAME_MAP( VectorLastWheelUpImage )
+
+			NAME_MAP( VectorLastWheelDown )
+			NAME_MAP( VectorLastWheelDownGl )
+			NAME_MAP( VectorLastWheelDownQuad )
+			NAME_MAP( VectorLastWheelDownImage )
+
+			return InvalidVectorID;
+
+		#undef NAME_MAP
+	}
+
+	MouseState::ColorID MouseState::getColorIDFromName(const std::string& name)
+	{
+		#define NAME_MAP( id ) if(STR(id)==name) return id;
+
+			NAME_MAP( ColorUnderLastLeftClick )
+			NAME_MAP( ColorUnderLastLeftPosition )
+			NAME_MAP( ColorUnderLastLeftRelease )
+			NAME_MAP( ColorUnderLastRightClick )
+			NAME_MAP( ColorUnderLastRightPosition )
+			NAME_MAP( ColorUnderLastRightRelease )
+
+			return InvalidColorID;
+
+		#undef NAME_MAP
 	}
 
 	MouseState::VectorID MouseState::getPixelVectorID(const VectorID& vID)
@@ -2837,7 +2950,7 @@ using namespace QVGL;
 					xImg	= 0.0f,
 					yImg	= 0.0f;
 
-				QPointF vPixel = mouseState.invisibleGetVector(*it);
+				QPointF vPixel = mouseState.getVector(*it); //mouseState.invisibleGetVector(*it);
 
 				View* currentView = getCurrentView();
 				ViewsTable* currentViewsTable = getCurrentViewsTable();

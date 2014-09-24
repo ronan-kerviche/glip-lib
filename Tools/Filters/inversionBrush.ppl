@@ -1,5 +1,7 @@
 REQUIRED_FORMAT:outputFormat(inputFormat0)
 
+INCLUDE_FILE(maths.ppl)
+
 SHADER_SOURCE:inversionBrushShader
 {
 	#version 130
@@ -7,16 +9,19 @@ SHADER_SOURCE:inversionBrushShader
 	uniform sampler2D inputTexture, inputMask;
 	out vec4 outputTexture, outputMask;
 	
-	uniform vec2 	mouse_pos = vec2(0.5, 0.5);
+	uniform ivec2 	mouse_pos = ivec2(0, 0);
 	uniform float	radius = 0.01;
 	
+	INCLUDE_SHARED_SOURCE:maths
+
 	void main()
-	{ 
+	{
 		vec2 	pos 	= gl_TexCoord[0].st;
 		vec4 	color 	= textureLod(inputTexture, pos, 0),
 			mask	= textureLod(inputMask, pos, 0);
+		vec2	mTex	= textureCoordinates(mouse_pos, inputTexture);
 
-		if(distance(pos, mouse_pos)<=radius)
+		if(distance(pos, mTex)<=radius)
 			mask.r = 1.0;
 	
 		if(mask.r==1.0)

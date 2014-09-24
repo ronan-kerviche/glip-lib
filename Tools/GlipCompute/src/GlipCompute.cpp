@@ -728,7 +728,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 			Glip::Modules::LayoutLoaderModule::addBasicModules(lloader);
 
 			// Create the uniforms loader : 
-			Glip::Modules::UniformsVarsLoader uloader;
+			Glip::Modules::UniformsLoader uloader;
 
 			// Analyze the pipeline : 
 			Glip::Modules::LayoutLoader::PipelineScriptElements elements = lloader.listElements(pipelineFilename);

@@ -19,7 +19,8 @@ INCLUDEPATH +=	../ExternalSrc/Qt \
 		../ExternalSrc/NetPBM
 
 HEADERS += 	../ExternalSrc/Qt/GLSceneWidget.hpp \	
-		../ExternalSrc/NetPBM/NetPBM.hpp \ 	
+		../ExternalSrc/NetPBM/NetPBM.hpp \ 
+		../ExternalSrc/Qt/QMenuTools.hpp \	
 		../ExternalSrc/Qt/ImageItem.hpp \ 
 		../ExternalSrc/Qt/PipelineManager.hpp \
 		../ExternalSrc/Qt/UniformsLoaderInterface.hpp \
@@ -27,7 +28,8 @@ HEADERS += 	../ExternalSrc/Qt/GLSceneWidget.hpp \
 		../ExternalSrc/Qt/CodeEditor.hpp \
 		./src/GlipStudio.hpp
 SOURCES += 	../ExternalSrc/Qt/GLSceneWidget.cpp \	
-		../ExternalSrc/NetPBM/NetPBM.cpp \	
+		../ExternalSrc/NetPBM/NetPBM.cpp \
+		../ExternalSrc/Qt/QMenuTools.cpp \	
 		../ExternalSrc/Qt/ImageItem.cpp \
 		../ExternalSrc/Qt/PipelineManager.cpp \
 		../ExternalSrc/Qt/UniformsLoaderInterface.cpp \

@@ -17,6 +17,7 @@
 #include "PipelineManager.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
+#include "QMenuTools.hpp"
 
 using namespace QGPM;
 
@@ -527,7 +528,11 @@ using namespace QGPM;
 	}
 
 // PipelineItem :
+	#ifdef __USE_QVGL__ 
+	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer, const QVGL::MouseState* _mouseState)
+	#else
 	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer)
+	#endif
 	 : 	QTreeWidgetItem(PipelineHeaderItemType),
 		referrer(_referrer),
 		inputFormatString("inputFormat%d"),
@@ -539,6 +544,9 @@ using namespace QGPM;
 		inputsNode(InputsHeaderItemType),
 		outputsNode(OutputsHeaderItemType),
 		uniformsNode(NULL)
+		#ifdef __USE_QVGL__
+			, mouseState(_mouseState)
+		#endif
 	{
 		setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
 
@@ -763,8 +771,12 @@ using namespace QGPM;
 			uniformsNode = NULL;
 		}
 		
-		// Create the uniforms profile : 
-		uniformsNode = new UniformsLoaderInterface(UniformsHeaderItemType);
+		// Create the uniforms profile :
+		#ifdef __USE_QVGL__
+			uniformsNode = new UniformsLoaderInterface(UniformsHeaderItemType, mouseState);
+		#else 
+			uniformsNode = new UniformsLoaderInterface(UniformsHeaderItemType);
+		#endif
 
 		addChild(uniformsNode);
 		uniformsNode->load(*pipeline);
@@ -1303,8 +1315,10 @@ using namespace QGPM;
 	{
 		if(isEnabled())
 		{
-			menu.addMenu(&imageItemsMenu);
-			menu.addMenu(&pipelineItemsMenu);
+			//menu.addMenu(&imageItemsMenu);
+			//menu.addMenu(&pipelineItemsMenu);
+			duplicateMenu(&menu, imageItemsMenu);
+			duplicateMenu(&menu, pipelineItemsMenu);
 			menu.addSeparator();
 		}
 	}
@@ -1568,12 +1582,20 @@ using namespace QGPM;
 	}
 
 // PipelineManager :
+	#ifdef __USE_QVGL__
+	PipelineManager::PipelineManager(const QVGL::MouseState* _mouseState)
+	#else
 	PipelineManager::PipelineManager(void)
+	#endif
 	 : 	layout(this),
 		menuBar(this),
 		pipelineMenu(this),
 		connectionsMenu(this),
+		uniformsLinkMenu(UniformsHeaderItemType, this),
 		outputsMenu(this)
+		#ifdef __USE_QVGL__
+		, mouseState(_mouseState)
+		#endif
 	{
 		layout.addWidget(&menuBar);
 		layout.addWidget(&treeWidget);
@@ -1582,6 +1604,7 @@ using namespace QGPM;
 
 		menuBar.addMenu(&pipelineMenu);
 		menuBar.addMenu(&connectionsMenu);
+		menuBar.addMenu(&uniformsLinkMenu);
 		menuBar.addMenu(&outputsMenu);
 
 		treeWidget.header()->close(); 
@@ -1612,6 +1635,7 @@ using namespace QGPM;
 		// Update menu : 
 		pipelineMenu.updateToSelection(selection);
 		connectionsMenu.updateToSelection(selection);
+		uniformsLinkMenu.updateToSelection(selection);
 		outputsMenu.updateToSelection(selection);
 	}
 
@@ -1691,8 +1715,13 @@ using namespace QGPM;
 			it.value()->updateSource(source, path);
 		else
 		{
-			// Create a new pipeline : 
+			// Create a new pipeline :
+			#ifdef __USE_QVGL__ 
+			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer, mouseState);
+			#else
 			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer);
+			#endif
+
 			pipelineItems[identifier] = pipelineItem;
 			treeWidget.addTopLevelItem(pipelineItem);
 
@@ -1724,7 +1753,8 @@ using namespace QGPM;
 
 // PipelineManagerSubWidget :
 #ifdef __USE_QVGL__
-	PipelineManagerSubWidget::PipelineManagerSubWidget(void)
+	PipelineManagerSubWidget::PipelineManagerSubWidget(const QVGL::MouseState* _mouseState)
+	 :	manager(_mouseState)
 	{
 		setInnerWidget(&manager);
 		setTitle("Pipeline Manager");

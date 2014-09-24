@@ -47,7 +47,7 @@ FILTER_LAYOUT:ChangeHSVFilter(outputFormat0,ChangeHSVShader)
 
 PIPELINE_MAIN:ChangeHSVPipeline
 {
-	// Declare some input and output ports for this pipeline ::
+	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(textureInput)
 	OUTPUT_PORTS(textureChangedHSV)
 

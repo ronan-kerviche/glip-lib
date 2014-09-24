@@ -60,7 +60,7 @@
 		window		= new QVGL::MainWidget;
 		editor		= new QGED::CodeEditorTabsSubWidget;
 		collection	= new QGIC::ImageItemsCollectionSubWidget;
-		pipelineManager	= new QGPM::PipelineManagerSubWidget;
+		pipelineManager	= new QGPM::PipelineManagerSubWidget(&const_cast<const QVGL::MainWidget*>(window)->getMouseState());
 
 		// Add Subwidgets : 
 		window->addSubWidget(editor);
@@ -76,7 +76,7 @@
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),			window, 				SLOT(addViewsTable(QVGL::ViewsTable*)));
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(QGIC::ImageItem*)),				collection->getCollectionPtr(),		SLOT(addImageItem(QGIC::ImageItem*)));
 
-		window->resize(1200, 800);
+		window->resize(900, 600);
 		window->show();
 	}
 

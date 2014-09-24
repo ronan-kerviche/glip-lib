@@ -45,6 +45,7 @@
 	#include <QMenu>
 	#include <QMenuBar>
 	#include <QSignalMapper>
+	#include <QElapsedTimer>
 
 	#include <QLineEdit>
 	#include <QComboBox>
@@ -594,14 +595,7 @@ namespace QVGL
 
 				InvalidColorID			= 65535
 				// ALSO UPDATE VALIDATE
-			};
-
-			enum DataStatus
-			{
-				NotModified,
-				RequireUpdate,
-				Modified
-			};
+			};	
 
 			enum FunctionMode
 			{
@@ -610,19 +604,22 @@ namespace QVGL
 			};
 
 		private : 
-			FunctionMode					functionMode;
-			QMap<VectorID, QPair<DataStatus, QPointF> >	vectors;
-			QMap<ColorID,  QPair<DataStatus, QColor> >	colors;
-			QList<VectorID>					vectorIDs;
-			QList<ColorID>					colorIDs;
-			float						wheelDelta;
-				
+			FunctionMode				functionMode;
+			QMap<VectorID, QPair<int, QPointF> >	vectors;	// The integer represent a count to the last modification.
+			QMap<ColorID,  QPair<int, QColor> >	colors;		// (0 : requires update, 1 : modified, 2+ : not modified)
+			QList<VectorID>				vectorIDs;
+			QList<ColorID>				colorIDs;
+			float					wheelDelta;
+			QElapsedTimer				elapsedTimer;
+			int					minActionDelta_ms;		
+	
 		protected :
 			friend class SceneWidget;
 			friend class MainWidget;
 
-			const QPointF& invisibleGetVector(const VectorID& id) const;
-			const QColor& invisibleGetColor(const ColorID& id) const;
+			//const QPointF& invisibleGetVector(const VectorID& id) const;
+			//const QColor& invisibleGetColor(const ColorID& id) const;
+			void incrementEventCounters(void);
 			bool doesVectorRequireUpdate(const VectorID& id) const;
 			bool doesColorRequirepdate(const ColorID& id) const;
 			void setVector(const VectorID& id, const QPointF& v, const bool requireUpdate=false);
@@ -640,8 +637,8 @@ namespace QVGL
 			const QList<ColorID>& getColorIDs(void) const;
 			bool isVectorModified(const VectorID& id) const;
 			bool isColorModified(const ColorID& id) const;
-			const QPointF& getVector(const VectorID& id);
-			const QColor& getColor(const ColorID& id);
+			const QPointF& getVector(const VectorID& id) const;
+			const QColor& getColor(const ColorID& id) const;
 			bool isWheelDeltaModified(void) const;
 			float getWheelDelta(void);
 			const FunctionMode& getFunctionMode(void) const;
@@ -649,6 +646,8 @@ namespace QVGL
 
 			static VectorID validate(const VectorID& vID);
 			static ColorID validate(const ColorID& cID);
+			static VectorID getVectorIDFromName(const std::string& name);
+			static ColorID getColorIDFromName(const std::string& name);
 			static VectorID getPixelVectorID(const VectorID& vID);
 			static BasisID getVectorBasis(const VectorID& vID);
 			static ColorID getCorrespondingColorID(const VectorID& cID);

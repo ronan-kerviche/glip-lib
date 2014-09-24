@@ -11,6 +11,15 @@ SHARED_SOURCE:maths
 	{
 		return exp(-l*l/(2.0f*r*r));
 	}
+
+	vec2 textureCoordinates(in ivec2 pos, in sampler2D s)
+	{
+		ivec2 sz = textureSize(s, 0);
+		vec2 res = vec2(0, 0);
+		res.s = float(pos.s) / float(sz.s);
+		res.t = float(pos.t) / float(sz.t);
+		return res;
+	}
 }
 
 // Higher level code : 
