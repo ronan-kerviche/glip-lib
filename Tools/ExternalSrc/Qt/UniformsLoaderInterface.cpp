@@ -18,8 +18,9 @@
 #include <QMessageBox>
 
 // ValuesInterface :
-	ValuesInterface::ValuesInterface(UniformsLoader::Resource& _resource)
-	 : 	resource(_resource),
+	ValuesInterface::ValuesInterface(UniformsLoader::Resource& _resource, QWidget* parent)
+	 : 	QWidget(parent),
+		resource(_resource),
 		layout(this),
 		signalMapper(this)
 		#ifdef __USE_QVGL__
@@ -313,7 +314,10 @@
 	#endif
 	 : 	QTreeWidgetItem(type)
 		#ifdef __USE_QVGL__
-		, mouseState(_mouseState)
+		, mouseState(_mouseState),
+		modificationCounter(0),
+		maxCounter(5),			// 5 Modifications
+		minimumDelta_ms(17)		// Or after 17ms from the last, whichever comes first.
 		#endif
 	{
 		setText(0, "Uniform Variables");
@@ -321,6 +325,8 @@
 		#ifdef __USE_QVGL__
 			if(mouseState!=NULL)
 				QObject::connect(mouseState, SIGNAL(updated(void)), this, SLOT(applyModificationFromMouseState(void)));
+
+			timer.start();
 		#endif
 	}
 
@@ -338,7 +344,7 @@
 		root->addChild(newNode);
 
 		// Create the interface widget : 
-		ValuesInterface* valuesInterface = new ValuesInterface(resource);
+		ValuesInterface* valuesInterface = new ValuesInterface(resource, treeWidget());
 
 		// Connect the signal : 
 		QObject::connect(valuesInterface, SIGNAL(modified(void)), this, SIGNAL(modified(void)));
@@ -440,15 +446,11 @@
 
 	int UniformsLoaderInterface::updateNodeWithMouseState(QTreeWidgetItem* nodeItem)
 	{
-		static int modCount = 0;
-		modCount++;
-		std::cout << "UniformsLoaderInterface::updateNodeWithMouseState : " << modCount << std::endl;
-
 		if(nodeItem->childCount()==0)
 		{
 			ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(nodeItem, type());
-			
-			if(valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState))
+		
+			if(valuesInterface!=NULL && valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState))
 				return 1;
 			else
 				return 0;
@@ -509,6 +511,21 @@
 	// Slots :
 	void UniformsLoaderInterface::applyModificationFromMouseState(void)
 	{
+		#ifdef __USE_QVGL__
+		if(mouseState==NULL || mouseState->getFunctionMode()!=QVGL::MouseState::ModeCollection)
+			return ;
+
+		if(modificationCounter<maxCounter && timer.elapsed()<minimumDelta_ms)
+		{
+			modificationCounter++;
+			return ;
+		}
+		else
+		{
+			modificationCounter=0;
+			timer.restart();
+		}
+
 		int count = 0;
 
 		blockSignals(true);
@@ -521,6 +538,7 @@
 
 		if(count>0)
 			emit modified();
+		#endif
 	}
 
 	// Public Tools : 
@@ -671,18 +689,21 @@
 			{
 				ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(*it, type);
 
-				const int 	rows = valuesInterface->getResource().object().getNumRows(),
-						cols = valuesInterface->getResource().object().getNumColumns();
+				if(valuesInterface!=NULL)
+				{
+					const int 	rows = valuesInterface->getResource().object().getNumRows(),
+							cols = valuesInterface->getResource().object().getNumColumns();
 
-				if((rows==2 || rows==3) && cols==1 && (rowCount==-1 || rowCount==rows))
-				{
-					rowCount = rows;
-					currentSelection.push_back(valuesInterface);
-				}
-				else
-				{
-					currentSelection.clear();
-					break;
+					if((rows==2 || rows==3) && cols==1 && (rowCount==-1 || rowCount==rows))
+					{
+						rowCount = rows;
+						currentSelection.push_back(valuesInterface);
+					}
+					else
+					{
+						currentSelection.clear();
+						break;
+					}
 				}
 			}
 		}

@@ -1654,8 +1654,7 @@ using namespace QVGL;
 // MouseState :
 	MouseState::MouseState(void)
 	 :	functionMode(ModeCollection),
-		wheelDelta(0.0f),
-		minActionDelta_ms(15)
+		wheelDelta(0.0f)
 	{
 		// Create the maps : 
 		#define ADD_VECTOR( ID ) vectors.insert( ID , QPair<int, QPointF>(1, QPointF(0.0, 0.0)));
@@ -1733,9 +1732,6 @@ using namespace QVGL;
 		colorIDs 	= colors.keys();
 
 		setFunctionMode(ModeCollection);
-
-		// Start the function timer :
-		elapsedTimer.start();
 	}
 
 	MouseState::~MouseState(void)
@@ -1805,9 +1801,6 @@ using namespace QVGL;
 
 	void MouseState::processEvent(QGraphicsSceneWheelEvent* event)
 	{
-		if(elapsedTimer.elapsed()<=minActionDelta_ms)
-			return ;
-
 		if(event->delta()!=0 && event->orientation()==Qt::Vertical)
 		{
 			wheelDelta += static_cast<float>(event->delta())/(8.0f*15.0f);
@@ -1823,15 +1816,11 @@ using namespace QVGL;
 			event->accept();
 			incrementEventCounters();
 			emit requestExternalUpdate();
-			elapsedTimer.restart();
 		}
 	}
 
 	void MouseState::processEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released)
 	{
-		if(elapsedTimer.elapsed()<=minActionDelta_ms)
-			return ;
-
 		// event->button()  : The button which triggered the event (empty during drag).
 		// event->buttons() : The buttons currently pressed (might not contain the previous in the case of a click).
 
@@ -1900,7 +1889,6 @@ using namespace QVGL;
 		{
 			incrementEventCounters();
 			emit requestExternalUpdate();
-			elapsedTimer.restart();
 		}
 	}
 

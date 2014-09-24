@@ -28,6 +28,7 @@
 	#define __USE_QVGL__
 
 	#ifdef __USE_QVGL__
+		#include <QElapsedTimer>
 		#include "GLSceneWidget.hpp"
 	#endif
 	
@@ -58,7 +59,7 @@
 			void pushAllModificationsToResource(bool emitSignal=true);
 
 		public : 
-			ValuesInterface(UniformsLoader::Resource& _resource);
+			ValuesInterface(UniformsLoader::Resource& _resource, QWidget* parent=NULL);
 			~ValuesInterface(void);
 			
 			const UniformsLoader::Resource& getResource(void) const;
@@ -66,7 +67,7 @@
 
 			#ifdef __USE_QVGL__
 				void setVectorLink(const QVGL::MouseState::VectorID& lnk);
-				void setColorLink(const QVGL::MouseState::ColorID& lnk);	
+				void setColorLink(const QVGL::MouseState::ColorID& lnk);
 				bool copyVectorFromMouseState(const QVGL::MouseState* mouseState);
 				bool copyColorFromMouseState(const QVGL::MouseState* mouseState);
 			#endif
@@ -87,6 +88,10 @@
 			UniformsLoader 					loader;
 			std::map<const std::string, QTreeWidgetItem*>	itemRoots;
 			#ifdef __USE_QVGL__
+			QElapsedTimer					timer;
+			int						modificationCounter;
+			const int					maxCounter,
+									minimumDelta_ms;
 			const QVGL::MouseState*				mouseState;
 			#endif
 

@@ -45,7 +45,6 @@
 	#include <QMenu>
 	#include <QMenuBar>
 	#include <QSignalMapper>
-	#include <QElapsedTimer>
 
 	#include <QLineEdit>
 	#include <QComboBox>
@@ -610,8 +609,6 @@ namespace QVGL
 			QList<VectorID>				vectorIDs;
 			QList<ColorID>				colorIDs;
 			float					wheelDelta;
-			QElapsedTimer				elapsedTimer;
-			int					minActionDelta_ms;		
 	
 		protected :
 			friend class SceneWidget;
