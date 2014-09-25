@@ -4,7 +4,7 @@
 		Duplicate the menus, keep the actions. 
 		This seems needed for reusing menu.
 	*/
-	void duplicateMenu(QMenu* dst, QMenu& origin)
+	void duplicateMenu(QMenu* dst, QMenu& origin, const bool onlyEnabled)
 	{
 		QMenu* sub = dst->addMenu(origin.title());
 
@@ -14,9 +14,9 @@
 		{
 			QMenu* itMenu = (*it)->menu();
 
-			if(itMenu!=NULL)
+			if(itMenu!=NULL && (itMenu->isEnabled() || !onlyEnabled))
 				duplicateMenu(sub, *itMenu);
-			else
+			else if((*it)->isEnabled() || !onlyEnabled)
 				sub->addAction(*it);
 		}
 	}

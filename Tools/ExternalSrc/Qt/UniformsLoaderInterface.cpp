@@ -15,6 +15,7 @@
 /* ************************************************************************************************************* */
 
 #include "UniformsLoaderInterface.hpp"
+#include "QMenuTools.hpp"
 #include <QMessageBox>
 
 // ValuesInterface :
@@ -37,6 +38,7 @@
 
 		// Test the type of the resource and create the interface accordingly : 
 		for(int i=0; i<object.getNumRows(); i++)
+		{
 			for(int j=0; j<object.getNumColumns(); j++)
 			{
 				const int index = object.getIndex(i, j);
@@ -91,32 +93,15 @@
 				else
 					layout.addWidget(integerBoxes[index], i, j);
 			}
+		}
+
+		// Add the connection layout :
+		layout.addWidget(&linkLabel, object.getNumRows(), 0, 1, -1);
+		linkLabel.setTextFormat(Qt::RichText);
+		unlink();
 
 		// Finished by conneting the SignalMapper : 
 		QObject::connect(&signalMapper, SIGNAL(mapped(int)), this, SLOT(pushModificationToResource(int)));
-
-		#ifdef __USE_QVGL__
-			// Prepare management for the user interface.
-			/*if(mouseState!=NULL)
-			{
-				// Auto link based on variable name, if possible :				
-				if(resource.object().getNumRows()==2 && resource.object().getNumColumns()==1)
-				{
-					vectorID = QVGL::MouseState::getVectorIDFromName(resource.getName());
-		
-					copyVectorFromMouseState();
-				}
-				else if(resource.object().getNumRows()==3 && resource.object().getNumColumns()==1)
-				{
-					colorID = QVGL::MouseState::getColorIDFromName(resource.getName());
-
-					copyColorFromMouseState();	
-				}
-
-				// Connect :
-				QObject::connect(mouseState, SIGNAL(modified(void)), this, SLOT(mouseStateModified(void)));
-			}*/	
-		#endif
 	}
 
 	ValuesInterface::~ValuesInterface(void)
@@ -195,14 +180,67 @@
 #ifdef __USE_QVGL__
 	void ValuesInterface::setVectorLink(const QVGL::MouseState::VectorID& lnk)
 	{
-		if(resource.object().getNumRows()==2 && resource.object().getNumColumns()==1)
-			vectorID = lnk;
+		if(lnk==QVGL::MouseState::InvalidVectorID)
+		{
+			unlink();
+			return ;
+		}
+		else
+		{
+			const HdlDynamicData& object = resource.object();
+			
+			if(object.getNumRows()==2 && object.getNumColumns()==1)
+			{
+				vectorID = lnk;
+				linkLabel.setText(tr("<font color=\"#FFFFFF\">Linked to %1</i></font>").arg(QVGL::MouseState::getVectorIDName(lnk)));
+			}
+		}
 	}
 
 	void ValuesInterface::setColorLink(const QVGL::MouseState::ColorID& lnk)
 	{
-		if(resource.object().getNumRows()==3 && resource.object().getNumColumns()==1)
-			colorID = lnk;
+		if(lnk==QVGL::MouseState::InvalidColorID)
+		{
+			unlink();
+			return ;
+		}
+		else
+		{
+			const HdlDynamicData& object = resource.object();
+
+			if(object.getNumRows()==3 && object.getNumColumns()==1)
+			{
+				colorID = lnk;
+				linkLabel.setText(tr("<font color=\"#FFFFFF\">Linked to %1</i></font>").arg(QVGL::MouseState::getColorIDName(lnk)));
+			}
+		}
+	}
+
+	void ValuesInterface::autoLink(const QVGL::MouseState* mouseState)
+	{
+		const HdlDynamicData& object = resource.object();
+
+		if(object.getNumRows()==2 && object.getNumColumns()==1)
+		{
+			QVGL::MouseState::VectorID vectorID = QVGL::MouseState::getVectorIDFromName(QString::fromStdString(resource.getName()));
+
+			if(vectorID!=QVGL::MouseState::InvalidVectorID)
+				setVectorLink(vectorID);
+		}
+		else if(object.getNumRows()==3 && object.getNumColumns()==1)
+		{
+			QVGL::MouseState::ColorID colorID =  QVGL::MouseState::getColorIDFromName(QString::fromStdString(resource.getName()));
+
+			if(colorID!=QVGL::MouseState::InvalidColorID)
+				setColorLink(colorID);
+		}
+	}
+
+	void ValuesInterface::unlink(void)
+	{
+		vectorID = QVGL::MouseState::InvalidVectorID;
+		colorID  = QVGL::MouseState::InvalidColorID;
+		linkLabel.setText("<font color=\"#000000\"><i>Not linked</i></font>");
 	}
 
 	bool ValuesInterface::copyVectorFromMouseState(const QVGL::MouseState* mouseState)
@@ -363,6 +401,11 @@
 			throw Exception("UniformsLoaderInterface::addResource - Internal error : no tree widget associated.", __FILE__, __LINE__);
 		else
 			treeWidget()->setItemWidget(newNode, 1, valuesInterface);
+
+		// Auto-link attempt :
+		#ifdef __USE_QVGL__
+			valuesInterface->autoLink(mouseState);
+		#endif
 
 		return newNode;
 	}
@@ -601,11 +644,14 @@
 		{ \
 			QMenu* menu = addMenu(removeHeader(STR(id))); \
 			QAction* action=NULL; \
-			action = menu->addAction(removeHeader(STR(id##Gl)), &vectorSignalMapper, SLOT(map()));\
+			action = menu->addAction(removeHeader(STR(id##Gl)), &vectorSignalMapper, SLOT(map())); \
+			vectorPositionsActions[id##Gl] = action; \
 			vectorSignalMapper.setMapping(action, static_cast<int>(id##Gl)); \
-			action = menu->addAction(removeHeader(STR(id##Quad)), &vectorSignalMapper, SLOT(map()));\
+			action = menu->addAction(removeHeader(STR(id##Quad)), &vectorSignalMapper, SLOT(map())); \
+			vectorPositionsActions[id##Quad] = action; \
 			vectorSignalMapper.setMapping(action, static_cast<int>(id##Quad)); \
-			action = menu->addAction(removeHeader(STR(id##Image)), &vectorSignalMapper, SLOT(map()));\
+			action = menu->addAction(removeHeader(STR(id##Image)), &vectorSignalMapper, SLOT(map())); \
+			vectorPositionsActions[id##Image] = action; \
 			vectorSignalMapper.setMapping(action, static_cast<int>(id##Image)); \
 		}
 
@@ -627,6 +673,7 @@
 		#define NEW_MENU(id) \
 		{ \
 			QAction* action = addAction(removeHeader(STR(id)), &colorSignalMapper, SLOT(map())); \
+			colorsActions[id] = action; \
 			colorSignalMapper.setMapping(action, static_cast<int>(id)); \
 		}
 
@@ -644,12 +691,16 @@
 		QObject::connect(&vectorSignalMapper,	SIGNAL(mapped(int)), 		this, SLOT(setUniformLinkToVector(int)));
 		QObject::connect(&colorSignalMapper,	SIGNAL(mapped(int)), 		this, SLOT(setUniformLinkToColor(int)));
 
+		// Reset :
 		QList<QTreeWidgetItem*> emptyList;
 		updateToSelection(emptyList);
 	}
 	
 	UniformsLinkMenu::~UniformsLinkMenu(void)
-	{ }
+	{
+		vectorPositionsActions.clear();
+		colorsActions.clear();
+	}
 
 	QString UniformsLinkMenu::removeHeader(const QString& str)
 	{
@@ -660,19 +711,26 @@
 
 	void UniformsLinkMenu::setUniformLinkToVector(int id)
 	{
-		for(QList<ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
-			(*it)->setVectorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::VectorID>(id)));
+		for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
+			it.value()->setVectorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::VectorID>(id)));
 	}
 
 	void UniformsLinkMenu::setUniformLinkToColor(int id)
 	{
-		for(QList<ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
-			(*it)->setColorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::ColorID>(id)));
+		for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
+			it.value()->setColorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::ColorID>(id)));
 	}
 
 	void UniformsLinkMenu::unlink(void)
 	{
+		for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
+			it.value()->unlink();	
+	}
 
+	void UniformsLinkMenu::addToMenu(QMenu& menu)
+	{
+		if(isEnabled())
+			duplicateMenu(&menu, *this, true);
 	}
 
 	void UniformsLinkMenu::updateToSelection(QList<QTreeWidgetItem*>& selection)
@@ -680,6 +738,7 @@
 		// Check that all the selection are QTreeWidgetItem corresponding to uniforms and that they are of the same size 
 		// (either 2x1 or 3x1)
 
+		bool allUniforms = !selection.isEmpty();
 		currentSelection.clear();
 	
 		int rowCount = -1; // not set yet.
@@ -697,15 +756,20 @@
 					if((rows==2 || rows==3) && cols==1 && (rowCount==-1 || rowCount==rows))
 					{
 						rowCount = rows;
-						currentSelection.push_back(valuesInterface);
+						currentSelection[*it] = valuesInterface;
 					}
 					else
 					{
 						currentSelection.clear();
+						rowCount = -1;
 						break;
 					}
 				}
+				else
+					allUniforms = false;
 			}
+			else
+				allUniforms = false;
 		}
 
 		// Set the right menu :
@@ -716,7 +780,7 @@
 			it.value()->setEnabled(rowCount==3);
 	
 		// Final :
-		setEnabled(!currentSelection.isEmpty());
+		setEnabled(allUniforms);
 	}
 #endif
 

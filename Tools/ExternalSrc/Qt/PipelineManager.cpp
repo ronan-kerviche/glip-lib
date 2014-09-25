@@ -1476,17 +1476,17 @@ using namespace QGPM;
 
 // PipelineMenu : 
 	PipelineMenu::PipelineMenu(QWidget* parent)
-	 :	QMenu("Pipeline", parent),
-		removePipelineAction(NULL),
+	 :	QMenu("Pipeline", parent),	
 		loadUniformsAction(NULL),
 		saveUniformsAction(NULL),
 		saveUniformsAsAction(NULL),
+		removePipelineAction(NULL),
 		currentPipelineItem(NULL)
 	{
-		removePipelineAction	= addAction("Close pipeline",		this, SLOT(removePipeline(void)));
 		loadUniformsAction	= addAction("Load uniforms",		this, SLOT(loadUniforms(void)));
 		saveUniformsAction	= addAction("Save uniforms",		this, SLOT(saveUniforms(void)));
 		saveUniformsAsAction	= addAction("Save uniforms as...",	this, SLOT(saveUniformsAs(void)));
+		removePipelineAction	= addAction("Close pipeline",		this, SLOT(removePipeline(void)));
 
 		setEnabled(false);
 	}
@@ -1664,6 +1664,7 @@ using namespace QGPM;
 	
 		connectionsMenu.addToMenu(contextMenu);
 		outputsMenu.addToMenu(contextMenu);
+		uniformsLinkMenu.addToMenu(contextMenu);
 		pipelineMenu.addToMenu(contextMenu);
 
 		contextMenu.exec(treeWidget.viewport()->mapToGlobal(pos));

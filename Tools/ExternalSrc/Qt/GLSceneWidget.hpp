@@ -602,7 +602,9 @@ namespace QVGL
 				ModeCollection
 			};
 
-		private : 
+		private :
+			static const QMap<VectorID, QString>	vectorsNameMap;
+			static const QMap<ColorID, QString>	colorsNameMap; 
 			FunctionMode				functionMode;
 			QMap<VectorID, QPair<int, QPointF> >	vectors;	// The integer represent a count to the last modification.
 			QMap<ColorID,  QPair<int, QColor> >	colors;		// (0 : requires update, 1 : modified, 2+ : not modified)
@@ -610,12 +612,13 @@ namespace QVGL
 			QList<ColorID>				colorIDs;
 			float					wheelDelta;
 	
+			static QMap<VectorID, QString> initVectorsNameMap(void);
+			static QMap<ColorID, QString> initColorsNameMap(void);
+
 		protected :
 			friend class SceneWidget;
 			friend class MainWidget;
 
-			//const QPointF& invisibleGetVector(const VectorID& id) const;
-			//const QColor& invisibleGetColor(const ColorID& id) const;
 			void incrementEventCounters(void);
 			bool doesVectorRequireUpdate(const VectorID& id) const;
 			bool doesColorRequirepdate(const ColorID& id) const;
@@ -643,8 +646,10 @@ namespace QVGL
 
 			static VectorID validate(const VectorID& vID);
 			static ColorID validate(const ColorID& cID);
-			static VectorID getVectorIDFromName(const std::string& name);
-			static ColorID getColorIDFromName(const std::string& name);
+			static QString getVectorIDName(const VectorID& vID);
+			static QString getColorIDName(const ColorID& cID);
+			static VectorID getVectorIDFromName(const QString& name);
+			static ColorID getColorIDFromName(const QString& name);
 			static VectorID getPixelVectorID(const VectorID& vID);
 			static BasisID getVectorBasis(const VectorID& vID);
 			static ColorID getCorrespondingColorID(const VectorID& cID);

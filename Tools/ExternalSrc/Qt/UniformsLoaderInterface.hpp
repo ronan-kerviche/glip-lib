@@ -48,6 +48,7 @@
 			QVector<QSpinBox*>			integerBoxes;
 			QVector<QDoubleSpinBox*>		floatBoxes;
 			QSignalMapper				signalMapper;
+			QLabel					linkLabel;
 
 			#ifdef __USE_QVGL__
 				QVGL::MouseState::VectorID	vectorID;
@@ -68,6 +69,8 @@
 			#ifdef __USE_QVGL__
 				void setVectorLink(const QVGL::MouseState::VectorID& lnk);
 				void setColorLink(const QVGL::MouseState::ColorID& lnk);
+				void autoLink(const QVGL::MouseState* mouseState);
+				void unlink(void);
 				bool copyVectorFromMouseState(const QVGL::MouseState* mouseState);
 				bool copyColorFromMouseState(const QVGL::MouseState* mouseState);
 			#endif
@@ -137,7 +140,7 @@
 				QAction						*unlinkAction;
 				QSignalMapper					vectorSignalMapper,
 										colorSignalMapper;
-				QList<ValuesInterface*>				currentSelection;		
+				QMap<QTreeWidgetItem*, ValuesInterface*>	currentSelection;		
 		
 				static QString removeHeader(const QString& str);
 
@@ -149,6 +152,8 @@
 			public :
 				UniformsLinkMenu(int _type, QWidget* parent=NULL);
 				~UniformsLinkMenu(void);
+
+				void addToMenu(QMenu& menu);
 
 			public slots :
 				void updateToSelection(QList<QTreeWidgetItem*>& selection);

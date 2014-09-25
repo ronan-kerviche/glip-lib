@@ -1652,81 +1652,110 @@ using namespace QVGL;
 	}
 
 // MouseState :
+	const QMap<MouseState::VectorID, QString>	MouseState::vectorsNameMap = initVectorsNameMap();
+	const QMap<MouseState::ColorID, QString>	MouseState::colorsNameMap = initColorsNameMap();
+
+	// Static Function :
+	QMap<MouseState::VectorID, QString> MouseState::initVectorsNameMap(void)
+	{
+		QMap<VectorID, QString> _vectorsNameMap;
+
+		#define NAME_MAP( id ) _vectorsNameMap[ id ] = STR( id );
+
+			NAME_MAP( VectorLastLeftClick )
+			NAME_MAP( VectorLastLeftClickGl )
+			NAME_MAP( VectorLastLeftClickQuad )
+			NAME_MAP( VectorLastLeftClickImage )
+
+			NAME_MAP( VectorLastLeftPosition )
+			NAME_MAP( VectorLastLeftPositionGl )
+			NAME_MAP( VectorLastLeftPositionQuad )
+			NAME_MAP( VectorLastLeftPositionImage )
+
+			NAME_MAP( VectorLastLeftShift )
+			NAME_MAP( VectorLastLeftShiftGl )
+			NAME_MAP( VectorLastLeftShiftQuad )
+			NAME_MAP( VectorLastLeftShiftImage )
+
+			NAME_MAP( VectorLastLeftRelease )
+			NAME_MAP( VectorLastLeftReleaseGl )
+			NAME_MAP( VectorLastLeftReleaseQuad )
+			NAME_MAP( VectorLastLeftReleaseImage )
+
+			NAME_MAP( VectorLastLeftCompletedVector )
+			NAME_MAP( VectorLastLeftCompletedVectorGl )
+			NAME_MAP( VectorLastLeftCompletedVectorQuad )
+			NAME_MAP( VectorLastLeftCompletedVectorImage )
+
+			NAME_MAP( VectorLastRightClick )
+			NAME_MAP( VectorLastRightClickGl )
+			NAME_MAP( VectorLastRightClickQuad )
+			NAME_MAP( VectorLastRightClickImage )
+
+			NAME_MAP( VectorLastRightPosition )
+			NAME_MAP( VectorLastRightPositionGl )
+			NAME_MAP( VectorLastRightPositionQuad )
+			NAME_MAP( VectorLastRightPositionImage )
+
+			NAME_MAP( VectorLastRightShift )
+			NAME_MAP( VectorLastRightShiftGl )
+			NAME_MAP( VectorLastRightShiftQuad )
+			NAME_MAP( VectorLastRightShiftImage )
+
+			NAME_MAP( VectorLastRightRelease )
+			NAME_MAP( VectorLastRightReleaseGl )
+			NAME_MAP( VectorLastRightReleaseQuad )
+			NAME_MAP( VectorLastRightReleaseImage )
+
+			NAME_MAP( VectorLastRightCompletedVector )
+			NAME_MAP( VectorLastRightCompletedVectorGl )
+			NAME_MAP( VectorLastRightCompletedVectorQuad )
+			NAME_MAP( VectorLastRightCompletedVectorImage )
+
+			NAME_MAP( VectorLastWheelUp )
+			NAME_MAP( VectorLastWheelUpGl )
+			NAME_MAP( VectorLastWheelUpQuad )
+			NAME_MAP( VectorLastWheelUpImage )
+
+			NAME_MAP( VectorLastWheelDown )
+			NAME_MAP( VectorLastWheelDownGl )
+			NAME_MAP( VectorLastWheelDownQuad )
+			NAME_MAP( VectorLastWheelDownImage )
+			
+		#undef NAME_MAP
+
+		return _vectorsNameMap;
+	}
+
+	// Static Function :
+	QMap<MouseState::ColorID, QString> MouseState::initColorsNameMap(void)
+	{
+		QMap<ColorID, QString> _colorsNameMap;
+
+		#define NAME_MAP( id ) _colorsNameMap[ id ] = STR( id );
+
+			NAME_MAP( ColorUnderLastLeftClick )
+			NAME_MAP( ColorUnderLastLeftPosition )
+			NAME_MAP( ColorUnderLastLeftRelease )
+			NAME_MAP( ColorUnderLastRightClick )
+			NAME_MAP( ColorUnderLastRightPosition )
+			NAME_MAP( ColorUnderLastRightRelease )
+
+		#undef NAME_MAP
+
+		return _colorsNameMap;
+	}
+
 	MouseState::MouseState(void)
 	 :	functionMode(ModeCollection),
 		wheelDelta(0.0f)
 	{
 		// Create the maps : 
-		#define ADD_VECTOR( ID ) vectors.insert( ID , QPair<int, QPointF>(1, QPointF(0.0, 0.0)));
-			ADD_VECTOR( VectorLastLeftClick )
-			ADD_VECTOR( VectorLastLeftClickGl )
-			ADD_VECTOR( VectorLastLeftClickQuad )
-			ADD_VECTOR( VectorLastLeftClickImage )
+		for(QMap<VectorID, QString>::const_iterator it=vectorsNameMap.begin(); it!=vectorsNameMap.end(); it++)
+			vectors.insert( it.key(), QPair<int, QPointF>(1, QPointF(0.0, 0.0)));
 
-			ADD_VECTOR( VectorLastLeftPosition )
-			ADD_VECTOR( VectorLastLeftPositionGl )
-			ADD_VECTOR( VectorLastLeftPositionQuad )
-			ADD_VECTOR( VectorLastLeftPositionImage )
-
-			ADD_VECTOR( VectorLastLeftShift )
-			ADD_VECTOR( VectorLastLeftShiftGl )
-			ADD_VECTOR( VectorLastLeftShiftQuad )
-			ADD_VECTOR( VectorLastLeftShiftImage )
-
-			ADD_VECTOR( VectorLastLeftRelease )
-			ADD_VECTOR( VectorLastLeftReleaseGl )
-			ADD_VECTOR( VectorLastLeftReleaseQuad )
-			ADD_VECTOR( VectorLastLeftReleaseImage )
-
-			ADD_VECTOR( VectorLastLeftCompletedVector )
-			ADD_VECTOR( VectorLastLeftCompletedVectorGl )
-			ADD_VECTOR( VectorLastLeftCompletedVectorQuad )
-			ADD_VECTOR( VectorLastLeftCompletedVectorImage )
-
-			ADD_VECTOR( VectorLastRightClick )
-			ADD_VECTOR( VectorLastRightClickGl )
-			ADD_VECTOR( VectorLastRightClickQuad )
-			ADD_VECTOR( VectorLastRightClickImage )
-
-			ADD_VECTOR( VectorLastRightPosition )
-			ADD_VECTOR( VectorLastRightPositionGl )
-			ADD_VECTOR( VectorLastRightPositionQuad )
-			ADD_VECTOR( VectorLastRightPositionImage )
-
-			ADD_VECTOR( VectorLastRightShift )
-			ADD_VECTOR( VectorLastRightShiftGl )
-			ADD_VECTOR( VectorLastRightShiftQuad	)
-			ADD_VECTOR( VectorLastRightShiftImage )
-
-			ADD_VECTOR( VectorLastRightRelease )
-			ADD_VECTOR( VectorLastRightReleaseGl )
-			ADD_VECTOR( VectorLastRightReleaseQuad )
-			ADD_VECTOR( VectorLastRightReleaseImage )
-
-			ADD_VECTOR( VectorLastRightCompletedVector )
-			ADD_VECTOR( VectorLastRightCompletedVectorGl )
-			ADD_VECTOR( VectorLastRightCompletedVectorQuad )
-			ADD_VECTOR( VectorLastRightCompletedVectorImage )
-
-			ADD_VECTOR( VectorLastWheelUp )
-			ADD_VECTOR( VectorLastWheelUpGl )
-			ADD_VECTOR( VectorLastWheelUpQuad )
-			ADD_VECTOR( VectorLastWheelUpImage )
-
-			ADD_VECTOR( VectorLastWheelDown )
-			ADD_VECTOR( VectorLastWheelDownGl )
-			ADD_VECTOR( VectorLastWheelDownQuad )
-			ADD_VECTOR( VectorLastWheelDownImage )
-		#undef ADD_VECTOR
-
-		#define ADD_COLOR( ID ) colors.insert( ID , QPair<int, QColor>(1, QColor(Qt::black)));
-			ADD_COLOR( ColorUnderLastLeftClick )
-			ADD_COLOR( ColorUnderLastLeftPosition )
-			ADD_COLOR( ColorUnderLastLeftRelease )
-			ADD_COLOR( ColorUnderLastRightClick )
-			ADD_COLOR( ColorUnderLastRightPosition )
-			ADD_COLOR( ColorUnderLastRightRelease )
-		#undef ADD_COLOR
+		for(QMap<ColorID, QString>::const_iterator it=colorsNameMap.begin(); it!=colorsNameMap.end(); it++)
+			colors.insert( it.key(), QPair<int, QColor>(1, QColor(Qt::black)));
 
 		vectorIDs 	= vectors.keys();
 		colorIDs 	= colors.keys();
@@ -1735,27 +1764,7 @@ using namespace QVGL;
 	}
 
 	MouseState::~MouseState(void)
-	{ }
-	
-	/*const QPointF& MouseState::invisibleGetVector(const VectorID& id) const
-	{
-		QMap<VectorID, QPair<DataStatus, QPointF> >::const_iterator it = vectors.find(id);
-
-		if(it!=vectors.end())
-			return it->second;
-		else
-			throw Exception("MouseState::getVector - Unknown VectorID (invisible access).", __FILE__, __LINE__);
-	}*/
-
-	/*const QColor& MouseState::invisibleGetColor(const ColorID& id) const
-	{
-		QMap<ColorID,  QPair<DataStatus, QColor> >::const_iterator it = colors.find(id);
-
-		if(it!=colors.end())
-			return it->second;
-		else
-			throw Exception("MouseState::getColor - Unknown ColorID (invisible access).", __FILE__, __LINE__);
-	}*/
+	{ }	
 
 	void MouseState::incrementEventCounters(void)
 	{
@@ -1991,175 +2000,61 @@ using namespace QVGL;
 
 	MouseState::VectorID MouseState::validate(const VectorID& vID)
 	{
-		switch(vID)
-		{
-			case VectorLastLeftClick :
-			case VectorLastLeftClickGl :
-			case VectorLastLeftClickQuad :
-			case VectorLastLeftClickImage :
-
-			case VectorLastLeftPosition :
-			case VectorLastLeftPositionGl :
-			case VectorLastLeftPositionQuad :
-			case VectorLastLeftPositionImage :
-
-			case VectorLastLeftShift :
-			case VectorLastLeftShiftGl :
-			case VectorLastLeftShiftQuad :
-			case VectorLastLeftShiftImage :
-
-			case VectorLastLeftRelease :
-			case VectorLastLeftReleaseGl :
-			case VectorLastLeftReleaseQuad :
-			case VectorLastLeftReleaseImage :
-
-			case VectorLastLeftCompletedVector :
-			case VectorLastLeftCompletedVectorGl :
-			case VectorLastLeftCompletedVectorQuad :
-			case VectorLastLeftCompletedVectorImage :
-
-			case VectorLastRightClick :
-			case VectorLastRightClickGl :
-			case VectorLastRightClickQuad :
-			case VectorLastRightClickImage :
-
-			case VectorLastRightPosition :
-			case VectorLastRightPositionGl :
-			case VectorLastRightPositionQuad :
-			case VectorLastRightPositionImage :
-
-			case VectorLastRightShift :
-			case VectorLastRightShiftGl :
-			case VectorLastRightShiftQuad :
-			case VectorLastRightShiftImage :
-
-			case VectorLastRightRelease :
-			case VectorLastRightReleaseGl :
-			case VectorLastRightReleaseQuad :
-			case VectorLastRightReleaseImage :
-
-			case VectorLastRightCompletedVector :
-			case VectorLastRightCompletedVectorGl :
-			case VectorLastRightCompletedVectorQuad :
-			case VectorLastRightCompletedVectorImage :
-
-			case VectorLastWheelUp :
-			case VectorLastWheelUpGl :
-			case VectorLastWheelUpQuad :
-			case VectorLastWheelUpImage :
-
-			case VectorLastWheelDown :
-			case VectorLastWheelDownGl :
-			case VectorLastWheelDownQuad :
-			case VectorLastWheelDownImage :
-				return vID;
-
-			default : 
-				return InvalidVectorID;
-		}
-	}
+		if(vectorsNameMap.contains(vID))
+			return vID;
+		else
+			return InvalidVectorID;
+	}	
 
 	MouseState::ColorID MouseState::validate(const ColorID& cID)
 	{
-		switch(cID)
-		{
-			case ColorUnderLastLeftClick :
-			case ColorUnderLastLeftPosition :
-			case ColorUnderLastLeftRelease :
-			case ColorUnderLastRightClick :
-			case ColorUnderLastRightPosition :
-			case ColorUnderLastRightRelease :
-				return cID;
-			
-			default : 
-				return InvalidColorID;
-		}
-	}
-
-	MouseState::VectorID MouseState::getVectorIDFromName(const std::string& name)
-	{
-		#define NAME_MAP( id ) if(STR(id)==name) return id;
-
-			NAME_MAP( VectorLastLeftClick )
-			NAME_MAP( VectorLastLeftClickGl )
-			NAME_MAP( VectorLastLeftClickQuad )
-			NAME_MAP( VectorLastLeftClickImage )
-
-			NAME_MAP( VectorLastLeftPosition )
-			NAME_MAP( VectorLastLeftPositionGl )
-			NAME_MAP( VectorLastLeftPositionQuad )
-			NAME_MAP( VectorLastLeftPositionImage )
-
-			NAME_MAP( VectorLastLeftShift )
-			NAME_MAP( VectorLastLeftShiftGl )
-			NAME_MAP( VectorLastLeftShiftQuad )
-			NAME_MAP( VectorLastLeftShiftImage )
-
-			NAME_MAP( VectorLastLeftRelease )
-			NAME_MAP( VectorLastLeftReleaseGl )
-			NAME_MAP( VectorLastLeftReleaseQuad )
-			NAME_MAP( VectorLastLeftReleaseImage )
-
-			NAME_MAP( VectorLastLeftCompletedVector )
-			NAME_MAP( VectorLastLeftCompletedVectorGl )
-			NAME_MAP( VectorLastLeftCompletedVectorQuad )
-			NAME_MAP( VectorLastLeftCompletedVectorImage )
-
-			NAME_MAP( VectorLastRightClick )
-			NAME_MAP( VectorLastRightClickGl )
-			NAME_MAP( VectorLastRightClickQuad )
-			NAME_MAP( VectorLastRightClickImage )
-
-			NAME_MAP( VectorLastRightPosition )
-			NAME_MAP( VectorLastRightPositionGl )
-			NAME_MAP( VectorLastRightPositionQuad )
-			NAME_MAP( VectorLastRightPositionImage )
-
-			NAME_MAP( VectorLastRightShift )
-			NAME_MAP( VectorLastRightShiftGl )
-			NAME_MAP( VectorLastRightShiftQuad )
-			NAME_MAP( VectorLastRightShiftImage )
-
-			NAME_MAP( VectorLastRightRelease )
-			NAME_MAP( VectorLastRightReleaseGl )
-			NAME_MAP( VectorLastRightReleaseQuad )
-			NAME_MAP( VectorLastRightReleaseImage )
-
-			NAME_MAP( VectorLastRightCompletedVector )
-			NAME_MAP( VectorLastRightCompletedVectorGl )
-			NAME_MAP( VectorLastRightCompletedVectorQuad )
-			NAME_MAP( VectorLastRightCompletedVectorImage )
-
-			NAME_MAP( VectorLastWheelUp )
-			NAME_MAP( VectorLastWheelUpGl )
-			NAME_MAP( VectorLastWheelUpQuad )
-			NAME_MAP( VectorLastWheelUpImage )
-
-			NAME_MAP( VectorLastWheelDown )
-			NAME_MAP( VectorLastWheelDownGl )
-			NAME_MAP( VectorLastWheelDownQuad )
-			NAME_MAP( VectorLastWheelDownImage )
-
-			return InvalidVectorID;
-
-		#undef NAME_MAP
-	}
-
-	MouseState::ColorID MouseState::getColorIDFromName(const std::string& name)
-	{
-		#define NAME_MAP( id ) if(STR(id)==name) return id;
-
-			NAME_MAP( ColorUnderLastLeftClick )
-			NAME_MAP( ColorUnderLastLeftPosition )
-			NAME_MAP( ColorUnderLastLeftRelease )
-			NAME_MAP( ColorUnderLastRightClick )
-			NAME_MAP( ColorUnderLastRightPosition )
-			NAME_MAP( ColorUnderLastRightRelease )
-
+		if(colorsNameMap.contains(cID))
+			return cID;
+		else
 			return InvalidColorID;
-
-		#undef NAME_MAP
 	}
+	
+	QString MouseState::getVectorIDName(const VectorID& vID)
+	{
+		QMap<VectorID, QString>::const_iterator it=vectorsNameMap.find(vID);
+
+		if(it==vectorsNameMap.end())
+			return "InvalidVectorID";
+		else
+			return it.value();
+	}
+
+	QString MouseState::getColorIDName(const ColorID& cID)
+	{
+		QMap<ColorID, QString>::const_iterator it=colorsNameMap.find(cID);		
+
+		if(it==colorsNameMap.end())
+			return "InvalidColorID";
+		else
+			return it.value();
+	}
+
+	MouseState::VectorID MouseState::getVectorIDFromName(const QString& name)
+	{
+		for(QMap<VectorID, QString>::const_iterator it=vectorsNameMap.begin(); it!=vectorsNameMap.end(); it++)
+		{
+			if(it.value()==name)
+				return it.key();
+		}
+	
+		return InvalidVectorID;
+	}	
+
+	MouseState::ColorID MouseState::getColorIDFromName(const QString& name)
+	{
+		for(QMap<ColorID, QString>::const_iterator it=colorsNameMap.begin(); it!=colorsNameMap.end(); it++)
+		{
+			if(it.value()==name)
+				return it.key();
+		}
+	
+		return InvalidColorID;
+	}	
 
 	MouseState::VectorID MouseState::getPixelVectorID(const VectorID& vID)
 	{

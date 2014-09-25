@@ -5,6 +5,6 @@
 	#include <QMenu>
 
 // Tools :
-	extern void duplicateMenu(QMenu* dst, QMenu& origin);
+	extern void duplicateMenu(QMenu* dst, QMenu& origin, const bool onlyEnabled=false);
 
 #endif

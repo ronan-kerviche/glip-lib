@@ -400,10 +400,10 @@ namespace QGPM
 		Q_OBJECT
 
 		private :
-			QAction		*removePipelineAction,
-					*loadUniformsAction,
+			QAction		*loadUniformsAction,
 					*saveUniformsAction,
-					*saveUniformsAsAction;
+					*saveUniformsAsAction,
+					*removePipelineAction;
 			PipelineItem	*currentPipelineItem;
 
 		private slots : 
