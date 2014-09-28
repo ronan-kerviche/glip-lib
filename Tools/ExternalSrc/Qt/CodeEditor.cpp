@@ -1720,7 +1720,11 @@ using namespace QGED;
 		//saveAllAction.setShortcuts	TODO
 		closeAction.setShortcuts(	QKeySequence::Close );
 		//closeAllAction.setShortcuts	TODO
-		compileAction.setShortcuts(	QKeySequence::Refresh );
+
+		QList<QKeySequence> compileActionShortCuts;
+		compileActionShortCuts.push_back(QKeySequence::Refresh);
+		compileActionShortCuts.push_back(Qt::CTRL + Qt::Key_R);
+		compileAction.setShortcuts(	compileActionShortCuts );
 
 		// Create a new tab by default : 
 		addTab();

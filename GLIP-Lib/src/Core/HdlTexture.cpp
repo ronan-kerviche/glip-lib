@@ -501,6 +501,52 @@ using namespace Glip::CoreGL;
 		}
 	}
 
+	/**
+	\fn HdlTextureFormat HdlTextureFormat::getTextureFormat(GLuint texID)
+	\brief Obtain the format from another texture.
+	\param texID The ID of the texture targeted (must compatible with GL_TEXTURE_2D).
+	\return A HdlTextureFormat describing the internal format of the texture.	
+	**/
+	HdlTextureFormat HdlTextureFormat::getTextureFormat(GLuint texID)
+	{
+		// Get the infos :
+		GLint	vWidth		= 0, 
+			vHeight		= 0, 
+			vMode		= GL_NONE,
+			vDepth		= GL_NONE, 
+			vBorder		= 0,
+			vMagFilter	= GL_NONE, 
+			vMinFilter	= GL_NONE, 
+			vBaseLevel	= 0, 
+			vMaxLevel	= 0, 
+			vSWrap		= GL_NONE, 
+			vTWrap		= GL_NONE;
+			 
+
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH,		&vDepth);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);
+
+		if(vBorder!=0)
+			throw Exception("HdlTextureFormat::getTextureFormat - Texture has a non-null border.", __FILE__, __LINE__);
+
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);
+
+		HdlTexture::unbind();
+
+		// Generate :
+		return HdlTextureFormat(vWidth, vHeight, vMode, vDepth, vMinFilter, vMagFilter, vSWrap, vTWrap, vBaseLevel, vMaxLevel);
+	}
+
 // HdlTexture - Functions
 	/**
 	\fn HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
@@ -508,7 +554,7 @@ using namespace Glip::CoreGL;
 	\param fmt The format to use.
 	**/
 	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
-	 : __ReadOnly_HdlTextureFormat(fmt), texID(0)
+	 : __ReadOnly_HdlTextureFormat(fmt), texID(0), proxy(false)
 	{
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
@@ -550,9 +596,7 @@ using namespace Glip::CoreGL;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  getMaxLevel()  );
 
 		if( getMaxLevel()>0 )
-		{
 			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-		}
 
 		GLenum err = glGetError();
 
@@ -562,16 +606,54 @@ using namespace Glip::CoreGL;
 		HdlTexture::unbind();
 	}
 
+	/**
+	\fn HdlTexture::HdlTexture(GLuint proxyTexID)
+	\brief Create a texture object as a proxy for another texture. 
+
+	The user is responsible for maintening the texture in memory while this object exists and to clear the texture when needed.
+	
+	\param proxyTexID The ID of the targeted texture.
+	**/
+	HdlTexture::HdlTexture(GLuint proxyTexID)
+	 : __ReadOnly_HdlTextureFormat(HdlTextureFormat::getTextureFormat(proxyTexID)), texID(proxyTexID), proxy(true)
+	{
+		// Testing hardware :
+		NEED_EXTENSION(GLEW_ARB_multitexture)
+		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
+		NEED_EXTENSION(GLEW_ARB_texture_non_power_of_two)
+		NEED_EXTENSION(GLEW_ARB_texture_rectangle)
+
+		if(isFloatingPoint())
+			NEED_EXTENSION(GLEW_ARB_texture_float)
+
+		if(isCompressed())
+			NEED_EXTENSION(GLEW_ARB_texture_compression);
+
+		// Test :
+		if(getBaseLevel()>getMaxLevel())
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__);
+
+		bind();
+
+		if( getMaxLevel()>0 )
+			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);		
+
+		HdlTexture::unbind();
+	}
+
 	HdlTexture::~HdlTexture(void)
 	{
 		HdlTexture::unbind();
 
-		// delete the texture :
-		glDeleteTextures( 1, &texID);
+		if(!proxy)
+		{
+			// delete the texture :
+			glDeleteTextures( 1, &texID);
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlTexture::~HdlTexture", "glDeleteTextures()")
-		#endif
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlTexture::~HdlTexture", "glDeleteTextures()")
+			#endif
+		}
 	}
 
 // Public tools
@@ -583,6 +665,16 @@ using namespace Glip::CoreGL;
 	GLuint HdlTexture::getID(void) const
 	{
 		return texID;
+	}
+
+	/**
+	\fn bool HdlTexture::isProxy(void) const
+	\brief Test if this texture object is a proxy.
+	\return True if the current texture object is a proxy.
+	**/
+	bool HdlTexture::isProxy(void) const
+	{
+		return proxy;
 	}
 
 	/**

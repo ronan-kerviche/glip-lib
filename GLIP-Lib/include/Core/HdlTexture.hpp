@@ -94,7 +94,7 @@
 				virtual	unsigned int getSetting(GLenum param) const;
 
 					// Static Tools :
-					static 	int	getMaxSize(void);
+					static int getMaxSize(void);
 			};
 
 			// Texture Format Handle
@@ -125,6 +125,8 @@
 					const __ReadOnly_HdlTextureFormat& operator=(const __ReadOnly_HdlTextureFormat&);
 
 					void setSetting(GLenum param, unsigned int value);
+
+					static HdlTextureFormat getTextureFormat(GLuint texID);
 			};
 
 			// Texture Handle
@@ -137,6 +139,7 @@
 				private :
 					// Data
 					GLuint texID;
+					bool proxy;
 
 					// Functions
 					HdlTexture(const HdlTexture&);
@@ -144,9 +147,11 @@
 				public :
 					// Functions
 					HdlTexture(const __ReadOnly_HdlTextureFormat& fmt);
+					HdlTexture(GLuint proxyTexID);
 					virtual ~HdlTexture(void);
 
-					GLuint	getID     (void)  const;
+					GLuint	getID(void) const;
+					bool	isProxy(void) const;
 					int	getSizeOnGPU(int m=0);
 					void	bind(GLenum unit=GL_TEXTURE0_ARB);
 					void	bind(int unit);

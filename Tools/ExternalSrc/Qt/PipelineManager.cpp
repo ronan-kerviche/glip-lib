@@ -361,7 +361,7 @@ using namespace QGPM;
 	}
 
 	void InputPortItem::doubleClicked(int column)
-	{
+	{ 
 		if(view==NULL && isConnected() && connection->isReady() && parentPipelineItem!=NULL)
 		{
 			view = new QVGL::View(&connection->getTexture(), tr("%1 (Input %2 of %3)").arg(text(0)).arg(portIdx).arg(parentPipelineItem->getName()));
@@ -543,7 +543,8 @@ using namespace QGPM;
 		computationCount(0),
 		inputsNode(InputsHeaderItemType),
 		outputsNode(OutputsHeaderItemType),
-		uniformsNode(NULL)
+		uniformsNode(NULL),
+		locked(false)
 		#ifdef __USE_QVGL__
 			, mouseState(_mouseState)
 		#endif
@@ -611,6 +612,31 @@ using namespace QGPM;
 		}
 	}
 
+	void PipelineItem::updateText(void)
+	{
+		if(!elements.mainPipeline.empty())
+			setText(0, QString::fromStdString(elements.mainPipeline));
+		else
+			setText(0, "(Untitled Pipeline)");
+
+		QString lockStatus;
+		QBrush brush;
+
+		if(isLocked())
+		{
+			lockStatus = "[Locked]";
+			brush = QBrush(Qt::red);
+		}
+		else
+		{
+			lockStatus = "Ready";
+			brush = QBrush(Qt::green);
+		}
+		
+		setText(1, lockStatus);
+		setForeground(1, brush);
+	}
+	
 	void PipelineItem::preInterpret(void)
 	{
 		deletePipeline();
@@ -627,11 +653,7 @@ using namespace QGPM;
 		// Update ports : 
 		refurnishPortItems();
 
-		// Set name : 
-		if(!elements.mainPipeline.empty())
-			setText(0, QString::fromStdString(elements.mainPipeline));
-		else
-			setText(0, "(Untitled Pipeline)");
+		updateText();
 	}
 
 	void PipelineItem::refurnishPortItems(void)
@@ -705,7 +727,7 @@ using namespace QGPM;
 
 	bool PipelineItem::checkConnections(void)
 	{
-		bool allToSelf = true;
+		bool allToSelf = !inputPortItems.isEmpty();
 
 		// Check that all connections are available : 
 		for(QVector<InputPortItem*>::iterator it=inputPortItems.begin(); it!=inputPortItems.end(); it++)
@@ -808,7 +830,7 @@ using namespace QGPM;
 
 	void PipelineItem::compute(QVector<const void*> resourceChain)
 	{
-		if(pipeline==NULL)
+		if(pipeline==NULL || isLocked())
 			return ;
 
 		// Detect a possible loop : 
@@ -1030,6 +1052,17 @@ using namespace QGPM;
 	int PipelineItem::getComputationCount(void) const
 	{
 		return computationCount;
+	}
+
+	bool PipelineItem::isLocked(void) const
+	{
+		return locked;
+	}
+
+	void PipelineItem::lock(bool enabled)
+	{
+		locked = enabled;
+		updateText();
 	}
 
 	const QString& PipelineItem::getUniformsFilename(void) const
@@ -1480,13 +1513,15 @@ using namespace QGPM;
 		loadUniformsAction(NULL),
 		saveUniformsAction(NULL),
 		saveUniformsAsAction(NULL),
+		toggleLockPipelineAction(NULL),
 		removePipelineAction(NULL),
 		currentPipelineItem(NULL)
 	{
-		loadUniformsAction	= addAction("Load uniforms",		this, SLOT(loadUniforms(void)));
-		saveUniformsAction	= addAction("Save uniforms",		this, SLOT(saveUniforms(void)));
-		saveUniformsAsAction	= addAction("Save uniforms as...",	this, SLOT(saveUniformsAs(void)));
-		removePipelineAction	= addAction("Close pipeline",		this, SLOT(removePipeline(void)));
+		loadUniformsAction		= addAction("Load uniforms",		this, SLOT(loadUniforms(void)));
+		saveUniformsAction		= addAction("Save uniforms",		this, SLOT(saveUniforms(void)));
+		saveUniformsAsAction		= addAction("Save uniforms as...",	this, SLOT(saveUniformsAs(void)));
+		toggleLockPipelineAction	= addAction("To Be Defined",		this, SLOT(toggleLockPipeline(void)));
+		removePipelineAction		= addAction("Close pipeline",		this, SLOT(removePipeline(void)));
 
 		setEnabled(false);
 	}
@@ -1494,12 +1529,17 @@ using namespace QGPM;
 	PipelineMenu::~PipelineMenu(void)
 	{
 		currentPipelineItem = NULL;
-	}
+	}	
 
-	void PipelineMenu::removePipeline(void)
+	void PipelineMenu::updateToggles(void)
 	{
 		if(currentPipelineItem!=NULL)
-			emit removePipeline(currentPipelineItem);
+		{
+			if(currentPipelineItem->isLocked())
+				toggleLockPipelineAction->setText("Unlock Pipeline");
+			else
+				toggleLockPipelineAction->setText("Lock Pipeline");
+		}
 	}
 
 	void PipelineMenu::loadUniforms(void)
@@ -1539,14 +1579,31 @@ using namespace QGPM;
 		}
 	}
 
+	void PipelineMenu::toggleLockPipeline(void)
+	{
+		if(currentPipelineItem!=NULL)
+		{
+			currentPipelineItem->lock( !currentPipelineItem->isLocked() );
+			
+			updateToggles();		
+		}
+	}
+
+	void PipelineMenu::removePipeline(void)
+	{
+		if(currentPipelineItem!=NULL)
+			emit removePipeline(currentPipelineItem);
+	}
+
 	void PipelineMenu::addToMenu(QMenu& menu)
 	{
 		if(isEnabled())
-		{
-			menu.addAction(removePipelineAction);
+		{	
 			menu.addAction(loadUniformsAction);
 			menu.addAction(saveUniformsAction);
 			menu.addAction(saveUniformsAsAction);
+			menu.addAction(toggleLockPipelineAction);
+			menu.addAction(removePipelineAction);
 			menu.addSeparator();
 		}
 	}
@@ -1573,6 +1630,8 @@ using namespace QGPM;
 
 			currentPipelineItem = targetPipelineItem;
 			setEnabled(currentPipelineItem!=NULL);
+
+			updateToggles();	
 		}
 		else
 		{

@@ -757,6 +757,7 @@ using namespace QVGL;
 		resizeActive(false),
 		resizeHorizontalLock(false),
 		resizeVerticalLock(false),
+		maximized(false),
 		qvglParent(NULL),
 		graphicsProxy(NULL)
 	{
@@ -837,14 +838,13 @@ using namespace QVGL;
 				QPoint v = mapToParent(event->pos() - offset);
 
 				// Prevent the widget from moving out of the scene : 
-				const int 	x	= std::max(0, std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x())),
-						y	= std::max(0, std::max(std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()), TopBar::getHeight()));		
-
-				if(x!=v.x() || y!=v.y())
-					offset = event->pos();
-
-				v.setX(x);
-				v.setY(y);
+				//const int 	x	= std::max(0, std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x())),
+				//		y	= std::max(0, std::max(std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()), TopBar::getHeight()));		
+				//
+				//if(x!=v.x() || y!=v.y())
+				//	offset = event->pos();
+				//v.setX(x);
+				//v.setY(y); 
  
 				move(v);
 			}
@@ -871,8 +871,6 @@ using namespace QVGL;
 				resize(width()+d.x(), height()+d.y());
 			}
 		}
-
-		//std::cout << "GLSubWidget : Mouse move event" << std::endl;
 	}
 
 	void SubWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -885,6 +883,42 @@ using namespace QVGL;
 			
 			motionActive = false;
 			resizeActive = false;
+		}
+	}
+
+	void SubWidget::mouseDoubleClickEvent(QMouseEvent* event)
+	{
+		QWidget::mouseDoubleClickEvent(event);
+
+		// It seems that the previous line always accepts the event. 
+		// We assume the titleBar discrimination is sufficient.
+
+		if(qvglParent!=NULL && titleWidget.underMouse())
+		{
+			if(!maximized)
+			{
+				// Remember the current size :
+				originalPosition = pos();
+				originalSize = size();
+				
+				// Set the maximized size :
+				move(0, TopBar::getHeight());
+				resize(qvglParent->sceneRect().width(), qvglParent->sceneRect().height()-TopBar::getHeight());
+				
+				maximized = true;
+			}
+			else
+			{
+				// Restore :
+				move(originalPosition);
+				resize(originalSize);
+
+				maximized = false;
+			}
+
+			//  Do not propagate the event hereafter.	
+			if(!event->isAccepted())
+				event->accept();
 		}
 	}
 
@@ -1644,8 +1678,8 @@ using namespace QVGL;
 		setActionKeySequence(ActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
 		setActionKeySequence(ActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
 		setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
-		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::CTRL + Qt::Key_R));
-		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::CTRL + Qt::Key_E));
+		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_F));
+		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::ALT + Qt::Key_G));
 		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::CTRL + Qt::Key_T));
 		setActionKeySequence(ActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::CTRL + Qt::Key_Y));
 		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::CTRL + Qt::Key_U));

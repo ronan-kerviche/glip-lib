@@ -1253,8 +1253,9 @@
 				}
 			}
 
-			if(inputPorts<0)
-				throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+			// This code was testing the presence of input ports. It was removed to allow for input-less pipeline.
+			//if(inputPorts<0)
+			//	throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
 
 			if(outputPorts<0)
 				throw Exception("From line " + toString(e.startLine) + " : The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
@@ -1265,11 +1266,14 @@
 			// Create the object :
 			PipelineLayout layout(e.name);
 
-			// Add the inputs :
-			preliminaryTests(parser.elements[inputPorts], -1, 1, 256, -1, "InputPorts");
+			// Add the inputs (if they exist) :
+			if(inputPorts>=0)
+			{
+				preliminaryTests(parser.elements[inputPorts], -1, 1, 256, -1, "InputPorts");
 
-			for(int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
-				layout.addInput(parser.elements[inputPorts].arguments[k]);
+				for(int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
+					layout.addInput(parser.elements[inputPorts].arguments[k]);
+			}
 
 			// Add the outputs :
 			preliminaryTests(parser.elements[outputPorts], -1, 1, 256, -1, "OutputPorts");
@@ -1515,12 +1519,15 @@
 				}
 			}
 
-			if(inputPorts<0)
+			// This code was testing the presence of input ports. It was removed to allow for input-less pipeline.
+			/*if(inputPorts<0)
 			{
 				if(mustHaveInputsAndOutputs)
 					throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
 			}			
-			else
+			else*/
+
+			if(inputPorts>=0)
 				inputs  = parser.elements[inputPorts].arguments;
 
 			if(outputPorts<0)

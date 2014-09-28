@@ -283,16 +283,20 @@ namespace QVGL
 			QWidget			*widget;
 			MainWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
-			bool 			visible,
+			bool 			visible,	
 						motionActive,
 						resizeActive,
 						resizeHorizontalLock,
-						resizeVerticalLock;
-			QPoint 			offset;
+						resizeVerticalLock,
+						maximized;
+			QSize			originalSize;
+			QPoint 			originalPosition,
+						offset;
 
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
+			void mouseDoubleClickEvent(QMouseEvent* event);
 
 			void addChild(QObject* pObject);
 			void removeChild(QObject* pObject);

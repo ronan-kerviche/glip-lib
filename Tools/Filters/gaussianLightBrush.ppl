@@ -1,0 +1,42 @@
+REQUIRED_FORMAT:outputFormat(inputFormat0)
+
+INCLUDE_FILE(maths.ppl)
+
+SHADER_SOURCE:gaussianLightBrushShader
+{
+	#version 130
+	
+	uniform sampler2D inputTexture, inputMask;
+	out vec4 outputTexture, outputMask;
+	
+	// Directly linked to the mouse left click position. Press and drag to paint.
+	uniform ivec2 	VectorLastLeftPositionImage = ivec2(0, 0); // Can be changed to VectorLastRightPositionImage	
+	uniform float	radius = 0.01;
+	
+	INCLUDE_SHARED_SOURCE:maths
+
+	void main()
+	{
+		vec2 	pos 	= gl_TexCoord[0].st;
+		vec4 	color 	= textureLod(inputTexture, pos, 0),
+			mask	= textureLod(inputMask, pos, 0);
+		vec2	mTex	= textureCoordinates(VectorLastLeftPositionImage, inputTexture);
+
+		mask.r = min(1.0, mask.r + gaussian(distance(pos, mTex), radius));
+	
+		color.rgb = (1.0 + mask.r) * color.rgb;
+
+		outputTexture = color;
+		outputMask = mask;
+	}
+}
+
+FILTER_LAYOUT:gaussianLightBrushFilter(outputFormat, gaussianLightBrushShader)
+
+PIPELINE_MAIN:gaussianLightBrushPipeline
+{
+	INPUT_PORTS(inputTexture, inputMask)
+	OUTPUT_PORTS(outputTexture, outputMask)
+
+	FILTER_INSTANCE:gaussianLightBrushFilter(gaussianLightBrushFilter)
+}

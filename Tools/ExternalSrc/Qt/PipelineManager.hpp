@@ -251,6 +251,7 @@ namespace QGPM
 								cellB,
 								computationCount;
 			QString					uniformsFilename;
+			bool					locked;
 			#ifdef __USE_QVGL__
 			const QVGL::MouseState*			mouseState;
 			#endif
@@ -258,6 +259,7 @@ namespace QGPM
 			void setText(int column, const QString & text);
 			std::string getInputFormatName(int idx);
 
+			void updateText(void);
 			void preInterpret(void);
 			void refurnishPortItems(void);
 			bool checkConnections(void);
@@ -294,6 +296,8 @@ namespace QGPM
 			const __ReadOnly_HdlTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
 			int getComputationCount(void) const;
+			bool isLocked(void) const;
+			void lock(bool enabled);
 
 			const QString& getUniformsFilename(void) const;
 			void loadUniforms(QString filename="");
@@ -403,14 +407,18 @@ namespace QGPM
 			QAction		*loadUniformsAction,
 					*saveUniformsAction,
 					*saveUniformsAsAction,
+					*toggleLockPipelineAction,
 					*removePipelineAction;
 			PipelineItem	*currentPipelineItem;
 
-		private slots : 
-			void removePipeline(void);
+			void updateToggles(void);
+
+		private slots : 	
 			void loadUniforms(void);
 			void saveUniforms(void);
 			void saveUniformsAs(void);
+			void toggleLockPipeline(void);
+			void removePipeline(void);
 
 		public : 
 			PipelineMenu(QWidget* parent=NULL);

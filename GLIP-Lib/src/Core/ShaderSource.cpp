@@ -49,44 +49,6 @@
 		lineOffset		= ss.lineOffset;
 	}
 
-	/*
-	fn    ShaderSource::ShaderSource(const char** src, bool eol, int lines)
-	brief ShaderSource Construtor.
-	param src Pointer to table of lines.
-	param eol Set to true if the code contains End Of Line delimiters.
-	param lines Number of lines to consider.
-	*/
-	/*ShaderSource::ShaderSource(const char** src, bool eol, int lines)
-	 : compatibilityRequest(false), versionNumber(0)
-	{
-		if(src==NULL)
-			throw Exception("ShaderSource::ShaderSource - Can't load from NULL", __FILE__, __LINE__);
-
-		source.clear();
-		sourceName = "<Inner String>";
-
-		if(lines>1)
-		{
-			for(int i = 1; i<lines; i++)
-			{
-				if(src[i]!=NULL) source += src[i];
-				if(eol)          source += "\n";
-			}
-		}
-		else
-		{
-			int i = 0;
-			while(src[i]!=NULL)
-			{
-				source += src[i];
-				if(eol) source += "\n";
-				i++;
-			}
-		}
-
-		parseCode();
-	}*/
-
 	/**
 	\fn    ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
 	\brief Constructor of ShaderSource, load from a standard string or a file.
@@ -450,7 +412,8 @@
 			atLeastOneInfo = false;
 		int	incriminatedLine = 0;
 
-		const std::string delimAMDATI = "ERROR: 0:";
+		const std::string 	delimAMDATI = "ERROR: 0:",
+					delimINTEL = "0:";
 		std::string buggyLine;
 		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
 		std::stringstream str("");
@@ -498,17 +461,33 @@
 						buggyLine = getLine(incriminatedLine-1);
 					break;
 				case HandleOpenGL::vd_INTEL :
+					one = line.find(delimINTEL);
+					if(one!=std::string::npos)
+					{
+						two = line.find('(',one+delimINTEL.size()+1);
+						if(two!=std::string::npos)
+						{
+							if(fromString(line.substr(one+delimINTEL.size(), two-one-delimINTEL.size()), incriminatedLine))
+							{
+								buggyLine = getLine(incriminatedLine-1);
+								prevLineEnhancement = true;
+							}
+						}
+					}
+					break;
 				case HandleOpenGL::vd_AMDATI :
 					one = line.find(delimAMDATI);
 					if(one!=std::string::npos)
 					{
 						two = line.find(':',one+delimAMDATI.size()+1);
 						if(two!=std::string::npos)
+						{
 							if(fromString(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
 							{
 								buggyLine = getLine(incriminatedLine-1);
 								prevLineEnhancement = true;
 							}
+						}
 					}
 					break;
 				case HandleOpenGL::vd_UNKNOWN :

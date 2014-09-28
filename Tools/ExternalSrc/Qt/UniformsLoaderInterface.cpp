@@ -493,7 +493,9 @@
 		{
 			ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(nodeItem, type());
 		
-			if(valuesInterface!=NULL && valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState))
+			std::cout << "UniformsLoaderInterface::updateNodeWithMouseState - " << nodeItem->text(0).toStdString() << " = " << valuesInterface << std::endl;
+
+			if(valuesInterface!=NULL && (valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState)))
 				return 1;
 			else
 				return 0;
