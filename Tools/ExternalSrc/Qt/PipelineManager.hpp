@@ -81,7 +81,8 @@ namespace QGPM
 			void modified(QVector<const void*> resourceChain);
 			void formatModified(void);
 			void statusChanged(bool valid);
-			void connectionClosed(void);			
+			void connectionClosed(void);
+			// destroyed() inherited from QObject		
 	};
 
 	class ConnectionToImageItem : public Connection
@@ -244,7 +245,7 @@ namespace QGPM
 			Pipeline*				pipeline;
 			QTreeWidgetItem				inputsNode,
 								outputsNode;
-			UniformsLoaderInterface*		uniformsNode;
+			QGUI::UniformsLoaderInterface*		uniformsNode;
 			QVector<InputPortItem*>			inputPortItems;
 			QVector<OutputPortItem*>		outputPortItems;
 			int					cellA,
@@ -298,6 +299,7 @@ namespace QGPM
 			int getComputationCount(void) const;
 			bool isLocked(void) const;
 			void lock(bool enabled);
+			void renewBuffers(void);
 
 			const QString& getUniformsFilename(void) const;
 			void loadUniforms(QString filename="");
@@ -408,6 +410,7 @@ namespace QGPM
 					*saveUniformsAction,
 					*saveUniformsAsAction,
 					*toggleLockPipelineAction,
+					*renewBuffersAction,
 					*removePipelineAction;
 			PipelineItem	*currentPipelineItem;
 
@@ -418,6 +421,7 @@ namespace QGPM
 			void saveUniforms(void);
 			void saveUniformsAs(void);
 			void toggleLockPipeline(void);
+			void renewBuffers(void);
 			void removePipeline(void);
 
 		public : 
@@ -444,12 +448,14 @@ namespace QGPM
 			QMenuBar				menuBar;
 			PipelineMenu				pipelineMenu;
 			ConnectionsMenu				connectionsMenu;
-			UniformsLinkMenu			uniformsLinkMenu;
+			QGUI::UniformsLinkMenu			uniformsLinkMenu;
 			OutputsMenu				outputsMenu;
-			QTreeWidget				treeWidget;
+			QGUI::QTreeWidgetSpecial		treeWidget;
 			#ifdef __USE_QVGL__
 			const QVGL::MouseState*			mouseState;
 			#endif
+
+			void resizeEvent(QResizeEvent* event);
 
 		private slots :
 			void itemSelectionChanged(void);

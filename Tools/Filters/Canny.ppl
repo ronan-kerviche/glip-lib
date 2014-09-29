@@ -14,7 +14,7 @@ SHADER_SOURCE:gaussianBlurShader
 	uniform sampler2D 	inputTexture;
 	out 	vec4		blurredTexture;
 
-	INCLUDE_SHARED_SOURCE:convolutionTool
+	INSERT(convolutionTool)
 
 	/*const mat3 blurKernel	= mat3(	0.0740, 0.2054, 0.0740
 					0.2054, 0.5699, 0.2054

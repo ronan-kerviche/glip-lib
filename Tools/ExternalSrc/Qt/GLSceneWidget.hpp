@@ -111,8 +111,8 @@ namespace QVGL
 					viewCenter[2],
 					homothecyCenter[2],
 					homothecyScale;
-			bool 		flipUpDown,		// upside down
-					flipLeftRight;		// mirrored
+			bool 		flipUpDown,		// upside down.
+					flipLeftRight;		// mirrored.
 
 			void prepareToDraw(void);
 
@@ -297,6 +297,7 @@ namespace QVGL
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
 			void mouseDoubleClickEvent(QMouseEvent* event);
+			void wheelEvent(QWheelEvent* event);
 
 			void addChild(QObject* pObject);
 			void removeChild(QObject* pObject);
@@ -318,6 +319,8 @@ namespace QVGL
 			QString getTitle(void);
 			void setTitle(QString title);
 			MainWidget* getQVGLParent(void);
+			bool isMaximized(void) const;
+			void toggleMaximized(void);
 			bool shoudBeVisible(void) const;
 
 		public slots :

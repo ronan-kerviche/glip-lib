@@ -18,6 +18,21 @@
 #include "QMenuTools.hpp"
 #include <QMessageBox>
 
+using namespace QGUI;
+
+// QTreeWidgetSpecial :
+	QTreeWidgetSpecial::QTreeWidgetSpecial(QWidget* parent)
+	 :	QTreeWidget(parent)
+	{ }
+
+	void QTreeWidgetSpecial::scrollContentsBy(int dx, int dy)
+	{
+		QTreeWidget::scrollContentsBy(dx, dy);
+
+		//Update the geometries of the widgets : 
+		updateGeometries();
+	}
+
 // ValuesInterface :
 	ValuesInterface::ValuesInterface(UniformsLoader::Resource& _resource, QWidget* parent)
 	 : 	QWidget(parent),
@@ -29,6 +44,9 @@
 			colorID(QVGL::MouseState::InvalidColorID)
 		#endif
 	{
+		layout.setMargin(0);
+		layout.setSpacing(0);
+
 		HdlDynamicData& object = resource.object();
 
 		if(object.isFloatingPointType())
@@ -45,9 +63,9 @@
 
 				// Create box : 
 				if(object.isFloatingPointType())
-					floatBoxes[index] = new QDoubleSpinBox;
+					floatBoxes[index] = new QDoubleSpinBox(this);
 				else
-					integerBoxes[index] = new QSpinBox;
+					integerBoxes[index] = new QSpinBox(this);
 
 				// Settings : 
 				if(object.isFloatingPointType())

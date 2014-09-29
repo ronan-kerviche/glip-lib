@@ -19,7 +19,7 @@ SHADER_SOURCE:bilateralShader
 	uniform int	windowSize = 5;
 	
 	// For the gaussian kernel : 
-	INCLUDE_SHARED_SOURCE:maths
+	INSERT(maths)
 
 	void main()
 	{

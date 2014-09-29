@@ -804,7 +804,7 @@ using namespace QVGL;
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 		{
-			event->accept(); // Do not propagate the event hereafter
+			//event->accept(); // Do not propagate the event hereafter
 			
 			offset = event->pos();
 
@@ -820,6 +820,9 @@ using namespace QVGL;
 			}
 		}
 
+		// Absorb all : 
+		event->accept();
+
 		// Send selection signal : 
 		emit selected(this);
 	}
@@ -830,8 +833,20 @@ using namespace QVGL;
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 		{
-			event->accept(); // Do not propagate the event hereafter.
+			//event->accept(); // Do not propagate the event hereafter.
 
+			// Protect from moving a maximized widget :
+			if(isMaximized() && !resizeActive)
+			{
+				toggleMaximized();
+
+				//move(mapToParent(event->pos()));
+				//move(mapToGlobal(event->pos()));
+				move(event->pos() - offset);
+
+				offset = event->pos();
+			}
+			
 			if(motionActive)
 			{
 				// Get the new position : 
@@ -848,7 +863,7 @@ using namespace QVGL;
  
 				move(v);
 			}
-			else if(resizeActive)
+			else if(resizeActive && !isMaximized())
 			{
 				QPoint d = event->pos() - offset;
 
@@ -871,6 +886,9 @@ using namespace QVGL;
 				resize(width()+d.x(), height()+d.y());
 			}
 		}
+
+		// Absorb all : 
+		event->accept();
 	}
 
 	void SubWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -879,11 +897,14 @@ using namespace QVGL;
 
 		if(!event->isAccepted())
 		{
-			event->accept(); // Do not propagate the event hereafter.
+			//event->accept(); // Do not propagate the event hereafter.
 			
 			motionActive = false;
 			resizeActive = false;
 		}
+
+		// Absorb all : 
+		event->accept();
 	}
 
 	void SubWidget::mouseDoubleClickEvent(QMouseEvent* event)
@@ -895,31 +916,23 @@ using namespace QVGL;
 
 		if(qvglParent!=NULL && titleWidget.underMouse())
 		{
-			if(!maximized)
-			{
-				// Remember the current size :
-				originalPosition = pos();
-				originalSize = size();
-				
-				// Set the maximized size :
-				move(0, TopBar::getHeight());
-				resize(qvglParent->sceneRect().width(), qvglParent->sceneRect().height()-TopBar::getHeight());
-				
-				maximized = true;
-			}
-			else
-			{
-				// Restore :
-				move(originalPosition);
-				resize(originalSize);
-
-				maximized = false;
-			}
+			toggleMaximized();
 
 			//  Do not propagate the event hereafter.	
-			if(!event->isAccepted())
-				event->accept();
+			//if(!event->isAccepted())
+			//	event->accept();
 		}
+
+		// Absorb all : 
+		event->accept();
+	}
+
+	void SubWidget::wheelEvent(QWheelEvent* event)
+	{
+		QWidget::wheelEvent(event);
+
+		// Absorb all : 
+		event->accept();
 	}
 
 	void SubWidget::addChild(QObject* pObject)
@@ -1034,6 +1047,35 @@ using namespace QVGL;
 	MainWidget* SubWidget::getQVGLParent(void)
 	{
 		return qvglParent;
+	}
+
+	bool SubWidget::isMaximized(void) const
+	{
+		return maximized;
+	}
+
+	void SubWidget::toggleMaximized(void)
+	{
+		if(!maximized)
+		{
+			// Remember the current size :
+			originalPosition = pos();
+			originalSize = size();
+			
+			// Set the maximized size :
+			move(0, TopBar::getHeight());
+			resize(qvglParent->sceneRect().width(), qvglParent->sceneRect().height()-TopBar::getHeight());
+			
+			maximized = true;
+		}
+		else
+		{
+			// Restore :
+			move(originalPosition);
+			resize(originalSize);
+
+			maximized = false;
+		}
 	}
 
 	bool SubWidget::shoudBeVisible(void) const

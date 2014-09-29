@@ -67,8 +67,8 @@ namespace Glip
 			KW_LL_REQUIRED_FORMAT,
 			KW_LL_REQUIRED_GEOMETRY,
 			KW_LL_REQUIRED_PIPELINE,
-			KW_LL_SHARED_SOURCE,
-			KW_LL_INCLUDE_SHARED_SOURCE,
+			KW_LL_SHARED_CODE,
+			KW_LL_INSERT,
 			KW_LL_GEOMETRY,
 			KW_LL_GRID_2D,
 			KW_LL_GRID_3D,
@@ -78,7 +78,7 @@ namespace Glip
 			KW_LL_VERTEX,
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
-			KW_LL_MODULE_CALL,
+			KW_LL_CALL,
 			KW_LL_UNIQUE,
 			LL_NumKeywords,
 			LL_UnknownKeyword
@@ -92,7 +92,7 @@ The LayoutLoader module enables you to use dynamic pipeline saved in a file or a
 
 The script must be structured with the following commands (but no special order is needed except standard declaration order) :
 
-- Protect file from being including twice and leading to redefinition errors : <BR>
+- Protect file from being included twice and leading to redefinition errors : <BR>
 <b>UNIQUE</b>(<i>someUniqueString</i>) 
 
 - Format for the texture : <BR>
@@ -119,7 +119,7 @@ Examples : <BR>
 <b>REQUIRED_GEOMETRY</b>:<i>geometry_name</i>(<i>required_geometry_name</i>)
 
 - Module call, see LayoutLoaderModule for more information : <BR>
-<b>MODULE_CALL</b> : <i>module_name</i> (<i> module_arguments</i>) <BR>
+<b>CALL</b> : <i>module_name</i> (<i> module_arguments</i>) <BR>
 { <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>(Optional)</i> <BR>
 } <BR>
@@ -179,15 +179,15 @@ Or, via an indirection : <BR>
 - Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
 <b>INCLUDE_FILE</b>(<i>string filename</i>)
 
-- Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT_SHARED_CODE marker : <BR>
-<b>SHARED_SOURCE:shared_segment_name</b> <BR>
+- Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT marker : <BR>
+<b>SHARED_CODE:shared_segment_name</b> <BR>
 { <BR>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>// shared code goes here...</i> <BR>
 } <BR>
 &nbsp;&nbsp; Then use : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i> <BR>
 { <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>INCLUDE_SHARED_SOURCE:shared_segment_name</b> // The shared code will be inserted here... <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <b>INSERT(shared_segment_name)</b> // The shared code will be inserted here... <BR>
 } <BR>
 
 - Comments : C++ style.

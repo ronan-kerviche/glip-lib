@@ -23,6 +23,7 @@
 	#include <QGridLayout>
 	#include <QDoubleSpinBox>
 	#include <QSignalMapper>
+	#include <QItemDelegate>
 
 	// For user inputs :
 	#define __USE_QVGL__
@@ -32,11 +33,22 @@
 		#include "GLSceneWidget.hpp"
 	#endif
 	
+namespace QGUI
+{
 	// Namespaces
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
+
+	class QTreeWidgetSpecial : public QTreeWidget
+	{
+		private : 
+			void scrollContentsBy(int dx, int dy);
+			
+		public : 
+			QTreeWidgetSpecial(QWidget* parent=NULL);
+	};
 
 	class ValuesInterface : public QWidget
 	{
@@ -61,7 +73,7 @@
 
 		public : 
 			ValuesInterface(UniformsLoader::Resource& _resource, QWidget* parent=NULL);
-			~ValuesInterface(void);
+			virtual ~ValuesInterface(void);
 			
 			const UniformsLoader::Resource& getResource(void) const;
 			UniformsLoader::Resource& getResource(void);
@@ -159,6 +171,7 @@
 				void updateToSelection(QList<QTreeWidgetItem*>& selection);
 		};
 	#endif
+}
 
 #endif
 

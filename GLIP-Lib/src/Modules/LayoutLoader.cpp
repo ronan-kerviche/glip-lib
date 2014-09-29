@@ -56,8 +56,8 @@
 										"REQUIRED_FORMAT",
 										"REQUIRED_GEOMETRY",
 										"REQUIRED_PIPELINE",
-										"SHARED_SOURCE",
-										"INCLUDE_SHARED_SOURCE",
+										"SHARED_CODE",
+										"INSERT",
 										"GEOMETRY",
 										"GRID_2D",
 										"GRID_3D",
@@ -67,7 +67,7 @@
 										"VERTEX",
 										"ELEMENT",
 										"ADD_PATH",
-										"MODULE_CALL",
+										"CALL",
 										"UNIQUE"
 									};
 
@@ -287,9 +287,11 @@
 
 	void LayoutLoader::enhanceShaderSource(std::string& str)
 	{
+		const char		openArg		= '(',
+					closeArg	= ')';
 		const std::string 	spacers 	= " \t\r\n\f\v",
 					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
-					keyword 	= keywords[KW_LL_INCLUDE_SHARED_SOURCE];
+					keyword 	= keywords[KW_LL_INSERT];
 
 		size_t pos = str.find(keyword);
 
@@ -297,10 +299,10 @@
 		{
 			size_t k = pos + keyword.size();
 
-			// Find the following trailing ':' :
+			// Find the following trailing openArg :
 			for(; k<str.size(); k++)
 			{
-				if(str[k]==':')
+				if(str[k]==openArg)
 					break;
 				else if(spacers.find(str[k])==std::string::npos)
 				{
@@ -311,16 +313,16 @@
 
 			// Possible errors :
 			if(k>=str.size())
-				throw Exception("Missing ':' after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
+				throw Exception("Missing '(' after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
 
 			size_t 	begin 	= str.find_first_not_of(spacers, k);
 
 			if(begin==std::string::npos)
 				throw Exception("Missing name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
 
-			size_t 	end	= str.find_first_of(endSpacers, begin);
+			size_t 	end	= str.find(closeArg, begin);
 
-			if(begin==std::string::npos)
+			if(end==std::string::npos)
 				throw Exception("Missing end to name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
 
 			// Extract name :
@@ -333,7 +335,7 @@
 				throw Exception("SharedCode object \"" + sharedCodeName + "\" is not reference in the current database.", __FILE__, __LINE__);
 
 			// Replace :
-			str.replace(str.begin() + pos, str.begin() + end, it->second.begin(), it->second.end());
+			str.replace(str.begin() + pos, str.begin() + end + 1, it->second.begin(), it->second.end());
 
 			// Search next occurence :
 			pos = str.find(keyword);
@@ -1416,7 +1418,7 @@
 						break;
 					case KW_LL_UNIQUE :
 						break; // Already processed, nothing to do here.
-					case KW_LL_SHARED_SOURCE :
+					case KW_LL_SHARED_CODE :
 						buildSharedCode(rootParser.elements[k]);
 						break;
 					case KW_LL_REQUIRED_FORMAT :
@@ -1428,7 +1430,7 @@
 					case KW_LL_REQUIRED_PIPELINE :
 						buildRequiredPipeline(rootParser.elements[k]);
 						break;
-					case KW_LL_MODULE_CALL :
+					case KW_LL_CALL :
 						moduleCall(rootParser.elements[k]);
 						break;
 					case KW_LL_FORMAT_LAYOUT :
@@ -1871,7 +1873,7 @@
 						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "Unique");
 						result.unique = rootParser.elements[k].arguments[0];
 						break;
-					case KW_LL_SHARED_SOURCE :
+					case KW_LL_SHARED_CODE :
 						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "SharedCode");
 						result.shaderSources.push_back( rootParser.elements[k].name );
 						break;
@@ -1890,7 +1892,7 @@
 						result.requiredPipelines.push_back( rootParser.elements[k].arguments[0] );
 						// WARNING, THE REQUIRED PIPELINE I/O ARE NOT LISTED BECAUSE WE CAN'T KNOW THEM AHEAD OF TIME.
 						break;
-					case KW_LL_MODULE_CALL :
+					case KW_LL_CALL :
 						preliminaryTests(rootParser.elements[k], 1, -1, -1, 0, "ModuleCall");
 						result.modulesCalls.push_back( rootParser.elements[k].name );
 						break;

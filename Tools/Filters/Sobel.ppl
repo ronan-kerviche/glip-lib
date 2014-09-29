@@ -9,7 +9,7 @@ INCLUDE_FILE(maths.ppl)
 // Format :
 REQUIRED_FORMAT:sobelOutputFormat(inputFormat0)
 
-SHARED_SOURCE:Sobel
+SHARED_CODE:Sobel
 {
 	const mat3 kernelX = mat3(	-1.0, 0.0, 1.0,
 					-2.0, 0.0, 2.0,
@@ -44,8 +44,8 @@ SHADER_SOURCE:sobelShaderVisualization()
 				visualization;
 
 	// Use the convolution tool :
-	INCLUDE_SHARED_SOURCE:convolutionTool
-	INCLUDE_SHARED_SOURCE:Sobel
+	INSERT(convolutionTool)
+	INSERT(Sobel)
 
 	void main()
 	{

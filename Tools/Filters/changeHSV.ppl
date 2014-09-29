@@ -13,7 +13,7 @@ SHADER_SOURCE:ChangeHSVShader
 	uniform sampler2D	textureInput;
 	out     vec4 		textureChangedHSV;
 	
-	INCLUDE_SHARED_SOURCE:ColorPrimitives
+	INSERT(ColorPrimitives)
 
 	uniform float vScal = 1.0, sScal = 1.0, hRot;
 

@@ -151,7 +151,10 @@ using namespace QGPM;
 	void ConnectionToPipelineOutput::pipelineItemStatusChanged(void)
 	{
 		if(pipelineItem!=NULL)
+		{
+			std::cout << "ConnectionToPipelineOutput::pipelineItemStatusChanged" << std::endl;
 			emit Connection::statusChanged(pipelineItem->isValid());
+		}
 	}
 
 	void ConnectionToPipelineOutput::pipelineItemDestroyed(void)
@@ -391,6 +394,8 @@ using namespace QGPM;
 
 	OutputPortItem::~OutputPortItem(void)
 	{
+		emit discardConnection();
+
 		delete view;
 		view = NULL;
 	}
@@ -795,9 +800,9 @@ using namespace QGPM;
 		
 		// Create the uniforms profile :
 		#ifdef __USE_QVGL__
-			uniformsNode = new UniformsLoaderInterface(UniformsHeaderItemType, mouseState);
+			uniformsNode = new QGUI::UniformsLoaderInterface(UniformsHeaderItemType, mouseState);
 		#else 
-			uniformsNode = new UniformsLoaderInterface(UniformsHeaderItemType);
+			uniformsNode = new QGUI::UniformsLoaderInterface(UniformsHeaderItemType);
 		#endif
 
 		addChild(uniformsNode);
@@ -820,11 +825,16 @@ using namespace QGPM;
 					selfConnectionTest = selfConnectionTest || inputPortItems[k]->getConnection()->selfTest(this);
 			}
 
-			if(selfConnectionTest && (cellA==-1 || cellB==-1))
+			if(selfConnectionTest)
 			{
-				cellA = pipeline->getCurrentCellID();
-				cellB = pipeline->createBuffersCell();
+				if(cellA==-1)
+					cellA = pipeline->getCurrentCellID();
+		
+				if(cellB==-1)
+					cellB = pipeline->createBuffersCell();
 			}
+			else
+				cellA = pipeline->getCurrentCellID();
 		}
 	}
 
@@ -932,7 +942,7 @@ using namespace QGPM;
 
 	void PipelineItem::connectionStatusChanged(int portIdx, bool validity)
 	{
-		std::cout << "PipelineItem::connectionStatusChanged" << std::endl;
+		std::cout << "PipelineItem::connectionStatusChanged - Port : " << portIdx << std::endl;
 	}
 
 	void PipelineItem::connectionClosed(int portIdx)
@@ -996,7 +1006,7 @@ using namespace QGPM;
 		loader.clearPaths();
 		loader.addToPaths(path);
 
-		source = _source;
+		source = _source + "\n";
 
 		preInterpret();
 
@@ -1063,6 +1073,32 @@ using namespace QGPM;
 	{
 		locked = enabled;
 		updateText();
+	}
+
+	void PipelineItem::renewBuffers(void)
+	{
+		if(pipeline!=NULL)
+		{
+			bool changed = false;
+
+			if(cellA!=-1)
+			{
+				pipeline->removeBuffersCell(cellA);
+				cellA = pipeline->createBuffersCell();
+				pipeline->changeTargetBuffersCell(cellA);
+				changed = true;
+			}				
+
+			if(cellB!=-1)
+			{
+				pipeline->removeBuffersCell(cellB);
+				cellB = pipeline->createBuffersCell();
+				changed = true;
+			}
+
+			if(changed && checkConnections())
+				compute();
+		}	
 	}
 
 	const QString& PipelineItem::getUniformsFilename(void) const
@@ -1514,13 +1550,15 @@ using namespace QGPM;
 		saveUniformsAction(NULL),
 		saveUniformsAsAction(NULL),
 		toggleLockPipelineAction(NULL),
+		renewBuffersAction(NULL),
 		removePipelineAction(NULL),
 		currentPipelineItem(NULL)
 	{
 		loadUniformsAction		= addAction("Load uniforms",		this, SLOT(loadUniforms(void)));
 		saveUniformsAction		= addAction("Save uniforms",		this, SLOT(saveUniforms(void)));
 		saveUniformsAsAction		= addAction("Save uniforms as...",	this, SLOT(saveUniformsAs(void)));
-		toggleLockPipelineAction	= addAction("To Be Defined",		this, SLOT(toggleLockPipeline(void)));
+		toggleLockPipelineAction	= addAction("To Be Defined Dynamically",this, SLOT(toggleLockPipeline(void)));
+		renewBuffersAction		= addAction("Renew Buffers",		this, SLOT(renewBuffers(void)));
 		removePipelineAction		= addAction("Close pipeline",		this, SLOT(removePipeline(void)));
 
 		setEnabled(false);
@@ -1589,6 +1627,12 @@ using namespace QGPM;
 		}
 	}
 
+	void PipelineMenu::renewBuffers(void)
+	{
+		if(currentPipelineItem!=NULL)
+			currentPipelineItem->renewBuffers();
+	}
+
 	void PipelineMenu::removePipeline(void)
 	{
 		if(currentPipelineItem!=NULL)
@@ -1651,7 +1695,8 @@ using namespace QGPM;
 		pipelineMenu(this),
 		connectionsMenu(this),
 		uniformsLinkMenu(UniformsHeaderItemType, this),
-		outputsMenu(this)
+		outputsMenu(this),
+		treeWidget(this)
 		#ifdef __USE_QVGL__
 		, mouseState(_mouseState)
 		#endif
@@ -1685,6 +1730,11 @@ using namespace QGPM;
 		for(QMap<void*, PipelineItem*>::iterator it=pipelineItems.begin(); it!=pipelineItems.end(); it++)
 			delete it.value();
 		pipelineItems.clear();
+	}
+
+	void PipelineManager::resizeEvent(QResizeEvent* event)
+	{
+		std::cout << "PipelineManager::resizeEvent" << std::endl;
 	}
 
 	void PipelineManager::itemSelectionChanged(void)

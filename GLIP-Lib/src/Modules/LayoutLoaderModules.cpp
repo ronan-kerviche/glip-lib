@@ -139,6 +139,7 @@
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
 			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
 			loader.addModule( new CHAIN_PIPELINES );
+			loader.addModule( new FORMAT_TO_CONSTANT );
 			loader.addModule( new ABORT_ERROR );
 		}
 
@@ -770,6 +771,20 @@
 
 				// Return : 
 				executionCode = requiredElements + "\n" + result.getCode();
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 2, 2, -1, true,	"Create a SHARED_SOURCE containing an ivec2 describing the size of the texture passed in argument.\n"
+											"For instance, can be used in a shader with : const ivec2 textureSize = INSERT(name);\n"
+											"Arguments   : textureFormat, sharedSourceName\n")
+			{
+				FORMAT_MUST_EXIST( arguments[0] )
+				SHAREDCODE_MUST_NOT_EXIST( arguments[1] )
+	
+				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+
+				std::string str = "ivec2(" + toString(it->second.getWidth()) + ", " + toString(it->second.getHeight()) + ")";
+
+				APPEND_NEW_SHAREDCODE(arguments[1], str);
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"

@@ -5,7 +5,7 @@
 UNIQUE(MATHS_FUNCTIONS)
 
 // Maths functions : 
-SHARED_SOURCE:maths
+SHARED_CODE:maths
 {
 	float gaussian(float l, float r)
 	{
@@ -23,7 +23,7 @@ SHARED_SOURCE:maths
 }
 
 // Higher level code : 
-SHARED_SOURCE:convolutionTool()
+SHARED_CODE:convolutionTool
 {
 	// Read a 3x3 matrix from the sample s, centered at position s :
 	void aggregate(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)

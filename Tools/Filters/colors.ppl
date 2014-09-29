@@ -2,7 +2,7 @@
 	Standard Color Space Conversion Functions
 */
 
-SHARED_SOURCE:ColorPrimitivesPrototypes
+SHARED_CODE:ColorPrimitivesPrototypes
 {
 	void RGBToHSV(in vec3 rgb, out vec3 hsv);
 	void HSVToRGB(in vec3 hsv, out vec3 rgb);
@@ -38,7 +38,7 @@ SHARED_SOURCE:ColorPrimitivesPrototypes
         const float VPD65 = 0.46833;
 */
 
-SHARED_SOURCE:ColorPrimitives
+SHARED_CODE:ColorPrimitives
 {
 	void RGBToHSV(in vec3 rgb, out vec3 hsv)
 	{
