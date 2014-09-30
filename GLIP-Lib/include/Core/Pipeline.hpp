@@ -57,10 +57,10 @@
 
 			// Objects
 /**
-\class __ReadOnly_PipelineLayout
+\class AbstractPipelineLayout
 \brief Pipeline layout (Read Only).
 **/
-			class GLIP_API __ReadOnly_PipelineLayout : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API AbstractPipelineLayout : virtual public AbstractComponentLayout
 			{
 				public :
 					///Flags describing the component kind.
@@ -92,7 +92,7 @@
 
 				private :
 					// Data
-					typedef std::vector<__ReadOnly_ComponentLayout*> ComponentList;
+					typedef std::vector<AbstractComponentLayout*> ComponentList;
 					std::vector<Connection>		connections;
 					ComponentList			elementsLayout;
 					std::vector<ComponentKind>	elementsKind;
@@ -104,7 +104,7 @@
 
 				protected :
 					// Tools
-					__ReadOnly_PipelineLayout(const std::string& type);
+					AbstractPipelineLayout(const std::string& type);
 					void				setElementID(int i, int ID);
 					std::vector<Connection>		getConnectionDestinations(int id, int p);
 					Connection			getConnectionSource(int id, int p);
@@ -114,8 +114,8 @@
 
 				public :
 					// Tools
-					__ReadOnly_PipelineLayout(const __ReadOnly_PipelineLayout& c);
-					virtual ~__ReadOnly_PipelineLayout(void);
+					AbstractPipelineLayout(const AbstractPipelineLayout& c);
+					virtual ~AbstractPipelineLayout(void);
 
 					void 				checkElement(int i) const;
 					int  				getNumElements(void) const;
@@ -128,14 +128,14 @@
 					const std::string&		getElementName(int i) const;	
 					int				getElementID(int i) const;
 					int				getElementID(const std::string& name) const;
-					__ReadOnly_ComponentLayout& 	componentLayout(int i) const;
-					__ReadOnly_ComponentLayout& 	componentLayout(const std::string& name) const;
+					AbstractComponentLayout& 	componentLayout(int i) const;
+					AbstractComponentLayout& 	componentLayout(const std::string& name) const;
 
-					__ReadOnly_FilterLayout&   	filterLayout(int i) const;
-					__ReadOnly_FilterLayout&   	filterLayout(const std::string& name) const;
-					__ReadOnly_PipelineLayout& 	pipelineLayout(int i) const;
-					__ReadOnly_PipelineLayout& 	pipelineLayout(const std::string& name) const;
-					__ReadOnly_PipelineLayout& 	pipelineLayout(const std::vector<std::string>& path); // Cannot be const as it can return itself.
+					AbstractFilterLayout&   	filterLayout(int i) const;
+					AbstractFilterLayout&   	filterLayout(const std::string& name) const;
+					AbstractPipelineLayout& 	pipelineLayout(int i) const;
+					AbstractPipelineLayout& 	pipelineLayout(const std::string& name) const;
+					AbstractPipelineLayout& 	pipelineLayout(const std::vector<std::string>& path); // Cannot be const as it can return itself.
 
 					Connection              	getConnection(int i) const;
 					std::string 			getConnectionDestinationsName(int filterSource, int port);
@@ -145,7 +145,7 @@
 					bool 				check(bool exception = true);
 			};
 
-			typedef __ReadOnly_PipelineLayout::ComponentKind ComponentKind;
+			typedef AbstractPipelineLayout::ComponentKind ComponentKind;
 
 /**
 \class PipelineLayout
@@ -186,14 +186,14 @@ How to create a pipeline layout :
 	// If you save the id of the elements, you can use the ID connection method but it usually is harder to read in code afterward.
 \endcode
 **/
-			class GLIP_API PipelineLayout : virtual public ComponentLayout, virtual public __ReadOnly_PipelineLayout
+			class GLIP_API PipelineLayout : virtual public ComponentLayout, virtual public AbstractPipelineLayout
 			{
 				public :
 					// Tools
 					PipelineLayout(const std::string& type);
-					PipelineLayout(const __ReadOnly_PipelineLayout& c);
-					int	add(const __ReadOnly_FilterLayout& filterLayout,     const std::string& name);
-					int  	add(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& name);
+					PipelineLayout(const AbstractPipelineLayout& c);
+					int	add(const AbstractFilterLayout& filterLayout,     const std::string& name);
+					int  	add(const AbstractPipelineLayout& pipelineLayout, const std::string& name);
 					int  	addInput(const std::string& name);
 					int  	addOutput(const std::string& name);
 
@@ -262,7 +262,7 @@ the buffers cell which represents the needed buffers for one full computation. A
 	}
 \endcode
 **/
-			class GLIP_API Pipeline : public __ReadOnly_PipelineLayout, public Component
+			class GLIP_API Pipeline : public AbstractPipelineLayout, public Component
 			{
 				public :
 					///Actions enumeration.
@@ -295,7 +295,7 @@ the buffers cell which represents the needed buffers for one full computation. A
 						std::vector<int>		outputCounts;		// Number of output textures for the current FBO.
 
 						int size(void) const;
-						void append(const __ReadOnly_HdlTextureFormat& fmt, int count);
+						void append(const HdlAbstractTextureFormat& fmt, int count);
 					};
 
 					struct BuffersCell
@@ -325,9 +325,9 @@ the buffers cell which represents the needed buffers for one full computation. A
 					double					totalPerf;
 
 					// Tools
-					Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name, bool fake);
+					Pipeline(const AbstractPipelineLayout& p, const std::string& name, bool fake);
 					void cleanInput(void);
-					void build(int& currentIdx, std::vector<Filter*>& filters, std::map<int, int>& filtersGlobalID, std::vector<Connection>& connections, __ReadOnly_PipelineLayout& originalLayout);
+					void build(int& currentIdx, std::vector<Filter*>& filters, std::map<int, int>& filtersGlobalID, std::vector<Connection>& connections, AbstractPipelineLayout& originalLayout);
 					void allocateBuffers(std::vector<Connection>& connections);
 
 				protected :
@@ -336,7 +336,7 @@ the buffers cell which represents the needed buffers for one full computation. A
 
 				public :
 					// Tools
-					Pipeline(const __ReadOnly_PipelineLayout& p, const std::string& name);
+					Pipeline(const AbstractPipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
 					int 			getNumActions(void);

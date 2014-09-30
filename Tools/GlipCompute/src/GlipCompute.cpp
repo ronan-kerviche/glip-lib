@@ -790,7 +790,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 					uloader.load(itCommand->uniformVariables, false, itCommand->uniformsLine);
 
 				// Load : 
-				Glip::CorePipeline::__ReadOnly_PipelineLayout pLayout = lloader(pipelineFilename);
+				Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader(pipelineFilename);
 				
 				// Prepare the pipeline : 
 				pipeline = new Glip::CorePipeline::Pipeline(pLayout, "GlipComputePipeline");

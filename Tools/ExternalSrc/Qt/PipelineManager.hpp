@@ -72,7 +72,7 @@ namespace QGPM
 			virtual bool isReady(void) const = 0;
 			virtual QString getName(void) const = 0;
 			virtual bool selfTest(PipelineItem* _pipelineItem) const = 0;
-			virtual const __ReadOnly_HdlTextureFormat& getFormat(void) const = 0;
+			virtual const HdlAbstractTextureFormat& getFormat(void) const = 0;
 			virtual HdlTexture& getTexture(void) = 0;
 			virtual void lock(bool enabled);
 			virtual const void* getIdentification(void) const = 0;
@@ -103,7 +103,7 @@ namespace QGPM
 			bool isReady(void) const;
 			QString getName(void) const;
 			bool selfTest(PipelineItem* _pipelineItem) const;
-			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
+			const HdlAbstractTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
 			void lock(bool enabled);
 			const void* getIdentification(void) const;
@@ -130,7 +130,7 @@ namespace QGPM
 			bool isReady(void) const;
 			QString getName(void) const;
 			bool selfTest(PipelineItem* _pipelineItem) const;
-			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
+			const HdlAbstractTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
 			const void* getIdentification(void) const;
 
@@ -294,7 +294,7 @@ namespace QGPM
 			QString getInputPortName(int idx) const;
 			int getNumOutputPorts(void) const;
 			QString getOutputPortName(int idx) const;
-			const __ReadOnly_HdlTextureFormat& getOutputFormat(int idx);
+			const HdlAbstractTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
 			int getComputationCount(void) const;
 			bool isLocked(void) const;
@@ -454,8 +454,6 @@ namespace QGPM
 			#ifdef __USE_QVGL__
 			const QVGL::MouseState*			mouseState;
 			#endif
-
-			void resizeEvent(QResizeEvent* event);
 
 		private slots :
 			void itemSelectionChanged(void);

@@ -148,7 +148,7 @@
 			void updateStatus(bool isRecording);
 			void updateFilename(const std::string& filename);
 			void updatePortName(const std::string& name);
-			void updateFormat(const __ReadOnly_HdlTextureFormat& fmt);
+			void updateFormat(const HdlAbstractTextureFormat& fmt);
 			void updateFrameRate(int f_fps);
 			void updatePixelFormat(PixelFormat pixFmt);
 			void updateBitRate(int b_bitPerSec);
@@ -213,7 +213,7 @@
 			void submitNewFrame(HdlTexture& texture);
 
 		public slots :
-			void startRecording(unsigned int portID, const std::string& portName, const __ReadOnly_HdlTextureFormat& fmt);
+			void startRecording(unsigned int portID, const std::string& portName, const HdlAbstractTextureFormat& fmt);
 			void stopRecording(void);
 
 		signals :

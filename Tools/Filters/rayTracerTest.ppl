@@ -1,0 +1,100 @@
+/*
+	Very Simple Ray Tracer
+*/
+
+TEXTURE_FORMAT:outputFormat(2048, 2048, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
+
+INCLUDE_FILE(primitives.ppl)
+
+SHADER_SOURCE:rayTracerShader
+{
+	#version 130
+
+	const float far = 1e12;
+
+	float intersectSphere(const vec3 spherePos, const float sphereRadius, const vec3 rayPos, const vec3 rayDir, out vec3 intersectionPos, out vec3 normal)
+	{
+		const vec3 	v 	= (spherePos - rayPos),
+				p 	= dot(v, rayDir) * rayDir,
+				k 	= v - p;
+		const float 	lSq 	= dot(k,k),
+				rSq	= sphereRadius * sphereRadius,
+				alpha	= sqrt(max(0.0, rSq - lSq));
+		intersectionPos		= p - alpha * rayDir;
+
+		normal = (-k - alpha * rayDir) / sphereRadius;
+		
+		return (lSq<=rSq) ? length(intersectionPos) : far;
+	}
+
+	// Output : 
+	out vec4	outputTexture;
+	
+	// Cameras : 
+	const vec2	screenSize	= vec2(INSERT(outputFormatSize));
+	uniform vec3 	eyePos 		= vec3(0.0, 0.0, 1.9);
+	uniform vec2	eyeDirAngle	= vec2(0.0, 0.0);
+	uniform float	focalLength	= 0.5;
+	// Scene 
+	uniform	vec3	scenePos	= vec3(0.0, 0.0, 3.0),
+			lightPos	= vec3(-0.1, 0.2, 0.5),
+			lightColor	= vec3(0.0, 0.15, 0.5),
+			ambientColor	= vec3(0.1, 0.3, 0.1),
+			backgroundColor	= vec3(0.05, 0.05, 0.05);
+	uniform float	sphereRadius 	= 0.2,
+			cubeSize	= 0.8;
+
+	void main()
+	{
+		// Get the direction of the eye : 
+		vec3 eyeDir = vec3(sin(eyeDirAngle.y)*cos(eyeDirAngle.x), sin(eyeDirAngle.y)*sin(eyeDirAngle.x), cos(eyeDirAngle.y));
+
+		// Get the screen position : 
+		vec3 	pos 	= vec3((gl_TexCoord[0].st-vec2(0.5,0.5))*2.0, 0.0);
+			pos.x	= pos.x * screenSize.x / screenSize.y;
+
+		// Get the direction of the ray for the current position : 
+		vec3	dir	= focalLength * vec3(0.0, 0.0, 1.0) + pos;
+			dir	= dir + eyeDir;
+			dir	= dir / length(dir);
+			pos	= pos + eyePos;
+		
+		vec3 normal, intersectionPos;
+		float d = far;
+
+		for(int i=-1; i<=1; i++)
+		{
+			for(int j=-1; j<=1; j++)
+			{
+				for(int k=-1; k<=1; k++)
+				{
+					vec3 currentSpherePos = scenePos + vec3(ivec3(i, j, k)) * cubeSize;
+					vec3 tmpNormal, tmpIntersectionPos;
+					float tmpD = intersectSphere(currentSpherePos, sphereRadius, pos, dir, tmpIntersectionPos, tmpNormal);
+
+					intersectionPos = (tmpD<d) ? tmpIntersectionPos : intersectionPos;
+					normal = (tmpD<d) ? tmpNormal : normal;
+					d = min(tmpD, d);
+				}
+			}
+		}
+		
+		vec3 lightIntersection = lightPos - intersectionPos;
+		vec3 nIntersectionPos = -intersectionPos / length(intersectionPos);
+		float attenuation = length(lightIntersection);
+		lightIntersection = lightIntersection / attenuation;
+		attenuation = 1.0 / (attenuation * attenuation);
+		outputTexture.rgb = ((d>0.0) ? 1.0 : 0.0) * max(dot(normal, lightIntersection), 0)*attenuation*lightColor + ((d<far) ? ((max(0.0, dot(normal, nIntersectionPos))+0.1) * ambientColor) : backgroundColor);
+		//outputTexture.r = 1.0/d;
+	}
+}
+
+FILTER_LAYOUT:rayTracerFilter(outputFormat, rayTracerShader)
+
+PIPELINE_MAIN:rayTracerPipeline
+{
+	OUTPUT_PORTS(outputTexture)
+
+	FILTER_INSTANCE:rayTracerFilter(rayTracerFilter)
+}

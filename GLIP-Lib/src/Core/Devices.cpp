@@ -35,7 +35,7 @@
 	\param _typeName The type name of the object.
 	**/
 	InputDevice::InputDeviceLayout::InputDeviceLayout(const std::string& _typeName)
-	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
+	 : AbstractComponentLayout(_typeName), ComponentLayout(_typeName)
 	{ }
 
 	/**
@@ -44,7 +44,7 @@
 	\param c The layout to copy.
 	**/
 	InputDevice::InputDeviceLayout::InputDeviceLayout(const InputDeviceLayout& c)
-	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
+	 : AbstractComponentLayout(c), ComponentLayout(c)
 	{ }
 
 	/**
@@ -66,7 +66,7 @@
 	\param name The name of the component.
 	**/
 	InputDevice::InputDevice(const InputDeviceLayout& layout, const std::string& name)
-	 : __ReadOnly_ComponentLayout(layout), Component(layout, name)
+	 : AbstractComponentLayout(layout), Component(layout, name)
 	{
 		texturesLinks.assign(getNumOutputPort(),NULL);
 		newImages.assign(getNumOutputPort(),false);
@@ -292,7 +292,7 @@
 	\param _typeName The type name of the object.
 	**/
 	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const std::string& _typeName)
-	 : __ReadOnly_ComponentLayout(_typeName), ComponentLayout(_typeName)
+	 : AbstractComponentLayout(_typeName), ComponentLayout(_typeName)
 	{ }
 
 	/**
@@ -301,7 +301,7 @@
 	\param c The layout to copy.
 	**/
 	OutputDevice::OutputDeviceLayout::OutputDeviceLayout(const OutputDeviceLayout& c)
-	 : __ReadOnly_ComponentLayout(c), ComponentLayout(c)
+	 : AbstractComponentLayout(c), ComponentLayout(c)
 	{ }
 
 	/**
@@ -323,7 +323,7 @@
 	\param name The name of the component.
 	**/
 	OutputDevice::OutputDevice(const OutputDeviceLayout& layout, const std::string& name)
-	 : __ReadOnly_ComponentLayout(layout), Component(layout, name)
+	 : AbstractComponentLayout(layout), Component(layout, name)
 	{
 		argumentsList.reserve(getNumInputPort());
 	}

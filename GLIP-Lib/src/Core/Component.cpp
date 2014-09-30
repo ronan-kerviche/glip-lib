@@ -28,33 +28,33 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-//__ReadOnly_ComponentLayout
+//AbstractComponentLayout
 	/**
-	\fn __ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& type)
-	\brief __ReadOnly_ComponentLayout constructor.
+	\fn AbstractComponentLayout::AbstractComponentLayout(const std::string& type)
+	\brief AbstractComponentLayout constructor.
 	\param type The typename of the object.
 	**/
-	__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& _typeName)
+	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName)
 	 : typeName(_typeName)
 	{ }
 
 	/**
-	\fn __ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
-	\brief __ReadOnly_ComponentLayout constructor.
+	\fn AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
+	\brief AbstractComponentLayout constructor.
 	\param _typeName The typename of the object.
 	\param _inputPorts The list of the names of the input ports.
 	\param _outputPorts The list of the names of the input ports.
 	**/
-	__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
+	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
 	 : typeName(_typeName), inputPorts(_inputPorts), outputPorts(_outputPorts)
 	{ }
 
 	/**
-	\fn __ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout& c)
-	\brief __ReadOnly_ComponentLayout constructor.
+	\fn AbstractComponentLayout::AbstractComponentLayout(const AbstractComponentLayout& c)
+	\brief AbstractComponentLayout constructor.
 	\param c Copy.
 	**/
-	__ReadOnly_ComponentLayout::__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout& c)
+	AbstractComponentLayout::AbstractComponentLayout(const AbstractComponentLayout& c)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
 			std::cout << "Copying ReadOnly Component Layout " << getName() << std::endl;
@@ -69,111 +69,111 @@
 		#endif
 	}
 
-	__ReadOnly_ComponentLayout::~__ReadOnly_ComponentLayout(void)
+	AbstractComponentLayout::~AbstractComponentLayout(void)
 	{ }
 
 	/**
-	\fn std::string __ReadOnly_ComponentLayout::getFullName(void) const
+	\fn std::string AbstractComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
 	\return The full name of this component (possible name and typename).
 	**/
-	std::string __ReadOnly_ComponentLayout::getFullName(void) const
+	std::string AbstractComponentLayout::getFullName(void) const
 	{
 		return "<ComponentLayout> (type : \"" + getTypeName() + "\")";
 	}
 
 	/**
-	\fn const std::string& __ReadOnly_ComponentLayout::getTypeName(void) const
+	\fn const std::string& AbstractComponentLayout::getTypeName(void) const
 	\brief Returns the typename of this component.
 	\return The typename of this component.
 	**/
-	const std::string& __ReadOnly_ComponentLayout::getTypeName(void) const
+	const std::string& AbstractComponentLayout::getTypeName(void) const
 	{
 		return typeName;
 	}
 
 	/**
-	\fn void __ReadOnly_ComponentLayout::checkInputPort(int i) const
+	\fn void AbstractComponentLayout::checkInputPort(int i) const
 	\brief Check the validity of an input port. Raise an exception if any errors occur.
 	\param i Index of the input port to test.
 	**/
-	void __ReadOnly_ComponentLayout::checkInputPort(int i) const
+	void AbstractComponentLayout::checkInputPort(int i) const
 	{
 		if(i<0 || i>=getNumInputPort())
 			throw Exception("ComponentLayout - Bad input port ID for "  + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
 	}
 
 	/**
-	\fn void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
+	\fn void AbstractComponentLayout::checkOutputPort(int i) const
 	\brief Check the validity of an output port. Raise an exception if any errors occur.
 	\param i Index of the output port to test.
 	**/
-	void __ReadOnly_ComponentLayout::checkOutputPort(int i) const
+	void AbstractComponentLayout::checkOutputPort(int i) const
 	{
 		if(i<0 || i>=getNumOutputPort())
 			throw Exception("ComponentLayout - Bad output port ID for " + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
 	}
 
 	/**
-	\fn int __ReadOnly_ComponentLayout::getNumInputPort(void) const
+	\fn int AbstractComponentLayout::getNumInputPort(void) const
 	\brief Get the number of input ports.
 	\return Number of input ports.
 	**/
-	int __ReadOnly_ComponentLayout::getNumInputPort(void) const
+	int AbstractComponentLayout::getNumInputPort(void) const
 	{
 		return inputPorts.size();
 	}
 
 	/**
-	\fn const std::string& __ReadOnly_ComponentLayout::getInputPortName(int id) const
+	\fn const std::string& AbstractComponentLayout::getInputPortName(int id) const
 	\brief Return the name of an input port. Raise an exception if any errors occur.
 	\param id The index of the input port.
 	\return The name of the input port as a standard string.
 	**/
-	const std::string& __ReadOnly_ComponentLayout::getInputPortName(int id) const
+	const std::string& AbstractComponentLayout::getInputPortName(int id) const
 	{
 		checkInputPort(id);
 		return inputPorts[id];
 	}
 
 	/**
-	\fn int __ReadOnly_ComponentLayout::getInputPortID(const std::string& name) const
+	\fn int AbstractComponentLayout::getInputPortID(const std::string& name) const
 	\brief Get the index of an input port knowing its name. Raise an exception if any errors occur.
 	\param name The name of the input port.
 	\return The index of the input port.
 	**/
-	int __ReadOnly_ComponentLayout::getInputPortID(const std::string& name) const
+	int AbstractComponentLayout::getInputPortID(const std::string& name) const
 	{
 		if(name=="*")
 		{
 			if(getNumInputPort()==1)
 				return 0;
 			else
-				throw Exception("__ReadOnly_ComponentLayout::getInputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::getInputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
 
 		if(it==inputPorts.end())
-			throw Exception("__ReadOnly_ComponentLayout::getInputPortID - Unable to find input port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractComponentLayout::getInputPortID - Unable to find input port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
 
 		return std::distance(inputPorts.begin(), it);
 	}
 
 	/**
-	\fn bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
+	\fn bool AbstractComponentLayout::doesInputPortExist(const std::string& name) const
 	\brief Check if an input port exists, knowing its name
 	\param name The name of the input port.
 	\return True if an input port named correctly exists, False otherwise.
 	**/
-	bool __ReadOnly_ComponentLayout::doesInputPortExist(const std::string& name) const
+	bool AbstractComponentLayout::doesInputPortExist(const std::string& name) const
 	{
 		if(name=="*")
 		{
 			if(getNumInputPort()==1)
 				return true;
 			else
-				throw Exception("__ReadOnly_ComponentLayout::doesInputPortExist( - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::doesInputPortExist( - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
@@ -182,65 +182,65 @@
 	}
 
 	/**
-	\fn int __ReadOnly_ComponentLayout::getNumOutputPort(void) const
+	\fn int AbstractComponentLayout::getNumOutputPort(void) const
 	\brief Get the number of output ports.
 	\return Number of output ports.
 	**/
-	int __ReadOnly_ComponentLayout::getNumOutputPort(void) const
+	int AbstractComponentLayout::getNumOutputPort(void) const
 	{
 		return outputPorts.size();
 	}
 
 	/**
-	\fn const std::string& __ReadOnly_ComponentLayout::getOutputPortName(int id) const
+	\fn const std::string& AbstractComponentLayout::getOutputPortName(int id) const
 	\brief Return the name of an output port. Raise an exception if any errors occur.
 	\param id The index of the output port.
 	\return The name of the output port as a standard string.
 	**/
-	const std::string& __ReadOnly_ComponentLayout::getOutputPortName(int id) const
+	const std::string& AbstractComponentLayout::getOutputPortName(int id) const
 	{
 		checkOutputPort(id);
 		return outputPorts[id];
 	}
 
 	/**
-	\fn int __ReadOnly_ComponentLayout::getOutputPortID(const std::string& name) const
+	\fn int AbstractComponentLayout::getOutputPortID(const std::string& name) const
 	\brief Get the index of an output port knowing its name. Raise an exception if any errors occur.
 	\param name The name of the output port.
 	\return The index of the output port.
 	**/
-	int __ReadOnly_ComponentLayout::getOutputPortID(const std::string& name) const
+	int AbstractComponentLayout::getOutputPortID(const std::string& name) const
 	{
 		if(name=="*")
 		{
 			if(getNumOutputPort()==1)
 				return 0;
 			else
-				throw Exception("__ReadOnly_ComponentLayout::getOutputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::getOutputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
 
 		if(it==outputPorts.end())
-			throw Exception("__ReadOnly_ComponentLayout::getOutputPortID - Unable to find output port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractComponentLayout::getOutputPortID - Unable to find output port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
 
 		return std::distance(outputPorts.begin(), it);
 	}
 
 	/**
-	\fn bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
+	\fn bool AbstractComponentLayout::doesOutputPortExist(const std::string& name) const
 	\brief Check if an output port exists, knowing its name
 	\param name The name of the output port.
 	\return True if an output port named correctly exists, False otherwise.
 	**/
-	bool __ReadOnly_ComponentLayout::doesOutputPortExist(const std::string& name) const
+	bool AbstractComponentLayout::doesOutputPortExist(const std::string& name) const
 	{
 		if(name=="*")
 		{
 			if(getNumOutputPort()==1)
 				return true;
 			else
-				throw Exception("__ReadOnly_ComponentLayout::doesOutputPortExist - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::doesOutputPortExist - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
@@ -255,16 +255,16 @@
 	\param _typeName Typename of the component.
 	**/
 	ComponentLayout::ComponentLayout(const std::string& _typeName)
-	 : __ReadOnly_ComponentLayout(_typeName)
+	 : AbstractComponentLayout(_typeName)
 	{ }
 
 	/**
-	\fn ComponentLayout::ComponentLayout(const __ReadOnly_ComponentLayout& c)
+	\fn ComponentLayout::ComponentLayout(const AbstractComponentLayout& c)
 	\brief ComponentLayout constructor.
 	\param c Copy.
 	**/
-	ComponentLayout::ComponentLayout(const __ReadOnly_ComponentLayout& c)
-	 : __ReadOnly_ComponentLayout(c)
+	ComponentLayout::ComponentLayout(const AbstractComponentLayout& c)
+	 : AbstractComponentLayout(c)
 	{ }
 
 	ComponentLayout::~ComponentLayout(void)
@@ -342,24 +342,24 @@
 	\param _instanceName The name of the component.
 	**/
 	Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
-	 : __ReadOnly_ComponentLayout(_typeName, _inputPorts, _outputPorts), instanceName(_instanceName)
+	 : AbstractComponentLayout(_typeName, _inputPorts, _outputPorts), instanceName(_instanceName)
 	{ }
 
 	/**
-	\fn Component::Component(const __ReadOnly_ComponentLayout& c, const std::string& _instanceName)
+	\fn Component::Component(const AbstractComponentLayout& c, const std::string& _instanceName)
 	\brief Component constructor.
 	\param c The component layout.
 	\param _instanceName The name of the component.
 	**/
-	Component::Component(const __ReadOnly_ComponentLayout& c, const std::string& _instanceName)
-	 : __ReadOnly_ComponentLayout(c), instanceName(_instanceName)
+	Component::Component(const AbstractComponentLayout& c, const std::string& _instanceName)
+	 : AbstractComponentLayout(c), instanceName(_instanceName)
 	{ }
 
 	Component::~Component(void)
 	{ }
 
 	/**
-	\fn std::string __ReadOnly_ComponentLayout::getFullName(void) const
+	\fn std::string AbstractComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
 	\return The full name of this component (name and typename).
 	**/

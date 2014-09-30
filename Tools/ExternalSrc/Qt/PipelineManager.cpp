@@ -89,7 +89,7 @@ using namespace QGPM;
 		return false;
 	}
 
-	const __ReadOnly_HdlTextureFormat& ConnectionToImageItem::getFormat(void) const
+	const HdlAbstractTextureFormat& ConnectionToImageItem::getFormat(void) const
 	{
 		if(!isValid())
 			throw Exception("ConnectionToImageItem::getFormat - Connection is invalid.", __FILE__, __LINE__);
@@ -195,7 +195,7 @@ using namespace QGPM;
 		return (_pipelineItem==pipelineItem);
 	}
 
-	const __ReadOnly_HdlTextureFormat& ConnectionToPipelineOutput::getFormat(void) const
+	const HdlAbstractTextureFormat& ConnectionToPipelineOutput::getFormat(void) const
 	{
 		if(!isValid())
 			throw Exception("ConnectionToPipleineOutput::getFormat - Connection is invalid.", __FILE__, __LINE__);
@@ -1029,7 +1029,7 @@ using namespace QGPM;
 		return outputPortItems;
 	}
 
-	const __ReadOnly_HdlTextureFormat& PipelineItem::getOutputFormat(int idx)
+	const HdlAbstractTextureFormat& PipelineItem::getOutputFormat(int idx)
 	{
 		std::cout << "PipelineItem::getOutputFormat - Index : " << idx << std::endl;
 
@@ -1730,11 +1730,6 @@ using namespace QGPM;
 		for(QMap<void*, PipelineItem*>::iterator it=pipelineItems.begin(); it!=pipelineItems.end(); it++)
 			delete it.value();
 		pipelineItems.clear();
-	}
-
-	void PipelineManager::resizeEvent(QResizeEvent* event)
-	{
-		std::cout << "PipelineManager::resizeEvent" << std::endl;
 	}
 
 	void PipelineManager::itemSelectionChanged(void)

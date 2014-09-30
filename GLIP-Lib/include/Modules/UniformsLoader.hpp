@@ -195,8 +195,8 @@ Processing example :
 					public :
 						Node(void);
 						Node(const VanillaParserSpace::Element& e);
-						Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_PipelineLayout& current);
-						Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_FilterLayout& current);				
+						Node(const std::string& _name, Pipeline& pipeline, const AbstractPipelineLayout& current);
+						Node(const std::string& _name, Pipeline& pipeline, const AbstractFilterLayout& current);				
 						Node(const Node& cpy);
 						~Node(void);
 
@@ -234,7 +234,7 @@ Processing example :
 						ResourceIterator resourceBegin(void);
 						ResourceIterator resourceEnd(void);
 
-						int applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite=true, bool silent=false) const;
+						int applyTo(Pipeline& pipeline, const AbstractPipelineLayout& current, bool forceWrite=true, bool silent=false) const;
 						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true, bool silent=false) const;
 						VanillaParserSpace::Element getCodeElement(void) const;
 				};

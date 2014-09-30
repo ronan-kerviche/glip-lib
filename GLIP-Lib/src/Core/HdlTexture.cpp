@@ -29,8 +29,8 @@ using namespace Glip::CoreGL;
 
 // HdlTextureFormat - Functions
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	\brief __ReadOnly_HdlTextureFormat Construtor.
+	\fn    HdlAbstractTextureFormat::HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	\brief HdlAbstractTextureFormat Construtor.
 
 	\param _width		Width of the texture.
 	\param _height		Height of the texture.
@@ -43,18 +43,18 @@ using namespace Glip::CoreGL;
 	\param _baseLevel	Base for the mipmaps (default is 0).
 	\param _maxLevel	Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
-	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
+	HdlAbstractTextureFormat::HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	 : 	width(_width), height(_height), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt),
 		alignment(1)
 	{ }
 
 	/**
-	\fn    __ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy)
-	\brief __ReadOnly_HdlTextureFormat Construtor.
+	\fn    HdlAbstractTextureFormat::HdlAbstractTextureFormat(const HdlAbstractTextureFormat& copy)
+	\brief HdlAbstractTextureFormat Construtor.
 
 	\param copy Copy this format.
 	**/
-	__ReadOnly_HdlTextureFormat::__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy)
+	HdlAbstractTextureFormat::HdlAbstractTextureFormat(const HdlAbstractTextureFormat& copy)
 	 : 	width(copy.width),
 		height(copy.height),
 		mode(copy.mode),
@@ -68,84 +68,84 @@ using namespace Glip::CoreGL;
 		alignment(copy.alignment)
 	{ }
 
-	__ReadOnly_HdlTextureFormat::~__ReadOnly_HdlTextureFormat(void)
+	HdlAbstractTextureFormat::~HdlAbstractTextureFormat(void)
 	{ }
 
 	/**
-	\fn void __ReadOnly_HdlTextureFormat::setAlignment(int _alignment)
+	\fn void HdlAbstractTextureFormat::setAlignment(int _alignment)
 	\brief Set the alignment for this format.
 	\param _alignment The new alignment value. It must be either 1, 4 or 8 bytes. Any other values will result in an exception.
 	**/
-	void __ReadOnly_HdlTextureFormat::setAlignment(int _alignment)
+	void HdlAbstractTextureFormat::setAlignment(int _alignment)
 	{
 		if(_alignment!=1 && _alignment!=4 && _alignment!=8)
-			throw Exception("__ReadOnly_HdlTextureFormat::setAlignment - Alignment value must be either 1, 4 or 8 (received : " + toString(_alignment) + ").", __FILE__, __LINE__);
+			throw Exception("HdlAbstractTextureFormat::setAlignment - Alignment value must be either 1, 4 or 8 (received : " + toString(_alignment) + ").", __FILE__, __LINE__);
 		else
 			alignment = _alignment; 
 	}
 
 // Public Tools
 	/**
-	\fn     int __ReadOnly_HdlTextureFormat::getWidth(void) const
+	\fn     int HdlAbstractTextureFormat::getWidth(void) const
 	\return The texture's width.
-	\fn     int __ReadOnly_HdlTextureFormat::getHeight(void) const
+	\fn     int HdlAbstractTextureFormat::getHeight(void) const
 	\return The texture's height.
-	\fn     int __ReadOnly_HdlTextureFormat::getNumPixels(void) const
+	\fn     int HdlAbstractTextureFormat::getNumPixels(void) const
 	\return The texture's number of pixels (width x height).
-	\fn     int __ReadOnly_HdlTextureFormat::getNumChannels(void) const
+	\fn     int HdlAbstractTextureFormat::getNumChannels(void) const
 	\return The texture's channel count.
-	\fn     int __ReadOnly_HdlTextureFormat::getChannelDepth(void) const
+	\fn     int HdlAbstractTextureFormat::getChannelDepth(void) const
 	\return The channel size in BYTE.
-	\fn     int __ReadOnly_HdlTextureFormat::getNumElements(void) const
+	\fn     int HdlAbstractTextureFormat::getNumElements(void) const
 	\return The texture's number of elements (width x height x channels).
-	\fn     size_t __ReadOnly_HdlTextureFormat::getSize(void) const
+	\fn     size_t HdlAbstractTextureFormat::getSize(void) const
 	\return The texture's size in BYTE.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getGLMode(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getGLMode(void) const
 	\return The texture's mode.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getGLDepth(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getGLDepth(void) const
 	\return The texture's pixel depth.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getMinFilter(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getMinFilter(void) const
 	\return The texture's minification parameter.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getMagFilter(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getMagFilter(void) const
 	\return The texture's magnification parameter.
-	\fn     int __ReadOnly_HdlTextureFormat::getBaseLevel(void) const
+	\fn     int HdlAbstractTextureFormat::getBaseLevel(void) const
 	\return The texture's base level for mipmaps.
-	\fn     int __ReadOnly_HdlTextureFormat::getMaxLevel (void) const
+	\fn     int HdlAbstractTextureFormat::getMaxLevel (void) const
 	\return The texture's highest level for mipmaps.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getSWrapping(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getSWrapping(void) const
 	\return The texture's S wrapping parameter.
-	\fn     GLenum __ReadOnly_HdlTextureFormat::getTWrapping(void) const
+	\fn     GLenum HdlAbstractTextureFormat::getTWrapping(void) const
 	\return The texture's T wrapping parameter.
-	\fn     bool __ReadOnly_HdlTextureFormat::isCompressed(void) const
+	\fn     bool HdlAbstractTextureFormat::isCompressed(void) const
 	\return True if the texture is compressed.
-	\fn     bool __ReadOnly_HdlTextureFormat::isFloatingPoint(void) const
+	\fn     bool HdlAbstractTextureFormat::isFloatingPoint(void) const
 	\return True if the texture is of floatting point type.
 	**/
-	int	__ReadOnly_HdlTextureFormat::getWidth   	(void) const { return width; }
-	int	__ReadOnly_HdlTextureFormat::getHeight   	(void) const { return height; }
-	int	__ReadOnly_HdlTextureFormat::getNumPixels	(void) const { return width*height; }
-	int	__ReadOnly_HdlTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels(); }
-	int	__ReadOnly_HdlTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
-	int	__ReadOnly_HdlTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
-	int	__ReadOnly_HdlTextureFormat::getAlignment	(void) const { return alignment; }
-	size_t	__ReadOnly_HdlTextureFormat::getLineSize	(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~static_cast<size_t>(alignment-1); }
-	size_t	__ReadOnly_HdlTextureFormat::getSize     	(void) const { return static_cast<size_t>(getHeight()) * getLineSize(); }
-	GLenum	__ReadOnly_HdlTextureFormat::getGLMode   	(void) const { return mode; }
-	GLenum	__ReadOnly_HdlTextureFormat::getGLDepth  	(void) const { return depth; }
-	GLenum	__ReadOnly_HdlTextureFormat::getMinFilter	(void) const { return minFilter; }
-	GLenum	__ReadOnly_HdlTextureFormat::getMagFilter	(void) const { return magFilter; }
-	int	__ReadOnly_HdlTextureFormat::getBaseLevel	(void) const { return baseLevel; }
-	int	__ReadOnly_HdlTextureFormat::getMaxLevel 	(void) const { return maxLevel; }
-	GLenum	__ReadOnly_HdlTextureFormat::getSWrapping	(void) const { return wraps; }
-	GLenum	__ReadOnly_HdlTextureFormat::getTWrapping	(void) const { return wrapt; }
-	bool	__ReadOnly_HdlTextureFormat::isCompressed	(void) const { return getFormatDescriptor().isCompressed; }
-	bool	__ReadOnly_HdlTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloating || depth==GL_FLOAT || depth==GL_DOUBLE; }
+	int	HdlAbstractTextureFormat::getWidth   		(void) const { return width; }
+	int	HdlAbstractTextureFormat::getHeight   		(void) const { return height; }
+	int	HdlAbstractTextureFormat::getNumPixels		(void) const { return width*height; }
+	int	HdlAbstractTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels(); }
+	int	HdlAbstractTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
+	int	HdlAbstractTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
+	int	HdlAbstractTextureFormat::getAlignment		(void) const { return alignment; }
+	size_t	HdlAbstractTextureFormat::getLineSize		(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~static_cast<size_t>(alignment-1); }
+	size_t	HdlAbstractTextureFormat::getSize     		(void) const { return static_cast<size_t>(getHeight()) * getLineSize(); }
+	GLenum	HdlAbstractTextureFormat::getGLMode   		(void) const { return mode; }
+	GLenum	HdlAbstractTextureFormat::getGLDepth  		(void) const { return depth; }
+	GLenum	HdlAbstractTextureFormat::getMinFilter		(void) const { return minFilter; }
+	GLenum	HdlAbstractTextureFormat::getMagFilter		(void) const { return magFilter; }
+	int	HdlAbstractTextureFormat::getBaseLevel		(void) const { return baseLevel; }
+	int	HdlAbstractTextureFormat::getMaxLevel 		(void) const { return maxLevel; }
+	GLenum	HdlAbstractTextureFormat::getSWrapping		(void) const { return wraps; }
+	GLenum	HdlAbstractTextureFormat::getTWrapping		(void) const { return wrapt; }
+	bool	HdlAbstractTextureFormat::isCompressed		(void) const { return getFormatDescriptor().isCompressed; }
+	bool	HdlAbstractTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloating || depth==GL_FLOAT || depth==GL_DOUBLE; }
 
 	/**
-	\fn const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
+	\fn const HdlTextureFormatDescriptor& HdlAbstractTextureFormat::getFormatDescriptor(void) const
 	\return A constatnt reference to the descriptor of the current mode.
 	**/
-	const HdlTextureFormatDescriptor& __ReadOnly_HdlTextureFormat::getFormatDescriptor(void) const
+	const HdlTextureFormatDescriptor& HdlAbstractTextureFormat::getFormatDescriptor(void) const
 	{
 		// Manage sparse changes :
 		static GLenum oldMode = GL_NONE;
@@ -161,11 +161,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
+	\fn    bool HdlAbstractTextureFormat::operator==(const HdlAbstractTextureFormat& f) const
 	\param f Format to be compared with this.
 	\return True if the two format have the same parameters.
 	**/
-	bool __ReadOnly_HdlTextureFormat::operator==(const __ReadOnly_HdlTextureFormat& f) const
+	bool HdlAbstractTextureFormat::operator==(const HdlAbstractTextureFormat& f) const
 	{
 		return  (width			== f.width)		&&
 			(height			== f.height)		&&
@@ -183,22 +183,22 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool __ReadOnly_HdlTextureFormat::operator!=(const __ReadOnly_HdlTextureFormat& f) const
+	\fn    bool HdlAbstractTextureFormat::operator!=(const HdlAbstractTextureFormat& f) const
 	\param f Format to be compared with this.
 	\return True if the two format have at least one different parameter.
 	**/
-	bool __ReadOnly_HdlTextureFormat::operator!=(const __ReadOnly_HdlTextureFormat& f) const
+	bool HdlAbstractTextureFormat::operator!=(const HdlAbstractTextureFormat& f) const
 	{
 		return !(*this==f);
 	}
 
 	/**
-	\fn    bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const
+	\fn    bool HdlAbstractTextureFormat::isCompatibleWith(const HdlAbstractTextureFormat&) const
 	\brief Check if the two formats share the same memory characteristics (sizes, number of channels, byte per pixel, internal GL mode, same mipmap levels).
 	\param f Format to be compared with this.
 	\return True if the two formats share the same memory characteristics (sizes, number of channels, byte per pixel, internal GL mode, same mipmap levels).
 	**/
-	bool __ReadOnly_HdlTextureFormat::isCompatibleWith(const __ReadOnly_HdlTextureFormat& f) const
+	bool HdlAbstractTextureFormat::isCompatibleWith(const HdlAbstractTextureFormat& f) const
 	{
 		return  (width			== f.width)		&&
 			(height			== f.height)		&&
@@ -212,46 +212,46 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
+	\fn    HdlAbstractTextureFormat HdlAbstractTextureFormat::getCompressedFormat(void) const
 	\brief Get the equivalent, but compressed, format.
-	\return A __ReadOnly_HdlTextureFormat object instance identical to this, but mode is set to the corresponding compressed format.
+	\return A HdlAbstractTextureFormat object instance identical to this, but mode is set to the corresponding compressed format.
 	**/
-	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getCompressedFormat(void) const
+	HdlAbstractTextureFormat HdlAbstractTextureFormat::getCompressedFormat(void) const
 	{
 		if(isCompressed())
 			return *this;
 		else
 		{
-			__ReadOnly_HdlTextureFormat res(*this);
+			HdlAbstractTextureFormat res(*this);
 			res.mode = getFormatDescriptor().getCompressedMode();
 			return res;
 		}
 	}
 
 	/**
-	\fn    __ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const
+	\fn    HdlAbstractTextureFormat HdlAbstractTextureFormat::getUncompressedFormat(void) const
 	\brief Get the equivalent, but uncompressed, format.
-	\return A __ReadOnly_HdlTextureFormat object instance identical to this, but mode is set to the corresponding uncompressed format.
+	\return A HdlAbstractTextureFormat object instance identical to this, but mode is set to the corresponding uncompressed format.
 	**/
-	__ReadOnly_HdlTextureFormat __ReadOnly_HdlTextureFormat::getUncompressedFormat(void) const
+	HdlAbstractTextureFormat HdlAbstractTextureFormat::getUncompressedFormat(void) const
 	{
 		if(!isCompressed())
 			return *this;
 		else
 		{
-			__ReadOnly_HdlTextureFormat res(*this);
+			HdlAbstractTextureFormat res(*this);
 			res.mode = getFormatDescriptor().getUncompressedMode();
 			return res;
 		}
 	}
 
 	/**
-	\fn    bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
+	\fn    bool HdlAbstractTextureFormat::isCorrespondingCompressedFormat(const HdlAbstractTextureFormat& f) const
 	\brief Check if this and f share the same memory parameters except that the mode for f is the corresponding compressed mode of this.
 	\param f Format to be compared with this.
 	\return True if this and f share the same memory parameters except that the mode for f is the corresponding compressed mode of this.
 	**/
-	bool __ReadOnly_HdlTextureFormat::isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat& f) const
+	bool HdlAbstractTextureFormat::isCorrespondingCompressedFormat(const HdlAbstractTextureFormat& f) const
 	{
 		bool test = 	(width			== f.width)		&&
 				(height			== f.height)		&&
@@ -266,7 +266,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn	unsigned int __ReadOnly_HdlTextureFormat::getSetting(GLenum param) const
+	\fn	unsigned int HdlAbstractTextureFormat::getSetting(GLenum param) const
 	\brief	Obtain a setting value based on its GL name.
 	\param param The GL name of the setting to be retreived.
 	\return The value of the corresponding setting or raise an Exception if any error occur.
@@ -274,30 +274,30 @@ using namespace Glip::CoreGL;
 	Available paramaters : 
 	Parameter       			| Description
 	--------------------------------------- | --------------------------
-	GL_TEXTURE_WIDTH			| Get the width (same as __ReadOnly_HdlTextureFormat::getWidth()).
-	GL_TEXTURE_HEIGHT			| Get the height (same as __ReadOnly_HdlTextureFormat::getHeight()).
-	GL_TEXTURE_RED_SIZE			| Get the depth of the red channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().redDepthInBits).
-	GL_TEXTURE_GREEN_SIZE			| Get the depth of the green channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().greenDepthInBits).
-	GL_TEXTURE_BLUE_SIZE			| Get the depth of the blue channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().blueDepthInBits).
-	GL_TEXTURE_ALPHA_SIZE			| Get the depth of the alpha channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().alphaDepthInBits).
-	GL_TEXTURE_LUMINANCE_SIZE		| Get the depth of the luminance channel in bits (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().luminanceDepthInBits).
-	GL_TEXTURE_MIN_FILTER			| Get the minification parameter (same as __ReadOnly_HdlTextureFormat::getMinFilter()).
-	GL_TEXTURE_MAG_FILTER			| Get the magnification parameter (same as __ReadOnly_HdlTextureFormat::getMagFilter()).
-	GL_TEXTURE_WRAP_S			| Get the S wrapping parameter (same as __ReadOnly_HdlTextureFormat::getSWrapping()).
-	GL_TEXTURE_WRAP_T			| Get the T wrapping parameter (same as __ReadOnly_HdlTextureFormat::getTWrapping()).
-	GL_TEXTURE_BASE_LEVEL			| Get the base mipmap level (same as __ReadOnly_HdlTextureFormat::getBaseLevel()).
-	GL_TEXTURE_MAX_LEVEL			| Get the base mipmap level (same as __ReadOnly_HdlTextureFormat::getMaxLevel()).
+	GL_TEXTURE_WIDTH			| Get the width (same as HdlAbstractTextureFormat::getWidth()).
+	GL_TEXTURE_HEIGHT			| Get the height (same as HdlAbstractTextureFormat::getHeight()).
+	GL_TEXTURE_RED_SIZE			| Get the depth of the red channel in bits (same as HdlAbstractTextureFormat::getFormatDescriptor().redDepthInBits).
+	GL_TEXTURE_GREEN_SIZE			| Get the depth of the green channel in bits (same as HdlAbstractTextureFormat::getFormatDescriptor().greenDepthInBits).
+	GL_TEXTURE_BLUE_SIZE			| Get the depth of the blue channel in bits (same as HdlAbstractTextureFormat::getFormatDescriptor().blueDepthInBits).
+	GL_TEXTURE_ALPHA_SIZE			| Get the depth of the alpha channel in bits (same as HdlAbstractTextureFormat::getFormatDescriptor().alphaDepthInBits).
+	GL_TEXTURE_LUMINANCE_SIZE		| Get the depth of the luminance channel in bits (same as HdlAbstractTextureFormat::getFormatDescriptor().luminanceDepthInBits).
+	GL_TEXTURE_MIN_FILTER			| Get the minification parameter (same as HdlAbstractTextureFormat::getMinFilter()).
+	GL_TEXTURE_MAG_FILTER			| Get the magnification parameter (same as HdlAbstractTextureFormat::getMagFilter()).
+	GL_TEXTURE_WRAP_S			| Get the S wrapping parameter (same as HdlAbstractTextureFormat::getSWrapping()).
+	GL_TEXTURE_WRAP_T			| Get the T wrapping parameter (same as HdlAbstractTextureFormat::getTWrapping()).
+	GL_TEXTURE_BASE_LEVEL			| Get the base mipmap level (same as HdlAbstractTextureFormat::getBaseLevel()).
+	GL_TEXTURE_MAX_LEVEL			| Get the base mipmap level (same as HdlAbstractTextureFormat::getMaxLevel()).
 	GL_GENERATE_MIPMAP			| Return 1 if the mipmap will be generated.
-	GL_TEXTURE_INTERNAL_FORMAT		| Get the mode (same as __ReadOnly_HdlTextureFormat::getGLMode()).
-	GL_TEXTURE_COMPRESSED			| Return 1 if the texture is compressed, 0 otherwise (same as __ReadOnly_HdlTextureFormat::isCompressed()).
+	GL_TEXTURE_INTERNAL_FORMAT		| Get the mode (same as HdlAbstractTextureFormat::getGLMode()).
+	GL_TEXTURE_COMPRESSED			| Return 1 if the texture is compressed, 0 otherwise (same as HdlAbstractTextureFormat::isCompressed()).
 	GL_TEXTURE_COMPRESSED_IMAGE_SIZE	| Will raise an exception as the format cannot communicate with the display driver.
-	GL_TEXTURE_DEPTH			| Get the depth (same as __ReadOnly_HdlTextureFormat::getGLDepth()).
-	GL_TEXTURE_RED_TYPE			| Get the red type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().redType).
-	GL_TEXTURE_GREEN_TYPE			| Get the green type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().greenType).
-	GL_TEXTURE_BLUE_TYPE			| Get the blue type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().blueType).
-	GL_TEXTURE_ALPHA_TYPE			| Get the alpha type (same as __ReadOnly_HdlTextureFormat::getFormatDescriptor().alphaType).
+	GL_TEXTURE_DEPTH			| Get the depth (same as HdlAbstractTextureFormat::getGLDepth()).
+	GL_TEXTURE_RED_TYPE			| Get the red type (same as HdlAbstractTextureFormat::getFormatDescriptor().redType).
+	GL_TEXTURE_GREEN_TYPE			| Get the green type (same as HdlAbstractTextureFormat::getFormatDescriptor().greenType).
+	GL_TEXTURE_BLUE_TYPE			| Get the blue type (same as HdlAbstractTextureFormat::getFormatDescriptor().blueType).
+	GL_TEXTURE_ALPHA_TYPE			| Get the alpha type (same as HdlAbstractTextureFormat::getFormatDescriptor().alphaType).
 	**/
-	unsigned int __ReadOnly_HdlTextureFormat::getSetting(GLenum param) const
+	unsigned int HdlAbstractTextureFormat::getSetting(GLenum param) const
 	{
 		#define TEXTURE_CHANNEL_TYPE(bitName, typeName)	if(getFormatDescriptor(). bitName ) \
 								{ \
@@ -328,24 +328,24 @@ using namespace Glip::CoreGL;
 			case GL_GENERATE_MIPMAP :		return getMaxLevel()>0;
 			case GL_TEXTURE_INTERNAL_FORMAT :	return getGLMode();		
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
-			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("HdlAbstractTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
 			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
 			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
 			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel(), blueType )
 			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )
-			default : 				throw Exception("__ReadOnly_HdlTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
 		}
 
 		#undef TEXTURE_CHANNEL_TYPE
 	}
 
 	/**
-	\fn    static int __ReadOnly_HdlTextureFormat::getMaxSize(void)
+	\fn    static int HdlAbstractTextureFormat::getMaxSize(void)
 	\brief Returns the maximum size for a texture.
 	\return The size, in pixels.
 	**/
-	int __ReadOnly_HdlTextureFormat::getMaxSize(void)
+	int HdlAbstractTextureFormat::getMaxSize(void)
 	{
 		GLint s;
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &s);
@@ -368,16 +368,16 @@ using namespace Glip::CoreGL;
 	\param _maxLevel	Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
 	HdlTextureFormat::HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	 : __ReadOnly_HdlTextureFormat(_width, _height, _mode, _depth, _minFilter, _magFilter, _wraps, _wrapt, _baseLevel, _maxLevel)
+	 : HdlAbstractTextureFormat(_width, _height, _mode, _depth, _minFilter, _magFilter, _wraps, _wrapt, _baseLevel, _maxLevel)
 	{ }
 
 	/**
-	\fn    HdlTextureFormat::HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt)7
+	\fn    HdlTextureFormat::HdlTextureFormat(const HdlAbstractTextureFormat& fmt)7
 	\brief HdlTextureFormat Construtor.
 	\param fmt Source format.
 	**/
-	HdlTextureFormat::HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt)
-	 : __ReadOnly_HdlTextureFormat(fmt)
+	HdlTextureFormat::HdlTextureFormat(const HdlAbstractTextureFormat& fmt)
+	 : HdlAbstractTextureFormat(fmt)
 	{ }
 
 	/**
@@ -430,12 +430,12 @@ using namespace Glip::CoreGL;
 	void HdlTextureFormat::setTWrapping(GLenum m)		{ wrapt		= m;  }
 
 	/**
-	\fn const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
+	\fn const HdlAbstractTextureFormat& HdlTextureFormat::operator=(const HdlAbstractTextureFormat& copy)
 	\brief Copy operator.
 	\param copy The format to copy.
 	\return This object.
 	**/
-	const __ReadOnly_HdlTextureFormat& HdlTextureFormat::operator=(const __ReadOnly_HdlTextureFormat& copy)
+	const HdlAbstractTextureFormat& HdlTextureFormat::operator=(const HdlAbstractTextureFormat& copy)
 	{
 		width      = copy.getWidth();
 		height      = copy.getHeight();
@@ -549,12 +549,12 @@ using namespace Glip::CoreGL;
 
 // HdlTexture - Functions
 	/**
-	\fn HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
+	\fn HdlTexture::HdlTexture(const HdlAbstractTextureFormat& fmt)
 	\brief HdlTexture constructor.
 	\param fmt The format to use.
 	**/
-	HdlTexture::HdlTexture(const __ReadOnly_HdlTextureFormat& fmt)
-	 : __ReadOnly_HdlTextureFormat(fmt), texID(0), proxy(false)
+	HdlTexture::HdlTexture(const HdlAbstractTextureFormat& fmt)
+	 : HdlAbstractTextureFormat(fmt), texID(0), proxy(false)
 	{
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
@@ -615,7 +615,7 @@ using namespace Glip::CoreGL;
 	\param proxyTexID The ID of the targeted texture.
 	**/
 	HdlTexture::HdlTexture(GLuint proxyTexID)
-	 : __ReadOnly_HdlTextureFormat(HdlTextureFormat::getTextureFormat(proxyTexID)), texID(proxyTexID), proxy(true)
+	 : HdlAbstractTextureFormat(HdlTextureFormat::getTextureFormat(proxyTexID)), texID(proxyTexID), proxy(true)
 	{
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
@@ -679,7 +679,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn void HdlTexture::getSizeOnGPU(int m)
-	\brief Returns the size of the texture in bytes for mipmap m, this function returns the same value as __ReadOnly_HdlTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
+	\brief Returns the size of the texture in bytes for mipmap m, this function returns the same value as HdlAbstractTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
 	\param m The target mipmap level.
 	\return Returns the size of the texture in bytes.
 	**/
@@ -1048,11 +1048,11 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn const __ReadOnly_HdlTextureFormat& HdlTexture::format(void) const
-	\brief Explicitly return a constant reference to a __ReadOnly_HdlTextureFormat object describing the format of this texture.
-	\return A constant reference to a __ReadOnly_HdlTextureFormat object.
+	\fn const HdlAbstractTextureFormat& HdlTexture::format(void) const
+	\brief Explicitly return a constant reference to a HdlAbstractTextureFormat object describing the format of this texture.
+	\return A constant reference to a HdlAbstractTextureFormat object.
 	**/
-	const __ReadOnly_HdlTextureFormat& HdlTexture::format(void) const
+	const HdlAbstractTextureFormat& HdlTexture::format(void) const
 	{
 		return *this;
 	}

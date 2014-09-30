@@ -43,17 +43,17 @@ using namespace Glip::CoreGL;
 	{ }
 
 	/**
-	\fn HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
+	\fn HdlPBO::HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq)
 	\brief HdlPBO constructor.
 	\param fmt The format to copy, this must an uncompressed format.
 	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
-	HdlPBO::HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq)
+	HdlPBO::HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq)
 	 : HdlGeBO(fmt.getSize(), aim, freq), w(fmt.getWidth()), h(fmt.getHeight()), c(fmt.getNumChannels()), cs(fmt.getChannelDepth())
 	{
 		if(fmt.isCompressed())
-			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on __ReadOnly_HdlTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
+			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on HdlAbstractTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
 	}
 
 	HdlPBO::~HdlPBO(void)

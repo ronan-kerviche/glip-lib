@@ -28,14 +28,14 @@ using namespace Glip::CoreGL;
 
 // Functions
 	/**
-	\fn    HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
+	\fn    HdlFBO::HdlFBO(const HdlAbstractTextureFormat& f, int numTarget)
 	\brief HdlFBO Construtor.
 
 	\param f Format of the textures attached to the rendering point.
 	\param numTarget Number of targets to be built by the constructor.
 	**/
-	HdlFBO::HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget)
-	 : 	__ReadOnly_HdlTextureFormat(f),
+	HdlFBO::HdlFBO(const HdlAbstractTextureFormat& f, int numTarget)
+	 : 	HdlAbstractTextureFormat(f),
 		firstRendering(true)
 	{
 		NEED_EXTENSION(GL_ARB_framebuffer_object)
@@ -262,7 +262,7 @@ using namespace Glip::CoreGL;
 	int HdlFBO::getSize(bool askDriver)
 	{
 		if(!askDriver)
-			return getAttachmentCount() * __ReadOnly_HdlTextureFormat::getSize();
+			return getAttachmentCount() * HdlAbstractTextureFormat::getSize();
 		else
 			if(getAttachmentCount()>0)
 				return getAttachmentCount() * targets.front()->getSizeOnGPU();

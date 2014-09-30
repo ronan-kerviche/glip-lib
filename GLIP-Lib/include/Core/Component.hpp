@@ -45,10 +45,10 @@
 
 			// Objects
 			/**
-			\class __ReadOnly_ComponentLayout
+			\class AbstractComponentLayout
 			\brief Layout of a component template (Read Only)
 			**/
-			class GLIP_API __ReadOnly_ComponentLayout
+			class GLIP_API AbstractComponentLayout
 			{
 				private :
 					// Data
@@ -60,13 +60,13 @@
 
 				protected :
 					// Tools
-					__ReadOnly_ComponentLayout(const std::string& _typeName);
-					__ReadOnly_ComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts);
+					AbstractComponentLayout(const std::string& _typeName);
+					AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts);
 
 				public :
 					// Tools
-					__ReadOnly_ComponentLayout(const __ReadOnly_ComponentLayout&);
-					virtual ~__ReadOnly_ComponentLayout(void);
+					AbstractComponentLayout(const AbstractComponentLayout&);
+					virtual ~AbstractComponentLayout(void);
 
 					void checkInputPort(int i) const;
 					void checkOutputPort(int i) const;
@@ -86,7 +86,7 @@
 			\class ComponentLayout
 			\brief Layout of a component template
 			**/
-			class GLIP_API ComponentLayout : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API ComponentLayout : virtual public AbstractComponentLayout
 			{
 				protected :
 					// Tools
@@ -96,7 +96,7 @@
 				public :
 					// Tools
 					ComponentLayout(const std::string& _typeName);
-					ComponentLayout(const __ReadOnly_ComponentLayout&);
+					ComponentLayout(const AbstractComponentLayout&);
 					virtual ~ComponentLayout(void);
 
 					void setInputPortName(int i, const std::string& newName);
@@ -107,14 +107,14 @@
 			\class Component
 			\brief Element of a pipeline
 			**/
-			class GLIP_API Component : virtual public __ReadOnly_ComponentLayout
+			class GLIP_API Component : virtual public AbstractComponentLayout
 			{
 				private :
 					std::string instanceName;
 				protected :
 					// Tools
 					Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName);
-					Component(const __ReadOnly_ComponentLayout&, const std::string& _instanceName);
+					Component(const AbstractComponentLayout&, const std::string& _instanceName);
 
 				public :
 					virtual ~Component(void);

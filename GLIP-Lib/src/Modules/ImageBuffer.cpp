@@ -34,13 +34,13 @@
 	const std::string 	ImageBuffer::headerSignature 	= "GLIPRAW1";
 
 	/**
-	\fn ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format, int _alignment)
+	\fn ImageBuffer::ImageBuffer(const HdlAbstractTextureFormat& format, int _alignment)
 	\brief ImageBuffer constructor.
 	\param format The format of this buffer (or the equivalent uncompressed format).
 	\param _alignment Force the memory alignment to either 1, 4 or 8 bytes.
 	**/
-	ImageBuffer::ImageBuffer(const __ReadOnly_HdlTextureFormat& format, int _alignment)
-	 : 	__ReadOnly_HdlTextureFormat(format),
+	ImageBuffer::ImageBuffer(const HdlAbstractTextureFormat& format, int _alignment)
+	 : 	HdlAbstractTextureFormat(format),
 		descriptor(format.getFormatDescriptor()),
 		table(NULL)
 	{
@@ -50,14 +50,14 @@
 	}
 
 	/**
-	\fn ImageBuffer::ImageBuffer(void* buffer, const __ReadOnly_HdlTextureFormat& format, int _alignment)
+	\fn ImageBuffer::ImageBuffer(void* buffer, const HdlAbstractTextureFormat& format, int _alignment)
 	\brief ImageBuffer proxy constructor.
 	\param buffer The buffer to point to, this memory table will NOT be deleted when this object is destroyed.
 	\param format The format of this buffer (or the equivalent uncompressed format).
 	\param _alignment Force the memory alignment to either 1, 4 or 8 bytes.
 	**/
-	ImageBuffer::ImageBuffer(void* buffer, const __ReadOnly_HdlTextureFormat& format, int _alignment)
-	 : 	__ReadOnly_HdlTextureFormat(format),
+	ImageBuffer::ImageBuffer(void* buffer, const HdlAbstractTextureFormat& format, int _alignment)
+	 : 	HdlAbstractTextureFormat(format),
 		descriptor(format.getFormatDescriptor()),
 		table(NULL)
 	{
@@ -74,7 +74,7 @@
 	\param _alignment Force the memory alignment to either 1, 4 or 8 bytes.
 	**/
 	ImageBuffer::ImageBuffer(HdlTexture& texture, int _alignment)
-	 :	__ReadOnly_HdlTextureFormat(texture),
+	 :	HdlAbstractTextureFormat(texture),
 		descriptor(texture.getFormatDescriptor()),
 		table(NULL)
 	{
@@ -92,7 +92,7 @@
 	\param image Image buffer to copy.
 	**/
 	ImageBuffer::ImageBuffer(const ImageBuffer& image)
-	 :	__ReadOnly_HdlTextureFormat(image),
+	 :	HdlAbstractTextureFormat(image),
 		descriptor(image.getFormatDescriptor()),
 		table(NULL)
 	{
@@ -240,7 +240,7 @@
 	/**
 	\fn const ImageBuffer& ImageBuffer::operator<<(const void* bytes)
 	\brief Copy an array.
-	\param bytes The buffer to copy (assumed to be of size __ReadOnly_HdlTextureFormat::getSize()).
+	\param bytes The buffer to copy (assumed to be of size HdlAbstractTextureFormat::getSize()).
 	\return This.
 	**/
 	const ImageBuffer& ImageBuffer::operator<<(const void* bytes)
@@ -310,7 +310,7 @@
 	/**
 	\fn const ImageBuffer& ImageBuffer::operator>>(void* bytes) const
 	\brief Copy an array.
-	\param bytes The buffer to copy (assumed to be of size __ReadOnly_HdlTextureFormat::getSize()).
+	\param bytes The buffer to copy (assumed to be of size HdlAbstractTextureFormat::getSize()).
 	\return This.
 	**/
 	const ImageBuffer& ImageBuffer::operator>>(void* bytes) const

@@ -386,12 +386,12 @@ Loading Example :
 				void addToPaths(const std::vector<std::string>& paths);
 				bool removeFromPaths(const std::string& p);
 
-				__ReadOnly_PipelineLayout operator()(const std::string& source); //can be a file or directly the source
+				AbstractPipelineLayout operator()(const std::string& source); //can be a file or directly the source
 				Pipeline* operator()(const std::string& source, std::string pipelineName);
 
-				void addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt);
+				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
-				void addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout);
+				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout);
 				int  clearRequiredElements(void);
 				int  clearRequiredElements(const std::string& name);
 
@@ -422,11 +422,11 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 		class GLIP_API LayoutWriter
 		{
 			private :
-				VanillaParserSpace::Element write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name);
+				VanillaParserSpace::Element write(const HdlAbstractTextureFormat& hLayout, const std::string& name);
 				VanillaParserSpace::Element write(const ShaderSource& source, const std::string& name);
 				VanillaParserSpace::Element write(const GeometryModel& mdl, const std::string& name);
-				VanillaParserSpace::Element write(const __ReadOnly_FilterLayout& fLayout);
-				VanillaParserSpace::Element write(const __ReadOnly_PipelineLayout& pLayout, bool isMain=false);
+				VanillaParserSpace::Element write(const AbstractFilterLayout& fLayout);
+				VanillaParserSpace::Element write(const AbstractPipelineLayout& pLayout, bool isMain=false);
 
 				std::string code;
 
@@ -434,8 +434,8 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 				LayoutWriter(void);
 				virtual ~LayoutWriter(void);
 
-				std::string operator()(const __ReadOnly_PipelineLayout& pipelineLayout);
-				void writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename);
+				std::string operator()(const AbstractPipelineLayout& pipelineLayout);
+				void writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename);
 		};
 	}
 }

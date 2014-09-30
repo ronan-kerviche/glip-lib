@@ -1616,12 +1616,12 @@
 	}
 
 	/**
-	\fn __ReadOnly_PipelineLayout LayoutLoader::operator()(const std::string& source)
+	\fn AbstractPipelineLayout LayoutLoader::operator()(const std::string& source)
 	\brief Loads a pipeline layout from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\return The newly loaded layout or raise an exception if any errors occur.
 	**/
-	__ReadOnly_PipelineLayout LayoutLoader::operator()(const std::string& source)
+	AbstractPipelineLayout LayoutLoader::operator()(const std::string& source)
 	{
 		clean();
 
@@ -1660,7 +1660,7 @@
 			// Get the mainPipeline :
 			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
 
-			return __ReadOnly_PipelineLayout(it->second);
+			return AbstractPipelineLayout(it->second);
 		}
 		catch(Exception& e)
 		{
@@ -1693,7 +1693,7 @@
 	**/
 	Pipeline* LayoutLoader::operator()(const std::string& source, std::string pipelineName)
 	{
-		__ReadOnly_PipelineLayout layout = (*this)(source);
+		AbstractPipelineLayout layout = (*this)(source);
 
 		if(pipelineName.empty())
 			pipelineName = layout.getTypeName();
@@ -1704,12 +1704,12 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
-	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt)
+	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
 	\param name The name of the element.
 	\param fmt The element to be associated.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const __ReadOnly_HdlTextureFormat& fmt)
+	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt)
 	{
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 
@@ -1721,7 +1721,7 @@
 
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
-	\brief Add a __ReadOnly_HdlTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
+	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
 	\param name The name of the element.
 	\param mdl The element to be associated.
 	**/
@@ -1736,12 +1736,12 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
-	\brief Add a __ReadOnly_PipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout)
+	\brief Add a AbstractPipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
 	\param name The name of the element.
 	\param layout The element to be associated.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, __ReadOnly_PipelineLayout& layout)
+	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout)
 	{
 		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
 
@@ -2056,7 +2056,7 @@
 		code.clear();
 	}
 
-	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_HdlTextureFormat& hLayout, const std::string& name)
+	VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& hLayout, const std::string& name)
 	{
 		if(name.empty())
 			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : name cannot be empty.", __FILE__, __LINE__);
@@ -2203,7 +2203,7 @@
 		return e;
 	}
 
-	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_FilterLayout& fLayout)
+	VanillaParserSpace::Element LayoutWriter::write(const AbstractFilterLayout& fLayout)
 	{
 		//if(name.empty())
 		//	throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
@@ -2262,7 +2262,7 @@
 		return e;
 	}
 
-	VanillaParserSpace::Element LayoutWriter::write(const __ReadOnly_PipelineLayout& pLayout, bool isMain)
+	VanillaParserSpace::Element LayoutWriter::write(const AbstractPipelineLayout& pLayout, bool isMain)
 	{
 		std::string keyword;
 
@@ -2317,11 +2317,11 @@
 
 			switch(pLayout.getElementKind(k))
 			{
-				case __ReadOnly_PipelineLayout::FILTER :
+				case AbstractPipelineLayout::FILTER :
 					c 		= write( pLayout.filterLayout(k) );
 					d.strKeyword	= LayoutLoader::getKeyword( KW_LL_FILTER_INSTANCE );
 					break;
-				case __ReadOnly_PipelineLayout::PIPELINE :
+				case AbstractPipelineLayout::PIPELINE :
 					c = write( pLayout.pipelineLayout(k) );
 					d.strKeyword	= LayoutLoader::getKeyword( KW_LL_PIPELINE_INSTANCE );
 					break;
@@ -2349,11 +2349,11 @@
 
 		for(int k=0; k<pLayout.getNumConnections(); k++)
 		{
-			__ReadOnly_PipelineLayout::Connection x = pLayout.getConnection(k);
+			AbstractPipelineLayout::Connection x = pLayout.getConnection(k);
 
 			c.arguments.clear();
 
-			if(x.idOut==__ReadOnly_PipelineLayout::THIS_PIPELINE)
+			if(x.idOut==AbstractPipelineLayout::THIS_PIPELINE)
 			{
 				c.arguments.push_back( LayoutLoader::getKeyword(KW_LL_THIS_PIPELINE) );
 				c.arguments.push_back( pLayout.getInputPortName(x.portOut) );
@@ -2364,7 +2364,7 @@
 				c.arguments.push_back( pLayout.componentLayout(x.idOut).getOutputPortName(x.portOut) );
 			}
 			
-			if(x.idIn==__ReadOnly_PipelineLayout::THIS_PIPELINE)
+			if(x.idIn==AbstractPipelineLayout::THIS_PIPELINE)
 			{
 				c.arguments.push_back( LayoutLoader::getKeyword(KW_LL_THIS_PIPELINE) );
 				c.arguments.push_back( pLayout.getOutputPortName(x.portIn) );
@@ -2382,12 +2382,12 @@
 	}
 
 	/**
-	\fn std::string LayoutWriter::operator()(const __ReadOnly_PipelineLayout& pipelineLayout)
-	\brief Build the human-readable code for the given __ReadOnly_PipelineLayout object.
+	\fn std::string LayoutWriter::operator()(const AbstractPipelineLayout& pipelineLayout)
+	\brief Build the human-readable code for the given AbstractPipelineLayout object.
 	\param pipelineLayout The pipeline layout to convert.
 	\return A standard string containing the full pipeline layout description. 
 	**/
-	std::string LayoutWriter::operator()(const __ReadOnly_PipelineLayout& pipelineLayout)
+	std::string LayoutWriter::operator()(const AbstractPipelineLayout& pipelineLayout)
 	{
 		code.clear();
 
@@ -2399,12 +2399,12 @@
 	}
 
 	/**
-	\fn void LayoutWriter::writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename)
-	\brief Build the human-readable code for the given __ReadOnly_PipelineLayout object and write it to a file. WARNING : it will discard all previous content.
+	\fn void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
+	\brief Build the human-readable code for the given AbstractPipelineLayout object and write it to a file. WARNING : it will discard all previous content.
 	\param pipelineLayout The pipeline layout to convert.
 	\param filename The filename to write to (Warning : discard all previous content).
 	**/
-	void LayoutWriter::writeToFile(const __ReadOnly_PipelineLayout& pipelineLayout, const std::string& filename)
+	void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
 	{
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 		

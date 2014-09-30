@@ -36,10 +36,10 @@
 
 			// Texture Format Handle
 			/**
-			\class __ReadOnly_HdlTextureFormat
+			\class HdlAbstractTextureFormat
 			\brief Object handle for OpenGL texture formats (Read Only).
 			**/
-			class GLIP_API __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlAbstractTextureFormat
 			{
 				private :
 					int	alignment;						// Alignment in memory (on 1, 4 or 8 bytes).
@@ -51,14 +51,14 @@
 					int	baseLevel, maxLevel;                			// MipMap information.	
 
 					// Protected constructors : 
-					__ReadOnly_HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
-					__ReadOnly_HdlTextureFormat(const __ReadOnly_HdlTextureFormat& copy);
+					HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					HdlAbstractTextureFormat(const HdlAbstractTextureFormat& copy);
 
 					// Protected function : 
 					void setAlignment(int _alignment);
 
 				public :
-				virtual ~__ReadOnly_HdlTextureFormat(void);
+				virtual ~HdlAbstractTextureFormat(void);
 
 					int	getWidth    	(void) const;
 					int	getHeight   	(void) const;
@@ -82,14 +82,14 @@
 
 					const HdlTextureFormatDescriptor& getFormatDescriptor(void) const;
 
-					bool	operator==(const __ReadOnly_HdlTextureFormat&) const;
-					bool	operator!=(const __ReadOnly_HdlTextureFormat&) const;
+					bool	operator==(const HdlAbstractTextureFormat&) const;
+					bool	operator!=(const HdlAbstractTextureFormat&) const;
 
-					bool	isCompatibleWith(const __ReadOnly_HdlTextureFormat&) const;
+					bool	isCompatibleWith(const HdlAbstractTextureFormat&) const;
 
-					__ReadOnly_HdlTextureFormat getCompressedFormat(void) const;
-					__ReadOnly_HdlTextureFormat getUncompressedFormat(void) const;
-					bool	isCorrespondingCompressedFormat(const __ReadOnly_HdlTextureFormat&) const;
+					HdlAbstractTextureFormat getCompressedFormat(void) const;
+					HdlAbstractTextureFormat getUncompressedFormat(void) const;
+					bool	isCorrespondingCompressedFormat(const HdlAbstractTextureFormat&) const;
 
 				virtual	unsigned int getSetting(GLenum param) const;
 
@@ -102,12 +102,12 @@
 			\class HdlTextureFormat
 			\brief Object handle for OpenGL texture formats.
 			**/
-			class GLIP_API HdlTextureFormat : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlTextureFormat : public HdlAbstractTextureFormat
 			{
 				public :
 					// reproduce constructor :
 					HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
-					HdlTextureFormat(const __ReadOnly_HdlTextureFormat& fmt);
+					HdlTextureFormat(const HdlAbstractTextureFormat& fmt);
 
 					// Writing Functions
 					void setWidth    (int w);
@@ -122,7 +122,7 @@
 					void setSWrapping(GLenum m);
 					void setTWrapping(GLenum m);
 
-					const __ReadOnly_HdlTextureFormat& operator=(const __ReadOnly_HdlTextureFormat&);
+					const HdlAbstractTextureFormat& operator=(const HdlAbstractTextureFormat&);
 
 					void setSetting(GLenum param, unsigned int value);
 
@@ -134,7 +134,7 @@
 			\class HdlTexture
 			\brief Object handle for OpenGL textures.
 			**/
-			class GLIP_API HdlTexture : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlTexture : public HdlAbstractTextureFormat
 			{
 				private :
 					// Data
@@ -142,11 +142,11 @@
 					bool proxy;
 
 					// Functions
-					HdlTexture(const HdlTexture&);
+					HdlTexture(const HdlTexture&); // No-copy
 
 				public :
 					// Functions
-					HdlTexture(const __ReadOnly_HdlTextureFormat& fmt);
+					HdlTexture(const HdlAbstractTextureFormat& fmt);
 					HdlTexture(GLuint proxyTexID);
 					virtual ~HdlTexture(void);
 
@@ -167,7 +167,7 @@
 					void	setTWrapping(GLenum m);
 					void 	setSetting(GLenum param, unsigned int value);
 
-					const __ReadOnly_HdlTextureFormat& format(void) const;
+					const HdlAbstractTextureFormat& format(void) const;
 
 					// Static Textures tools
 					static void unbind(GLenum unit=GL_TEXTURE0_ARB);

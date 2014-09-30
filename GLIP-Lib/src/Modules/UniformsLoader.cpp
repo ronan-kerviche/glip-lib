@@ -267,17 +267,17 @@
 		// else, stay empty.
 	}
 
-	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_PipelineLayout& current)
+	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const AbstractPipelineLayout& current)
 	 : 	name(_name)
 	{
 		for(int k=0; k<current.getNumElements(); k++)
 		{
 			switch(current.getElementKind(k))
 			{
-				case __ReadOnly_PipelineLayout::FILTER :
+				case AbstractPipelineLayout::FILTER :
 					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.filterLayout(k));
 					break;
-				case __ReadOnly_PipelineLayout::PIPELINE :
+				case AbstractPipelineLayout::PIPELINE :
 					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.pipelineLayout(k));
 					break;
 				default :
@@ -286,7 +286,7 @@
 		}
 	}
 
-	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const __ReadOnly_FilterLayout& current)
+	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const AbstractFilterLayout& current)
 	 : 	name(_name)
 	{
 		// Get access to the filter : 
@@ -675,7 +675,7 @@
 		return resources.end();
 	}
 
-	int UniformsLoader::Node::applyTo(Pipeline& pipeline, const __ReadOnly_PipelineLayout& current, bool forceWrite, bool silent) const
+	int UniformsLoader::Node::applyTo(Pipeline& pipeline, const AbstractPipelineLayout& current, bool forceWrite, bool silent) const
 	{
 		int c = 0;
 
@@ -690,18 +690,18 @@
 			{
 				int id = current.getElementIndex(it->second.getName());
 	
-				const __ReadOnly_PipelineLayout::ComponentKind kind = current.getElementKind(id);
+				const AbstractPipelineLayout::ComponentKind kind = current.getElementKind(id);
 	
 				switch(kind)
 				{
-					case __ReadOnly_PipelineLayout::FILTER :
+					case AbstractPipelineLayout::FILTER :
 						{
 							int gid = current.getElementID(id);
 							Filter& filter = pipeline[gid];	
 							c += it->second.applyTo(pipeline, filter, forceWrite);
 						}
 						break;
-					case __ReadOnly_PipelineLayout::PIPELINE :
+					case AbstractPipelineLayout::PIPELINE :
 						c += it->second.applyTo(pipeline, current.pipelineLayout(id), forceWrite);
 						break;
 					default : 
@@ -970,7 +970,7 @@
 	/**
 	\fn std::vector<std::string> UniformsLoader::getPipelinesTypeNames(void) const
 	\brief Get the typenames of all the pipelines which have data loaded.
-	\return A vector of strings, each one is a known pipeline typename (see __ReadOnly_ComponentLayout::getTypeName()).
+	\return A vector of strings, each one is a known pipeline typename (see AbstractComponentLayout::getTypeName()).
 	**/
 	std::vector<std::string> UniformsLoader::getPipelinesTypeNames(void) const
 	{

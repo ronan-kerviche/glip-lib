@@ -83,6 +83,7 @@ IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value 
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
 GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
 CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
+FORMAT_TO_CONSTANT		| Create a shared code object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat, nameSharedCode.
 ABORT_ERROR			| Return a user defined error. Argument : error description.
 </CENTER>
 

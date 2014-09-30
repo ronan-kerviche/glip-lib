@@ -72,7 +72,7 @@ Example of how to use TextureReader :
 \endcode
 
 **/
-		class GLIP_API TextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API TextureReader : public OutputDevice, public HdlAbstractTextureFormat
 		{
 			private :
 				char* originalPointer;
@@ -90,7 +90,7 @@ Example of how to use TextureReader :
 					/// Set to true if you want to flip Y axis while reading.
 						yFlip;
 				// Functions
-				TextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
+				TextureReader(const std::string& name, const HdlAbstractTextureFormat& format);
 				~TextureReader(void);
 
 				double operator()(int x, int y, int c);
@@ -127,7 +127,7 @@ Example of how to use PBOTextureReader :
 	secondPBOReader.endReadingMemory();
 \endcode
 **/
-		class GLIP_API PBOTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat, protected HdlPBO
+		class GLIP_API PBOTextureReader : public OutputDevice, public HdlAbstractTextureFormat, protected HdlPBO
 		{
 			private : 
 				OutputDevice::OutputDeviceLayout getLayout(void) const;
@@ -137,15 +137,15 @@ Example of how to use PBOTextureReader :
 
 			public :
 				// Functions
-				PBOTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format, GLenum freq);
+				PBOTextureReader(const std::string& name, const HdlAbstractTextureFormat& format, GLenum freq);
 				~PBOTextureReader(void);
 
 				void* startReadingMemory(void);
 				void endReadingMemory(void);
 
-				using __ReadOnly_HdlTextureFormat::getWidth;
-				using __ReadOnly_HdlTextureFormat::getHeight;
-				using __ReadOnly_HdlTextureFormat::getSize;
+				using HdlAbstractTextureFormat::getWidth;
+				using HdlAbstractTextureFormat::getHeight;
+				using HdlAbstractTextureFormat::getSize;
 		};
 
 /**
@@ -154,7 +154,7 @@ Example of how to use PBOTextureReader :
 
 This class is working exacly as TextureReader except that you will access the data in a compressed format (no direct channels/pixels access).
 **/
-		class GLIP_API CompressedTextureReader : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API CompressedTextureReader : public OutputDevice, public HdlAbstractTextureFormat
 		{
 			private :
 				char* data;
@@ -166,7 +166,7 @@ This class is working exacly as TextureReader except that you will access the da
 				void process(void);
 
 			public :
-				CompressedTextureReader(const std::string& name, const __ReadOnly_HdlTextureFormat& format);
+				CompressedTextureReader(const std::string& name, const HdlAbstractTextureFormat& format);
 				~CompressedTextureReader(void);
 
 				size_t	getSize(void) const;
@@ -203,7 +203,7 @@ Example :
 	somePipeline << someTargetTexture << ... ;
 \endcode
 **/
-		class GLIP_API TextureCopier : public OutputDevice, public __ReadOnly_HdlTextureFormat
+		class GLIP_API TextureCopier : public OutputDevice, public HdlAbstractTextureFormat
 		{
 			private :
 				bool 		customTexture;
@@ -216,7 +216,7 @@ Example :
 				void process(void);
 
 			public :
-				TextureCopier(const std::string& name, const __ReadOnly_HdlTextureFormat& formatIn, const __ReadOnly_HdlTextureFormat& formatOut, bool _customTexture=false);
+				TextureCopier(const std::string& name, const HdlAbstractTextureFormat& formatIn, const HdlAbstractTextureFormat& formatOut, bool _customTexture=false);
 				~TextureCopier(void);
 
 				bool isUsingCustomTargetTexture(void) const;

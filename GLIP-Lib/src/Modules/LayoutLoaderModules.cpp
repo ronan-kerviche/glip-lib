@@ -527,7 +527,7 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1, true, 	"Match if a format setting is equal to a value (integer or GL keyword).\n"
 												"Arguments : nameFormat, nameSetting, value.\n"
-												"            nameSettings : the settings name can be found in the documentation of __ReadOnly_HdlTextureFormat::getSetting).")
+												"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 
@@ -556,7 +556,7 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_LARGERTHAN, 3, 3, 1, true, 	"Match if a format setting is larger than a value (integer or GL keyword).\n"
 													"Arguments : nameFormat, nameSetting, value.\n"
-													"            nameSettings : the settings name can be found in the documentation of __ReadOnly_HdlTextureFormat::getSetting).")
+													"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
 			{
 				FORMAT_MUST_EXIST( arguments[0] )
 

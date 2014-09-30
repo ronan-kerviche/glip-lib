@@ -356,7 +356,7 @@ using namespace QGIC;
 		return lockedToDevice;
 	}
 
-	const __ReadOnly_HdlTextureFormat& ImageItem::getFormat(void) const
+	const HdlAbstractTextureFormat& ImageItem::getFormat(void) const
 	{
 		return format;
 	}
@@ -521,7 +521,7 @@ using namespace QGIC;
 			return tr("%1 B").arg( size );
 	}
 
-	QString ImageItem::getFormatToolTip(const __ReadOnly_HdlTextureFormat& format, const QString& name)
+	QString ImageItem::getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name)
 	{
 		QString toolTip;
 
@@ -827,7 +827,7 @@ using namespace QGIC;
 		clearChecked();
 	}
 
-	void FilterMenu::update(const __ReadOnly_HdlTextureFormat& format)
+	void FilterMenu::update(const HdlAbstractTextureFormat& format)
 	{
 		bothNearest.setEnabled(true);
 		bothLinear.setEnabled(true);
@@ -1069,7 +1069,7 @@ using namespace QGIC;
 		tMirroredRepeat.setEnabled(false);
 	}
 
-	void WrappingMenu::update(const __ReadOnly_HdlTextureFormat& format)
+	void WrappingMenu::update(const HdlAbstractTextureFormat& format)
 	{
 		bothClamp.setEnabled(true);
 		bothClampToBorder.setEnabled(true);
@@ -1454,7 +1454,7 @@ using namespace QGIC;
 		GET_ITEM_SAFE( item )
 
 		// Format Size, Mode and Depth : 
-		const __ReadOnly_HdlTextureFormat& format = imageItem->getFormat();
+		const HdlAbstractTextureFormat& format = imageItem->getFormat();
 
 		QString formatString;
 

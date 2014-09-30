@@ -60,7 +60,7 @@ using namespace QVGL;
 		return (texture!=NULL);
 	}
 
-	const __ReadOnly_HdlTextureFormat& View::getFormat(void) const
+	const HdlAbstractTextureFormat& View::getFormat(void) const
 	{
 		if(texture==NULL)
 			throw Exception("View::getFormat - View is invalid.", __FILE__, __LINE__);

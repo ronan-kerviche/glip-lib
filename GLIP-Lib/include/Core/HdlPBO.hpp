@@ -77,7 +77,7 @@ For reading operations, use Glip::Modules::PBOTextureReader.
 				public :
 					// Tools
 					HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size=-1);
-					HdlPBO(const __ReadOnly_HdlTextureFormat& fmt, GLenum aim, GLenum freq);
+					HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq);
 					~HdlPBO(void);
 
 					int  getWidth(void);

@@ -44,7 +44,7 @@ namespace Glip
 \class ImageBuffer
 \brief Host-side image buffer.
 **/
-		class GLIP_API ImageBuffer : public __ReadOnly_HdlTextureFormat
+		class GLIP_API ImageBuffer : public HdlAbstractTextureFormat
 		{
 			private : 
 				static const unsigned int headerNumBytes;
@@ -55,8 +55,8 @@ namespace Glip
 				HdlDynamicTable*			table;
 		
 			public : 
-				ImageBuffer(const __ReadOnly_HdlTextureFormat& format, int _alignment=1);
-				ImageBuffer(void* buffer, const __ReadOnly_HdlTextureFormat& format, int _alignment=1);
+				ImageBuffer(const HdlAbstractTextureFormat& format, int _alignment=1);
+				ImageBuffer(void* buffer, const HdlAbstractTextureFormat& format, int _alignment=1);
 				ImageBuffer(HdlTexture& texture, int _alignment=1);
 				ImageBuffer(const ImageBuffer& image);
 				~ImageBuffer(void);

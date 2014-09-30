@@ -125,7 +125,7 @@ namespace QVGL
 			~View(void);
 
 			bool isValid(void) const;
-			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
+			const HdlAbstractTextureFormat& getFormat(void) const;
 			const QString& getName(void) const;
 			void setName(const QString& newName);
 			void setTexture(HdlTexture* texture);

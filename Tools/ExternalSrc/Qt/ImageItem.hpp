@@ -79,7 +79,7 @@ namespace QGIC
 			void lockToDevice(bool lockEnabled);
 			bool isLockedToDevice(void) const;
 
-			const __ReadOnly_HdlTextureFormat& getFormat(void) const;
+			const HdlAbstractTextureFormat& getFormat(void) const;
 			void setMinFilter(GLenum mf);
 			void setMagFilter(GLenum mf);
 			void setSWrapping(GLint m);
@@ -103,7 +103,7 @@ namespace QGIC
 			void remove(void);
 
 			static QString getSizeString(size_t size);
-			static QString getFormatToolTip(const __ReadOnly_HdlTextureFormat& format, const QString& name="");
+			static QString getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name="");
 			static ImageItem* pasteImageFromClipboard(void);
 
 		signals : 
@@ -178,7 +178,7 @@ namespace QGIC
 			~FilterMenu(void);
 
 			void update(void);
-			void update(const __ReadOnly_HdlTextureFormat& format);
+			void update(const HdlAbstractTextureFormat& format);
 			void update(const QList<HdlTextureFormat>& formats);
 			void get(QAction* action, GLenum& dminFilter, GLenum& dmagFilter);
 			bool get(const QPoint& pos, GLenum& minFilter, GLenum& magFilter);
@@ -222,7 +222,7 @@ namespace QGIC
 			WrappingMenu(QWidget* parent=NULL);
 
 			void update(void);
-			void update(const __ReadOnly_HdlTextureFormat& format);
+			void update(const HdlAbstractTextureFormat& format);
 			void update(const QList<HdlTextureFormat>& formats);
 			void get(QAction* action, GLenum& sWrapping, GLenum& tWrapping);
 			bool get(const QPoint& pos, GLenum& sWrapping, GLenum& tWrapping);

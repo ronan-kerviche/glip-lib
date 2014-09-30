@@ -376,7 +376,7 @@
 		portNameInfo.setText(QString(name.c_str()));
 	}
 
-	void VideoRecordingDialog::updateFormat(const __ReadOnly_HdlTextureFormat& fmt)
+	void VideoRecordingDialog::updateFormat(const HdlAbstractTextureFormat& fmt)
 	{
 		int weight 	= fmt.getSize()/1024 + 1;
 		QString mode 	= glParamName(fmt.getGLMode()).c_str(),
@@ -505,7 +505,7 @@
 		}
 	}
 
-	void VideoRecorderControls::startRecording(unsigned int portID, const std::string& portName, const __ReadOnly_HdlTextureFormat& fmt)
+	void VideoRecorderControls::startRecording(unsigned int portID, const std::string& portName, const HdlAbstractTextureFormat& fmt)
 	{
 		if(!isRecording())
 		{

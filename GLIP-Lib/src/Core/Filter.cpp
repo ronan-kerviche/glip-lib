@@ -71,41 +71,41 @@
 		return std::string(str.str());
 	}
 
-	// __ReadOnly_FilterLayout
+	// AbstractFilterLayout
 	/**
-	\fn __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-	\brief __ReadOnly_FilterLayout constructor.
+	\fn AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
+	\brief AbstractFilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param f The texture format associated to all outputs of the filter.
 	**/
-	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f)
-	 : __ReadOnly_ComponentLayout(type), __ReadOnly_HdlTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(false), clearing(true), isStandardVertex(true), isStandardGeometry(true)
+	AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
+	 : AbstractComponentLayout(type), HdlAbstractTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(false), clearing(true), isStandardVertex(true), isStandardGeometry(true)
 	{ }
 
 	/**
-	\fn __ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-	\brief __ReadOnly_FilterLayout constructor.
+	\fn AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
+	\brief AbstractFilterLayout constructor.
 	\param c Copy.
 	**/
-	__ReadOnly_FilterLayout::__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout& c)
-	 : __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(c.blending), clearing(c.clearing), isStandardVertex(c.isStandardVertex), isStandardGeometry(c.isStandardGeometry)
+	AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
+	 : AbstractComponentLayout(c), HdlAbstractTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(c.blending), clearing(c.clearing), isStandardVertex(c.isStandardVertex), isStandardGeometry(c.isStandardGeometry)
 	{
 		try
 		{
 			if(c.vertexSource!=NULL)
 				vertexSource   = new ShaderSource(*c.vertexSource);
 			else
-				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
 			if(c.fragmentSource!=NULL)
 				fragmentSource = new ShaderSource(*c.fragmentSource);
 			else
-				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
 
 			if(c.geometryModel!=NULL)
 				geometryModel = new GeometryModel(*c.geometryModel);
 			else
-				throw Exception("__ReadOnly_FilterLayout::__ReadOnly_FilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
 		}
 		catch(Exception& e)
 		{
@@ -123,7 +123,7 @@
 		
 	}
 
-	__ReadOnly_FilterLayout::~__ReadOnly_FilterLayout(void)
+	AbstractFilterLayout::~AbstractFilterLayout(void)
 	{
 		delete vertexSource;
 		delete fragmentSource;
@@ -131,11 +131,11 @@
 	}
 
 	/**
-	\fn ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
+	\fn ShaderSource& AbstractFilterLayout::getVertexSource(void) const
 	\brief Get the ShaderSource object of the vertex shader used by the filter.
 	\return ShaderSource object reference.
 	**/
-	ShaderSource& __ReadOnly_FilterLayout::getVertexSource(void) const
+	ShaderSource& AbstractFilterLayout::getVertexSource(void) const
 	{
 		if(vertexSource==NULL)
 			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
@@ -144,11 +144,11 @@
 	}
 
 	/**
-	\fn ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
+	\fn ShaderSource& AbstractFilterLayout::getFragmentSource(void) const
 	\brief Get the ShaderSource object of the fragment shader used by the filter.
 	\return ShaderSource object reference.
 	**/
-	ShaderSource& __ReadOnly_FilterLayout::getFragmentSource(void) const
+	ShaderSource& AbstractFilterLayout::getFragmentSource(void) const
 	{
 		if(fragmentSource==NULL)
 			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
@@ -157,11 +157,11 @@
 	}
 
 	/**
-	\fn GeometryModel& __ReadOnly_FilterLayout::getGeometryModel(void) const
+	\fn GeometryModel& AbstractFilterLayout::getGeometryModel(void) const
 	\brief Get the GeometryModel used by the filter.
 	\return GeometryModel object reference.
 	**/
-	GeometryModel& __ReadOnly_FilterLayout::getGeometryModel(void) const
+	GeometryModel& AbstractFilterLayout::getGeometryModel(void) const
 	{
 		if(geometryModel==NULL)
 			throw Exception("FilterLayout::getGeometryModel - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__);
@@ -170,38 +170,38 @@
 	}
 
 	/**
-	\fn bool __ReadOnly_FilterLayout::isBlendingEnabled(void) const
+	\fn bool AbstractFilterLayout::isBlendingEnabled(void) const
 	\return true if blending is enabled.
-	\fn void __ReadOnly_FilterLayout::enableBlending(void)
+	\fn void AbstractFilterLayout::enableBlending(void)
 	\brief Enables blending operation (the alpha channel is used).
-	\fn void __ReadOnly_FilterLayout::disableBlending(void)
+	\fn void AbstractFilterLayout::disableBlending(void)
 	\brief Disables blending operation.
-	\fn bool __ReadOnly_FilterLayout::isClearingEnabled(void) const
+	\fn bool AbstractFilterLayout::isClearingEnabled(void) const
 	\return true if clearing is enabled.
-	\fn void __ReadOnly_FilterLayout::enableClearing(void)
+	\fn void AbstractFilterLayout::enableClearing(void)
 	\brief Enables clearing operation (the destination buffer is cleared before each operation).
-	\fn void __ReadOnly_FilterLayout::disableClearing(void)
+	\fn void AbstractFilterLayout::disableClearing(void)
 	\brief Disables clearing operation.
 	**/
-	bool __ReadOnly_FilterLayout::isBlendingEnabled(void) const	{ return blending;  }
-	void __ReadOnly_FilterLayout::enableBlending(void)   		{ blending = true;  }
-	void __ReadOnly_FilterLayout::disableBlending(void)  		{ blending = false; }
-	bool __ReadOnly_FilterLayout::isClearingEnabled(void) const	{ return clearing;  }
-	void __ReadOnly_FilterLayout::enableClearing(void)   		{ clearing = true;  }
-	void __ReadOnly_FilterLayout::disableClearing(void)  		{ clearing = false; }
+	bool AbstractFilterLayout::isBlendingEnabled(void) const	{ return blending;  }
+	void AbstractFilterLayout::enableBlending(void)   		{ blending = true;  }
+	void AbstractFilterLayout::disableBlending(void)  		{ blending = false; }
+	bool AbstractFilterLayout::isClearingEnabled(void) const	{ return clearing;  }
+	void AbstractFilterLayout::enableClearing(void)   		{ clearing = true;  }
+	void AbstractFilterLayout::disableClearing(void)  		{ clearing = false; }
 
 	/**
-	\fn bool __ReadOnly_FilterLayout::isStandardVertexSource(void) const
+	\fn bool AbstractFilterLayout::isStandardVertexSource(void) const
 	\return true if the filter will be using a standard vertex program.
-	\fn bool __ReadOnly_FilterLayout::isStandardGeometryModel(void) const
+	\fn bool AbstractFilterLayout::isStandardGeometryModel(void) const
 	\return true if the filter will be using a standard quad as geometry.
 	**/
-	bool __ReadOnly_FilterLayout::isStandardVertexSource(void) const	{ return isStandardVertex; }
-	bool __ReadOnly_FilterLayout::isStandardGeometryModel(void) const	{ return isStandardGeometry; }
+	bool AbstractFilterLayout::isStandardVertexSource(void) const	{ return isStandardVertex; }
+	bool AbstractFilterLayout::isStandardGeometryModel(void) const	{ return isStandardGeometry; }
 
 	// FilterLayout
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
+	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
@@ -209,8 +209,8 @@
 	\param vertex The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
 	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
-	 : __ReadOnly_HdlTextureFormat(fout), __ReadOnly_ComponentLayout(type), ComponentLayout(type), __ReadOnly_FilterLayout(type, fout)
+	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
+	 : HdlAbstractTextureFormat(fout), AbstractComponentLayout(type), ComponentLayout(type), AbstractFilterLayout(type, fout)
 	{
 		fragmentSource = new ShaderSource(fragment);
 
@@ -276,13 +276,13 @@
 
 // Filter
 	/**
-	\fn Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
+	\fn Filter::Filter(const AbstractFilterLayout& c, const std::string& name)
 	\brief Filter constructor.
 	\param c Filter layout.
 	\param name The instance name.
 	**/
-	Filter::Filter(const __ReadOnly_FilterLayout& c, const std::string& name)
-	: Component(c, name), __ReadOnly_FilterLayout(c), __ReadOnly_ComponentLayout(c), __ReadOnly_HdlTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), prgm(NULL), geometry(NULL) 
+	Filter::Filter(const AbstractFilterLayout& c, const std::string& name)
+	: Component(c, name), AbstractFilterLayout(c), AbstractComponentLayout(c), HdlAbstractTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), prgm(NULL), geometry(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();

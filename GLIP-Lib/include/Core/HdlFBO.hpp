@@ -45,7 +45,7 @@
 
 			This class can manage a Frame Buffer Object and multiple rendering target, each one of these rendering target have the same format.
 			**/
-			class GLIP_API HdlFBO : public __ReadOnly_HdlTextureFormat
+			class GLIP_API HdlFBO : public HdlAbstractTextureFormat
 			{
 				private :
 					// Data
@@ -62,7 +62,7 @@
 
 				public :
 					// Tools
-					HdlFBO(const __ReadOnly_HdlTextureFormat& f, int numTarget = 1);
+					HdlFBO(const HdlAbstractTextureFormat& f, int numTarget = 1);
 					~HdlFBO(void);
 
 					int		addTarget(void);

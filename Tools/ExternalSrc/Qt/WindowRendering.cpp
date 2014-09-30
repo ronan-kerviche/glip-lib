@@ -411,7 +411,7 @@
 		currentImageAspectRatio = ratio;
 	}
 
-	void WindowRenderer::setImageAspectRatio(const __ReadOnly_HdlTextureFormat& fmt)
+	void WindowRenderer::setImageAspectRatio(const HdlAbstractTextureFormat& fmt)
 	{
 		float ratio = static_cast<float>(fmt.getWidth())/static_cast<float>(fmt.getHeight());
 		setImageAspectRatio(ratio);

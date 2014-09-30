@@ -52,10 +52,10 @@
 
 			// Objects
 			/**
-			\class __ReadOnly_FilterLayout
+			\class AbstractFilterLayout
 			\brief Filter layout (Read Only).
 			**/
-			class GLIP_API __ReadOnly_FilterLayout : virtual public __ReadOnly_ComponentLayout, virtual public __ReadOnly_HdlTextureFormat
+			class GLIP_API AbstractFilterLayout : virtual public AbstractComponentLayout, virtual public HdlAbstractTextureFormat
 			{
 				private :
 					// Data
@@ -70,12 +70,12 @@
 
 				protected :
 					// Tools
-					__ReadOnly_FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& f);
+					AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f);
 
 				public :
 					// Tools
-					__ReadOnly_FilterLayout(const __ReadOnly_FilterLayout&);
-					virtual ~__ReadOnly_FilterLayout(void);
+					AbstractFilterLayout(const AbstractFilterLayout&);
+					virtual ~AbstractFilterLayout(void);
 					ShaderSource& getVertexSource(void) const;
 					ShaderSource& getFragmentSource(void) const;
 					GeometryModel& getGeometryModel(void) const;
@@ -95,18 +95,18 @@
 			\class FilterLayout
 			\brief Filter layout.
 			**/
-			class GLIP_API FilterLayout : virtual public ComponentLayout, virtual public __ReadOnly_FilterLayout
+			class GLIP_API FilterLayout : virtual public ComponentLayout, virtual public AbstractFilterLayout
 			{
 				public :
 					// Tools
-					FilterLayout(const std::string& type, const __ReadOnly_HdlTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryModel* geometry = NULL);
+					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryModel* geometry = NULL);
 			};
 
 			/**
 			\class Filter
 			\brief Filter object.
 			**/
-			class GLIP_API Filter : virtual public Component, virtual public __ReadOnly_FilterLayout
+			class GLIP_API Filter : virtual public Component, virtual public AbstractFilterLayout
 			{
 				private :
 					// Data
@@ -120,7 +120,7 @@
 
 				protected :
 					// Tools
-					Filter(const __ReadOnly_FilterLayout&, const std::string& name);
+					Filter(const AbstractFilterLayout&, const std::string& name);
 
 					void setInputForNextRendering(int id, HdlTexture* ptr);
 					void process(HdlFBO& renderer);
