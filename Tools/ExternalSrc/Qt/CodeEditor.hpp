@@ -136,11 +136,15 @@ namespace QGED
 		Q_OBJECT
 		
 		private : 
-			bool					highlightLine;
+			bool					highlightLine,
+								braceMatching;
 			QString 				currentFilename;
 			QFont					font;
 			Highlighter 				*highLighter;
 			QWidget 				*lineNumberArea;
+
+			QColor					braceMatchingColor;
+			QList<QTextEdit::ExtraSelection>	bracesMatchExtraSelections;
 
 			QRegExp 				searchExpression;
 			QColor					searchHighlightColor;
@@ -156,15 +160,18 @@ namespace QGED
 			void resizeEvent(QResizeEvent *event);
 			void keyPressEvent(QKeyEvent* e);
 			void contextMenuEvent(QContextMenuEvent* event);
+			static void matchBraces(QTextCursor& current, bool& acceptableMatch, QTextCursor& result);
 
 			friend class LineNumberArea;
 
 		private slots:
 			void updateLineNumberAreaWidth(int newBlockCount);
+			void updateLineNumberArea(const QRect &, int);
+			void updateBracesMatchExtraSelection(void);
+			void updateSearchExtraSelection(void);
 			void updateExtraHighlight(void);
 			void clearHighlightOfCurrentLine(void);
-			void updateLineNumberArea(const QRect &, int);
-			void updateSearchExtraSelection(void);
+			void updateToCursorPosition(void);		
 	
 		public :
 			CodeEditor(QWidget *parent = 0);
@@ -274,13 +281,15 @@ namespace QGED
 						glipLayoutLoaderKeywordColor,
 						glipUniformLoaderKeywordColor,
 						commentsColor,
+						braceMatchingColor,
 						searchColor;
 			QFont			editorFont,
 						keywordFont;
 			QTextOption::WrapMode	wrapMode;
 			int			tabNumberOfSpaces;
 			bool			enableHighlight,
-						highlightCurrentLine;
+						highlightCurrentLine,
+						braceMatching;
 
 			// Gui : 
 			QGridLayout		layout;
@@ -295,6 +304,7 @@ namespace QGED
 						glipLayoutLoaderKeywordColorLabel,
 						glipUniformLoaderKeywordColorLabel,
 						commentsColorLabel,
+						braceMatchingColorLabel,
 						searchColorLabel;
 			QPushButton		glslKeywordColorButton,
 						glslFunctionColorButton,
@@ -302,6 +312,7 @@ namespace QGED
 						glipUniformLoaderKeywordColorButton,
 						commentsColorButton,
 						searchColorButton,
+						braceMatchingColorButton,
 						editorFontButton,
 						keywordFontButton,
 						okButton,
@@ -309,7 +320,8 @@ namespace QGED
 						cancelButton,
 						resetButton;
 			QCheckBox		highlightKeywordsCheck,
-						highlightCurrentLineCheck;	
+						highlightCurrentLineCheck,
+						braceMatchingCheck;	
 			QComboBox		wrapModesBox;
 			QSpinBox		tabSpacesSpin;
 
@@ -331,6 +343,7 @@ namespace QGED
 			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
 			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
 			const QColor& getCommentsColor(void) const;
+			const QColor& getBraceMatchingColor(void) const;
 			const QColor& getSearchColor(void) const;
 			const QFont& getEditorFont(void) const;
 			const QFont& getKeywordFont(void) const;
@@ -338,6 +351,7 @@ namespace QGED
 			const int& getNumberOfSpacesPerTabulation(void) const;
 			const bool& isHighlightEnabled(void) const;
 			const bool& isLineHighlightEnabled(void) const;
+			const bool& isBraceMatchingEnabled(void) const;
 		
 			std::string getSettingsString(void) const;
 			void setSettingsFromString(const std::string& str);

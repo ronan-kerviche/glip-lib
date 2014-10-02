@@ -458,7 +458,10 @@
 					one = line.find('(') + 1;
 					two = line.find(')');
 					if(fromString(line.substr(one, two-one), incriminatedLine))
-						buggyLine = getLine(incriminatedLine-1);
+					{
+						incriminatedLine++;
+						buggyLine = getLine(incriminatedLine-2);
+					}
 					break;
 				case HandleOpenGL::vd_INTEL :
 					one = line.find(delimINTEL);

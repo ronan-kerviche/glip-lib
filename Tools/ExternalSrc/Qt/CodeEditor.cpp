@@ -212,6 +212,7 @@ using namespace QGED;
 	 : 	QPlainTextEdit(parent),
 		currentFilename(""),
 		highlightLine(false),
+		braceMatching(false),
 		lineNumberArea(NULL),
 		highLighter(NULL)
 	{
@@ -222,7 +223,7 @@ using namespace QGED;
 
 		QObject::connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
 		QObject::connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
-		QObject::connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(updateExtraHighlight()));
+		QObject::connect(this,			SIGNAL(cursorPositionChanged()),	this, SLOT(updateToCursorPosition()));
 		QObject::connect(document(),		SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
 		QObject::connect(document(), 		SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
 	}
@@ -253,18 +254,19 @@ using namespace QGED;
 
 		painter.fillRect(event->rect(), bg);
 
+		const int	pixelOffset	= 2;
 		QTextBlock 	block 		= firstVisibleBlock();
 		int 		blockNumber 	= block.blockNumber();
 		int 		top 		= (int) blockBoundingGeometry(block).translated(contentOffset()).top();
 		int 		bottom 		= top + (int) blockBoundingRect(block).height();
 
-		QFontMetrics metrics(font);
-
 		painter.setPen(ed);
-		QFont painterFont = painter.font();
-		QPen painterPen	= painter.pen();
+		QFont 	painterFont	= painter.font();
+		QPen 	painterPen	= painter.pen();
 
-		while(block.isValid() && top <= event->rect().bottom())
+		QFontMetrics metrics(painterFont);
+
+		while(block.isValid() && top<=event->rect().bottom())
 		{
 			if(block.isVisible() && bottom>=event->rect().top())
 			{
@@ -291,17 +293,20 @@ using namespace QGED;
 					QFont tmpFont = painterFont;
 					tmpFont.setBold(true);	
 					QPen tmpPen = painterPen;
-					tmpPen.setColor(Qt::red);
-				
+					tmpPen.setColor(Qt::white);
+
 					painter.setFont(tmpFont);
 					painter.setPen(tmpPen);
+
+					// Red rectangle :
+					painter.fillRect(0, top-pixelOffset, lineNumberArea->width(), metrics.height(), Qt::red);
 
 					reset = true;
 				}
 
 				QString number = QString::number(blockNumber + 1);
 				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
-				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
+				painter.drawText(0, top-pixelOffset, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
 
 				if(reset)
 				{
@@ -336,42 +341,6 @@ using namespace QGED;
 		if(rect.contains(viewport()->rect()))
 			updateLineNumberAreaWidth(0);
 	}
-	
-	void CodeEditor::updateSearchExtraSelection(void)
-	{
-		searchExtraSelections.clear();
-	
-		if(!searchExpression.isEmpty())
-		{
-			for(QTextBlock block=document()->begin(); block!=document()->end(); block=block.next()) 
-			{
-				const QString text = block.text();
-				int index = searchExpression.indexIn(text);
-
-				QTextCursor cursor(block);
-
-				while(index>=0)
-				{
-					int length = searchExpression.matchedLength();
-					cursor.setPosition(block.position()+index, QTextCursor::MoveAnchor);
-					cursor.setPosition(block.position()+index+length, QTextCursor::KeepAnchor);
-
-					// Append :
-					QTextEdit::ExtraSelection selection;
-					selection.format.setBackground(searchHighlightColor);
-					selection.cursor = cursor;
-					searchExtraSelections.append(selection);
-
-					// Next :
-					index = searchExpression.indexIn(text, index + length);	
-				}
-			}
-
-			// Update the highlighting :
-			if(!searchExtraSelections.isEmpty())
-				updateExtraHighlight();		
-		}
-	}	
 
 	void CodeEditor::resizeEvent(QResizeEvent *e)
 	{
@@ -424,6 +393,7 @@ using namespace QGED;
 			cursor.setPosition(startSel, QTextCursor::KeepAnchor);
 			QTextBlock block = cursor.block();
 
+			cursor.beginEditBlock();
 			for(; block.isValid() && !(endBlock < block); block = block.next())
 			{
 				if(!block.isValid())
@@ -442,6 +412,7 @@ using namespace QGED;
 				
 				cursor.movePosition(QTextCursor::NextBlock);
 			}
+			cursor.endEditBlock();
 		}
 		else // Otherwise, propagate : 
 			QPlainTextEdit::keyPressEvent(e);
@@ -460,6 +431,177 @@ using namespace QGED;
 		delete menu;
 	}
 
+	void CodeEditor::matchBraces(QTextCursor& current, bool& acceptableMatch, QTextCursor& result)
+	{
+		const QString	openChar 	= "([{",
+				closeChar	= ")]}";
+		int 		counter[3]	= {0, 0, 0};
+
+		acceptableMatch	= false;
+		result		= QTextCursor();
+		
+		if(current.isNull() || current.document()==NULL)
+			return ;
+
+		QChar character = current.document()->characterAt(current.position());
+		
+		int 	indexOpen 	= openChar.indexOf(character),
+			indexClose 	= closeChar.indexOf(character);
+
+		// Test the previous character in case of failure : 
+		if(indexOpen<0 && indexClose<0)
+		{
+			current.movePosition(QTextCursor::PreviousCharacter);
+
+			character = current.document()->characterAt(current.position());
+
+			indexOpen 	= openChar.indexOf(character),
+			indexClose 	= closeChar.indexOf(character);
+		}
+		
+		if(indexOpen>=0)
+		{
+			acceptableMatch	= true;
+
+			result = current;
+			result.movePosition(QTextCursor::NextCharacter);
+			while(!result.isNull())
+			{
+				const QChar currentChar = current.document()->characterAt(result.position());				
+				int 	currentIndexOpen  = openChar.indexOf(currentChar),
+					currentIndexClose = closeChar.indexOf(currentChar);
+
+				if(currentIndexOpen>=0)
+					counter[currentIndexOpen]++;
+				else if(currentIndexClose>=0)
+					counter[currentIndexClose]--;
+
+				if(counter[indexOpen]<0)
+					break ;
+				else
+				{
+					if(!result.movePosition(QTextCursor::NextCharacter))
+					{
+						result = QTextCursor();
+						break ;
+					}
+				}
+			}
+		}
+		else if(indexClose>=0)
+		{
+			acceptableMatch	= true;
+
+			result = current;
+			result.movePosition(QTextCursor::PreviousCharacter);
+			while(!result.isNull())
+			{
+				const QChar currentChar = current.document()->characterAt(result.position());				
+				int 	currentIndexOpen  = openChar.indexOf(currentChar),
+					currentIndexClose = closeChar.indexOf(currentChar);
+
+				if(currentIndexOpen>=0)
+					counter[currentIndexOpen]--;
+				else if(currentIndexClose>=0)
+					counter[currentIndexClose]++;
+
+				if(counter[indexClose]<0)
+					break ;
+				else
+				{
+					if(!result.movePosition(QTextCursor::PreviousCharacter))
+					{
+						result = QTextCursor();
+						break ;
+					}
+				}
+			}
+		}
+		// else, default error
+
+		if(!current.isNull())
+			current.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+
+		if(!result.isNull())
+			result.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+	}
+
+	void CodeEditor::updateBracesMatchExtraSelection(void)
+	{
+		bracesMatchExtraSelections.clear();
+
+		if(!braceMatching)
+			return ;
+
+		bool acceptableMatch = false;
+		QTextCursor currentTextCursor = textCursor();
+		QTextCursor result = QTextCursor();
+
+		matchBraces(currentTextCursor, acceptableMatch, result);
+
+		if(acceptableMatch)
+		{
+			if(!result.isNull())
+			{
+				QTextEdit::ExtraSelection selectionBegin;
+
+				selectionBegin.format.setBackground(braceMatchingColor);
+				selectionBegin.cursor = currentTextCursor;
+				bracesMatchExtraSelections.append(selectionBegin);
+		
+				QTextEdit::ExtraSelection selectionEnd;
+
+				selectionEnd.format.setBackground(braceMatchingColor);
+				selectionEnd.cursor = result;
+				bracesMatchExtraSelections.append(selectionEnd);
+			}
+			else
+			{
+				QTextEdit::ExtraSelection selection;
+
+				selection.format.setBackground(Qt::red);
+				selection.cursor = currentTextCursor;
+				bracesMatchExtraSelections.append(selection);
+			}
+		}
+	}
+
+	void CodeEditor::updateSearchExtraSelection(void)
+	{
+		searchExtraSelections.clear();
+	
+		if(!searchExpression.isEmpty())
+		{
+			for(QTextBlock block=document()->begin(); block!=document()->end(); block=block.next()) 
+			{
+				const QString text = block.text();
+				int index = searchExpression.indexIn(text);
+
+				QTextCursor cursor(block);
+
+				while(index>=0)
+				{
+					int length = searchExpression.matchedLength();
+					cursor.setPosition(block.position()+index, QTextCursor::MoveAnchor);
+					cursor.setPosition(block.position()+index+length, QTextCursor::KeepAnchor);
+
+					// Append :
+					QTextEdit::ExtraSelection selection;
+					selection.format.setBackground(searchHighlightColor);
+					selection.cursor = cursor;
+					searchExtraSelections.append(selection);
+
+					// Next :
+					index = searchExpression.indexIn(text, index + length);	
+				}
+			}
+
+			// Update the highlighting :
+			if(!searchExtraSelections.isEmpty())
+				updateExtraHighlight();		
+		}
+	}	
+
 	void CodeEditor::updateExtraHighlight(void)
 	{
 		if(highlightLine && !isReadOnly())
@@ -477,12 +619,19 @@ using namespace QGED;
 	
 			extraSelections.append(selection);
 
-			// Add the search extra selection :
+			// Add the braces match and search extra selections :
+			extraSelections.append(bracesMatchExtraSelections);
 			extraSelections.append(searchExtraSelections);
 
 			// Submit :
 			setExtraSelections(extraSelections);
 		}
+	}
+
+	void CodeEditor::updateToCursorPosition(void)
+	{
+		updateBracesMatchExtraSelection();
+		updateExtraHighlight();
 	}
 
 	void CodeEditor::clearHighlightOfCurrentLine(void)
@@ -503,6 +652,7 @@ using namespace QGED;
 			extraSelections.append(selection);
 		
 			// Add the search extra selection :
+			extraSelections.append(bracesMatchExtraSelections);
 			extraSelections.append(searchExtraSelections);
 
 			// Submit :
@@ -668,6 +818,14 @@ using namespace QGED;
 		if(!highlightLine)
 			clearHighlightOfCurrentLine();
 
+		// Set brace matching : 
+		braceMatching = settings.isBraceMatchingEnabled();
+
+		if(!braceMatching)
+			updateToCursorPosition();
+		else
+			braceMatchingColor = settings.getBraceMatchingColor();
+
 		// Propagate : 
 		if(highLighter!=NULL)
 			highLighter->updateSettings(settings);
@@ -740,6 +898,7 @@ using namespace QGED;
 		currentCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 		QTextCursor cursor = document()->find(expression, currentCursor, flags);
 		
+		cursor.beginEditBlock();
 		while(!cursor.isNull())
 		{
 			// Replace :
@@ -749,6 +908,7 @@ using namespace QGED;
 			// Next :
 			cursor = document()->find(expression, cursor.position(), flags);
 		}
+		cursor.endEditBlock();
 
 		// Show remaining :
 		searchExpression = expression;
@@ -877,6 +1037,9 @@ using namespace QGED;
 
 			int totalHeight = std::accumulate(sizes.begin(), sizes.end(), 0);
 			
+			// Prevent the error widget to take more than 1/3 of the total size :
+			newHeight = std::min(newHeight, totalHeight/3);
+
 			sizes[0] = totalHeight - newHeight;
 			sizes[1] = newHeight;
 
@@ -1067,9 +1230,11 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
 		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
 		commentsColorLabel("Comments"),
+		braceMatchingColorLabel("Matching braces"),
 		searchColorLabel("Search"),
 		highlightKeywordsCheck("Highlight keywords"),
 		highlightCurrentLineCheck("Highlight current line"),
+		braceMatchingCheck("Enable brace matching"),
 		okButton("OK"),
 		applyButton("Apply"),
 		cancelButton("Cancel"),
@@ -1085,14 +1250,16 @@ using namespace QGED;
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	2, 0);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	3, 0);
 				layoutColors.addWidget(&commentsColorLabel, 			4, 0);
-				layoutColors.addWidget(&searchColorLabel, 			5, 0);
+				layoutColors.addWidget(&braceMatchingColorLabel,		5, 0);
+				layoutColors.addWidget(&searchColorLabel, 			6, 0);
 
 				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
 				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	2, 1);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	3, 1);
 				layoutColors.addWidget(&commentsColorButton, 			4, 1);
-				layoutColors.addWidget(&searchColorButton,			5, 1);
+				layoutColors.addWidget(&braceMatchingColorButton,		5, 1);
+				layoutColors.addWidget(&searchColorButton,			6, 1);
 
 				groupColors.setTitle("Highlight colors");
 				groupColors.setLayout(&layoutColors);
@@ -1103,6 +1270,7 @@ using namespace QGED;
 				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&braceMatchingColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&searchColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
 
 			// Font : 
@@ -1125,6 +1293,7 @@ using namespace QGED;
 
 				layoutMisc.addWidget(&highlightKeywordsCheck);
 				layoutMisc.addWidget(&highlightCurrentLineCheck);
+				layoutMisc.addWidget(&braceMatchingCheck);
 				layoutMisc.addWidget(&wrapModesBox);
 				layoutMisc.addWidget(&tabSpacesSpin);
 				
@@ -1162,6 +1331,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
 		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
 		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
+		braceMatchingColorButton.setStyleSheet(			tr("background:%1;").arg(braceMatchingColor.name()) );
 		searchColorButton.setStyleSheet(			tr("background:%1;").arg(searchColor.name()) );
 
 		// Fonts : 
@@ -1174,6 +1344,7 @@ using namespace QGED;
 		// Misc : 
 		highlightKeywordsCheck.setChecked( enableHighlight );
 		highlightCurrentLineCheck.setChecked( highlightCurrentLine );
+		braceMatchingCheck.setChecked( braceMatching );
 		wrapModesBox.setCurrentIndex( wrapModesBox.findData(QVariant(wrapMode)) );
 		tabSpacesSpin.setValue( tabNumberOfSpaces );
 	}
@@ -1188,6 +1359,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
 		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
 		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
+		braceMatchingColor		= braceMatchingColorButton.palette().color(QPalette::Window);
 		searchColor			= searchColorButton.palette().color(QPalette::Window);
 
 		// Fonts :
@@ -1197,6 +1369,7 @@ using namespace QGED;
 		// Misc : 
 		enableHighlight			= highlightKeywordsCheck.isChecked();
 		highlightCurrentLine		= highlightCurrentLineCheck.isChecked();
+		braceMatching			= braceMatchingCheck.isChecked();
 		wrapMode			= static_cast<QTextOption::WrapMode>( wrapModesBox.itemData( wrapModesBox.currentIndex() ).toUInt() );
 		tabNumberOfSpaces 		= tabSpacesSpin.value();
 
@@ -1221,6 +1394,8 @@ using namespace QGED;
 			title = "GLIP Uniforms Loader Keyword";
 		else if(target==&commentsColorButton)
 			title = "Comments Color";
+		else if(target==&braceMatchingColorButton)
+			title = "Matching Braces Color";
 		else if(target==&searchColorButton)
 			title = "Search Color";
 		else
@@ -1285,6 +1460,7 @@ using namespace QGED;
 		glipLayoutLoaderKeywordColor	= QColor(255, 	51, 	255);
 		glipUniformLoaderKeywordColor	= QColor(51, 	255, 	255);
 		commentsColor			= QColor(51,	153,	255);
+		braceMatchingColor		= QColor(128,	128,	200);
 		searchColor			= QColor(0,	192,	192);
 
 		// Fonts : 
@@ -1305,6 +1481,7 @@ using namespace QGED;
 		// Highlight : 
 		enableHighlight 	= true;
 		highlightCurrentLine	= true;
+		braceMatching		= true;
 
 		updateGUI();
 	}
@@ -1314,6 +1491,7 @@ using namespace QGED;
 	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
+	const QColor& 			CodeEditorSettings::getBraceMatchingColor(void) const			{ return braceMatchingColor; }
 	const QColor& 			CodeEditorSettings::getSearchColor(void) const				{ return searchColor; }
 	const QFont&			CodeEditorSettings::getEditorFont(void) const				{ return editorFont; }
 	const QFont& 			CodeEditorSettings::getKeywordFont(void) const				{ return keywordFont; }
@@ -1321,6 +1499,7 @@ using namespace QGED;
 	const int& 			CodeEditorSettings::getNumberOfSpacesPerTabulation(void) const		{ return tabNumberOfSpaces; }
 	const bool& 			CodeEditorSettings::isHighlightEnabled(void) const			{ return enableHighlight; }
 	const bool&			CodeEditorSettings::isLineHighlightEnabled(void) const			{ return highlightCurrentLine; }
+	const bool&			CodeEditorSettings::isBraceMatchingEnabled(void) const			{ return braceMatching; }
 
 	std::string CodeEditorSettings::getSettingsString(void) const
 	{
@@ -1363,10 +1542,13 @@ using namespace QGED;
 			SAVE_COLOR( glipLayoutLoaderKeywordColor )
 			SAVE_COLOR( glipUniformLoaderKeywordColor )
 			SAVE_COLOR( commentsColor )
+			SAVE_COLOR( braceMatchingColor )
+			SAVE_COLOR( searchColor )
 
 			SAVE_NUMBER( tabNumberOfSpaces )
 			SAVE_NUMBER( enableHighlight )
 			SAVE_NUMBER( highlightCurrentLine )
+			SAVE_NUMBER( braceMatching )
 
 			SAVE_TEST( wrapMode, ==QTextOption::WordWrap )
 			
@@ -1449,10 +1631,13 @@ using namespace QGED;
 			READ_COLOR( glipLayoutLoaderKeywordColor )
 			READ_COLOR( glipUniformLoaderKeywordColor )
 			READ_COLOR( commentsColor )
+			READ_COLOR( braceMatchingColor )
+			READ_COLOR( searchColor )
 
 			READ_NUMBER( tabNumberOfSpaces )
 			READ_NUMBER( enableHighlight )
 			READ_NUMBER( highlightCurrentLine )
+			READ_NUMBER( braceMatching )
 
 			READ_TEST( wrapMode, QTextOption::WordWrap, QTextOption::NoWrap)
 			
@@ -1887,11 +2072,6 @@ using namespace QGED;
 		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,		SLOT(updateElements(void)));
 		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
 		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 		SLOT(transferSourceCompilation(void)));
-		/*QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,		SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(clearSearchHighlight(void)),				this,		SLOT(transferClearSearchRequest(void)));
-		*/
 
 		// Shortcuts : 
 		newAction.setShortcuts(		QKeySequence::New );

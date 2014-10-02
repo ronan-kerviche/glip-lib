@@ -2,7 +2,7 @@
 	Very Simple Ray Tracer
 */
 
-TEXTURE_FORMAT:outputFormat(1366, 768, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+TEXTURE_FORMAT:outputFormat(1920, 1200, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
 CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
 
 SHADER_SOURCE:rayTracerShader
@@ -31,14 +31,14 @@ SHADER_SOURCE:rayTracerShader
 	
 	// Cameras : 
 	const vec2	screenSize	= vec2(INSERT(outputFormatSize));
-	uniform vec3 	eyePos 		= vec3(0.0, 0.0, 1.9);
-	uniform vec2	eyeDirAngle	= vec2(0.0, 0.0);
-	uniform float	focalLength	= 0.5;
+	uniform vec3 	eyePos 		= vec3(-0.01, -0.01, 1.9);
+	uniform vec2	eyeDirAngle	= vec2(-1.9, 0.3);
+	uniform float	focalLength	= 0.1;
 	// Scene 
 	uniform	vec3	scenePos	= vec3(0.0, 0.0, 3.0),
-			lightPos	= vec3(-0.1, 0.2, 0.5),
+			lightPos	= vec3(-0.1, 2.3, 5.7),
 			lightColor	= vec3(0.5, 0.15, 0.0),
-			ambientColor	= vec3(0.3, 0.3, 0.3),
+			ambientColor	= vec3(0.1, 0.1, 0.1),
 			backgroundColor	= vec3(0.05, 0.05, 0.05);
 	uniform float	sphereRadius 	= 0.2,
 			cubeSize	= 0.8;
@@ -78,22 +78,23 @@ SHADER_SOURCE:rayTracerShader
 			}
 		}
 		
-		vec3 lightIntersection = lightPos/10.0 - intersectionPos;
-		vec3 nIntersectionPos = -intersectionPos / length(intersectionPos);
-		float attenuation = length(lightIntersection);
-		lightIntersection = lightIntersection / attenuation;
-		attenuation = 1.0 / (attenuation * attenuation);
-
-		// General :
-		vec3 outputCol = ((d<far) ? (max(dot(normal, lightIntersection), 0)*attenuation*lightColor) : vec3(0.0, 0.0, 0.0)) + ((d<far) ? ((max(0.0, dot(normal, nIntersectionPos))+0.1) * ambientColor) : backgroundColor);
-	
-		// Gamma :
-		outputCol = pow(outputCol, vec3(1.0,1.0,1.0)/2.2);
+		if(d<far)
+		{
+			vec3 lightIntersection = lightPos/10.0 - intersectionPos;
+			vec3 nIntersectionPos = -intersectionPos / length(intersectionPos);
+			float attenuation = length(lightIntersection);
+			lightIntersection = lightIntersection / attenuation;
+			attenuation = 1.0 / (attenuation * attenuation);
 		
-		outputTexture.rgb = outputCol;		
-
-		// Debug, print distances :
-		//outputTexture.r = 1.0/d;
+			vec3 outputCol = ((d<far) ? (max(dot(normal, lightIntersection), 0)*attenuation*lightColor) : vec3(0.0, 0.0, 0.0)) + ((d<far) ? ((max(0.0, dot(normal, nIntersectionPos))+0.1) * ambientColor) : backgroundColor);
+		
+			// Gamma :
+			outputCol = pow(outputCol, vec3(1.0,1.0,1.0)/2.2);
+			
+			outputTexture.rgb = outputCol;		
+		}
+		else
+			outputTexture.rgb = backgroundColor;
 	}
 }
 
