@@ -469,7 +469,8 @@
 						{
 							if(fromString(line.substr(one+delimINTEL.size(), two-one-delimINTEL.size()), incriminatedLine))
 							{
-								buggyLine = getLine(incriminatedLine-1);
+								incriminatedLine++;
+								buggyLine = getLine(incriminatedLine-2);
 								prevLineEnhancement = true;
 							}
 						}

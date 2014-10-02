@@ -101,8 +101,7 @@ namespace QGED
 					glipLayoutLoaderKeywordFormat,
 					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
-					multiLineCommentFormat,
-					searchExpressionFormat;
+					multiLineCommentFormat;
 					//quotationFormat,
 					//classFormat,
 					//functionFormat;
@@ -113,10 +112,9 @@ namespace QGED
 		public:
 			Highlighter(QTextDocument *parent = 0);
 
+			QTextCharFormat format(int position) const;
 			void updateSettings(const CodeEditorSettings& settings);
-			void setSearchHighlight(const QRegExp& expression);
-			void clearSearchHighlight(void);
-	};
+	};	
 
 	class LineNumberArea : public QWidget
 	{
@@ -138,13 +136,20 @@ namespace QGED
 		Q_OBJECT
 		
 		private : 
-			bool		highlightLine;
-			QString 	currentFilename;
-			QFont		font;
-			Highlighter 	*highLighter;
-			QWidget 	*lineNumberArea;
-			QList<QMenu*>	subMenus;
+			bool					highlightLine;
+			QString 				currentFilename;
+			QFont					font;
+			Highlighter 				*highLighter;
+			QWidget 				*lineNumberArea;
 
+			QRegExp 				searchExpression;
+			QColor					searchHighlightColor;
+			QList<QTextEdit::ExtraSelection>	searchExtraSelections;
+	
+			QList<int>				errorLineNumbers;
+
+			QList<QMenu*>				subMenus;
+	
 		protected :
 			int lineNumberAreaWidth(void) const;
 			void lineNumberAreaPaintEvent(QPaintEvent *event);
@@ -156,10 +161,11 @@ namespace QGED
 
 		private slots:
 			void updateLineNumberAreaWidth(int newBlockCount);
-			void highlightCurrentLine(void);
+			void updateExtraHighlight(void);
 			void clearHighlightOfCurrentLine(void);
 			void updateLineNumberArea(const QRect &, int);
-			
+			void updateSearchExtraSelection(void);
+	
 		public :
 			CodeEditor(QWidget *parent = 0);
 			virtual ~CodeEditor(void);
@@ -179,11 +185,15 @@ namespace QGED
 			void insert(const QString& text);
 			void addSubMenu(QMenu* menu);
 			void updateSettings(const CodeEditorSettings& settings);
+			void gotoLine(int lineNumber);
 
 			void search(QRegExp expression, QTextDocument::FindFlags flags);
 			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString text);
 			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text);
 			void clearSearch(void);
+
+			void highlightErrorLines(const QList<int>& lineNumbers);
+			void clearHighlightErrorLines(void);
 
 		signals :
 			void titleChanged(void);
@@ -199,6 +209,9 @@ namespace QGED
 			QSplitter 	splitterLayout;
 			CodeEditor	editor;
 			QListWidget	errorsList;
+
+		private slots :
+			void errorItemDoubleClicked(QListWidgetItem* item);
 
 		public : 
 			CodeEditorContainer(QWidget* parent);
@@ -233,9 +246,11 @@ namespace QGED
 					replaceAllAction,
 					clearHighlightAction;
 			QLabel		errorString;
+			CodeEditor*	target;
 
 		private slots : 
 			void prepareExpression(void);
+			void clearSearchHighlight(void);
 			void openMenu(void);
 
 		public :
@@ -243,12 +258,8 @@ namespace QGED
 			~SearchAndReplaceMenu(void);
 
 			QAction* getAction(void);
-
-		signals :
-			void search(QRegExp expression, QTextDocument::FindFlags flags);
-			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
-			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
-			void clearSearchHighlight(void);
+			void setCurrentCodeEditor(CodeEditor* currentCodeEditor);
+			void clearCurrentCodeEditor(void);
 	};
 
 	class CodeEditorSettings : public QWidget
@@ -497,11 +508,7 @@ namespace QGED
 			void changeToTab(int tabID);
 			void closeTab(int tabID, bool imperative=false);
 			void updateSettings(void);
-			void transferSourceCompilation(void);
-			void transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags);
-			void transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
-			void transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement);
-			void transferClearSearchRequest(void);
+			void transferSourceCompilation(void);	
 
 		public slots :
 			void addTab(const QString& filename="");

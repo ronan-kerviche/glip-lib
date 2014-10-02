@@ -98,10 +98,9 @@ GL_TEXTURE_MAG_FILTER( filterForInput0, filterForInput1, ...)\n\
 GL_TEXTURE_WRAP_S( filterForInput0, filterForInput1, ...)\n\
 GL_TEXTURE_WRAP_T( filterForInput0, filterForInput1, ...)\n\
 \n\
-It is also possible\n\
-to supply specific Uniforms variables on a per command basis via two\n\
-methods. The first, from a file, by adding the following line in the body\n\
-of the command :\n\
+It is also possible to supply specific Uniforms variables on a per command\n\
+basis via two methods. The first, from a file, by adding the following\n\
+line in the body of the command :\n\
 \n\
 UNIFORMS( filename.uvd )\n\
 \n\

@@ -41,7 +41,7 @@
 										"FILTER_LAYOUT",
 										"PIPELINE_LAYOUT",
 										"PIPELINE_MAIN",
-										"INCLUDE_FILE",
+										"INCLUDE",
 										"FILTER_INSTANCE",
 										"PIPELINE_INSTANCE",
 										"CONNECTION",
@@ -1413,7 +1413,7 @@
 					case KW_LL_ADD_PATH :
 						appendPath(rootParser.elements[k]);
 						break;
-					case KW_LL_INCLUDE_FILE :
+					case KW_LL_INCLUDE :
 						includeFile(rootParser.elements[k]);
 						break;
 					case KW_LL_UNIQUE :
@@ -1865,7 +1865,7 @@
 						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "AppendPath");
 						result.addedPaths.push_back( rootParser.elements[k].arguments[0] );
 						break;
-					case KW_LL_INCLUDE_FILE :
+					case KW_LL_INCLUDE :
 						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "IncludeFile");
 						result.includedFiles.push_back( rootParser.elements[k].arguments[0] );
 						break;

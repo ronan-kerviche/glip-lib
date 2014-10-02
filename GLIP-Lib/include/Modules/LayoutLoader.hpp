@@ -52,7 +52,7 @@ namespace Glip
 			KW_LL_FILTER_LAYOUT,
 			KW_LL_PIPELINE_LAYOUT,
 			KW_LL_PIPELINE_MAIN,
-			KW_LL_INCLUDE_FILE,
+			KW_LL_INCLUDE,
 			KW_LL_FILTER_INSTANCE,
 			KW_LL_PIPELINE_INSTANCE,
 			KW_LL_CONNECTION,
@@ -177,7 +177,7 @@ Or, via an indirection : <BR>
 <b>ADD_PATH</b>(/some/path/) <BR>
 
 - Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
-<b>INCLUDE_FILE</b>(<i>string filename</i>)
+<b>INCLUDE</b>(<i>string filename</i>)
 
 - Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT marker : <BR>
 <b>SHARED_CODE:shared_segment_name</b> <BR>

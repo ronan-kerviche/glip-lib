@@ -4,7 +4,7 @@
 */
 
 // Include Sobel :
-INCLUDE_FILE(Sobel.ppl)
+INCLUDE(Sobel.ppl)
 
 // gaussian blur :
 SHADER_SOURCE:gaussianBlurShader

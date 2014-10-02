@@ -4,7 +4,7 @@
 */
 
 // Include :
-INCLUDE_FILE(maths.ppl)
+INCLUDE(maths.ppl)
 
 // Format :
 REQUIRED_FORMAT:sobelOutputFormat(inputFormat0)

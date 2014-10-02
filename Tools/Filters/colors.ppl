@@ -2,6 +2,8 @@
 	Standard Color Space Conversion Functions
 */
 
+UNIQUE(COLORS_FUNCTION)
+
 SHARED_CODE:ColorPrimitivesPrototypes
 {
 	void RGBToHSV(in vec3 rgb, out vec3 hsv);

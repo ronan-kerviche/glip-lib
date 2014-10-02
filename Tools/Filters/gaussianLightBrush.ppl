@@ -1,6 +1,6 @@
 REQUIRED_FORMAT:outputFormat(inputFormat0)
 
-INCLUDE_FILE(maths.ppl)
+INCLUDE(maths.ppl)
 
 SHADER_SOURCE:gaussianLightBrushShader
 {

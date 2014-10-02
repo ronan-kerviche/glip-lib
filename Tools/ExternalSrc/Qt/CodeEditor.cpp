@@ -159,19 +159,12 @@ using namespace QGED;
 				setFormat(startIndex, commentLength, multiLineCommentFormat);
 				startIndex = commentStartExpression.indexIn(text, startIndex + commentLength);
 			}
-		}
+		}	
+	}
 
-		// Search expression :
-		if(!searchExpression.isEmpty())
-		{
-			int index = searchExpression.indexIn(text);
-			while(index>=0)
-			{
-				int length = searchExpression.matchedLength();
-				setFormat(index, length, searchExpressionFormat);
-				index = searchExpression.indexIn(text, index + length);
-			}
-		}
+	QTextCharFormat Highlighter::format(int position) const
+	{
+		return QSyntaxHighlighter::format(position);
 	}
 
 	void Highlighter::updateSettings(const CodeEditorSettings& settings)
@@ -183,7 +176,6 @@ using namespace QGED;
 		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
 		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
 		multiLineCommentFormat.setForeground(		settings.getCommentsColor() );
-		searchExpressionFormat.setBackground(		settings.getSearchColor() );
 
 		// Font : 
 		glslkeywordFormat.setFont(			settings.getKeywordFont() );
@@ -198,23 +190,7 @@ using namespace QGED;
 
 		// Update : 
 		rehighlight();
-	}
-
-	void Highlighter::setSearchHighlight(const QRegExp& expression)
-	{
-		searchExpression = expression;
-
-		// Update : 
-		rehighlight();
 	}	
-
-	void Highlighter::clearSearchHighlight(void)
-	{
-		searchExpression = QRegExp();
-
-		// Update : 
-		rehighlight();
-	}
 
 // LineNumberArea 
 	LineNumberArea::LineNumberArea(CodeEditor *editor)
@@ -246,7 +222,8 @@ using namespace QGED;
 
 		QObject::connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
 		QObject::connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
-		QObject::connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(highlightCurrentLine()));
+		QObject::connect(this, 			SIGNAL(cursorPositionChanged()),	this, SLOT(updateExtraHighlight()));
+		QObject::connect(document(),		SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
 		QObject::connect(document(), 		SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
 	}
 
@@ -256,14 +233,14 @@ using namespace QGED;
 
 		delete highLighter;
 		delete lineNumberArea;
-	}
+	}	
 
 	int CodeEditor::lineNumberAreaWidth(void) const
 	{
 		int digits = std::floor( std::log10( qMax(1, blockCount()) ) ) + 1;
 
 		//int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
-		int space = 3 + fontMetrics().width( '0' ) * digits;
+		int space = 3 + fontMetrics().width('0') * digits;
 
 		return space;
 	}
@@ -283,14 +260,55 @@ using namespace QGED;
 
 		QFontMetrics metrics(font);
 
-		while (block.isValid() && top <= event->rect().bottom())
+		painter.setPen(ed);
+		QFont painterFont = painter.font();
+		QPen painterPen	= painter.pen();
+
+		while(block.isValid() && top <= event->rect().bottom())
 		{
-			if (block.isVisible() && bottom >= event->rect().top())
+			if(block.isVisible() && bottom>=event->rect().top())
 			{
+				const bool currentLine = (block==textCursor().block());
+				bool reset = false;				
+
+				// This the current line, change the line number representation :
+				if(currentLine)
+				{	
+					QFont tmpFont = painterFont;
+					tmpFont.setBold(true);
+					QPen tmpPen = painterPen;
+					tmpPen.setColor(Qt::white);
+
+					painter.setFont(tmpFont);
+					painter.setPen(tmpPen);
+
+					reset = true;
+				}
+
+				// Test if this is a line with some error :
+				if(!errorLineNumbers.isEmpty() && errorLineNumbers.contains(blockNumber+1))
+				{
+					QFont tmpFont = painterFont;
+					tmpFont.setBold(true);	
+					QPen tmpPen = painterPen;
+					tmpPen.setColor(Qt::red);
+				
+					painter.setFont(tmpFont);
+					painter.setPen(tmpPen);
+
+					reset = true;
+				}
+
 				QString number = QString::number(blockNumber + 1);
-				painter.setPen(ed);
 				//painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(), Qt::AlignRight, number);
 				painter.drawText(0, top, lineNumberArea->width(), metrics.height(), Qt::AlignRight | Qt::AlignVCenter, number);
+
+				if(reset)
+				{
+					// Restore :
+					painter.setFont(painterFont);
+					painter.setPen(painterPen);
+				}
 			}
 
 			block = block.next();
@@ -319,6 +337,42 @@ using namespace QGED;
 			updateLineNumberAreaWidth(0);
 	}
 	
+	void CodeEditor::updateSearchExtraSelection(void)
+	{
+		searchExtraSelections.clear();
+	
+		if(!searchExpression.isEmpty())
+		{
+			for(QTextBlock block=document()->begin(); block!=document()->end(); block=block.next()) 
+			{
+				const QString text = block.text();
+				int index = searchExpression.indexIn(text);
+
+				QTextCursor cursor(block);
+
+				while(index>=0)
+				{
+					int length = searchExpression.matchedLength();
+					cursor.setPosition(block.position()+index, QTextCursor::MoveAnchor);
+					cursor.setPosition(block.position()+index+length, QTextCursor::KeepAnchor);
+
+					// Append :
+					QTextEdit::ExtraSelection selection;
+					selection.format.setBackground(searchHighlightColor);
+					selection.cursor = cursor;
+					searchExtraSelections.append(selection);
+
+					// Next :
+					index = searchExpression.indexIn(text, index + length);	
+				}
+			}
+
+			// Update the highlighting :
+			if(!searchExtraSelections.isEmpty())
+				updateExtraHighlight();		
+		}
+	}	
+
 	void CodeEditor::resizeEvent(QResizeEvent *e)
 	{
 		QPlainTextEdit::resizeEvent(e);
@@ -338,6 +392,14 @@ using namespace QGED;
 			// Replace unicode : 
 			selectedText.replace(QString::fromWCharArray(L"\u2029"), "\n");
 
+			// If the selection contains only a single line :
+			if(!selectedText.contains('\n'))
+			{
+				QPlainTextEdit::keyPressEvent(e);
+				return ;
+			}
+
+			// Get the selection :
 			QTextCursor cursor = textCursor();
 
 			int	startSel = cursor.selectionStart(), 
@@ -354,7 +416,7 @@ using namespace QGED;
 				cursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
 				cursor.insertText( cursor.selectedText().replace("\t","") );
 				return ;
-			}
+			}	
 
 			cursor.setPosition(endSel, QTextCursor::KeepAnchor);
 			QTextBlock endBlock = cursor.block();
@@ -364,7 +426,7 @@ using namespace QGED;
 
 			for(; block.isValid() && !(endBlock < block); block = block.next())
 			{
-				if (!block.isValid())
+				if(!block.isValid())
 					continue;
 
 				cursor.movePosition(QTextCursor::StartOfLine);
@@ -391,9 +453,6 @@ using namespace QGED;
 		
 		menu->addSeparator();
 
-		//for(int k=0; k<subMenus.count(); k++)
-		//	menu->addMenu(subMenus[k]);
-	
 		for(int k=0; k<subMenus.count(); k++)
 			duplicateMenu(menu, *subMenus[k]);
 
@@ -401,25 +460,27 @@ using namespace QGED;
 		delete menu;
 	}
 
-	void CodeEditor::highlightCurrentLine(void)
+	void CodeEditor::updateExtraHighlight(void)
 	{
-		if(highlightLine)
+		if(highlightLine && !isReadOnly())
 		{
+			const QColor regularBackground = palette().background().color();
+			const QColor lineColor = regularBackground.lighter(150);
+
 			QList<QTextEdit::ExtraSelection> extraSelections;
+	
+			QTextEdit::ExtraSelection selection;
+			selection.format.setBackground(lineColor);
+			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+			selection.cursor = textCursor();
+			selection.cursor.clearSelection();
+	
+			extraSelections.append(selection);
 
-			if (!isReadOnly())
-			{
-				QTextEdit::ExtraSelection selection;
+			// Add the search extra selection :
+			extraSelections.append(searchExtraSelections);
 
-				QColor lineColor = palette().background().color().lighter(130);			
-
-				selection.format.setBackground(lineColor);
-				selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-				selection.cursor = textCursor();
-				selection.cursor.clearSelection();
-				extraSelections.append(selection);
-			}
-
+			// Submit :
 			setExtraSelections(extraSelections);
 		}
 	}
@@ -427,23 +488,24 @@ using namespace QGED;
 	void CodeEditor::clearHighlightOfCurrentLine(void)
 	{
 		// Prevent clear, if it was not already in place.
-		if(highlightLine)	
+		if(highlightLine && !isReadOnly())	
 		{
 			QList<QTextEdit::ExtraSelection> extraSelections;
 
-			if(!isReadOnly())
-			{
-				QTextEdit::ExtraSelection selection;
+			QTextEdit::ExtraSelection selection;
 
-				QColor lineColor = palette().background().color();			
+			const QColor regularBackground = palette().background().color();	
+		
+			selection.format.setBackground(regularBackground);
+			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+			selection.cursor = textCursor();
+			selection.cursor.clearSelection();
+			extraSelections.append(selection);
+		
+			// Add the search extra selection :
+			extraSelections.append(searchExtraSelections);
 
-				selection.format.setBackground(lineColor);
-				selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-				selection.cursor = textCursor();
-				selection.cursor.clearSelection();
-				extraSelections.append(selection);
-			}
-
+			// Submit :
 			setExtraSelections(extraSelections);
 		}
 	}
@@ -610,14 +672,25 @@ using namespace QGED;
 		if(highLighter!=NULL)
 			highLighter->updateSettings(settings);
 
+		// Set search highlight color :
+		searchHighlightColor = settings.getSearchColor();
+
 		document()->blockSignals(false);
 		blockSignals(false);
 	}
 
+	void CodeEditor::gotoLine(int lineNumber)
+	{
+		QTextCursor cursor(document()->findBlockByLineNumber(lineNumber-1));
+		setTextCursor(cursor);
+	}
+
 	void CodeEditor::search(QRegExp expression, QTextDocument::FindFlags flags)
 	{
-		if(highLighter!=NULL)
-			highLighter->setSearchHighlight(expression);
+		//if(highLighter!=NULL)
+		//	highLighter->setSearchHighlight(expression);
+		searchExpression = expression;
+		updateSearchExtraSelection();
 
 		QTextCursor cursor = document()->find(expression, textCursor(), flags);
 		
@@ -634,8 +707,8 @@ using namespace QGED;
 
 	void CodeEditor::replace(QRegExp expression, QTextDocument::FindFlags flags, QString text)
 	{
-		if(highLighter!=NULL)
-			highLighter->setSearchHighlight(expression);
+		searchExpression = expression;
+		updateSearchExtraSelection();
 
 		QTextCursor currentCursor = textCursor();
 		currentCursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::MoveAnchor);
@@ -660,13 +733,49 @@ using namespace QGED;
 
 	void CodeEditor::replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text)
 	{
-		// TODO
+		// Always forward :
+		flags = flags & ~QTextDocument::FindBackward;
+
+		QTextCursor currentCursor = textCursor();
+		currentCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+		QTextCursor cursor = document()->find(expression, currentCursor, flags);
+		
+		while(!cursor.isNull())
+		{
+			// Replace :
+			cursor.removeSelectedText();
+			cursor.insertText(text);
+			
+			// Next :
+			cursor = document()->find(expression, cursor.position(), flags);
+		}
+
+		// Show remaining :
+		searchExpression = expression;
+		updateSearchExtraSelection();
 	}
 
 	void CodeEditor::clearSearch(void)
 	{
-		if(highLighter!=NULL)
-			highLighter->clearSearchHighlight();
+		searchExpression = QRegExp(); // clear
+		updateSearchExtraSelection();
+		updateExtraHighlight();
+	}
+
+	void CodeEditor::highlightErrorLines(const QList<int>& lineNumbers)
+	{
+		errorLineNumbers = lineNumbers;
+		
+		// Force update :
+		repaint();
+	}
+
+	void CodeEditor::clearHighlightErrorLines(void)
+	{
+		errorLineNumbers.clear();
+
+		// Force update :
+		repaint();
 	}
 
 // CodeEditorContainer :
@@ -681,6 +790,8 @@ using namespace QGED;
 		splitterLayout.addWidget(&errorsList);
 		layout.addWidget(&splitterLayout);
 
+		QObject::connect(&errorsList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(errorItemDoubleClicked(QListWidgetItem*))); 
+
 		layout.setMargin(0);
 		layout.setSpacing(0);
 
@@ -689,6 +800,17 @@ using namespace QGED;
 
 	CodeEditorContainer::~CodeEditorContainer(void)
 	{ }
+
+	void CodeEditorContainer::errorItemDoubleClicked(QListWidgetItem* item)
+	{
+		if(item!=NULL)
+		{
+			const int lineNumber = item->data(Qt::UserRole).toInt();
+
+			if(lineNumber>=1)
+				editor.gotoLine(lineNumber);
+		}
+	}
 
 	const CodeEditor& CodeEditorContainer::getEditor(void) const
 	{
@@ -704,18 +826,46 @@ using namespace QGED;
 	{
 		errorsList.clear();
 		errorsList.hide();
+		editor.clearHighlightErrorLines();
 	}
 
 	void CodeEditorContainer::showErrors(Exception compilationError)
 	{
+		const std::string lineErrorDescription = "At line ";
+		
+		QList<int> errorLines;
+
 		errorsList.clear();
 
 		compilationError.hideHeader(true);
 		std::string line;
 		std::istringstream stream(compilationError.what());
 
-		while( std::getline(stream, line) )
-			errorsList.addItem( QString::fromStdString(line) );
+		while(std::getline(stream, line))
+		{
+			QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(line), &errorsList);
+			errorsList.addItem(item);
+
+			// Try to read the line number for the error :
+			size_t 	p = line.find(lineErrorDescription);
+			if(p!=std::string::npos)
+			{
+				p+=lineErrorDescription.size();
+				size_t q = line.find(':', p);
+				int l = -1;
+				if(q!=std::string::npos && fromString(line.substr(p, q-p), l))
+				{
+					item->setData(Qt::UserRole, QVariant::fromValue(l));
+					errorLines.append(l);
+				}
+				else
+					item->setData(Qt::UserRole, QVariant::fromValue(-1));
+			}	
+			else
+				item->setData(Qt::UserRole, QVariant::fromValue(-1));
+		}
+
+		editor.highlightErrorLines(errorLines);
 
 		QListWidgetItem* firstItem = errorsList.item(0);
 		if(errorsList.count()>0 && firstItem!=NULL)
@@ -745,7 +895,7 @@ using namespace QGED;
 		widget(this),
 		layout(&widget),
 		searchLabel("Search : ", &widget),
-		replaceLabel("Replace : ", &widget),
+		replaceLabel("Replace by : ", &widget),
 		searchPattern(&widget),
 		replaceString(&widget),
 		worldOnlyCheck("World Only", &widget),
@@ -755,7 +905,8 @@ using namespace QGED;
 		findNextAction("Find Next", this),
 		replaceNextAction("Replace Next", this),
 		replaceAllAction("Replace All", this),
-		clearHighlightAction("Clear Highlight", this)
+		clearHighlightAction("Clear Highlight", this),
+		target(NULL)
 	{
 		layout.addWidget(&searchLabel, 		0, 0);
 		layout.addWidget(&searchPattern,	0, 1);
@@ -780,7 +931,7 @@ using namespace QGED;
 		QObject::connect(&findNextAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
 		QObject::connect(&replaceNextAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
 		QObject::connect(&replaceAllAction, 	SIGNAL(triggered()), 	 this, 			SLOT(prepareExpression()));
-		QObject::connect(&clearHighlightAction, SIGNAL(triggered()),	 this, 			SIGNAL(clearSearchHighlight()));
+		QObject::connect(&clearHighlightAction, SIGNAL(triggered()),	 this, 			SLOT(clearSearchHighlight()));
 
 		QObject::connect(&openMenuAction, SIGNAL(triggered()), this, SLOT(openMenu()));
 
@@ -811,7 +962,7 @@ using namespace QGED;
 		QString 	expression 	= searchPattern.text(),
 				replacement	= replaceString.text();
 
-		if(!expression.isEmpty())
+		if(!expression.isEmpty() && target!=NULL)
 		{
 			QRegExp regExpression(expression);
 			QTextDocument::FindFlags flags = 0;
@@ -838,17 +989,17 @@ using namespace QGED;
 				if(action==&findNextAction)
 				{
 					// Send the search request : 
-					emit search(regExpression, flags);
+					target->search(regExpression, flags);
 				}
 				else if(action==&replaceNextAction)	
 				{
 					// Send the replace request : 
-					emit replace(regExpression, flags, replacement);
+					target->replace(regExpression, flags, replacement);
 				}
 				else if(action==&replaceAllAction)
 				{
 					// Send the replace all request : 
-					emit replaceAll(regExpression, flags, replacement);
+					target->replaceAll(regExpression, flags, replacement);
 				}
 			}			
 			else
@@ -859,14 +1010,33 @@ using namespace QGED;
 		}
 	}
 
+	void SearchAndReplaceMenu::clearSearchHighlight(void)
+	{
+		if(target!=NULL)
+			target->clearSearch();
+	}
+
 	void SearchAndReplaceMenu::openMenu(void)
 	{
 		QList<QWidget*> associatedWidgets = openMenuAction.associatedWidgets();
 
 		if(!associatedWidgets.isEmpty())
 		{
-			searchPattern.clear();
+			if(target!=NULL)
+			{
+				// Try to use the current selection :
+				QString selectedText = target->textCursor().selectedText();
+		
+				if(!selectedText.isEmpty())
+				{
+					selectedText.replace(QString::fromWCharArray(L"\u2029"), "\\n");
+					searchPattern.setText(selectedText);
+				}
+			}
+
+			searchPattern.selectAll();
 			searchPattern.setFocus(Qt::PopupFocusReason);
+			replaceString.clear();
 
 			QPoint execPoint = associatedWidgets.front()->mapToGlobal(QPoint(0,0)) + QPoint(associatedWidgets.front()->width() - width(), associatedWidgets.front()->height());
 			exec(execPoint);
@@ -876,6 +1046,16 @@ using namespace QGED;
 	QAction* SearchAndReplaceMenu::getAction(void)
 	{
 		return &openMenuAction;
+	}
+
+	void SearchAndReplaceMenu::setCurrentCodeEditor(CodeEditor* currentCodeEditor)
+	{
+		target = currentCodeEditor;
+	}
+
+	void SearchAndReplaceMenu::clearCurrentCodeEditor(void)
+	{
+		target = NULL;	
 	}
 
 // CodeEditorSettings :
@@ -1707,10 +1887,11 @@ using namespace QGED;
 		QObject::connect(&elementsMenu,			SIGNAL(updateElements(void)),					this,		SLOT(updateElements(void)));
 		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
 		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 		SLOT(transferSourceCompilation(void)));
-		QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,		SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
+		/*QObject::connect(&searchAndReplaceMenu,		SIGNAL(search(QRegExp, QTextDocument::FindFlags)),		this,		SLOT(transferSearchRequest(QRegExp, QTextDocument::FindFlags)));
 		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceRequest(QRegExp, QTextDocument::FindFlags, QString)));
 		QObject::connect(&searchAndReplaceMenu,		SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)),	this,		SLOT(transferReplaceAllRequest(QRegExp, QTextDocument::FindFlags, QString)));
 		QObject::connect(&searchAndReplaceMenu,		SIGNAL(clearSearchHighlight(void)),				this,		SLOT(transferClearSearchRequest(void)));
+		*/
 
 		// Shortcuts : 
 		newAction.setShortcuts(		QKeySequence::New );
@@ -1881,7 +2062,8 @@ using namespace QGED;
 		stack.addWidget(ptr);
 		int c = tabBar.addTab("Unnamed.ppl");
 		tabBar.setTabData(c, counter);
-		tabBar.setCurrentIndex(c);	
+		tabBar.setCurrentIndex(c);
+		searchAndReplaceMenu.setCurrentCodeEditor(&ptr->getEditor());
 
 		counter++;
 
@@ -1944,7 +2126,12 @@ using namespace QGED;
 		int w = tabBar.tabData(tabID).toUInt();
 
 		if(editors.find(w)!=editors.end())
+		{
 			stack.setCurrentWidget(editors[w]);
+			searchAndReplaceMenu.setCurrentCodeEditor(&editors[w]->getEditor());
+		}
+		else
+			searchAndReplaceMenu.clearCurrentCodeEditor();
 	}
 
 	void CodeEditorTabs::open(QStringList filenameList)
@@ -1998,37 +2185,7 @@ using namespace QGED;
 
 		if(editor!=NULL)
 			emit compileSource(editor->getEditor().getCurrentContent(), editor->getEditor().getPath().toStdString(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this));
-	}
-
-	void CodeEditorTabs::transferSearchRequest(QRegExp expression, QTextDocument::FindFlags flags)
-	{
-		CodeEditorContainer* editor = getCurrentEditor();
-
-		if(editor!=NULL)
-			editor->getEditor().search(expression, flags);
-	}
-
-	void CodeEditorTabs::transferReplaceRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
-	{
-		CodeEditorContainer* editor = getCurrentEditor();
-
-		if(editor!=NULL)
-			editor->getEditor().replace(expression, flags, replacement);
-	}
-
-	void CodeEditorTabs::transferReplaceAllRequest(QRegExp expression, QTextDocument::FindFlags flags, QString replacement)
-	{
-		CodeEditorContainer* editor = getCurrentEditor();
-
-		if(editor!=NULL)
-			editor->getEditor().replaceAll(expression, flags, replacement);
-	}
-
-	void CodeEditorTabs::transferClearSearchRequest(void)
-	{
-		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
-			(*it)->getEditor().clearSearch();
-	}
+	}	
 
 	void CodeEditorTabs::closeTab(int tabID, bool imperative)
 	{
