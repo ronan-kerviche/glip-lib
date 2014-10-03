@@ -768,7 +768,7 @@ using namespace QVGL;
 		setFocusPolicy(Qt::ClickFocus);
 
 		// Create title bar : 
-		titleLabel.setOpenExternalLinks(false);
+		titleLabel.setTextFormat(Qt::PlainText);
 		setTitle("Title");
 
 		// Buttons : 
@@ -1006,15 +1006,13 @@ using namespace QVGL;
 	{
 		if(widget!=NULL)
 			throw Exception("SubWidget::setInnerWidget - A QWidget was already bound.", __FILE__, __LINE__);
-		else if(_widget==NULL)
-			throw Exception("SubWidget::setInnerWidget - Invalid QWidget (NULL).", __FILE__, __LINE__);
-		else
+		else if(_widget!=NULL)
 		{
 			widget = _widget;
 			widget->setParent(this);
 			layout.addWidget(widget, 1);
 
-			// Scan widget and install event filter : 
+			// Scan widget and install the event filter : 
 			widget->installEventFilter(this);
 
 			const QObjectList& childList = widget->children();
@@ -1035,9 +1033,6 @@ using namespace QVGL;
 
 	void SubWidget::setTitle(QString title)
 	{
-		// Do not put rich text!
-		title.remove(QRegExp("<[^>]*>"));
-
 		titleLabel.setText(title);
 		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
@@ -3845,9 +3840,6 @@ using namespace QVGL;
 			subWidget->qvglParent = this;
 			subWidgetsList.append(subWidget);
 
-			// Update widgets list : 
-			//topBar.updateSubWidgetsList(subWidgetsList);
-
 			// Move and show : 
 			subWidget->move(0, topBar.height());
 			subWidget->show();
@@ -3938,11 +3930,9 @@ using namespace QVGL;
 				if(currentView!=NULL) currentView->reset();
 				break;
 			case ActionPreviousView :
-				//currentViewIndex = std::max(currentViewIndex - 1, std::min(viewsList.size()-1, 0));
 				changeCurrentView(currentViewIndex - 1);
 				break;
 			case ActionNextView :
-				//currentViewIndex = std::min(currentViewIndex + 1, viewsList.size()-1);
 				changeCurrentView(currentViewIndex + 1);
 				break;
 			case ActionCloseView :

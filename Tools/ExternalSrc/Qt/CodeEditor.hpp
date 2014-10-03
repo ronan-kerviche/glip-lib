@@ -52,7 +52,7 @@
 	#include <QFontDialog>
 	#include <QSplitter>
 	#include <QListWidget>
-
+	#include <QElapsedTimer>
 	#include <QHBoxLayout>
 	#include <QTabBar>
 	#include <QStackedLayout>
@@ -422,12 +422,11 @@ namespace QGED
 	{
 		Q_OBJECT
 		
-		private : 
-			QTimer 				timer;
-			std::map<CodeEditor*, QMenu*>	menus;
+		private :
+			const qint64			deltaRefresh; 
+			QElapsedTimer			timer;
+			QMap<CodeEditor*, QMenu*>	menus;
 			
-			void updateMenu(void);
-
 		private slots :
 			void insertCalled(void);
 
@@ -435,11 +434,10 @@ namespace QGED
 			ElementsMenu(QWidget* parent=NULL);
 			~ElementsMenu(void);
 
-			void scan(CodeEditor* editor, LayoutLoader::PipelineScriptElements& elements);
+			void scan(CodeEditor* editor);
 			void remove(CodeEditor* editor);
 
 		signals :
-			void updateElements(void);
 			void insertElement(QString element);
 	};
 
@@ -479,8 +477,7 @@ namespace QGED
 			QHBoxLayout			topBar;
 			QMenuBar			menuBarLeft,
 							menuBarRight;
-			QMenu				mainMenu,
-							searchContainerMenu;
+			QMenu				mainMenu;
 			QTabBar				tabBar;
 			QStackedLayout			stack;
 			QMap<int, CodeEditorContainer*>	editors;
@@ -505,10 +502,9 @@ namespace QGED
 			void setCurrentPath(QString path);
 			void save(CodeEditorContainer* editor);
 			void saveAs(CodeEditorContainer* editor, QString filename="");
-			void wheelEvent(QWheelEvent* event);
 
-		protected :
-			virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;
+		//protected :
+		//	virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;
 
 		public :
 			CodeEditorTabs(void);
@@ -518,7 +514,6 @@ namespace QGED
 			void tabTitleChanged(void);
 			void documentModified(bool changed);
 			void insert(QString str);
-			void updateElements(void);
 			void changeToTab(int tabID);
 			void closeTab(int tabID, bool imperative=false);
 			void updateSettings(void);

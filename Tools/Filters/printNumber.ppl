@@ -1,0 +1,164 @@
+/*
+	Print a number on the texture
+*/
+
+UNIQUE(PRINT_NUMBER)
+
+SHARED_CODE:printNumber
+{
+	float printNumber(in float number, in vec2 position, in float maxChars, in vec2 charSize)
+	{
+		vec2 localPos = vec2(gl_FragCoord.xy-position);
+
+		if(localPos.x<0.0 || localPos.y<0.0 || localPos.x>=(maxChars*charSize.x) || localPos.y>=charSize.y)
+			return 0.0;
+		else
+		{
+			float 	logNumber	= log2(abs(number))/log2(10),
+				startPower	= max(floor(logNumber), 0.0),
+				currentCharPos	= floor(localPos.x/charSize.x),
+				currentPower	= startPower - currentCharPos;
+			float	currentChar	= -1.0;
+
+			if(number<0.0)
+			{
+				if(currentCharPos==0)		currentChar = 4224.0; //1536.0;
+				else				currentPower++;
+			}
+			
+			if(currentPower<0)
+			{
+				if(currentPower==-1)		currentChar = 512.0; //131072.0;
+				else				currentPower++;
+			}
+
+			if(currentChar<0.0)
+			{
+				float currentDigit = floor(mod(abs(number+1e-6)/pow(10.0, currentPower), 10.0));
+
+				if(currentDigit<=0.0)		currentChar = 32319.0; // currentChar = 480599.0;
+				else if(currentDigit<1.5)	currentChar = 31808.0; // currentChar = 279652.0;
+				else if(currentDigit<2.5)	currentChar = 24253.0; // currentChar = 464711.0;
+				else if(currentDigit<3.5)	currentChar = 32437.0; // currentChar = 476999.0;
+				else if(currentDigit<4.5)	currentChar = 30855.0; // currentChar = 280401.0;
+				else if(currentDigit<5.5)	currentChar = 30391.0; // currentChar = 476951.0;
+				else if(currentDigit<6.5)	currentChar = 29375.0; // currentChar = 481043.0;
+				else if(currentDigit<7.5)	currentChar = 31777.0; // currentChar = 279623.0;
+				else if(currentDigit<8.5)	currentChar = 32447.0; // currentChar = 481111.0;
+				else 				currentChar = 32439.0; // currentChar = 477015.0;
+			}
+
+			vec2 subLocalPos = floor((localPos - currentCharPos*vec2(charSize.x, 0.0))/charSize*vec2(4.0, 5.0));
+			float index = subLocalPos.x * 5.0 + subLocalPos.y;//subLocalPos.y * 4.0 + subLocalPos.x;
+			return floor(mod(currentChar/pow(2.0, index), 2.0));
+		}
+	}
+}
+
+/*
+	Quick Reference, Character Set : 
+	cDot = [0, 0, 0, 0; ... 
+                0, 0, 0, 0; ... 
+                0, 0, 0, 0; ... 
+                0, 0, 0, 0; ... 
+                0, 1, 0, 0]; 		
+	3
+
+	        cMin = [0, 0, 0, 0; ... 
+                0, 0, 0, 0; ... 
+                0, 1, 1, 0; ... 
+                0, 0, 0, 0; ... 
+                0, 0, 0, 0]; 
+
+        c0 =   [1, 1, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0]; 
+
+        c1 =   [0, 0, 1, 0; ... 
+                0, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0]; 
+
+        c2 =   [1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                1, 1, 1, 0; ... 
+                1, 0, 0, 0; ... 
+                1, 1, 1, 0]; 
+
+        c3 =   [1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                1, 1, 1, 0]; 
+
+        c4 =   [1, 0, 0, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0]; 
+
+        c5 =   [1, 1, 1, 0; ... 
+                1, 0, 0, 0; ... 
+                1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                1, 1, 1, 0]; 
+
+        c6 =   [1, 1, 0, 0; ... 
+                1, 0, 0, 0; ... 
+                1, 1, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0]; 
+
+        c7 =   [1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                0, 0, 1, 0]; 
+
+        c8 =   [1, 1, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0]; 
+
+        c9 =   [1, 1, 1, 0; ... 
+                1, 0, 1, 0; ... 
+                1, 1, 1, 0; ... 
+                0, 0, 1, 0; ... 
+                1, 1, 1, 0];
+
+		// Encoding function : 
+	function number = getNumber(C)
+		powers  = 0:(numel(C)-1);
+		number  = sum(C(:).*2.^powers(:));
+	end
+
+		dot	4224
+	minus	512	
+	0	32319
+	1	31808
+	2	24253
+	3	32437
+	4	30855
+	5	30391
+	6	29375
+	7	31777
+	8	32447
+	9	32439
+
+		dot	131072
+	minus	1536
+	0	480599
+	1	279652
+	2	464711
+	3	476999
+	4	280401
+	5	476951
+	6	481043
+	7	279623
+	8	481111
+	9	477015
+*/

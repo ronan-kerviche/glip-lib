@@ -168,8 +168,6 @@ using namespace QGUI;
 					v = floatBoxes[index]->value();
 				else
 					v = integerBoxes[index]->value();
-		
-				std::cout << "Index : " << index << " = " << v << std::endl;
 	
 				resource.object().set(v, i, j);
 			}
@@ -274,10 +272,8 @@ using namespace QGUI;
 			{
 				const double 	x = v.x(),
 						y = v.y();
-				std::cout << "ValuesInterface::copyVectorFromMouseState (1) : " << x << ", " << y << std::endl;
 				floatBoxes[0]->setValue(x);
 				floatBoxes[1]->setValue(y);
-				std::cout << "ValuesInterface::copyVectorFromMouseState (2) : " << floatBoxes[0]->value() << ", " << floatBoxes[1]->value() << std::endl;
 			}
 			else
 			{
@@ -469,8 +465,6 @@ using namespace QGUI;
 			{
 				const std::string name = (*it)->text(0).toStdString();
 
-				std::cout << "    Subnode : " << name << std::endl;
-
 				// Try to find the corresponding data node : 
 				if(node.subNodeExists(name))
 					count += updateNode(node.subNode(name), *it, updateOnly);
@@ -479,8 +473,6 @@ using namespace QGUI;
 			{
 				const std::string name = (*it)->data(0, Qt::UserRole).toString().toStdString();
 
-				std::cout << "    Subresource : " << name << std::endl;
-
 				// Try to find the corresponding data resource : 
 				if(node.resourceExists(name))
 				{
@@ -488,7 +480,6 @@ using namespace QGUI;
 						throw Exception("UniformsLoaderInterface::updateNode - Internal error : no tree widget associated.", __FILE__, __LINE__);
 					else
 					{
-						std::cout << "UniformsLoaderInterface::updateNode - updating node : " << nodeItem << std::endl;
 						delete (*it);
 						
 						(*it) = addResource(node.resource(name), nodeItem);
@@ -511,8 +502,6 @@ using namespace QGUI;
 		{
 			ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(nodeItem, type());
 		
-			std::cout << "UniformsLoaderInterface::updateNodeWithMouseState - " << nodeItem->text(0).toStdString() << " = " << valuesInterface << std::endl;
-
 			if(valuesInterface!=NULL && (valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState)))
 				return 1;
 			else
@@ -536,15 +525,12 @@ using namespace QGUI;
 
 	void UniformsLoaderInterface::scanLoader(bool updateOnly)
 	{
-		std::cout << "UniformsLoaderInterface::scanLoader - updateOnly : " << updateOnly << std::endl;
-
 		if(treeWidget()==NULL)
 			throw Exception("UniformsLoaderInterface::scanLoader - Internal error : no tree widget associated.", __FILE__, __LINE__);
 
 		for(UniformsLoader::NodeIterator it=loader.rootNodeBegin(); it!=loader.rootNodeEnd(); it++)
 		{
 			const bool test = isNodeListed(it->first);
-			std::cout << "  Node : " << it->first << std::endl;
 
 			if(!test && !updateOnly)
 			{
@@ -553,13 +539,9 @@ using namespace QGUI;
 			}
 			else if(test)
 			{
-				std::cout << "  Updating..." << std::endl;
-
 				// Update node : 
 				std::map<const std::string, QTreeWidgetItem*>::iterator itInternal = itemRoots.find(it->first);
 				int c = updateNode(it->second, itInternal->second, updateOnly);
-
-				std::cout << "  Count : " << c << std::endl;
 
 				if(c>0)
 				{

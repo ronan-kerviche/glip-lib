@@ -1,0 +1,54 @@
+REQUIRED_FORMAT:outputFormat(inputFormat0)
+
+INCLUDE(printNumber.ppl)
+
+SHADER_SOURCE:WriteColorShader
+{
+	#version 130
+	
+	INSERT(printNumber)
+
+	uniform	sampler2D inputTexture;
+	out vec4 	outputTexture;
+	
+	uniform float 	digits = 6.0;			// Number of digits printed.
+	uniform vec2 	charSize = vec2(16.0, 20.0),	// Size of the characters (in pixel)
+			VectorLastLeftPositionImage;	// Left click to change the position.
+
+	void main(void)
+	{
+		vec2 lineHeight = vec2(0, charSize.y+1);
+		ivec2 sz = textureSize(inputTexture, 0);
+		vec4 	a = textureLod(inputTexture, gl_TexCoord[0].st, 0),
+			b = textureLod(inputTexture, VectorLastLeftPositionImage/vec2(sz), 0);
+			
+		float 	c = (max(charSize.x, charSize.y)+1.0) * 5.0;
+		vec2 	boxCorner0 = VectorLastLeftPositionImage,
+			boxCorner0b = VectorLastLeftPositionImage + vec2(digits*charSize.x, c),
+			boxCorner1 = VectorLastLeftPositionImage + vec2(digits*charSize.x, 0.0),
+			boxCorner2 = VectorLastLeftPositionImage + vec2(digits, 0.0)*charSize + vec2(c, c);
+		if(gl_FragCoord.x>=boxCorner1.x && gl_FragCoord.x<boxCorner2.x && gl_FragCoord.y>=boxCorner1.y && gl_FragCoord.y<boxCorner2.y)
+			outputTexture.rgb = b.rgb;
+		else if(gl_FragCoord.x>=boxCorner0.x && gl_FragCoord.x<boxCorner0b.x && gl_FragCoord.y>=boxCorner0.y && gl_FragCoord.y<boxCorner0b.y)
+		{
+			float	c1 = printNumber(VectorLastLeftPositionImage.x, VectorLastLeftPositionImage, float(digits), charSize),
+				c2 = printNumber(VectorLastLeftPositionImage.y, VectorLastLeftPositionImage + lineHeight, float(digits), charSize),
+				c3 = printNumber(b.r, VectorLastLeftPositionImage + 2.0 * lineHeight, float(digits), charSize),
+				c4 = printNumber(b.g, VectorLastLeftPositionImage + 3.0 * lineHeight, float(digits), charSize),
+				c5 = printNumber(b.b, VectorLastLeftPositionImage + 4.0 * lineHeight, float(digits), charSize);
+			outputTexture.rgb = vec3(1.0, 1.0, 1.0) * max(c1, c2) + vec3(c3, c4, c5);
+		}
+		else
+			outputTexture.rgb = a.rgb;
+	}
+}
+
+FILTER_LAYOUT:WriteColorFilter(outputFormat, WriteColorShader)
+
+PIPELINE_MAIN:WriteColorPipeline
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture)
+
+	FILTER_INSTANCE:WriteColorFilter(WriteColorFilter)
+}
