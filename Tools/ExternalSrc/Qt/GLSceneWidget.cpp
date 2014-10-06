@@ -2380,101 +2380,11 @@ using namespace QVGL;
 			drawViewsTable(viewsTable);
 		else
 		{
-			// ORIGINAL
 			View* currentView = qvglParent->getCurrentView();
 
 			if(currentView!=NULL)
 				drawView(currentView);
 		}
-
-		/*if(qvglParent->getCurrentViewList().size()<2)
-		{
-			// ORIGINAL
-			View* currentView = qvglParent->getCurrentView();
-
-			if(currentView!=NULL)
-				drawView(currentView);
-		}
-		else
-		{
-			QList<View*>& viewsList = qvglParent->getCurrentViewList();
-			QRectF sceneRect = qvglParent->sceneRect();
-
-			int a, b, w, h;
-			float u, v;
-			getTableParameters(sceneRect.width(), sceneRect.height() - TopBar::getHeight(), viewsList.size(), 0.05, a, b, w, h, u, v);
-
-			//std::cout << "Table : " << std::endl;
-			//std::cout << "    WIDTH     : " << sceneRect.width() << std::endl;
-			//std::cout << "    HEIGHT    : " << sceneRect.height() << std::endl;
-			//std::cout << "    Columns   : " << a << std::endl;
-			//std::cout << "    Rows      : " << b << std::endl;
-			//std::cout << "    Width     : " << w << std::endl;
-			//std::cout << "    Height    : " << h << std::endl;
-			//std::cout << "    H Spacing : " << u << std::endl;
-			//std::cout << "    V Spacing : " << v << std::endl;
-
-			//std::cout << "Drawing : " << std::endl;
-
-			int i = 0, j = 0;
-			for(QList<View*>::iterator it=viewsList.begin(); it!=viewsList.end(); it++)
-			{
-				const int 	x = static_cast<int>(static_cast<float>(j) * (static_cast<float>(w) + u) + u),
-						y = sceneRect.height() - static_cast<int>(static_cast<float>(i) * (static_cast<float>(h) + v) + v) - h - TopBar::getHeight();
-
-				//std::cout << "    " << x << 'x' << y << std::endl;
-
-				drawView(*it, x, y, w, h);
-
-				// Increase : 
-				j++;
-				if(j>=a)
-				{
-					j = 0;
-					i++;
-				}
-			}
-
-			// Restore view port : 
-			glViewport(0, 0, sceneRect.width(), sceneRect.height());
-		}*/
-	
-		/* ORIGINAL
-		if(currentView!=NULL)
-		{
-			shaderProgram->use();
-
-			float 	imageScale[2],
-				sceneScale[2],
-				adaptationScale;
-
-			// Get the various scales : 
-			currentView->getAspectRatioScaling(imageScale[0], imageScale[1]);
-			qvglParent->getSceneRatioScaling(sceneScale[0], sceneScale[1]);
-			adaptationScale = qvglParent->getAdaptationScaling(currentView->getImageRatio());
-
-			// Load the data : 
-			shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
-			shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
-			shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
-			shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	currentView->viewCenter);
-			shaderProgram->modifyVar("homothecyCenter",	GL_FLOAT_VEC2,	currentView->homothecyCenter);
-			shaderProgram->modifyVar("angle",		GL_FLOAT,	currentView->angle);
-			shaderProgram->modifyVar("homothecyScale",	GL_FLOAT,	currentView->homothecyScale);
-
-			currentView->prepareToDraw();
-
-			quad->draw();
-
-			//currentView->setAngle( currentView->getAngle() + 1.57079f); //0.174f);
-
-			//std::cout << "Image      : " << currentView->getImageRatio() << std::endl;
-			//std::cout << "Scene      : " << Parent->getSceneRatio() << std::endl;
-			//std::cout << "Adaptation : " << adaptationScale << std::endl;
-			//std::cout << "Angle      : " << currentView->getAngle() << std::endl;
-		}*/	
-		//else
-		//	std::cout << "Nothing to draw!" << std::endl;
 
 		/*{
 			HdlProgram::stopProgram();

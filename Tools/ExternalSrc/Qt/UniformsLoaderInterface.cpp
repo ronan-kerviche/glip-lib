@@ -101,7 +101,7 @@ using namespace QGUI;
 				}
 				else
 				{
-					QObject::connect(integerBoxes[index], SIGNAL(valueChanged(double)), &signalMapper, SLOT(map(void)));
+					QObject::connect(integerBoxes[index], SIGNAL(valueChanged(int)), &signalMapper, SLOT(map(void)));
 					signalMapper.setMapping(integerBoxes[index], object.getIndex(i, j));
 				}
 	
@@ -144,6 +144,8 @@ using namespace QGUI;
 			v = integerBoxes[index]->value();
 	
 		resource.object().set(v, i, j);
+
+		std::cout << "ValuesInterface::pushModificationToResource - Pushing " << index << ", " << i << ", " << j << " = " << v << std::endl;
 
 		// Set resource as modified : 
 		resource.modified = true;

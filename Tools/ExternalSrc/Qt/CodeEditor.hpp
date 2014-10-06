@@ -60,6 +60,7 @@
 	#include <QFileDialog>
 	#include <QLineEdit>
 	#include <QWidgetAction>
+	#include <QTime>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
@@ -204,7 +205,7 @@ namespace QGED
 
 		signals :
 			void titleChanged(void);
-			void modified(bool changed);
+			void modified(bool changed);	// Triggered once when the state changes to 'modified'.
 	};
 
 	class CodeEditorContainer : public QWidget
@@ -418,24 +419,45 @@ namespace QGED
 			void insertTemplate(QString str);
 	};
 
+		class ElementsMenu;
+
+		class EditorDataMenu : public QMenu
+		{
+			Q_OBJECT
+
+			private :
+				const int		deltaRescan;
+				const ElementsMenu*	parent;
+				const CodeEditor*	editor;
+				bool			modified;
+				QTime			timer;
+
+			public : 
+				EditorDataMenu(ElementsMenu* _parent, CodeEditor* _editor);
+				~EditorDataMenu(void);
+
+			public slots :
+				void update(void);
+				void conditionalUpdate(void);
+		};
+
 	class ElementsMenu : public QMenu
 	{
 		Q_OBJECT
 		
 		private :
-			const qint64			deltaRefresh; 
-			QElapsedTimer			timer;
-			QMap<CodeEditor*, QMenu*>	menus;
+
+			QMap<CodeEditor*, EditorDataMenu*>	menus;
 			
 		private slots :
 			void insertCalled(void);
+			void editorDestroyed(void);
 
 		public : 
 			ElementsMenu(QWidget* parent=NULL);
 			~ElementsMenu(void);
 
-			void scan(CodeEditor* editor);
-			void remove(CodeEditor* editor);
+			void track(CodeEditor* editor);
 
 		signals :
 			void insertElement(QString element);

@@ -2,7 +2,7 @@
 	Print a number on the texture
 */
 
-UNIQUE(PRINT_NUMBER)
+UNIQUE(PRINT_NUMBER_FUNCTIONS)
 
 SHARED_CODE:printNumber
 {
@@ -130,7 +130,7 @@ SHARED_CODE:printNumber
                 0, 0, 1, 0; ... 
                 1, 1, 1, 0];
 
-		// Encoding function : 
+	// Encoding function : 
 	function number = getNumber(C)
 		powers  = 0:(numel(C)-1);
 		number  = sum(C(:).*2.^powers(:));

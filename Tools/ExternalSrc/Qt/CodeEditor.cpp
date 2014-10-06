@@ -406,8 +406,31 @@ using namespace QGED;
 					cursor.insertText("\t");
 				else
 				{
-					cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-					cursor.insertText( cursor.selectedText().replace("\t","") );
+					// Select the equivalent of one tab.
+					QFontMetrics metrics(document()->defaultFont());
+					const int tabSpacesEquivalent = tabStopWidth()/metrics.width(' ');
+					int numSpaces = 0;
+					
+					// Scan the beginning of the line, to remove UP TO one tabulation :
+					QChar c = document()->characterAt(cursor.position());
+					while(c.isSpace() && numSpaces<tabSpacesEquivalent)
+					{
+						if(c=='\t' || c=='\n')
+						{
+							cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+							break;
+						}
+						else
+							numSpaces++;
+
+						cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+						c = document()->characterAt(cursor.position());
+					}
+
+					cursor.removeSelectedText();
+
+					//cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+					//cursor.insertText( cursor.selectedText().replace("\t","") );
 				}
 				
 				cursor.movePosition(QTextCursor::NextBlock);
@@ -440,7 +463,7 @@ using namespace QGED;
 		acceptableMatch	= false;
 		result		= QTextCursor();
 		
-		if(current.isNull() || current.document()==NULL)
+		if(current.isNull() || current.document()==NULL || !(current.selectionStart()==current.position() && current.selectionEnd()==current.position())) // And do not match when selecting text
 			return ;
 
 		QChar character = current.document()->characterAt(current.position());
@@ -604,21 +627,25 @@ using namespace QGED;
 
 	void CodeEditor::updateExtraHighlight(void)
 	{
-		if(highlightLine && !isReadOnly())
+		if(!isReadOnly())
 		{
 			const QColor regularBackground = palette().background().color();
 			const QColor lineColor = regularBackground.lighter(150);
 
 			QList<QTextEdit::ExtraSelection> extraSelections;
 	
-			QTextEdit::ExtraSelection selection;
-			selection.format.setBackground(lineColor);
-			selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-			selection.cursor = textCursor();
-			selection.cursor.clearSelection();
-	
-			extraSelections.append(selection);
+			// Add current line highlight :
+			if(highlightLine)
+			{
+				QTextEdit::ExtraSelection selection;
+				selection.format.setBackground(lineColor);
+				selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+				selection.cursor = textCursor();
+				selection.cursor.clearSelection();
 
+				extraSelections.append(selection);
+			}
+	
 			// Add the braces match and search extra selections :
 			extraSelections.append(bracesMatchExtraSelections);
 			extraSelections.append(searchExtraSelections);
@@ -1767,37 +1794,29 @@ using namespace QGED;
 			emit insertTemplate(QString(templatesCode[ct]));
 	}
 
-// ElementsMenu
-	ElementsMenu::ElementsMenu(QWidget* parent)
-	 : 	QMenu("Elements", parent),
-		deltaRefresh(10000)
+// ElementsMenu :
+	EditorDataMenu::EditorDataMenu(ElementsMenu* _parent, CodeEditor* _editor)
+	 : 	QMenu("Editor", _parent->parentWidget()),
+		deltaRescan(20000),
+		parent(_parent),
+		editor(_editor),
+		modified(false)
 	{
-		setEnabled(false);
+		update();
+
+		_parent->addMenu(this);
+
+		QObject::connect(editor->document(), SIGNAL(contentsChanged()), this, SLOT(conditionalUpdate()));
 
 		timer.start();
 	}
 
-	ElementsMenu::~ElementsMenu(void)
-	{
-		clear();
-	}
+	EditorDataMenu::~EditorDataMenu(void)
+	{ }
 
-	void ElementsMenu::insertCalled(void)
+	void EditorDataMenu::update(void)
 	{
-		QAction* sender = reinterpret_cast<QAction*>( QObject::sender() );
-
-		emit insertElement(sender->toolTip());
-	}
-	
-	void ElementsMenu::scan(CodeEditor* editor)
-	{
-		// Wait some delta before pushing a refresh : 
-		if(timer.msecsSinceReference()<deltaRefresh)
-			return ;
-		else
-			timer.restart();
-
-		// Get the code : 
+		// Read : 
 		LayoutLoader layoutLoader;
 		LayoutLoader::PipelineScriptElements  elements;
 
@@ -1808,39 +1827,22 @@ using namespace QGED;
 		catch(Glip::Exception& e)
 		{ } // Forget the possible Exceptions
 
-		// Try to locate the menu if possible : 
-		QMap<CodeEditor*, QMenu*>::iterator it = menus.find(editor);
-		
-		if(it!=menus.end())
-		{
-			// Clear the previous actions : 
-			it.value()->clear();
-		}
-		else
-		{
-			// Create a new menu, and point to it : 
-			//menus[editor] = addMenu(editor->getRawTitle());
-			//it = menus.find(editor);
+		// Rebuild the menu :
+		clear();
 
-			// The previous two lines results in a position bug for the QMenu.
-			menus[editor] = new QMenu(editor->getRawTitle(), parentWidget());
-			it = menus.find(editor);
-			addMenu(it.value());
-		}
-
-		it.value()->addAction(tr("Include %1").arg(editor->getRawTitle()), this, SLOT(insertCalled()))->setToolTip(tr("INCLUDE_FILE(%1)\n").arg(editor->getRawTitle()));
+		addAction(tr("Include %1").arg(editor->getRawTitle()), parent, SLOT(insertCalled()))->setToolTip(tr("INCLUDE_FILE(%1)\n").arg(editor->getRawTitle()));
 
 		if(!editor->getPath().isEmpty())
-			it.value()->addAction(tr("Add path..."), this, SLOT(insertCalled()))->setToolTip(tr("ADD_PATH(%1)\n").arg(editor->getPath()));
+			addAction(tr("Add path..."), parent, SLOT(insertCalled()))->setToolTip(tr("ADD_PATH(%1)\n").arg(editor->getPath()));
 
 		// Load : 
 		#define MAKE_LIST( listName, name ) \
 			if(!elements. listName .empty()) \
 			{ \
-				QMenu* tmp = it.value()->addMenu(tr( name " (%1)").arg(elements. listName .size())); \
+				QMenu* tmp = addMenu(tr( name " (%1)").arg(elements. listName .size())); \
 				\
 				for(int k=0; k<elements. listName .size(); k++) \
-					tmp->addAction(elements. listName [k].c_str(), this, SLOT(insertCalled()))->setToolTip(elements. listName [k].c_str()); \
+					tmp->addAction(elements. listName [k].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements. listName [k].c_str()); \
 			}
 
 		MAKE_LIST( requiredFormats, 	"Required Formats" );
@@ -1856,56 +1858,93 @@ using namespace QGED;
 		// Pipelines : 
 		if(!elements.pipelines.empty())
 		{
-			QMenu* tmp = it.value()->addMenu(tr("Pipelines (%1)").arg(elements.pipelines.size()));
+			QMenu* tmp = addMenu(tr("Pipelines (%1)").arg(elements.pipelines.size()));
 
 			for(int k=0; k<elements.pipelines.size(); k++)
 			{
-				tmp->addAction(elements.pipelines[k].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelines[k].c_str());
+				tmp->addAction(elements.pipelines[k].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelines[k].c_str());
 
 				QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineInputs[k].size()));
 
 				for(int ki=0; ki<elements.pipelineInputs[k].size(); ki++)
-					i->addAction(elements.pipelineInputs[k][ki].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelineInputs[k][ki].c_str());
+					i->addAction(elements.pipelineInputs[k][ki].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelineInputs[k][ki].c_str());
 
 				QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineOutputs[k].size()));
 
 				for(int ko=0; ko<elements.pipelineOutputs[k].size(); ko++)
-					o->addAction(elements.pipelineOutputs[k][ko].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.pipelineOutputs[k][ko].c_str());
+					o->addAction(elements.pipelineOutputs[k][ko].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelineOutputs[k][ko].c_str());
 			}
 		}
 
 		if(!elements.mainPipeline.empty())
 		{
-			QMenu* tmp = it.value()->addMenu("Main Pipeline");
+			QMenu* tmp = addMenu("Main Pipeline");
 
-			tmp->addAction(elements.mainPipeline.c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipeline.c_str());
+			tmp->addAction(elements.mainPipeline.c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipeline.c_str());
 
 			QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineInputs.size()));
 
 			for(int ki=0; ki<elements.mainPipelineInputs.size(); ki++)
-				i->addAction(elements.mainPipelineInputs[ki].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipelineInputs[ki].c_str());
+				i->addAction(elements.mainPipelineInputs[ki].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipelineInputs[ki].c_str());
 
 			QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineOutputs.size()));
 
 			for(int ko=0; ko<elements.mainPipelineOutputs.size(); ko++)
-				o->addAction(elements.mainPipelineOutputs[ko].c_str(), this, SLOT(insertCalled()))->setToolTip(elements.mainPipelineOutputs[ko].c_str());
+				o->addAction(elements.mainPipelineOutputs[ko].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipelineOutputs[ko].c_str());
 		}
-
-		setEnabled(true);
 	}
 
-	void ElementsMenu::remove(CodeEditor* editor)
+	void EditorDataMenu::conditionalUpdate(void)
 	{
-		QMap<CodeEditor*, QMenu*>::iterator it = menus.find(editor);
+		if(timer.elapsed()>deltaRescan)
+		{
+			update();
+			timer.restart();
+		}
+	}
+
+// ElementsMenu :
+	ElementsMenu::ElementsMenu(QWidget* parent)
+	 : 	QMenu("Elements", parent)
+	{
+		setEnabled(false);
+	}
+
+	ElementsMenu::~ElementsMenu(void)
+	{
+		clear();
+	}
+
+	void ElementsMenu::insertCalled(void)
+	{
+		QAction* sender = reinterpret_cast<QAction*>(QObject::sender());
+
+		emit insertElement(sender->toolTip());
+	}
+
+	void ElementsMenu::editorDestroyed(void)
+	{
+		CodeEditor* editor = reinterpret_cast<CodeEditor*>(QObject::sender());
+
+		QMap<CodeEditor*, EditorDataMenu*>::iterator it = menus.find(editor);
 
 		if(it!=menus.end())
 		{
 			delete it.value();
 			menus.erase(it);
-
-			if(menus.empty())
-				setEnabled(false);
 		}
+
+		if(menus.isEmpty())
+			setEnabled(false);
+	}
+
+	void ElementsMenu::track(CodeEditor* editor)
+	{
+		EditorDataMenu* editorDataMenu = new EditorDataMenu(this, editor);	
+		menus[editor] = editorDataMenu;
+		QObject::connect(editor, SIGNAL(destroyed(void)), this, SLOT(editorDestroyed(void)));
+		
+		setEnabled(true);
 	}
 
 // RecentFileMenu ;
@@ -2197,6 +2236,14 @@ using namespace QGED;
 	{
 		static unsigned int counter = 0; 
 	
+		// Close any existing, empty and non saved tab : 
+		CodeEditorContainer* currentEditor = getCurrentEditor();
+		if(currentEditor!=NULL && currentEditor->getEditor().empty() && currentEditor->getEditor().getFilename().isEmpty())
+		{
+			int idx = getTabIndex(currentEditor);
+			closeTab(idx, true);
+		}
+
 		// Create the widget : 
 		CodeEditorContainer* ptr = new CodeEditorContainer(this);
 		editors[counter] = ptr;
@@ -2219,7 +2266,7 @@ using namespace QGED;
 		if(!filename.isEmpty())
 		{
 			ptr->getEditor().open(filename);
-			elementsMenu.scan(&ptr->getEditor());
+			elementsMenu.track(&ptr->getEditor());
 		}
 	}
 
@@ -2250,9 +2297,6 @@ using namespace QGED;
 
 		if(ptr!=NULL && tabID>=0)
 			tabBar.setTabText(tabID, ptr->getTitle());
-
-		// Try to update the elements : 
-		elementsMenu.scan(ptr);
 	}
 
 	void CodeEditorTabs::insert(QString str)
@@ -2361,7 +2405,6 @@ using namespace QGED;
 					return ; // exit
 			}
 
-			elementsMenu.remove(&(*it)->getEditor());
 			tabBar.removeTab(tabID);
 			stack.removeWidget(*it);
 			delete (*it);
