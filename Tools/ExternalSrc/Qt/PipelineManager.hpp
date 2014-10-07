@@ -252,10 +252,7 @@ namespace QGPM
 								cellB,
 								computationCount;
 			QString					uniformsFilename;
-			bool					locked;
-			#ifdef __USE_QVGL__
-			const QVGL::MouseState*			mouseState;
-			#endif
+			bool					locked;	
 
 			void setText(int column, const QString & text);
 			std::string getInputFormatName(int idx);
@@ -279,11 +276,7 @@ namespace QGPM
 			void uniformsModified(void);
 
 		public :
-			#ifdef __USE_QVGL__ 
-			PipelineItem(void* _identifier, const QObject* _referrer, const QVGL::MouseState* _mouseState=NULL);
-			#else
 			PipelineItem(void* _identifier, const QObject* _referrer);
-			#endif
 			~PipelineItem(void);
 
 			QString getName(void) const;
@@ -451,9 +444,6 @@ namespace QGPM
 			QGUI::UniformsLinkMenu			uniformsLinkMenu;
 			OutputsMenu				outputsMenu;
 			QGUI::QTreeWidgetSpecial		treeWidget;
-			#ifdef __USE_QVGL__
-			const QVGL::MouseState*			mouseState;
-			#endif
 
 		private slots :
 			void itemSelectionChanged(void);
@@ -462,11 +452,7 @@ namespace QGPM
 			void removePipeline(PipelineItem* pipelineItem);
 
 		public : 
-			#ifdef __USE_QVGL__
-			PipelineManager(const QVGL::MouseState* _mouseState=NULL);
-			#else
-			PipelineManager(void)
-			#endif
+			PipelineManager(void);
 			~PipelineManager(void);
 
 			static QTreeWidgetItem* getRoot(QTreeWidgetItem* item);
@@ -493,7 +479,7 @@ namespace QGPM
 			PipelineManager	manager;
 
 		public : 
-			PipelineManagerSubWidget(const QVGL::MouseState* _mouseState=NULL);
+			PipelineManagerSubWidget(void);
 			~PipelineManagerSubWidget(void);
 
 			PipelineManager* getManagerPtr(void);

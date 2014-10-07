@@ -60,7 +60,7 @@
 		window		= new QVGL::MainWidget;
 		editor		= new QGED::CodeEditorTabsSubWidget;
 		collection	= new QGIC::ImageItemsCollectionSubWidget;
-		pipelineManager	= new QGPM::PipelineManagerSubWidget(&const_cast<const QVGL::MainWidget*>(window)->getMouseState());
+		pipelineManager	= new QGPM::PipelineManagerSubWidget();
 
 		// Add Subwidgets : 
 		window->addSubWidget(editor);

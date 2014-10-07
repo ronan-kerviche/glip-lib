@@ -51,6 +51,13 @@
 	#include <QListWidget>
 	#include <QDialogButtonBox>
 
+	// Enable some interactivity with Uniforms Variables modules :
+	#define __MAKE_VARIABLES__
+	
+	#ifdef __MAKE_VARIABLES__
+		#include "UniformsLoaderInterface.hpp"	
+	#endif
+
 // Namespaces :
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -610,11 +617,42 @@ namespace QVGL
 			};
 
 		private :
+			struct VectorData
+			{
+				private :
+					VectorData(const VectorData&);
+
+				public :
+					int			modification;
+					QPointF			vector;
+					#ifdef __MAKE_VARIABLES__
+					QGUI::VariableRecord*	record;
+					#endif
+
+					VectorData(const QString& name, QObject* parent=NULL);
+					~VectorData(void);
+			};
+
+			struct ColorData
+			{
+				private :
+					ColorData(const ColorData&);
+				public :
+					int 			modification; 	// The integer represent a count to the last modification.
+					QColor			color;		// (0 : requires update, 1 : modified, 2+ : not modified)
+					#ifdef __MAKE_VARIABLES__
+					QGUI::VariableRecord*	record;
+					#endif
+
+					ColorData(const QString& name, QObject* parent=NULL);
+					~ColorData(void);
+			};
+
 			static const QMap<VectorID, QString>	vectorsNameMap;
 			static const QMap<ColorID, QString>	colorsNameMap; 
 			FunctionMode				functionMode;
-			QMap<VectorID, QPair<int, QPointF> >	vectors;	// The integer represent a count to the last modification.
-			QMap<ColorID,  QPair<int, QColor> >	colors;		// (0 : requires update, 1 : modified, 2+ : not modified)
+			QMap<VectorID, VectorData*>		vectors;	
+			QMap<ColorID, ColorData*>		colors; 
 			QList<VectorID>				vectorIDs;
 			QList<ColorID>				colorIDs;
 			float					wheelDelta;

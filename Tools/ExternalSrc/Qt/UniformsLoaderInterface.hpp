@@ -23,15 +23,9 @@
 	#include <QGridLayout>
 	#include <QDoubleSpinBox>
 	#include <QSignalMapper>
-	#include <QItemDelegate>
-
-	// For user inputs :
-	#define __USE_QVGL__
-
-	#ifdef __USE_QVGL__
-		#include <QElapsedTimer>
-		#include "GLSceneWidget.hpp"
-	#endif
+	#include <QLabel>
+	#include <QMenu>
+	#include <QElapsedTimer>	
 	
 namespace QGUI
 {
@@ -41,6 +35,39 @@ namespace QGUI
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
+	class VariableRecord : public QObject
+	{
+		Q_OBJECT
+
+		private :
+			static VariableRecord*		referenceRecord;
+			static QVector<VariableRecord*>	records;
+			QString 			name;
+			int 				modification;
+			HdlDynamicData* 		object;
+		
+			VariableRecord(void);
+			VariableRecord(const VariableRecord&);	
+			
+		public :
+			VariableRecord(const QString& _name, const GLenum& type, QObject* parent=NULL);
+			~VariableRecord(void);
+
+			const QString& getName(void) const;
+			int getModificationIndex(void) const;
+			const HdlDynamicData& data(void) const;
+			HdlDynamicData& data(void);
+			void declareUpdate(void);
+
+			static const VariableRecord* getRecord(const QString& name);	
+			static const QVector<VariableRecord*>& getRecords(void);
+			static const VariableRecord* getReferenceRecord(void); // Used for signal passing.
+
+		signals :
+			void recordAdded(const VariableRecord*);
+			void updated(void);
+	};
+	
 	class QTreeWidgetSpecial : public QTreeWidget
 	{
 		private : 
@@ -61,15 +88,13 @@ namespace QGUI
 			QVector<QDoubleSpinBox*>		floatBoxes;
 			QSignalMapper				signalMapper;
 			QLabel					linkLabel;
-
-			#ifdef __USE_QVGL__
-				QVGL::MouseState::VectorID	vectorID;
-				QVGL::MouseState::ColorID	colorID;	
-			#endif
+			const VariableRecord*			variableLink;		
 			
 		private slots :
 			void pushModificationToResource(int index);
 			void pushAllModificationsToResource(bool emitSignal=true);
+			void recordUpdated(void);
+			void recordDestroyed(void);
 
 		public : 
 			ValuesInterface(UniformsLoader::Resource& _resource, QWidget* parent=NULL);
@@ -78,16 +103,12 @@ namespace QGUI
 			const UniformsLoader::Resource& getResource(void) const;
 			UniformsLoader::Resource& getResource(void);
 
-			#ifdef __USE_QVGL__
-				void setVectorLink(const QVGL::MouseState::VectorID& lnk);
-				void setColorLink(const QVGL::MouseState::ColorID& lnk);
-				void autoLink(const QVGL::MouseState* mouseState);
-				void unlink(void);
-				bool copyVectorFromMouseState(const QVGL::MouseState* mouseState);
-				bool copyColorFromMouseState(const QVGL::MouseState* mouseState);
-			#endif
+			void setVariableLink(const VariableRecord* lnk);
+			void autoLink(void);
+			void unlink(void);
+			bool copyDataFromLink(void);
 
-			void pullModificationToResource(void);
+			void pullModificationFromResource(void);
 			static ValuesInterface* getPtrFromGenericItem(QTreeWidgetItem* item, const int type);
 
 		signals : 
@@ -102,32 +123,21 @@ namespace QGUI
 			// Data : 
 			UniformsLoader 					loader;
 			std::map<const std::string, QTreeWidgetItem*>	itemRoots;
-			#ifdef __USE_QVGL__
 			QElapsedTimer					timer;
 			int						modificationCounter;
 			const int					maxCounter,
 									minimumDelta_ms;
-			const QVGL::MouseState*				mouseState;
-			#endif
 
 			// Tools : 
 			QTreeWidgetItem* addResource(UniformsLoader::Resource& resource, QTreeWidgetItem* root);
 			QTreeWidgetItem* addNode(UniformsLoader::Node& node, QTreeWidgetItem* root);
 			QTreeWidgetItem* addNodeAsRoot(UniformsLoader::Node& node);
 			int updateNode(UniformsLoader::Node& node, QTreeWidgetItem* nodeItem, bool updateOnly);
-			int updateNodeWithMouseState(QTreeWidgetItem* nodeItem);
 			bool isNodeListed(const std::string& name) const;
 			void scanLoader(bool updateOnly=false);
 
-		private slots :
-			void applyModificationFromMouseState(void);	
-
 		public :
-			#ifdef __USE_QVGL__ 
-			UniformsLoaderInterface(int type, const QVGL::MouseState* _mouseState=NULL);
-			#else
 			UniformsLoaderInterface(int type);
-			#endif
 			virtual ~UniformsLoaderInterface(void);
 
 			void load(Pipeline& pipeline);
@@ -140,37 +150,33 @@ namespace QGUI
 			void modified(void);
 	};
 
-	#ifdef __USE_QVGL__
-		class UniformsLinkMenu : public QMenu
-		{
-			Q_OBJECT
+	class UniformsLinkMenu : public QMenu
+	{
+		Q_OBJECT
 
-			private :
-				const int 					type;
-				QMap<QVGL::MouseState::VectorID, QAction*>	vectorPositionsActions;
-				QMap<QVGL::MouseState::ColorID, QAction*>	colorsActions;
-				QAction						*unlinkAction;
-				QSignalMapper					vectorSignalMapper,
-										colorSignalMapper;
-				QMap<QTreeWidgetItem*, ValuesInterface*>	currentSelection;		
-		
-				static QString removeHeader(const QString& str);
+		private :
+			const int 					type;
+			QMap<const VariableRecord*, QAction*>		recordActions;
+			QAction						*unlinkAction;
+			QMap<QTreeWidgetItem*, ValuesInterface*>	currentSelection;		
+	
+			static const VariableRecord* getRecordFromAction(QAction* action);
 
-			private slots :
-				void setUniformLinkToVector(int id);
-				void setUniformLinkToColor(int id);
-				void unlink(void);
+		private slots :
+			void addRecord(const VariableRecord* record);
+			void recordDestroyed(void);
+			void setLink(void);
+			void unlink(void);
 
-			public :
-				UniformsLinkMenu(int _type, QWidget* parent=NULL);
-				~UniformsLinkMenu(void);
+		public :
+			UniformsLinkMenu(int _type, QWidget* parent=NULL);
+			~UniformsLinkMenu(void);
 
-				void addToMenu(QMenu& menu);
+			void addToMenu(QMenu& menu);
 
-			public slots :
-				void updateToSelection(QList<QTreeWidgetItem*>& selection);
-		};
-	#endif
+		public slots :
+			void updateToSelection(QList<QTreeWidgetItem*>& selection);
+	};
 }
 
 #endif

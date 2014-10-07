@@ -533,11 +533,7 @@ using namespace QGPM;
 	}
 
 // PipelineItem :
-	#ifdef __USE_QVGL__ 
-	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer, const QVGL::MouseState* _mouseState)
-	#else
 	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer)
-	#endif
 	 : 	QTreeWidgetItem(PipelineHeaderItemType),
 		referrer(_referrer),
 		inputFormatString("inputFormat%d"),
@@ -550,9 +546,6 @@ using namespace QGPM;
 		outputsNode(OutputsHeaderItemType),
 		uniformsNode(NULL),
 		locked(false)
-		#ifdef __USE_QVGL__
-			, mouseState(_mouseState)
-		#endif
 	{
 		setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
 
@@ -799,11 +792,7 @@ using namespace QGPM;
 		}
 		
 		// Create the uniforms profile :
-		#ifdef __USE_QVGL__
-			uniformsNode = new QGUI::UniformsLoaderInterface(UniformsHeaderItemType, mouseState);
-		#else 
-			uniformsNode = new QGUI::UniformsLoaderInterface(UniformsHeaderItemType);
-		#endif
+		uniformsNode = new QGUI::UniformsLoaderInterface(UniformsHeaderItemType);
 
 		addChild(uniformsNode);
 		uniformsNode->load(*pipeline);
@@ -1685,11 +1674,7 @@ using namespace QGPM;
 	}
 
 // PipelineManager :
-	#ifdef __USE_QVGL__
-	PipelineManager::PipelineManager(const QVGL::MouseState* _mouseState)
-	#else
 	PipelineManager::PipelineManager(void)
-	#endif
 	 : 	layout(this),
 		menuBar(this),
 		pipelineMenu(this),
@@ -1697,9 +1682,6 @@ using namespace QGPM;
 		uniformsLinkMenu(UniformsHeaderItemType, this),
 		outputsMenu(this),
 		treeWidget(this)
-		#ifdef __USE_QVGL__
-		, mouseState(_mouseState)
-		#endif
 	{
 		layout.addWidget(&menuBar);
 		layout.addWidget(&treeWidget);
@@ -1821,11 +1803,7 @@ using namespace QGPM;
 		else
 		{
 			// Create a new pipeline :
-			#ifdef __USE_QVGL__ 
-			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer, mouseState);
-			#else
 			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer);
-			#endif
 
 			pipelineItems[identifier] = pipelineItem;
 			treeWidget.addTopLevelItem(pipelineItem);
@@ -1858,8 +1836,7 @@ using namespace QGPM;
 
 // PipelineManagerSubWidget :
 #ifdef __USE_QVGL__
-	PipelineManagerSubWidget::PipelineManagerSubWidget(const QVGL::MouseState* _mouseState)
-	 :	manager(_mouseState)
+	PipelineManagerSubWidget::PipelineManagerSubWidget(void)
 	{
 		setInnerWidget(&manager);
 		setTitle("Pipeline Manager");

@@ -1722,6 +1722,46 @@ using namespace QVGL;
 		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::CTRL + Qt::Key_U));
 	}
 
+// MouseState::VectorData
+	MouseState::VectorData::VectorData(const QString& name, QObject* parent)
+	 : 	modification(1)
+		#ifdef __MAKE_VARIABLES__
+		, record(NULL)
+		#endif
+	{
+		#ifdef __MAKE_VARIABLES__
+			record = new QGUI::VariableRecord(name, GL_FLOAT_VEC2, parent);
+		#endif
+	}
+
+	MouseState::VectorData::~VectorData(void)
+	{
+		#ifdef __MAKE_VARIABLES__
+			delete record;
+			record = NULL;
+		#endif	
+	}
+
+// MouseState::ColorData
+	MouseState::ColorData::ColorData(const QString& name, QObject* parent)
+	 : 	modification(1)
+		#ifdef __MAKE_VARIABLES__
+		, record(NULL)
+		#endif
+	{
+		#ifdef __MAKE_VARIABLES__
+			record = new QGUI::VariableRecord(name, GL_FLOAT_VEC3, parent);
+		#endif
+	}
+
+	MouseState::ColorData::~ColorData(void)
+	{
+		#ifdef __MAKE_VARIABLES__
+			delete record;
+			record = NULL;
+		#endif	
+	}
+
 // MouseState :
 	const QMap<MouseState::VectorID, QString>	MouseState::vectorsNameMap = initVectorsNameMap();
 	const QMap<MouseState::ColorID, QString>	MouseState::colorsNameMap = initColorsNameMap();
@@ -1823,10 +1863,10 @@ using namespace QVGL;
 	{
 		// Create the maps : 
 		for(QMap<VectorID, QString>::const_iterator it=vectorsNameMap.begin(); it!=vectorsNameMap.end(); it++)
-			vectors.insert( it.key(), QPair<int, QPointF>(1, QPointF(0.0, 0.0)));
+			vectors.insert( it.key(), new VectorData(getVectorIDName(it.key()), this));
 
 		for(QMap<ColorID, QString>::const_iterator it=colorsNameMap.begin(); it!=colorsNameMap.end(); it++)
-			colors.insert( it.key(), QPair<int, QColor>(1, QColor(Qt::black)));
+			colors.insert( it.key(), new ColorData(getColorIDName(it.key()), this));
 
 		vectorIDs 	= vectors.keys();
 		colorIDs 	= colors.keys();
@@ -1835,34 +1875,59 @@ using namespace QVGL;
 	}
 
 	MouseState::~MouseState(void)
-	{ }	
+	{ 
+		for(QMap<VectorID, VectorData*>::iterator it=vectors.begin(); it!=vectors.end(); it++)
+			delete it.value();
+		vectors.clear();
+
+		for(QMap<ColorID, ColorData*>::iterator it=colors.begin(); it!=colors.end(); it++)
+			delete it.value();
+		colors.clear();
+	}	
 
 	void MouseState::incrementEventCounters(void)
 	{
 		// Increment only if the value is not waiting for an update (0) :
-		for(QMap<VectorID, QPair<int, QPointF> >::iterator it=vectors.begin(); it!=vectors.end(); it++)
-			it.value().first += (it.value().first>=1) ? 1 : 0;
+		for(QMap<VectorID, VectorData*>::iterator it=vectors.begin(); it!=vectors.end(); it++)
+			it.value()->modification += (it.value()->modification>=1) ? 1 : 0;
 
-		for(QMap<ColorID,  QPair<int, QColor> >::iterator it=colors.begin(); it!=colors.end(); it++)
-			it.value().first += (it.value().first>=1) ? 1 : 0;
+		for(QMap<ColorID, ColorData*>::iterator it=colors.begin(); it!=colors.end(); it++)
+			it.value()->modification += (it.value()->modification>=1) ? 1 : 0;
 	}
 
 	bool MouseState::doesVectorRequireUpdate(const VectorID& id) const
 	{
-		return vectors[id].first==0;
+		if(id==InvalidVectorID)
+			return false;
+		else
+			return vectors[id]->modification==0;
 	}
 
 	bool MouseState::doesColorRequirepdate(const ColorID& id) const
 	{
-		return colors[id].first==0;
+		if(id==InvalidColorID)
+			return false;
+		else
+			return colors[id]->modification==0;
 	}
 
 	void MouseState::setVector(const VectorID& id, const QPointF& v, const bool requireUpdate)
 	{
-		if(vectors.contains(id))
+		QMap<VectorID, VectorData*>::iterator it = vectors.find(id);
+	
+		if(it!=vectors.end())
 		{
-			vectors[id].first 	= requireUpdate ? 0 : 1; //(requireUpdate ? RequireUpdate : Modified);
-			vectors[id].second 	= v;
+			it.value()->modification = requireUpdate ? 0 : 1; //(requireUpdate ? RequireUpdate : Modified);
+			it.value()->vector 	 = v;
+			
+			#ifdef __MAKE_VARIABLES__
+			if(!requireUpdate && getFunctionMode()==ModeCollection)
+			{
+				it.value()->record->data().set(v.x(), 0);
+				it.value()->record->data().set(v.y(), 1);
+				it.value()->record->declareUpdate();
+			}
+			#endif
 		}
 		else
 			throw Exception("MouseState::setVector - Unknown VectorID.", __FILE__, __LINE__);
@@ -1870,10 +1935,22 @@ using namespace QVGL;
 
 	void MouseState::setColor(const ColorID& id, const QColor& c)
 	{
-		if(colors.contains(id))
+		QMap<ColorID, ColorData*>::iterator it = colors.find(id);
+
+		if(it!=colors.end())
 		{
-			colors[id].first 	= 1; // Modified
-			colors[id].second	= c;
+			it.value()->modification = 1; // Modified
+			it.value()->color	= c;
+
+			#ifdef __MAKE_VARIABLES__
+			if(getFunctionMode()==ModeCollection)
+			{
+				it.value()->record->data().set(c.red(), 0);
+				it.value()->record->data().set(c.green(), 1);
+				it.value()->record->data().set(c.blue(), 2);
+				it.value()->record->declareUpdate();
+			}
+			#endif
 		}
 		else
 			throw Exception("MouseState::setColor - Unknown ColorID.", __FILE__, __LINE__);
@@ -1979,16 +2056,25 @@ using namespace QVGL;
 
 	void MouseState::clear(void)
 	{
-		for(QMap<VectorID, QPair<int, QPointF> >::Iterator it=vectors.begin(); it!=vectors.end(); it++)
+		for(QMap<VectorID, VectorData*>::Iterator it=vectors.begin(); it!=vectors.end(); it++)
 		{
-			it.value().first 	= 1;
-			it.value().second 	= QPointF(0.0, 0.0);
+			it.value()->modification 	= 1;
+			it.value()->vector 		= QPointF(0.0, 0.0);
+			#ifdef __MAKE_VARIABLES__
+			it.value()->record->data().set(0.0, 0);
+			it.value()->record->data().set(0.0, 1);
+			#endif
 		}
 
-		for(QMap<ColorID, QPair<int, QColor> >::Iterator it=colors.begin(); it!=colors.end(); it++)
+		for(QMap<ColorID, ColorData*>::Iterator it=colors.begin(); it!=colors.end(); it++)
 		{
-			it.value().first 	= 1;
-			it.value().second 	= Qt::black;
+			it.value()->modification 	= 1;
+			it.value()->color		= Qt::black;
+			#ifdef __MAKE_VARIABLES__
+			it.value()->record->data().set(0.0, 0);
+			it.value()->record->data().set(0.0, 1);
+			it.value()->record->data().set(0.0, 2);
+			#endif
 		}
 	}
 
@@ -2004,32 +2090,40 @@ using namespace QVGL;
 
 	bool MouseState::isVectorModified(const VectorID& id) const
 	{
-		return (vectors[id].first==1);
+		QMap<VectorID, VectorData*>::const_iterator it=vectors.find(id);
+
+		if(it!=vectors.end())
+			return (it.value()->modification==1);
+		else
+			return false;
 	}
 
 	bool MouseState::isColorModified(const ColorID& id) const 
 	{
-		return (colors[id].first==1);
+		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);
+	
+		if(it!=colors.end())
+			return (it.value()->modification==1);
+		else
+			return false;
 	}
 
 	const QPointF& MouseState::getVector(const VectorID& id) const
 	{
-		if(vectors.contains(id))
-		{
-			//vectors[id].first = ((vectors[id].first==Modified) ? NotModified : vectors[id].first);
-			return vectors[id].second;
-		}
+		QMap<VectorID, VectorData*>::const_iterator it=vectors.find(id);
+
+		if(it!=vectors.end())
+			return it.value()->vector;
 		else
 			throw Exception("MouseState::getVector - Unknown VectorID.", __FILE__, __LINE__);
 	}
 
 	const QColor& MouseState::getColor(const ColorID& id) const
 	{
-		if(colors.contains(id))
-		{
-			//colors[id].first = ((colors[id].first==Modified) ? NotModified : colors[id].first);
-			return colors[id].second;
-		}
+		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);	
+	
+		if(it!=colors.end())
+			return it.value()->color;
 		else
 			throw Exception("MouseState::getColor - Unknown ColorID.", __FILE__, __LINE__);
 	}

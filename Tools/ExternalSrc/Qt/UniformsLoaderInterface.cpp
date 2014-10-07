@@ -20,6 +20,107 @@
 
 using namespace QGUI;
 
+// VariableRecord :
+	VariableRecord*			VariableRecord::referenceRecord = NULL;
+	QVector<VariableRecord*> 	VariableRecord::records;
+
+	VariableRecord::VariableRecord(void)
+	 :	QObject(NULL),
+		name("REFERENCE"),
+		modification(-1),
+		object(NULL)
+	{ }
+
+	VariableRecord::VariableRecord(const QString& _name, const GLenum& type, QObject* parent)
+	 :	QObject(parent),
+		name(_name),
+		modification(0),
+		object(NULL)
+	{ 
+		object = HdlDynamicData::build(type);
+
+		records.push_back(this);
+
+		if(referenceRecord!=NULL)
+			emit referenceRecord->recordAdded(this);
+	}
+
+	VariableRecord::~VariableRecord(void)
+	{
+		delete object;
+		object = NULL;
+
+		if(this==referenceRecord)
+			referenceRecord = NULL;
+
+		int idx = records.indexOf(this);
+
+		if(idx>=0)
+			records.remove(idx);
+	}
+	
+	const QString& VariableRecord::getName(void) const
+	{
+		return name;
+	}
+
+	int VariableRecord::getModificationIndex(void) const
+	{
+		return modification;
+	}
+	
+	const HdlDynamicData& VariableRecord::data(void) const
+	{
+		if(object==NULL)
+			throw Exception("VariableRecord::data - Data is invalid.", __FILE__, __LINE__);
+		else
+			return (*object);
+	}	
+
+	HdlDynamicData& VariableRecord::data(void)
+	{
+		if(object==NULL)
+			throw Exception("VariableRecord::data - Data is invalid.", __FILE__, __LINE__);
+		else
+			return (*object);
+	}
+
+	void VariableRecord::declareUpdate(void)
+	{
+		// Update the modification indices of all the other variables :
+		for(QVector<VariableRecord*>::iterator it=records.begin(); it!=records.end(); it++)
+			(*it)->modification++;
+		
+		// Reset mine :
+		modification = 0;
+
+		emit updated();
+	}
+	
+	const VariableRecord* VariableRecord::getRecord(const QString& name)
+	{
+		for(QVector<VariableRecord*>::iterator it=records.begin(); it!=records.end(); it++)
+		{
+			if((*it)->name==name)
+				return (*it);
+		}
+
+		return NULL;
+	}
+
+	const QVector<VariableRecord*>& VariableRecord::getRecords(void)
+	{
+		return records;
+	}
+
+	const VariableRecord* VariableRecord::getReferenceRecord(void)
+	{
+		if(referenceRecord==NULL)
+			referenceRecord = new VariableRecord;
+	
+		return referenceRecord;
+	}
+
 // QTreeWidgetSpecial :
 	QTreeWidgetSpecial::QTreeWidgetSpecial(QWidget* parent)
 	 :	QTreeWidget(parent)
@@ -38,11 +139,8 @@ using namespace QGUI;
 	 : 	QWidget(parent),
 		resource(_resource),
 		layout(this),
-		signalMapper(this)
-		#ifdef __USE_QVGL__
-			, vectorID(QVGL::MouseState::InvalidVectorID),
-			colorID(QVGL::MouseState::InvalidColorID)
-		#endif
+		signalMapper(this),
+		variableLink(NULL)	
 	{
 		layout.setMargin(0);
 		layout.setSpacing(0);
@@ -183,6 +281,25 @@ using namespace QGUI;
 		// Emit modified signal : 
 		if(emitSignal)
 			emit modified();
+	}
+
+	void ValuesInterface::recordUpdated(void)
+	{
+		VariableRecord* record = reinterpret_cast<VariableRecord*>(QObject::sender());
+
+		if(variableLink!=NULL && variableLink==record)
+		{	
+			resource.object() = variableLink->data();
+			pullModificationFromResource();
+		}
+	}
+
+	void ValuesInterface::recordDestroyed(void)
+	{
+		VariableRecord* record = reinterpret_cast<VariableRecord*>(QObject::sender());
+		
+		if(record==variableLink)
+			unlink();
 	}	
 
 	const UniformsLoader::Resource& ValuesInterface::getResource(void) const
@@ -195,142 +312,39 @@ using namespace QGUI;
 		return resource;
 	}
 
-#ifdef __USE_QVGL__
-	void ValuesInterface::setVectorLink(const QVGL::MouseState::VectorID& lnk)
+	void ValuesInterface::setVariableLink(const VariableRecord* lnk)
 	{
-		if(lnk==QVGL::MouseState::InvalidVectorID)
-		{
+		if(lnk==NULL)
 			unlink();
-			return ;
-		}
 		else
 		{
-			const HdlDynamicData& object = resource.object();
-			
-			if(object.getNumRows()==2 && object.getNumColumns()==1)
-			{
-				vectorID = lnk;
-				linkLabel.setText(tr("<font color=\"#FFFFFF\">Linked to %1</i></font>").arg(QVGL::MouseState::getVectorIDName(lnk)));
-			}
+			variableLink = lnk;
+			QObject::connect(variableLink, SIGNAL(updated(void)),	this, SLOT(recordUpdated(void)));
+			QObject::connect(variableLink, SIGNAL(destroyed(void)), this, SLOT(recordDestroyed(void)));
+			linkLabel.setText(tr("<font color=\"#FFFFFF\">Linked to %1</i></font>").arg(lnk->getName()));
 		}
 	}
 
-	void ValuesInterface::setColorLink(const QVGL::MouseState::ColorID& lnk)
-	{
-		if(lnk==QVGL::MouseState::InvalidColorID)
-		{
-			unlink();
-			return ;
-		}
-		else
-		{
-			const HdlDynamicData& object = resource.object();
-
-			if(object.getNumRows()==3 && object.getNumColumns()==1)
-			{
-				colorID = lnk;
-				linkLabel.setText(tr("<font color=\"#FFFFFF\">Linked to %1</i></font>").arg(QVGL::MouseState::getColorIDName(lnk)));
-			}
-		}
-	}
-
-	void ValuesInterface::autoLink(const QVGL::MouseState* mouseState)
+	void ValuesInterface::autoLink(void)
 	{
 		const HdlDynamicData& object = resource.object();
 
-		if(object.getNumRows()==2 && object.getNumColumns()==1)
-		{
-			QVGL::MouseState::VectorID vectorID = QVGL::MouseState::getVectorIDFromName(QString::fromStdString(resource.getName()));
+		const VariableRecord* target = VariableRecord::getRecord(QString::fromStdString(resource.getName()));
 
-			if(vectorID!=QVGL::MouseState::InvalidVectorID)
-				setVectorLink(vectorID);
-		}
-		else if(object.getNumRows()==3 && object.getNumColumns()==1)
-		{
-			QVGL::MouseState::ColorID colorID =  QVGL::MouseState::getColorIDFromName(QString::fromStdString(resource.getName()));
-
-			if(colorID!=QVGL::MouseState::InvalidColorID)
-				setColorLink(colorID);
-		}
+		if(target!=NULL && object.getGLType()==target->data().getGLType())
+			setVariableLink(target);	
 	}
 
 	void ValuesInterface::unlink(void)
 	{
-		vectorID = QVGL::MouseState::InvalidVectorID;
-		colorID  = QVGL::MouseState::InvalidColorID;
+		if(variableLink!=NULL)
+			QObject::disconnect(variableLink, 0, this, 0); // Disconnect all signals.
+		
+		variableLink = NULL;
 		linkLabel.setText("<font color=\"#000000\"><i>Not linked</i></font>");
-	}
-
-	bool ValuesInterface::copyVectorFromMouseState(const QVGL::MouseState* mouseState)
-	{
-		if(mouseState!=NULL && vectorID!=QVGL::MouseState::InvalidVectorID && mouseState->isVectorModified(vectorID))
-		{
-			const QPointF& v = mouseState->getVector(vectorID);
+	}	
 	
-			// Copy the value :
-			blockSignals(true);
-
-			if(resource.object().isFloatingPointType())
-			{
-				const double 	x = v.x(),
-						y = v.y();
-				floatBoxes[0]->setValue(x);
-				floatBoxes[1]->setValue(y);
-			}
-			else
-			{
-				const int 	x = v.x(),
-						y = v.y();
-				integerBoxes[0]->setValue(x);
-				integerBoxes[1]->setValue(y);
-			}
-
-			blockSignals(false);
-
-			// Push :
-			pushAllModificationsToResource(false);
-
-			return true;
-		}
-		else
-			return false;
-	}
-
-	bool ValuesInterface::copyColorFromMouseState(const QVGL::MouseState* mouseState)
-	{
-		if(mouseState!=NULL && colorID!=QVGL::MouseState::InvalidColorID && mouseState->isColorModified(colorID))
-		{
-			const QColor& c = mouseState->getColor(colorID);
-	
-			// Copy the value :
-			blockSignals(true);
-
-			if(resource.object().isFloatingPointType())
-			{
-				floatBoxes[0]->setValue(c.red());
-				floatBoxes[1]->setValue(c.green());
-				floatBoxes[2]->setValue(c.blue());
-			}
-			else
-			{
-				integerBoxes[0]->setValue(c.red());
-				integerBoxes[1]->setValue(c.green());
-				integerBoxes[2]->setValue(c.blue());
-			}
-	
-			blockSignals(false);
-			
-			// Push :
-			pushAllModificationsToResource(false);
-
-			return true;
-		}
-		else
-			return false;
-	}
-#endif
-
-	void ValuesInterface::pullModificationToResource(void)
+	void ValuesInterface::pullModificationFromResource(void)
 	{
 		blockSignals(true);
 
@@ -350,6 +364,8 @@ using namespace QGUI;
 		}
 
 		blockSignals(false);
+
+		emit modified();
 	}
 
 	ValuesInterface* ValuesInterface::getPtrFromGenericItem(QTreeWidgetItem* item, const int type)
@@ -361,27 +377,15 @@ using namespace QGUI;
 	}
 
 // UniformsLoaderInterface :
-	#ifdef __USE_QVGL__
-	UniformsLoaderInterface::UniformsLoaderInterface(int type, const QVGL::MouseState* _mouseState)
-	#else
 	UniformsLoaderInterface::UniformsLoaderInterface(int type)
-	#endif
-	 : 	QTreeWidgetItem(type)
-		#ifdef __USE_QVGL__
-		, mouseState(_mouseState),
+	 : 	QTreeWidgetItem(type),	
 		modificationCounter(0),
 		maxCounter(5),			// 5 Modifications
 		minimumDelta_ms(17)		// Or after 17ms from the last, whichever comes first.
-		#endif
 	{
 		setText(0, "Uniform Variables");
 		
-		#ifdef __USE_QVGL__
-			if(mouseState!=NULL)
-				QObject::connect(mouseState, SIGNAL(updated(void)), this, SLOT(applyModificationFromMouseState(void)));
-
-			timer.start();
-		#endif
+		timer.start();
 	}
 
 	UniformsLoaderInterface::~UniformsLoaderInterface(void)
@@ -419,9 +423,7 @@ using namespace QGUI;
 			treeWidget()->setItemWidget(newNode, 1, valuesInterface);
 
 		// Auto-link attempt :
-		#ifdef __USE_QVGL__
-			valuesInterface->autoLink(mouseState);
-		#endif
+		valuesInterface->autoLink();
 
 		return newNode;
 	}
@@ -496,29 +498,7 @@ using namespace QGUI;
 		nodeItem->setExpanded(true);
 
 		return count;
-	}
-
-	int UniformsLoaderInterface::updateNodeWithMouseState(QTreeWidgetItem* nodeItem)
-	{
-		if(nodeItem->childCount()==0)
-		{
-			ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(nodeItem, type());
-		
-			if(valuesInterface!=NULL && (valuesInterface->copyVectorFromMouseState(mouseState) || valuesInterface->copyColorFromMouseState(mouseState)))
-				return 1;
-			else
-				return 0;
-		}
-		else
-		{
-			int count = 0;
-
-			for(int k=0; k<nodeItem->childCount(); k++)
-				count += updateNodeWithMouseState(nodeItem->child(k));
-			
-			return count;
-		}
-	}
+	}	
 
 	bool UniformsLoaderInterface::isNodeListed(const std::string& name) const
 	{
@@ -553,40 +533,7 @@ using namespace QGUI;
 			}
 		}
 		setExpanded(true);
-	}
-
-	// Slots :
-	void UniformsLoaderInterface::applyModificationFromMouseState(void)
-	{
-		#ifdef __USE_QVGL__
-		if(mouseState==NULL || mouseState->getFunctionMode()!=QVGL::MouseState::ModeCollection)
-			return ;
-
-		if(modificationCounter<maxCounter && timer.elapsed()<minimumDelta_ms)
-		{
-			modificationCounter++;
-			return ;
-		}
-		else
-		{
-			modificationCounter=0;
-			timer.restart();
-		}
-
-		int count = 0;
-
-		blockSignals(true);
-
-		// Scan variables and count the number of modification :
-		for(int k=0; k<childCount(); k++)
-			count += updateNodeWithMouseState(child(k));
-
-		blockSignals(false);
-
-		if(count>0)
-			emit modified();
-		#endif
-	}
+	}	
 
 	// Public Tools : 
 	void UniformsLoaderInterface::load(Pipeline& pipeline)
@@ -637,63 +584,21 @@ using namespace QGUI;
 	}
 
 // UniformsLinkMenu :
-#ifdef __USE_QVGL__
 	UniformsLinkMenu::UniformsLinkMenu(int _type, QWidget* parent)
 	 :	QMenu("Uniforms Links", parent),
 		type(_type),
 		unlinkAction(NULL)
-	{
-		// Generate the menu :
-		#define NEW_MENU(id) \
-		{ \
-			QMenu* menu = addMenu(removeHeader(STR(id))); \
-			QAction* action=NULL; \
-			action = menu->addAction(removeHeader(STR(id##Gl)), &vectorSignalMapper, SLOT(map())); \
-			vectorPositionsActions[id##Gl] = action; \
-			vectorSignalMapper.setMapping(action, static_cast<int>(id##Gl)); \
-			action = menu->addAction(removeHeader(STR(id##Quad)), &vectorSignalMapper, SLOT(map())); \
-			vectorPositionsActions[id##Quad] = action; \
-			vectorSignalMapper.setMapping(action, static_cast<int>(id##Quad)); \
-			action = menu->addAction(removeHeader(STR(id##Image)), &vectorSignalMapper, SLOT(map())); \
-			vectorPositionsActions[id##Image] = action; \
-			vectorSignalMapper.setMapping(action, static_cast<int>(id##Image)); \
-		}
-
-			NEW_MENU( QVGL::MouseState::VectorLastLeftClick )
-			NEW_MENU( QVGL::MouseState::VectorLastLeftPosition )
-			NEW_MENU( QVGL::MouseState::VectorLastLeftShift )
-			NEW_MENU( QVGL::MouseState::VectorLastLeftRelease )
-			NEW_MENU( QVGL::MouseState::VectorLastLeftCompletedVector )
-			NEW_MENU( QVGL::MouseState::VectorLastRightClick )
-			NEW_MENU( QVGL::MouseState::VectorLastRightPosition )
-			NEW_MENU( QVGL::MouseState::VectorLastRightShift )
-			NEW_MENU( QVGL::MouseState::VectorLastRightRelease )
-			NEW_MENU( QVGL::MouseState::VectorLastRightCompletedVector )
-			NEW_MENU( QVGL::MouseState::VectorLastWheelUp )
-			NEW_MENU( QVGL::MouseState::VectorLastWheelDown )
-
-		#undef NEW_MENU
-
-		#define NEW_MENU(id) \
-		{ \
-			QAction* action = addAction(removeHeader(STR(id)), &colorSignalMapper, SLOT(map())); \
-			colorsActions[id] = action; \
-			colorSignalMapper.setMapping(action, static_cast<int>(id)); \
-		}
-
-			NEW_MENU( QVGL::MouseState::ColorUnderLastLeftClick )
-			NEW_MENU( QVGL::MouseState::ColorUnderLastLeftPosition )
-			NEW_MENU( QVGL::MouseState::ColorUnderLastLeftRelease )
-			NEW_MENU( QVGL::MouseState::ColorUnderLastRightClick )
-			NEW_MENU( QVGL::MouseState::ColorUnderLastRightPosition )
-			NEW_MENU( QVGL::MouseState::ColorUnderLastRightRelease )
-
-		#undef NEW_MENU
-
+	{	
 		unlinkAction = addAction("Unlink", this, SLOT(unlink(void)));
 
-		QObject::connect(&vectorSignalMapper,	SIGNAL(mapped(int)), 		this, SLOT(setUniformLinkToVector(int)));
-		QObject::connect(&colorSignalMapper,	SIGNAL(mapped(int)), 		this, SLOT(setUniformLinkToColor(int)));
+		// Prepare the link to receive the records :
+		const VariableRecord* reference = VariableRecord::getReferenceRecord();		
+		QObject::connect(reference, SIGNAL(recordAdded(const VariableRecord*)), this, SLOT(addRecord(const VariableRecord*)));
+
+		// Add the current actions :
+		const QVector<VariableRecord*>& currentRecords = VariableRecord::getRecords();
+		for(QVector<VariableRecord*>::const_iterator it=currentRecords.begin(); it!=currentRecords.end(); it++)
+			addRecord(*it);
 
 		// Reset :
 		QList<QTreeWidgetItem*> emptyList;
@@ -702,27 +607,50 @@ using namespace QGUI;
 	
 	UniformsLinkMenu::~UniformsLinkMenu(void)
 	{
-		vectorPositionsActions.clear();
-		colorsActions.clear();
+		recordActions.clear();
+		clear();
+	}	
+
+	const VariableRecord* UniformsLinkMenu::getRecordFromAction(QAction* action)
+	{
+		return reinterpret_cast<const VariableRecord*>(action->data().value<void*>());
 	}
 
-	QString UniformsLinkMenu::removeHeader(const QString& str)
+	void UniformsLinkMenu::addRecord(const VariableRecord* record)
 	{
-		QString res = str;
-		res.remove("QVGL::MouseState::");
-		return res;
+		// Connect :
+		QObject::connect(record, SIGNAL(destroyed(void)), this, SLOT(recordDestroyed(void)));
+
+		// Create a corresponding action :
+		QAction* action = addAction(record->getName(), this, SLOT(setLink()));
+		action->setData(QVariant::fromValue(reinterpret_cast<void*>(const_cast<VariableRecord*>(record))));
+		
+		recordActions[record] = action;
 	}
 
-	void UniformsLinkMenu::setUniformLinkToVector(int id)
+	void UniformsLinkMenu::recordDestroyed(void)
 	{
-		for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
-			it.value()->setVectorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::VectorID>(id)));
-	}
+		VariableRecord* record = reinterpret_cast<VariableRecord*>(QObject::sender());
 
-	void UniformsLinkMenu::setUniformLinkToColor(int id)
+		QMap<const VariableRecord*, QAction*>::iterator it = recordActions.find(record);
+
+		if(it!=recordActions.end())
+		{
+			delete it.value();
+			recordActions.erase(it);
+		}
+	}	
+
+	void UniformsLinkMenu::setLink(void)
 	{
-		for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
-			it.value()->setColorLink(QVGL::MouseState::validate(static_cast<QVGL::MouseState::ColorID>(id)));
+		QAction* action = reinterpret_cast<QAction*>(QObject::sender());
+		const VariableRecord* link = getRecordFromAction(action);
+
+		if(link!=NULL)
+		{
+			for(QMap<QTreeWidgetItem*, ValuesInterface*>::iterator it=currentSelection.begin(); it!=currentSelection.end(); it++)
+				it.value()->setVariableLink(link);
+		}
 	}
 
 	void UniformsLinkMenu::unlink(void)
@@ -738,11 +666,8 @@ using namespace QGUI;
 	}
 
 	void UniformsLinkMenu::updateToSelection(QList<QTreeWidgetItem*>& selection)
-	{
-		// Check that all the selection are QTreeWidgetItem corresponding to uniforms and that they are of the same size 
-		// (either 2x1 or 3x1)
-
-		bool allUniforms = !selection.isEmpty();
+	{	
+		GLenum glType = GL_NONE;
 		currentSelection.clear();
 	
 		int rowCount = -1; // not set yet.
@@ -752,39 +677,34 @@ using namespace QGUI;
 			{
 				ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(*it, type);
 
-				if(valuesInterface!=NULL)
+				if(valuesInterface!=NULL && (glType==GL_NONE || glType==valuesInterface->getResource().object().getGLType()))
 				{
-					const int 	rows = valuesInterface->getResource().object().getNumRows(),
-							cols = valuesInterface->getResource().object().getNumColumns();
+					glType = valuesInterface->getResource().object().getGLType();
 
-					if((rows==2 || rows==3) && cols==1 && (rowCount==-1 || rowCount==rows))
-					{
-						rowCount = rows;
-						currentSelection[*it] = valuesInterface;
-					}
-					else
-					{
-						currentSelection.clear();
-						rowCount = -1;
-						break;
-					}
+					currentSelection[*it] = valuesInterface;	
 				}
 				else
-					allUniforms = false;
+				{
+					currentSelection.clear();
+					break;
+				}
 			}
 			else
-				allUniforms = false;
+			{
+				currentSelection.clear();
+				break;
+			}
 		}
 
-		// Set the right menu :
-		for(QMap<QVGL::MouseState::VectorID, QAction*>::iterator it=vectorPositionsActions.begin(); it!=vectorPositionsActions.end(); it++)
-			it.value()->setEnabled(rowCount==2);
-
-		for(QMap<QVGL::MouseState::ColorID, QAction*>::iterator it=colorsActions.begin(); it!=colorsActions.end(); it++)
-			it.value()->setEnabled(rowCount==3);
-	
-		// Final :
-		setEnabled(allUniforms);
+		// Set the right menus :
+		if(!currentSelection.isEmpty())
+		{
+			for(QMap<const VariableRecord*, QAction*>::iterator it=recordActions.begin(); it!=recordActions.end(); it++)
+				it.value()->setEnabled(it.key()->data().getGLType()==glType);
+		
+			setEnabled(true);
+		}
+		else
+			setEnabled(false);
 	}
-#endif
 
