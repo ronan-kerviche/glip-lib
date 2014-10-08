@@ -2642,6 +2642,7 @@ using namespace QVGL;
 	{
 		if(scene()!=NULL)
 		{
+			// Force the size of the scene to be exactly equal to the size of the widget :
 			scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));
 			//emit resized(event->size());
 		}
@@ -2897,7 +2898,7 @@ using namespace QVGL;
 		{
 			const MouseState::BasisID basisID = MouseState::getVectorBasis(*it);
 
-			if( mouseState.doesVectorRequireUpdate(*it) && ((basisID==MouseState::PixelBasis) || (basisID==MouseState::PixelRelativeBasis))) // use the first one to populate the others : 
+			if(mouseState.doesVectorRequireUpdate(*it) && ((basisID==MouseState::PixelBasis) || (basisID==MouseState::PixelRelativeBasis))) // use the first one to populate the others : 
 			{
 				const bool isBasisRelative = (basisID==MouseState::PixelRelativeBasis);
 
@@ -2914,7 +2915,7 @@ using namespace QVGL;
 				ViewsTable* currentViewsTable = getCurrentViewsTable();
 
 				if(currentView!=NULL && currentViewsTable==NULL)
-				{	
+				{
 					// Full scene : 
 					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative);
 					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative);

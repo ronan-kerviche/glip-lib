@@ -10,7 +10,7 @@ SHADER_SOURCE:inversionBrushShader
 	out vec4 outputTexture, outputMask;
 	
 	// Directly linked to the mouse left click position. Press and drag to paint.
-	uniform ivec2 	VectorLastLeftPositionImage = ivec2(0, 0);	
+	uniform vec2 	VectorLastLeftPositionImage = vec2(0, 0);	
 	uniform float	radius = 0.01;
 	
 	INSERT(maths)
@@ -20,7 +20,7 @@ SHADER_SOURCE:inversionBrushShader
 		vec2 	pos 	= gl_TexCoord[0].st;
 		vec4 	color 	= textureLod(inputTexture, pos, 0),
 			mask	= textureLod(inputMask, pos, 0);
-		vec2	mTex	= textureCoordinates(VectorLastLeftPositionImage, inputTexture);
+		vec2	mTex	= textureCoordinates(ivec2(VectorLastLeftPositionImage), inputTexture);
 
 		if(distance(pos, mTex)<=radius)
 			mask.r = 1.0;
