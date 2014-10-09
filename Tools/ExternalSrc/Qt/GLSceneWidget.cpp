@@ -757,9 +757,9 @@ using namespace QVGL;
 		resizeActive(false),
 		resizeHorizontalLock(false),
 		resizeVerticalLock(false),
-		maximized(false),
 		qvglParent(NULL),
-		graphicsProxy(NULL)
+		graphicsProxy(NULL),
+		anchorMode(AnchorFree)
 	{
 		// But first : 
 		QWidget::hide();
@@ -796,7 +796,14 @@ using namespace QVGL;
 	}
 
 	SubWidget::~SubWidget(void)
-	{ }
+	{
+		if(graphicsProxy!=NULL)
+		{
+			graphicsProxy->setWidget(NULL);
+			delete graphicsProxy;
+			graphicsProxy = NULL;
+		}
+	}
 
 	void SubWidget::mousePressEvent(QMouseEvent* event)
 	{
@@ -804,19 +811,23 @@ using namespace QVGL;
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 		{
-			//event->accept(); // Do not propagate the event hereafter
-			
-			offset = event->pos();
+			const QPoint 	cw 		 = mapFromGlobal(event->globalPos());
+					mousePress  	 = mapToParent(cw);
+					sizeAtMousePress = size();
 
-			const int borderResize = 4;
-			//resizeActive = (std::abs(event->pos().x())<borderResize || std::abs(event->pos().x()-width())<borderResize || std::abs(event->pos().y())<borderResize || std::abs(event->pos().y()-height())<borderResize); // All borders
-			resizeActive = (std::abs(event->pos().x()-width())<borderResize || std::abs(event->pos().y()-height())<borderResize);
+			// Vector from the initial widget position to the start click position. After that, move the window to the current cursor position plus this vector : 
+			offset = mousePress - pos(); 
+
+			const int borderResize = 2 * layout.margin();
+			resizeActive = (cw.x()<borderResize) || ((width()-cw.x())<borderResize) || ((height()-cw.y())<borderResize); // All borders except the title.
 			motionActive = !resizeActive;
 
+			// Further test on the resize action : 
 			if(resizeActive)
 			{
-				resizeHorizontalLock 	= (std::abs(event->pos().y()-height())>borderResize);
-				resizeVerticalLock	= (std::abs(event->pos().x()-width())>borderResize);
+				resizeHorizontalLock 	= ((height()-cw.y())>borderResize) || anchorMode!=AnchorFree; // All anchors lock the vertical resize
+				resizeVerticalLock	= ((cw.x()>borderResize) && ((width()-cw.x())>borderResize)) || anchorMode==AnchorMaximized; // Only the maximized anchor lock the horizontal resize.
+				resizeActive		= !(resizeHorizontalLock && resizeVerticalLock);	
 			}
 		}
 
@@ -831,59 +842,97 @@ using namespace QVGL;
 	{
 		QWidget::mousePressEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
+		QRectF sceneRect;
+		if(graphicsProxy!=NULL && graphicsProxy->scene()!=NULL)
+			sceneRect = graphicsProxy->scene()->sceneRect();
+
+		if(!event->isAccepted())
 		{
-			//event->accept(); // Do not propagate the event hereafter.
-
 			// Protect from moving a maximized widget :
-			if(isMaximized() && !resizeActive)
+			if(anchorMode!=AnchorFree && motionActive)	// Detach?
 			{
-				toggleMaximized();
+				const double	unsnapSafeMarginPercent = 0.03,
+						smallestMarginPixel = 64.0;
 
-				//move(mapToParent(event->pos()));
-				//move(mapToGlobal(event->pos()));
-				move(event->pos() - offset);
+				// Get the new position : 
+				const QPoint	c = mapToParent(mapFromGlobal(event->globalPos())),
+						p = c - offset;
+				const double	d = (p.x() - x())*(p.x() - x()) + (p.y() - y())*(p.y() - y());
 
-				offset = event->pos();
+				// Unsnap / demaximized only if needed.
+				if((anchorMode==AnchorLeft && c.x()>std::max(unsnapSafeMarginPercent*sceneRect.width(), smallestMarginPixel)) || (anchorMode==AnchorRight && c.x()<std::min((1.0-unsnapSafeMarginPercent)*sceneRect.width(), sceneRect.width()-smallestMarginPixel)) || (anchorMode==AnchorMaximized && d>(smallestMarginPixel*smallestMarginPixel) && c.y()>0 && c.y()<(sceneRect.height()-1)))
+				{
+					const bool test = (anchorMode==AnchorMaximized);
+
+					setAnchor(AnchorFree);
+
+					// Reset the offset, if needed : 
+					if(!test)
+						move(p);
+					else
+					{
+						move(c - QPoint(width()/2, titleLabel.height()/2));
+						offset = c - pos();
+					}
+				}
 			}
-			
-			if(motionActive)
+			else if(motionActive)
 			{
 				// Get the new position : 
-				QPoint v = mapToParent(event->pos() - offset);
+				const QPoint	c = mapToParent(mapFromGlobal(event->globalPos())),
+						p = c - offset;
 
-				// Prevent the widget from moving out of the scene : 
-				//const int 	x	= std::max(0, std::min(static_cast<int>(qvglParent->sceneRect().width()-width()), v.x())),
-				//		y	= std::max(0, std::max(std::min(static_cast<int>(qvglParent->sceneRect().height()-titleBar.geometry().height() - 4), v.y()), TopBar::getHeight()));		
-				//
-				//if(x!=v.x() || y!=v.y())
-				//	offset = event->pos();
-				//v.setX(x);
-				//v.setY(y); 
- 
-				move(v);
+				if(c.x()<=0)
+					setAnchor(AnchorLeft);
+				else if(c.x()>=(sceneRect.width()-1))
+ 					setAnchor(AnchorRight);
+				else if(c.y()<=0 || c.y()>=(sceneRect.height()-1))
+				{
+					setAnchor(AnchorMaximized);
+					offset = c - pos();
+				}				
+				else
+					move(p);
 			}
-			else if(resizeActive && !isMaximized())
+			else if(resizeActive)
 			{
-				QPoint d = event->pos() - offset;
+				const QPoint	c = mapToParent(mapFromGlobal(event->globalPos()));
 
-				if(resizeHorizontalLock)
-					d.setY(0);
+				if(std::abs(offset.x())<2*layout.margin())
+				{
+					// Special case were the resize is mixed with a change in the position in X.
+					QPoint d = c - mousePress;
 
-				if(resizeVerticalLock)
-					d.setX(0);
+					if(resizeHorizontalLock)
+						d.setY(0);
 
+					if(resizeVerticalLock)
+						d.setX(0);
 
-				const int 	xn = std::min(static_cast<int>(qvglParent->sceneRect().width()-x()-width()), d.x()),
-						yn = std::min(static_cast<int>(qvglParent->sceneRect().height()-y()-height()), d.y());
+					// Prevent right-shift if the width is smaller than the minimumWidgth :
+					int newWidth = sizeAtMousePress.width()-d.x();
 
-				if(xn==d.x() && yn==d.y()) // Re-offset : 	
-					offset = event->pos();
+					if(newWidth<minimumWidth())
+					{
+						newWidth = minimumWidth();
+						d.setX(sizeAtMousePress.width() - minimumWidth()); // Solve for the correct displacement.
+					}
 
-				d.setX( xn );
-				d.setY( yn );
+					setGeometry(mousePress.x()+d.x()-offset.x(), mousePress.y()-offset.y(), newWidth, sizeAtMousePress.height()+d.y());
+				}
+				else
+				{
+					// General case : 
+					QPoint d = c - mousePress;
 
-				resize(width()+d.x(), height()+d.y());
+					if(resizeHorizontalLock)
+						d.setY(0);
+
+					if(resizeVerticalLock)
+						d.setX(0);
+
+					resize(sizeAtMousePress.width()+d.x(), sizeAtMousePress.height()+d.y());
+				}
 			}
 		}
 
@@ -897,8 +946,6 @@ using namespace QVGL;
 
 		if(!event->isAccepted())
 		{
-			//event->accept(); // Do not propagate the event hereafter.
-			
 			motionActive = false;
 			resizeActive = false;
 		}
@@ -916,11 +963,10 @@ using namespace QVGL;
 
 		if(qvglParent!=NULL && titleWidget.underMouse())
 		{
-			toggleMaximized();
-
-			//  Do not propagate the event hereafter.	
-			//if(!event->isAccepted())
-			//	event->accept();
+			if(anchorMode!=AnchorMaximized)
+				setAnchor(AnchorMaximized);
+			else
+				setAnchor(AnchorFree);
 		}
 
 		// Absorb all : 
@@ -939,8 +985,6 @@ using namespace QVGL;
 	{
 		if(pObject && pObject->isWidgetType())
 		{
-			//std::cout << "SubWidget::addChild : " << this << ", " << pObject << std::endl;
-
 			pObject->installEventFilter(this);
 
 			const QObjectList& childList = pObject->children();
@@ -953,8 +997,6 @@ using namespace QVGL;
 	{
 		if(pObject && pObject->isWidgetType())
 		{
-			//std::cout << "SubWidget::removeChild : " << this << ", " << pObject << std::endl;
-
 			pObject->removeEventFilter(this);
 
 			const QObjectList& childList = pObject->children();
@@ -967,8 +1009,6 @@ using namespace QVGL;
 	{
 		if (e->child()->isWidgetType())
 		{
-			//std::cout << "SubWidget::childEvent : " << this << std::endl;
-
 			if(e->type() == QEvent::ChildAdded)
 				addChild(e->child());
 			else if (e->type() == QEvent::ChildRemoved)
@@ -980,26 +1020,45 @@ using namespace QVGL;
 
 	bool SubWidget::eventFilter(QObject* target, QEvent* e)
 	{
-		//std::cout << "SubWidget::eventFilter : " << this << ", " << target << std::endl;
-
 		if(e->type()==QEvent::ChildAdded)
 			addChild(reinterpret_cast<QChildEvent*>(e)->child());	
 		else if(e->type()==QEvent::ChildRemoved)
 			removeChild(reinterpret_cast<QChildEvent*>(e)->child());
 		else if(e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease || e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)
 			emit selected(this);
-		//else
-			//std::cout << "    Other event : " << e->type() << std::endl;
 
 		return QWidget::eventFilter(target, e);
 	}
 
-	void SubWidget::temporaryHide(bool enabled)
+	void SubWidget::sceneRectChanged(const QRectF& sceneRect)
 	{
-		if(enabled)
-			QWidget::hide();
-		else if(!enabled && visible)
-			QWidget::show();
+		switch(anchorMode)
+		{
+			case AnchorLeft:
+				move(0, TopBar::getHeight());
+				resize(width(), sceneRect.height()-TopBar::getHeight());
+				break;
+			case AnchorRight: 
+				move(sceneRect.width()-width(), TopBar::getHeight());
+				resize(width(), sceneRect.height()-TopBar::getHeight());
+				break;
+			case AnchorMaximized:
+				move(0, TopBar::getHeight());
+				resize(sceneRect.width(), sceneRect.height()-TopBar::getHeight());
+				break;
+		}
+	}
+
+	void SubWidget::sceneRectChanged(void)
+	{
+		if(graphicsProxy!=NULL && graphicsProxy->scene()!=NULL)
+			sceneRectChanged(graphicsProxy->scene()->sceneRect());
+	}
+
+	void SubWidget::graphicsProxyDestroyed(void)
+	{
+		graphicsProxy = NULL;
+		anchorMode = AnchorFree;
 	}
 
 	void SubWidget::setInnerWidget(QWidget* _widget)
@@ -1021,9 +1080,27 @@ using namespace QVGL;
 		}
 	}
 
-	QWidget* SubWidget::innerWidget(void)
+	QWidget* SubWidget::getInnerWidget(void)
 	{
 		return widget;
+	}
+
+	void SubWidget::setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy)
+	{
+		if(_graphicsProxy!=NULL)
+		{
+			graphicsProxy = _graphicsProxy;
+
+			if(graphicsProxy->scene()!=NULL)
+				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(sceneRectChanged(const QRectF&)));
+
+			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
+		}
+	}
+
+	QGraphicsProxyWidget* SubWidget::getGraphicsProxy(void)
+	{
+		return graphicsProxy;
 	}
 
 	QString SubWidget::getTitle(void)
@@ -1039,38 +1116,39 @@ using namespace QVGL;
 		emit titleChanged();
 	}
 
+	void SubWidget::setQVGLParent(MainWidget* _qvglParent)
+	{
+		qvglParent = _qvglParent;
+	}
+
 	MainWidget* SubWidget::getQVGLParent(void)
 	{
 		return qvglParent;
 	}
 
-	bool SubWidget::isMaximized(void) const
+	void SubWidget::setAnchor(AnchorMode mode)
 	{
-		return maximized;
+		switch(mode)
+		{
+			case AnchorFree :
+				move(originalPosition);
+				resize(originalSize);
+				anchorMode = AnchorFree;
+				break;
+			case AnchorLeft :
+			case AnchorRight :
+			case AnchorMaximized :
+				originalPosition = pos();
+				originalSize = size();
+				anchorMode = mode;
+				sceneRectChanged();
+				break;
+		}
 	}
 
-	void SubWidget::toggleMaximized(void)
+	const SubWidget::AnchorMode& SubWidget::getAnchor(void) const
 	{
-		if(!maximized)
-		{
-			// Remember the current size :
-			originalPosition = pos();
-			originalSize = size();
-			
-			// Set the maximized size :
-			move(0, TopBar::getHeight());
-			resize(qvglParent->sceneRect().width(), qvglParent->sceneRect().height()-TopBar::getHeight());
-			
-			maximized = true;
-		}
-		else
-		{
-			// Restore :
-			move(originalPosition);
-			resize(originalSize);
-
-			maximized = false;
-		}
+		return anchorMode;
 	}
 
 	bool SubWidget::shoudBeVisible(void) const
@@ -1085,6 +1163,14 @@ using namespace QVGL;
 		visible = true;
 
 		emit showRequest(this);
+	}
+
+	void SubWidget::temporaryHide(bool enabled)
+	{
+		if(enabled)
+			QWidget::hide();
+		else if(!enabled && visible)
+			QWidget::show();
 	}
 
 	void SubWidget::hide(void)
@@ -1242,6 +1328,13 @@ using namespace QVGL;
 		subWidgetsMenu.removeAction(&temporaryHideAllSubWidgetsAction);
 		subWidgetsMenu.removeAction(&hideAllSubWidgetsAction);
 
+		if(graphicsProxy!=NULL)
+		{
+			graphicsProxy->setWidget(NULL);
+			delete graphicsProxy;
+			graphicsProxy = NULL;
+		}
+
 		if(singleton==this)
 			singleton = NULL;
 	}
@@ -1354,6 +1447,29 @@ using namespace QVGL;
 			delete it.value();
 			subWidgetsActions.erase(it);
 		}
+	}
+
+	void TopBar::graphicsProxyDestroyed(void)
+	{
+		graphicsProxy = NULL;
+	}
+
+	void TopBar::setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy)
+	{
+		if(_graphicsProxy!=NULL)
+		{
+			graphicsProxy = _graphicsProxy;
+
+			if(graphicsProxy->scene()!=NULL)
+				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
+
+			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
+		}
+	}
+
+	QGraphicsProxyWidget* TopBar::getGraphicsProxy(void)
+	{
+		return graphicsProxy;
 	}
 
 	void TopBar::setTitle(void)
@@ -1503,7 +1619,14 @@ using namespace QVGL;
 	}
 
 	BottomBar::~BottomBar(void)
-	{ }
+	{
+		if(graphicsProxy!=NULL)
+		{
+			graphicsProxy->setWidget(NULL);
+			delete graphicsProxy;
+			graphicsProxy = NULL;
+		}
+	}
 
 	void BottomBar::mousePressEvent(QMouseEvent* event)
 	{
@@ -1515,6 +1638,29 @@ using namespace QVGL;
 	void BottomBar::stretch(const QRectF& rect)
 	{
 		setGeometry(0, rect.height()-height(), rect.width(), height());
+	}
+
+	void BottomBar::graphicsProxyDestroyed(void)
+	{
+		graphicsProxy = NULL;
+	}
+
+	void BottomBar::setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy)
+	{
+		if(_graphicsProxy!=NULL)
+		{
+			graphicsProxy = _graphicsProxy;
+
+			if(graphicsProxy->scene()!=NULL)
+				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
+
+			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
+		}
+	}
+
+	QGraphicsProxyWidget* BottomBar::getGraphicsProxy(void)
+	{
+		return graphicsProxy;
 	}
 
 // ContextWidget :
@@ -2339,14 +2485,16 @@ using namespace QVGL;
 		// Bars (here because of the stretch signal) : 
 		if(topBar!=NULL)
 		{
-			topBar->graphicsProxy = addWidget(topBar);
-			QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), topBar, SLOT(stretch(const QRectF&)));
+			QGraphicsProxyWidget* graphicsProxy = addWidget(topBar);
+			topBar->setGraphicsProxy(graphicsProxy);
+			//QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), topBar, SLOT(stretch(const QRectF&)));
 		}
 
 		if(bottomBar!=NULL)
 		{
-			bottomBar->graphicsProxy = addWidget(bottomBar);
-			QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), bottomBar, SLOT(stretch(const QRectF&)));
+			QGraphicsProxyWidget* graphicsProxy = addWidget(bottomBar);
+			bottomBar->setGraphicsProxy(graphicsProxy);
+			//QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), bottomBar, SLOT(stretch(const QRectF&)));
 		}
 	}
 
@@ -2652,7 +2800,8 @@ using namespace QVGL;
 
 	void SceneViewWidget::addSubWidget(SubWidget* subWidget)
 	{
-		subWidget->graphicsProxy = sceneWidget->addWidget(subWidget);
+		QGraphicsProxyWidget* proxy = sceneWidget->addWidget(subWidget);
+		subWidget->setGraphicsProxy(proxy);
 	}
 
 	void SceneViewWidget::addItem(QGraphicsItem* item)
@@ -2672,15 +2821,20 @@ using namespace QVGL;
 		else
 		{
 			SubWidget* highest = list.front();
+			QGraphicsProxyWidget* highestGraphicsProxy = highest->getGraphicsProxy();
 
 			for(QList<SubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
 			{
-				if((*it)->graphicsProxy!=NULL)
+				QGraphicsProxyWidget* graphicsProxy = (*it)->getGraphicsProxy();
+
+				if(graphicsProxy!=NULL)
 				{
-					if(!highest->isVisible() && (*it)->isVisible() && onlyIfVisible)
+					if(	(!highest->isVisible() && (*it)->isVisible() && onlyIfVisible) || 					// First case.
+						(graphicsProxy->zValue() > highestGraphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible)) )	// Generic case.
+					{
 						highest = (*it);
-					else if((*it)->graphicsProxy->zValue() > highest->graphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible))
-						highest = (*it);
+						highestGraphicsProxy = graphicsProxy;
+					}
 				}
 			}
 
@@ -2698,15 +2852,20 @@ using namespace QVGL;
 		else
 		{
 			SubWidget* lowest = list.front();
+			QGraphicsProxyWidget* lowestGraphicsProxy = lowest->getGraphicsProxy();
 
 			for(QList<SubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
 			{
-				if((*it)->graphicsProxy!=NULL)
+				QGraphicsProxyWidget* graphicsProxy = (*it)->getGraphicsProxy();
+
+				if(graphicsProxy!=NULL)
 				{
-					if(!lowest->isVisible() && (*it)->isVisible() && onlyIfVisible)
+					if(	(!lowest->isVisible() && (*it)->isVisible() && onlyIfVisible) ||				// First case.
+						(graphicsProxy->zValue() < lowestGraphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible)) )	// Generic case.
+					{
 						lowest = (*it);
-					else if((*it)->graphicsProxy->zValue() < lowest->graphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible))
-						lowest = (*it);
+						lowestGraphicsProxy = graphicsProxy;
+					}
 				}
 			}
 
@@ -2736,9 +2895,12 @@ using namespace QVGL;
 		{
 			for(int q=0; q<(list.size()-1); q++)
 			{
-				if(list[q+1]->graphicsProxy!=NULL && list[q]->graphicsProxy!=NULL)
+				QGraphicsProxyWidget	*currentGraphicsProxy = list[q]->getGraphicsProxy(),
+							*nextGraphicsProxy = list[q+1]->getGraphicsProxy();
+
+				if(currentGraphicsProxy!=NULL && nextGraphicsProxy!=NULL)
 				{
-					if(list[q+1]->graphicsProxy->zValue() > list[q]->graphicsProxy->zValue())
+					if(nextGraphicsProxy->zValue() > currentGraphicsProxy->zValue())
 						list.swap(q+1,q);
 				}
 			}
@@ -3256,7 +3418,7 @@ using namespace QVGL;
 
 	void MainWidget::subWidgetSelected(SubWidget* subWidget)
 	{
-		if(subWidgetsList.contains(subWidget) && subWidget->qvglParent==this && subWidget->graphicsProxy!=NULL)
+		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Change opacity of all other subWidgets : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -3270,7 +3432,7 @@ using namespace QVGL;
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
 
 			// Raise the current subWidget : 
-			sceneViewWidget.putItemOnTop(subWidget->graphicsProxy);
+			sceneViewWidget.putItemOnTop(subWidget->getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3303,13 +3465,13 @@ using namespace QVGL;
 	
 	void MainWidget::hideSubWidget(SubWidget* subWidget)
 	{
-		if(subWidgetsList.contains(subWidget) && subWidget->qvglParent==this && subWidget->graphicsProxy!=NULL)
+		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Lower the current subWidget : 
-			sceneViewWidget.putItemOnBottom(subWidget->graphicsProxy);
+			sceneViewWidget.putItemOnBottom(subWidget->getGraphicsProxy());
 
 			// Raise the top bar : 
-			sceneViewWidget.putItemOnTop(topBar.graphicsProxy);
+			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
 		}
 	}
 
@@ -3332,7 +3494,7 @@ using namespace QVGL;
 
 			// Disconnect : 
 			subWidget->disconnect(this);
-			subWidget->qvglParent = NULL;
+			subWidget->setQVGLParent(NULL);
 		}
 	}
 
@@ -3363,8 +3525,8 @@ using namespace QVGL;
 
 		if(list.count()>=2)
 		{
-			sceneViewWidget.putItemOnBottom(list[0]->graphicsProxy);
-			sceneViewWidget.putItemOnTop(list[1]->graphicsProxy);
+			sceneViewWidget.putItemOnBottom(list[0]->getGraphicsProxy());
+			sceneViewWidget.putItemOnTop(list[1]->getGraphicsProxy());
 
 			// Change opacities : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -3385,7 +3547,7 @@ using namespace QVGL;
 
 		if(list.count()>=2)
 		{
-			sceneViewWidget.putItemOnTop(list.back()->graphicsProxy);
+			sceneViewWidget.putItemOnTop(list.back()->getGraphicsProxy());
 			
 			// Change opacities : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -3423,8 +3585,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			sceneViewWidget.putItemOnTop(bottomBar.graphicsProxy);
-			sceneViewWidget.putItemOnTop(topBar.graphicsProxy);		// Raise TOP on top.
+			sceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());
+			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3444,8 +3606,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			sceneViewWidget.putItemOnTop(topBar.graphicsProxy);
-			sceneViewWidget.putItemOnTop(bottomBar.graphicsProxy);		// Raise BOTTOM on top.
+			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
+			sceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3831,7 +3993,7 @@ using namespace QVGL;
 
 	void MainWidget::addSubWidget(SubWidget* subWidget)
 	{
-		if(!subWidgetsList.contains(subWidget) && subWidget->qvglParent==NULL)
+		if(!subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
 		{
 			sceneViewWidget.addSubWidget(subWidget);
 			
@@ -3842,7 +4004,7 @@ using namespace QVGL;
 			QObject::connect(subWidget, SIGNAL(destroyed()),		this, SLOT(subWidgetDestroyed()));
 
 			// Save link : 
-			subWidget->qvglParent = this;
+			subWidget->setQVGLParent(this);
 			subWidgetsList.append(subWidget);
 
 			// Move and show : 
@@ -3852,7 +4014,7 @@ using namespace QVGL;
 			// Update : 
 			emit subWidgetAdded(subWidget);
 		}
-		else if(subWidgetsList.contains(subWidget) && subWidget->qvglParent==this)
+		else if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this)
 			subWidgetSelected(subWidget);
 	}
 

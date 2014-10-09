@@ -372,7 +372,8 @@ namespace QGED
 			enum CodeTemplates
 			{
 				tplAddPath,
-				tplIncludeFile,
+				tplInclude,
+				tplCall,
 				tplRequiredFormat,
 				tplRequiredPipeline,
 				tplTextureFormat,
@@ -380,10 +381,10 @@ namespace QGED
 				tplGeometryGrid2D,
 				tplGeometryGrid3D,
 				tplGeometryCustomModel,
-				tplSharedSource,
+				tplSharedCode,
 				tplShaderSourceFragGLSL,
 				tplShaderSourceVertGLSL,
-				tplIncludeSharedSource,
+				tplInsert,
 				tplLinkShader,
 				tplFilterLayout,
 				tplPipelineLayout,

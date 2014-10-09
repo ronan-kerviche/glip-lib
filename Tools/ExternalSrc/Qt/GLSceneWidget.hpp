@@ -281,6 +281,15 @@ namespace QVGL
 	{
 		Q_OBJECT
 
+		public : 
+			enum AnchorMode
+			{
+				AnchorFree	= 0,
+				AnchorLeft	= 1,
+				AnchorRight	= 2,
+				AnchorMaximized	= 3
+			};
+
 		private : 
 			QVBoxLayout		layout;
 			QWidget			titleWidget;	// For fixed size;
@@ -294,11 +303,13 @@ namespace QVGL
 						motionActive,
 						resizeActive,
 						resizeHorizontalLock,
-						resizeVerticalLock,
-						maximized;
-			QSize			originalSize;
+						resizeVerticalLock;
+			QSize			originalSize,
+						sizeAtMousePress;
 			QPoint 			originalPosition,
+						mousePress,
 						offset;
+			AnchorMode		anchorMode;
 
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
@@ -311,28 +322,31 @@ namespace QVGL
 			void childEvent(QChildEvent* e);
 			bool eventFilter(QObject* target, QEvent* e);
 
-			friend class SceneViewWidget;
-			friend class MainWidget;
-
 		private slots :
-			void temporaryHide(bool enabled);
+			void sceneRectChanged(const QRectF& sceneRect);
+			void sceneRectChanged(void);
+			void graphicsProxyDestroyed(void);
 
 		public : 
 			SubWidget(void);
 			virtual ~SubWidget(void);
 
 			void setInnerWidget(QWidget* _widget);
-			QWidget* innerWidget(void);
+			QWidget* getInnerWidget(void);
+			void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
+			QGraphicsProxyWidget* getGraphicsProxy(void);
 			QString getTitle(void);
 			void setTitle(QString title);
+			void setQVGLParent(MainWidget* _qvglParent);
 			MainWidget* getQVGLParent(void);
-			bool isMaximized(void) const;
-			void toggleMaximized(void);
+			void setAnchor(AnchorMode mode);
+			const AnchorMode& getAnchor(void) const;
 			bool shoudBeVisible(void) const;
 
 		public slots :
 			// Re-implement some of the QWidget functions : 
 			void show(void);
+			void temporaryHide(bool enabled);
 			void hide(void);
 
 		signals  :
@@ -368,7 +382,7 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
-				static TopBar*			singleton;
+				static TopBar			*singleton;
 				QGraphicsProxyWidget 		*graphicsProxy;
 				QHBoxLayout			bar;
 				QMenuBar			menuBar;
@@ -398,9 +412,6 @@ namespace QVGL
 				void mouseDoubleClickEvent(QMouseEvent* event);
 				void mouseMoveEvent(QMouseEvent* event);
 				void mouseReleaseEvent(QMouseEvent* event);
-
-				friend class SceneWidget;
-				friend class MainWidget;
 				
 			private slots : 
 				void stretch(const QRectF& rect);
@@ -412,11 +423,14 @@ namespace QVGL
 				void viewClosed(void);
 				void viewsTableClosed(void);
 				void subWidgetClosed(void);
+				void graphicsProxyDestroyed(void);
 
 			public :
 				TopBar(void);
 				~TopBar(void);
 
+				void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
+				QGraphicsProxyWidget* getGraphicsProxy(void);
 				void setTitle(void);
 				void setTitle(QString title);
 				void setTitle(const View& view);
@@ -450,15 +464,16 @@ namespace QVGL
 				
 				void mousePressEvent(QMouseEvent* event);
 
-				friend class SceneWidget;
-				friend class MainWidget;
-
 			private slots : 
 				void stretch(const QRectF& rect);
+				void graphicsProxyDestroyed(void);
 
 			public :
 				BottomBar(void);
 				~BottomBar(void);
+
+				void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
+				QGraphicsProxyWidget* getGraphicsProxy(void);
 
 			signals : 
 				void selected(BottomBar*);
@@ -722,7 +737,6 @@ namespace QVGL
 			void drawView(View* view);
 			void drawView(View* view, const int& x, const int& y, const int& w, const int& h);
 			void drawViewsTable(ViewsTable* viewsTable);
-			//void getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const;
 
 			// Qt events : 
 			void drawBackground(QPainter* painter, const QRectF& rect);
@@ -732,7 +746,6 @@ namespace QVGL
 			void wheelEvent(QGraphicsSceneWheelEvent* event);
 			void mousePressEvent(QGraphicsSceneMouseEvent* event);
 			void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
-			//void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);	
 
 		public : 
 			SceneWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);

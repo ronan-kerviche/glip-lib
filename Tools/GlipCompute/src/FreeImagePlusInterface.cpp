@@ -16,6 +16,9 @@
 
 #include "FreeImagePlusInterface.hpp"
 
+	// To be impletemented : read Bayer data directly from RAW files.
+	// See http://sourceforge.net/p/freeimage/discussion/36110/thread/2bd2ff7f/?limit=50
+
 	Glip::CoreGL::HdlTexture* loadImage(const std::string& filename)
 	{
 		fipImage inputImage;
@@ -55,7 +58,7 @@
 
 		GLenum depth = GL_NONE;				
 		int bitsPerComponent = inputImage.getBitsPerPixel() / planes;
-		
+
 		switch(bitsPerComponent)
 		{
 			case 1:
@@ -80,22 +83,44 @@
 
 		texture->write(inputImage.accessPixels(), fipMode, GL_ZERO, 4);
 
-		// Test : 
-		//Glip::Modules::ImageBuffer testBuffer(*texture);
-		//testBuffer.write("testBuffer.raw");
-
 		return texture;
 	}
 
 	void saveImage(Glip::CoreGL::HdlTexture& texture, const std::string& filename)
 	{
 		const Glip::CoreGL::HdlTextureFormatDescriptor& descriptor = texture.getFormatDescriptor();
+		const GLenum depth = texture.getGLDepth();
 
 		int bpp = descriptor.pixelSizeInBits;
 		if(bpp==0)
 			bpp = descriptor.numChannels() * Glip::CoreGL::HdlTextureFormatDescriptorsList::getTypeDepth(texture.getGLDepth())*8;
 
-		fipImage outputImage(FIT_BITMAP, texture.getWidth(), texture.getHeight(), bpp);
+		// Determine the type of the output image : 
+		FREE_IMAGE_TYPE fipType = FIT_UNKNOWN;
+
+		if((depth==GL_BYTE || depth==GL_UNSIGNED_BYTE) && descriptor.numChannels()>=1 && descriptor.numChannels()<=4)
+			fipType = FIT_BITMAP;
+		if(depth==GL_SHORT && descriptor.numChannels()==1)
+			fipType = FIT_INT16;
+		else if(depth==GL_UNSIGNED_SHORT && descriptor.numChannels()==1)
+			fipType = FIT_UINT16;
+		else if((depth==GL_SHORT || depth==GL_UNSIGNED_SHORT) && descriptor.numChannels()==3)
+			fipType = FIT_RGB16;
+		else if((depth==GL_SHORT || depth==GL_UNSIGNED_SHORT) && descriptor.numChannels()==4)
+			fipType = FIT_RGBA16;
+		else if((depth==GL_INT || depth==GL_UNSIGNED_INT) && descriptor.numChannels()==1)
+			fipType = FIT_INT32;
+		else if(depth==GL_FLOAT && descriptor.numChannels()==1)
+			fipType = FIT_FLOAT;
+		else if(depth==GL_FLOAT && descriptor.numChannels()==3)
+			fipType = FIT_RGBF;
+		else if(depth==GL_FLOAT && descriptor.numChannels()==4)
+			fipType = FIT_RGBAF;
+
+		if(fipType==FIT_UNKNOWN)
+			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible with FreeImage interface (" + Glip::toString(descriptor.numChannels()) + " channels, " + Glip::glParamName(depth) + " depth, " + Glip::toString(bpp) + " bits per pixel.)", __FILE__, __LINE__);
+
+		fipImage outputImage(fipType, texture.getWidth(), texture.getHeight(), bpp);
 		
 		if(!outputImage.isValid())
 			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible.", __FILE__, __LINE__);

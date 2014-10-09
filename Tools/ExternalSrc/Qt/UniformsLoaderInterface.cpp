@@ -161,7 +161,10 @@ using namespace QGUI;
 
 				// Create box : 
 				if(object.isFloatingPointType())
+				{
 					floatBoxes[index] = new QDoubleSpinBox(this);
+					floatBoxes[index]->setDecimals(3); 				
+				}
 				else
 					integerBoxes[index] = new QSpinBox(this);
 

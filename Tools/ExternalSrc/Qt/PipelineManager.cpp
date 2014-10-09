@@ -239,7 +239,6 @@ using namespace QGPM;
 
 	InputPortItem::~InputPortItem(void)
 	{
-		std::cout << "InputPortItem::~InputPortItem : " << this << std::endl;
 		delete connection;
 		delete view;
 		connection 	= NULL;
