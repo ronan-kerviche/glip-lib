@@ -489,11 +489,7 @@ using namespace QVGL;
 
 		const float sceneRatio = W / H;
 
-		// ROUND REQUIRES : 
-		// QT <= 4 : QMAKE_CXXFLAGS += -std=c++11
-		// QT >= 5 : CONFIG += c++11
-
-		a = std::round(std::sqrt(sceneRatio*static_cast<float>(N)));
+		a = std::ceil(std::sqrt(sceneRatio*static_cast<float>(N)) - 0.5); // std::round(x) \approx std::ceil(x-0.5)
 		b = std::ceil(static_cast<float>(N)/static_cast<float>(a));
 
 		w = static_cast<int>((1.0f - rho) * W / static_cast<float>(a));
@@ -1132,6 +1128,10 @@ using namespace QVGL;
 		{
 			case AnchorFree :
 				move(originalPosition);
+
+				if(anchorMode==AnchorLeft || anchorMode==AnchorRight)
+					originalSize.setWidth(width());
+
 				resize(originalSize);
 				anchorMode = AnchorFree;
 				break;

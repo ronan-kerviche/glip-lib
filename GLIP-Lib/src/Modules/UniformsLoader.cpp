@@ -403,6 +403,8 @@
 		
 		for(NodeConstIterator it=nodeBegin(); it!=nodeEnd(); it++)
 			test = test || it->second.hasModifications();
+
+		return test;
 	}
 
 	/**

@@ -316,6 +316,8 @@
 	const ImageBuffer& ImageBuffer::operator>>(void* bytes) const
 	{
 		std::memcpy(bytes, table->getPtr(), table->getSize());
+
+		return (*this);
 	}
 
 	/**

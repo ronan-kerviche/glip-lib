@@ -157,7 +157,11 @@ delete data;
 					**/
 					virtual HdlDynamicData& operator=(const HdlDynamicData& cpy) = 0;
 
-					friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
+					#ifdef _WIN32
+						GLIP_API_FUNC friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
+					#else
+						friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
+					#endif
 	
 					static HdlDynamicData* build(const GLenum& type);
 					static HdlDynamicData* copy(const HdlDynamicData& cpy);

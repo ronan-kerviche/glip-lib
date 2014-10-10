@@ -1062,7 +1062,9 @@ using namespace QGED;
 
 			QList<int> sizes = splitterLayout.sizes();
 
-			int totalHeight = std::accumulate(sizes.begin(), sizes.end(), 0);
+			int totalHeight = 0; //std::accumulate(sizes.begin(), sizes.end(), 0); only in C++11
+			for(QList<int>::const_iterator it=sizes.begin(); it!=sizes.end(); it++)
+				totalHeight += *it;
 			
 			// Prevent the error widget to take more than 1/3 of the total size :
 			newHeight = std::min(newHeight, totalHeight/3);

@@ -92,7 +92,7 @@ namespace Glip
 \class PixelIterator
 \brief Iterator-like element for ImageBuffer
 **/
-		class PixelIterator : protected HdlDynamicTableIterator
+		class GLIP_API PixelIterator : protected HdlDynamicTableIterator
 		{
 			private :
 				ImageBuffer& image;
