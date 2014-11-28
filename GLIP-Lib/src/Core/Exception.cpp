@@ -24,7 +24,7 @@
 #include "Core/Exception.hpp"
 
 	using namespace Glip;
-
+ 
 	/**
 	\fn Exception::Exception(const std::string& m, std::string f, unsigned int l)
 	\brief Exception constructor.
@@ -33,7 +33,12 @@
 	\param l Line number (__LINE__).
 	**/
 	Exception::Exception(const std::string& m, std::string f, unsigned int l)
-	 : msg(m), filename(f), line(l), showHeader(true)
+	 :	msg(m), 
+		filename(f), 
+		line(l), 
+		completeMsg(),
+		showHeader(true),
+		subExceptions()
 	{
 		if(filename!="")
 		{
@@ -50,19 +55,24 @@
 	\param e Copy.
 	**/
 	Exception::Exception(const Exception& e)
-	 : msg(e.msg), filename(e.filename), line(e.line), subErrors(e.subErrors), completeMsg(e.completeMsg), showHeader(e.showHeader)
+	 :	msg(e.msg), 
+		filename(e.filename), 
+		line(e.line), 
+		completeMsg(e.completeMsg),
+		showHeader(e.showHeader),
+		subExceptions(e.subExceptions) 
 	{ }
 
 	Exception::~Exception(void) throw()
 	{
-		subErrors.clear();
+		subExceptions.clear();
 	}
 
 	void Exception::updateCompleteMessage(void)
 	{
 		completeMsg.clear();
 
-		int nMessages = subErrors.size() + 1;
+		int nMessages = subExceptions.size() + 1;
 
 		std::string h = header(showHeader);
 
@@ -89,17 +99,17 @@
 
 			messages.push_back(msg);
 
-			for(int i=subErrors.size()-1; i>=0; i--)
+			for(int i=subExceptions.size()-1; i>=0; i--)
 			{
 				headers.push_back("");
-				std::string header = subErrors[i].header(showHeader);
+				std::string header = subExceptions[i].header(showHeader);
 
 				if(!header.empty())
-					headers.back() = "[ " + toString(subErrors.size()-i+1) + " | " + header + " ";
+					headers.back() = "[ " + toString(subExceptions.size()-i+1) + " | " + header + " ";
 				else
-					headers.back() = "[ " + toString(subErrors.size()-i+1) + " ";
+					headers.back() = "[ " + toString(subExceptions.size()-i+1) + " ";
 
-				messages.push_back(subErrors[i].msg);
+				messages.push_back(subExceptions[i].msg);
 
 				maxLength = std::max(maxLength, headers.back().size());
 			}
@@ -108,7 +118,7 @@
 			const std::string blank(maxLength, ' ');
 			std::string padded;
 
-			for(int k=0; k<headers.size(); k++)
+			for(int k=0; k<static_cast<int>(headers.size()); k++)
 			{
 				if(k>0)
 					completeMsg += "\n";
@@ -182,8 +192,8 @@
 	**/
 	const Exception& Exception::operator+(const std::exception& e)
 	{
-		subErrors.push_back(Exception(e.what()));
-		subErrors.push_back(Exception("<std::exception>"));
+		subExceptions.push_back(Exception(e.what()));
+		subExceptions.push_back(Exception("<std::exception>"));
 
 		updateCompleteMessage();
 
@@ -198,11 +208,11 @@
 	**/
 	const Exception& Exception::operator+(const Exception& e)
 	{
-		if(!e.subErrors.empty())
-			subErrors.insert( subErrors.end(), e.subErrors.begin(), e.subErrors.end() );
+		if(!e.subExceptions.empty())
+			subExceptions.insert( subExceptions.end(), e.subExceptions.begin(), e.subExceptions.end() );
 
-		subErrors.push_back(e);
-		subErrors.back().subErrors.clear();
+		subExceptions.push_back(e);
+		subExceptions.back().subExceptions.clear();
 
 		updateCompleteMessage();
 
@@ -210,38 +220,38 @@
 	}
 
 	/**
-	\fn int Exception::numSubError(void) const throw();
+	\fn int Exception::numSubExceptions(void) const throw();
 	\brief Get the number of sub-error embedded.
 	\return The number of sub-error embedded.
 	**/
-	int Exception::numSubError(void) const throw()
+	int Exception::numSubExceptions(void) const throw()
 	{
-		return subErrors.size();
+		return subExceptions.size();
 	}
 
 	/**
-	\fn const Exception& Exception::subError(int i)
+	\fn const Exception& Exception::subException(int i)
 	\brief Return the sub-error at index i.
 	\param i The index of the sub-error.
 	\return Return the sub-error corresponding at index i or raise an error if the index is invalid.
 	**/
-	const Exception& Exception::subError(int i)
+	const Exception& Exception::subException(int i)
 	{
-		if(i<0 || i>numSubError())
-			throw Exception("Exception::subError - Index out of bounds (" + toString(i) + " out of [0;" + toString(numSubError()) + "].", __FILE__, __LINE__);
+		if(i<0 || i>numSubExceptions())
+			throw Exception("Exception::subException - Index out of bounds (" + toString(i) + ", range is [0;" + toString(numSubExceptions()) + "].", __FILE__, __LINE__);
 
 		else
-			return subErrors[i];
+			return subExceptions[i];
 	}
 
 	/**
-	\fn void Exception::hideHeader(bool t)
+	\fn void Exception::hideHeader(bool enabled)
 	\brief Hide (or show) the headers in messages provided by what().
-	\param t true (default) to hide the headers or true to show them.
+	\param enabled true (default) to hide the headers or true to show them.
 	**/
-	void Exception::hideHeader(bool t)
+	void Exception::hideHeader(bool enabled)
 	{
-		showHeader = !t;
+		showHeader = !enabled;
 		updateCompleteMessage();
 	}
 

@@ -1,38 +1,26 @@
 /* ************************************************************************************************************* */
 /*                                                                                                               */
-/*     GLIP-LIB                                                                                                  */
-/*     OpenGL Image Processing LIBrary                                                                           */
+/*     LIBRAW INTERFACE                                                                                          */
+/*     Interface to the LibRaw library for the OpenGL Image Processing LIBrary                                   */
 /*                                                                                                               */
 /*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : OglInclude.hpp                                                                            */
-/*     Original Date : December 2nd 2013                                                                         */
+/*     File          : LibRawInterface.pp                                                                       */
+/*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : Specific defines for the API structure.                                                   */
+/*     Description   : LibRaw interface for image input/output.                                                  */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-/**
- * \file    LibTools.hpp
- * \brief   Specific defines for the API structure.
- * \author  R. KERVICHE
- * \date    December 2nd 2013
-**/
+#ifndef __GLIPLIB_LIBRAWINTERFACE__
+#define __GLIPLIB_LIBRAWINTERFACE__
 
-#ifndef __LIBTOOLS_INCLUDE__
-#define __LIBTOOLS_INCLUDE__
+	#include <libraw/libraw.h>
+	#include "GLIPLib.hpp"
 
-	#ifdef _WIN32
-		#define	GLIP_API 	__declspec(dllexport)
-		#define	GLIP_API_FUNC 	__declspec(dllexport) extern
-	#else
-		#define GLIP_API 	
-		#define	GLIP_API_FUNC 	extern
-	#endif
-
-	#define UNUSED_PARAMETER(x) (void)(x);
+	extern Glip::Modules::ImageBuffer* libRawLoadImage(const std::string& filename);
 
 #endif
 

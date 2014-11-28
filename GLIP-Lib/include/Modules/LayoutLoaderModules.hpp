@@ -148,7 +148,7 @@ Example, creating a simple Module :
 							manual;
 				const int		minNumArguments,
 							maxNumArguments;
-				char 			bodyPresence;
+				const char 		bodyPresence;
 				bool			showManualOnError;
 
 			protected :
@@ -156,6 +156,7 @@ Example, creating a simple Module :
 
 			public :
 				LayoutLoaderModule(const LayoutLoaderModule& m);
+				virtual ~LayoutLoaderModule(void);
 
 				/**
 				\fn virtual void LayoutLoaderModule::apply(	const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, std::string>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, const std::vector<std::string>&	staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, std::string& executionCode) = 0

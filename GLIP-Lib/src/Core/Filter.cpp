@@ -48,7 +48,7 @@
 		if(versionNumber>0)
 			str << "#version " << versionNumber << std::endl;
 		else if(versionNumber>130)
-			str << "in vec3 vertex;" << std::endl;
+			str << "in vec4 vertex;" << std::endl;
 
 		str << "void main()" << std::endl;
 		str << "{" << std::endl;
@@ -79,7 +79,20 @@
 	\param f The texture format associated to all outputs of the filter.
 	**/
 	AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
-	 : AbstractComponentLayout(type), HdlAbstractTextureFormat(f), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(false), clearing(true), isStandardVertex(true), isStandardGeometry(true)
+	 : 	AbstractComponentLayout(type), 
+		HdlAbstractTextureFormat(f), 
+		vertexSource(NULL), 
+		fragmentSource(NULL), 
+		geometryModel(NULL), 
+		clearing(true),
+		blending(false),
+		depthTesting(false),
+		isStandardVertex(true),
+		isStandardGeometry(true),
+		sFactor(GL_ONE),
+		dFactor(GL_ONE),
+		blendingEquation(GL_FUNC_ADD),
+		depthTestingFunction(GL_LESS)
 	{ }
 
 	/**
@@ -88,7 +101,20 @@
 	\param c Copy.
 	**/
 	AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
-	 : AbstractComponentLayout(c), HdlAbstractTextureFormat(c), vertexSource(NULL), fragmentSource(NULL), geometryModel(NULL), blending(c.blending), clearing(c.clearing), isStandardVertex(c.isStandardVertex), isStandardGeometry(c.isStandardGeometry)
+	 :	AbstractComponentLayout(c), 
+		HdlAbstractTextureFormat(c), 
+		vertexSource(NULL), 
+		fragmentSource(NULL), 
+		geometryModel(NULL), 
+		clearing(c.clearing),
+		blending(c.blending), 
+		depthTesting(c.depthTesting),
+		isStandardVertex(c.isStandardVertex), 
+		isStandardGeometry(c.isStandardGeometry),
+		sFactor(c.sFactor),
+		dFactor(c.dFactor),
+		blendingEquation(c.blendingEquation),
+		depthTestingFunction(c.depthTestingFunction)
 	{
 		try
 		{
@@ -170,25 +196,129 @@
 	}
 
 	/**
-	\fn bool AbstractFilterLayout::isBlendingEnabled(void) const
-	\return true if blending is enabled.
-	\fn void AbstractFilterLayout::enableBlending(void)
-	\brief Enables blending operation (the alpha channel is used).
-	\fn void AbstractFilterLayout::disableBlending(void)
-	\brief Disables blending operation.
 	\fn bool AbstractFilterLayout::isClearingEnabled(void) const
-	\return true if clearing is enabled.
+	\return true if clearing is enabled.		
+	**/
+	bool AbstractFilterLayout::isClearingEnabled(void) const
+	{
+		return clearing;
+	}
+	
+	/**
 	\fn void AbstractFilterLayout::enableClearing(void)
 	\brief Enables clearing operation (the destination buffer is cleared before each operation).
+	**/
+	void AbstractFilterLayout::enableClearing(void)
+	{ 
+		clearing = true;
+	}
+	
+	/**
 	\fn void AbstractFilterLayout::disableClearing(void)
 	\brief Disables clearing operation.
 	**/
-	bool AbstractFilterLayout::isBlendingEnabled(void) const	{ return blending;  }
-	void AbstractFilterLayout::enableBlending(void)   		{ blending = true;  }
-	void AbstractFilterLayout::disableBlending(void)  		{ blending = false; }
-	bool AbstractFilterLayout::isClearingEnabled(void) const	{ return clearing;  }
-	void AbstractFilterLayout::enableClearing(void)   		{ clearing = true;  }
-	void AbstractFilterLayout::disableClearing(void)  		{ clearing = false; }
+	void AbstractFilterLayout::disableClearing(void)
+	{
+		clearing = false; 
+	}
+
+	/**
+	\fn bool AbstractFilterLayout::isBlendingEnabled(void) const
+	\return true if blending is enabled.	
+	**/
+	bool AbstractFilterLayout::isBlendingEnabled(void) const
+	{ 
+		return blending;  
+	}
+
+	/**
+	\fn const GLenum& AbstractFilterLayout::getSFactor(void) const
+	\return Get the blending factor to be applied to the source (only if blending is enabled).
+	**/
+	const GLenum& AbstractFilterLayout::getSFactor(void) const
+	{
+		return sFactor;
+	}
+
+	/**
+	\fn const GLenum& AbstractFilterLayout::getDFactor(void) const
+	\return Get the blending factor to be applied to the destination (only if blending is enabled).
+	**/
+	const GLenum& AbstractFilterLayout::getDFactor(void) const
+	{
+		return dFactor;
+	}
+
+	/**
+	\fn const GLenum& AbstractFilterLayout::getBlendingEquation(void) const
+	\return Get the equation used for the blending operation.
+	**/
+	const GLenum& AbstractFilterLayout::getBlendingEquation(void) const
+	{
+		return blendingEquation;
+	}
+
+	/**
+	\fn void AbstractFilterLayout::enableBlending(const GLenum& _sFactor, const GLenum& _dFactor, const GLenum& _blendingEquation)
+	\brief Enables blending operation (the alpha channel is used).
+	\param _sFactor Blending factor to be applied to the source; among GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA and GL_SRC_ALPHA_SATURATE (see https://www.opengl.org/sdk/docs/man2/xhtml/glBlendFunc.xml for more information).
+	\param _dFactor Blending factor to be applied to the destination; among GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA. GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA and GL_ONE_MINUS_CONSTANT_ALPHA (see https://www.opengl.org/sdk/docs/man2/xhtml/glBlendFunc.xml for more information).
+	\param _blendingEquation Setting the blending function, for mixing the source and destination color; among GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, GL_MIN, GL_MAX (see https://www.opengl.org/sdk/docs/man2/xhtml/glBlendEquation.xml for more information).
+	**/
+	void AbstractFilterLayout::enableBlending(const GLenum& _sFactor, const GLenum& _dFactor, const GLenum& _blendingEquation)   		
+	{
+		sFactor = _sFactor;
+		dFactor = _dFactor;
+		blendingEquation = _blendingEquation;
+		blending = true;  
+	}
+
+	/**
+	\fn void AbstractFilterLayout::disableBlending(void)
+	\brief Disables blending operation.
+	**/
+	void AbstractFilterLayout::disableBlending(void)
+	{
+		blending = false;
+	}
+
+	/**
+	\fn bool AbstractFilterLayout::isDepthTestingEnabled(void) const
+	\return True if the depth testing is enabled.
+	**/
+	bool AbstractFilterLayout::isDepthTestingEnabled(void) const
+	{
+		return depthTesting;
+	}
+
+	/**
+	\fn const GLenum& AbstractFilterLayout::getDepthTestingFunction(void) const
+	\return The depth testing function used if depth testing is enabled;
+	**/
+	const GLenum& AbstractFilterLayout::getDepthTestingFunction(void) const
+	{
+		return depthTestingFunction;
+	}
+
+	/**
+	\fn void AbstractFilterLayout::enableDepthTesting(const GLenum& _depthTestingFunction)
+	\brief Enable depth testing during filter processing.
+	\param _depthTestingFunction Function used the depth testing; among GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL and GL_ALWAYS (see https://www.opengl.org/sdk/docs/man2/xhtml/glDepthFunc.xml for more information).
+	**/
+	void AbstractFilterLayout::enableDepthTesting(const GLenum& _depthTestingFunction)
+	{
+		depthTestingFunction = _depthTestingFunction;
+		depthTesting = true;
+	}	
+
+	/**
+	\fn void AbstractFilterLayout::disableDepthTesting(void)
+	\brief Disable depth testing operation.
+	**/
+	void AbstractFilterLayout::disableDepthTesting(void)
+	{
+		depthTesting = false;
+	}
 
 	/**
 	\fn bool AbstractFilterLayout::isStandardVertexSource(void) const
@@ -210,7 +340,10 @@
 	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
 	**/
 	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
-	 : HdlAbstractTextureFormat(fout), AbstractComponentLayout(type), ComponentLayout(type), AbstractFilterLayout(type, fout)
+	 : 	AbstractComponentLayout(type),  
+		ComponentLayout(type),
+		HdlAbstractTextureFormat(fout),
+		AbstractFilterLayout(type, fout)
 	{
 		fragmentSource = new ShaderSource(fragment);
 
@@ -282,7 +415,14 @@
 	\param name The instance name.
 	**/
 	Filter::Filter(const AbstractFilterLayout& c, const std::string& name)
-	: Component(c, name), AbstractFilterLayout(c), AbstractComponentLayout(c), HdlAbstractTextureFormat(c), vertexShader(NULL), fragmentShader(NULL), prgm(NULL), geometry(NULL) 
+	:	AbstractComponentLayout(c), 
+		Component(c, name),
+		HdlAbstractTextureFormat(c), 
+		AbstractFilterLayout(c),
+		vertexShader(NULL), 
+		fragmentShader(NULL), 
+		prgm(NULL), 
+		geometry(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
@@ -411,10 +551,19 @@
 			renderer.beginRendering(getNumOutputPort());
 	
 		// Enable states
+			if(isDepthTestingEnabled())
+			{
+				glEnable(GL_DEPTH_TEST);
+				glDepthFunc(getDepthTestingFunction());
+			}
+			else
+				glDisable(GL_DEPTH_TEST);
+
 			if(isBlendingEnabled())
 			{
 				glEnable(GL_BLEND);
-				glBlendFunc(GL_ONE, GL_ONE);
+				glBlendFunc(getSFactor(), getDFactor());
+				glBlendEquation(getBlendingEquation());
 			}
 			else
 				glDisable(GL_BLEND);
@@ -479,8 +628,11 @@
 			HdlProgram::stopProgram();
 
 		// Remove from stack
+			if(isDepthTestingEnabled())
+				glDisable(GL_DEPTH_TEST);
+
 			if(isBlendingEnabled())
-			    glDisable(GL_BLEND);
+				glDisable(GL_BLEND);
 
 		// Unload
 			for(int i=0; i<getNumInputPort(); i++)

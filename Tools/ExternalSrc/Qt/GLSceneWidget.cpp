@@ -416,7 +416,7 @@ using namespace QVGL;
 
 			// Compute the maximum number of characters to fill 80% max :
 			QFontMetrics metrics(title.font());
-			int maxCharacters = static_cast<int>(0.8f * static_cast<float>(getWidth())/static_cast<float>(metrics.maxWidth()));
+			int maxCharacters = static_cast<int>(0.8f * static_cast<float>(getWidth())/static_cast<float>(metrics.width(' ')));
 
 			if(titleStr.size()>maxCharacters)
 				titleStr = tr("%1...").arg(titleStr.left(maxCharacters-3));

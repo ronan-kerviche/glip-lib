@@ -28,10 +28,11 @@ if(WIN32) # Windows specifics
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
 
-	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
+	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32 -std=c++11 -pedantic -Wall -Wextra")
 
-else() # Linux psecifics
-	#For Cleaning purpose : set(CMAKE_CXX_FLAGS "-pedantic -Wall")
+else() # Linux specifics
+	#For Cleaning purpose :
+	set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall -Wextra")
 endif()
 
 set(LIBRARY_OUTPUT_PATH lib/)

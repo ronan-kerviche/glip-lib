@@ -320,6 +320,42 @@
 		return (*this);
 	}
 
+	/*
+	\fn bool ImageBuffer::isInside(const int& x, const int& y, const GLenum& channel) const
+	\brief Check if coordinates are valid.
+	\param x X-axis coordinate (along the width).
+	\param y Y-axis coordinate (along the height).
+	\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
+	\return True if the coordinates lie inside the current image.
+	*/
+	bool ImageBuffer::isInside(const int& x, const int& y, const GLenum& channel) const
+	{
+		const int c = descriptor.channelIndex(channel);
+
+		if(c<0)
+			return false;
+		else
+			return table->isInside(x, y, c);
+	}
+
+	/*
+	\fn int ImageBuffer::getIndex(const int&x, const int& y, const GLenum& channel) const
+	\brief Get data index.
+	\param x X-axis coordinate (along the width).
+	\param y Y-axis coordinate (along the height).
+	\param channel The channel (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA or GL_LUMINANCE).
+	\return The corresponding index, or -1 if the index is not valid.
+	*/
+	int ImageBuffer::getIndex(const int&x, const int& y, const GLenum& channel) const
+	{
+		const int c = descriptor.channelIndex(channel);
+		
+		if(c<0)
+			return -1;
+		else
+			return table->getIndex(x, y, c);
+	}
+
 	/**
 	\fn long long ImageBuffer::get(const int& x, const int& y, const GLenum& channel) const
 	\brief Get an element from the array. The output type is much larger than any possible type and the value from buffer is not stretched except if the buffer is in single or double floating point precision.
@@ -847,7 +883,7 @@
 			for(int k=0; k<s; k++)
 			{
 				if(indices[k]>=0)
-					dst[k] = src[indices[k]];
+					dst[k] = src[static_cast<int>(indices[k])];
 			}
 		}
 
@@ -877,7 +913,7 @@
 			const int 	largestLayout 	= 256;
 			char		indices[largestLayout];
 
-			std::memset(reinterpret_cast<void*>(indices), -1, largestLayout);
+			std::memset(reinterpret_cast<void*>(indices), -1, largestLayout); // Fill with 0xFF
 
 			const int	sizeSrcComponent	= src.image.getTable().getElementSize(),
 					sizeDstComponent	= image.getTable().getElementSize();

@@ -41,12 +41,12 @@
 		{
 			private :
 				// Data :
-				std::string  msg;
-				std::string  filename;
-				unsigned int line;
-				std::string completeMsg;
-				std::vector<Exception>	subErrors;
-				bool showHeader;
+				std::string  		msg,
+							filename;
+				unsigned int		line;
+				std::string		completeMsg;
+				bool			showHeader;
+				std::vector<Exception>	subExceptions;	
 
 				// Tools :
 				std::string header(bool showHeaderControl=true) const throw();
@@ -66,9 +66,9 @@
 				const Exception& operator+(const std::exception& e);
 				const Exception& operator+(const Exception& e);
 
-				int numSubError(void) const throw();
-				const Exception& subError(int i);
-				void hideHeader(bool t=true);
+				int numSubExceptions(void) const throw();
+				const Exception& subException(int i);
+				void hideHeader(bool enabled=true);
 		};
 
 		// Tools

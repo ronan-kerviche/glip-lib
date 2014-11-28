@@ -75,7 +75,6 @@ delete data;
 
 					// Forbidden : 
 					HdlDynamicData(const HdlDynamicData&);
-					//HdlDynamicData& operator=(const HdlDynamicData& cpy);
 
 					// Tool : 
 					static GLenum getRelatedGLSupportingType(const GLenum& t);
@@ -150,17 +149,17 @@ delete data;
 					virtual void* getPtr(void) = 0;
 
 					/**
-					\fn virtual operator=(const HdlDynamicData& cpy) = 0;
+					\fn virtual const HdlynamicData& operator=(const HdlDynamicData& cpy) = 0;
 					\brief Copy the value from another HdlDynamicData object. Type MUST match, will raise an exception otherwise.
 					\param cpy The object to be copied.
 					\return Reference to this object.
 					**/
-					virtual HdlDynamicData& operator=(const HdlDynamicData& cpy) = 0;
+					virtual const HdlDynamicData& operator=(const HdlDynamicData& cpy) = 0;
 
 					#ifdef _WIN32
 						GLIP_API_FUNC friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
 					#else
-						friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d);
+						friend std::ostream& operator<<(std::ostream& os, const HdlDynamicData& d); // Does not support the extern keyword
 					#endif
 	
 					static HdlDynamicData* build(const GLenum& type);
@@ -177,7 +176,7 @@ delete data;
 
 					// Forbidden : 
 					HdlDynamicDataSpecial(const HdlDynamicDataSpecial& cpy);
-					HdlDynamicDataSpecial& operator=(const HdlDynamicDataSpecial& cpy);
+					const HdlDynamicDataSpecial& operator=(const HdlDynamicDataSpecial& cpy);
 
 				protected :
 					HdlDynamicDataSpecial(const GLenum& _type, int _rows=1, int _columns=1);
@@ -195,7 +194,7 @@ delete data;
 					const void* getPtr(void) const;
 					void* getPtr(void);
 
-					HdlDynamicData& operator=(const HdlDynamicData& cpy);
+					const HdlDynamicData& operator=(const HdlDynamicData& cpy);
 			};
 
 			// Template implementation :
@@ -265,7 +264,7 @@ delete data;
 				}
 
 				template<typename T>
-				HdlDynamicData& HdlDynamicDataSpecial<T>::operator=(const HdlDynamicData& cpy)
+				const HdlDynamicData& HdlDynamicDataSpecial<T>::operator=(const HdlDynamicData& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
 						throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__);
@@ -617,12 +616,12 @@ delete data;
 					virtual void* getRowPtr(int i) = 0;
 
 					/**
-					\fn virtual operator=(const HdlDynamicData& cpy) = 0;
+					\fn virtual const HdlDynamicTable& operator=(const HdlDynamicData& cpy) = 0;
 					\brief Copy the value from another HdlDynamicData object. Type MUST match, will raise an exception otherwise.
 					\param cpy The object to be copied.
 					\return Reference to this object.
 					**/
-					virtual HdlDynamicTable& operator=(const HdlDynamicTable& cpy) = 0;
+					virtual const HdlDynamicTable& operator=(const HdlDynamicTable& cpy) = 0;
 
 					static HdlDynamicTable* build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized=false, int _alignment=1);
 					static HdlDynamicTable* buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized=false, int _alignment=1);
@@ -637,7 +636,7 @@ delete data;
 
 					// Forbidden : 
 					HdlDynamicTableSpecial(const HdlDynamicTableSpecial& cpy);
-					HdlDynamicTableSpecial& operator=(const HdlDynamicTableSpecial& cpy);
+					const HdlDynamicTableSpecial& operator=(const HdlDynamicTableSpecial& cpy);
 
 				protected :
 					HdlDynamicTableSpecial(const GLenum& _type, int _columns=1, int _rows=1, int _slices=1, bool _normalized=false, int _alignment=1);
@@ -684,7 +683,7 @@ delete data;
 					const void* getRowPtr(int i) const;
 					void* getRowPtr(int i);
 
-					HdlDynamicTable& operator=(const HdlDynamicTable& cpy);
+					const HdlDynamicTable& operator=(const HdlDynamicTable& cpy);
 
 					static float normalize(const T& t);
 					static T denormalize(const float& t);
@@ -943,7 +942,7 @@ delete data;
 					if(!isNormalized())
 						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<int>::normalize(value);
+						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<unsigned char>::normalize(value);
 				}
 
 				template<typename T>
@@ -995,7 +994,7 @@ delete data;
 				}
 
 				template<typename T>
-				HdlDynamicTable& HdlDynamicTableSpecial<T>::operator=(const HdlDynamicTable& cpy)
+				const HdlDynamicTable& HdlDynamicTableSpecial<T>::operator=(const HdlDynamicTable& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
 						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__);

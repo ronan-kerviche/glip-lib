@@ -84,7 +84,7 @@
 		data = HdlDynamicData::build(glFromString(e.strKeyword));
 
 		// Test : 
-		if(data->getNumElements()!=e.arguments.size())
+		if(data->getNumElements()!=static_cast<int>(e.arguments.size()))
 		{
 			const int expectedArgs = data->getNumElements();
 			delete data;
@@ -289,6 +289,8 @@
 	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const AbstractFilterLayout& current)
 	 : 	name(_name)
 	{
+		UNUSED_PARAMETER(current)
+
 		// Get access to the filter : 
 		int gid = pipeline.getElementID(name);
 		Filter& filter = pipeline[gid];	
@@ -300,7 +302,7 @@
 		const std::vector<std::string>& 	uniformsNames = prgm.getUniformsNames();
  		const std::vector<GLenum>& 		uniformsTypes = prgm.getUniformsTypes();
 
-		for(int k=0; k<uniformsNames.size(); k++)
+		for(unsigned int k=0; k<uniformsNames.size(); k++)
 		{
 			if(prgm.isUniformVariableValid(uniformsNames[k]))
 			{
@@ -717,6 +719,8 @@
 
 	int UniformsLoader::Node::applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite, bool silent) const
 	{
+		UNUSED_PARAMETER(pipeline)
+
 		int c = 0;
 
 		if(!empty() && !isFilter())

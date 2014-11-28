@@ -974,90 +974,83 @@ As discussed in the \ref page_GettingStarted page, this is not directly transfer
 
 We can write a Pipeline Script <i>histogram.ppl</i> as :
 	\code
+	// The input format :
+	REQUIRED_FORMAT:inputFormat(inputTextureFormat)
 	// The format of the bins :
-	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGB32F,GL_FLOAT)
+	TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGBA32F,GL_FLOAT)
 
-	// The geometry we will use is a 3D grid of points. In this example, we will use a static grid definition :   
-	GEOMETRY:grid(GRID_3D, 512, 512, 3)
+	// Reduce the input format by some given factor :
+	CALL:FORMAT_SCALE_SIZE(inputFormat, 0.2, 0.2, reducedFormat)
+	CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)
 
-	// Otherwise we could rely on a geometry model provided by the application : 
-	//REQUIRED_GEOMETRY:grid(histogramGrid)
+	// Create a grid from the reduced format :
+	CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormat, grid)
 
-	// The vertex shader, this will be called for every vertex in the geometry :
-	SHADER_SOURCE:histogramVertShader
+	SHADER_SOURCE:HistogramVertexShader
 	{
 		#version 130
 
 		uniform sampler2D inputTexture;
+
+		const vec2 reducedFormat = vec2(INSERT(reducedFormat));
 
 		void main()
 		{
 			// Vertex texture fetching :
-			vec4 col = textureLod(inputTexture, gl_Vertex.xy+vec2(0.5,0.5), 0.0);
-			// gl_Vertex.xy is a vec2 corresponding to the current X and Y coordinates of the point.
-
+			vec4 col = textureLod(inputTexture, gl_Vertex.xy/reducedFormat, 0.0);
 			float sel = 0.0;
-
-			// "Payload"
-			if(gl_Vertex.z==-1.0)				// Red plane
+			// Compute the "Payload"
+			if(gl_Vertex.z==0.0) // Red plane
 			{
 				gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 				sel = col.r;
 			}
-			else if(gl_Vertex.z==0.0)			// Green plane
+			else if(gl_Vertex.z==1.0) // Green plane
 			{
 				gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
 				sel = col.g;
 			}
-			else						// Blue plane
+			else // Blue plane
 			{
 				gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
 				sel = col.b;
 			}
-
 			// Only on [0.0,1.0] interval :
-			clamp(sel, 0.0, 1.0);
-
+			sel = clamp(sel, 0.0, 1.0);
 			// Done
-			gl_Position.x = (sel-0.5)*2.0; 	// set new point position to the color intensity in [-1.0,1.0] interval.
-			gl_Position.y = 0.0;		// output texture is 1D, Y and Z coordinates are thus 0.
-			gl_Position.z = 0.0;
+			gl_Position = vec4((sel-0.5)*2.0, 0.0, 0.0, 1.0); // set new point position to the color intensity in [-1.0,1.0] interval.
 		}
 	}
 
 	// The fragment shader :
-	SHADER_SOURCE:histogramFragShader
+	SHADER_SOURCE:HistogramFragmentShader
 	{
 		#version 130
 
-		uniform sampler2D inputTexture;
 		out vec4 histogramBins;
+
+		const vec2 reducedFormat = vec2(INSERT(reducedFormat));
 
 		void main()
 		{
-			// Get the size of the texture :
-			ivec2 sz  = textureSize(inputTexture, 0);
-
 			// Prepare normalization constant :
-			float nrm = 1.0/float(sz.s*sz.t);
-
+			float nrm = 1.0/(reducedFormat.s*reducedFormat.t);
+			// Push :
 			histogramBins = gl_Color*nrm;
+			histogramBins.a = 1.0;
 		}
 	}
 
-	// Now we create the layout :
-	FILTER_LAYOUT:histogramFilter(histogramBinsFormat, histogramFragShader, histogramVertShader, CLEARING_ON, BLENDING_ON, grid)
-	// Beyond the vertex shader we also provide two options :
-	//     CLEARING_ON which means that the written texture will be cleared to black before each processing.
-	//     BLENDING_ON which means that we can write several time to a single ouput texture (with special geometry) and that the "colors" will be added.
+	FILTER_LAYOUT:HistogramFilter(histogramBinsFormat, HistogramFragmentShader, HistogramVertexShader, grid)
+	{
+		GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD) // Enable blending, a simple addition between source and destination.
+	}
 
-	// The pipeline layout :
-	PIPELINE_MAIN:pipelineHistogram
+	PIPELINE_MAIN:HistogramPipeline
 	{
 		INPUT_PORTS(inputTexture)
 		OUTPUT_PORTS(histogramBins)
-
-		FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
+		FILTER_INSTANCE:HistogramFilter(HistogramFilter)
 	}
 	\endcode
 
@@ -1068,8 +1061,11 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 
 	Loader loader;
 
-	// If we want a dynamic grid size : 
-	//loader.addRequiredElement("histogramGrid", GeometryPrimitives::PointsGrid3D(imageFormat.getWidth(), imageFormat.getHeight(), 3) );
+	// Load the standard modules :
+	LayoutLoaderModules::addBasicModules(loader);
+
+	// Give the size of the current texture : 
+	loader.addRequiredElement("inputTextureFormat", imageFormat);
 
 	// Create and load the pipeline :
 	Pipeline* histogramPipeline = loader("histogram.ppl", "HistogramPipeline");
@@ -1091,43 +1087,36 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 
 	We write a file <i>prettyHistogram.ppl</i>
 	\code
-	// Include previous file in order to re-use some of the elements :
-	INCLUDE_FILE(histogram.ppl)
-	// This inclusion will transform the PIPELINE_MAIN:pipelineHistogram of the file to a simple PIPELINE_LAYOUT:pipelineHistogram.
+	// Include the file containing the Histogram pipeline :
+	INCLUDE(histogram.ppl)
 
-	// Require to have the exact format of the image :
-	REQUIRED_FORMAT:imageFormat(imageFormat)
+	// Get the format of the input image :
+	REQUIRED_FORMAT:outputFormat(inputTextureFormat)
 
-	// Make a mixing shader :
-	SHADER_SOURCE:showHistogramShader
+	// Shader plotting the histograms on top of the image :
+	SHADER_SOURCE:PlotHistogramShader
 	{
 		#version 130
 
-		// Two inputs : the histogram from previous computation and the inputTexture
 		uniform sampler2D histogramBins, inputTexture;
 		out vec4 outputTexture;
 
-		// A stretching factor which can be modified from the C++ code, default is 1.0 :
 		uniform float scale = 1.0;
 
 		void main()
 		{
-			vec2 pos 	= gl_TexCoord[0].st;
-			vec4 hist	= textureLod(histogramBins, vec2(pos.s, 0.0), 0);
-			vec4 col	= textureLod(inputTexture,  pos, 0);
+			vec2 pos = gl_TexCoord[0].st;
+			vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+			vec4 col = textureLod(inputTexture, pos, 0);
 
-			// If the coordinates is under the value (normalized to 1) of the histogram, we change the color of the output.
-			// This will draw the surface under the histogram curve, for each channel.
 			if(pos.t>(1.0-hist.r*scale) )
 				outputTexture.r = 1.0;
 			else
 				outputTexture.r = col.r;
-
 			if(pos.t>(1.0-hist.g*scale) )
 				outputTexture.g = 1.0;
 			else
 				outputTexture.g = col.g;
-
 			if(pos.t>(1.0-hist.b*scale) )
 				outputTexture.b = 1.0;
 			else
@@ -1135,19 +1124,15 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 		}
 	}
 
-	// Make the filter histogramShowFilter :
-	FILTER_LAYOUT:histogramShowFilter(imageFormat, showHistogramShader)
+	FILTER_LAYOUT:PlotHistogramFilter(outputFormat, PlotHistogramShader)
 
 	// Create the pipeline :
-	PIPELINE_MAIN:prettyHistogramPipeline
+	PIPELINE_MAIN:PlotHistogramPipeline
 	{
 		INPUT_PORTS(inputTexture)
-		OUTPUT_PORTS(histogramBins, outputTexture) // The first port will be the actual histogram and the second will be the enhanced image.
-
-		FILTER_INSTANCE:histogramFilterInstance(histogramFilter)
-		FILTER_INSTANCE:histogramShowFilterInstance(histogramShowFilter)
-
-		// Connections will be made automatically as our ports name are matching.
+		OUTPUT_PORTS(histogramBins, outputTexture) 
+		FILTER_INSTANCE:HistogramFilter(HistogramFilter)
+		FILTER_INSTANCE:PlotHistogramFilter(PlotHistogramFilter)
 	}
 	\endcode
 
@@ -1156,9 +1141,14 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	HdlTextureFormat imageFormat(w, h, GL_RGB, GL_UNSIGNED_BYTE);
 	HdlTexture theTexture(imageFormat);
 
-	// Create and load the pipeline :
 	Loader loader;
-	loader.addRequiredElement(imageFormat, "imageFormat");
+
+	// Load the standard modules :
+	LayoutLoaderModules::addBasicModules(loader);
+
+	// Give the size of the current texture : 
+	loader.addRequiredElement("inputTextureFormat", imageFormat);
+
 	Pipeline* prettyHistogramPipeline = loader("prettyHistogram.ppl", "PrettyHistogramPipeline");
 
 	// Write in the texture :

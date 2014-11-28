@@ -700,6 +700,34 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_ALWAYS )
 		KEYWORD_PAIR( GL_NEVER )
 
+		// Function
+		KEYWORD_PAIR( GL_FUNC_ADD )
+		KEYWORD_PAIR( GL_FUNC_SUBTRACT )
+		KEYWORD_PAIR( GL_FUNC_REVERSE_SUBTRACT )
+		KEYWORD_PAIR( GL_MIN )
+		KEYWORD_PAIR( GL_MAX )
+
+		// Blending
+		KEYWORD_PAIR( GL_SRC_COLOR )
+		KEYWORD_PAIR( GL_ONE_MINUS_SRC_COLOR )
+		KEYWORD_PAIR( GL_DST_COLOR )
+		KEYWORD_PAIR( GL_ONE_MINUS_DST_COLOR )
+		KEYWORD_PAIR( GL_SRC_ALPHA )
+		KEYWORD_PAIR( GL_ONE_MINUS_SRC_ALPHA )
+		KEYWORD_PAIR( GL_DST_ALPHA )
+		KEYWORD_PAIR( GL_ONE_MINUS_DST_ALPHA )
+		KEYWORD_PAIR( GL_CONSTANT_COLOR )
+		KEYWORD_PAIR( GL_ONE_MINUS_CONSTANT_COLOR )
+		KEYWORD_PAIR( GL_CONSTANT_ALPHA )
+		KEYWORD_PAIR( GL_ONE_MINUS_CONSTANT_ALPHA )
+		KEYWORD_PAIR( GL_SRC_ALPHA_SATURATE )
+
+		// Pipeline parts
+		KEYWORD_PAIR( GL_CLEAR )
+		KEYWORD_PAIR( GL_BLEND )
+		KEYWORD_PAIR( GL_DEPTH_TEST )
+		KEYWORD_PAIR( GL_STENCIL_TEST )
+
 		#undef KEYWORD_PAIR
 	};
 
@@ -713,7 +741,7 @@ using namespace Glip::CoreGL;
 	**/
 	std::string Glip::CoreGL::glParamName(GLenum param)
 	{
-		const unsigned int numTokens = sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair);
+		const int numTokens = static_cast<int>(sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair));
 
 		// Mixed name :
 		if(param==GL_POINTS || param==GL_ZERO || param==GL_FALSE)
@@ -738,7 +766,7 @@ using namespace Glip::CoreGL;
 	**/
 	GLenum Glip::CoreGL::glFromString(const std::string& name)
 	{
-		const unsigned int numTokens = sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair);
+		const int numTokens = static_cast<int>(sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair));
 
 		for(int i=0; i<numTokens; i++)
 		{

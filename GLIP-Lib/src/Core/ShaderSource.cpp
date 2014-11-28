@@ -57,7 +57,10 @@
 	\param _lineOffset Correction added to the debugger info (also if loaded from a Layout File for example).
 	**/
 	ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
-	 : compatibilityRequest(false), versionNumber(0), sourceInfo(_sourceInfo), lineOffset(_lineOffset)
+	 :	sourceInfo(_sourceInfo),
+		compatibilityRequest(false), 
+		versionNumber(0),  
+		lineOffset(_lineOffset)
 	{
 		size_t newline = src.find('\n');
 
@@ -193,7 +196,7 @@
 
 		std::string current;
 		bool recording=false;
-		for(int i=0; i<line.size(); i++)
+		for(unsigned int i=0; i<line.size(); i++)
 		{
 			bool 	isDelimiter = (delimiters.find(line[i])!=std::string::npos),
 				isWordDelim = (wordsDelim.find(line[i])!=std::string::npos);
@@ -325,6 +328,9 @@
 		std::vector<std::string> split;
 		wordSplit(line, split);
 
+		if(split.empty())
+			return ;
+
 		// Read it :
 		const std::string 	versionKeyword 	= "#version",
 					uniformKeyword 	= "uniform",
@@ -336,7 +342,7 @@
 			readingVarNames		= false,
 			waitComa		= false;
 		GLenum typeCode;
-		for(int k=0; k<split.size(); k++)
+		for(unsigned int k=0; k<split.size(); k++)
 		{
 			if(endOfCodeLine.find(split[k])!=std::string::npos)
 			{
@@ -361,7 +367,7 @@
 				if(!fromString(split[k], versionNumber))
 					throw Exception("ShaderSource::parseCode - GLSL version number cannot be read from string \"" + split[k] + "\".", __FILE__, __LINE__);
 			}
-			else if(previousWasUniform && !readingVarNames && k<split.size()-1)
+			else if(previousWasUniform && !readingVarNames && k<(split.size()-1))
 			{
 				typeCode = parseUniformTypeCode(split[k], split[k+1]);
 				readingVarNames = true;
@@ -376,7 +382,7 @@
 				else
 					inSamplers2D.push_back(split[k]);
 			}
-			else if(previousWasOut && !readingVarNames && k<split.size()-1)
+			else if(previousWasOut && !readingVarNames && k<(split.size()-1))
 			{
 				typeCode = parseOutTypeCode(split[k], split[k+1]);
 				readingVarNames = true;

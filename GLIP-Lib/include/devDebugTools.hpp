@@ -30,9 +30,9 @@
 		//#define __GLIPLIB_TRACK_GL_ERRORS__
 
 	// Tools
-		#define STR_EXPAND(tok) 	#tok
-		#define STR(tok) 		STR_EXPAND(tok)
-		#define __HERE__		"[" STR(__FUNCTION__) " at " STR(__FILE__) " : " STR(__LINE__) "] "
+		#define GLIP_STR_EXPAND(tok) 	#tok
+		#define GLIP_STR(tok) 		GLIP_STR_EXPAND(tok)
+		#define __HERE__		"[" GLIP_STR(__FUNCTION__) " at " GLIP_STR(__FILE__) " : " GLIP_STR(__LINE__) "] "
 
 		#define OPENGL_ERROR_TRACKER(functionName, callLine) \
 			{ \

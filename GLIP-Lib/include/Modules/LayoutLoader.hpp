@@ -125,16 +125,21 @@ Examples : <BR>
 } <BR>
 
 - Shader source code, from the same file : <BR>
-<b>SHADER_SOURCE</b>:<i>source_name</i>
-{
-	<i>source code</i>
-}
+<b>SHADER_SOURCE</b>:<i>source_name</i> <BR>
+{ <BR>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>source code</i> <BR>
+} <BR>
 
 - Shader source code, from the another file : <BR>
 <b>SHADER_SOURCE</b>:<i>source_name</i>(<i>string filename</i>)
 
 - Filter layout :
-<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <b>CLEARING_ON</b>/<b>CLEARING_OFF</b>, <b>BLENDING_ON</b>/<b>BLENDING_OFF</b>, <i>geometry_name</i>])
+<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <i>geometry_name</i>]) <BR>
+[{<BR>
+&nbsp;&nbsp;&nbsp;&nbsp; GL_CLEAR(<i>true/false</i>)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp; GL_BLEND(<i>sFactor</i>,<i>dFactor</i>,<i>blendingFunction</i>)<BR>
+&nbsp;&nbsp;&nbsp;&nbsp; GL_DEPTH_TEST(<i>depthTestFunction</i>)<BR>
+}]<BR>
 
 - Pipeline layout : <BR>
 <b>PIPELINE_LAYOUT</b>:<i>pipeline_layout_name</i> <BR>

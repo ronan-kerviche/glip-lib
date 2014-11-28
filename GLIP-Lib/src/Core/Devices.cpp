@@ -373,7 +373,7 @@
 		if(getNumInputPort()==0)
 			throw Exception("OutputDevice::operator<<(HdlTexture&) - OutputDevice " + getFullName() + " has no configured input ports.", __FILE__, __LINE__);
 
-		if(argumentsList.size()>=getNumInputPort())
+		if(static_cast<int>(argumentsList.size())>=getNumInputPort())
 			throw Exception("OutputDevice::operator<<(HdlTexture&) - Too much arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 		argumentsList.push_back(&texture);
@@ -394,7 +394,7 @@
 
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
-			if(argumentsList.size()>=getNumInputPort())
+			if(static_cast<int>(argumentsList.size())>=getNumInputPort())
 				throw Exception("OutputDevice::operator<<(Pipeline&) - Too much arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 			argumentsList.push_back(&pipeline.out(i));
@@ -415,7 +415,7 @@
 			throw Exception("OutputDevice::operator<<(OutputDevice::ActionType) - OutputDevice " + getFullName() + " has no configured input ports.", __FILE__, __LINE__);
 
 		// Check the number of arguments given :
-		if(argumentsList.size()!=getNumInputPort())
+		if(static_cast<int>(argumentsList.size())!=getNumInputPort())
 			throw Exception("OutputDevice::operator<<(ActionType) - Too few arguments given to OutputDevice " + getFullName() + ".", __FILE__, __LINE__);
 
 		switch(a)

@@ -45,11 +45,24 @@
 		\param _showManualOnError Requiring the LayoutLoader to show the manual if any errors occur.
 		**/
 		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError)
-		 : name(_name), manual(_manual), minNumArguments(_minNumArguments), maxNumArguments(_maxNumArguments), bodyPresence(_bodyPresence)
+		 : 	name(_name), 
+			manual(_manual), 
+			minNumArguments(_minNumArguments), 
+			maxNumArguments(_maxNumArguments), 
+			bodyPresence(_bodyPresence),
+			showManualOnError(_showManualOnError)
 		{ }
 
 		LayoutLoaderModule::LayoutLoaderModule(const LayoutLoaderModule& m)
-		 : name(m.name), manual(m.manual), minNumArguments(m.minNumArguments), maxNumArguments(m.maxNumArguments), bodyPresence(m.bodyPresence), showManualOnError(m.showManualOnError)
+		 : 	name(m.name), 
+			manual(m.manual), 
+			minNumArguments(m.minNumArguments), 
+			maxNumArguments(m.maxNumArguments), 
+			bodyPresence(m.bodyPresence), 
+			showManualOnError(m.showManualOnError)
+		{ }
+
+		LayoutLoaderModule::~LayoutLoaderModule(void)
 		{ }
 
 		/**
@@ -160,6 +173,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1, true,	"Change the size of a format, save as a new format.\n"
 											"Arguments : nameOriginal, widthNew, heightNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -186,6 +213,20 @@
 											"Arguments : nameOriginal, scaleFactor, nameNew.\n"
 											"            nameOriginal, scaleFactorX, scaleFactorY, nameNew.")
 		 	{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -226,6 +267,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1, true,	"Change the channels of a format, save as a new format.\n"
 												"Arguments : nameOriginal, channelNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -241,6 +296,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1, true,	"Change the depth of a format, save as a new format.\n"
 												"Arguments : nameOriginal, depthNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -256,6 +325,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1, true,	"Change the filtering of a format, save as a new format.\n"
 												"Arguments : nameOriginal, minNew, magNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -272,6 +355,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1, true,	"Change the wrapping of a format, save as a new format.\n"
 												"Arguments : nameOriginal, sNew, tNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+	
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -288,6 +385,20 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1, true,	"Change the mipmap level of a format, save as a new format.\n"
 												"Arguments : nameOriginal, mNew, nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
 
@@ -304,10 +415,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the smallest width, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					widthBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -332,10 +457,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the largest width, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					widthBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -360,10 +499,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the smallest height, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					heightBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -388,10 +541,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the largest height, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					heightBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -416,10 +583,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the smallest number of pixels, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					sizeBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -444,10 +625,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the largest number of pixels, save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				int 	kBest 		= 0,
 					sizeBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -472,10 +667,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the smallest number of elements (pixels times channels count), save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)				
+
 				int 	kBest 		= 0,
 					sizeBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -500,10 +709,24 @@
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the largest number of elements (pixels times channels count), save as a new format.\n"
 												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)				
+
 				int 	kBest 		= 0,
 					sizeBest	= 0;
 
-				for(int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=0; k<arguments.size()-1; k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -529,6 +752,18 @@
 												"Arguments : nameFormat, nameSetting, value.\n"
 												"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
 			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
@@ -558,6 +793,18 @@
 													"Arguments : nameFormat, nameSetting, value.\n"
 													"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
 			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
@@ -587,6 +834,19 @@
 												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
 												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
 
@@ -605,6 +865,19 @@
 												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
 												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
 
@@ -625,6 +898,21 @@
 											"                     the first pipeline are not equal to the number of input of the second pipeline,\n"
 											"                     then the module will report an error.\n")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				const int startPipelines = 2;
 				std::string requiredElements;
 				VanillaParserSpace::Element 	result;
@@ -645,7 +933,7 @@
 				// Get all the pipelines : 
 				std::string lastInstance;
 				std::vector<std::string> outputPortNames;
-				for(int k=startPipelines; k<arguments.size(); k++)
+				for(unsigned int k=startPipelines; k<arguments.size(); k++)
 				{
 					// Access the pipeline : 
 					PIPELINE_MUST_EXIST( arguments[k] );
@@ -705,11 +993,11 @@
 					else
 					{
 						// Standard check : 
-						if(itCurrentPipeline->second.getNumInputPort() > outputPortNames.size())
+						if(itCurrentPipeline->second.getNumInputPort()>static_cast<int>(outputPortNames.size()))
 							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + toString(outputPortNames.size()) + " output ports.", __FILE__, __LINE__);
 
 						// Check the previous number of output : 
-						if(isStrict && itCurrentPipeline->second.getNumInputPort() != outputPortNames.size())
+						if(isStrict && itCurrentPipeline->second.getNumInputPort()!=static_cast<int>(outputPortNames.size()))
 							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + toString(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", __FILE__, __LINE__);
 
 						// Make the connections : 
@@ -775,8 +1063,21 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 2, 2, -1, true,	"Create a SHARED_SOURCE containing an ivec2 describing the size of the texture passed in argument.\n"
 											"For instance, can be used in a shader with : const ivec2 textureSize = INSERT(name);\n"
-											"Arguments   : textureFormat, sharedSourceName\n")
+											"Arguments   : textureFormat, sharedCodeName\n")
 			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				FORMAT_MUST_EXIST( arguments[0] )
 				SHAREDCODE_MUST_NOT_EXIST( arguments[1] )
 	
@@ -791,6 +1092,20 @@
 											"Argument    : error description.\n"
 											"Body (opt.) : more complete description of the error.")
 			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
 				Exception m("Error : " + arguments.front(), __FILE__, __LINE__);
 
 				if(body.empty())

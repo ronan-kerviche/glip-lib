@@ -306,7 +306,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	\fn int HdlTextureFormatDescriptor::channelIndex(GLenum channel) const
 	\brief Returns the channel index or raise an exception if the channel is unknown.
 	\param channel The channel name (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA, GL_LUMINANCE or GL_NONE).
-	\return Returns the channel index (-1 for GL_NONE or if the channel does not exist in the current format).
+	\return Returns the channel index (-1 for GL_NONE).
 	**/
 	int HdlTextureFormatDescriptor::channelIndex(GLenum channel) const
 	{

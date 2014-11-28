@@ -131,6 +131,9 @@ Example of how to use PBOTextureReader :
 		{
 			private : 
 				OutputDevice::OutputDeviceLayout getLayout(void) const;
+
+				PBOTextureReader(const PBOTextureReader&);
+				const PBOTextureReader& operator=(const PBOTextureReader&);
 		
 			protected :
 				void process(void);

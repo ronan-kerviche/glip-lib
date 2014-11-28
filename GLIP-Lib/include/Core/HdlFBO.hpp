@@ -56,9 +56,10 @@
 					// Tools
 					void bindTextureToFBO(int i);
 					void unbindTextureFromFBO(int i);
-					/*void clearList(void);
-					void addTolist(GLenum attach);
-					void removeFromList(GLenum attach);*/
+				
+					// No copy :
+					HdlFBO(const HdlFBO&);
+					const HdlFBO& operator=(const HdlFBO&);	
 
 				public :
 					// Tools
@@ -72,7 +73,7 @@
 					void		endRendering(void);
 					void		bind(void);
 					HdlTexture* 	operator[](int i);
-					int		getSize(bool askDriver = false);
+					size_t		getSize(bool askDriver = false);
 					GLenum		test(void);
 
 					// Static tools :

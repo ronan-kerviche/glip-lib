@@ -270,13 +270,13 @@
 		if(minArguments>0 && e.arguments.empty())
 			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s).", __FILE__, __LINE__);
 
-		if(e.arguments.size()!=minArguments && minArguments==maxArguments && minArguments>=0)
+		if(static_cast<int>(e.arguments.size())!=minArguments && minArguments==maxArguments && minArguments>=0)
 			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have exactly "  + toString(minArguments) + " argument(s).", __FILE__, __LINE__);
 
-		if(e.arguments.size()<minArguments && minArguments>=0)
+		if(static_cast<int>(e.arguments.size())<minArguments && minArguments>=0)
 			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s), but it has only " + toString(e.arguments.size()) + ".", __FILE__, __LINE__);
 
-		if(e.arguments.size()>maxArguments && maxArguments>=0)
+		if(static_cast<int>(e.arguments.size())>maxArguments && maxArguments>=0)
 			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + toString(maxArguments) + " argument(s), but it has " + toString(e.arguments.size()) + ".", __FILE__, __LINE__);
 
 		if(e.noBody && bodyProperty>0)
@@ -949,7 +949,7 @@
 						u = 0.0f, 
 						v = 0.0f;
 				int 		pArg = 0;				
-				for(int k=0; k<associatedKeywords.size(); k++)
+				for(unsigned int k=0; k<associatedKeywords.size(); k++)
 				{
 					// Test :
 					if(associatedKeywords[k]==KW_LL_VERTEX)
@@ -1022,7 +1022,7 @@
 
 				// Second pass for elements : 
 				std::vector<GLuint> indices(g->numVerticesPerEl);
-				for(int k=0; k<associatedKeywords.size(); k++)
+				for(unsigned int k=0; k<associatedKeywords.size(); k++)
 				{
 					if(associatedKeywords[k]==KW_LL_ELEMENT)
 					{
@@ -1057,7 +1057,7 @@
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests :
-		preliminaryTests(e, 1, 2, 6, -1, "FilterLayout");
+		preliminaryTests(e, 1, 2, 4, 0, "FilterLayout");
 
 		// Find the format :
 		std::map<std::string,HdlTextureFormat>::iterator 	format		 = formatList.find(e.arguments[0]);
@@ -1087,14 +1087,14 @@
 			}
 		}
 
-		if(e.arguments.size()>5)
+		if(e.arguments.size()>3)
 		{
-			if(e.arguments[5]!=keywords[KW_LL_STANDARD_QUAD])
+			if(e.arguments[3]!=keywords[KW_LL_STANDARD_QUAD])
 			{
-				geometry = geometryList.find(e.arguments[5]);
+				geometry = geometryList.find(e.arguments[3]);
 
 				if(geometry==geometryList.end())
-					throw Exception("From line " + toString(e.startLine) + " : No Geometry with name \"" + e.arguments[5] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+					throw Exception("From line " + toString(e.startLine) + " : No Geometry with name \"" + e.arguments[3] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
 
 				geometryPtr = &geometry->second;
 			}
@@ -1104,7 +1104,7 @@
 
 		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
 
-		if(e.arguments.size()>3)
+		/*if(e.arguments.size()>3)
 		{
 			if(e.arguments[3]==keywords[KW_LL_CLEARING_ON])
 				filterLayout->second.enableClearing();
@@ -1122,6 +1122,77 @@
 				filterLayout->second.disableBlending();
 			else
 				throw Exception("From line " + toString(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[KW_LL_BLENDING_ON] + "\" or \"" + keywords[KW_LL_BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+		}*/
+
+		if(!e.noBody && !e.body.empty())
+		{
+			try
+			{
+				VanillaParser parser(e.body, e.bodyLine);
+
+				// Classify :
+				std::map<GLenum, bool> setParametersTest;
+				setParametersTest[GL_CLEAR]	= false;
+				setParametersTest[GL_BLEND]	= false;
+				setParametersTest[GL_DEPTH_TEST]= false;
+
+				for(unsigned int k=0; k<parser.elements.size(); k++)
+				{
+					GLenum glId = glFromString(parser.elements[k].strKeyword);
+					
+					if(glId==GL_CLEAR)
+					{
+						if(setParametersTest[GL_CLEAR])
+							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_CLEAR parameter was already set.", __FILE__, __LINE__); 
+
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+						
+						if(parser.elements[k].arguments[0]=="true")
+							filterLayout->second.enableClearing();
+						else if(parser.elements[k].arguments[0]=="false")
+							filterLayout->second.disableClearing();
+						else
+							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Unknown settings \"" + parser.elements[k].arguments[0] + "\".", __FILE__, __LINE__); 
+
+						setParametersTest[GL_CLEAR] = true;
+					}
+					else if(glId==GL_BLEND)
+					{
+						if(setParametersTest[GL_BLEND])
+							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_BLEND parameter was already set.", __FILE__, __LINE__);
+
+						preliminaryTests(parser.elements[k], -1, 3, 3, -1, e.name);
+
+						GLenum 	sFactor 	= glFromString(parser.elements[k].arguments[0]),
+							dFactor 	= glFromString(parser.elements[k].arguments[1]),
+							blendingEquation= glFromString(parser.elements[k].arguments[2]);
+
+						filterLayout->second.enableBlending(sFactor, dFactor, blendingEquation);
+
+						setParametersTest[GL_BLEND] = true;
+					}
+					else if(glId==GL_DEPTH_TEST)
+					{
+						if(setParametersTest[GL_DEPTH_TEST])
+							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_DEPTH_TEST parameter was already set.", __FILE__, __LINE__);
+							
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						GLenum  depthTestingFunction = glFromString(parser.elements[k].arguments[0]);
+
+						filterLayout->second.enableDepthTesting(depthTestingFunction);
+		
+						setParametersTest[GL_DEPTH_TEST] = true;
+					}
+					else
+						throw Exception("From line " + toString(parser.elements[k].startLine) + " : The parameter \"" + parser.elements[k].strKeyword + "\" is invalid. ", __FILE__, __LINE__);
+				}
+			}
+			catch(Exception& ex)
+			{
+				Exception m("From line " + toString(e.startLine) + " : Exception caught while building FilterLayout \"" + e.name + "\".", __FILE__, __LINE__);
+				throw m + ex;
+			}
 		}
 	}
 
@@ -1154,7 +1225,7 @@
 
 					int 	inputPorts = -1,
 						outputPorts = -1;
-					for(int k=0; k<associatedKeywords.size(); k++)
+					for(unsigned int k=0; k<associatedKeywords.size(); k++)
 					{
 						switch(associatedKeywords[k])
 						{
@@ -1182,20 +1253,20 @@
 					// Tests inputs : 
 					if(inputPorts>=0)
 					{
-						if(parser.elements[inputPorts].arguments.size() != pipeline.getNumInputPort())
+						if(static_cast<int>(parser.elements[inputPorts].arguments.size())!=pipeline.getNumInputPort())
 							throw Exception("From line " + toString(parser.elements[inputPorts].startLine) + " : The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumInputPort()) + " input ports while the declaration expects " + toString(parser.elements[inputPorts].arguments.size()) + " input ports.", __FILE__, __LINE__);
 
-						for(int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
+						for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 							pipeline.setInputPortName(k, parser.elements[inputPorts].arguments[k]);
 					}
 
 					// Tests inputs : 
 					if(outputPorts>=0)
 					{
-						if(parser.elements[outputPorts].arguments.size() != pipeline.getNumOutputPort())
+						if(static_cast<int>(parser.elements[outputPorts].arguments.size())!=pipeline.getNumOutputPort())
 							throw Exception("From line " + toString(parser.elements[outputPorts].startLine) + " : The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumOutputPort()) + " output ports while the declaration expects " + toString(parser.elements[outputPorts].arguments.size()) + " output ports.", __FILE__, __LINE__);
 
-						for(int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
+						for(unsigned int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
 							pipeline.setOutputPortName(k, parser.elements[outputPorts].arguments[k]);
 					}
 				}
@@ -1224,7 +1295,7 @@
 			int 	inputPorts = -1,
 				outputPorts = -1,
 				components = 0;
-			for(int k=0; k<associatedKeywords.size(); k++)
+			for(unsigned int k=0; k<associatedKeywords.size(); k++)
 			{
 				switch(associatedKeywords[k])
 				{
@@ -1273,21 +1344,21 @@
 			{
 				preliminaryTests(parser.elements[inputPorts], -1, 1, 256, -1, "InputPorts");
 
-				for(int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
+				for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 					layout.addInput(parser.elements[inputPorts].arguments[k]);
 			}
 
 			// Add the outputs :
 			preliminaryTests(parser.elements[outputPorts], -1, 1, 256, -1, "OutputPorts");
 
-			for(int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
+			for(unsigned int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
 				layout.addOutput(parser.elements[outputPorts].arguments[k]);
 
 			// Parse and add the Objects for the PipelineLayout :
 			std::map<std::string,FilterLayout>::iterator	filter;
 			std::map<std::string,PipelineLayout>::iterator	pipeline;
 
-			for(int k=0; k<associatedKeywords.size(); k++)
+			for(unsigned int k=0; k<associatedKeywords.size(); k++)
 			{
 				switch(associatedKeywords[k])
 				{
@@ -1338,7 +1409,7 @@
 
 			// Install the connections :
 			bool makeAutoConnect = true;
-			for(int k=0; k<associatedKeywords.size(); k++)
+			for(unsigned int k=0; k<associatedKeywords.size(); k++)
 			{
 				if(associatedKeywords[k]==KW_LL_CONNECTION)
 				{
@@ -1406,7 +1477,7 @@
 			}
 
 			// Process :
-			for(int k=0; k<associatedKeyword.size(); k++)
+			for(unsigned int k=0; k<associatedKeyword.size(); k++)
 			{
 				switch(associatedKeyword[k])
 				{
@@ -1502,7 +1573,7 @@
 			// Test for possible external elements :
 			int 	inputPorts = -1,
 				outputPorts = -1;
-			for(int k=0; k<associatedKeywords.size(); k++)
+			for(unsigned int k=0; k<associatedKeywords.size(); k++)
 			{
 				switch(associatedKeywords[k])
 				{
@@ -1517,6 +1588,8 @@
 							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
 						else
 							outputPorts = k;
+						break;
+					default : // Drop.
 						break;
 				}
 			}
@@ -1857,7 +1930,7 @@
 			classify(rootParser.elements, associatedKeyword);
 
 			// Process
-			for(int k=0; k<associatedKeyword.size(); k++)
+			for(unsigned int k=0; k<associatedKeyword.size(); k++)
 			{
 				switch(associatedKeyword[k])
 				{
@@ -2120,7 +2193,7 @@
 
 			// Find grid size :
 			GLfloat x = 0.0, y = 0.0; 
-			for(int k=0; k<mdl.getNumVertices(); k++)
+			for(unsigned int k=0; k<mdl.getNumVertices(); k++)
 			{
 				x = std::max(x, mdl.x(k));
 				y = std::max(y, mdl.y(k));
@@ -2135,7 +2208,7 @@
 
 			// Find grid size : 
 			GLfloat x = 0.0, y = 0.0, z = 0.0; 
-			for(int k=0; k<mdl.getNumVertices(); k++)
+			for(unsigned int k=0; k<mdl.getNumVertices(); k++)
 			{
 				x = std::max(x, mdl.x(k));
 				y = std::max(y, mdl.y(k));
@@ -2159,7 +2232,7 @@
 			v.strKeyword	= LayoutLoader::getKeyword( KW_LL_VERTEX );
 			v.noName 	= true;
 			v.noBody 	= true;
-			for(int k=0; k<mdl.getNumVertices(); k++)
+			for(unsigned int k=0; k<mdl.getNumVertices(); k++)
 			{
 				v.arguments.clear();
 
@@ -2186,7 +2259,7 @@
 			p.noName 	= true;
 			p.noBody 	= true;
 			e.body += "\n";
-			for(int k=0; k<mdl.getNumElements(); k++)
+			for(unsigned int k=0; k<mdl.getNumElements(); k++)
 			{
 				p.arguments.clear();
 

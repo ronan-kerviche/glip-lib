@@ -1005,6 +1005,11 @@ using namespace QGPM;
 			// And run : 
 			compute();
 		}
+		else
+		{
+			Exception e("[WARNING] Cannot fully compile the pipeline at the moment (missing inputs or other requirements).", __FILE__, __LINE__);
+			emit compilationFailureNotification(identifier, e);
+		}
 	}
 
 	bool PipelineItem::isValid(void) const

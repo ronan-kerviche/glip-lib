@@ -128,7 +128,8 @@ using namespace Glip::CoreGL;
 		//std::cout << "    Vertex description 1 : "; glErrors(true, false);
 		if(dimTexCoords>0)
 		{
-			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(NULL + nVert*dim*sizeof(GLfloat)));
+			//OLD, offset on NLL : glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(NULL + nVert*dim*sizeof(GLfloat)));
+			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(nVert*dim*sizeof(GLfloat)));
 			//std::cout << "    Texcoords description 1 : "; glErrors(true, false);
 		}
 

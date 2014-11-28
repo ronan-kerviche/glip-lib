@@ -18,6 +18,7 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include "NetPBM.hpp"
+#include "LibRawInterface.hpp"
 #include "QMenuTools.hpp"
 
 // To remove : 
@@ -50,7 +51,7 @@ using namespace QGIC;
 		else
 			mode = GL_RGB;
 
-		const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
+		//const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
 
 		HdlTextureFormat textureFormat( qimage.width(), qimage.height(), mode, GL_UNSIGNED_BYTE );
 		
@@ -137,8 +138,18 @@ using namespace QGIC;
 		if(qimage==NULL)
 		{
 			// Create : 
-			if( descriptor.hasLuminanceChannel() && (descriptor.luminanceDepthInBits==8 || depthBytes==1) )
-				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_RGB888);
+			if( descriptor.numChannels()==1 && depthBytes==1 )
+			{
+				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_Indexed8);
+			
+				// Create the index :
+				QVector<QRgb> colors;
+
+				for(unsigned int k=0; k<256; k++)
+					colors.push_back(QRgb(0xFF000000 | k<<16 | k<<8 | k));
+
+				qimage->setColorTable(colors);
+			}
 			else if( descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && !descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
 				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_RGB888);
 			else if(descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
@@ -151,8 +162,8 @@ using namespace QGIC;
 			// Check : 
 			if(qimage->width()!=imageBuffer.getWidth() || qimage->height()!=imageBuffer.getHeight())
 				throw Exception("toQImage - qimage has an incompatible size.", __FILE__, __LINE__);
-			else if( (descriptor.hasLuminanceChannel() && (descriptor.luminanceDepthInBits==8 || depthBytes==1)) && qimage->format()!=QImage::Format_RGB888 )
-				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
+			else if( (descriptor.numChannels()==1 && depthBytes==1) && (qimage->format()!=QImage::Format_Indexed8 || qimage->colorTable().isEmpty()) )
+				throw Exception("toQImage - qimage has an incompatible format (should be a grayscale image).", __FILE__, __LINE__);
 			else if( (descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && !descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1)) && qimage->format()!=QImage::Format_RGB888 )
 				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
 			else if( (descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1)) && qimage->format()!=QImage::Format_ARGB32 )
@@ -164,7 +175,7 @@ using namespace QGIC;
 		const int nChannels = qimage->bytesPerLine()/qimage->width();
 		GLenum mode;
 		if(nChannels==1)
-			mode = GL_LUMINANCE;
+			mode = imageBuffer.getGLMode();
 		else if(nChannels==2)
 			mode = GL_RG;
 		else if(nChannels==3)
@@ -274,7 +285,7 @@ using namespace QGIC;
 			throw Exception("File \"" + _filename.toStdString() + "\" does not exist.", __FILE__, __LINE__);
 
 		// Load : 
-		if(path.completeSuffix()=="raw")
+		if(QString::compare(path.completeSuffix(), "raw", Qt::CaseInsensitive)==0)
 		{
 			std::string comment;
 
@@ -286,8 +297,10 @@ using namespace QGIC;
 				std::cout << comment << std::endl;
 			}
 		}
-		else if(path.completeSuffix()=="ppm" || path.completeSuffix()=="pgm")
+		else if(QString::compare(path.completeSuffix(), "ppm", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "pgm", Qt::CaseInsensitive)==0)
 			imageBuffer 	= NetPBM::loadNetPBMFile(filename.toStdString());
+		else if(QString::compare(path.completeSuffix(), "cr2", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "nef", Qt::CaseInsensitive)==0)
+			imageBuffer	= libRawLoadImage(filename.toStdString());
 		else
 		{
 			QImage qimage(filename);

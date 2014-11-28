@@ -1,0 +1,48 @@
+/*
+	Histogram Plot
+*/
+
+INCLUDE(histogram.ppl)
+
+REQUIRED_FORMAT:outputFormat(inputFormat0)
+
+SHADER_SOURCE:PlotHistogramShader
+{
+	#version 130
+
+	uniform sampler2D histogramBins, inputTexture;
+	out vec4 outputTexture;
+
+	uniform float scale = 1.0;
+
+	void main()
+	{
+		vec2 pos = gl_TexCoord[0].st;
+		vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+		vec4 col = textureLod(inputTexture, pos, 0);
+
+		if(pos.t>(1.0-hist.r*scale) )
+			outputTexture.r = 1.0;
+		else
+			outputTexture.r = col.r;
+		if(pos.t>(1.0-hist.g*scale) )
+			outputTexture.g = 1.0;
+		else
+			outputTexture.g = col.g;
+		if(pos.t>(1.0-hist.b*scale) )
+			outputTexture.b = 1.0;
+		else
+			outputTexture.b = col.b;
+	}
+}
+
+FILTER_LAYOUT:PlotHistogramFilter(outputFormat, PlotHistogramShader)
+
+// Create the pipeline :
+PIPELINE_MAIN:PlotHistogramPipeline
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(histogramBins, outputTexture) 
+	FILTER_INSTANCE:HistogramFilter(HistogramFilter)
+	FILTER_INSTANCE:PlotHistogramFilter(PlotHistogramFilter)
+}

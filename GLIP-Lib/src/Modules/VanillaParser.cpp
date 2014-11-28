@@ -82,7 +82,7 @@
 		const std::string 	spacers = " \t\r\n\f\v",
 					spaces	= " \t";
 		const char 		newLine	= '\n',
-					space	= ' ',
+					//space	= ' ',
 					tab	= '\t';
 
 		size_t 	lineStart 	= 0,
@@ -213,7 +213,7 @@
 		
 			res += "(";
 
-			for(int k=0; k<arguments.size(); k++)
+			for(unsigned int k=0; k<arguments.size(); k++)
 			{
 				if(putComa)
 					res += ", ";
@@ -267,7 +267,7 @@
 		Element::Field 		currentField 		= Element::Keyword;
 		Element			el;
 
-		for(int k=0; k<code.size(); k++)
+		for(int k=0; k<static_cast<int>(code.size()); k++)
 		{
 			const bool isSpacer = (spacers.find(code[k])!=std::string::npos);
 

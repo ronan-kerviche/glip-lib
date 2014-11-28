@@ -138,10 +138,10 @@
 					AbstractPipelineLayout& 	pipelineLayout(const std::vector<std::string>& path); // Cannot be const as it can return itself.
 
 					Connection              	getConnection(int i) const;
-					std::string 			getConnectionDestinationsName(int filterSource, int port);
-					std::string 			getConnectionDestinationsName(const std::string& filterSource, const std::string& port);
-					std::string 			getConnectionSourceName(int filterDestination, int port);
-					std::string 			getConnectionSourceName(const std::string& filterDestination, const std::string& port);
+					//std::string 			getConnectionDestinationsName(int filterSource, int port);
+					//std::string 			getConnectionDestinationsName(const std::string& filterSource, const std::string& port);
+					//std::string 			getConnectionSourceName(int filterDestination, int port);
+					//std::string 			getConnectionSourceName(const std::string& filterDestination, const std::string& port);
 					bool 				check(bool exception = true);
 			};
 
@@ -339,7 +339,7 @@ the buffers cell which represents the needed buffers for one full computation. A
 					Pipeline(const AbstractPipelineLayout& p, const std::string& name);
 					~Pipeline(void);
 
-					int 			getNumActions(void);
+					int 			getNumActions(void) const;
 					int 			getSize(bool askDriver = false);
 
 					Pipeline& 		operator<<(HdlTexture& texture);

@@ -9,15 +9,17 @@ INCLUDEPATH += 	/usr/local/lib \
 		../ExternalSrc/Qt \
 		../../GLIP-Lib/include
 
-unix: 		LIBS += ../../GLIP-Lib/lib/libglip.so
+unix: 		LIBS += ../../GLIP-Lib/lib/libglip.so -lraw
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
 INCLUDEPATH +=	../ExternalSrc/Qt \
-		../ExternalSrc/NetPBM
+		../ExternalSrc/NetPBM \
+		../ExternalSrc/LibRaw 
 
 HEADERS += 	../ExternalSrc/Qt/GLSceneWidget.hpp \	
 		../ExternalSrc/NetPBM/NetPBM.hpp \ 
+		../ExternalSrc/LibRaw/LibRawInterface.hpp \
 		../ExternalSrc/Qt/QMenuTools.hpp \	
 		../ExternalSrc/Qt/ImageItem.hpp \ 
 		../ExternalSrc/Qt/PipelineManager.hpp \
@@ -27,6 +29,7 @@ HEADERS += 	../ExternalSrc/Qt/GLSceneWidget.hpp \
 		./src/GlipStudio.hpp
 SOURCES += 	../ExternalSrc/Qt/GLSceneWidget.cpp \	
 		../ExternalSrc/NetPBM/NetPBM.cpp \
+		../ExternalSrc/LibRaw/LibRawInterface.cpp \
 		../ExternalSrc/Qt/QMenuTools.cpp \	
 		../ExternalSrc/Qt/ImageItem.cpp \
 		../ExternalSrc/Qt/PipelineManager.cpp \

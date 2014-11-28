@@ -128,7 +128,7 @@ using namespace Glip::CoreGL;
 	**/
 	int HdlFBO::addTarget(void)
 	{
-		if(targets.size()>=getMaximumColorAttachment())
+		if(static_cast<int>(targets.size())>=getMaximumColorAttachment())
 			throw Exception("HdlFBO::addTarget - Can't add more target, limit reached : " + toString(getMaximumColorAttachment()) + " textures.", __FILE__, __LINE__);
 		else
 		{
@@ -166,7 +166,7 @@ using namespace Glip::CoreGL;
 		if(usedTarget==0)
 			usedTarget = targets.size();
 
-		if(usedTarget>targets.size())
+		if(usedTarget>static_cast<int>(targets.size()))
 			throw Exception("HdlFBO::beginRendering - Can't render to " + toString(usedTarget) + " textures because the current number of targets is " + toString(targets.size()), __FILE__, __LINE__);
 
 		// First run test : 
@@ -238,7 +238,7 @@ using namespace Glip::CoreGL;
 	**/
 	HdlTexture* HdlFBO::operator[](int i)
 	{
-		if(i<0 || i>targets.size())
+		if(i<0 || i>static_cast<int>(targets.size()))
 			throw Exception("HdlFBO::operator[] - Invalid index : " + toString(i) + " of " + toString(targets.size()), __FILE__, __LINE__);
 		else
 			return targets[i];
@@ -254,20 +254,22 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn     int HdlFBO::getSize(bool askDriver)
+	\fn     size_t HdlFBO::getSize(bool askDriver)
 	\brief  Gets the size of the FBO in bytes.
 	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return The size in byte of the multiple targets.
 	**/
-	int HdlFBO::getSize(bool askDriver)
+	size_t HdlFBO::getSize(bool askDriver)
 	{
 		if(!askDriver)
 			return getAttachmentCount() * HdlAbstractTextureFormat::getSize();
 		else
+		{
 			if(getAttachmentCount()>0)
 				return getAttachmentCount() * targets.front()->getSizeOnGPU();
 			else
 				return 0;
+		}
 	}
 
 	/**

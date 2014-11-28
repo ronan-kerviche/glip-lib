@@ -79,6 +79,8 @@ namespace Glip
 				const ImageBuffer& operator>>(ImageBuffer& image) const;
 				const ImageBuffer& operator>>(void* bytes) const;
 
+				bool isInside(const int& x, const int& y, const GLenum& channel) const;
+				int getIndex(const int& x, const int& y, const GLenum& channel) const;
 				long long get(const int& x, const int& y, const GLenum& channel) const;
 				void set(const long long& value, const int& x, const int& y, const GLenum& channel);
 				float getNormalized(const int& x, const int& y, const GLenum& channel) const;

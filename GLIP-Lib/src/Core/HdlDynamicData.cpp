@@ -29,10 +29,10 @@
 
 // HdlDynamicDataSpecial :
 	HdlDynamicData::HdlDynamicData(const GLenum& _type, int _rows, int _columns)
-	 :	type(_type),
-		supportingType(getRelatedGLSupportingType(_type)),
-		rows(_rows),
+	 :	rows(_rows),
 		columns(_columns),
+		type(_type),
+		supportingType(getRelatedGLSupportingType(_type)),	
 		floatingPointType(supportingType==GL_FLOAT || supportingType==GL_DOUBLE),
 		integerType(supportingType==GL_BYTE || supportingType==GL_UNSIGNED_BYTE || supportingType==GL_SHORT || supportingType==GL_UNSIGNED_SHORT || supportingType==GL_INT || supportingType==GL_UNSIGNED_INT),
 		booleanType(supportingType==GL_BOOL),
@@ -337,13 +337,13 @@
 
 // HdlDynamicTable :
 	HdlDynamicTable::HdlDynamicTable(const GLenum& _type, int _columns, int _rows, int _slices, bool _normalized, int _alignment, bool _proxy)
-	 :	type(_type),
-		rows(_rows),
+	 :	rows(_rows),
 		columns(_columns),
-		slices(_slices),
-		normalized(_normalized),
+		slices(_slices),	
 		alignment(_alignment),
-		proxy(_proxy)
+		proxy(_proxy),
+		normalized(_normalized),	
+		type(_type)	
 	{ }
 
 	HdlDynamicTable::~HdlDynamicTable(void)
@@ -535,7 +535,7 @@
 	**/
 	int HdlDynamicTable::getIndex(const int& j, const int& i, const int& d) const
 	{
-		return (i * columns + j) * rows + d;
+		return (i * columns + j) * slices + d;
 	}
 
 	/**
@@ -1053,7 +1053,10 @@
 	**/
 	void HdlDynamicTableIterator::jumpTo(const int& _j, const int& _i, const int& _d)
 	{
-		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getPosition(j, i, d);
+		j = _j;
+		i = _i;
+		d = _d;
+		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getPosition(_j, _i, _d);	
 	}
 
 	/**

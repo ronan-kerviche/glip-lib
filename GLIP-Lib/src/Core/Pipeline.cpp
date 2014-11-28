@@ -57,7 +57,7 @@
 		elementsID     	= c.elementsID;
 		connections	= c.connections;
 
-		for(int i=0; i<c.elementsLayout.size(); i++)
+		for(unsigned int i=0; i<c.elementsLayout.size(); i++)
 		{
 			switch(elementsKind[i])
 			{
@@ -76,7 +76,7 @@
 
 	AbstractPipelineLayout::~AbstractPipelineLayout(void)
 	{
-		for(int k=0; k<elementsLayout.size(); k++)
+		for(unsigned int k=0; k<elementsLayout.size(); k++)
 		{
 			switch(elementsKind[k])
 			{
@@ -144,7 +144,7 @@
 	**/
 	AbstractPipelineLayout::Connection AbstractPipelineLayout::getConnection(int i) const
 	{
-		if(i<0 || i>=connections.size())
+		if(i<0 || i>=static_cast<int>(connections.size()))
 			throw Exception("AbstractPipelineLayout::getConnection - Bad connection ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
 		return connections[i];
 	}
@@ -156,7 +156,7 @@
 	**/
 	void AbstractPipelineLayout::checkElement(int i) const
 	{
-		if(i<0 || i>=elementsLayout.size())
+		if(i<0 || i>=static_cast<int>(elementsLayout.size()))
 			throw Exception("AbstractPipelineLayout::checkElement - Bad element ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
 	}
 
@@ -195,7 +195,7 @@
 		numPipelines		= 0;
 		numUniformVariables 	= 0;
 
-		for(int i=0; i<elementsLayout.size(); i++)
+		for(unsigned int i=0; i<elementsLayout.size(); i++)
 		{
 			switch(elementsKind[i])
 			{
@@ -455,13 +455,13 @@
 			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__);
 	}
 
-	/**
-	\fn std::string AbstractPipelineLayout::getConnectionDestinationsName(int source, int port)
-	\brief Get the name of the elements linked to the output.
-	\param source The ID of the output element.
-	\param port The port of the output element.
-	\return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
-	**/
+	/*
+	fn std::string AbstractPipelineLayout::getConnectionDestinationsName(int source, int port)
+	brief Get the name of the elements linked to the output.
+	param source The ID of the output element.
+	param port The port of the output element.
+	return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
+	
 	std::string AbstractPipelineLayout::getConnectionDestinationsName(int source, int port)
 	{
 		std::vector<Connection> res = getConnectionDestinations(source, port);
@@ -479,27 +479,26 @@
 		return result;
 	}
 
-	/**
-	\fn std::string AbstractPipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
-	\brief Get the name of the elements linked to the output.
-	\param source The name of the output element.
-	\param port The name of the port of the output element.
-	\return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
-	**/
+	fn std::string AbstractPipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
+	brief Get the name of the elements linked to the output.
+	param source The name of the output element.
+	param port The name of the port of the output element.
+	return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
+	
 	std::string AbstractPipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
 	{
 		int id = getElementIndex(source);
 		int p  = componentLayout(id).getOutputPortID(port);
 		return getConnectionDestinationsName(id, p);
-	}
+	}*/
 
-	/**
-	\fn std::string AbstractPipelineLayout::getConnectionSourceName(int dest, int port)
-	\brief Get the name of the element linked to the input.
-	\param dest The ID of the input element.
-	\param port The port of the input element.
-	\return A standard string containing the element name linked to the input or raise an exception if any errors occur.
-	**/
+	/*
+	fn std::string AbstractPipelineLayout::getConnectionSourceName(int dest, int port)
+	brief Get the name of the element linked to the input.
+	param dest The ID of the input element.
+	param port The port of the input element.
+	return A standard string containing the element name linked to the input or raise an exception if any errors occur.
+
 	std::string AbstractPipelineLayout::getConnectionSourceName(int dest, int port)
 	{
 		Connection c = getConnectionSource(dest, port);
@@ -511,19 +510,18 @@
 		return tmp.getInputPortName(c.portOut);
 	}
 
-	/**
-	\fn std::string AbstractPipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
-	\brief Get the name of the element linked to the input.
-	\param dest The name of the input element.
-	\param port The name of the port of the input element.
-	\return A standard string containing the element name linked to the input or raise an exception if any errors occur.
-	**/
+	fn std::string AbstractPipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
+	brief Get the name of the element linked to the input.
+	param dest The name of the input element.
+	param port The name of the port of the input element.
+	return A standard string containing the element name linked to the input or raise an exception if any errors occur.
+	
 	std::string AbstractPipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
 	{
 		int id = getElementIndex(dest);
 		int p  = componentLayout(id).getOutputPortID(port);
 		return getConnectionSourceName(id, p);
-	}
+	}*/
 
 	/**
 	\fn bool AbstractPipelineLayout::check(bool exception)
@@ -535,7 +533,7 @@
 	{
 		std::string res;
 
-		for(int i=0; i<elementsLayout.size(); i++)
+		for(unsigned int i=0; i<elementsLayout.size(); i++)
 		{
 			AbstractComponentLayout& tmp = componentLayout(i);
 
@@ -617,7 +615,9 @@
 	\param type The typename.
 	**/
 	PipelineLayout::PipelineLayout(const std::string& type)
-	 : AbstractComponentLayout(type), ComponentLayout(type), AbstractPipelineLayout(type)
+	 : 	AbstractComponentLayout(type), 
+		ComponentLayout(type), 
+		AbstractPipelineLayout(type)
 	{ }
 
 	/**
@@ -626,7 +626,9 @@
 	\param c Copy.
 	**/
 	PipelineLayout::PipelineLayout(const AbstractPipelineLayout& c)
-	 : AbstractPipelineLayout(c), AbstractComponentLayout(c), ComponentLayout(c)
+	 : 	AbstractComponentLayout(c), 
+		ComponentLayout(c),
+		AbstractPipelineLayout(c)
 	{ }
 
 	/**
@@ -944,7 +946,7 @@
 // Pipeline::BuffersCell
 	Pipeline::BuffersCell::BuffersCell(const BufferFormatsCell& bufferFormats)
 	{
-		for(int k=0; k<bufferFormats.formats.size(); k++)
+		for(unsigned int k=0; k<bufferFormats.formats.size(); k++)
 			buffersList.push_back( new HdlFBO(bufferFormats.formats[k], bufferFormats.outputCounts[k]) );
 	}
 
@@ -961,8 +963,15 @@
 	\brief NODESC.
 	**/
 	Pipeline::Pipeline(const AbstractPipelineLayout& p, const std::string& name, bool fake)
-	 : AbstractComponentLayout(p), AbstractPipelineLayout(p), Component(p, "(Intermediate : " + name + ")"), perfsMonitoring(false), queryObject(0), currentCell(NULL)
-	{ }
+	 : 	AbstractComponentLayout(p), 
+		AbstractPipelineLayout(p), 
+		Component(p, "(Intermediate : " + name + ")"), 
+		currentCell(NULL),
+		perfsMonitoring(false), 	
+		queryObject(0)
+	{
+		UNUSED_PARAMETER(fake)
+	}
 
 	/**
 	\fn Pipeline::Pipeline(const AbstractPipelineLayout& p, const std::string& name)
@@ -971,7 +980,12 @@
 	\param name Name of the pipeline.
 	**/
 	Pipeline::Pipeline(const AbstractPipelineLayout& p, const std::string& name)
-	 : AbstractComponentLayout(p), AbstractPipelineLayout(p), Component(p, name), perfsMonitoring(false), queryObject(0), currentCell(NULL)
+	 :	AbstractComponentLayout(p), 
+		AbstractPipelineLayout(p), 
+		Component(p, name),
+		currentCell(NULL), 
+		perfsMonitoring(false), 
+		queryObject(0) 
 	{
 		cleanInput();
 
@@ -1108,7 +1122,7 @@
 					// (and thus removed from localConections) or that we have to find first.
 
 					int idx = -1;
-					for(int l=0; l<innerOutputConnections.size(); l++)
+					for(unsigned int l=0; l<innerOutputConnections.size(); l++)
 					{
 						if(innerOutputConnections[l].idIn==elIdx && innerOutputConnections[l].portIn==c.portOut)
 						{
@@ -1120,7 +1134,7 @@
 					// Otherwise, try to find it in localConnections and push it in innerOutputConnections :
 					if(idx<0)
 					{
-						for(int l=0; l<localConnections.size(); l++)
+						for(unsigned int l=0; l<localConnections.size(); l++)
 						{
 							if(localConnections[l].idIn==elIdx && localConnections[l].portIn==c.portOut)
 							{
@@ -1151,7 +1165,7 @@
 					const int elIdx = localToGlobalIdx[c.idIn];
 
 					// Shorten paths :
-					for(int l=0; l<localConnections.size(); l++)
+					for(unsigned int l=0; l<localConnections.size(); l++)
 					{
 						if(localConnections[l].idOut==elIdx && localConnections[l].portOut==c.portIn) // If the connections correspond to the other end.
 						{
@@ -1211,7 +1225,7 @@
 			outputsList.assign( getNumOutputPort(), blankOutput );
 
 			// Setup the requirements counters :
-			for(int k=0; k<filtersList.size(); k++)
+			for(unsigned int k=0; k<filtersList.size(); k++)
 			{
 				ActionHub hub;
 
@@ -1227,7 +1241,7 @@
 			}
 
 			// Initialize by decrementing the connections to this pipeline inputs :
-			for(int k=0; k<remainingConnections.size(); k++)
+			for(unsigned int k=0; k<remainingConnections.size(); k++)
 			{
 				if(remainingConnections[k].idOut==THIS_PIPELINE)
 				{
@@ -1253,7 +1267,7 @@
 				#endif
 				// Explore the list to find the possibles solutions :
 				std::vector<int> candidatesIdx;
-				for(int k=0; k<requestedInputConnections.size(); k++)
+				for(unsigned int k=0; k<requestedInputConnections.size(); k++)
 				{
 					//std::cout << k << " -> " << requestedInputConnections[k] << std::endl;
 					if(requestedInputConnections[k]==0)
@@ -1280,7 +1294,7 @@
 				int bIdx = -1;						// The buffer index (if one already exists).
 				int currentDecision = 5;				// No decision.
 
-				for(int k=0; k<candidatesIdx.size(); k++)
+				for(unsigned int k=0; k<candidatesIdx.size(); k++)
 				{
 					// Try to find a match in the buffers :
 					bool noMatch = true;
@@ -1359,7 +1373,7 @@
 					throw Exception("Internal error : Unkown action decision (" + toString(currentDecision) + ").", __FILE__, __LINE__);
 
 				// Find all the buffers read by the current actions and decrease their occupancy :
-				for(int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
+				for(unsigned int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
 				{
 					if( actionsList.back().inputBufferIdx[k]!=THIS_PIPELINE )
 						bufferOccupancy[ actionsList.back().inputBufferIdx[k] ]--;
@@ -1369,7 +1383,7 @@
 				requestedInputConnections[fIdx] = -1;
 
 				// Update the buffer occupancy to the new number of output and at the same time decrease the number of requests :
-				for(int k=0; k<remainingConnections.size(); k++)
+				for(unsigned int k=0; k<remainingConnections.size(); k++)
 				{
 					if(filtersGlobalIDsList[remainingConnections[k].idOut]==fIdx)
 					{
@@ -1401,7 +1415,7 @@
 				// Test if all were processed :
 				allProcessed 	= true;
 				bool noNextStep = true;
-				for(int k=0; k<requestedInputConnections.size(); k++)
+				for(unsigned int k=0; k<requestedInputConnections.size(); k++)
 				{
 					if(requestedInputConnections[k]>=0)
 						allProcessed = false;
@@ -1442,11 +1456,11 @@
 	}
 
 	/**
-	\fn int Pipeline::getNumActions(void)
+	\fn int Pipeline::getNumActions(void) const
 	\brief Get the number of filters applied during processing.
 	\return Number of filters applied during processing.
 	**/
-	int Pipeline::getNumActions(void)
+	int Pipeline::getNumActions(void) const
 	{
 		return actionsList.size();
 	}
@@ -1512,7 +1526,7 @@
 			std::cout << "Pipeline::process - Processing : " << getFullName() << std::endl;
 		#endif
 
-		for(int k = 0; k<actionsList.size(); k++)
+		for(unsigned int k=0; k<actionsList.size(); k++)
 		{
 			ActionHub* 	action 	= &actionsList[k];
 			Filter* 	f 	= filtersList[ action->filterIdx ];
@@ -1596,7 +1610,7 @@
 			if(GLEW_VERSION_3_3)
 			{
 				totalPerf = 0;
-				for(int i=0; i<perfs.size(); i++)
+				for(unsigned int i=0; i<perfs.size(); i++)
 					totalPerf += perfs[i];
 			}
 			else
@@ -1621,7 +1635,7 @@
 	**/
 	Pipeline& Pipeline::operator<<(HdlTexture& texture)
 	{
-		if(inputsList.size()>=getNumInputPort())
+		if(static_cast<int>(inputsList.size())>=getNumInputPort())
 			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
 
 		inputsList.push_back(&texture);
@@ -1639,7 +1653,7 @@
 	{
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
-			if(inputsList.size()>=getNumInputPort())
+			if(static_cast<int>(inputsList.size())>=getNumInputPort())
 				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
 
 			inputsList.push_back(&pipeline.out(i));
@@ -1657,7 +1671,7 @@
 	Pipeline& Pipeline::operator<<(ActionType a)
 	{
 		// Check the number of arguments given :
-		if(inputsList.size()!=getNumInputPort() && a!=Reset)
+		if(static_cast<int>(inputsList.size())!=getNumInputPort() && a!=Reset)
 			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
 
 		switch(a)
@@ -1935,7 +1949,7 @@
 	{
 		if(perfsMonitoring)
 		{
-			if(action<0 || action>=actionsList.size())
+			if(action<0 || action>=static_cast<int>(actionsList.size()))
 				throw Exception("Pipeline::getTiming - Action index is outside of range.", __FILE__, __LINE__);
 			else
 			{

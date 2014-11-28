@@ -62,8 +62,15 @@
 					ShaderSource 	*vertexSource,
 							*fragmentSource;
 					GeometryModel	*geometryModel;
-					bool blending, clearing;
-					bool isStandardVertex, isStandardGeometry;
+					bool		clearing,
+							blending,
+							depthTesting,
+							isStandardVertex, 
+							isStandardGeometry;
+					GLenum		sFactor,
+							dFactor,
+							blendingEquation,
+							depthTestingFunction;
 
 					// Friends
 					friend class FilterLayout;
@@ -80,12 +87,19 @@
 					ShaderSource& getFragmentSource(void) const;
 					GeometryModel& getGeometryModel(void) const;
 
-					bool isBlendingEnabled(void) const;
-					void enableBlending(void);
-					void disableBlending(void);
 					bool isClearingEnabled(void) const;
 					void enableClearing(void);
 					void disableClearing(void);
+					bool isBlendingEnabled(void) const;
+					const GLenum& getSFactor(void) const;
+					const GLenum& getDFactor(void) const;
+					const GLenum& getBlendingEquation(void) const;
+					void enableBlending(const GLenum& _sFactor = GL_ONE, const GLenum& _dFactor = GL_ONE, const GLenum& _blendingEquation = GL_FUNC_ADD);
+					void disableBlending(void);
+					bool isDepthTestingEnabled(void) const;
+					const GLenum& getDepthTestingFunction(void) const;
+					void enableDepthTesting(const GLenum& _depthTestingFunction = GL_LESS);
+					void disableDepthTesting(void);	
 
 					bool isStandardVertexSource(void) const;
 					bool isStandardGeometryModel(void) const;

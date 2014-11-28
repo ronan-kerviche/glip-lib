@@ -39,7 +39,14 @@
 	\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
 	**/
 	GeometryModel::GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
-	 : type(_type), dim(_dim), numVerticesPerEl(getNumVerticesFromPrimitive(_primitiveGL)), primitiveGL(_primitiveGL), hasTexCoord(_hasTexCoord)
+	 :	pos(),
+		tex(),
+		elements(),
+		type(_type), 
+		hasTexCoord(_hasTexCoord),
+		dim(_dim), 
+		numVerticesPerEl(getNumVerticesFromPrimitive(_primitiveGL)), 
+		primitiveGL(_primitiveGL)
 	{
 		if(dim!=2 && dim!=3)
 			throw Exception("GeometryModel::GeometryModel - Dimension must be either 2 or 3 (current : " + toString(dim) + ").", __FILE__, __LINE__);
@@ -51,7 +58,14 @@
 	\param mdl The source model.
 	**/
 	GeometryModel::GeometryModel(const GeometryModel& mdl)
-	 : type(mdl.type), pos(mdl.pos), tex(mdl.tex), dim(mdl.dim), numVerticesPerEl(mdl.numVerticesPerEl), primitiveGL(mdl.primitiveGL), elements(mdl.elements), hasTexCoord(mdl.hasTexCoord)
+	 :	pos(mdl.pos),
+		tex(mdl.tex),
+		elements(mdl.elements),
+		type(mdl.type),
+		hasTexCoord(mdl.hasTexCoord),
+		dim(mdl.dim),
+		numVerticesPerEl(mdl.numVerticesPerEl),
+		primitiveGL(mdl.primitiveGL)
 	{ }
 
 	GeometryModel::~GeometryModel(void)
@@ -211,7 +225,7 @@
 	**/
 	GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
 	{
-		if(numVerticesPerEl!=indices.size())
+		if(numVerticesPerEl!=static_cast<int>(indices.size()))
 			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
 		else
 		{
@@ -292,7 +306,7 @@
 	**/
 	GLuint& GeometryModel::a(GLuint i)
 	{
-		const GLuint expectedNumberOfVertices = 1;
+		const int expectedNumberOfVertices = 1;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
@@ -308,7 +322,7 @@
 	**/
 	GLuint& GeometryModel::b(GLuint i)
 	{
-		const GLuint expectedNumberOfVertices = 2;
+		const int expectedNumberOfVertices = 2;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
@@ -324,7 +338,7 @@
 	**/
 	GLuint& GeometryModel::c(GLuint i)
 	{
-		const GLuint expectedNumberOfVertices = 3;
+		const int expectedNumberOfVertices = 3;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
@@ -340,7 +354,7 @@
 	**/
 	GLuint& GeometryModel::d(GLuint i)
 	{
-		const GLuint expectedNumberOfVertices = 4;
+		const int expectedNumberOfVertices = 4;
 
 		if(numVerticesPerEl<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__);
@@ -814,7 +828,7 @@
 									y = static_cast<float>(i)/static_cast<float>(h-1),
 									z = static_cast<float>(k)/static_cast<float>(d-1);
 
-							addVertex2D(x,  y, z);
+							addVertex3D(x,  y, z);
 						}
 					}
 				}

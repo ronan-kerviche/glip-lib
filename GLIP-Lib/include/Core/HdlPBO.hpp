@@ -74,6 +74,10 @@ For reading operations, use Glip::Modules::PBOTextureReader.
 					// Data
 					int w, h, c, cs;
 
+					// No copy :
+					HdlPBO(const HdlPBO&);
+					const HdlPBO& operator=(const HdlPBO&);
+
 				public :
 					// Tools
 					HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size=-1);

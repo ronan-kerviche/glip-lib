@@ -44,8 +44,17 @@ using namespace Glip::CoreGL;
 	\param _maxLevel	Highest level for the mipmaps (default is 0, no other mipmaps than the original image).
 	**/
 	HdlAbstractTextureFormat::HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
-	 : 	width(_width), height(_height), mode(_mode), depth(_depth), minFilter(_minFilter), magFilter(_magFilter), baseLevel(_baseLevel), maxLevel(_maxLevel), wraps(_wraps), wrapt(_wrapt),
-		alignment(1)
+	 : 	alignment(1),
+		width(_width),
+		height(_height),
+		mode(_mode),
+		depth(_depth),
+		minFilter(_minFilter),
+		magFilter(_magFilter),
+		wraps(_wraps), 
+		wrapt(_wrapt),
+		baseLevel(_baseLevel),
+		maxLevel(_maxLevel)	
 	{ }
 
 	/**
@@ -55,17 +64,17 @@ using namespace Glip::CoreGL;
 	\param copy Copy this format.
 	**/
 	HdlAbstractTextureFormat::HdlAbstractTextureFormat(const HdlAbstractTextureFormat& copy)
-	 : 	width(copy.width),
+	 : 	alignment(copy.alignment),
+		width(copy.width),
 		height(copy.height),
 		mode(copy.mode),
 		depth(copy.depth),
 		minFilter(copy.minFilter),
 		magFilter(copy.magFilter),
-		baseLevel(copy.baseLevel),
-		maxLevel(copy.maxLevel),
 		wraps(copy.wraps),
 		wrapt(copy.wrapt),
-		alignment(copy.alignment)
+		baseLevel(copy.baseLevel),
+		maxLevel(copy.maxLevel)
 	{ }
 
 	HdlAbstractTextureFormat::~HdlAbstractTextureFormat(void)
@@ -965,17 +974,17 @@ using namespace Glip::CoreGL;
 
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &glId);
 
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	tMagFilter	= vMagFilter==getMagFilter();
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	tMinFilter	= vMinFilter==getMinFilter();
+		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	tMagFilter	= vMagFilter==static_cast<GLint>(getMagFilter());
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	tMinFilter	= vMinFilter==static_cast<GLint>(getMinFilter());
                 glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);	tBaseLevel	= vBaseLevel==getBaseLevel();
                 glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);	tMaxLevel	= vMaxLevel==getMaxLevel();
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);	tSWrap		= vSWrap==getSWrapping();
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);	tTWrap		= vTWrap==getTWrapping();
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);	tSWrap		= vSWrap==static_cast<GLint>(getSWrapping());
+                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);	tTWrap		= vTWrap==static_cast<GLint>(getTWrapping());
                 glGetTexParameteriv(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, 			&vMipmapGen);	tMipmapGen	= (vMipmapGen>0 && getBaseLevel()>0) || (vMipmapGen==0 && getBaseLevel()==0);
 
                 glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);	tWidth		= vWidth==getWidth();
                 glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);	tHeight		= vHeight==getHeight();
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);	tMode		= vMode==getGLMode();
+                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);	tMode		= vMode==static_cast<GLint>(getGLMode());
                 glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);	tBorder		= vBorder==0;
                 glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, 	&vCompressed);	tCompressed	= (vCompressed>0 && isCompressed()) || (vCompressed==0 && !isCompressed());
 

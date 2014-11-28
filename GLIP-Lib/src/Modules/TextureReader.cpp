@@ -38,7 +38,13 @@
 	\param format Format expected.
 	**/
 	TextureReader::TextureReader(const std::string& name, const HdlAbstractTextureFormat& format)
-	 : AbstractComponentLayout(getLayout()), OutputDevice(getLayout(), name), HdlAbstractTextureFormat(format), xFlip(false), yFlip(false), originalPointer(NULL), data(NULL)
+	 : 	AbstractComponentLayout(getLayout()), 
+		OutputDevice(getLayout(), name), 
+		HdlAbstractTextureFormat(format), 
+		originalPointer(NULL), 
+		data(NULL),
+		xFlip(false), 
+		yFlip(false)	
 	{
 		if(isCompressed())
 			throw Exception("TextureReader::TextureReader - Can not read directly compressed textures with TextureReader (for " + getFullName() + ").", __FILE__, __LINE__);
@@ -343,7 +349,12 @@
 	\param _customTexture If set to true, no texture will be created by this object and user must provide the correct target via TextureCopier::provideTexture() (custom mode).
 	**/
 	TextureCopier::TextureCopier(const std::string& name, const HdlAbstractTextureFormat& formatIn, const HdlAbstractTextureFormat& formatOut, bool _customTexture)
-	 : AbstractComponentLayout(getLayout()), OutputDevice(getLayout(), name), HdlAbstractTextureFormat(formatOut), targetTexture(NULL), pbo(NULL), customTexture(_customTexture)
+	 :	AbstractComponentLayout(getLayout()), 
+		OutputDevice(getLayout(), name), 
+		HdlAbstractTextureFormat(formatOut), 
+		customTexture(_customTexture),
+		targetTexture(NULL), 
+		pbo(NULL)	
 	{
 		if(!( formatIn.isCorrespondingCompressedFormat(formatOut) || formatOut.isCorrespondingCompressedFormat(formatIn) || formatIn.isCompatibleWith(formatOut)))
 			throw Exception("TextureCopier::TextureCopier - Can not read texture having different layout format (uncompressed/compressed format accepted though) in " + getFullName() + ".", __FILE__, __LINE__);
@@ -382,10 +393,12 @@
 			throw Exception("TextureCopier::process - Can not read texture having different layout format (for copier " + getFullName() + ").", __FILE__, __LINE__);
 
 		if(targetTexture==NULL)
+		{
 			if(!customTexture)
 				throw Exception("TextureCopier::process - Internal error : texture wasn't properly created for " + getFullName() + ".", __FILE__, __LINE__);
 			else
 				throw Exception("TextureCopier::process - A custom texture was declared but not given to " + getFullName() + " (use TextureCopier::provideTexture).", __FILE__, __LINE__);
+		}
 
 		int tsize = texture.getSizeOnGPU();
 		GLint inputMode = texture.getInternalMode();
