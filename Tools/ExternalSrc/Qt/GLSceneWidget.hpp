@@ -52,7 +52,7 @@
 	#include <QDialogButtonBox>
 
 	// Enable some interactivity with Uniforms Variables modules :
-	#define __MAKE_VARIABLES__
+	//#define __MAKE_VARIABLES__
 	
 	#ifdef __MAKE_VARIABLES__
 		#include "UniformsLoaderInterface.hpp"	
@@ -478,6 +478,30 @@ namespace QVGL
 			signals : 
 				void selected(BottomBar*);
 		};
+
+	#ifdef __MAKE_VARIABLES__
+		class VariablesTrackerSubWidget : public SubWidget
+		{
+			Q_OBJECT
+
+			private :
+				QTreeWidget						innerTreeWidget;
+				QMap<GLenum, QTreeWidgetItem*>				typeRoots;
+				QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>	items;
+
+				void updateAlternateColors(void);
+
+			private slots :
+				void variableAdded(const QGUI::VariableRecord* ptr);
+				void variableUpdated(const QGUI::VariableRecord* ptr);
+				void variableUpdated(void);
+				void variableDeleted(void);
+		
+			public :
+				VariablesTrackerSubWidget(void);
+				~VariablesTrackerSubWidget(void);
+		};
+	#endif
 
 	class ContextWidget : public QGLWidget
 	{

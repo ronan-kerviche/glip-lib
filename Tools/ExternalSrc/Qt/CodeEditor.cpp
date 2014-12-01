@@ -1541,25 +1541,25 @@ using namespace QGED;
 		element.noBody		= true;
 
 		#define SAVE_COLOR( varName ) \
-			element.strKeyword = STR( varName ); \
+			element.strKeyword = GLIP_STR( varName ); \
 			element.arguments.push_back( varName .name().toStdString() ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear();
 
 		#define SAVE_NUMBER( varName ) \
-			element.strKeyword = STR( varName ); \
+			element.strKeyword = GLIP_STR( varName ); \
 			element.arguments.push_back( toString(static_cast<int>( varName )) ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear(); \
 
 		#define SAVE_TEST( varName, test ) \
-			element.strKeyword = STR( varName ); \
+			element.strKeyword = GLIP_STR( varName ); \
 			element.arguments.push_back( toString(static_cast<int>( varName test )) ); \
 			str += element.getCode() + "\n"; \
 			element.arguments.clear();	
 
 		#define SAVE_FONT( varName ) \
-			element.strKeyword = STR( varName ); \
+			element.strKeyword = GLIP_STR( varName ); \
 			element.arguments.push_back( varName .family().toStdString() ); \
 			element.arguments.push_back( varName .styleName().toStdString() ); \
 			element.arguments.push_back( toString( varName .pointSize()) ); \
@@ -1597,45 +1597,45 @@ using namespace QGED;
 		Glip::Modules::VanillaParserSpace::VanillaParser parser(str);
 
 		#define READ_COLOR( varName ) \
-			if(it->strKeyword==STR( varName )) \
+			if(it->strKeyword==GLIP_STR( varName )) \
 			{ \
 				if( it->arguments.size()==1 ) \
 					varName .setNamedColor( it->arguments.front().c_str() ); \
 				else \
-					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read color " STR( varName ) ".", __FILE__, __LINE__); \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read color " GLIP_STR( varName ) ".", __FILE__, __LINE__); \
 			}
 
 		#define READ_NUMBER( varName ) \
-			if(it->strKeyword==STR( varName )) \
+			if(it->strKeyword==GLIP_STR( varName )) \
 			{ \
 				if( it->arguments.size()==1 ) \
 				{ \
 					if(!fromString(it->arguments.front(), varName)) \
-						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " GLIP_STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
 				} \
 				else \
-					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " GLIP_STR( varName ) ".", __FILE__, __LINE__); \
 			}
 
 		#define READ_TEST( varName, valTrue, valFalse ) \
-			if(it->strKeyword==STR( varName )) \
+			if(it->strKeyword==GLIP_STR( varName )) \
 			{ \
 				if( it->arguments.size()==1 ) \
 				{ \
 					bool t = false; \
 					if(!fromString(it->arguments.front(), t)) \
-						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " GLIP_STR( varName ) " : " + it->arguments.front() + ".", __FILE__, __LINE__); \
 					else if(t) \
 						varName = valTrue; \
 					else \
 						varName = valFalse; \
 				} \
 				else \
-					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " GLIP_STR( varName ) ".", __FILE__, __LINE__); \
 			}	
 
 		#define READ_FONT( varName ) \
-			if(it->strKeyword==STR( varName )) \
+			if(it->strKeyword==GLIP_STR( varName )) \
 			{ \
 				if( it->arguments.size()==3 ) \
 				{ \
@@ -1644,13 +1644,13 @@ using namespace QGED;
 					int	pointSize; \
 					\
 					if(!fromString(it->arguments[2], pointSize)) \
-						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read pointSize for font " STR( varName ) " : " + it->arguments[2] + ".", __FILE__, __LINE__); \
+						throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read pointSize for font " GLIP_STR( varName ) " : " + it->arguments[2] + ".", __FILE__, __LINE__); \
 					\
 					QFontDatabase db; \
 					varName = db.font( familyName, styleName, pointSize); \
 				} \
 				else \
-					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " STR( varName ) ".", __FILE__, __LINE__); \
+					throw Glip::Exception("CodeEditorSettings::setSettingsFromString - Cannot read " GLIP_STR( varName ) ".", __FILE__, __LINE__); \
 			} 
 
 		for(std::vector<Glip::Modules::VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)

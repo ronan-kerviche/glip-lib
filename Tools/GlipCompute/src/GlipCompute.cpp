@@ -201,7 +201,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 	{
 		#define TEST_AND_FILL( targetVector, defaultValue ) \
 			if(! targetVector .empty() && targetVector.size()!=inputFilenames.size()) \
-				throw Glip::Exception("ProcessCommand::setSafeParameterSettings - " STR(targetVector) " is not empty but does not contain the same number of elements as the inputs list (internal error).", __FILE__, __LINE__); \
+				throw Glip::Exception("ProcessCommand::setSafeParameterSettings - " GLIP_STR(targetVector) " is not empty but does not contain the same number of elements as the inputs list (internal error).", __FILE__, __LINE__); \
 			else if( targetVector .empty()) \
 				targetVector .assign(inputFilenames.size(), defaultValue );
 			

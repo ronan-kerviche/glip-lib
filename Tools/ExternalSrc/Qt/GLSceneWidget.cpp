@@ -1663,6 +1663,160 @@ using namespace QVGL;
 		return graphicsProxy;
 	}
 
+#ifdef __MAKE_VARIABLES__ 
+// VariablesTrackerSubWidget 
+	VariablesTrackerSubWidget::VariablesTrackerSubWidget(void)
+	 : innerTreeWidget(NULL)
+	{
+		// Add the inner widget :
+		setInnerWidget(&innerTreeWidget);
+		setTitle("Variables Tracker");
+
+		QStringList headersList;
+		headersList.append("Name");
+		headersList.append("Value (transposed)");
+		innerTreeWidget.setHeaderLabels(headersList);
+		innerTreeWidget.setColumnCount(2);
+		innerTreeWidget.setIndentation(16);
+		innerTreeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+		// Add the already existing variables :
+		const QVector<QGUI::VariableRecord*>& variables = QGUI::VariableRecord::getRecords();
+		for(QVector<QGUI::VariableRecord*>::const_iterator it=variables.begin(); it!=variables.end(); it++)
+			variableAdded(*it);	
+
+		// Be notified if other variables are added :
+		QObject::connect(QGUI::VariableRecord::getReferenceRecord(), SIGNAL(recordAdded(const QGUI::VariableRecord*)), this, SLOT(variableAdded(const QGUI::VariableRecord*)));
+	}
+
+	VariablesTrackerSubWidget::~VariablesTrackerSubWidget(void)
+	{ }
+
+	void VariablesTrackerSubWidget::updateAlternateColors(void)
+	{
+		QBrush	original	= innerTreeWidget.palette().background().color(),
+			darker		= QBrush(original.color().lighter(90)),
+			lighter		= QBrush(original.color().lighter(110));
+
+		QBrush* ptr = NULL;
+		int c = 0;
+		for(int k=0; k<innerTreeWidget.topLevelItemCount(); k++)
+		{
+			QTreeWidgetItem* item = innerTreeWidget.topLevelItem(k);
+
+			// This line :
+			ptr = (c%2==0) ? (&lighter) : (&darker);
+			for(int p=0; p<innerTreeWidget.columnCount(); p++)
+				item->setBackground(p, QBrush(*ptr));
+			c++;
+
+			// All the sublines :
+			for(int l=0; l<item->childCount(); l++)
+			{
+				ptr = (c%2==0) ? (&lighter) : (&darker);
+				for(int p=0; p<innerTreeWidget.columnCount(); p++)
+					item->child(l)->setBackground(p, QBrush(*ptr));
+				c++;
+			}
+		}
+	}
+
+	void VariablesTrackerSubWidget::variableAdded(const QGUI::VariableRecord* ptr)
+	{
+		// Check if the type already exists :
+		QMap<GLenum, QTreeWidgetItem*>::iterator itRoot = typeRoots.find(ptr->data().getGLType());
+		if(itRoot==typeRoots.end())
+		{
+			// If not, create it :
+			QTreeWidgetItem* rootItem = new QTreeWidgetItem(static_cast<int>(ptr->data().getGLType()));
+			rootItem->setText(0, QString::fromStdString(glParamName(ptr->data().getGLType())));			
+
+			innerTreeWidget.addTopLevelItem(rootItem);
+			typeRoots[ptr->data().getGLType()] = rootItem;
+
+			itRoot = typeRoots.find(ptr->data().getGLType());
+		}
+
+		// Create the variable :
+		QTreeWidgetItem* variableItem = new QTreeWidgetItem(static_cast<int>(GL_NONE));
+		variableItem->setText(0, ptr->getName());
+
+		itRoot.value()->addChild(variableItem);
+		items[ptr] = variableItem;
+
+		// Update the content of the newly created content :
+		variableUpdated(ptr);
+
+		// Connect :
+		QObject::connect(ptr, SIGNAL(updated(void)), 	this, SLOT(variableUpdated(void)));
+		QObject::connect(ptr, SIGNAL(destroyed(void)), 	this, SLOT(variableDeleted(void)));
+
+		// Resize :
+		itRoot.value()->setExpanded(true);
+		innerTreeWidget.resizeColumnToContents(0);
+		updateAlternateColors();
+	}
+
+	void VariablesTrackerSubWidget::variableUpdated(const QGUI::VariableRecord* ptr)
+	{
+		// Find the variable :
+		QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(ptr);
+	
+		if(it!=items.end())
+		{
+			QString str;
+			const HdlDynamicData& data = ptr->data();
+
+			for(int j=0; j<data.getNumColumns(); j++)
+			{
+				for(int i=0; i<data.getNumRows(); i++)
+				{
+					const double value = data.get(i, j);
+
+					if(data.isBooleanType())
+					{
+						if(value==0.0)
+							str += "false";
+						else
+							str += "true";
+					}
+					else if(data.isIntegerType())
+						str += tr("%1").arg(static_cast<long long>(value));
+					else
+						str += tr("%1").arg(value);
+
+					if(i<(data.getNumRows()-1))
+						str += ", ";
+				}
+
+				if(j<(data.getNumColumns()-1))
+					str +="\n";
+			}
+
+			it.value()->setText(1, str);
+		}
+	}
+
+	void VariablesTrackerSubWidget::variableUpdated(void)
+	{
+		const QGUI::VariableRecord* ptr = reinterpret_cast<QGUI::VariableRecord*>(QObject::sender());
+		variableUpdated(ptr);
+	}
+
+	void VariablesTrackerSubWidget::variableDeleted(void)
+	{
+		// Find the variable :
+		const QGUI::VariableRecord* ptr = reinterpret_cast<QGUI::VariableRecord*>(QObject::sender());
+		QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(ptr);
+		
+		if(it!=items.end())
+		{
+			delete it.value();
+			items.erase(it);
+		}
+	}
+#endif
+
 // ContextWidget :
 	ContextWidget::ContextWidget(QGLContext* ctx, QWidget* parent)
 	 : 	QGLWidget(ctx, parent),
@@ -1917,7 +2071,7 @@ using namespace QVGL;
 	{
 		QMap<VectorID, QString> _vectorsNameMap;
 
-		#define NAME_MAP( id ) _vectorsNameMap[ id ] = STR( id );
+		#define NAME_MAP( id ) _vectorsNameMap[ id ] = GLIP_STR( id );
 
 			NAME_MAP( VectorLastLeftClick )
 			NAME_MAP( VectorLastLeftClickGl )
@@ -1989,7 +2143,7 @@ using namespace QVGL;
 	{
 		QMap<ColorID, QString> _colorsNameMap;
 
-		#define NAME_MAP( id ) _colorsNameMap[ id ] = STR( id );
+		#define NAME_MAP( id ) _colorsNameMap[ id ] = GLIP_STR( id );
 
 			NAME_MAP( ColorUnderLastLeftClick )
 			NAME_MAP( ColorUnderLastLeftPosition )

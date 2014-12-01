@@ -22,7 +22,13 @@
 	//#define __USE_PBO__
 
 	// Use QVGL::SubWidget definition :  
-	#define __USE_QVGL__
+	//#define __USE_QVGL__
+
+	// Use NETPBM external code (to load PGM / PPM images) :
+	//#define __USE_NETPBM__
+	
+	// Use LibRaw and LibRawInterface (to load CR2 / NEF images, raw) :
+	//#define __USE_LIBRAW__
 
 // Includes : 
 	#include "GLIPLib.hpp"
@@ -31,11 +37,11 @@
 	#include <QVBoxLayout>
 	#include <QMenuBar>
 	#include <QApplication>
-	#include <QClipboard>
+	#include <QClipboard> 
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
-	#endif 
+	#endif
 
 // Namespaces
 	using namespace Glip;
@@ -86,7 +92,7 @@ namespace QGIC
 			void setTWrapping(GLint m);
 
 			const QString& getFilename(void) const;
-			void setFilename(const QString& newFilename);
+			void setFilename(const QString& newFilename, bool useAsNewName=false);
 			QString getName(void) const;
 			void setName(const QString& newName);
 			

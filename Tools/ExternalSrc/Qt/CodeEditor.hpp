@@ -19,7 +19,7 @@
 
 // Settings : 
 	// Use QVGL::SubWidget definition :  
-	#define __USE_QVGL__
+	//#define __USE_QVGL__
 
 // Includes :
 	#include "GLIPLib.hpp"

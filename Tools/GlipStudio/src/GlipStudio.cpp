@@ -44,6 +44,7 @@
 	GlipStudio::GlipStudio(int& argc, char** argv)
 	 :	QApplication(argc, argv),
 		window(NULL),
+		variableTracker(NULL), 
 		editor(NULL),
 		collection(NULL),
 		pipelineManager(NULL)
@@ -58,12 +59,14 @@
 		loadFonts();
 
 		window		= new QVGL::MainWidget;
+		variableTracker	= new QVGL::VariablesTrackerSubWidget;
 		editor		= new QGED::CodeEditorTabsSubWidget;
 		collection	= new QGIC::ImageItemsCollectionSubWidget;
 		pipelineManager	= new QGPM::PipelineManagerSubWidget();
 
 		// Add Subwidgets : 
 		window->addSubWidget(editor);
+		window->addSubWidget(variableTracker);
 		window->addSubWidget(collection);
 		window->addViewsTable(collection->getMainViewsTablePtr());
 		window->addSubWidget(pipelineManager);
@@ -85,6 +88,7 @@
 		delete pipelineManager;
 		delete collection;
 		delete editor;
+		delete variableTracker;
 		delete window;
 	}
 

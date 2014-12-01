@@ -3,7 +3,7 @@
 */
 
 REQUIRED_FORMAT:inputFormat(inputFormat0)
-TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGBA32F,GL_FLOAT)
+TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGBA32F,GL_FLOAT, GL_NEAREST, GL_LINEAR)
 
 CALL:FORMAT_SCALE_SIZE(inputFormat, 0.2, 0.2, reducedFormat)
 CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)

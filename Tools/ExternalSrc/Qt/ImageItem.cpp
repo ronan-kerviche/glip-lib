@@ -17,9 +17,15 @@
 #include "ImageItem.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
-#include "NetPBM.hpp"
-#include "LibRawInterface.hpp"
 #include "QMenuTools.hpp"
+
+#ifdef __USE_NETPBM__
+	#include "NetPBM.hpp"
+#endif
+
+#ifdef __USE_LIBRAW__
+	#include "LibRawInterface.hpp"
+#endif
 
 // To remove : 
 #include <QElapsedTimer>
@@ -297,10 +303,14 @@ using namespace QGIC;
 				std::cout << comment << std::endl;
 			}
 		}
+		#ifdef __USE_NETPBM__
 		else if(QString::compare(path.completeSuffix(), "ppm", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "pgm", Qt::CaseInsensitive)==0)
 			imageBuffer 	= NetPBM::loadNetPBMFile(filename.toStdString());
+		#endif
+		#ifdef __USE_LIBRAW__
 		else if(QString::compare(path.completeSuffix(), "cr2", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "nef", Qt::CaseInsensitive)==0)
 			imageBuffer	= libRawLoadImage(filename.toStdString());
+		#endif
 		else
 		{
 			QImage qimage(filename);
@@ -397,10 +407,16 @@ using namespace QGIC;
 		return filename;
 	}
 
-	void ImageItem::setFilename(const QString& newFilename)
+	void ImageItem::setFilename(const QString& newFilename, bool useAsNewName)
 	{
 		filename = newFilename;
 		emit filenameModified();
+
+		if(useAsNewName)
+		{
+			QFileInfo info(filename);
+			setName(info.fileName());
+		}
 	}
 
 	QString ImageItem::getName(void) const
@@ -464,9 +480,9 @@ using namespace QGIC;
 		// Open the file and guess the texture format : 
 		QFileInfo path(_filename);
 			
-		if(path.completeSuffix()=="ppm" || path.completeSuffix()=="pgm")
+		if(QString::compare(path.completeSuffix(), "ppm", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "pgm", Qt::CaseInsensitive)==0)
 			NetPBM::saveNetPBMToFile(*imageBuffer, _filename.toStdString());
-		else if(path.completeSuffix()=="raw")
+		else if(QString::compare(path.completeSuffix(), "raw", Qt::CaseInsensitive)==0)
 			imageBuffer->write(_filename.toStdString(), "Written by GlipStudio.");
 		else
 		{
@@ -1594,8 +1610,9 @@ using namespace QGIC;
 	void ImageItemsCollection::copy(void)
 	{
 		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
-
-		if(selectedImageItems.size()==1)
+	
+		// Take only the first one :
+		if(!selectedImageItems.isEmpty())
 			selectedImageItems.front()->copyToClipboard();
 	}
 
@@ -1609,12 +1626,39 @@ using namespace QGIC;
 
 	void ImageItemsCollection::save(void)
 	{
-		std::cerr << "ImageItemsCollection::save not implemented." << std::endl;
+		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
+
+		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
+		{
+			if((*it)->getFilename().isEmpty())
+			{
+				QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg((*it)->getName()), currentPath, "Image File (*.*)");
+
+				if(!filename.isEmpty())
+				{
+					(*it)->setFilename(filename, true);
+					(*it)->save();
+				}
+			}	
+			else
+				(*it)->save();	
+		}
 	}
 
 	void ImageItemsCollection::saveAs(void)
 	{
-		std::cerr << "ImageItemsCollection::saveAs not implemented." << std::endl;
+		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
+
+		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
+		{
+			QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg((*it)->getName()), currentPath, "Image File (*.*)");
+
+			if(!filename.isEmpty())
+			{
+				(*it)->setFilename(filename, true);
+				(*it)->save();
+			}
+		}
 	} 
 
 	void ImageItemsCollection::removeImageItem(void)
@@ -1658,8 +1702,6 @@ using namespace QGIC;
 	{
 		QMenu menu(&collectionWidget);
 		
-		//menu.addMenu(&filterMenu);
-		//menu.addMenu(&wrappingMenu);
 		duplicateMenu(&menu, filterMenu);
 		duplicateMenu(&menu, wrappingMenu);
 		menu.addAction(copyAction);
@@ -1820,7 +1862,10 @@ using namespace QGIC;
 				view->show();
 			}
 			else
-				std::cerr << "ImageItemsCollectionSubWidget::imageItemShow - Cannot load imageItem \"" << imageItem->getName().toStdString() << "\" to device." << std::endl;
+			{
+				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Cannot load the image \"%1\" to device.").arg(imageItem->getName()));
+				messageBox.exec();
+			}
 		}
 		else
 			it.value()->show();
@@ -1846,9 +1891,11 @@ using namespace QGIC;
 
 		if(it!=views.end())
 		{
+			// Prevent any of these two objects to popup cleaning request
+			it.key()->disconnect(this);
 			it.value()->disconnect(this);
 			delete it.value();
-			views.remove(imageItem);
+			views.erase(it);
 		}
 	}
 

@@ -18,7 +18,7 @@
 #define __GLIPLIB_PIPELINE_MANAGER__
 
 	// Use QVGL::SubWidget definition, and allow user interaction :  
-	#define __USE_QVGL__
+	//#define __USE_QVGL__
 
 // Includes :
 	#include "GLIPLib.hpp"

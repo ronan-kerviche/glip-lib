@@ -25,7 +25,7 @@
 	#include <QSignalMapper>
 	#include <QLabel>
 	#include <QMenu>
-	#include <QElapsedTimer>	
+	#include <QElapsedTimer>		
 	
 namespace QGUI
 {

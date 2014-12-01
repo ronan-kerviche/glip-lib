@@ -13,6 +13,7 @@
 
 		private :
 			QVGL::MainWidget			*window;
+			QVGL::VariablesTrackerSubWidget		*variableTracker;
 			QGED::CodeEditorTabsSubWidget		*editor;
 			QGIC::ImageItemsCollectionSubWidget	*collection;
 			QGPM::PipelineManagerSubWidget		*pipelineManager;
