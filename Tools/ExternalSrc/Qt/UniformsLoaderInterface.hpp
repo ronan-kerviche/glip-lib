@@ -63,7 +63,7 @@ namespace QGUI
 			static const VariableRecord* getReferenceRecord(void); // Used for signal passing.
 
 		signals :
-			void recordAdded(const VariableRecord*);
+			void recordAdded(const QGUI::VariableRecord*);
 			void updated(void);
 	};
 	
@@ -158,7 +158,7 @@ namespace QGUI
 			static const VariableRecord* getRecordFromAction(QAction* action);
 
 		private slots :
-			void addRecord(const VariableRecord* record);
+			void addRecord(const QGUI::VariableRecord* record);
 			void recordDestroyed(void);
 			void setLink(void);
 			void unlink(void);

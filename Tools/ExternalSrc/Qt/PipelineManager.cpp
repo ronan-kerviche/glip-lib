@@ -132,7 +132,6 @@ using namespace QGPM;
 
 		QObject::connect(pipelineItem, SIGNAL(computationFinished(int, QVector<const void*>)),	this,	SLOT(pipelineComputationFinished(int, QVector<const void*>)));
 		QObject::connect(pipelineItem, SIGNAL(statusChanged()),					this,	SLOT(pipelineItemStatusChanged()));
-		QObject::connect(pipelineItem, SIGNAL(removed()),					this, 	SLOT(pipelineItemDestroyed()));
 		QObject::connect(pipelineItem, SIGNAL(destroyed()),					this, 	SLOT(pipelineItemDestroyed()));
 	}
 
@@ -1365,7 +1364,6 @@ using namespace QGPM;
 		if(pipelineItem==NULL)
 			return ;
 
-		QObject::connect(pipelineItem, SIGNAL(removed(void)), 	this, SLOT(pipelineItemDestroyed(void)));
 		QObject::connect(pipelineItem, SIGNAL(destroyed(void)), this, SLOT(pipelineItemDestroyed(void)));
 
 		pipelineItems.push_back(pipelineItem);

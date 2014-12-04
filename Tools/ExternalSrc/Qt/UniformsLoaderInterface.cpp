@@ -591,7 +591,7 @@ using namespace QGUI;
 
 		// Prepare the link to receive the records :
 		const VariableRecord* reference = VariableRecord::getReferenceRecord();		
-		QObject::connect(reference, SIGNAL(recordAdded(const VariableRecord*)), this, SLOT(addRecord(const VariableRecord*)));
+		QObject::connect(reference, SIGNAL(recordAdded(const QGUI::VariableRecord*)), this, SLOT(addRecord(const QGUI::VariableRecord*)));
 
 		// Add the current actions :
 		const QVector<VariableRecord*>& currentRecords = VariableRecord::getRecords();

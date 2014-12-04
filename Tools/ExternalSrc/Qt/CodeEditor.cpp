@@ -2031,7 +2031,7 @@ using namespace QGED;
 	CodeEditorTabs::CodeEditorTabs(void)
 	 : 	currentPath("."),
 		layout(this),
-		topBar(this),
+		topBar(NULL),
 		menuBarLeft(this),
 		menuBarRight(this),
 		mainMenu("Menu", this),
@@ -2067,6 +2067,7 @@ using namespace QGED;
 		tabBar.setExpanding(false);
 		tabBar.setMovable(true);
 		tabBar.setTabsClosable(true);
+		tabBar.setDrawBase(false);
 
 		// Actions settings :
 		menuBarLeft.addMenu(&mainMenu);
