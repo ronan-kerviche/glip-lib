@@ -381,14 +381,9 @@ using namespace QGUI;
 
 // UniformsLoaderInterface :
 	UniformsLoaderInterface::UniformsLoaderInterface(int type)
-	 : 	QTreeWidgetItem(type),	
-		modificationCounter(0),
-		maxCounter(5),			// 5 Modifications
-		minimumDelta_ms(17)		// Or after 17ms from the last, whichever comes first.
+	 : 	QTreeWidgetItem(type)	
 	{
-		setText(0, "Uniform Variables");
-		
-		timer.start();
+		setText(0, "Uniform Variables");	
 	}
 
 	UniformsLoaderInterface::~UniformsLoaderInterface(void)

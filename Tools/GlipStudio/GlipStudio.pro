@@ -41,14 +41,12 @@ SOURCES += 	../ExternalSrc/Qt/GLSceneWidget.cpp \
 		./src/main.cpp
 
 # Specific addons :
-contains(DEFINES, __USE_NETPBM__)
-{
+contains(DEFINES, __USE_NETPBM__){
 	HEADERS += ../ExternalSrc/NetPBM/NetPBM.hpp
 	SOURCES += ../ExternalSrc/NetPBM/NetPBM.cpp
 }
 
-contains(DEFINES, __USE_LIBRAW__)
-{
+contains(DEFINES, __USE_LIBRAW__){
 	unix:	LIBS += -lraw
 	HEADERS	+= ../ExternalSrc/LibRaw/LibRawInterface.hpp
 	SOURCES += ../ExternalSrc/LibRaw/LibRawInterface.cpp

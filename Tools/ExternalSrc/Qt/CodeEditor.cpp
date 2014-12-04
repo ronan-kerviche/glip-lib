@@ -17,6 +17,7 @@
 #include "CodeEditor.hpp"
 #include "GLSLKeywords.hpp"
 #include "QMenuTools.hpp"
+#include <QFontDatabase>
 
 using namespace QGED;
 

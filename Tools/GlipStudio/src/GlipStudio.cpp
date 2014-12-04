@@ -1,6 +1,7 @@
 #include "GlipStudio.hpp"
 #include <QDateTime>
 #include <QDebug>
+#include <QFontDatabase>
 
 // Special function, for redirection of qDebug, qCritical, etc. to a file : 
 #if QT_VERSION >= 0x050000
@@ -70,6 +71,11 @@
 		window->addSubWidget(collection);
 		window->addViewsTable(collection->getMainViewsTablePtr());
 		window->addSubWidget(pipelineManager);
+
+		editor->hide();
+		variableTracker->hide();
+		collection->hide();
+		pipelineManager->hide();
 
 		// Connections : 
 		QObject::connect(collection, 				SIGNAL(addViewRequest(QVGL::View*)), 					window, 				SLOT(addView(QVGL::View*)));

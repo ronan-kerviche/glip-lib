@@ -25,7 +25,6 @@
 	#include <QSignalMapper>
 	#include <QLabel>
 	#include <QMenu>
-	#include <QElapsedTimer>		
 	
 namespace QGUI
 {
@@ -123,10 +122,6 @@ namespace QGUI
 			// Data : 
 			UniformsLoader 					loader;
 			std::map<const std::string, QTreeWidgetItem*>	itemRoots;
-			QElapsedTimer					timer;
-			int						modificationCounter;
-			const int					maxCounter,
-									minimumDelta_ms;
 
 			// Tools : 
 			QTreeWidgetItem* addResource(UniformsLoader::Resource& resource, QTreeWidgetItem* root);
