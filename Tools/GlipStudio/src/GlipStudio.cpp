@@ -5,14 +5,18 @@
 
 // Special function, for redirection of qDebug, qCritical, etc. to a file : 
 #if QT_VERSION >= 0x050000
-	void customMessageHandler(QtMsgType type, const QMessageLogContext& context, const char *msg)
+	void customMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 #else
-	void customMessageHandler(QtMsgType type, const char *msg)
+	void customMessageHandler(QtMsgType type, const char *msgCStr)
 #endif
 	{
 		QDateTime dateTime = QDateTime::currentDateTime();
 		
 		QString txt;
+
+		#if QT_VERSION < 0x050000
+			const QString msg = QString::fromAscii(msgCStr);
+		#endif
 
 		switch (type)
 		{
@@ -31,6 +35,8 @@
 			default :
 				txt = QString("[%1] UNKNOWN :\n%2").arg(dateTime.toString()).arg(msg);
 		}
+
+		std::cout << txt.toStdString() << std::endl;
 
 		QFile outFile("errorLog.txt");
 		outFile.open(QIODevice::WriteOnly | QIODevice::Append);

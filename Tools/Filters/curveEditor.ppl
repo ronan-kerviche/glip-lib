@@ -1,0 +1,70 @@
+/*
+	Curve Editor, for Glip Studio
+*/
+
+TEXTURE_FORMAT:curveFormat(256, 1, GL_RGB, GL_UNSIGNED_BYTE)
+TEXTURE_FORMAT:plotFormat(256, 256, GL_RGB, GL_UNSIGNED_BYTE)
+
+SHADER_SOURCE:CurveShader
+{
+	#version 130
+
+	uniform sampler2D 	initialCurveDataTextureInput,
+				curveDataTextureInput;
+	out vec4 		curveDataTextureOutput;
+	
+	uniform vec2 VectorLastLeftPositionQuad = vec2(-1.0, -1.0);
+	uniform vec3 ColorUnderLastRightClick = vec3(1.0, 1.0, 1.0);
+
+	void main()
+	{
+		vec2 	pos = gl_TexCoord[0].st,
+			mPos=(VectorLastLeftPositionQuad+1.0)/2.0;
+		vec4	cIn = textureLod(initialCurveDataTextureInput, pos, 0),
+			col = textureLod(curveDataTextureInput, pos, 0) + cIn/1000.0;
+		vec3	mask = step(1.0, ColorUnderLastRightClick.rgb);
+
+		if(abs(mPos.s-pos.s)*256.0<1.0)
+			col.rgb = mPos.ttt * mask + col.rgb * (1.0 - mask);
+
+		curveDataTextureOutput = col;
+	}
+}
+
+SHADER_SOURCE:PlotCurveShader
+{
+	#version 130
+	
+	uniform sampler2D curveDataTextureOutput;
+	out vec4 curvePlot;	
+
+	void main()
+	{
+		vec2 pos = gl_TexCoord[0].st;
+		vec4 data = textureLod(curveDataTextureOutput, vec2(pos.s, 0.0), 0);
+		vec4 col = vec4(0.0, 0.0, 0.0, 0.0);
+
+		pos.t = 1.0 - pos.t;
+
+		if(pos.t<data.r)
+			col.r = 1.0;
+		if(pos.t<data.g)
+			col.g = 1.0;
+		if(pos.t<data.b)
+			col.b = 1.0;
+	
+		curvePlot = col;
+	}
+}
+
+FILTER_LAYOUT:CurveFilter(curveFormat, CurveShader)
+FILTER_LAYOUT:PlotCurveShader(plotFormat, PlotCurveShader)
+
+PIPELINE_MAIN:CurveEditorPipeline
+{
+	INPUT_PORTS(initialCurveDataTextureInput, curveDataTextureInput)
+	OUTPUT_PORTS(curveDataTextureOutput, curvePlot)
+
+	FILTER_INSTANCE:CurveFilter(CurveFilter)
+	FILTER_INSTANCE:PlotCurveShader(PlotCurveShader)
+}

@@ -1,0 +1,39 @@
+/*
+	Apply specific curve on an image
+	
+	(User defined mapping function,
+	 see curveEditor.ppl to generate
+	 such curve)
+*/
+
+REQUIRED_FORMAT:outputFormat(inputFormat1)
+
+SHADER_SOURCE:ApplyCurveShader
+{
+	#version 130
+
+	uniform sampler2D curveDataTexture, inputTexture;
+	out vec4 outputTexture;
+
+	void main()
+	{
+		vec2 pos 	= gl_TexCoord[0].st;
+		vec4 col 	= textureLod(inputTexture, pos, 0);
+		vec4 curveRed 	= textureLod(curveDataTexture, vec2(col.r, 0.0), 0),
+		     curveGreen	= textureLod(curveDataTexture, vec2(col.g, 0.0), 0),
+		     curveBlue 	= textureLod(curveDataTexture, vec2(col.b, 0.0), 0);
+		
+		col.rgb = vec3(curveRed.r, curveGreen.g, curveBlue.b);
+		outputTexture = col;
+	}
+}
+
+FILTER_LAYOUT:ApplyCurveFilter(outputFormat, ApplyCurveShader)
+
+PIPELINE_MAIN:ApplyCurvePipeline
+{
+	INPUT_PORTS(curveDataTexture, inputTexture)
+	OUTPUT_PORTS(outputTexture)
+
+	FILTER_INSTANCE:ApplyCurveFilter(ApplyCurveFilter)
+}

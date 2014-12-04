@@ -831,6 +831,9 @@ using namespace Glip::CoreGL;
 		// Bind it :
 		glBindTexture(GL_TEXTURE_2D, texID);
 
+		// Save the current packing alignment, and replace it with the desired value :
+		GLint originalAlignment = 0;
+		glGetIntegerv(GL_UNPACK_ALIGNMENT, &originalAlignment);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, _alignment);
 
 		// Write :
@@ -848,6 +851,9 @@ using namespace Glip::CoreGL;
 				OPENGL_ERROR_TRACKER("HdlTexture::write", "glGenerateMipmap()")
 			#endif
 		}
+
+		// Restore :
+		glPixelStorei(GL_UNPACK_ALIGNMENT, originalAlignment);
 	}
 
 	/**
@@ -876,7 +882,6 @@ using namespace Glip::CoreGL;
 		glPixelStorei(GL_UNPACK_ALIGNMENT, _alignment);
 
 		// Write
-		//glTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0, pixelFormat, pixelDepth, texData);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, mode, width, height, 0,  static_cast<GLsizei>(size), texData);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
