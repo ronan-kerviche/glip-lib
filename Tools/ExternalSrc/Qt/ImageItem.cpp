@@ -1324,6 +1324,8 @@ using namespace QGIC;
 	ImageItemsCollection::ImageItemsCollection(void)
 	 : 	layout(this),
 		menuBar(this),
+		openAction(NULL),
+		pasteAction(NULL),
 		saveAction(NULL),
 		saveAsAction(NULL),
 		removeAction(NULL),
@@ -1336,14 +1338,30 @@ using namespace QGIC;
 		layout.addWidget(&collectionWidget);
 		layout.setMargin(0);
 		layout.setSpacing(0);
+	
+		openAction	= imagesMenu.addAction("Open",		this, SLOT(open()),			QKeySequence::Open);
+		pasteAction	= imagesMenu.addAction("Paste",		this, SLOT(paste()),			QKeySequence::Paste);
+		copyAction	= imagesMenu.addAction("Copy",		this, SLOT(copy()),			QKeySequence::Copy);
+		saveAction 	= imagesMenu.addAction("Save",		this, SLOT(save()),			QKeySequence::Save);
+		saveAsAction	= imagesMenu.addAction("Save as",	this, SLOT(saveAs()),			QKeySequence::SaveAs);
+		removeAction	= imagesMenu.addAction("Remove",	this, SLOT(removeImageItem()),		QKeySequence::Delete);
+		removeAllAction	= imagesMenu.addAction("Remove all",	this, SLOT(removeAllImageItem()),	Qt::SHIFT + Qt::Key_Delete);
 
-				  imagesMenu.addAction("Open",		this, SLOT(open()));
-				  imagesMenu.addAction("Paste",		this, SLOT(paste()));
-		copyAction	= imagesMenu.addAction("Copy",		this, SLOT(copy()));
-		saveAction 	= imagesMenu.addAction("Save",		this, SLOT(save()));
-		saveAsAction	= imagesMenu.addAction("Save as",	this, SLOT(saveAs()));
-		removeAction	= imagesMenu.addAction("Remove",	this, SLOT(removeImageItem()));
-		removeAllAction	= imagesMenu.addAction("Remove all",	this, SLOT(removeAllImageItem()));
+		openAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		pasteAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		copyAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		saveAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		saveAsAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		removeAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		removeAllAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		
+		addAction(openAction);
+		addAction(pasteAction);
+		addAction(copyAction);
+		addAction(saveAction);
+		addAction(saveAsAction);
+		addAction(removeAction);
+		addAction(removeAllAction);
 
 		menuBar.addMenu(&imagesMenu);
 		menuBar.addMenu(&filterMenu);

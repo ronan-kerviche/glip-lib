@@ -287,7 +287,9 @@ namespace QGIC
 			QString					currentPath;
 			QVBoxLayout				layout;
 			QMenuBar				menuBar;
-			QAction					*copyAction,
+			QAction					*openAction,
+								*pasteAction,
+								*copyAction,
 								*saveAction,
 								*saveAsAction,
 								*removeAction,

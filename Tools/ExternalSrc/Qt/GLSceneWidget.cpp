@@ -327,12 +327,6 @@ using namespace QVGL;
 				event->ignore();
 		}
 
-		/*void Vignette::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
-		{
-			std::cout << "Vignette::mouseMoveEvent" << std::endl;
-			event->ignore();
-		}*/
-
 		void Vignette::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		{
 			const QRectF rectF = boundingRect();
@@ -349,12 +343,6 @@ using namespace QVGL;
 			else
 				event->ignore();
 		}
-
-		/*void Vignette::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
-		{
-			std::cout << "Vignette::mouseReleaseEvent" << std::endl;
-			event->ignore();
-		}*/
 
 		View* Vignette::getView(void)
 		{
@@ -555,13 +543,6 @@ using namespace QVGL;
 			return QGraphicsItem::itemChange(change, value);
 	}
 
-	/*void ViewsTable::setVisible(bool enabled)
-	{
-		visible = enabled;
-		for(QMap<View*, Vignette*>::iterator it=vignettesList.begin(); it!=vignettesList.end(); it++)
-			it.value()->setVisible(enabled);
-	}*/
-
 	void ViewsTable::resize(const QRectF& size)
 	{
 		// Recompute parameters : 
@@ -757,6 +738,8 @@ using namespace QVGL;
 		graphicsProxy(NULL),
 		anchorMode(AnchorFree)
 	{
+		installEventFilter(this);
+
 		// But first : 
 		QWidget::hide();
 
@@ -984,7 +967,7 @@ using namespace QVGL;
 			pObject->installEventFilter(this);
 
 			const QObjectList& childList = pObject->children();
-			for(QObjectList::const_iterator it = childList.begin(); it!=childList.end(); it++)
+			for(QObjectList::const_iterator it=childList.begin(); it!=childList.end(); it++)
 				addChild(*it);
 		}
 	}
@@ -996,18 +979,18 @@ using namespace QVGL;
 			pObject->removeEventFilter(this);
 
 			const QObjectList& childList = pObject->children();
-			for(QObjectList::const_iterator it = childList.begin(); it!=childList.end(); it++)
+			for(QObjectList::const_iterator it=childList.begin(); it!=childList.end(); it++)
 				removeChild(*it);
 		}
 	}
 
 	void SubWidget::childEvent(QChildEvent* e)
 	{
-		if (e->child()->isWidgetType())
+		if(e->child()->isWidgetType())
 		{
-			if(e->type() == QEvent::ChildAdded)
+			if(e->type()==QEvent::ChildAdded)
 				addChild(e->child());
-			else if (e->type() == QEvent::ChildRemoved)
+			else if (e->type()==QEvent::ChildRemoved)
 				removeChild(e->child());
 		}
 
@@ -1016,14 +999,45 @@ using namespace QVGL;
 
 	bool SubWidget::eventFilter(QObject* target, QEvent* e)
 	{
+		//std::cout << "SubWidget::eventFilter on " << this << " : " << getTitle().toStdString() << "; targeting : " << target << " with event : " << e << " (" << (e->type()==QEvent::KeyPress) << ")" << std::endl;
+
 		if(e->type()==QEvent::ChildAdded)
-			addChild(reinterpret_cast<QChildEvent*>(e)->child());	
+			addChild(reinterpret_cast<QChildEvent*>(e)->child());
 		else if(e->type()==QEvent::ChildRemoved)
 			removeChild(reinterpret_cast<QChildEvent*>(e)->child());
-		else if(e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease || e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)
+		else if(e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease || e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)	
 			emit selected(this);
 
-		return QWidget::eventFilter(target, e);
+		// Test inner widget actions : 
+		if(getInnerWidget()!=NULL && e->type()==QEvent::KeyPress)
+		{
+			/*
+				This following piece of code takes all the actions attached to the inner widget, test if they are restricted (remember to setShortcutContext(Qt::WidgetShortcut) or setShortCut(Qt::WidgetWithChildrenShortcut)) and if the keyPress matches the shortcut sequences. If true, the specific action is triggered (can happen to multiple actions) and the event is discarded. This is only true if the subWidget is on top of the stack.
+			*/
+
+			bool test = false;
+			QKeyEvent* keyEvent = reinterpret_cast<QKeyEvent*>(e);
+			const QKeySequence received = QKeySequence(keyEvent->key() | keyEvent->modifiers());
+			QList<QAction*> innerWidgetActions = getInnerWidget()->actions();
+			for(QList<QAction*>::iterator it=innerWidgetActions.begin(); it!=innerWidgetActions.end(); it++)
+			{
+				//std::cout << "    ACTION : " << (*it)->text().toStdString() << " - " << ((*it)->shortcutContext()==Qt::WidgetShortcut) << " / " << ((*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) << " / " << ((*it)->shortcut().matches(received)>QKeySequence::PartialMatch) << std::endl;
+				if(((*it)->shortcutContext()==Qt::WidgetShortcut || (*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) && (*it)->shortcut().matches(received)>QKeySequence::PartialMatch)
+				{
+					(*it)->trigger();
+					test = true;
+				}
+			}
+
+			if(test)
+				return true;
+			//else continue.
+		}
+
+		if(target==this)
+			return QWidget::eventFilter(target, e); // Give to the base class.
+		else
+			return false; // Agree
 	}
 
 	void SubWidget::sceneRectChanged(const QRectF& sceneRect)
@@ -1149,6 +1163,18 @@ using namespace QVGL;
 	const SubWidget::AnchorMode& SubWidget::getAnchor(void) const
 	{
 		return anchorMode;
+	}
+
+	bool SubWidget::isOnTop(void) const
+	{
+		if(graphicsProxy==NULL || graphicsProxy->scene()==NULL)
+			return false;
+		else
+		{
+			const QList<QGraphicsItem*> items = graphicsProxy->scene()->items();
+
+			return !items.isEmpty() && items.front()==graphicsProxy;
+		}
 	}
 
 	bool SubWidget::shoudBeVisible(void) const
@@ -2014,7 +2040,7 @@ using namespace QVGL;
 		setActionKeySequence(ActionCloseView,				Qt::Key_Delete);
 		setActionKeySequence(ActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
 		setActionKeySequence(ActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
-		setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
+		//setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
 		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_F));
 		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::ALT + Qt::Key_G));
 		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::CTRL + Qt::Key_T));
@@ -2602,8 +2628,8 @@ using namespace QVGL;
 							"	displayOutput = textureLod(viewTexture, gl_TexCoord[0].st, 0.0);							\n"
 							"}																\n";
 
-// SceneWidget :
-	SceneWidget::SceneWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
+// GLScene :
+	GLScene::GLScene(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
 	 : 	qvglParent(_qvglParent),
 		quad(NULL),
 		shaderProgram(NULL),
@@ -2652,13 +2678,13 @@ using namespace QVGL;
 		}
 	}
 
-	SceneWidget::~SceneWidget(void)
+	GLScene::~GLScene(void)
 	{
 		delete quad;
 		delete shaderProgram;
 	}
 
-	void SceneWidget::drawView(View* view)
+	void GLScene::drawView(View* view)
 	{
 		float 	imageScale[2],
 			sceneScale[2],
@@ -2684,7 +2710,7 @@ using namespace QVGL;
 		quad->draw();
 	}
 
-	void SceneWidget::drawView(View* view, const int& x, const int& y, const int& w, const int& h)
+	void GLScene::drawView(View* view, const int& x, const int& y, const int& w, const int& h)
 	{
 		glViewport(x, y, w, h);
 
@@ -2713,7 +2739,7 @@ using namespace QVGL;
 		quad->draw();
 	}
 
-	void SceneWidget::drawViewsTable(ViewsTable* viewsTable)
+	void GLScene::drawViewsTable(ViewsTable* viewsTable)
 	{
 		//std::cout << "Drawing table : " << std::endl;
 		for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
@@ -2729,7 +2755,7 @@ using namespace QVGL;
 		glViewport(0, 0, width(), height());
 	}
 
-	/*void SceneWidget::getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const
+	/*void GLScene::getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const
 	{
 		// W 	: width of the scene.
 		// H	: height of the scene.
@@ -2758,7 +2784,7 @@ using namespace QVGL;
 		v = static_cast<float>(H - b*h) / static_cast<float>(b + 1);
 	}*/
 
-	void SceneWidget::drawBackground(QPainter* painter, const QRectF& rect)
+	void GLScene::drawBackground(QPainter* painter, const QRectF& rect)
 	{
 		HdlTexture::unbind();
 
@@ -2827,17 +2853,15 @@ using namespace QVGL;
 		HdlTexture::unbind();
 	}
 
-	void SceneWidget::keyPressEvent(QKeyEvent* event)
+	void GLScene::keyPressEvent(QKeyEvent* event)
 	{
 		QGraphicsScene::keyPressEvent(event);
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 			qvglParent->getKeyboardState().keyPressed(event);
-
-		//std::cout << "Pressed : " << qvglParent->getKeyboardState().getActionAssociatedToKey(event) << std::endl;
 	}
 
-	void SceneWidget::keyReleaseEvent(QKeyEvent* event)
+	void GLScene::keyReleaseEvent(QKeyEvent* event)
 	{
 		QGraphicsScene::keyReleaseEvent(event);
 
@@ -2847,7 +2871,7 @@ using namespace QVGL;
 		//std::cout << "Released : " << qvglParent->getKeyboardState().getActionAssociatedToKey(event) << std::endl;
 	}
 
-	void SceneWidget::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+	void GLScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 	{
 		QGraphicsScene::mouseMoveEvent(event);
 
@@ -2855,15 +2879,16 @@ using namespace QVGL;
 			qvglParent->getMouseState().processEvent(event, false, true, false);
 	}
 
-	void SceneWidget::wheelEvent(QGraphicsSceneWheelEvent* event)
+	void GLScene::wheelEvent(QGraphicsSceneWheelEvent* event)
 	{
-		QGraphicsScene::wheelEvent(event);
+		if(!event->isAccepted())
+			QGraphicsScene::wheelEvent(event);
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 			qvglParent->getMouseState().processEvent(event);
 	}
 
-	void SceneWidget::mousePressEvent(QGraphicsSceneMouseEvent* event)
+	void GLScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
 	{
 		QGraphicsScene::mousePressEvent(event);
 
@@ -2894,7 +2919,7 @@ using namespace QVGL;
 			qvglParent->getMouseState().processEvent(event, true, false, false);
 	}
 
-	void SceneWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+	void GLScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 	{
 		QGraphicsScene::mouseReleaseEvent(event);
 
@@ -2902,7 +2927,7 @@ using namespace QVGL;
 			qvglParent->getMouseState().processEvent(event, false, false, true);
 	}
 
-	/*void SceneWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
+	/*void GLScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 	{
 		QGraphicsScene::mouseDoubleClickEvent(event);
 
@@ -2917,10 +2942,10 @@ using namespace QVGL;
 		}
 	}*/
 
-// SceneViewWidget :
-	SceneViewWidget::SceneViewWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
+// GLSceneViewWidget :
+	GLSceneViewWidget::GLSceneViewWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
 	 : 	contextWidget(NULL),
-		sceneWidget(NULL),
+		glScene(NULL),
 		qvglParent(_qvglParent)
 	{
 		// Create the GL widget : 
@@ -2929,18 +2954,18 @@ using namespace QVGL;
 		setViewport(contextWidget);
 
 		// Create the scene : 
-		sceneWidget = new SceneWidget(qvglParent, _topBar, _bottomBar);
-		setScene(sceneWidget);
+		glScene = new GLScene(qvglParent, _topBar, _bottomBar);
+		setScene(glScene);
 
 		// Other parameters : 	
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);	// For container catching.
 		setViewportUpdateMode(QGraphicsView::FullViewportUpdate);	// Because GL has to redraw the complete area.
 	}
 
-	SceneViewWidget::~SceneViewWidget(void)
+	GLSceneViewWidget::~GLSceneViewWidget(void)
 	{ }
 
-	void SceneViewWidget::resizeEvent(QResizeEvent *event)
+	void GLSceneViewWidget::resizeEvent(QResizeEvent *event)
 	{
 		if(scene()!=NULL)
 		{
@@ -2952,23 +2977,23 @@ using namespace QVGL;
 		QGraphicsView::resizeEvent(event);
    	}
 
-	void SceneViewWidget::addSubWidget(SubWidget* subWidget)
+	void GLSceneViewWidget::addSubWidget(SubWidget* subWidget)
 	{
-		QGraphicsProxyWidget* proxy = sceneWidget->addWidget(subWidget);
+		QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
 		subWidget->setGraphicsProxy(proxy);
 	}
 
-	void SceneViewWidget::addItem(QGraphicsItem* item)
+	void GLSceneViewWidget::addItem(QGraphicsItem* item)
 	{
-		sceneWidget->addItem(item);
+		glScene->addItem(item);
 	}
 
-	void SceneViewWidget::removeItem(QGraphicsItem* item)
+	void GLSceneViewWidget::removeItem(QGraphicsItem* item)
 	{
-		sceneWidget->removeItem(item);
+		glScene->removeItem(item);
 	}
 
-	SubWidget* SceneViewWidget::getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
+	SubWidget* GLSceneViewWidget::getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
 	{
 		if(list.isEmpty())
 			return NULL;
@@ -2999,7 +3024,7 @@ using namespace QVGL;
 		}
 	}
 
-	SubWidget* SceneViewWidget::getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
+	SubWidget* GLSceneViewWidget::getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
 	{
 		if(list.isEmpty())
 			return NULL;
@@ -3030,7 +3055,7 @@ using namespace QVGL;
 		}
 	}
 
-	void SceneViewWidget::orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible) const
+	void GLSceneViewWidget::orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible) const
 	{
 		if(onlyIfVisible)
 		{
@@ -3061,11 +3086,11 @@ using namespace QVGL;
 		}
 	}
 
-	void SceneViewWidget::putItemOnTop(QGraphicsProxyWidget* graphicsProxy)
+	void GLSceneViewWidget::putItemOnTop(QGraphicsProxyWidget* graphicsProxy)
 	{
 		if(graphicsProxy!=NULL)
 		{
-			QList<QGraphicsItem*> itemsList = sceneWidget->items();
+			QList<QGraphicsItem*> itemsList = glScene->items();
 
 			qreal k = itemsList.count()-2;
 
@@ -3083,11 +3108,11 @@ using namespace QVGL;
 		}
 	}
 
-	void SceneViewWidget::putItemOnBottom(QGraphicsProxyWidget* graphicsProxy)
+	void GLSceneViewWidget::putItemOnBottom(QGraphicsProxyWidget* graphicsProxy)
 	{
 		if(graphicsProxy!=NULL)
 		{
-			QList<QGraphicsItem*> itemsList = sceneWidget->items();
+			QList<QGraphicsItem*> itemsList = glScene->items();
 
 			qreal k = itemsList.count()-1;
 
@@ -3105,12 +3130,12 @@ using namespace QVGL;
 		}
 	}
 
-	void SceneViewWidget::makeGLContextAvailable(void)
+	void GLSceneViewWidget::makeGLContextAvailable(void)
 	{
 		contextWidget->makeCurrent();
 	}
 
-	void SceneViewWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
+	void GLSceneViewWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
 	{
 		unsigned char rgb[3];
 
@@ -3125,7 +3150,7 @@ using namespace QVGL;
 		blue	= rgb[2];
 	}
 
-	void SceneViewWidget::getColorAt(int x, int y, QColor& c)
+	void GLSceneViewWidget::getColorAt(int x, int y, QColor& c)
 	{
 		unsigned char rgb[3];
 
@@ -3140,9 +3165,9 @@ using namespace QVGL;
 		c.setBlue(rgb[2]);
 	}
 
-	void SceneViewWidget::update(void)
+	void GLSceneViewWidget::update(void)
 	{
-		sceneWidget->update();
+		glScene->update();
 		//QGraphicsView::update(); // not required.
 	}
 
@@ -3150,7 +3175,7 @@ using namespace QVGL;
 	MainWidget::MainWidget(QWidget* parent)
 	 :	QWidget(parent), 
 		container(QBoxLayout::LeftToRight, this),
-		sceneViewWidget(this, &topBar, &bottomBar),
+		glSceneViewWidget(this, &topBar, &bottomBar),
 		currentViewIndex(-1),
 		currentViewsTableIndex(-1),
 		mainViewsTable(NULL),
@@ -3161,7 +3186,7 @@ using namespace QVGL;
 	{
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-		container.addWidget(&sceneViewWidget);
+		container.addWidget(&glSceneViewWidget);
 		container.setMargin(0);
 		container.setSpacing(0);
 
@@ -3394,8 +3419,8 @@ using namespace QVGL;
 	void MainWidget::setMouseCursor(Qt::CursorShape cursorShape)
 	{
 		setCursor(cursorShape);
-		sceneViewWidget.setCursor(cursorShape);
-		sceneViewWidget.viewport()->setCursor(cursorShape);
+		glSceneViewWidget.setCursor(cursorShape);
+		glSceneViewWidget.viewport()->setCursor(cursorShape);
 	}
 
 	void MainWidget::viewRequireDisplay(View* view)
@@ -3427,7 +3452,7 @@ using namespace QVGL;
 	void MainWidget::viewUpdated(View* view)
 	{
 		if(view==getCurrentView() && view!=NULL)
-			sceneViewWidget.update();
+			glSceneViewWidget.update();
 	}
 
 	void MainWidget::viewUpdated(void)
@@ -3535,7 +3560,7 @@ using namespace QVGL;
 		if(idx>=0 && viewsTable!=mainViewsTable) // Do not remove main table
 		{
 			viewsTablesList.removeAt(idx);
-			sceneViewWidget.removeItem(viewsTable);
+			glSceneViewWidget.removeItem(viewsTable);
 			viewsTable->disconnect(this);		
 		}
 	}
@@ -3586,7 +3611,7 @@ using namespace QVGL;
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
 
 			// Raise the current subWidget : 
-			sceneViewWidget.putItemOnTop(subWidget->getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(subWidget->getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3622,10 +3647,10 @@ using namespace QVGL;
 		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Lower the current subWidget : 
-			sceneViewWidget.putItemOnBottom(subWidget->getGraphicsProxy());
+			glSceneViewWidget.putItemOnBottom(subWidget->getGraphicsProxy());
 
 			// Raise the top bar : 
-			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
 		}
 	}
 
@@ -3675,12 +3700,12 @@ using namespace QVGL;
 	{
 		// Get the ordered list of widgets : 
 		QList<SubWidget*> list = subWidgetsList;
-		sceneViewWidget.orderSubWidgetsList(list, true);
+		glSceneViewWidget.orderSubWidgetsList(list, true);
 
 		if(list.count()>=2)
 		{
-			sceneViewWidget.putItemOnBottom(list[0]->getGraphicsProxy());
-			sceneViewWidget.putItemOnTop(list[1]->getGraphicsProxy());
+			glSceneViewWidget.putItemOnBottom(list[0]->getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(list[1]->getGraphicsProxy());
 
 			// Change opacities : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -3697,11 +3722,11 @@ using namespace QVGL;
 	{
 		// Get the ordered list of widgets : 
 		QList<SubWidget*> list = subWidgetsList;
-		sceneViewWidget.orderSubWidgetsList(list, true);
+		glSceneViewWidget.orderSubWidgetsList(list, true);
 
 		if(list.count()>=2)
 		{
-			sceneViewWidget.putItemOnTop(list.back()->getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(list.back()->getGraphicsProxy());
 			
 			// Change opacities : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
@@ -3739,8 +3764,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			sceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());
-			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
+			glSceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3760,8 +3785,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			sceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
-			sceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
+			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
+			glSceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3824,7 +3849,7 @@ using namespace QVGL;
 			topBar.setTitle(*currentView);
 
 			// Show : 
-			sceneViewWidget.update();
+			glSceneViewWidget.update();
 		}
 		else if(currentView==NULL)
 			topBar.setTitle("(No View)");
@@ -3834,7 +3859,7 @@ using namespace QVGL;
 	{
 		topBar.setTitle("(No View)");
 		currentViewIndex = -1;
-		sceneViewWidget.update();		
+		glSceneViewWidget.update();		
 	}
 
 	void MainWidget::changeCurrentViewsTable(int targetID)
@@ -3853,7 +3878,7 @@ using namespace QVGL;
 
 			// Show : 
 			currentTable->setVisible(true);
-			sceneViewWidget.update();
+			glSceneViewWidget.update();
 		}
 	}
 
@@ -4093,17 +4118,17 @@ using namespace QVGL;
 
 	QRectF MainWidget::sceneRect(void) const
 	{
-		return sceneViewWidget.sceneRect();
+		return glSceneViewWidget.sceneRect();
 	}
 
 	void MainWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
 	{
-		MainWidget::sceneViewWidget.getColorAt(x, y, red, green, blue);
+		MainWidget::glSceneViewWidget.getColorAt(x, y, red, green, blue);
 	}
 
 	void MainWidget::getColorAt(int x, int y, QColor& c)
 	{
-		MainWidget::sceneViewWidget.getColorAt(x, y, c);
+		MainWidget::glSceneViewWidget.getColorAt(x, y, c);
 	}
 
 	void MainWidget::addView(View* view)
@@ -4131,7 +4156,7 @@ using namespace QVGL;
 	{
 		if(!viewsTablesList.contains(viewsTable))
 		{
-			sceneViewWidget.addItem(viewsTable);
+			glSceneViewWidget.addItem(viewsTable);
 			viewsTablesList.append(viewsTable);
 
 			QObject::connect(viewsTable, SIGNAL(requireDisplay()),		this, SLOT(viewsTableRequireDisplay()));
@@ -4149,7 +4174,7 @@ using namespace QVGL;
 	{
 		if(!subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
 		{
-			sceneViewWidget.addSubWidget(subWidget);
+			glSceneViewWidget.addSubWidget(subWidget);
 			
 			// Connect : 
 			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 	this, SLOT(subWidgetSelected(SubWidget*)));
@@ -4232,20 +4257,20 @@ using namespace QVGL;
 				if(currentView!=NULL) currentView->rotate(+0.17453f);
 				break;
 			case ActionToggleFullscreen :
-				if(!sceneViewWidget.isFullScreen())
+				if(!glSceneViewWidget.isFullScreen())
 				{
 					// Enter fullscreen : 
-					sceneViewWidget.setParent(NULL);
-					sceneViewWidget.showFullScreen();
+					glSceneViewWidget.setParent(NULL);
+					glSceneViewWidget.showFullScreen();
 					break;
 				}
 				// else : 
 			case ActionExitFullscreen :
 				// Re-attach :
-				sceneViewWidget.setParent(this);
-				sceneViewWidget.showNormal();
-				container.removeWidget(&sceneViewWidget);
-				container.addWidget(&sceneViewWidget);
+				glSceneViewWidget.setParent(this);
+				glSceneViewWidget.showNormal();
+				container.removeWidget(&glSceneViewWidget);
+				container.addWidget(&glSceneViewWidget);
 				break;
 			case ActionResetView :
 				if(currentView!=NULL) currentView->reset();

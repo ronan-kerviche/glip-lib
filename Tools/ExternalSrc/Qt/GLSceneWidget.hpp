@@ -71,9 +71,22 @@ namespace QVGL
 	class SubWidget;
 	class ContextWidget;
 	class KeyboardState;
-	class SceneWidget;
-	class SceneViewWidget;
+	class GLScene;
+	class GLSceneViewWidget;
 	class MainWidget;
+
+	enum VisualElement
+	{
+		ViewPart,
+		ViewElement,
+		VignettePart,
+		VignetteElement,
+		ViewsTablePart,
+		ViewsTableElement,
+		SubWidgetPart,
+		SubWidgetElement,
+		NotAVisualElement = 0
+	};
 
 	enum ActionID
 	{
@@ -123,7 +136,7 @@ namespace QVGL
 
 			void prepareToDraw(void);
 
-			friend class SceneWidget;
+			friend class GLScene;
 			friend class MainWidget;
 
 		public : 
@@ -233,8 +246,6 @@ namespace QVGL
 			QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 			//void setVisible(bool enabled);
 
-			//friend class MainWidget;
-
 		private slots : 
 			void resize(const QRectF& size);
 			void resize(void);
@@ -341,6 +352,7 @@ namespace QVGL
 			MainWidget* getQVGLParent(void);
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
+			bool isOnTop(void) const;
 			bool shoudBeVisible(void) const;
 
 		public slots :
@@ -529,7 +541,7 @@ namespace QVGL
 			bool				actionPressed[NumActions];
 	
 		protected :
-			friend class SceneWidget;
+			friend class GLScene;
 			friend class MainWidget;
 
 			void keyPressed(QKeyEvent* event);	
@@ -700,7 +712,7 @@ namespace QVGL
 			static QMap<ColorID, QString> initColorsNameMap(void);
 
 		protected :
-			friend class SceneWidget;
+			friend class GLScene;
 			friend class MainWidget;
 
 			void incrementEventCounters(void);
@@ -745,7 +757,7 @@ namespace QVGL
 			void updated(void);
 	};
 
-	class SceneWidget : public QGraphicsScene
+	class GLScene : public QGraphicsScene
 	{
 		Q_OBJECT
 
@@ -772,29 +784,29 @@ namespace QVGL
 			void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 
 		public : 
-			SceneWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
-			~SceneWidget(void);
+			GLScene(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			~GLScene(void);
 
 			void addSubWidget(SubWidget* subWidget);
 			void putItemOnTop(QGraphicsProxyWidget*);
 	};
 
-	class SceneViewWidget : public QGraphicsView
+	class GLSceneViewWidget : public QGraphicsView
 	{
 		Q_OBJECT
 
 		private : 
 			// Data :
 			ContextWidget			*contextWidget;
-			SceneWidget 			*sceneWidget;
+			GLScene 			*glScene;
 			MainWidget			*qvglParent;
 
 			// Functions :
 			void resizeEvent(QResizeEvent *event);
 
 		public : 
-			SceneViewWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
-			~SceneViewWidget(void);
+			GLSceneViewWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			~GLSceneViewWidget(void);
 
 			void addSubWidget(SubWidget* subWidget);
 			void addItem(QGraphicsItem* item);
@@ -823,7 +835,7 @@ namespace QVGL
 			MouseState			mouseState;
 			TopBar				topBar;
 			BottomBar			bottomBar;
-			SceneViewWidget  		sceneViewWidget;
+			GLSceneViewWidget  		glSceneViewWidget;
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
 			QList<ViewsTable*>		viewsTablesList;
@@ -899,8 +911,8 @@ namespace QVGL
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;
 			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view=NULL) const;
 
-			friend class SceneWidget;
-			friend class SceneViewWidget;
+			friend class GLScene;
+			friend class GLSceneViewWidget;
 			
 		public :
 			MainWidget(QWidget* parent=NULL);

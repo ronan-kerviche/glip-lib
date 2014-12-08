@@ -1137,7 +1137,13 @@ using namespace QGED;
 		keyList.append(QKeySequence(Qt::CTRL + Qt::Key_K));
 		clearHighlightAction.setShortcuts(keyList);
 
-		// Add action to parent : 
+		openMenuAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		findNextAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		replaceNextAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		clearHighlightAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+
+		// Add action to parent :
+		parent->addAction(&openMenuAction);
 		parent->addAction(&findNextAction);
 		parent->addAction(&replaceNextAction);
 		parent->addAction(&replaceAllAction);
@@ -2121,7 +2127,26 @@ using namespace QGED;
 		QList<QKeySequence> compileActionShortCuts;
 		compileActionShortCuts.push_back(Qt::CTRL + Qt::Key_R);
 		//compileActionShortCuts.push_back(QKeySequence::Refresh);
-		compileAction.setShortcuts(	compileActionShortCuts );
+		compileAction.setShortcuts(compileActionShortCuts);
+
+		newAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		openAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		saveAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		saveAsAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		saveAllAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		closeAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		closeAllAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+		compileAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
+
+		// Add the actions to this inner widget : 
+		addAction(&newAction);
+		addAction(&openAction);
+		addAction(&saveAction);
+		addAction(&saveAsAction);
+		addAction(&saveAllAction);
+		addAction(&closeAction);
+		addAction(&closeAllAction);
+		addAction(&compileAction);
 
 		// Create a new tab by default : 
 		addTab();

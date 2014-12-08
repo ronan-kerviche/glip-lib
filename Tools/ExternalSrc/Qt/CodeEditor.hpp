@@ -175,7 +175,7 @@ namespace QGED
 			void updateToCursorPosition(void);		
 	
 		public :
-			CodeEditor(QWidget *parent = 0);
+			CodeEditor(QWidget *parent);
 			virtual ~CodeEditor(void);
 
 			bool empty(void) const;
