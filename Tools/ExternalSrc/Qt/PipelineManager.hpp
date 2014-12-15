@@ -25,6 +25,7 @@
 	#include "ImageItem.hpp"
 	#include "UniformsLoaderInterface.hpp"
 	#include <QHeaderView>
+	#include <QTimer>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
@@ -252,12 +253,17 @@ namespace QGPM
 								cellB,
 								computationCount;
 			QString					uniformsFilename;
-			bool					locked;	
+			bool					locked;
+			int					coolDown,
+								remainingCoolDownTicks;
+			bool 					catchupComputation;
+			QTimer					coolDownTimer;
 
 			void setText(int column, const QString & text);
 			std::string getInputFormatName(int idx);
 
-			void updateText(void);
+			void updateNameString(void);
+			void updateStatusString(void);
 			void preInterpret(void);
 			void refurnishPortItems(void);
 			bool checkConnections(void);
@@ -274,6 +280,7 @@ namespace QGPM
 			void connectionStatusChanged(int portIdx, bool validity);			
 			void connectionClosed(int portIdx);
 			void uniformsModified(void);
+			void updateCoolDown(void);
 
 		public :
 			PipelineItem(void* _identifier, const QObject* _referrer);
@@ -290,8 +297,11 @@ namespace QGPM
 			const HdlAbstractTextureFormat& getOutputFormat(int idx);
 			HdlTexture& out(int idx);
 			int getComputationCount(void) const;
+			bool isReady(void) const;
 			bool isLocked(void) const;
 			void lock(bool enabled);
+			int getCoolDown(void) const;
+			void setCoolDown(int seconds);
 			void renewBuffers(void);
 
 			const QString& getUniformsFilename(void) const;
@@ -301,7 +311,7 @@ namespace QGPM
 			static PipelineItem* getPtrFromGenericItem(QTreeWidgetItem* item);
 
 		signals : 	
-			void statusChanged(void);
+			void pipelineCreated(void);
 			void pipelineDestroyed(void);
 			void showIdentifierWidget(void* identifier);
 			void compilationSuccessNotification(void* identifier);
@@ -318,34 +328,40 @@ namespace QGPM
 		Q_OBJECT
 
 		private : 
-			struct PotentialConnectionMap
+			class PotentialConnections
 			{
-				QMap<InputPortItem*, Connection*> connectionsMap;
+				private : 
+					QMap<InputPortItem*, QGIC::ImageItem*> 			imageConnections;
+					QMap<InputPortItem*, QPair<PipelineItem*, int> > 	pipelineOutputConnections;
 				
-				PotentialConnectionMap(void);
-				~PotentialConnectionMap(void);
+				public : 
+					PotentialConnections(void);
+					~PotentialConnections(void);
 
-				void add(InputPortItem* inputPortItem, QGIC::ImageItem* imageItem);
-				void add(InputPortItem* inputPortItem, PipelineItem* pipelineItem, int outputIdx);
-				void apply(void);
+					void add(InputPortItem* inputPortItem, QGIC::ImageItem* imageItem);
+					void add(InputPortItem* inputPortItem, PipelineItem* pipelineItem, int outputIdx);
+					void apply(void);
 			};
 
 			QList<InputPortItem*>			selectedInputPortItems;
+			QGIC::ImageItem*			voidImage;
 			QAction					noImageConnectionAction,
-								noPipelineConnectionAction;
+								noPipelineConnectionAction,
+								voidImageConnection;
 			QMenu					imageItemsMenu,
 								pipelineItemsMenu;
 			QList<QGIC::ImageItem*>			imageItems;
 			QList<PipelineItem*>			pipelineItems;
-			QMap<QAction*, PotentialConnectionMap*>	potentialConnectionsMapMap;
-	
+			QMap<QAction*, PotentialConnections*>	potentialConnectionsMap;
+			
+			void clearPotentialConnectionsMap(void);
 			void buildMenu(void);
 
 		private slots : 
 			void imageItemDestroyed(void);
 			void pipelineItemDestroyed(void);
 			void actionTriggered(void);
-			void actionDestroyed(void);
+			void voidImageActionTriggered(void);
 
 		public : 
 			ConnectionsMenu(QWidget* parent=NULL);
@@ -405,6 +421,9 @@ namespace QGPM
 					*toggleLockPipelineAction,
 					*renewBuffersAction,
 					*removePipelineAction;
+			QMenu		*coolDownMenu;
+			QList<QAction*>	coolDownActions;
+			QSignalMapper	coolDownMapper;
 			PipelineItem	*currentPipelineItem;
 
 			void updateToggles(void);
@@ -415,6 +434,7 @@ namespace QGPM
 			void saveUniformsAs(void);
 			void toggleLockPipeline(void);
 			void renewBuffers(void);
+			void changeCoolDown(int seconds);
 			void removePipeline(void);
 
 		public : 

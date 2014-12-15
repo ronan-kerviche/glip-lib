@@ -606,46 +606,6 @@
  	GeometryInstance::GeometryInstance(const GeometryModel& mdl, GLenum freq)
 	 : id(-1)
 	{
-		// Find if a similar model exist :
-		/*int 	k	= 0,
-			kNull 	= -1;
-		for(; k<models.size(); k++)
-		{
-			if(models[k]!=NULL)
-			{
-				if( (*models[k])==mdl )
-					break;
-			}
-			else
-				kNull = k;
-		}
-
-		// If one was found :
-		if(k<models.size())
-		{
-			// Set the id and increase the counter :
-			id = k;
-			counters[id]++;
-		}
-		else
-		{
-			// No holes?
-			if(kNull<0)
-			{
-				kNull = vbos.size();
-				vbos.push_back(NULL);
-				models.push_back(NULL);
-				counters.push_back(0);
-			}
-
-			// Create :
-			vbos[kNull] 	= mdl.getVBO(freq);
-			models[kNull]	= new GeometryModel(mdl);
-			counters[kNull]	= 1;
-
-			id = kNull;
-		}*/
-
 		// Find if a similar model exist : 
 		for(std::map<int, GeometryModel*>::iterator it=models.begin(); it!=models.end(); it++)
 		{
@@ -686,14 +646,6 @@
 		counters[id]--;
 
 		// If there is no reference anymore :
-		/*if(counters[id]<=0)
-		{
-			delete vbos[id];
-			vbos[id] = NULL;
-			delete models[id];
-			models[id] = NULL;
-		}*/
-
 		if(counters[id]<=0)
 		{
 			delete vbos[id];

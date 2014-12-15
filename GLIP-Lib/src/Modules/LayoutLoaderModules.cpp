@@ -913,7 +913,7 @@
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(executionCode)
 
-				const int startPipelines = 2;
+				const unsigned int startPipelines = 2;
 				std::string requiredElements;
 				VanillaParserSpace::Element 	result;
 

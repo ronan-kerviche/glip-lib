@@ -196,7 +196,7 @@ Processing example :
 						Node(void);
 						Node(const VanillaParserSpace::Element& e);
 						Node(const std::string& _name, Pipeline& pipeline, const AbstractPipelineLayout& current);
-						Node(const std::string& _name, Pipeline& pipeline, const AbstractFilterLayout& current);				
+						Node(const std::string& _name, Pipeline& pipeline, const AbstractPipelineLayout& parent, const AbstractFilterLayout& current);				
 						Node(const Node& cpy);
 						~Node(void);
 

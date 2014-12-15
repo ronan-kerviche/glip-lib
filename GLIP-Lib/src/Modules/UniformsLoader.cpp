@@ -275,7 +275,7 @@
 			switch(current.getElementKind(k))
 			{
 				case AbstractPipelineLayout::FILTER :
-					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.filterLayout(k));
+					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current, current.filterLayout(k));
 					break;
 				case AbstractPipelineLayout::PIPELINE :
 					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.pipelineLayout(k));
@@ -286,14 +286,14 @@
 		}
 	}
 
-	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const AbstractFilterLayout& current)
+	UniformsLoader::Node::Node(const std::string& _name, Pipeline& pipeline, const AbstractPipelineLayout& parent, const AbstractFilterLayout& current)
 	 : 	name(_name)
 	{
 		UNUSED_PARAMETER(current)
 
 		// Get access to the filter : 
-		int gid = pipeline.getElementID(name);
-		Filter& filter = pipeline[gid];	
+		const int gid = parent.getElementID(name);
+		Filter& filter = pipeline[gid];
 
 		// Get the program : 
 		HdlProgram& prgm = filter.program();

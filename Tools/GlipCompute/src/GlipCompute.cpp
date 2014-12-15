@@ -744,11 +744,11 @@ Link : <http://glip-lib.sourceforge.net/>\
 				// Fill in the filter settings :
 				itCommand->setSafeParameterSettings();
 
-				// Test number of outputs : 
+				// Test number of inputs : 
 				if(elements.mainPipelineInputs.size()>itCommand->inputFilenames.size())
 					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s) but only " + Glip::toString(itCommand->inputFilenames.size()) + " input filenames were given" + commandName + ".", __FILE__, __LINE__);
-				if(elements.mainPipelineOutputs.size()>itCommand->outputFilenames.size())
-					throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s) but only " + Glip::toString(itCommand->outputFilenames.size()) + " output filenames were given" + commandName + ".", __FILE__, __LINE__);
+				//if(elements.mainPipelineOutputs.size()>itCommand->outputFilenames.size())
+				//	throw Glip::Exception("The pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s) but only " + Glip::toString(itCommand->outputFilenames.size()) + " output filenames were given" + commandName + ".", __FILE__, __LINE__);
 
 				// Sort : 
 				std::vector<std::string> 	inputsSorted,

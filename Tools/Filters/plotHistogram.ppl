@@ -9,6 +9,7 @@ REQUIRED_FORMAT:outputFormat(inputFormat0)
 SHADER_SOURCE:PlotHistogramShader
 {
 	#version 130
+	precision highp float; // Comment this line if any problem occurs.
 
 	uniform sampler2D histogramBins, inputTexture;
 	out vec4 outputTexture;
@@ -33,6 +34,8 @@ SHADER_SOURCE:PlotHistogramShader
 			outputTexture.b = 1.0;
 		else
 			outputTexture.b = col.b;
+
+		outputTexture.a = 1.0;
 	}
 }
 

@@ -36,7 +36,8 @@
 		if(!(decoderInfo.decoder_flags & LIBRAW_DECODER_FLATFIELD))
 			throw Glip::Exception("libRawLoadImage - Error while unpacking the file " + filename + " : not a Bayer-pattern RAW file.", __FILE__, __LINE__);
 
-		Glip::CoreGL::HdlTextureFormat format(rawProcessor.imgdata.sizes.raw_width, rawProcessor.imgdata.sizes.raw_height, GL_LUMINANCE, GL_UNSIGNED_SHORT);
+		// WARNING, THE FORMAT MUST BE GL_LUMINANCE16 TO ALLOW THE SHADERS TO READ FULL 16 BITS PRECISION. 
+		Glip::CoreGL::HdlTextureFormat format(rawProcessor.imgdata.sizes.raw_width, rawProcessor.imgdata.sizes.raw_height, GL_LUMINANCE16, GL_UNSIGNED_SHORT);
 		Glip::Modules::ImageBuffer* imageBuffer = new Glip::Modules::ImageBuffer(format);
 
 		std::memcpy(imageBuffer->getPtr(), rawProcessor.imgdata.rawdata.raw_image, format.getSize());

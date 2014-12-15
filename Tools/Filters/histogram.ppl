@@ -3,15 +3,16 @@
 */
 
 REQUIRED_FORMAT:inputFormat(inputFormat0)
-TEXTURE_FORMAT:histogramBinsFormat(256,1,GL_RGBA32F,GL_FLOAT, GL_NEAREST, GL_LINEAR)
+TEXTURE_FORMAT:histogramBinsFormat(256, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_LINEAR)
 
-CALL:FORMAT_SCALE_SIZE(inputFormat, 0.2, 0.2, reducedFormat)
+CALL:FORMAT_SCALE_SIZE(inputFormat, 0.25, 0.25, reducedFormat)
 CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)
 CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormat, grid)
 
 SHADER_SOURCE:HistogramVertexShader
 {
 	#version 130
+	precision highp float; // Comment this line if any problem occurs.
 
 	uniform sampler2D inputTexture;
 
@@ -20,7 +21,8 @@ SHADER_SOURCE:HistogramVertexShader
 	void main()
 	{
 		// Vertex texture fetching :
-		vec4 col = textureLod(inputTexture, gl_Vertex.xy/reducedFormat, 0.0);
+		//vec4 col = texture(inputTexture, gl_Vertex.xy/reducedFormat);
+		vec4 col = texelFetch(inputTexture, ivec2(gl_Vertex.xy), 0);
 		float sel = 0.0;
 		// Compute the "Payload"
 		if(gl_Vertex.z==0.0) // Red plane

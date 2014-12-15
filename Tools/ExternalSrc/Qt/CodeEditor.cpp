@@ -1143,11 +1143,14 @@ using namespace QGED;
 		clearHighlightAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);
 
 		// Add action to parent :
-		parent->addAction(&openMenuAction);
-		parent->addAction(&findNextAction);
-		parent->addAction(&replaceNextAction);
-		parent->addAction(&replaceAllAction);
-		parent->addAction(&clearHighlightAction);
+		if(parent!=NULL)
+		{
+			parent->addAction(&openMenuAction);
+			parent->addAction(&findNextAction);
+			parent->addAction(&replaceNextAction);
+			parent->addAction(&replaceAllAction);
+			parent->addAction(&clearHighlightAction);
+		}
 	}
 	
 	SearchAndReplaceMenu::~SearchAndReplaceMenu(void)

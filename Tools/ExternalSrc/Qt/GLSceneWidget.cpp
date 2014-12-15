@@ -1022,7 +1022,7 @@ using namespace QVGL;
 			for(QList<QAction*>::iterator it=innerWidgetActions.begin(); it!=innerWidgetActions.end(); it++)
 			{
 				//std::cout << "    ACTION : " << (*it)->text().toStdString() << " - " << ((*it)->shortcutContext()==Qt::WidgetShortcut) << " / " << ((*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) << " / " << ((*it)->shortcut().matches(received)>QKeySequence::PartialMatch) << std::endl;
-				if(((*it)->shortcutContext()==Qt::WidgetShortcut || (*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) && (*it)->shortcut().matches(received)>QKeySequence::PartialMatch)
+				if((*it)->isEnabled() && ((*it)->shortcutContext()==Qt::WidgetShortcut || (*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) && (*it)->shortcut().matches(received)>QKeySequence::PartialMatch)
 				{
 					(*it)->trigger();
 					test = true;
@@ -2032,7 +2032,7 @@ using namespace QVGL;
 		setActionKeySequence(ActionZoomOut,				QKeySequence(Qt::Key_Minus, Qt::SHIFT + Qt::Key_Minus, Qt::KeypadModifier + Qt::Key_Minus));	// Support for keypad and shifts.
 		setActionKeySequence(ActionRotationClockWise,			Qt::Key_F);
 		setActionKeySequence(ActionRotationCounterClockWise,		Qt::Key_D);
-		setActionKeySequence(ActionToggleFullscreen,			Qt::Key_Return);
+		setActionKeySequence(ActionToggleFullscreen,			Qt::Key_F5);
 		setActionKeySequence(ActionExitFullscreen,			Qt::Key_Escape);
 		setActionKeySequence(ActionResetView,				Qt::Key_Space);
 		setActionKeySequence(ActionPreviousView,			QKeySequence(Qt::CTRL + Qt::Key_Left));

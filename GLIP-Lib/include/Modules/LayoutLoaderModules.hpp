@@ -293,7 +293,7 @@ Example, creating a simple Module :
 			/** SHADERSOURCE_MUST_NOT_EXIST( elementName )				Check that the Shader Source named elementName must not exist (raise an exception otherwise). **/
 			#define SHADERSOURCE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
 			/** APPEND_NEW_SHADERSOURCE(elementName, newElement)			Append the new element to the Shader Source list. **/
-			#define APPEND_NEW_SHADERSOURCE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
+			#define APPEND_NEW_SHADERSOURCE(elementName, newElement)		__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
 			
 			/** ITERATOR_TO_GEOMETRY( iteratorName, elementName )			Get an iterator on the Geometry named elementName. **/
 			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
