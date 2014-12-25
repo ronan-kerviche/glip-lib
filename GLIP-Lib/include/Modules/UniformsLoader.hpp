@@ -201,6 +201,7 @@ Processing example :
 						~Node(void);
 
 						Node& operator=(const Node& cpy);
+						void softCopy(const Node& cpy, bool appendNewNodes=true, bool appendNewResources=true);
 
 						const std::string& getName(void) const;
 						bool isFilter(void) const;
@@ -215,24 +216,26 @@ Processing example :
 						bool subNodeExists(const std::string& nodeName) const;
 						const Node& subNode(const std::string& nodeName) const;
 						Node& subNode(const std::string& nodeName);
-						//void addNode(const Node& node);
 						void eraseNode(const std::string& nodeName);
 						NodeConstIterator nodeBegin(void) const;
 						NodeConstIterator nodeEnd(void) const;
+						NodeConstIterator findNode(const std::string& nodeName) const;
 						NodeIterator nodeBegin(void);
 						NodeIterator nodeEnd(void);
+						NodeIterator findNode(const std::string& nodeName);
 
 						int getNumResources(void) const;
 						std::vector<std::string> getResourcesNamesList(void) const;
 						bool resourceExists(const std::string& resourceName) const;
 						const Resource& resource(const std::string& resourceName) const;
 						Resource& resource(const std::string& resourceName);
-						//void addRssource(const Resource& resource);
 						void eraseResource(const std::string& resourceName);
 						ResourceConstIterator resourceBegin(void) const;
 						ResourceConstIterator resourceEnd(void) const;
+						ResourceConstIterator findResource(const std::string& resourceName) const;
 						ResourceIterator resourceBegin(void);
 						ResourceIterator resourceEnd(void);
+						ResourceIterator findResource(const std::string& resourceName);
 
 						int applyTo(Pipeline& pipeline, const AbstractPipelineLayout& current, bool forceWrite=true, bool silent=false) const;
 						int applyTo(Pipeline& pipeline, Filter& filter, bool forceWrite=true, bool silent=false) const;

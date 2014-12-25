@@ -339,6 +339,43 @@
 	}
 
 	/**
+	\fn void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources)
+	\brief Perform a soft copy from another node (copy the existing data, with possible filters).
+
+	The nodes existing in this but not in cpy will not be modified.
+
+	\param cpy The node to be copied.
+	\param appendNewNodes If true, nodes existing in cpy but not in this will be added to this.
+	\param appendNewResources If true, resources existing in cpy but not in this will be added to this.
+	**/
+	void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources)
+	{
+		// Do not copy the name.
+
+		// Scan the sub-nodes of cpy :
+		for(NodeConstIterator it=cpy.nodeBegin(); it!=cpy.nodeEnd(); it++)
+		{
+			NodeIterator itSub = findNode(it->first);
+
+			if(itSub!=nodeEnd())
+				itSub->second.softCopy(it->second, appendNewNodes, appendNewResources);
+			else if(appendNewNodes)
+				subNodes[it->first] = it->second;	
+		}
+
+		// Scan the resources of cpy :
+		for(ResourceConstIterator it=cpy.resourceBegin(); it!=cpy.resourceEnd(); it++)
+		{
+			ResourceIterator itRes = findResource(it->first);
+
+			if(itRes!=resourceEnd())
+				itRes->second = it->second; // Copy the values.
+			else if(appendNewResources)
+				resources[it->first] = it->second;
+		}
+	}
+
+	/**
 	\fn const std::string& UniformsLoader::Node::getName(void) const
 	\brief Get the name of the node.
 	\return Constant reference to the standard string containing the name of the Node.
@@ -532,6 +569,17 @@
 	}
 
 	/**
+	\fn UniformsLoader::NodeConstIterator UniformsLoader::Node::findNode(const std::string& nodeName) const
+	\brief Find node.
+	\param nodeName Name of the targeted node.
+	\return A constant iterator to the node or UniformsLoader::Node::nodeEnd() if no match is found.
+	**/	
+	UniformsLoader::NodeConstIterator UniformsLoader::Node::findNode(const std::string& nodeName) const
+	{
+		return subNodes.find(nodeName);
+	}
+
+	/**
 	\fn UniformsLoader::NodeIterator UniformsLoader::Node::nodeBegin(void)
 	\brief Get the 'begin' iterator on the sub-nodes list.
 	\return A UniformsLoader::NodeIterator on 'begin'. 
@@ -549,6 +597,17 @@
 	UniformsLoader::NodeIterator UniformsLoader::Node::nodeEnd(void)
 	{
 		return subNodes.end();
+	}
+
+	/**
+	\fn UniformsLoader::NodeIterator UniformsLoader::Node::findNode(const std::string& nodeName)
+	\brief Find node.
+	\param nodeName Name of the targeted node.
+	\return An iterator to the node or UniformsLoader::Node::nodeEnd() if no match is found.
+	**/
+	UniformsLoader::NodeIterator UniformsLoader::Node::findNode(const std::string& nodeName)
+	{
+		return subNodes.find(nodeName);
 	}
 
 	/**
@@ -660,6 +719,17 @@
 	}
 
 	/**
+	\fn UniformsLoader::ResourceConstIterator UniformsLoader::Node::findResource(const std::string& resourceName) const
+	\brief Find resource.
+	\param resourceName Name of the targeted resource.
+	\return A constant iterator to the resource or UniformsLoader::Node::resourceEnd() if no match is found.
+	**/
+	UniformsLoader::ResourceConstIterator UniformsLoader::Node::findResource(const std::string& resourceName) const
+	{
+		return resources.find(resourceName);
+	}
+
+	/**
 	\fn UniformsLoader::ResourceIterator UniformsLoader::Node::resourceBegin(void)
 	\brief Get the 'begin' iterator on the resources list.
 	\return A UniformsLoader::ResourceIterator on 'begin'. 
@@ -677,6 +747,17 @@
 	UniformsLoader::ResourceIterator UniformsLoader::Node::resourceEnd(void)
 	{
 		return resources.end();
+	}
+
+	/**
+	\fn UniformsLoader::ResourceIterator UniformsLoader::Node::findResource(const std::string& resourceName)
+	\brief Find resource.
+	\param resourceName Name of the targeted resource.
+	\return An iterator to the resource or UniformsLoader::Node::resourceEnd() if no match is found.
+	**/
+	UniformsLoader::ResourceIterator UniformsLoader::Node::findResource(const std::string& resourceName)
+	{
+		return resources.find(resourceName);
 	}
 
 	int UniformsLoader::Node::applyTo(Pipeline& pipeline, const AbstractPipelineLayout& current, bool forceWrite, bool silent) const
@@ -864,8 +945,10 @@
 
 				if(!tmp.empty())
 				{
-					if(!hasPipeline(tmp.getName()) || replace)
-						nodes[tmp.getName()] = tmp;
+					NodeIterator similarIt = nodes.find(tmp.getName());
+
+					if(similarIt!=nodes.end() || replace)
+						similarIt->second.softCopy(tmp);
 					else
 						throw Exception("From line " + toString(it->startLine) + " : An element with the typename \"" + tmp.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
 				}
@@ -899,11 +982,15 @@
 
 		if(it!=nodes.end() && !replace)
 			throw Exception("UniformsLoader::load - An element with the typename \"" + pipeline.getTypeName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);	
-		else if(it!=nodes.end())
-			nodes.erase(it);
+		else 
+		{
+			Node tmp(pipeline.getTypeName(), pipeline, pipeline);
 
-		// Insert the new node : 
-		nodes[pipeline.getTypeName()] = Node(pipeline.getTypeName(), pipeline, pipeline);
+			if(it!=nodes.end())
+				it->second.softCopy(tmp);
+			else
+				nodes[pipeline.getTypeName()] = tmp;
+		}
 	}
 
 	/**
@@ -920,11 +1007,13 @@
 			
 			if(similarIt!=nodes.end() && !replace)
 				throw Exception("UniformsLoader::load - An element with the typename \"" + it->first + "\" has already been registered (replace=false).", __FILE__, __LINE__);
-			else if(it!=nodes.end())
-				nodes.erase(similarIt);
-
-			// Insert the new node as a copy : 
-			nodes[it->first] = Node(it->second);
+			else 
+			{
+				if(similarIt!=nodes.end())
+					similarIt->second.softCopy(it->second);
+				else
+					nodes[it->first] = it->second;
+			}
 		}
 	}
 
