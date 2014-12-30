@@ -203,7 +203,6 @@ using namespace QGIC;
 	ImageItem::ImageItem(const ImageItem& imageItem)
 	 : 	QObject(),
 		saved(false),
-		lockedToDevice(false),
 		name(tr("copy_of_%1").arg(imageItem.getName())),
 		filename(""),
 		format(imageItem.format),
@@ -218,7 +217,6 @@ using namespace QGIC;
 
 	ImageItem::ImageItem(const QString& _filename)
 	 : 	saved(true),
-		lockedToDevice(false),
 		name(""),
 		filename(_filename),
 		format(1, 1, GL_RGB, GL_UNSIGNED_BYTE),
@@ -231,7 +229,6 @@ using namespace QGIC;
 
 	ImageItem::ImageItem(const QImage& qimage, const QString& _name)
 	 : 	saved(false),
-		lockedToDevice(false),
 		name(_name),
 		filename(""),
 		format(1, 1, GL_RGB, GL_UNSIGNED_BYTE),
@@ -244,7 +241,6 @@ using namespace QGIC;
 
 	ImageItem::ImageItem(const ImageBuffer& buffer, const QString& _name)
 	 : 	saved(false),
-		lockedToDevice(false),
 		name(_name),
 		filename(""),
 		format(buffer),
@@ -256,7 +252,6 @@ using namespace QGIC;
 
 	ImageItem::ImageItem(HdlTexture& _texture, const QString& _name)
 	 : 	saved(false),
-		lockedToDevice(false),
 		name(_name),
 		filename(""),
 		format(_texture),
@@ -364,19 +359,31 @@ using namespace QGIC;
 		}
 	}
 
-	void ImageItem::lockToDevice(bool enabled)
+	void ImageItem::lock(const void* key)
 	{
-		if(enabled!=lockedToDevice)
+		if(!locks.contains(key))
 		{
-			lockedToDevice = enabled;
+			locks.append(key);
 
-			emit locking(lockedToDevice);
+			if(locks.size()==1)
+				emit locking(true);
+		}
+	}
+
+	void ImageItem::unlock(const void* key)
+	{
+		if(locks.contains(key))
+		{
+			locks.remove(locks.indexOf(key));
+
+			if(locks.empty())
+				emit locking(false);
 		}
 	}
 
 	bool ImageItem::isLockedToDevice(void) const
 	{
-		return lockedToDevice;
+		return (!locks.empty());
 	}
 
 	const HdlAbstractTextureFormat& ImageItem::getFormat(void) const
@@ -528,7 +535,7 @@ using namespace QGIC;
 
 	void ImageItem::remove(void)
 	{
-		lockToDevice(false);
+		locks.clear();
 		unloadFromDevice();
 
 		emit removed();
@@ -1822,6 +1829,30 @@ using namespace QGIC;
 
 			emit imageItemAdded(imageItem);
 		}
+	}
+
+	void ImageItemsCollection::addImageItem(const QString filename)
+	{
+		ImageItem* imageItem = new ImageItem(filename);
+		addImageItem(imageItem);
+	}
+
+	void ImageItemsCollection::addImageItem(const QImage* qimage, const QString name)
+	{
+		ImageItem* imageItem = new ImageItem(*qimage, name);
+		addImageItem(imageItem);
+	}
+
+	void ImageItemsCollection::addImageItem(const ImageBuffer* buffer, const QString name)
+	{
+		ImageItem* imageItem = new ImageItem(*buffer, name);
+		addImageItem(imageItem);
+	}
+
+	void ImageItemsCollection::addImageItem(HdlTexture* texture, const QString name)
+	{
+		ImageItem* imageItem = new ImageItem(*texture, name);
+		addImageItem(imageItem);
 	}
 
 // ImageItemsCollectionSubWidget :

@@ -526,9 +526,6 @@ namespace QGED
 			void save(CodeEditorContainer* editor);
 			void saveAs(CodeEditorContainer* editor, QString filename="");
 
-		//protected :
-		//	virtual LayoutLoader::PipelineScriptElements scanSource(const std::string& code) const;
-
 		public :
 			CodeEditorTabs(void);
 			~CodeEditorTabs(void);

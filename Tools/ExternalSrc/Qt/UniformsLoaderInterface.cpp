@@ -17,6 +17,7 @@
 #include "UniformsLoaderInterface.hpp"
 #include "QMenuTools.hpp"
 #include <QMessageBox>
+#include <QFileInfo>
 
 using namespace QGUI;
 
@@ -347,7 +348,7 @@ using namespace QGUI;
 		linkLabel.setText("<font color=\"#000000\"><i>Not linked</i></font>");
 	}	
 	
-	void ValuesInterface::pullModificationFromResource(void)
+	void ValuesInterface::pullModificationFromResource(bool emitSignal)
 	{
 		blockSignals(true);
 
@@ -368,7 +369,8 @@ using namespace QGUI;
 
 		blockSignals(false);
 
-		emit modified();
+		if(emitSignal)
+			emit modified();
 	}
 
 	ValuesInterface* ValuesInterface::getPtrFromGenericItem(QTreeWidgetItem* item, const int type)
@@ -381,9 +383,10 @@ using namespace QGUI;
 
 // UniformsLoaderInterface :
 	UniformsLoaderInterface::UniformsLoaderInterface(int type)
-	 : 	QTreeWidgetItem(type)	
+	 : 	QTreeWidgetItem(type)
 	{
-		setText(0, "Uniform Variables");	
+		setText(0, "Uniform Variables");
+		updateFilenameDisplay();	
 	}
 
 	UniformsLoaderInterface::~UniformsLoaderInterface(void)
@@ -445,8 +448,6 @@ using namespace QGUI;
 		for(UniformsLoader::ResourceIterator it=node.resourceBegin(); it!=node.resourceEnd(); it++)
 			addResource(it->second, newNode);
 
-		newNode->setExpanded(true);
-
 		return newNode;
 	}
 
@@ -455,25 +456,37 @@ using namespace QGUI;
 		return addNode(node, this);
 	}
 
+	int UniformsLoaderInterface::updateResource(UniformsLoader::Resource& resource, QTreeWidgetItem* resourceItem, bool updateOnly)
+	{
+		ValuesInterface* valuesInterface = ValuesInterface::getPtrFromGenericItem(resourceItem, type());
+
+		if(valuesInterface!=NULL)
+		{
+			valuesInterface->pullModificationFromResource(false);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
 	int UniformsLoaderInterface::updateNode(UniformsLoader::Node& node, QTreeWidgetItem* nodeItem, bool updateOnly)
 	{
 		int count = 0;
-		QList<QTreeWidgetItem*> children = nodeItem->takeChildren();
-
-		for(QList<QTreeWidgetItem*>::iterator it=children.begin(); it!=children.end(); it++)
+		
+		for(int k=0; k<nodeItem->childCount(); k++)
 		{
 			// Is a node itself : 
-			if((*it)->childCount()>0)
+			if(nodeItem->child(k)->childCount()>0)
 			{
-				const std::string name = (*it)->text(0).toStdString();
+				const std::string name = nodeItem->child(k)->text(0).toStdString();
 
 				// Try to find the corresponding data node : 
 				if(node.subNodeExists(name))
-					count += updateNode(node.subNode(name), *it, updateOnly);
+					count += updateNode(node.subNode(name), nodeItem->child(k), updateOnly);
 			}
 			else // Is a leaf :
 			{
-				const std::string name = (*it)->data(0, Qt::UserRole).toString().toStdString();
+				const std::string name = nodeItem->child(k)->data(0, Qt::UserRole).toString().toStdString();
 
 				// Try to find the corresponding data resource : 
 				if(node.resourceExists(name))
@@ -481,22 +494,13 @@ using namespace QGUI;
 					if(treeWidget()==NULL)
 						throw Exception("UniformsLoaderInterface::updateNode - Internal error : no tree widget associated.", __FILE__, __LINE__);
 					else
-					{
-						delete (*it);
-						
-						(*it) = addResource(node.resource(name), nodeItem);
-	
-						count++;
-					}
+						count += updateResource(node.resource(name), nodeItem->child(k), updateOnly);
 				}
 			}
 		}
 
-		nodeItem->insertChildren(0, children);
-		nodeItem->setExpanded(true);
-
 		return count;
-	}	
+	}
 
 	bool UniformsLoaderInterface::isNodeListed(const std::string& name) const
 	{
@@ -524,21 +528,36 @@ using namespace QGUI;
 				int c = updateNode(it->second, itInternal->second, updateOnly);
 
 				if(c>0)
-				{
 					emit modified();
-					itInternal->second->setExpanded(true);
-				}
 			}
 		}
-		setExpanded(true);
-	}	
+		setAllExpanded(true);
+	}
+
+	void UniformsLoaderInterface::updateFilenameDisplay()
+	{
+		// Update :
+		if(filename.isEmpty())
+		{
+			setText(1, "-");
+			setForeground(1, QBrush(QColor(192, 192, 192)));
+			setStatusTip(1, "<i>File</i> : <i>N.A.</i>");
+		}
+		else
+		{
+			QFileInfo info(filename);
+			setText(1, info.fileName());
+			setForeground(1, QBrush(QColor(192, 192, 192)));
+			setToolTip(1, tr("<i>File</i> : %1").arg(filename));
+		}
+	}
 
 	// Public Tools : 
 	void UniformsLoaderInterface::load(Pipeline& pipeline)
 	{
 		try
 		{
-			loader.load(pipeline, true);
+			loader.load(pipeline, UniformsLoader::LoadAll);
 			scanLoader();
 		}
 		catch(Exception& e)
@@ -550,20 +569,50 @@ using namespace QGUI;
 		}
 	}
 
-	void UniformsLoaderInterface::load(const QString& filename, bool updateOnly)
+	void UniformsLoaderInterface::load(QString _filename, bool updateOnly)
 	{
-		try
+		if(_filename.isEmpty())
+			_filename = filename;
+
+		if(!_filename.isEmpty())
 		{
-			loader.load(filename.toStdString(), true); // Replace values.
-			scanLoader(updateOnly);
+			try
+			{
+				loader.load(_filename.toStdString(), updateOnly ? UniformsLoader::ReplaceOnlySilent : UniformsLoader::LoadAll); // Replace values.
+				scanLoader(updateOnly);
+
+				// Keep : 
+				filename = _filename;
+				updateFilenameDisplay();
+			}
+			catch(Exception& e)
+			{
+				// Warning :
+				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from file : \"%1\"").arg(filename), QMessageBox::Ok);
+				messageBox.setDetailedText(e.what());
+				messageBox.exec();
+			}
 		}
-		catch(Exception& e)
+	}
+
+	void UniformsLoaderInterface::save(QString _filename)
+	{
+		if(_filename.isEmpty())
+			_filename = filename;
+
+		if(!_filename.isEmpty())
 		{
-			// Warning :
-			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from file : \"%1\"").arg(filename), QMessageBox::Ok);
-			messageBox.setDetailedText(e.what());
-			messageBox.exec();
+			loader.writeToFile(_filename.toStdString());
+			
+			// Keep : 
+			filename = _filename;
+			updateFilenameDisplay();
 		}
+	}
+
+	const QString& UniformsLoaderInterface::getFilename(void) const
+	{
+		return filename;
 	}
 
 	bool UniformsLoaderInterface::hasPipeline(const std::string& name) const
@@ -571,14 +620,28 @@ using namespace QGUI;
 		return false;
 	}
 
-	void UniformsLoaderInterface::save(const QString& filename)
-	{
-		loader.writeToFile(filename.toStdString());
-	}
-
 	int UniformsLoaderInterface::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	{
 		return loader.applyTo(pipeline, forceWrite, silent);
+	}
+
+	void UniformsLoaderInterface::setAllExpanded(bool enabled)
+	{
+		QList<QTreeWidgetItem*> items;
+
+		// Start with this : 
+		items.push_back(this);
+
+		while(!items.empty())
+		{
+			// Push the sub of front : 
+			for(int k=0; k<items.front()->childCount(); k++)
+				items.push_back(items.front()->child(k));
+	
+			// Expand current : 
+			items.front()->setExpanded(enabled);
+			items.pop_front();
+		}
 	}
 
 // UniformsLinkMenu :

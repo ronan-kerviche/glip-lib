@@ -753,7 +753,7 @@
 			throw Exception("From line " + toString(e.startLine) + " : Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
 
 		if(!fromString(e.arguments[1], h))
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
 
 		mode  = glFromString(e.arguments[2]);
 		depth = glFromString(e.arguments[3]);
@@ -1103,26 +1103,6 @@
 		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second, vertexSourcePtr, geometryPtr) ) );
 
 		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
-
-		/*if(e.arguments.size()>3)
-		{
-			if(e.arguments[3]==keywords[KW_LL_CLEARING_ON])
-				filterLayout->second.enableClearing();
-			else if(e.arguments[3]==keywords[KW_LL_CLEARING_OFF])
-				filterLayout->second.disableClearing();
-			else
-				throw Exception("From line " + toString(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[KW_LL_CLEARING_ON] + "\" or \"" + keywords[KW_LL_CLEARING_OFF] + "\"). Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
-		}
-
-		if(e.arguments.size()>4)
-		{
-			if(e.arguments[4]==keywords[KW_LL_BLENDING_ON])
-				filterLayout->second.enableBlending();
-			else if(e.arguments[4]==keywords[KW_LL_BLENDING_OFF])
-				filterLayout->second.disableBlending();
-			else
-				throw Exception("From line " + toString(e.startLine) + " : Unable to read clearing parameter (should be either \"" +  keywords[KW_LL_BLENDING_ON] + "\" or \"" + keywords[KW_LL_BLENDING_OFF] + "\"). Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
-		}*/
 
 		if(!e.noBody && !e.body.empty())
 		{

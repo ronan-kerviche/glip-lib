@@ -407,7 +407,7 @@ namespace QGPM
 			void updateToSelection(QList<QTreeWidgetItem*>& selection);
 
 		signals : 
-			void addImageItemRequest(QGIC::ImageItem* imageItem);
+			void addImageItemRequest(HdlTexture* texture, const QString name);
 	};
 
 	class PipelineMenu : public QMenu
@@ -415,9 +415,11 @@ namespace QGPM
 		Q_OBJECT
 
 		private :
-			QAction		*loadUniformsAction,
+			QAction		*reloadUniformsAction,
+					*loadUniformsAction,
 					*saveUniformsAction,
 					*saveUniformsAsAction,
+					*editUniformsAction,
 					*toggleLockPipelineAction,
 					*renewBuffersAction,
 					*removePipelineAction;
@@ -428,10 +430,12 @@ namespace QGPM
 
 			void updateToggles(void);
 
-		private slots : 	
+		private slots : 
+			void reloadUniforms(void);	
 			void loadUniforms(void);
 			void saveUniforms(void);
 			void saveUniformsAs(void);
+			void editUniforms(void);
 			void toggleLockPipeline(void);
 			void renewBuffers(void);
 			void changeCoolDown(int seconds);
@@ -448,6 +452,7 @@ namespace QGPM
 
 		signals :
 			void removePipeline(PipelineItem* pipelineItem);
+			void editFile(const QString filename);
 	};
 
 	class PipelineManager : public QWidget
@@ -468,6 +473,8 @@ namespace QGPM
 		private slots :
 			void itemSelectionChanged(void);
 			void itemDoubleClicked(QTreeWidgetItem* item, int column);
+			void itemExpanded(QTreeWidgetItem* item);
+			void itemCollapsed(QTreeWidgetItem* item);
 			void execCustomContextMenu(const QPoint& pos); 
 			void removePipeline(PipelineItem* pipelineItem);
 
@@ -487,7 +494,8 @@ namespace QGPM
 			void pipelineItemAdded(QGPM::PipelineItem* pipelineItem);
 			void addViewRequest(QVGL::View* view);
 			void addViewsTableRequest(QVGL::ViewsTable* newTable);
-			void addImageItemRequest(QGIC::ImageItem* imageItem);
+			void addImageItemRequest(HdlTexture* texture, const QString name);
+			void editFile(const QString filename);
 	};
 
 	#ifdef __USE_QVGL__

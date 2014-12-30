@@ -339,18 +339,40 @@
 	}
 
 	/**
-	\fn void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources)
+	\fn void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources, bool removeAbsentNodes, bool removeAbsentResources)
 	\brief Perform a soft copy from another node (copy the existing data, with possible filters).
 
-	The nodes existing in this but not in cpy will not be modified.
-
-	\param cpy The node to be copied.
-	\param appendNewNodes If true, nodes existing in cpy but not in this will be added to this.
-	\param appendNewResources If true, resources existing in cpy but not in this will be added to this.
+	\param cpy The node to be copied (the source).
+	\param appendNewNodes If true, nodes existing in the source but not in this will be added to this.
+	\param appendNewResources If true, resources existing in the source but not in this will be added to this.
+	\param removeAbsentNodes If true, remove the nodes existing in this but not in the source.
+	\param removeAbsentResources If true, remove the resources existing in this but not in the source.
 	**/
-	void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources)
+	void UniformsLoader::Node::softCopy(const Node& cpy, bool appendNewNodes, bool appendNewResources, bool removeAbsentNodes, bool removeAbsentResources)
 	{
 		// Do not copy the name.
+
+		if(removeAbsentNodes)
+		{
+			for(NodeIterator it=nodeBegin(); it!=nodeEnd(); )
+			{
+				if(cpy.subNodeExists(it->second.getName()))
+					it = subNodes.erase(it);
+				else
+					it++;
+			}
+		}
+
+		if(removeAbsentResources)
+		{
+			for(ResourceIterator it=resourceBegin(); it!=resourceEnd(); )
+			{
+				if(cpy.resourceExists(it->second.getName()))
+					it = resources.erase(it);
+				else
+					it++;
+			}
+		}
 
 		// Scan the sub-nodes of cpy :
 		for(NodeConstIterator it=cpy.nodeBegin(); it!=cpy.nodeEnd(); it++)
@@ -372,6 +394,64 @@
 				itRes->second = it->second; // Copy the values.
 			else if(appendNewResources)
 				resources[it->first] = it->second;
+		}
+	}
+
+	/**
+	\fn void UniformsLoader::Node::softCopy(const Node& cpy, LoadingFilter loadingFilter)
+	\brief Perform a soft copy from another node (copy the existing data, with possible filters).
+
+	The nodes existing in this but not in the source will not be modified.
+
+	\param cpy The node to be copied (the source).
+	\param loadingFilter Select a specific method of loading.
+	**/
+	void UniformsLoader::Node::softCopy(const Node& cpy, LoadingFilter loadingFilter)
+	{
+		// Scan the sub-nodes of cpy :
+		for(NodeConstIterator it=cpy.nodeBegin(); it!=cpy.nodeEnd(); it++)
+		{
+			NodeIterator itSub = findNode(it->first);
+
+			if(itSub==nodeEnd())
+			{
+				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
+					subNodes[it->first] = it->second;
+				else if(loadingFilter==ReplaceOnly)
+					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+				//else loadingFilter==ReplaceOnlySilent, nothing.
+			}
+			else
+			{
+				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
+					itSub->second.softCopy(it->second, loadingFilter);
+				else if(loadingFilter==NewOnly)
+					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+				//else loadingFilter==NewOnlySilent, nothing.
+			}
+		}
+
+		// Scan the resources of cpy :
+		for(ResourceConstIterator it=cpy.resourceBegin(); it!=cpy.resourceEnd(); it++)
+		{
+			ResourceIterator itRes = findResource(it->first);
+
+			if(itRes==resourceEnd())
+			{
+				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
+					resources[it->first] = it->second;
+				else if(loadingFilter==ReplaceOnly)
+					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+				//else loadingFilter==ReplaceOnlySilent, nothing.
+			}
+			else
+			{
+				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
+					itRes->second = it->second;
+				else if(loadingFilter==NewOnly)
+					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+				//else loadingFilter==NewOnlySilent, nothing.
+			}
 		}
 	}
 
@@ -891,13 +971,13 @@
 	}
 
 	/**
-	\fn void UniformsLoader::load(std::string source, bool replace, int lineOffset)
+	\fn void UniformsLoader::load(std::string source, LoadingFilter loadingFilter, int lineOffset)
 	\brief Loads a set of uniforms variables for one, or multiple, pipelines.
 	\param source Either a filename or directly the source string (in this case it must contain at least one newline character '\\n').
-	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
+	\param loadingFilter Select a specific method of loading.
 	\param lineOffset Set the line number offset for error reporting. 
 	**/
-	void UniformsLoader::load(std::string source, bool replace, int lineOffset)
+	void UniformsLoader::load(std::string source, LoadingFilter loadingFilter, int lineOffset)
 	{
 		std::string filename;
 
@@ -947,10 +1027,22 @@
 				{
 					NodeIterator similarIt = nodes.find(tmp.getName());
 
-					if(similarIt!=nodes.end() || replace)
-						similarIt->second.softCopy(tmp);
+					if(similarIt==nodes.end())
+					{
+						if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
+							nodes[tmp.getName()] = tmp;
+						else if(loadingFilter==ReplaceOnly)
+							throw Exception("From line " + toString(it->startLine) + " : The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+						//else loadingFilter==ReplaceOnlySilent, nothing
+					}
 					else
-						throw Exception("From line " + toString(it->startLine) + " : An element with the typename \"" + tmp.getName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);
+					{
+						if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
+							similarIt->second.softCopy(tmp, loadingFilter);
+						else if(loadingFilter==NewOnly)
+							throw Exception("From line " + toString(it->startLine) + " : The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+						//else loadingFilter==NewOnlySilent, nothing
+					}
 				}
 			}
 		}
@@ -970,49 +1062,61 @@
 	}
 
 	/**
-	\fn void UniformsLoader::load(Pipeline& pipeline, bool replace)
+	\fn void UniformsLoader::load(Pipeline& pipeline, LoadingFilter loadingFilter)
 	\brief Load the set of uniforms variables from a pipeline.
 	\param pipeline The pipeline to extract the data from.
-	\param replace If set to true, and in the case that a pipeline with a similar name already exists, then the set of values is overwritten. Otherwise it will raise an Exception.
+	\param loadingFilter Select a specific method of loading.
 	**/
-	void UniformsLoader::load(Pipeline& pipeline, bool replace)
+	void UniformsLoader::load(Pipeline& pipeline, LoadingFilter loadingFilter)
 	{
-		
+		Node tmp(pipeline.getTypeName(), pipeline, pipeline);
 		std::map<std::string, UniformsLoader::Node>::iterator it=nodes.find(pipeline.getTypeName());
 
-		if(it!=nodes.end() && !replace)
-			throw Exception("UniformsLoader::load - An element with the typename \"" + pipeline.getTypeName() + "\" has already been registered (replace=false).", __FILE__, __LINE__);	
-		else 
+		if(it==nodes.end())
 		{
-			Node tmp(pipeline.getTypeName(), pipeline, pipeline);
-
-			if(it!=nodes.end())
-				it->second.softCopy(tmp);
-			else
-				nodes[pipeline.getTypeName()] = tmp;
+			if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
+				nodes[tmp.getName()] = tmp;
+			else if(loadingFilter==ReplaceOnly)
+				throw Exception("The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+			//else loadingFilter==ReplaceOnlySilent, nothing.
+		}
+		else
+		{
+			if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
+				it->second.softCopy(tmp, loadingFilter);
+			else if(loadingFilter==NewOnly)
+				throw Exception("The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+			//else loadingFilter==NewOnlySilent, nothing.
 		}
 	}
 
 	/**
-	\fn void UniformsLoader::load(const UniformsLoader& subLoader, bool replace=false)
+	\fn void UniformsLoader::load(const UniformsLoader& subLoader, LoadingFilter loadingFilter)
 	\brief Load data from another UniformsLoader object.
 	\param subLoader Other object.
-	\param replace If set to true, and in the case that variables with a similar name already exist, then the set of values is overwritten. Otherwise it will raise an Exception.
+	\param loadingFilter Select a specific method of loading.
 	**/
-	void UniformsLoader::load(const UniformsLoader& subLoader, bool replace)
+	void UniformsLoader::load(const UniformsLoader& subLoader, LoadingFilter loadingFilter)
 	{
 		for(NodeConstIterator it = subLoader.nodes.begin(); it!=subLoader.nodes.end(); it++)
 		{
 			std::map<std::string, UniformsLoader::Node>::iterator similarIt = nodes.find(it->first);
 			
-			if(similarIt!=nodes.end() && !replace)
-				throw Exception("UniformsLoader::load - An element with the typename \"" + it->first + "\" has already been registered (replace=false).", __FILE__, __LINE__);
-			else 
+			if(similarIt==nodes.end())
 			{
-				if(similarIt!=nodes.end())
-					similarIt->second.softCopy(it->second);
-				else
+				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 					nodes[it->first] = it->second;
+				else if(loadingFilter==ReplaceOnly)
+					throw Exception("The element with the name \"" + it->second.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+				//else loadingFilter==ReplaceOnlySilent, nothing.
+			}
+			else
+			{
+				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
+					similarIt->second.softCopy(it->second, loadingFilter);
+				else if(loadingFilter==NewOnly)
+					throw Exception("The element with the name \"" + it->second.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+				//else loadingFilter==NewOnlySilent, nothing.
 			}
 		}
 	}

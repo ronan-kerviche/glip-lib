@@ -1019,7 +1019,7 @@ using namespace QGED;
 
 	void CodeEditorContainer::showErrors(Exception compilationError)
 	{
-		const std::string lineErrorDescription = "At line ";
+		const std::string lineErrorDescriptors[2] = {"At line ", "From line "};
 		
 		QList<int> errorLines;
 
@@ -1035,22 +1035,23 @@ using namespace QGED;
 			errorsList.addItem(item);
 
 			// Try to read the line number for the error :
-			size_t 	p = line.find(lineErrorDescription);
-			if(p!=std::string::npos)
+			item->setData(Qt::UserRole, QVariant::fromValue(-1));
+			for(int k=0; k<sizeof(lineErrorDescriptors)/sizeof(std::string); k++)
 			{
-				p+=lineErrorDescription.size();
-				size_t q = line.find(':', p);
-				int l = -1;
-				if(q!=std::string::npos && fromString(line.substr(p, q-p), l))
+				size_t 	p = line.find(lineErrorDescriptors[k]);
+				if(p!=std::string::npos)
 				{
-					item->setData(Qt::UserRole, QVariant::fromValue(l));
-					errorLines.append(l);
+					p+=lineErrorDescriptors[k].size();
+					size_t q = line.find(':', p);
+					int l = -1;
+					if(q!=std::string::npos && fromString(line.substr(p, q-p), l))
+					{
+						item->setData(Qt::UserRole, QVariant::fromValue(l));
+						errorLines.append(l);
+						break;
+					}
 				}
-				else
-					item->setData(Qt::UserRole, QVariant::fromValue(-1));
-			}	
-			else
-				item->setData(Qt::UserRole, QVariant::fromValue(-1));
+			}
 		}
 
 		editor.highlightErrorLines(errorLines);
@@ -1058,11 +1059,11 @@ using namespace QGED;
 		QListWidgetItem* firstItem = errorsList.item(0);
 		if(errorsList.count()>0 && firstItem!=NULL)
 		{
-			QFontMetrics metrics(firstItem->font());
-			int newHeight = errorsList.count() * metrics.lineSpacing() * 1.3; // This factor is adhoc... and yes it is ugly.
+			int newHeight = 0;
+			for(int k=0; k<errorsList.count(); k++)
+				newHeight += (errorsList.sizeHintForRow(k) + 1);
 
 			QList<int> sizes = splitterLayout.sizes();
-
 			int totalHeight = 0; //std::accumulate(sizes.begin(), sizes.end(), 0); only in C++11
 			for(QList<int>::const_iterator it=sizes.begin(); it!=sizes.end(); it++)
 				totalHeight += *it;
@@ -1240,7 +1241,16 @@ using namespace QGED;
 			searchPattern.setFocus(Qt::PopupFocusReason);
 			replaceString.clear();
 
-			QPoint execPoint = associatedWidgets.front()->mapToGlobal(QPoint(0,0)) + QPoint(associatedWidgets.front()->width() - width(), associatedWidgets.front()->height());
+			// Compute the position at which the menu should be displayed : 
+			QPoint execPoint = associatedWidgets.front()->mapToGlobal(QPoint(0,0));
+
+			// Shift to the right position, if possible : 
+			if(associatedWidgets.size()>=2)
+				execPoint += QPoint(associatedWidgets.front()->width() - width(), associatedWidgets[1]->height());
+			else
+				execPoint += QPoint(associatedWidgets.front()->width() - width(), 0);
+
+			// Open the menu : 
 			exec(execPoint);
 		}
 	}

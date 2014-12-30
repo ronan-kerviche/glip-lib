@@ -107,7 +107,7 @@ namespace QGUI
 			void unlink(void);
 			bool copyDataFromLink(void);
 
-			void pullModificationFromResource(void);
+			void pullModificationFromResource(bool emitSignal=true);
 			static ValuesInterface* getPtrFromGenericItem(QTreeWidgetItem* item, const int type);
 
 		signals : 
@@ -122,24 +122,29 @@ namespace QGUI
 			// Data : 
 			UniformsLoader 					loader;
 			std::map<const std::string, QTreeWidgetItem*>	itemRoots;
+			QString						filename;
 
 			// Tools : 
 			QTreeWidgetItem* addResource(UniformsLoader::Resource& resource, QTreeWidgetItem* root);
 			QTreeWidgetItem* addNode(UniformsLoader::Node& node, QTreeWidgetItem* root);
 			QTreeWidgetItem* addNodeAsRoot(UniformsLoader::Node& node);
+			int updateResource(UniformsLoader::Resource& resource, QTreeWidgetItem* resourceItem, bool updateOnly);
 			int updateNode(UniformsLoader::Node& node, QTreeWidgetItem* nodeItem, bool updateOnly);
 			bool isNodeListed(const std::string& name) const;
 			void scanLoader(bool updateOnly=false);
+			void updateFilenameDisplay(void);
 
 		public :
 			UniformsLoaderInterface(int type);
 			virtual ~UniformsLoaderInterface(void);
 
 			void load(Pipeline& pipeline);
-			void load(const QString& filename, bool updateOnly=true);
-			void save(const QString& filename);
+			void load(QString _filename="", bool updateOnly=true);
+			void save(QString _filename="");
+			const QString& getFilename(void) const;
 			bool hasPipeline(const std::string& name) const;
 			int applyTo(Pipeline& pipeline, bool forceWrite=true, bool silent=false) const;
+			void setAllExpanded(bool enabled);
 
 		signals : 
 			void modified(void);

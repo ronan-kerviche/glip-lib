@@ -47,7 +47,7 @@ using namespace QGPM;
 	ConnectionToImageItem::~ConnectionToImageItem(void)
 	{
 		if(imageItem!=NULL)
-			imageItem->lockToDevice(false);
+			imageItem->unlock(reinterpret_cast<void*>(this));
 
 		imageItem = NULL;
 	}
@@ -114,7 +114,7 @@ using namespace QGPM;
 	void ConnectionToImageItem::lock(bool enabled)
 	{
 		if(isValid())
-			imageItem->lockToDevice(enabled);
+			imageItem->lock(reinterpret_cast<void*>(this));
 	}
 
 	const void* ConnectionToImageItem::getIdentification(void) const
@@ -1189,35 +1189,22 @@ using namespace QGPM;
 
 	const QString& PipelineItem::getUniformsFilename(void) const
 	{
-		return uniformsFilename;
+		if(uniformsNode!=NULL)
+			return uniformsNode->getFilename();
+		else
+			return QString("");
 	}
 
 	void PipelineItem::loadUniforms(QString filename)
 	{
-		if(filename.isEmpty())
-			filename = uniformsFilename;
-
-		if(!filename.isEmpty() && uniformsNode!=NULL)
-		{
-			uniformsNode->load(filename);
-				
-			// Update : 
-			uniformsFilename = filename;
-		}
+		if(uniformsNode!=NULL)
+			uniformsNode->load(filename, true);
 	}
 
 	void PipelineItem::saveUniforms(QString filename)
 	{
-		if(filename.isEmpty())
-			filename = uniformsFilename;
-
-		if(!filename.isEmpty() && uniformsNode!=NULL)
-		{
+		if(uniformsNode!=NULL)
 			uniformsNode->save(filename);
-			
-			// Update : 
-			uniformsFilename = filename;
-		}
 	}
 
 	PipelineItem* PipelineItem::getPtrFromGenericItem(QTreeWidgetItem* item)
@@ -1582,7 +1569,8 @@ using namespace QGPM;
 	
 	void OutputsMenu::copyAsNewImageItem(OutputPortItem* outputPortItem)
 	{
-		
+		if(outputPortItem!=NULL && outputPortItem->isValid())
+			emit addImageItemRequest(&outputPortItem->out(), outputPortItem->getName());
 	}
 
 	void OutputsMenu::copyAsNewImageItem(void)
@@ -1643,10 +1631,12 @@ using namespace QGPM;
 
 // PipelineMenu : 
 	PipelineMenu::PipelineMenu(QWidget* parent)
-	 :	QMenu("Pipeline", parent),	
+	 :	QMenu("Pipeline", parent),
+		reloadUniformsAction(NULL),
 		loadUniformsAction(NULL),
 		saveUniformsAction(NULL),
 		saveUniformsAsAction(NULL),
+		editUniformsAction(NULL),
 		toggleLockPipelineAction(NULL),
 		renewBuffersAction(NULL),
 		removePipelineAction(NULL),
@@ -1654,9 +1644,11 @@ using namespace QGPM;
 		coolDownMapper(this),
 		currentPipelineItem(NULL)
 	{
+		reloadUniformsAction		= addAction("Reload uniforms",		this, SLOT(reloadUniforms(void)));
 		loadUniformsAction		= addAction("Load uniforms",		this, SLOT(loadUniforms(void)),		QKeySequence::Open);
 		saveUniformsAction		= addAction("Save uniforms",		this, SLOT(saveUniforms(void)),		QKeySequence::Save);
 		saveUniformsAsAction		= addAction("Save uniforms as...",	this, SLOT(saveUniformsAs(void)),	QKeySequence::SaveAs);
+		editUniformsAction		= addAction("Edit uniforms",		this, SLOT(editUniforms(void)));
 		coolDownMenu = addMenu("Cool Down");
 		toggleLockPipelineAction	= addAction("To Be Defined Dynamically",this, SLOT(toggleLockPipeline(void)));
 		renewBuffersAction		= addAction("Renew Buffers",		this, SLOT(renewBuffers(void)));
@@ -1710,6 +1702,17 @@ using namespace QGPM;
 		}
 	}
 
+	void PipelineMenu::reloadUniforms(void)
+	{
+		if(currentPipelineItem!=NULL)
+		{
+			if(currentPipelineItem->getUniformsFilename().isEmpty())
+				loadUniforms();
+			else
+				currentPipelineItem->loadUniforms();
+		}
+	}
+
 	void PipelineMenu::loadUniforms(void)
 	{
 		if(currentPipelineItem!=NULL)
@@ -1747,6 +1750,12 @@ using namespace QGPM;
 		}
 	}
 
+	void PipelineMenu::editUniforms(void)
+	{
+		if(currentPipelineItem!=NULL && !currentPipelineItem->getUniformsFilename().isEmpty())
+			emit editFile(currentPipelineItem->getUniformsFilename());
+	}
+
 	void PipelineMenu::toggleLockPipeline(void)
 	{
 		if(currentPipelineItem!=NULL)
@@ -1779,9 +1788,11 @@ using namespace QGPM;
 	{
 		if(isEnabled())
 		{	
+			menu.addAction(reloadUniformsAction);
 			menu.addAction(loadUniformsAction);
 			menu.addAction(saveUniformsAction);
 			menu.addAction(saveUniformsAsAction);
+			menu.addAction(editUniformsAction);
 			duplicateMenu(&menu, *coolDownMenu);
 			menu.addAction(toggleLockPipelineAction);
 			menu.addAction(removePipelineAction);
@@ -1817,9 +1828,11 @@ using namespace QGPM;
 			setEnabled(currentPipelineItem!=NULL);
 
 			updateToggles();
+			reloadUniformsAction->setEnabled(allUniforms);
 			loadUniformsAction->setEnabled(allUniforms);
 			saveUniformsAction->setEnabled(allUniforms);
 			saveUniformsAsAction->setEnabled(allUniforms);
+			editUniformsAction->setEnabled(allUniforms);
 		}
 		else
 		{
@@ -1857,9 +1870,12 @@ using namespace QGPM;
 		QObject::connect(this, 		SIGNAL(pipelineItemAdded(QGPM::PipelineItem*)), 	&connectionsMenu, 	SLOT(addPipelineItem(QGPM::PipelineItem*)));
 		QObject::connect(&treeWidget,	SIGNAL(itemSelectionChanged(void)),			this,			SLOT(itemSelectionChanged()));
 		QObject::connect(&treeWidget,	SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),	this,			SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
+		QObject::connect(&treeWidget,	SIGNAL(itemExpanded(QTreeWidgetItem*)),			this,			SLOT(itemExpanded(QTreeWidgetItem*)));
+		QObject::connect(&treeWidget,	SIGNAL(itemCollapsed(QTreeWidgetItem*)),		this,			SLOT(itemCollapsed(QTreeWidgetItem*)));
 		QObject::connect(&treeWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),	this,			SLOT(execCustomContextMenu(const QPoint&)));
 		QObject::connect(&pipelineMenu,	SIGNAL(removePipeline(PipelineItem*)),			this,			SLOT(removePipeline(PipelineItem*)));
-		QObject::connect(&outputsMenu,	SIGNAL(addImageItemRequest(QGIC::ImageItem*)),		this,			SIGNAL(addImageItemRequest(QGIC::ImageItem*)));
+		QObject::connect(&pipelineMenu,	SIGNAL(editFile(const QString)),			this,			SIGNAL(editFile(const QString)));
+		QObject::connect(&outputsMenu,	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),this,			SIGNAL(addImageItemRequest(HdlTexture*, const QString)));
 	}
 
 	PipelineManager::~PipelineManager(void)
@@ -1897,6 +1913,16 @@ using namespace QGPM;
 			if(outputPortItem!=NULL)
 				outputPortItem->doubleClicked(column);
 		}
+	}
+
+	void PipelineManager::itemExpanded(QTreeWidgetItem* item)
+	{
+		updateColumnSize();
+	}
+
+	void PipelineManager::itemCollapsed(QTreeWidgetItem* item)
+	{
+		updateColumnSize();
 	}
 
 	void PipelineManager::execCustomContextMenu(const QPoint& pos)

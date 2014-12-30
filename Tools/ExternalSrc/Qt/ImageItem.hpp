@@ -61,8 +61,8 @@ namespace QGIC
 		Q_OBJECT
 
 		private : 
-			bool			saved,
-						lockedToDevice;
+			bool			saved;
+			QVector<const void*>	locks;
 			QString			name,
 						filename;
 			HdlTextureFormat	format;			
@@ -82,7 +82,8 @@ namespace QGIC
 			bool isOnDevice(void) const;
 			bool loadToDevice(void);
 			void unloadFromDevice(void);
-			void lockToDevice(bool lockEnabled);
+			void lock(const void* key);
+			void unlock(const void* key);
 			bool isLockedToDevice(void) const;
 
 			const HdlAbstractTextureFormat& getFormat(void) const;
@@ -344,6 +345,10 @@ namespace QGIC
 	
 		public slots : 
 			void addImageItem(QGIC::ImageItem* imageItem);
+			void addImageItem(const QString filename);
+			void addImageItem(const QImage* qimage, const QString name);
+			void addImageItem(const ImageBuffer* buffer, const QString name);
+			void addImageItem(HdlTexture* texture, const QString name);
 
 		signals :
 			void imageItemAdded(QGIC::ImageItem* imageItem);

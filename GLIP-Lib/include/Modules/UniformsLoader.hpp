@@ -151,6 +151,21 @@ Processing example :
 				/// Iterator over the resources (refers to a std::pair, use second to access the UniformsLoader::Resource& object).
 				typedef std::map<const std::string, Resource>::iterator 	ResourceIterator;
 
+				/// Flags used for loading data from pipelines, strings or files.
+				enum LoadingFilter
+				{
+					/// Load all the data, append new data, replace existing data.
+					LoadAll,
+					/// Load only new data, throw an Exception if some data already exists.
+					NewOnly,
+					/// Load only new data, ignore data which already exists.
+					NewOnlySilent,
+					/// Replace existing data only, throw an Exception if there is some new data.
+					ReplaceOnly,
+					/// Replace existing data only, ignore new data.
+					ReplaceOnlySilent
+				};
+
 /**
 \class Resource
 \brief Resource (variable) of a structure (filter, pipeline).
@@ -162,7 +177,7 @@ Processing example :
 						HdlDynamicData* data;
 
 					public : 
-						/// This flag can be used to manually set the variable as modified or non modified, in order to limit driver work time.
+						/// This flag can be used to manually set the variable as modified or non-modified, in order to limit driver work time.
 						bool modified;
 
 						Resource(void);
@@ -201,7 +216,8 @@ Processing example :
 						~Node(void);
 
 						Node& operator=(const Node& cpy);
-						void softCopy(const Node& cpy, bool appendNewNodes=true, bool appendNewResources=true);
+						void softCopy(const Node& cpy, bool appendNewNodes=true, bool appendNewResources=true, bool removeAbsentNodes=true, bool removeAbsentResources=true);
+						void softCopy(const Node& cpy, LoadingFilter loadingFilter);
 
 						const std::string& getName(void) const;
 						bool isFilter(void) const;
@@ -250,9 +266,9 @@ Processing example :
 				UniformsLoader(const UniformsLoader& cpy);
 				~UniformsLoader(void);
 
-				void load(std::string source, bool replace=false, int lineOffset=1);
-				void load(Pipeline& pipeline, bool replace=false);
-				void load(const UniformsLoader& subLoader, bool replace=false);
+				void load(std::string source, LoadingFilter loadingFilter=LoadAll, int lineOffset=1);
+				void load(Pipeline& pipeline, LoadingFilter loadingFilter=LoadAll);
+				void load(const UniformsLoader& subLoader, LoadingFilter loadingFilter=LoadAll);
 				bool empty(void) const;
 				void clear(void);
 				void clear(const std::string& name);
