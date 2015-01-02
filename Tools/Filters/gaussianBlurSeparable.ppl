@@ -1,0 +1,77 @@
+/*
+	Apply a gaussian blur to the image (within a defined window, separable version).
+*/
+
+REQUIRED_FORMAT:outputFormat0(inputFormat0)
+
+SHARED_CODE:SeparableGaussianBlurCode
+{
+	float gaussian1(in float pos, in float sigma)
+	{
+		return exp(- pos*pos / (2.0 * sigma * sigma));
+	}
+
+	vec4 gaussianBlur1(in sampler2D inTexture, in ivec2 pos, in int halfWindowSize, in float sigma, in vec2 direction)
+	{
+		float sumWeights = 0.0;
+		vec4 result = vec4(0.0, 0.0, 0.0, 0.0);
+
+		for(int i=-halfWindowSize; i<=halfWindowSize; i++)
+		{
+			vec4 current = texelFetch(inTexture, pos + ivec2(i * direction), 0);
+			float weight = gaussian1(float(i), sigma);
+			result = result + current * weight;
+			sumWeights = sumWeights + weight;
+		}
+
+		return result/sumWeights;
+	}
+}
+
+SHADER_SOURCE:SeparableGaussianBlurShaderX
+{
+	#version 130
+
+	uniform sampler2D	textureInput;
+	out     vec4 		blurredTextureX;
+	uniform float		sigma 		= 1.0;
+	uniform int		halfWindowSize	= 1;
+	
+	INSERT(SeparableGaussianBlurCode)
+
+	void main()
+	{
+		blurredTextureX = gaussianBlur1(textureInput, ivec2(gl_FragCoord.xy), halfWindowSize, sigma, vec2(1.0, 0.0));
+	}
+}
+
+SHADER_SOURCE:SeparableGaussianBlurShaderXY
+{
+	#version 130
+
+	uniform sampler2D	blurredTextureX;
+	out     vec4 		blurredTexture;
+	uniform float		sigma 		= 1.0;
+	uniform int		halfWindowSize	= 1;
+	
+	INSERT(SeparableGaussianBlurCode)
+
+	void main()
+	{
+		blurredTexture = gaussianBlur1(blurredTextureX, ivec2(gl_FragCoord.xy), halfWindowSize, sigma, vec2(0.0, 1.0));
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:SeparableGaussianBlurFilterX(outputFormat0,SeparableGaussianBlurShaderX)
+FILTER_LAYOUT:SeparableGaussianBlurFilterXY(outputFormat0,SeparableGaussianBlurShaderXY)
+
+PIPELINE_MAIN:SeparableGaussianBlurPipeline
+{
+	// Declare some input and output ports for this pipeline :
+	INPUT_PORTS(textureInput)
+	OUTPUT_PORTS(blurredTexture)
+
+	FILTER_INSTANCE:SeparableGaussianBlurFilterX
+	FILTER_INSTANCE:SeparableGaussianBlurFilterXY
+}

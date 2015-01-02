@@ -409,6 +409,25 @@ using namespace QGIC;
 		
 	#undef MAKE_SET_FILTER
 
+	QString ImageItem::getToolTipInformation(void)
+	{
+		QString tooltip;
+
+		QMap<QString, QString> infos;
+
+		if(!getFilename().isEmpty())
+			infos["Filename"] = getFilename();
+
+		infos["Locks Count"] = tr("%1").arg(locks.size());
+
+		if(isOnDevice())
+			tooltip = getFormatToolTip(*texture, getName(), infos);
+		else
+			tooltip = getFormatToolTip(format, getName(), infos);
+		
+		return tooltip;
+	}
+
 	const QString& ImageItem::getFilename(void) const
 	{
 		return filename;
@@ -557,7 +576,7 @@ using namespace QGIC;
 			return tr("%1 B").arg( size );
 	}
 
-	QString ImageItem::getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name)
+	QString ImageItem::getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name, const QMap<QString, QString>& otherInfos)
 	{
 		QString toolTip;
 
@@ -572,6 +591,35 @@ using namespace QGIC;
 		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getMinFilter() ).c_str()).arg(glParamName(format.getMagFilter() ).c_str());
 		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getSWrapping() ).c_str()).arg(glParamName(format.getTWrapping() ).c_str());
 		toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(format.getBaseLevel()).arg(format.getMaxLevel());
+
+		for(QMap<QString, QString>::const_iterator it=otherInfos.begin(); it!=otherInfos.end(); it++)
+			toolTip += tr("<tr><td><i>%1</i></td><td>:</td><td>%2</td></tr>").arg(it.key()).arg(it.value());
+
+		toolTip += "</table>";
+
+		return toolTip;
+	}
+
+	QString ImageItem::getFormatToolTip(HdlTexture& texture, const QString& name, const QMap<QString, QString>& otherInfos)
+	{
+		QString toolTip;
+
+		toolTip += "<table>";
+
+		if(!name.isEmpty())
+			toolTip += tr("<tr><td><i>Name</i></td><td>:</td><td>%1</td></tr>").arg(name);
+
+		toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(texture.getWidth()).arg(texture.getHeight()).arg(getSizeString(texture.getSize()));
+		toolTip += tr("<tr><td><i>Size (Driver)</i></td><td>:</td><td>%1</td></tr>").arg(getSizeString(texture.getSizeOnGPU(0)));
+		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture.getGLMode() ).c_str());
+		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture.getGLDepth() ).c_str());
+		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture.getMinFilter() ).c_str()).arg(glParamName(texture.getMagFilter() ).c_str());
+		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture.getSWrapping() ).c_str()).arg(glParamName(texture.getTWrapping() ).c_str());
+		toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(texture.getBaseLevel()).arg(texture.getMaxLevel());
+
+		for(QMap<QString, QString>::const_iterator it=otherInfos.begin(); it!=otherInfos.end(); it++)
+			toolTip += tr("<tr><td><i>%1</i></td><td>:</td><td>%2</td></tr>").arg(it.key()).arg(it.value());
+
 		toolTip += "</table>";
 
 		return toolTip;
@@ -1898,6 +1946,10 @@ using namespace QGIC;
 				// Create a view : 
 				QVGL::View* view = new QVGL::View(imageItem->getTexturePtr(), imageItem->getName());
 				views[imageItem] = view;
+
+				view->infos["Source"] = "Collection";
+				if(!imageItem->getFilename().isEmpty())
+					view->infos["Filename"] = imageItem->getFilename();
 
 				QObject::connect(imageItem,	SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemViewRemoved()));
 				QObject::connect(imageItem,	SIGNAL(removed()),		this, SLOT(imageItemViewRemoved()));

@@ -36,7 +36,9 @@
 	using namespace Glip::Modules::VanillaParserSpace;
 
 	// Static variable :
-	const char* Glip::Modules::LayoutLoader::keywords[LL_NumKeywords] =  {	"TEXTURE_FORMAT",
+	const char* Glip::Modules::LayoutLoader::keywords[LL_NumKeywords] =  {	"TRUE",
+										"FALSE",
+										"TEXTURE_FORMAT",
 										"SHADER_SOURCE",
 										"FILTER_LAYOUT",
 										"PIPELINE_LAYOUT",

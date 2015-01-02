@@ -79,7 +79,7 @@ Other options : \n\
 \n\
 PROCESSING COMMANDS\n\
   Processing commands describe which resource to use in order to repeat\n\
-the operation with little overhead. This commands are given in a format\n\
+the operation with little overhead. These commands are given in a format\n\
 close to the format of the Pipeline or Uniforms script. They should be :\n\
 \n\
 PROCESS\n\
@@ -162,7 +162,7 @@ PIPELINE:/* pipeline name */\n\
 {\n\
 	FILTER:/* filter instance */\n\
 	{\n\
-		/* GL Type */ : /* name */ ( /*values */ )\n\
+		/* GL Type */ : /* name */ ( /* values */ )\n\
 		// E.g. :\n\
 		GL_FLOAT_MAT3:M(0.3, 0.3, 0.4, 0.3, 0.3, 0.4, 0.3, 0.3, 0.4)\n\
 	}\n\
@@ -786,7 +786,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				// Uniforms : 
 				if(!itCommand->uniformVariables.empty())
-					uloader.load(itCommand->uniformVariables, false, itCommand->uniformsLine);
+					uloader.load(itCommand->uniformVariables, Glip::Modules::UniformsLoader::LoadAll, itCommand->uniformsLine);
 
 				// Load : 
 				Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader(pipelineFilename);

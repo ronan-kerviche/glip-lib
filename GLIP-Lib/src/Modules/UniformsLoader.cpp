@@ -356,10 +356,11 @@
 		{
 			for(NodeIterator it=nodeBegin(); it!=nodeEnd(); )
 			{
-				if(cpy.subNodeExists(it->second.getName()))
-					it = subNodes.erase(it);
-				else
-					it++;
+				NodeIterator itLag = it;
+				it++;
+
+				if(!cpy.subNodeExists(itLag->second.getName()))
+					subNodes.erase(itLag);
 			}
 		}
 
@@ -367,10 +368,11 @@
 		{
 			for(ResourceIterator it=resourceBegin(); it!=resourceEnd(); )
 			{
-				if(cpy.resourceExists(it->second.getName()))
-					it = resources.erase(it);
-				else
-					it++;
+				ResourceIterator itLag = it;
+				it++;
+
+				if(!cpy.resourceExists(itLag->second.getName()))
+					resources.erase(itLag);
 			}
 		}
 

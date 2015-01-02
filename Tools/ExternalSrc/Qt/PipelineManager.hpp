@@ -72,6 +72,7 @@ namespace QGPM
 			virtual bool isValid(void) const = 0;
 			virtual bool isReady(void) const = 0;
 			virtual QString getName(void) const = 0;
+			virtual QString getToolTipInformation(void) = 0;
 			virtual bool selfTest(PipelineItem* _pipelineItem) const = 0;
 			virtual const HdlAbstractTextureFormat& getFormat(void) const = 0;
 			virtual HdlTexture& getTexture(void) = 0;
@@ -103,6 +104,7 @@ namespace QGPM
 			bool isValid(void) const;
 			bool isReady(void) const;
 			QString getName(void) const;
+			QString getToolTipInformation(void);
 			bool selfTest(PipelineItem* _pipelineItem) const;
 			const HdlAbstractTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
@@ -130,6 +132,7 @@ namespace QGPM
 			bool isValid(void) const;
 			bool isReady(void) const;
 			QString getName(void) const;
+			QString getToolTipInformation(void);
 			bool selfTest(PipelineItem* _pipelineItem) const;
 			const HdlAbstractTextureFormat& getFormat(void) const;
 			HdlTexture& getTexture(void);
@@ -195,6 +198,7 @@ namespace QGPM
 			QVGL::View*	view;
 	
 			void setText(int column, const QString& text);
+			void updateToolTip(void);
 
 		protected : 
 			void setName(std::string& name);

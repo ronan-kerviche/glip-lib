@@ -47,6 +47,8 @@ namespace Glip
 		**/
 		enum LayoutLoaderKeyword
 		{
+			KW_LL_TRUE,
+			KW_LL_FALSE,
 			KW_LL_FORMAT_LAYOUT,
 			KW_LL_SHADER_SOURCE,
 			KW_LL_FILTER_LAYOUT,

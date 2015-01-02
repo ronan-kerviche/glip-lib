@@ -156,20 +156,309 @@
 			loader.addModule( new ABORT_ERROR );
 		}
 
+		/**
+		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase)
+		\brief Get true and false cases out of a body.
+	
+		In a if-statement you can write : 
+		IF(tatement)
+		{
+			TRUE
+			{
+				//...
+			}
+			FALSE
+			{
+				//...
+			}
+		}
+
+		\param body Body to extract the data from.
+		\param trueCase Body of the true statement (not modified is none is found).
+		\param falseCase Body of the false statement (not modified is none is found).
+		**/
 		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase)
 		{
 			VanillaParser parser(body);
+			bool 	trueCaseAlreadySet = false,
+				falseCaseAlreadySet = false;
 
 			for(std::vector<Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 			{
-				if(it->strKeyword=="true" && !it->noBody)
-					trueCase += it->getCleanBody();
-				else if(it->strKeyword=="false" && !it->noBody)
-					falseCase += it->getCleanBody();
+				if(it->strKeyword==LayoutLoader::getKeyword(KW_LL_TRUE) && !it->noBody)
+				{
+					if(trueCaseAlreadySet)
+						throw Exception("LayoutLoaderModule::getCases - True case already set.", __FILE__, __LINE__);
+					
+					trueCase = it->getCleanBody();
+					trueCaseAlreadySet = true;
+				}
+				else if(it->strKeyword==LayoutLoader::getKeyword(KW_LL_FALSE)  && !it->noBody)
+				{
+					if(falseCaseAlreadySet)
+						throw Exception("LayoutLoaderModule::getCases - True case already set.", __FILE__, __LINE__);
+
+					falseCase = it->getCleanBody();
+					falseCaseAlreadySet = true;
+				}				
+				else
+					throw Exception("LayoutLoaderModule::getCases - Unknown case keyword \"" + it->strKeyword + "\". Expected " + LayoutLoader::getKeyword(KW_LL_TRUE) + " or " + LayoutLoader::getKeyword(KW_LL_FALSE) + ".", __FILE__, __LINE__);
 			}
 		}
 
 	// Simple modules : 
+			LAYOUT_LOADER_MODULE_APPLY( IF_SHAREDCODE_DEFINED, 1, 1, 1, true, 	"Check if the SHAREDCODE was defined.\n"
+												"Arguments : sharedCodeName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_SHAREDCODE(it, arguments[0])
+
+				if(it!=sharedCodeList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1, true, 		"Check if the FORMAT was defined.\n"
+												"Arguments : formatName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_FORMAT(it, arguments[0])
+
+				if(it!=formatList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_SHADERSOURCE_DEFINED, 1, 1, 1, true, 	"Check if the SHADERSOURCE was defined.\n"
+												"Arguments : shaderSourceName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_SHADERSOURCE(it, arguments[0])
+
+				if(it!=sourceList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_GEOMETRY_DEFINED, 1, 1, 1, true, 	"Check if the GEOMETRY was defined.\n"
+												"Arguments : geometryName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_GEOMETRY(it, arguments[0])
+
+				if(it!=geometryList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the FILTERLAYOUT was defined.\n"
+												"Arguments : filterLayoutName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_FILTER(it, arguments[0])
+
+				if(it!=filterList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the PIPELINELAYOUT was defined.\n"
+												"Arguments : pipelineLayoutName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_PIPELINE(it, arguments[0])
+
+				if(it!=pipelineList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1, true, 	"Check if the REQUIREDFORMAT was defined.\n"
+												"Arguments : requiredFormatName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_REQUIREDFORMAT(it, arguments[0])
+
+				if(it!=requiredFormatList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1, true, "Check if the REQUIREDGEOMETRY was defined.\n"
+												"Arguments : requiredGeometryName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_REQUIREDGEOMETRY(it, arguments[0])
+
+				if(it!=requiredGeometryList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1, true, "Check if the REQUIREDPIPELINE was defined.\n"
+												"Arguments : requiredPipelineName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase);
+				
+				CONST_ITERATOR_TO_REQUIREDPIPELINE(it, arguments[0])
+
+				if(it!=requiredPipelineList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1, true,	"Change the size of a format, save as a new format.\n"
 											"Arguments : nameOriginal, widthNew, heightNew, nameNew.")
 			{

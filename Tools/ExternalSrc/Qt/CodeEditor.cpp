@@ -1036,7 +1036,7 @@ using namespace QGED;
 
 			// Try to read the line number for the error :
 			item->setData(Qt::UserRole, QVariant::fromValue(-1));
-			for(int k=0; k<sizeof(lineErrorDescriptors)/sizeof(std::string); k++)
+			for(unsigned int k=0; k<sizeof(lineErrorDescriptors)/sizeof(std::string); k++)
 			{
 				size_t 	p = line.find(lineErrorDescriptors[k]);
 				if(p!=std::string::npos)

@@ -81,7 +81,15 @@ using namespace QGPM;
 		if(isValid())
 			return imageItem->getName();
 		else
-			return "(invalid connection)";
+			return "(invalid connection to ImageItem)";
+	}
+
+	QString ConnectionToImageItem::getToolTipInformation(void)
+	{
+		if(isValid())
+			return imageItem->getToolTipInformation();
+		else
+			return "(invalid connection to ImageItem)";
 	}
 
 	bool ConnectionToImageItem::selfTest(PipelineItem* _pipelineItem) const
@@ -187,7 +195,23 @@ using namespace QGPM;
 		if(isValid())
 			return tr("%1 (Pipeline : %2)").arg(pipelineItem->getOutputPortName(outputIdx)).arg(pipelineItem->getName());
 		else
-			return "(invalid connection)";
+			return "(invalid connection to OutputItem)";
+	}
+
+	QString ConnectionToPipelineOutput::getToolTipInformation(void)
+	{
+		if(isValid())
+		{
+			QMap<QString, QString> infos;
+
+			infos["Pipeline"] 	= pipelineItem->getName();
+			infos["Output Name"] 	= pipelineItem->getOutputPortName(outputIdx);
+			infos["Output Index"] 	= tr("%1 (%2 of %3)").arg(outputIdx).arg(outputIdx+1).arg(pipelineItem->getNumOutputPorts());
+
+			return QGIC::ImageItem::getFormatToolTip(getTexture(), getName(), infos);
+		}
+		else
+			return "(invalid connection to OutputItem)";
 	}
 
 	bool ConnectionToPipelineOutput::selfTest(PipelineItem* _pipelineItem) const
@@ -234,7 +258,6 @@ using namespace QGPM;
 
 		setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
 		setForeground(0, QBrush(Qt::red));
-		std::cout << "InputPortItem::InputPortItem " << this << " - connection : " << connection << std::endl;
 	}
 
 	InputPortItem::~InputPortItem(void)
@@ -258,11 +281,7 @@ using namespace QGPM;
 
 	void InputPortItem::connectionFormatModified(void)
 	{
-		if(connection!=NULL && connection->isValid())
-			setToolTip(1, QGIC::ImageItem::getFormatToolTip(connection->getFormat(), connection->getName()));
-		else
-			setToolTip(1, "");
-
+		setToolTip(1, connection->getToolTipInformation());
 		emit connectionContentFormatModified(portIdx);
 	}
 
@@ -280,6 +299,9 @@ using namespace QGPM;
 		}
 		else
 			setForeground(0, QBrush(QColor(255, 128, 0)));
+
+		// Also update the tooltip : 
+		setToolTip(1, connection->getToolTipInformation());
 
 		emit connectionStatusChanged(portIdx, validity);
 	}	
@@ -344,14 +366,11 @@ using namespace QGPM;
 					setForeground(0, QBrush(Qt::blue));
 				else
 					setForeground(0, QBrush(Qt::green));
-				
-				setToolTip(1, QGIC::ImageItem::getFormatToolTip(connection->getFormat(), connection->getName()));
 			}			
 			else
-			{
 				setForeground(0, QBrush(QColor(255, 128, 0)));
-				setToolTip(1, "(invalid connection)");
-			}
+
+			setToolTip(1, connection->getToolTipInformation());
 
 			emit connectionAdded(portIdx);
 		}
@@ -387,6 +406,10 @@ using namespace QGPM;
 		if(view==NULL && isConnected() && connection->isReady() && parentPipelineItem!=NULL)
 		{
 			view = new QVGL::View(&connection->getTexture(), tr("%1 (Input %2 of %3)").arg(text(0)).arg(portIdx).arg(parentPipelineItem->getName()));
+
+			view->infos["Pipeline"] 	= parentPipelineItem->getName();
+			view->infos["Input Name"] 	= text(0);
+			view->infos["Input Index"] 	= tr("%1 (%2 of %3)").arg(portIdx).arg(portIdx+1).arg(parentPipelineItem->getNumInputPorts());
 
 			QObject::connect(view, SIGNAL(closed(void)), this, SLOT(viewClosed(void)));
 
@@ -425,6 +448,25 @@ using namespace QGPM;
 		emit updateColumnSize();
 	}	
 
+	void OutputPortItem::updateToolTip(void)
+	{
+		if(isValid())
+		{
+			QMap<QString, QString> infos;
+
+			if(!filename.isEmpty())
+				infos["Filename"] = filename;
+			else
+				infos["Filename"] = "<i>N.A.</i>";
+
+			setToolTip(1, QGIC::ImageItem::getFormatToolTip(out(), parentPipelineItem->getOutputPortName(portIdx), infos));
+		}
+
+		// View tooltip : 
+		if(view!=NULL)
+			view->infos["Filename"] = filename;
+	}
+
 	void OutputPortItem::setName(std::string& name)
 	{
 		QString currentName = text(0);
@@ -436,6 +478,7 @@ using namespace QGPM;
 
 		setText(0, name.c_str());
 		setText(1, "(invalid)");
+		updateToolTip();
 	}
 
 	void OutputPortItem::viewClosed(void)
@@ -462,6 +505,7 @@ using namespace QGPM;
 	void OutputPortItem::setFilename(const QString& newFilename)
 	{
 		filename = newFilename;
+		updateToolTip();
 	}
 
 	bool OutputPortItem::isValid(void) const
@@ -512,8 +556,9 @@ using namespace QGPM;
 		
 		// Update the infos : 
 		setForeground(0, QBrush(Qt::red));
-		setText(1, tr("(invalid)"));
-		setToolTip(1, "");
+		setText(1, "(invalid)");
+		setToolTip(1, "(invalid)");
+		updateToolTip();
 	}
 
 	void OutputPortItem::computationFinished(int computeCount, QVector<const void*> resourceChain)
@@ -529,10 +574,10 @@ using namespace QGPM;
 
 		if(parentPipelineItem!=NULL && parentPipelineItem->isValid())
 		{
-			const HdlTexture& outputTexture = parentPipelineItem->out(portIdx);
+			HdlTexture& outputTexture = parentPipelineItem->out(portIdx);
 
 			setText(1, tr("%1x%2 (%3)").arg(outputTexture.getWidth()).arg(outputTexture.getHeight()).arg(QGIC::ImageItem::getSizeString(outputTexture.getSize())));
-			setToolTip(1, QGIC::ImageItem::getFormatToolTip(outputTexture, parentPipelineItem->getOutputPortName(portIdx)));
+			updateToolTip();
 		}
 	}
 
@@ -541,6 +586,15 @@ using namespace QGPM;
 		if(view==NULL && parentPipelineItem!=NULL && parentPipelineItem->isValid() && parentPipelineItem->getComputationCount()>0)
 		{
 			view = new QVGL::View(&parentPipelineItem->out(portIdx), tr("%1 (Output %2 of %3)").arg(text(0)).arg(portIdx).arg(parentPipelineItem->getName()));
+
+			view->infos["Pipeline"] 	= parentPipelineItem->getName();
+			view->infos["Output Name"] 	= text(0);
+			view->infos["Output Index"] 	= tr("%1 (%2 of %3)").arg(portIdx).arg(portIdx+1).arg(parentPipelineItem->getNumOutputPorts());
+			
+			if(!getFilename().isEmpty())
+				view->infos["Filename"] = getFilename();
+			else
+				view->infos["Filename"] = "<i>N.A.</i>";
 
 			QObject::connect(view, SIGNAL(closed(void)), this, SLOT(viewClosed(void)));
 

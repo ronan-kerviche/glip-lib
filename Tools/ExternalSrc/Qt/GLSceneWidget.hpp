@@ -51,7 +51,7 @@
 	#include <QListWidget>
 	#include <QDialogButtonBox>
 
-	// Enable some interactivity with Uniforms Variables modules :
+	// Enable some interactivity with Uniforms Variables modules (might be declared somewhere else) :
 	//#define __MAKE_VARIABLES__
 	
 	#ifdef __MAKE_VARIABLES__
@@ -75,17 +75,19 @@ namespace QVGL
 	class GLSceneViewWidget;
 	class MainWidget;
 
-	enum VisualElement
+	const int 	QGraphicsItemVisualPartKey 		= 0,
+			QGraphicsItemSubWidgetPointerKey 	= 1;
+
+	enum VisualPart
 	{
-		ViewPart,
-		ViewElement,
-		VignettePart,
-		VignetteElement,
-		ViewsTablePart,
-		ViewsTableElement,
-		SubWidgetPart,
-		SubWidgetElement,
-		NotAVisualElement = 0
+		ViewVisualPart		= 0x00000001,
+		VignetteVisualPart	= 0x00000002,
+		ViewsTableVisualPart	= 0x00000004,
+		SubWidgetVisualPart	= 0x00000008,
+		TopBarVisualPart	= 0x00000010,
+		BottomBarVisualPart	= 0x00000030,
+		WidgetVisualPartMask	= 0x00000038,
+		NotAVisualPart 		= 0
 	};
 
 	enum ActionID
@@ -111,8 +113,7 @@ namespace QVGL
 		ActionRotationModifier,
 		ActionNextSubWidget,
 		ActionPreviousSubWidget,
-		ActionTemporaryHideAllSubWidgets,
-		ActionTemporaryUnhideAllSubWidgets,
+		ActionToggleTemporaryHideAllSubWidgets,
 		ActionHideAllSubWidgets,
 		// Add new actions before this line
 		NumActions,
@@ -140,6 +141,8 @@ namespace QVGL
 			friend class MainWidget;
 
 		public : 
+			QMap<QString, QString> infos;
+
 			View(const QString& _name);
 			View(HdlTexture* _texture, const QString& _name);
 			~View(void);
@@ -153,6 +156,7 @@ namespace QVGL
 			void setAngle(const float& a);
 			void rotate(const float& a);
 			void getViewCenter(float& x, float& y) const;
+			void getImageCenter(float& x, float& y) const;
 			void setViewCenter(const float& x, const float& y);
 			void move(const float& x, const float& y);
 			bool isMirrored(void) const;
@@ -169,7 +173,9 @@ namespace QVGL
 			void getAspectRatioScaling(float& xImgScale, float& yImgScale) const;	// scaling to apply on the standard quad to have the same aspect ratio as the image.
 
 			// Infos : 
+			static QString getSizeString(size_t sizeInBytes);
 			QString getSizeString(void) const;
+			QString getDescriptionToolTip(void);
 
 		signals :
 			void updated(void);
@@ -310,8 +316,7 @@ namespace QVGL
 			QWidget			*widget;
 			MainWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
-			bool 			visible,	
-						motionActive,
+			bool 			motionActive,
 						resizeActive,
 						resizeHorizontalLock,
 						resizeVerticalLock;
@@ -352,13 +357,13 @@ namespace QVGL
 			MainWidget* getQVGLParent(void);
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
-			bool isOnTop(void) const;
-			bool shoudBeVisible(void) const;
+
+			static SubWidget* getPtrFromProxyItem(QGraphicsItem *item);
+			static SubWidget* getPtrFromProxyItem(QGraphicsProxyWidget *proxy);
 
 		public slots :
 			// Re-implement some of the QWidget functions : 
 			void show(void);
-			void temporaryHide(bool enabled);
 			void hide(void);
 
 		signals  :
@@ -400,16 +405,20 @@ namespace QVGL
 				QMenuBar			menuBar;
 				QMenu				mainMenu,
 								viewsMenu,
+								viewsTablesMenu,
 								subWidgetsMenu;
-				QAction				*viewsSeparator,
+				QAction				toggleFullscreenAction,
+								openSettingsAction,
+								quitAction,
+								*viewsSeparator,
 								closeCurrentViewAction,	
 								closeAllViewsAction,
 								*viewsTablesSeparator,
 								closeCurrentViewsTableAction,
 								closeAllViewsTableAction,
-								temporaryHideAllSubWidgetsAction,
-								hideAllSubWidgetsAction,
-								*subWidgetsSeparator;
+								*subWidgetsSeparator,
+								toggleTemporaryHideAllSubWidgetsAction,
+								hideAllSubWidgetsAction;
 				QLabel				titleLabel;
 				PositionColorInfoMini		positionColorInfo;
 				QSignalMapper			signalMapper,
@@ -445,7 +454,7 @@ namespace QVGL
 				QGraphicsProxyWidget* getGraphicsProxy(void);
 				void setTitle(void);
 				void setTitle(QString title);
-				void setTitle(const View& view);
+				void setTitle(View& view);
 				void setTitle(const ViewsTable& table);
 				void updatePositionAndColor(const QPointF& pos, const QColor& color);
 				void setWindowOpacity(qreal level);
@@ -489,6 +498,17 @@ namespace QVGL
 
 			signals : 
 				void selected(BottomBar*);
+		};
+
+		class SettingsDialog : public QWidget
+		{
+			Q_OBJECT
+
+			private : 
+
+			public : 
+				SettingsDialog(QWidget* parent=NULL);
+				~SettingsDialog(void);
 		};
 
 	#ifdef __MAKE_VARIABLES__
@@ -664,6 +684,7 @@ namespace QVGL
 			enum FunctionMode
 			{
 				ModeMotion,
+				ModeRotation,
 				ModeCollection
 			};
 
@@ -766,8 +787,6 @@ namespace QVGL
 			MainWidget		*qvglParent;
 			GeometryInstance	*quad;
 			HdlProgram		*shaderProgram;
-			TopBar			*topBar;
-			BottomBar		*bottomBar;
 
 			// Tools : 
 			void drawView(View* view);
@@ -784,11 +803,8 @@ namespace QVGL
 			void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 
 		public : 
-			GLScene(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			GLScene(MainWidget* _Parent);
 			~GLScene(void);
-
-			void addSubWidget(SubWidget* subWidget);
-			void putItemOnTop(QGraphicsProxyWidget*);
 	};
 
 	class GLSceneViewWidget : public QGraphicsView
@@ -805,21 +821,24 @@ namespace QVGL
 			void resizeEvent(QResizeEvent *event);
 
 		public : 
-			GLSceneViewWidget(MainWidget* _Parent, TopBar* _topBar, BottomBar* _bottomBar);
+			GLSceneViewWidget(MainWidget* _Parent, TopBar* topBar=NULL, BottomBar* bottomBar=NULL);
 			~GLSceneViewWidget(void);
 
 			void addSubWidget(SubWidget* subWidget);
 			void addItem(QGraphicsItem* item);
 			void removeItem(QGraphicsItem* item);
-			SubWidget* getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
-			SubWidget* getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible=true) const;
-			void orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible=true) const;
-			void putItemOnTop(QGraphicsProxyWidget* graphicsProxy);				// Both subWidgets and bars.
-			void putItemOnBottom(QGraphicsProxyWidget* graphicsProxy);			// Only subWidgets (but accept bars also).
+			void forceItemOrdering(void);
+			void putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy);
+			void putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy);
+			SubWidget* getTopSubWidget(bool onlyVisible=false);
+			SubWidget* getBottomSubWidget(bool onlyVisible=false);
+			SubWidget* getSubWidget(int index, bool onlyVisible=false);
 			void makeGLContextAvailable(void);
 			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
 			void getColorAt(int x, int y, QColor& c);
 			void update(void);
+
+			static void sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order=Qt::DescendingOrder);
 
 		//signals : 
 			//void resized(QSize newSize);
@@ -838,6 +857,7 @@ namespace QVGL
 			GLSceneViewWidget  		glSceneViewWidget;
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
+			QList<SubWidget*>		temporaryHiddenSubWidgetsList;
 			QList<ViewsTable*>		viewsTablesList;
 			int				currentViewIndex,
 							currentViewsTableIndex;
@@ -885,6 +905,7 @@ namespace QVGL
 				void nextSubWidget(void);
 				void previousSubWidget(void);
 				void temporaryHideAllSubWidgets(bool enabled = true);
+				void toggleTemporaryHideAllSubWidgets(void);
 				void hideAllSubWidgets(void);
 
 			// Bars : 
@@ -937,6 +958,9 @@ namespace QVGL
 			void subWidgetAdded(SubWidget*);
 	};
 }
+
+// Qt Declarations : 
+	Q_DECLARE_METATYPE(QVGL::SubWidget*)
 
 #endif
 

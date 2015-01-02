@@ -63,6 +63,15 @@ These modules are :
 <CENTER>
 Module       			| Description
 ------------------------------- | --------------------------
+IF_SHAREDCODE_DEFINED		| Check if the SHAREDCODE was defined. Arguments : sharedCodeName.
+IF_FORMAT_DEFINED		| Check if the FORMAT was defined. Arguments : formatName.
+IF_SHADERSOURCE_DEFINED		| Check if the SHADERSOURCE was defined. Arguments : shaderSourceName.
+IF_GEOMETRY_DEFINED		| Check if the GEOMETRY was defined. Arguments : geometryName.
+IF_FILTERLAYOUT_DEFINED		| Check if the FILTERLAYOUT was defined. Arguments : filterLayoutName.
+IF_PIPELINELAYOUT_DEFINED	| Check if the PIPELINELAYOUT was defined. Arguments : pipelineLayoutName.
+IF_REQUIREDFORMAT_DEFINED	| Check if the REQUIREDFORMAT was defined. Arguments : requiredFormatName.
+IF_REQUIREDGEOMETRY_DEFINED	| Check if the REQUIREDGEOMETRY was defined. Arguments : requiredGeometryName.
+IF_REQUIREDPIPELINE_DEFINED	| Check if the REQUIREDPIPELINE was defined. Arguments : requiredPipelineName.
 FORMAT_CHANGE_SIZE		| Change the size of a format, save as a new format. Arguments : nameOriginal, widthNew, heightNew, nameNew.
 FORMAT_SCALE_SIZE		| Scale a format by a scalar (or two), save as a new format. Arguments : nameOriginal, scaleFactor, nameNew OR nameOriginal, scaleFactorX, scaleFactorY, nameNew.
 FORMAT_CHANGE_CHANNELS		| Change the channels of a format, save as a new format. Arguments : nameOriginal, channelNew, nameNew.
@@ -267,7 +276,7 @@ Example, creating a simple Module :
 			/** CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		Get a constant iterator on the Shared Code named elementName. **/
 			#define CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )	__CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName)
 			/** SHAREDCODE_MUST_EXIST( elementName )				Check that the Shared Code named elementName must exist (raise an exception otherwise). **/
-			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Hstd::string, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
+			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
 			/** SHAREDCODE_MUST_NOT_EXIST( elementName )				Check that the Shared Code named elementName must not exist (raise an exception otherwise). **/
 			#define SHAREDCODE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sharedCodeList, elementName) }
 			/** APPEND_NEW_SHAREDCODE(elementName, newElement)			Append the new element to the Shared Code list. **/
@@ -353,6 +362,15 @@ Example, creating a simple Module :
 			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", __FILE__, __LINE__);
 
 		// Basic Modules : 
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHAREDCODE_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHADERSOURCE_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_GEOMETRY_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_FILTERLAYOUT_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_PIPELINELAYOUT_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDFORMAT_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDGEOMETRY_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDPIPELINE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_SIZE )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SCALE_SIZE )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_CHANNELS )

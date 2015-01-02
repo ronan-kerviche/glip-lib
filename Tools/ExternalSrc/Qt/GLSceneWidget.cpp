@@ -18,6 +18,27 @@
 
 using namespace QVGL;
 
+// Tools : 
+	const std::string getVisualPartName(const VisualPart& part)
+	{
+		#define PART( id ) case id : return GLIP_STR(id);
+
+		switch(part)
+		{
+			PART( ViewVisualPart )
+			PART( VignetteVisualPart )
+			PART( ViewsTableVisualPart )
+			PART( SubWidgetVisualPart )
+			PART( TopBarVisualPart )
+			PART( BottomBarVisualPart )
+			PART( NotAVisualPart )
+			default : 
+				return "<UnknownVisualPart>";
+		}
+
+		#undef PART
+	}
+
 // View :
 	View::View(const QString& _name)
 	 : 	texture(NULL),
@@ -110,6 +131,20 @@ using namespace QVGL;
 	{
 		x = viewCenter[0];
 		y = viewCenter[1];
+	}
+
+	void View::getImageCenter(float& x, float& y) const
+	{
+		if(texture!=NULL)
+		{
+			x = static_cast<float>(texture->getWidth())/2.0f;
+			y = static_cast<float>(texture->getHeight())/2.0f;
+		}
+		else
+		{
+			x = 0.0f;
+			y = 0.0f;
+		}
 	}
 
 	void View::setViewCenter(const float& x, const float& y)
@@ -229,27 +264,58 @@ using namespace QVGL;
 		if(flipUpDown) 		yImgScale *= -1.0f;
 	}
 
+	QString View::getSizeString(size_t sizeInBytes)
+	{
+		const float	GB = 1024.0f*1024.0f*1024.0f,
+				MB = 1024.0f*1024.0f,
+				KB = 1024.0f;
+
+		if(sizeInBytes>=GB)
+			return tr("%1 GB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/GB)) );
+		else if(sizeInBytes>=MB)
+			return tr("%1 MB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/MB)) );
+		else if(sizeInBytes>=KB)
+			return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/KB)) );
+		else 
+			return tr("%1 B").arg( sizeInBytes );
+	}
+
 	QString View::getSizeString(void) const
 	{
 		if(texture!=NULL)
-		{
-			const unsigned int sizeInBytes = texture->getSize();
-
-			const float	GB = 1024.0f*1024.0f*1024.0f,
-					MB = 1024.0f*1024.0f,
-					KB = 1024.0f;
-
-			if(sizeInBytes>=GB)
-				return tr("%1 GB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/GB)) );
-			else if(sizeInBytes>=MB)
-				return tr("%1 MB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/MB)) );
-			else if(sizeInBytes>=KB)
-				return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(sizeInBytes)/KB)) );
-			else 
-				return tr("%1 B").arg( sizeInBytes );
-		}
+			return getSizeString(texture->getSize());
 		else
 			return "0 B";
+	}
+
+	QString View::getDescriptionToolTip(void)
+	{
+		if(texture!=NULL)
+		{
+			QString toolTip;
+
+			toolTip += "<table>";
+
+			if(!name.isEmpty())
+				toolTip += tr("<tr><td><i>Name</i></td><td>:</td><td>%1</td></tr>").arg(name);
+
+			toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(texture->getWidth()).arg(texture->getHeight()).arg(getSizeString(texture->getSize()));
+			toolTip += tr("<tr><td><i>Size (Driver)</i></td><td>:</td><td>%1</td></tr>").arg(getSizeString(texture->getSizeOnGPU(0)));
+			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture->getGLMode() ).c_str());
+			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture->getGLDepth() ).c_str());
+			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture->getMinFilter() ).c_str()).arg(glParamName(texture->getMagFilter() ).c_str());
+			toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture->getSWrapping() ).c_str()).arg(glParamName(texture->getTWrapping() ).c_str());
+			toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(texture->getBaseLevel()).arg(texture->getMaxLevel());
+
+			for(QMap<QString, QString>::const_iterator it=infos.begin(); it!=infos.end(); it++)
+				toolTip += tr("<tr><td><i>%1</i></td><td>:</td><td>%2</td></tr>").arg(it.key()).arg(it.value());
+
+			toolTip += "</table>";
+
+			return toolTip;
+		}
+		else
+			return "<i>Description not available.</i>";
 	}
 
 // Vignette :
@@ -269,6 +335,13 @@ using namespace QVGL;
 			frame(0, 0, 1, 1),
 			titleBar(0, 0, 1, 1)
 		{
+			// Set user data of parts : 
+			setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
+			frame.setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
+			titleBar.setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
+			title.setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
+			infos.setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
+
 			setFiltersChildEvents(true);
 			setAcceptHoverEvents(true);
 
@@ -437,6 +510,10 @@ using namespace QVGL;
 		emptyNotification("(Empty)")//,
 		//visible(true)
 	{
+		// Set user data of parts : 
+		setData(QGraphicsItemVisualPartKey, QVariant(ViewsTableVisualPart));
+		emptyNotification.setData(QGraphicsItemVisualPartKey, QVariant(ViewsTableVisualPart));
+
 		// Let its children handle their own notification : 
 		setHandlesChildEvents(false);
 
@@ -628,23 +705,11 @@ using namespace QVGL;
 		else
 			return QRectF(0.0f, 0.0f, 0.0f, 0.0f);
 	}
-
-	/*bool ViewsTable::isVisible(void) const
-	{
-		return visible;
-	}*/
 	
 	bool ViewsTable::isClosed(void) const
 	{
 		return (scene()==NULL);
 	}
-
-	/*void ViewsTable::setVisible(bool enabled) // TEST, TO REMOVE
-	{
-		std::cout << "ViewsTable::setVisible - \"" << getName().toStdString() << "\" : " << enabled << std::endl;
-
-		QGraphicsItemGroup::setVisible(enabled);
-	}*/
 
 	void ViewsTable::addView(View* view, bool resizeNow)
 	{
@@ -729,7 +794,6 @@ using namespace QVGL;
 		titleLabel(this),
 		hideButton(this),
 		widget(NULL),
-		visible(false),
 		motionActive(false),
 		resizeActive(false),
 		resizeHorizontalLock(false),
@@ -999,15 +1063,13 @@ using namespace QVGL;
 
 	bool SubWidget::eventFilter(QObject* target, QEvent* e)
 	{
-		//std::cout << "SubWidget::eventFilter on " << this << " : " << getTitle().toStdString() << "; targeting : " << target << " with event : " << e << " (" << (e->type()==QEvent::KeyPress) << ")" << std::endl;
-
 		if(e->type()==QEvent::ChildAdded)
 			addChild(reinterpret_cast<QChildEvent*>(e)->child());
 		else if(e->type()==QEvent::ChildRemoved)
 			removeChild(reinterpret_cast<QChildEvent*>(e)->child());
-		else if(e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease || e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)	
+		else if(/*e->type()==QEvent::KeyPress || e->type()==QEvent::KeyRelease ||*/ e->type()==QEvent::MouseButtonDblClick || e->type()==QEvent::MouseButtonPress || e->type()==QEvent::MouseButtonRelease || e->type()==QEvent::FocusIn)
 			emit selected(this);
-
+	
 		// Test inner widget actions : 
 		if(getInnerWidget()!=NULL && e->type()==QEvent::KeyPress)
 		{
@@ -1021,7 +1083,6 @@ using namespace QVGL;
 			QList<QAction*> innerWidgetActions = getInnerWidget()->actions();
 			for(QList<QAction*>::iterator it=innerWidgetActions.begin(); it!=innerWidgetActions.end(); it++)
 			{
-				//std::cout << "    ACTION : " << (*it)->text().toStdString() << " - " << ((*it)->shortcutContext()==Qt::WidgetShortcut) << " / " << ((*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) << " / " << ((*it)->shortcut().matches(received)>QKeySequence::PartialMatch) << std::endl;
 				if((*it)->isEnabled() && ((*it)->shortcutContext()==Qt::WidgetShortcut || (*it)->shortcutContext()==Qt::WidgetWithChildrenShortcut) && (*it)->shortcut().matches(received)>QKeySequence::PartialMatch)
 				{
 					(*it)->trigger();
@@ -1100,6 +1161,8 @@ using namespace QVGL;
 		if(_graphicsProxy!=NULL)
 		{
 			graphicsProxy = _graphicsProxy;
+			graphicsProxy->setData(QGraphicsItemVisualPartKey, 		QVariant(SubWidgetVisualPart));
+			graphicsProxy->setData(QGraphicsItemSubWidgetPointerKey,	QVariant::fromValue<SubWidget*>(this));
 
 			if(graphicsProxy->scene()!=NULL)
 				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(sceneRectChanged(const QRectF&)));
@@ -1165,47 +1228,32 @@ using namespace QVGL;
 		return anchorMode;
 	}
 
-	bool SubWidget::isOnTop(void) const
-	{
-		if(graphicsProxy==NULL || graphicsProxy->scene()==NULL)
-			return false;
-		else
-		{
-			const QList<QGraphicsItem*> items = graphicsProxy->scene()->items();
-
-			return !items.isEmpty() && items.front()==graphicsProxy;
-		}
-	}
-
-	bool SubWidget::shoudBeVisible(void) const
-	{
-		return visible;
-	}
-
 	void SubWidget::show(void)
 	{
 		QWidget::show();
-
-		visible = true;
-
 		emit showRequest(this);
-	}
-
-	void SubWidget::temporaryHide(bool enabled)
-	{
-		if(enabled)
-			QWidget::hide();
-		else if(!enabled && visible)
-			QWidget::show();
 	}
 
 	void SubWidget::hide(void)
 	{
 		QWidget::hide();
-
-		visible = false;
-
 		emit hideRequest(this);
+	}
+
+	SubWidget* SubWidget::getPtrFromProxyItem(QGraphicsItem* item)
+	{
+		if(item==NULL)
+			return NULL;
+		else
+			return item->data(QGraphicsItemSubWidgetPointerKey).value<SubWidget*>();
+	}
+
+	SubWidget* SubWidget::getPtrFromProxyItem(QGraphicsProxyWidget* proxy)
+	{
+		if(proxy==NULL)
+			return NULL;
+		else
+			return proxy->data(QGraphicsItemSubWidgetPointerKey).value<SubWidget*>();
 	}
 
 // PositionColorInfoMini : 
@@ -1246,7 +1294,6 @@ using namespace QVGL;
 
 	void PositionColorInfoMini::updatePosition(const QPointF& pos)
 	{
-		//positionLabel.setText("00000x00000");
 		positionLabel.setText(tr("%1x%2").arg(std::floor(pos.x())).arg(std::floor(pos.y())));
 	}
 
@@ -1255,6 +1302,7 @@ using namespace QVGL;
 		QPalette palette = colorBox.palette();
 		palette.setColor(QPalette::Window, color);
 		colorBox.setPalette(palette);
+		colorBox.setToolTip(tr("<table><tr><td><i>Code</i></td><td>:</td><td>%1</td></tr><tr><td><i>RGB</i></td><td>:</td><td>(%2, %3, %4)</td></tr></table>").arg(color.name()).arg(color.red()).arg(color.green()).arg(color.blue()));
 	}
 
 // TopBar
@@ -1265,14 +1313,18 @@ using namespace QVGL;
 		bar(this),
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
+		viewsTablesMenu("Tables", this),
 		subWidgetsMenu("Widgets", this),
+		toggleFullscreenAction("Toggle Fullscreen", this),
+		openSettingsAction("Settings", this),
+		quitAction("Quit", this),
 		viewsSeparator(NULL),
 		closeCurrentViewAction("Close view", this),	
 		closeAllViewsAction("Close all views", this),
 		viewsTablesSeparator(NULL),
 		closeCurrentViewsTableAction("Close table", this), 
 		closeAllViewsTableAction("Close all tables", this),
-		temporaryHideAllSubWidgetsAction("Hide all widgets", this),
+		toggleTemporaryHideAllSubWidgetsAction("Hide all widgets", this),
 		hideAllSubWidgetsAction("Close all widgets", this),
 		subWidgetsSeparator(NULL),
 		signalMapper(this),
@@ -1282,13 +1334,14 @@ using namespace QVGL;
 			singleton = this;
 		else
 			throw Glip::Exception("TopBar::TopBar - Only one instance of TopBar is tolerated.", __FILE__, __LINE__);
-
+	
 		// Activate focus via mouse click :
 		setFocusPolicy(Qt::ClickFocus);
 
 		// Menu :
 		menuBar.addMenu(&mainMenu);
 		menuBar.addMenu(&viewsMenu);
+		menuBar.addMenu(&viewsTablesMenu);
 		menuBar.addMenu(&subWidgetsMenu);
 		menuBar.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -1300,47 +1353,49 @@ using namespace QVGL;
 		bar.setSpacing(0);
 
 		// Signals connections : 
-		QObject::connect(&viewsSignalMapper, 			SIGNAL(mapped(QObject*)), 	this, SLOT(castViewPointer(QObject*)));
-		QObject::connect(&viewsTablesSignalMapper,		SIGNAL(mapped(QObject*)), 	this, SLOT(castViewsTablePointer(QObject*)));
-		QObject::connect(&widgetsSignalMapper,			SIGNAL(mapped(QObject*)), 	this, SLOT(castSubWidgetPointer(QObject*)));
-		QObject::connect(&mainMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
-		QObject::connect(&viewsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
-		QObject::connect(&subWidgetsMenu,			SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
-		QObject::connect(&signalMapper,				SIGNAL(mapped(int)),		this, SLOT(transferActionSignal(int)));
+		QObject::connect(&viewsSignalMapper, 				SIGNAL(mapped(QObject*)), 	this, SLOT(castViewPointer(QObject*)));
+		QObject::connect(&viewsTablesSignalMapper,			SIGNAL(mapped(QObject*)), 	this, SLOT(castViewsTablePointer(QObject*)));
+		QObject::connect(&widgetsSignalMapper,				SIGNAL(mapped(QObject*)), 	this, SLOT(castSubWidgetPointer(QObject*)));
+		QObject::connect(&mainMenu,					SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&viewsMenu,					SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&viewsTablesMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&subWidgetsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
+		QObject::connect(&signalMapper,					SIGNAL(mapped(int)),		this, SLOT(transferActionSignal(int)));
 
 		// Signals mapping : 
-		QObject::connect(&closeCurrentViewAction,		SIGNAL(triggered()),		&signalMapper, SLOT(map()));
-		QObject::connect(&closeAllViewsAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
-		QObject::connect(&temporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		&signalMapper, SLOT(map()));
-		QObject::connect(&hideAllSubWidgetsAction,		SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&toggleFullscreenAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&closeCurrentViewAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&closeAllViewsAction,				SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&toggleTemporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&hideAllSubWidgetsAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 
+		signalMapper.setMapping(&toggleFullscreenAction,		ActionToggleFullscreen);
 		signalMapper.setMapping(&closeCurrentViewAction, 		ActionCloseView);
 		signalMapper.setMapping(&closeAllViewsAction,			ActionCloseAllViews);
 		signalMapper.setMapping(&closeCurrentViewsTableAction, 		ActionCloseViewsTable);
 		signalMapper.setMapping(&closeAllViewsTableAction,		ActionCloseAllViewsTables);
-		signalMapper.setMapping(&temporaryHideAllSubWidgetsAction,	ActionTemporaryHideAllSubWidgets);
+		signalMapper.setMapping(&toggleTemporaryHideAllSubWidgetsAction,ActionToggleTemporaryHideAllSubWidgets);
 		signalMapper.setMapping(&hideAllSubWidgetsAction,		ActionHideAllSubWidgets);
 
-		// Init views menu : 
+		// Init menus : 
+		mainMenu.addAction(&toggleFullscreenAction);
+		mainMenu.addAction(&openSettingsAction);
+		mainMenu.addAction(&quitAction);
+
 		viewsSeparator = viewsMenu.addSeparator();
 		viewsMenu.addAction(&closeCurrentViewAction);	
 		viewsMenu.addAction(&closeAllViewsAction);
-		viewsMenu.addSeparator();
-		viewsTablesSeparator = viewsMenu.addSeparator();
-		viewsMenu.addAction(&closeCurrentViewsTableAction);
-		viewsMenu.addAction(&closeAllViewsTableAction);
+		
+		viewsTablesSeparator = viewsTablesMenu.addSeparator();
+		viewsTablesMenu.addAction(&closeCurrentViewsTableAction);
+		viewsTablesMenu.addAction(&closeAllViewsTableAction);
 
-		subWidgetsMenu.addAction(&temporaryHideAllSubWidgetsAction);
-		subWidgetsMenu.addAction(&hideAllSubWidgetsAction);
 		subWidgetsSeparator = subWidgetsMenu.addSeparator();
+		subWidgetsMenu.addAction(&toggleTemporaryHideAllSubWidgetsAction);
+		subWidgetsMenu.addAction(&hideAllSubWidgetsAction);	
 
 		// Reset : 
 		setTitle();
-
-		// TEST :
-		mainMenu.addAction("Action 1");
-		mainMenu.addAction("Action 2");
-		mainMenu.addAction("Action 3");
 	}
 
 	TopBar::~TopBar(void)
@@ -1349,9 +1404,14 @@ using namespace QVGL;
 		viewsActions.clear();
 		viewsTablesActions.clear();
 
+		mainMenu.removeAction(&toggleFullscreenAction);
+		mainMenu.removeAction(&openSettingsAction);
+		mainMenu.removeAction(&quitAction);
 		viewsMenu.removeAction(&closeCurrentViewAction);
 		viewsMenu.removeAction(&closeAllViewsAction);
-		subWidgetsMenu.removeAction(&temporaryHideAllSubWidgetsAction);
+		viewsTablesMenu.removeAction(&closeCurrentViewsTableAction);
+		viewsTablesMenu.removeAction(&closeAllViewsTableAction);
+		subWidgetsMenu.removeAction(&toggleTemporaryHideAllSubWidgetsAction);
 		subWidgetsMenu.removeAction(&hideAllSubWidgetsAction);
 
 		if(graphicsProxy!=NULL)
@@ -1455,7 +1515,7 @@ using namespace QVGL;
 
 		if(viewTable!=NULL && it!=viewsTablesActions.end())
 		{
-			viewsMenu.removeAction(it.value());
+			viewsTablesMenu.removeAction(it.value());
 			delete it.value();
 			viewsTablesActions.erase(it);
 		}
@@ -1485,6 +1545,7 @@ using namespace QVGL;
 		if(_graphicsProxy!=NULL)
 		{
 			graphicsProxy = _graphicsProxy;
+			graphicsProxy->setData(QGraphicsItemVisualPartKey, QVariant(TopBarVisualPart));
 
 			if(graphicsProxy->scene()!=NULL)
 				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
@@ -1519,30 +1580,13 @@ using namespace QVGL;
 		titleLabel.setToolTip("");
 	}
 
-	void TopBar::setTitle(const View& view)
+	void TopBar::setTitle(View& view)
 	{
 		// Set title : 
 		titleLabel.setText(view.getName());
 		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
-		// Set tooltip info :
-		QString toolTip;
-
-		if(view.isValid())
-		{
-			toolTip += "<table>";
-				toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(view.getFormat().getWidth()).arg(view.getFormat().getHeight()).arg(view.getSizeString());
-				toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLMode() ).c_str());
-				toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName( view.getFormat().getGLDepth() ).c_str());
-				toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getMinFilter() ).c_str()).arg(glParamName( view.getFormat().getMagFilter() ).c_str());
-				toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName( view.getFormat().getSWrapping() ).c_str()).arg(glParamName( view.getFormat().getTWrapping() ).c_str());
-				toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(view.getFormat().getBaseLevel()).arg(view.getFormat().getMaxLevel());
-			toolTip += "</table>";
-		}
-		else
-			toolTip = "<i>Invalid View</i>";
-
-		titleLabel.setToolTip(toolTip);
+		titleLabel.setToolTip(view.getDescriptionToolTip());
 	}
 
 	void TopBar::setTitle(const ViewsTable& table)
@@ -1566,6 +1610,7 @@ using namespace QVGL;
 		QWidget::setWindowOpacity(level);
 		mainMenu.setWindowOpacity(level);
 		viewsMenu.setWindowOpacity(level);
+		viewsTablesMenu.setWindowOpacity(level);
 		subWidgetsMenu.setWindowOpacity(level);
 		positionColorInfo.setWindowOpacity(level);
 	}
@@ -1600,7 +1645,7 @@ using namespace QVGL;
 		{
 			QAction* action = new QAction(viewsTable->getName(), this);
 			viewsTablesActions[viewsTable] = action;
-			viewsMenu.insertAction(viewsTablesSeparator, action);
+			viewsTablesMenu.insertAction(viewsTablesSeparator, action);
 			
 			// Signals : 
 			viewsTablesSignalMapper.setMapping(action, reinterpret_cast<QObject*>(viewsTable));
@@ -1616,7 +1661,7 @@ using namespace QVGL;
 		{
 			QAction* action = new QAction(subWidget->getTitle(), this);
 			subWidgetsActions[subWidget] = action;
-			subWidgetsMenu.addAction(action);
+			subWidgetsMenu.insertAction(subWidgetsSeparator, action);
 
 			// Signals :
 			widgetsSignalMapper.setMapping(action, reinterpret_cast<QObject*>(subWidget));
@@ -1676,6 +1721,7 @@ using namespace QVGL;
 		if(_graphicsProxy!=NULL)
 		{
 			graphicsProxy = _graphicsProxy;
+			graphicsProxy->setData(QGraphicsItemVisualPartKey, QVariant(BottomBarVisualPart));
 
 			if(graphicsProxy->scene()!=NULL)
 				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
@@ -1687,6 +1733,18 @@ using namespace QVGL;
 	QGraphicsProxyWidget* BottomBar::getGraphicsProxy(void)
 	{
 		return graphicsProxy;
+	}
+
+// SettingsDialog : 
+	SettingsDialog::SettingsDialog(QWidget* parent)
+	 : QWidget(parent)
+	{
+
+	}
+
+	SettingsDialog::~SettingsDialog(void)
+	{
+
 	}
 
 #ifdef __MAKE_VARIABLES__ 
@@ -2040,12 +2098,11 @@ using namespace QVGL;
 		setActionKeySequence(ActionCloseView,				Qt::Key_Delete);
 		setActionKeySequence(ActionCloseAllViews,			QKeySequence(Qt::SHIFT + Qt::Key_Delete));
 		setActionKeySequence(ActionMotionModifier,			QKeySequence(Qt::CTRL + Qt::Key_Control, Qt::Key_Control), true); 	// The first correspond the press event, the second to the release.
-		//setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
-		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::ALT + Qt::Key_F));
-		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::ALT + Qt::Key_G));
-		setActionKeySequence(ActionTemporaryHideAllSubWidgets,		QKeySequence(Qt::CTRL + Qt::Key_T));
-		setActionKeySequence(ActionTemporaryUnhideAllSubWidgets,	QKeySequence(Qt::CTRL + Qt::Key_Y));
-		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::CTRL + Qt::Key_U));
+		setActionKeySequence(ActionRotationModifier,			QKeySequence(Qt::SHIFT + Qt::Key_Shift, Qt::Key_Shift), true);		// (the same)
+		setActionKeySequence(ActionNextSubWidget,			QKeySequence(Qt::Key_F7));
+		setActionKeySequence(ActionPreviousSubWidget,			QKeySequence(Qt::Key_F8));
+		setActionKeySequence(ActionToggleTemporaryHideAllSubWidgets,	QKeySequence(Qt::Key_F6));
+		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::Key_F9));
 	}
 
 // MouseState::VectorData
@@ -2315,7 +2372,7 @@ using namespace QVGL;
 				setVector(VectorLastLeftPosition, event->scenePos(), true);
 				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
 
-				if(getFunctionMode()==ModeMotion)
+				if(getFunctionMode()==ModeMotion || getFunctionMode()==ModeRotation)
 					emit mustSetMouseCursor(Qt::ClosedHandCursor);
 			}			
 
@@ -2332,7 +2389,7 @@ using namespace QVGL;
 				//setVector(VectorLastLeftCompletedVector, event->scenePos() - invisibleGetVector(VectorLastLeftClick), true);
 				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
 
-				if(getFunctionMode()==ModeMotion)
+				if(getFunctionMode()==ModeMotion || getFunctionMode()==ModeRotation)
 					emit mustSetMouseCursor(Qt::OpenHandCursor);
 			}
 
@@ -2479,6 +2536,7 @@ using namespace QVGL;
 		switch(m)
 		{
 			case ModeMotion :
+			case ModeRotation :
 				emit mustSetMouseCursor(Qt::OpenHandCursor);
 				break;
 			case ModeCollection :
@@ -2629,12 +2687,10 @@ using namespace QVGL;
 							"}																\n";
 
 // GLScene :
-	GLScene::GLScene(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
+	GLScene::GLScene(MainWidget* _qvglParent)
 	 : 	qvglParent(_qvglParent),
 		quad(NULL),
-		shaderProgram(NULL),
-		topBar(_topBar),
-		bottomBar(_bottomBar)
+		shaderProgram(NULL)
 	{
 		// Activate focus via mouse click :
 		//setFocusPolicy(Qt::ClickFocus);
@@ -2661,27 +2717,14 @@ using namespace QVGL;
 			// re-throw :
 			throw e; 
 		}
-
-		// Bars (here because of the stretch signal) : 
-		if(topBar!=NULL)
-		{
-			QGraphicsProxyWidget* graphicsProxy = addWidget(topBar);
-			topBar->setGraphicsProxy(graphicsProxy);
-			//QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), topBar, SLOT(stretch(const QRectF&)));
-		}
-
-		if(bottomBar!=NULL)
-		{
-			QGraphicsProxyWidget* graphicsProxy = addWidget(bottomBar);
-			bottomBar->setGraphicsProxy(graphicsProxy);
-			//QObject::connect(this, SIGNAL(sceneRectChanged(const QRectF&)), bottomBar, SLOT(stretch(const QRectF&)));
-		}
 	}
 
 	GLScene::~GLScene(void)
 	{
 		delete quad;
 		delete shaderProgram;
+		quad = NULL;
+		shaderProgram = NULL;
 	}
 
 	void GLScene::drawView(View* view)
@@ -2754,35 +2797,6 @@ using namespace QVGL;
 		// Restore view port : 
 		glViewport(0, 0, width(), height());
 	}
-
-	/*void GLScene::getTableParameters(const int& W, const int& H, const int& N, const float& rho, int& a, int& b, int& w, int& h, float& u, float& v) const
-	{
-		// W 	: width of the scene.
-		// H	: height of the scene.
-		// N 	: number of elements to display.
-		// rho 	: percentage of spacing.
-		// a 	: number of columns of the table.
-		// b 	: number of rows of the table.
-		// w	: width of each vignette.
-		// h 	: height of each vignette.
-		// u 	: horizontal spacing, adjusted.
-		// v 	: vertical spacing, adjusted.
-		
-		const float sceneRatio = static_cast<float>(W)/static_cast<float>(H);
-
-		// ROUND REQUIRES : 
-		// QT <= 4 : QMAKE_CXXFLAGS += -std=c++11
-		// QT >= 5 : CONFIG += c++11
-
-		a = std::round(std::sqrt(sceneRatio*static_cast<float>(N)));
-		b = std::ceil(static_cast<float>(N)/static_cast<float>(a));
-
-		w = static_cast<int>((1.0f - rho) * static_cast<float>(W) / static_cast<float>(a));
-		h = static_cast<int>((1.0f - rho) * static_cast<float>(H) / static_cast<float>(b));
-
-		u = static_cast<float>(W - a*w) / static_cast<float>(a + 1);
-		v = static_cast<float>(H - b*h) / static_cast<float>(b + 1);
-	}*/
 
 	void GLScene::drawBackground(QPainter* painter, const QRectF& rect)
 	{
@@ -2867,8 +2881,6 @@ using namespace QVGL;
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 			qvglParent->getKeyboardState().keyReleased(event);
-
-		//std::cout << "Released : " << qvglParent->getKeyboardState().getActionAssociatedToKey(event) << std::endl;
 	}
 
 	void GLScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
@@ -2892,8 +2904,8 @@ using namespace QVGL;
 	{
 		QGraphicsScene::mousePressEvent(event);
 
-		// TMP : 
-		if(!event->isAccepted() && qvglParent!=NULL)
+		// TMP / Test : 
+		/*if(!event->isAccepted() && qvglParent!=NULL)
 		{
 			float xGl, yGl;
 			qvglParent->toGlCoordinates(event->scenePos().x(), event->scenePos().y(), xGl, yGl, false);
@@ -2912,7 +2924,7 @@ using namespace QVGL;
 			unsigned char red, green, blue;
 			qvglParent->getColorAt(event->scenePos().x(), event->scenePos().y(), red, green, blue);
 			std::cout << "MousePressed - Color             : (" << static_cast<int>(red) << "; " << static_cast<int>(green) << ", " << static_cast<int>(blue) << ")" << std::endl;
-		}
+		}*/
 
 		// Send the event :
 		if(!event->isAccepted() && qvglParent!=NULL)
@@ -2927,23 +2939,8 @@ using namespace QVGL;
 			qvglParent->getMouseState().processEvent(event, false, false, true);
 	}
 
-	/*void GLScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
-	{
-		QGraphicsScene::mouseDoubleClickEvent(event);
-
-		if(!event->isAccepted())
-		{
-			std::cout << "TODO - line " << __LINE__ << " : add double click event process." << std::endl;
-
-			// TODO
-			//qvglParent->getMouseState().processEvent(event);
-
-			event->accept();
-		}
-	}*/
-
 // GLSceneViewWidget :
-	GLSceneViewWidget::GLSceneViewWidget(MainWidget* _qvglParent, TopBar* _topBar, BottomBar* _bottomBar)
+	GLSceneViewWidget::GLSceneViewWidget(MainWidget* _qvglParent, TopBar* topBar, BottomBar* bottomBar)
 	 : 	contextWidget(NULL),
 		glScene(NULL),
 		qvglParent(_qvglParent)
@@ -2954,12 +2951,28 @@ using namespace QVGL;
 		setViewport(contextWidget);
 
 		// Create the scene : 
-		glScene = new GLScene(qvglParent, _topBar, _bottomBar);
+		glScene = new GLScene(qvglParent);
 		setScene(glScene);
 
 		// Other parameters : 	
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);	// For container catching.
 		setViewportUpdateMode(QGraphicsView::FullViewportUpdate);	// Because GL has to redraw the complete area.
+
+		// Add the bars : 
+		if(topBar!=NULL)
+		{
+			QGraphicsProxyWidget* graphicsProxy = glScene->addWidget(topBar);
+			topBar->setGraphicsProxy(graphicsProxy);
+		}
+
+		if(bottomBar!=NULL)
+		{
+			QGraphicsProxyWidget* graphicsProxy = glScene->addWidget(bottomBar);
+			bottomBar->setGraphicsProxy(graphicsProxy);
+		}
+
+		if(topBar!=NULL || bottomBar!=NULL)
+			forceItemOrdering();
 	}
 
 	GLSceneViewWidget::~GLSceneViewWidget(void)
@@ -2981,11 +2994,13 @@ using namespace QVGL;
 	{
 		QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
 		subWidget->setGraphicsProxy(proxy);
+		forceItemOrdering();
 	}
 
 	void GLSceneViewWidget::addItem(QGraphicsItem* item)
 	{
 		glScene->addItem(item);
+		forceItemOrdering();
 	}
 
 	void GLSceneViewWidget::removeItem(QGraphicsItem* item)
@@ -2993,141 +3008,136 @@ using namespace QVGL;
 		glScene->removeItem(item);
 	}
 
-	SubWidget* GLSceneViewWidget::getUppermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
+	void GLSceneViewWidget::forceItemOrdering(void)
 	{
-		if(list.isEmpty())
-			return NULL;
-		else
+		// Force all the items to be on bottom, and the widgets to be on top.
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		// Sort in the list : 
+		for(QList<QGraphicsItem*>::iterator it1=itemsList.end(); it1!=itemsList.begin(); it1--)
 		{
-			SubWidget* highest = list.front();
-			QGraphicsProxyWidget* highestGraphicsProxy = highest->getGraphicsProxy();
-
-			for(QList<SubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
+			QList<QGraphicsItem*>::iterator itLag = itemsList.end();
+			for(QList<QGraphicsItem*>::iterator it2=itemsList.begin(); it2!=it1; it2++)
 			{
-				QGraphicsProxyWidget* graphicsProxy = (*it)->getGraphicsProxy();
+				// If it2 is a widget (SubWidget or a bar) and itLag is not, then swap the two values :
+				if(itLag!=itemsList.end() && (((*itLag)->data(QGraphicsItemVisualPartKey).toInt() & WidgetVisualPartMask)==0 && ((*it2)->data(QGraphicsItemVisualPartKey).toInt() & WidgetVisualPartMask)!=0))
+					std::swap(*itLag, *it2);
 
-				if(graphicsProxy!=NULL)
-				{
-					if(	(!highest->isVisible() && (*it)->isVisible() && onlyIfVisible) || 					// First case.
-						(graphicsProxy->zValue() > highestGraphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible)) )	// Generic case.
-					{
-						highest = (*it);
-						highestGraphicsProxy = graphicsProxy;
-					}
-				}
+				itLag = it2;
 			}
+		}
 
-			if(!highest->isVisible() && onlyIfVisible)
-				return NULL;
-			else			
-				return highest;
+		// Reset to the correct Z-Values : 
+		int z = 1;
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
+		{
+			(*it)->setZValue(itemsList.size()-z);
+			z++;
 		}
 	}
 
-	SubWidget* GLSceneViewWidget::getLowermostSubWidget(const QList<SubWidget*>& list, bool onlyIfVisible) const
+	void GLSceneViewWidget::putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy)
 	{
-		if(list.isEmpty())
-			return NULL;
-		else
+		// Assumption : all widgets are already on top of all the others graphicsItems.
+
+		if(graphicsProxy==NULL || (graphicsProxy->data(QGraphicsItemVisualPartKey).toInt() & WidgetVisualPartMask)==0)
+			return ;
+
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
 		{
-			SubWidget* lowest = list.front();
-			QGraphicsProxyWidget* lowestGraphicsProxy = lowest->getGraphicsProxy();
-
-			for(QList<SubWidget*>::const_iterator it=list.begin(); it!=list.end(); it++)
+			if((*it)==graphicsProxy->graphicsItem())
 			{
-				QGraphicsProxyWidget* graphicsProxy = (*it)->getGraphicsProxy();
-
-				if(graphicsProxy!=NULL)
-				{
-					if(	(!lowest->isVisible() && (*it)->isVisible() && onlyIfVisible) ||				// First case.
-						(graphicsProxy->zValue() < lowestGraphicsProxy->zValue() && ((*it)->isVisible() || !onlyIfVisible)) )	// Generic case.
-					{
-						lowest = (*it);
-						lowestGraphicsProxy = graphicsProxy;
-					}
-				}
+				(*it)->setZValue(itemsList.size()-1);
+				break;
 			}
-
-			if(!lowest->isVisible() && onlyIfVisible)
-				return NULL;
-			else			
-				return lowest;
+			else 
+				(*it)->setZValue((*it)->zValue()-1);
 		}
 	}
 
-	void GLSceneViewWidget::orderSubWidgetsList(QList<SubWidget*>& list, bool onlyIfVisible) const
+	void GLSceneViewWidget::putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy)
 	{
-		if(onlyIfVisible)
+		// Assumption : all widgets are already on top of all the others graphicsItems.
+
+		if(graphicsProxy==NULL || (graphicsProxy->data(QGraphicsItemVisualPartKey).toInt() & WidgetVisualPartMask)==0)
+			return ;
+
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		int lastZ = -1;
+		QList<QGraphicsItem*>::iterator itTarget = itemsList.end();
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
 		{
-			// Remove non-visible widgets : 
-			for(QList<SubWidget*>::iterator it=list.begin(); it!=list.end(); )
+			if(((*it)->data(QGraphicsItemVisualPartKey).toInt() & WidgetVisualPartMask)!=0)
+				lastZ = (*it)->zValue();
+			else
+				break;
+
+			if(itTarget!=itemsList.end())
+				(*it)->setZValue((*it)->zValue()+1);
+			else if((*it)==graphicsProxy->graphicsItem())
+				itTarget = it;
+		}
+
+		if(itTarget!=itemsList.end())
+			(*itTarget)->setZValue(lastZ);
+	}
+
+	SubWidget* GLSceneViewWidget::getTopSubWidget(bool onlyVisible)
+	{
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
+		{
+			if(((*it)->data(QGraphicsItemVisualPartKey).toInt() & SubWidgetVisualPart)!=0 && ((*it)->isVisible() || !onlyVisible))
+				return SubWidget::getPtrFromProxyItem(*it);
+		}
+
+		return NULL;
+	}
+
+	SubWidget* GLSceneViewWidget::getBottomSubWidget(bool onlyVisible)
+	{
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		SubWidget* ptr = NULL;
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
+		{
+			if(((*it)->data(QGraphicsItemVisualPartKey).toInt() & SubWidgetVisualPart)!=0 && ((*it)->isVisible() || !onlyVisible))
+				ptr = SubWidget::getPtrFromProxyItem(*it);
+		}
+
+		return ptr;
+	}
+
+	SubWidget* GLSceneViewWidget::getSubWidget(int index, bool onlyVisible)
+	{
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		sortItems(itemsList);
+
+		SubWidget* ptr = NULL;
+		int k = 0;
+		for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
+		{
+			if(((*it)->data(QGraphicsItemVisualPartKey).toInt() & SubWidgetVisualPart)!=0 && ((*it)->isVisible() || !onlyVisible))
 			{
-				if(!(*it)->isVisible())
-					it = list.erase(it);
+				ptr = SubWidget::getPtrFromProxyItem(*it);
+
+				if(k==index)
+					break;
 				else
-					it++;
+					k++;
 			}
 		}
 
-		// Sort widget regarding their zValue : 
-		for(int p=0; p<list.size(); p++)
-		{
-			for(int q=0; q<(list.size()-1); q++)
-			{
-				QGraphicsProxyWidget	*currentGraphicsProxy = list[q]->getGraphicsProxy(),
-							*nextGraphicsProxy = list[q+1]->getGraphicsProxy();
-
-				if(currentGraphicsProxy!=NULL && nextGraphicsProxy!=NULL)
-				{
-					if(nextGraphicsProxy->zValue() > currentGraphicsProxy->zValue())
-						list.swap(q+1,q);
-				}
-			}
-		}
-	}
-
-	void GLSceneViewWidget::putItemOnTop(QGraphicsProxyWidget* graphicsProxy)
-	{
-		if(graphicsProxy!=NULL)
-		{
-			QList<QGraphicsItem*> itemsList = glScene->items();
-
-			qreal k = itemsList.count()-2;
-
-			for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
-			{
-				if((*it)!=graphicsProxy->graphicsItem())
-				{
-					(*it)->setZValue(k);
-					k--;
-				}
-			}
-
-			// Raise to top : 
-			graphicsProxy->setZValue(itemsList.count()-1);
-		}
-	}
-
-	void GLSceneViewWidget::putItemOnBottom(QGraphicsProxyWidget* graphicsProxy)
-	{
-		if(graphicsProxy!=NULL)
-		{
-			QList<QGraphicsItem*> itemsList = glScene->items();
-
-			qreal k = itemsList.count()-1;
-
-			for(QList<QGraphicsItem*>::iterator it=itemsList.begin(); it!=itemsList.end(); it++)
-			{
-				if((*it)!=graphicsProxy->graphicsItem())
-				{
-					(*it)->setZValue(k);
-					k--;
-				}
-			}
-
-			// Raise to top : 
-			graphicsProxy->setZValue(0.0);
-		}
+		return ptr;
 	}
 
 	void GLSceneViewWidget::makeGLContextAvailable(void)
@@ -3168,7 +3178,15 @@ using namespace QVGL;
 	void GLSceneViewWidget::update(void)
 	{
 		glScene->update();
-		//QGraphicsView::update(); // not required.
+	}
+
+	void GLSceneViewWidget::sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order)
+	{
+		// Simple bubble sort : 
+		for(QList<QGraphicsItem*>::iterator it1=list.begin(); it1!=list.end(); it1++)
+			for(QList<QGraphicsItem*>::iterator it2=(it1+1); it2!=list.end(); it2++)
+				if( ((*it1)->zValue()>(*it2)->zValue()) != (order==Qt::DescendingOrder) )
+					std::swap(*it1, *it2);
 	}
 
 // MainWidget :
@@ -3317,37 +3335,23 @@ using namespace QVGL;
 		View* 		currentView 		= getCurrentView();
 		ViewsTable* 	currentViewsTable 	= getCurrentViewsTable();
 
-		if(currentView!=NULL && mouseState.getFunctionMode()==MouseState::ModeMotion)
+		if(currentView!=NULL && (mouseState.getFunctionMode()==MouseState::ModeMotion || mouseState.getFunctionMode()==MouseState::ModeRotation))
 		{
-			QRectF sceneRect;
-	
-			if(currentViewsTable!=NULL)
-				sceneRect = currentViewsTable->getVignetteFrame(currentView);
-
 			// Get adaptation scale (full screen or frame) :
 			float adaptationScale;
 
 			if(currentViewsTable==NULL)
 				adaptationScale = getAdaptationScaling(currentView->getImageRatio());
 			else
+			{
+				QRectF sceneRect = currentViewsTable->getVignetteFrame(currentView);
 				adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());
+			}
 
-
-			if(mouseState.isVectorModified(MouseState::VectorLastLeftShiftGl))
+			// Translate : 
+			if(mouseState.getFunctionMode()==MouseState::ModeMotion && mouseState.isVectorModified(MouseState::VectorLastLeftShiftGl))
 			{
 				QPointF v = mouseState.getVector(MouseState::VectorLastLeftShiftGl);
-
-				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
-
-				// Adaptation scaling : 
-				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-
-				/*float adaptationScale;
-
-				if(currentViewsTable==NULL)
-					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-				else
-					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
 
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
@@ -3363,22 +3367,33 @@ using namespace QVGL;
 
 				currentView->move(v.x(), v.y());
 			}
+		
+			// Rotate : 
+			if(mouseState.getFunctionMode()==MouseState::ModeRotation && mouseState.isVectorModified(MouseState::VectorLastLeftPositionImage))
+			{
+				float 	xImageCenter = 0.0f, 
+					yImageCenter = 0.0f;
 
+				currentView->getImageCenter(xImageCenter, yImageCenter);
+
+				QPointF a 	= mouseState.getVector(MouseState::VectorLastLeftPositionImage),
+					s	= mouseState.getVector(MouseState::VectorLastLeftShiftImage);
+				a.setX(a.x() - xImageCenter);
+				a.setY(a.y() - yImageCenter);
+				float	p	= a.x()*s.x() + a.y()*s.y(),
+					laSq	= a.x()*a.x() + a.y()*a.y();
+				QPointF u	= QPointF(s.x() - p*a.x()/laSq, s.y() - p*a.y()/laSq);
+				float	luSq	= u.x()*u.x()+u.y()*u.y(),
+					sign	= (u.x()*a.y()-a.x()*u.y())<0.0 ? -1.0f : 1.0f,
+					angle	= atan2(sign * std::sqrt(luSq), std::sqrt(laSq));
+
+				currentView->rotate(angle);
+			}
+
+			// Zoom in/out :
 			if(mouseState.isVectorModified(MouseState::VectorLastWheelUpGl) && mouseState.isWheelDeltaModified())
 			{
 				QPointF v = mouseState.getVector(MouseState::VectorLastWheelUpGl);
-
-				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
-
-				// Adaptation scaling : 
-				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-
-				/*float adaptationScale;
-
-				if(currentViewsTable==NULL)
-					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-				else
-					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
 
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
@@ -3386,21 +3401,10 @@ using namespace QVGL;
 				currentView->zoom(v.x(), v.y(), std::pow(1.2f, mouseState.getWheelDelta()));
 			}
 
+			// Zoom in/out :
 			if(mouseState.isVectorModified(MouseState::VectorLastWheelDownGl) && mouseState.isWheelDeltaModified())
 			{
 				QPointF v = mouseState.getVector(MouseState::VectorLastWheelDownGl);
-
-				// Go from Gl coordinates to Translation (before quad, do not use QuadBasis).
-
-				// Adaptation scaling : 
-				// ORIGINAL : const float adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-
-				/*float adaptationScale;
-
-				if(currentViewsTable==NULL)
-					adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-				else
-					adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());*/
 
 				v.rx() /= adaptationScale;
 				v.ry() /= adaptationScale;
@@ -3425,8 +3429,6 @@ using namespace QVGL;
 
 	void MainWidget::viewRequireDisplay(View* view)
 	{
-		std::cout << "MainWidget::viewRequireDisplay : " << view << std::endl;	
-
 		int idx = viewsList.indexOf(view);
 
 		if(idx>=0 && idx<viewsList.size())
@@ -3479,13 +3481,8 @@ using namespace QVGL;
 			view->close();
 				
 			// Change current view if needed :
-			if(currentViewIndex==idx)
-			{
-				if(getCurrentViewsTable()!=NULL)
-					hideCurrentView();
-				else
-					changeCurrentView(currentViewIndex);
-			}
+			if(currentViewIndex==idx && getCurrentViewsTable()==NULL)
+				changeCurrentView(currentViewIndex);
 		}
 	}
 
@@ -3511,13 +3508,8 @@ using namespace QVGL;
 			viewsList.removeAt(idx);
 
 			// Change current view if needed :
-			if(currentViewIndex==idx)
-			{
-				if(getCurrentViewsTable()!=NULL)
-					hideCurrentView();
-				else
-					changeCurrentView(currentViewIndex);
-			}
+			if(currentViewIndex==idx && getCurrentViewsTable()==NULL)
+				changeCurrentView(currentViewIndex);
 		}
 	}
 
@@ -3599,6 +3591,10 @@ using namespace QVGL;
 	{
 		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
+			// Forget any temporary hide : 
+			if(!temporaryHiddenSubWidgetsList.empty())
+				temporaryHideAllSubWidgets(false);
+
 			// Change opacity of all other subWidgets : 
 			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
 				(*it)->setWindowOpacity(opacityIdleSubWidget);
@@ -3611,7 +3607,7 @@ using namespace QVGL;
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
 
 			// Raise the current subWidget : 
-			glSceneViewWidget.putItemOnTop(subWidget->getGraphicsProxy());
+			glSceneViewWidget.putWidgetOnTop(subWidget->getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3647,10 +3643,10 @@ using namespace QVGL;
 		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Lower the current subWidget : 
-			glSceneViewWidget.putItemOnBottom(subWidget->getGraphicsProxy());
+			glSceneViewWidget.putWidgetOnBottom(subWidget->getGraphicsProxy());
 
 			// Raise the top bar : 
-			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
+			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
 		}
 	}
 
@@ -3698,51 +3694,51 @@ using namespace QVGL;
 
 	void MainWidget::nextSubWidget(void)
 	{
-		// Get the ordered list of widgets : 
-		QList<SubWidget*> list = subWidgetsList;
-		glSceneViewWidget.orderSubWidgetsList(list, true);
-
-		if(list.count()>=2)
-		{
-			glSceneViewWidget.putItemOnBottom(list[0]->getGraphicsProxy());
-			glSceneViewWidget.putItemOnTop(list[1]->getGraphicsProxy());
-
-			// Change opacities : 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-				(*it)->setWindowOpacity(opacityIdleSubWidget);
-
-			topBar.setWindowOpacity(opacityIdleBar);
-			bottomBar.setWindowOpacity(opacityIdleBar);
-
-			list[1]->setWindowOpacity(opacityActiveSubWidget);			
-		}
+		SubWidget* secondSubWidget = glSceneViewWidget.getSubWidget(1, true); // only if visible.
+		
+		if(secondSubWidget!=NULL)
+			subWidgetSelected(secondSubWidget);
 	}
 
 	void MainWidget::previousSubWidget(void)
 	{
-		// Get the ordered list of widgets : 
-		QList<SubWidget*> list = subWidgetsList;
-		glSceneViewWidget.orderSubWidgetsList(list, true);
+		SubWidget* bottom = glSceneViewWidget.getBottomSubWidget(true); // only if visible.
 
-		if(list.count()>=2)
-		{
-			glSceneViewWidget.putItemOnTop(list.back()->getGraphicsProxy());
-			
-			// Change opacities : 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-				(*it)->setWindowOpacity(opacityIdleSubWidget);
-
-			topBar.setWindowOpacity(opacityIdleBar);
-			bottomBar.setWindowOpacity(opacityIdleBar);
-
-			list.back()->setWindowOpacity(opacityActiveSubWidget);			
-		}
+		if(bottom!=NULL)
+			subWidgetSelected(bottom);
 	}
 
 	void MainWidget::temporaryHideAllSubWidgets(bool enabled)
 	{
-		for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-			(*it)->temporaryHide(enabled);
+		// Hide :
+		if(enabled && temporaryHiddenSubWidgetsList.empty())
+		{
+			temporaryHiddenSubWidgetsList.clear();
+
+			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			{
+				if((*it)->getGraphicsProxy()!=NULL && (*it)->getGraphicsProxy()->isVisible())
+				{
+					temporaryHiddenSubWidgetsList.push_back(*it);
+					(*it)->getGraphicsProxy()->setVisible(false);
+				}
+			}
+		}
+		else if(!enabled) // Release :
+		{
+			for(QList<SubWidget*>::iterator it=temporaryHiddenSubWidgetsList.begin(); it!=temporaryHiddenSubWidgetsList.end(); it++)
+			{
+				if((*it)->getGraphicsProxy()!=NULL)
+					(*it)->getGraphicsProxy()->setVisible(true);
+			}
+		
+			temporaryHiddenSubWidgetsList.clear();
+		}
+	}
+
+	void MainWidget::toggleTemporaryHideAllSubWidgets(void)
+	{
+		temporaryHideAllSubWidgets(temporaryHiddenSubWidgetsList.empty());
 	}
 
 	void MainWidget::hideAllSubWidgets(void)
@@ -3764,8 +3760,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			glSceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());
-			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
+			glSceneViewWidget.putWidgetOnTop(bottomBar.getGraphicsProxy());
+			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3785,8 +3781,8 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			glSceneViewWidget.putItemOnTop(topBar.getGraphicsProxy());
-			glSceneViewWidget.putItemOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
+			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
+			glSceneViewWidget.putWidgetOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
 
 			// Release all buttons from the main interface : 
 			keyboardState.forceRelease();
@@ -3902,12 +3898,6 @@ using namespace QVGL;
 
 	void MainWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
 	{
-		/* ORIGINAL
-		const float sceneRatio = getSceneRatio();
-
-		xSceneScale = std::min(1.0f, 1.0f/sceneRatio);
-		ySceneScale = std::min(1.0f, sceneRatio); 	// The minus sign set the orientation of the GL axis to be the same as Qt.*/
-
 		getSceneRatioScaling(getSceneRatio(), xSceneScale, ySceneScale);
 	}
 
@@ -3933,26 +3923,6 @@ using namespace QVGL;
 
 	float MainWidget::getAdaptationScaling(const float& imageRatio) const
 	{
-		/* ORIGINAL
-		const float sceneRatio = getSceneRatio();
-
-		if((sceneRatio<=1.0f && imageRatio>=1.0f) || (sceneRatio>=1.0f && imageRatio<=1.0f))	// Opposite aspect ratios : do not do anything.
-			return 1.0f;
-		else if(imageRatio<=1.0f)	// Portrait
-		{
-			if(sceneRatio>imageRatio)
-				return std::max(sceneRatio, 1.0f/sceneRatio);
-			else
-				return std::max(imageRatio, 1.0f/imageRatio);
-		}
-		else //if(imageRatio>1.0f)	// Landscape
-		{
-			if(sceneRatio>imageRatio)
-				return std::max(imageRatio, 1.0f/imageRatio);
-			else
-				return std::max(sceneRatio, 1.0f/sceneRatio);
-		}*/
-
 		return getAdaptationScaling(getSceneRatio(), imageRatio);
 	}
 
@@ -3980,27 +3950,6 @@ using namespace QVGL;
 
 	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const
 	{
-		/* ORIGINAL
-		QRectF rect = sceneRect();
-
-		if(!isRelative)
-		{
-			xGl = (static_cast<float>(x) - rect.x()) * 2.0f / rect.width() - 1.0f;
-			yGl = 1.0f - (static_cast<float>(y) - rect.y()) * 2.0f / rect.height();
-		}
-		else
-		{
-			xGl = static_cast<float>(x) * 2.0f / rect.width();
-			yGl = - static_cast<float>(y) * 2.0f / rect.height();
-		}
-
-		// Scene scaling : 
-		float xSceneScale, ySceneScale;
-		getSceneRatioScaling(xSceneScale, ySceneScale);	
-
-		xGl /= xSceneScale;
-		yGl /= ySceneScale;*/
-
 		toGlCoordinates(x, y, xGl, yGl, isRelative, sceneRect());
 	}
 
@@ -4041,8 +3990,8 @@ using namespace QVGL;
 			// Rotation : 
 			const float 	c  = std::cos(view->angle),
 					s  = std::sin(view->angle),
-			 		x2 = c * x - s * y,
-					y2 = s * x + c * y;
+			 		x2 =  c * x + s * y,
+					y2 = -s * x + c * y;
 
 			// Image scaling : 
 			float xImgScale, yImgScale;
@@ -4071,8 +4020,8 @@ using namespace QVGL;
 			// Rotation : 
 			const float 	c  = std::cos(view->angle),
 					s  = std::sin(view->angle),
-			 		x2 = c * x - s * y,
-					y2 = s * x + c * y;
+			 		x2 =  c * x + s * y,
+					y2 = -s * x + c * y;
 
 			// Image scaling : 
 			float xImgScale, yImgScale;
@@ -4300,7 +4249,10 @@ using namespace QVGL;
 					mouseState.setFunctionMode(MouseState::ModeCollection);
 				break;
 			case ActionRotationModifier :
-				std::cout << '[' << __LINE__ << "] ActionRotationModifier not available." << std::endl;
+				if(!takenBack)
+					mouseState.setFunctionMode(MouseState::ModeRotation);
+				else
+					mouseState.setFunctionMode(MouseState::ModeCollection);
 				break;
 			case ActionNextSubWidget :
 				nextSubWidget();
@@ -4308,11 +4260,8 @@ using namespace QVGL;
 			case ActionPreviousSubWidget :
 				previousSubWidget();
 				break;
-			case ActionTemporaryHideAllSubWidgets :
-				temporaryHideAllSubWidgets(true);
-				break;
-			case ActionTemporaryUnhideAllSubWidgets :
-				temporaryHideAllSubWidgets(false);
+			case ActionToggleTemporaryHideAllSubWidgets :
+				toggleTemporaryHideAllSubWidgets();
 				break;
 			case ActionHideAllSubWidgets :
 				hideAllSubWidgets();

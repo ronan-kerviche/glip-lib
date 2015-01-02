@@ -91,6 +91,7 @@ namespace QGIC
 			void setMagFilter(GLenum mf);
 			void setSWrapping(GLint m);
 			void setTWrapping(GLint m);
+			QString getToolTipInformation(void);
 
 			const QString& getFilename(void) const;
 			void setFilename(const QString& newFilename, bool useAsNewName=false);
@@ -110,7 +111,8 @@ namespace QGIC
 			void remove(void);
 
 			static QString getSizeString(size_t size);
-			static QString getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name="");
+			static QString getFormatToolTip(const HdlAbstractTextureFormat& format, const QString& name="", const QMap<QString, QString>& otherInfos=QMap<QString, QString>());
+			static QString getFormatToolTip(HdlTexture& texture, const QString& name="", const QMap<QString, QString>& otherInfos=QMap<QString, QString>());
 			static ImageItem* pasteImageFromClipboard(void);
 
 		signals : 

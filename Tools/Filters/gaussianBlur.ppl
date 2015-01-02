@@ -1,0 +1,61 @@
+/*
+	Apply a gaussian blur to the image (within a defined window).
+*/
+
+REQUIRED_FORMAT:outputFormat0(inputFormat0)
+
+SHARED_CODE:GaussianBlurCode
+{
+	float gaussian(in vec2 pos, in float sigma)
+	{
+		return exp(- dot(pos.xy, pos.xy) / (2.0 * sigma * sigma));
+	}
+
+	vec4 gaussianBlur(in sampler2D inTexture, in ivec2 pos, in int halfWindowSize, in float sigma)
+	{
+		float sumWeights = 0.0;
+		vec4 result = vec4(0.0, 0.0, 0.0, 0.0);
+
+		for(int i=-halfWindowSize; i<=halfWindowSize; i++)
+		{
+			for(int j=-halfWindowSize; j<=halfWindowSize; j++)
+			{
+				vec4 current = texelFetch(inTexture, pos + ivec2(i, j), 0);
+				float weight = gaussian(vec2(i,j), sigma);
+				result = result + current * weight;
+				sumWeights = sumWeights + weight;
+			}
+		}
+
+		return result/sumWeights;
+	}
+}
+
+SHADER_SOURCE:GaussianBlurShader
+{
+	#version 130
+
+	uniform sampler2D	textureInput;
+	out     vec4 		blurredTexture;
+	uniform float		sigma 		= 1.0;
+	uniform int		halfWindowSize	= 1;
+	
+	INSERT(GaussianBlurCode)
+
+	void main()
+	{
+		blurredTexture = gaussianBlur(textureInput, ivec2(gl_FragCoord.xy), halfWindowSize, sigma);
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:GaussianBlurFilter(outputFormat0,GaussianBlurShader)
+
+PIPELINE_MAIN:GaussianBlurPipeline
+{
+	// Declare some input and output ports for this pipeline :
+	INPUT_PORTS(textureInput)
+	OUTPUT_PORTS(blurredTexture)
+
+	FILTER_INSTANCE:GaussianBlurFilter
+}
