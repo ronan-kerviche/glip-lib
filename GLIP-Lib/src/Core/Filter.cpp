@@ -121,17 +121,17 @@
 			if(c.vertexSource!=NULL)
 				vertexSource   = new ShaderSource(*c.vertexSource);
 			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 
 			if(c.fragmentSource!=NULL)
 				fragmentSource = new ShaderSource(*c.fragmentSource);
 			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 
 			if(c.geometryModel!=NULL)
 				geometryModel = new GeometryModel(*c.geometryModel);
 			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 		}
 		catch(Exception& e)
 		{
@@ -164,7 +164,7 @@
 	ShaderSource& AbstractFilterLayout::getVertexSource(void) const
 	{
 		if(vertexSource==NULL)
-			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
+			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 
 		return *vertexSource;
 	}
@@ -177,7 +177,7 @@
 	ShaderSource& AbstractFilterLayout::getFragmentSource(void) const
 	{
 		if(fragmentSource==NULL)
-			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__);
+			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 
 		return *fragmentSource;
 	}
@@ -190,7 +190,7 @@
 	GeometryModel& AbstractFilterLayout::getGeometryModel(void) const
 	{
 		if(geometryModel==NULL)
-			throw Exception("FilterLayout::getGeometryModel - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__);
+			throw Exception("FilterLayout::getGeometryModel - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 
 		return *geometryModel;
 	}
@@ -432,10 +432,10 @@
 
 		// Check for the number of input
 		if(getNumInputPort()>limInput)
-			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many input port for hardware (Max : " + toString(limInput) + ", Current : " + toString(getNumInputPort()) + ").", __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many input port for hardware (Max : " + toString(limInput) + ", Current : " + toString(getNumInputPort()) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 		if(getNumOutputPort()>limOutput)
-			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many output port for hardware (Max : " + toString(limOutput) + ", Current : " + toString(getNumInputPort()) + ").", __FILE__, __LINE__);
+			throw Exception("Filter::Filter - Filter " + getFullName() + " has too many output port for hardware (Max : " + toString(limOutput) + ", Current : " + toString(getNumInputPort()) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 		// Build arguments table :
 		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));
@@ -453,8 +453,9 @@
 			delete fragmentShader;
 			delete prgm;
 
-			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
@@ -462,8 +463,9 @@
 			delete fragmentShader;
 			delete prgm;
 
-			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 
 		try
@@ -486,8 +488,9 @@
 			delete fragmentShader;
 			delete prgm;
 
-			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
@@ -495,8 +498,9 @@
 			delete fragmentShader;
 			delete prgm;
 
-			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 
 		// Build the geometry :
@@ -508,15 +512,6 @@
 
 	Filter::~Filter(void)
 	{
-		/*if(program==NULL)
-			throw Exception("Filter::~Filter - Internal error : program is NULL", __FILE__, __LINE__);
-		if(vertexShader==NULL)
-			throw Exception("Filter::~Filter - Internal error : vertexShader is NULL", __FILE__, __LINE__);
-		if(fragmentShader==NULL)
-			throw Exception("Filter::~Filter - Internal error : fragmentShader is NULL", __FILE__, __LINE__);
-		if(vbo!=NULL)
-			delete vbo;*/
-
 		delete prgm;
 		delete vertexShader;
 		delete fragmentShader;
@@ -532,7 +527,7 @@
 	void Filter::setInputForNextRendering(int id, HdlTexture* ptr)
 	{
 		if(id<0 || id>getNumInputPort())
-			throw Exception("Filter::setInputForNextRendering - Index out of range", __FILE__, __LINE__);
+			throw Exception("Filter::setInputForNextRendering - Index out of range", __FILE__, __LINE__, Exception::CoreException);
 		arguments[id] = ptr;
 		//std::cout << "Adding : " << arguments[id] << " at " << id << std::endl;
 	}
@@ -545,7 +540,7 @@
 	void Filter::process(HdlFBO& renderer)
 	{
 		if(renderer.getAttachmentCount()<getNumOutputPort())
-			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getFullName() + " has outputs.", __FILE__, __LINE__);
+			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getFullName() + " has outputs.", __FILE__, __LINE__, Exception::CoreException);
 
 		// Prepare the renderer	
 			renderer.beginRendering(getNumOutputPort());
@@ -600,7 +595,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -620,7 +615,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -653,7 +648,7 @@
 				{
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 				else
 					firstRun 	= false; // First run completed successfully.

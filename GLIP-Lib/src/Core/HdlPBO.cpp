@@ -53,7 +53,7 @@ using namespace Glip::CoreGL;
 	 : HdlGeBO(fmt.getSize(), aim, freq), w(fmt.getWidth()), h(fmt.getHeight()), c(fmt.getNumChannels()), cs(fmt.getChannelDepth())
 	{
 		if(fmt.isCompressed())
-			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on HdlAbstractTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__);
+			throw Exception("HdlPBO::HdlPBO - Can not create a PBO on HdlAbstractTextureFormat object for a compressed texture (size can not be obtained).", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	HdlPBO::~HdlPBO(void)
@@ -103,9 +103,9 @@ using namespace Glip::CoreGL;
 		#ifdef __VERBOSE__
 			if(glErrors(true, false))
 				if(texture.isCompressed())
-					throw Exception("HdlPBO::copyToTexture - Writing into a compressed texture from a PBO : make sure that the data in the PBO is compressed too.", __FILE__, __LINE__);
+					throw Exception("HdlPBO::copyToTexture - Writing into a compressed texture from a PBO : make sure that the data in the PBO is compressed too.", __FILE__, __LINE__, Exception::GLException);
 				else
-					throw Exception("HdlPBO::copyToTexture - You must write at least in the target texture before using this function.", __FILE__, __LINE__);
+					throw Exception("HdlPBO::copyToTexture - You must write at least in the target texture before using this function.", __FILE__, __LINE__, Exception::GLException);
 		#endif
 
 		// Unbind from target :

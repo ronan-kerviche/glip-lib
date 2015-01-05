@@ -68,6 +68,7 @@ namespace QGIC
 			HdlTextureFormat	format;			
 			ImageBuffer*		imageBuffer;
 			HdlTexture* 		texture;
+			qint64			lastAccessTimeStamp;
 
 			void load(QString _filename="");
 
@@ -103,10 +104,11 @@ namespace QGIC
 			ImageBuffer* getImageBufferPtr(void);
 			HdlTexture& getTexture(void);
 			HdlTexture* getTexturePtr(void);
-
+			
 			bool isSaved(void) const;
 			void save(QString _filename="");
 			void copyToClipboard(void);
+			qint64 getLastAccessTimeStamp(void) const;
 
 			void remove(void);
 
@@ -135,6 +137,20 @@ namespace QGIC
 			static QVector<ImageItemsStorage*>	storagesList;
 			QVector<ImageItem*>			imageItemsList;
 
+			struct Record
+			{
+				ImageItemsStorage*	storage;
+				ImageItem*		item;
+
+				Record(void);
+				Record(const Record& c);	
+				Record(ImageItemsStorage* _storage, ImageItem* _item);
+				Record& operator=(const Record& c);
+				bool operator<(const Record& b) const; 
+			};
+
+			QVector<Record> getFreeableRecords(void);
+
 		private slots : 	
 			void imageItemDestroyed(void);
 			void imageItemRemoved(void);
@@ -147,12 +163,13 @@ namespace QGIC
 			void addImageItem(ImageItem* imageItem);
 
 			// Manage the storage : 
-			size_t getMaxOccupancy(void);
-			void setMaxOccupancy(size_t newMaxOccupancy);
-			size_t thisStorageDeviceOccupancy(size_t* canBeFreed=NULL) const;
-			void cleanThisStorage(void);
+			size_t deviceOccupancy(size_t* canBeFreed=NULL) const;
+			void clean(void);
+			static size_t getMaxOccupancy(void);
+			static void setMaxOccupancy(size_t newMaxOccupancy);
 			static size_t totalDeviceOccupancy(size_t* canBeFreed=NULL);
 			static void cleanStorages(void);
+			static void cleanStorages(size_t futureAdd);
 			static bool checkMemSpaceAvailabilty(size_t futureAdd);
 	};
 
@@ -328,7 +345,6 @@ namespace QGIC
 			void removeAllImageItem(void);
 
 			// Interaction : 
-			//void currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
 			void itemActivated(QTreeWidgetItem * item, int column);
 			void itemSelectionChanged(void);
 			void openContextMenu(const QPoint& pos);

@@ -215,28 +215,31 @@
 
 		if(possiblePaths.empty())
 		{
-			std::string msg;
-
 			if(dynamicPaths.empty())
-				msg = "Unable to load file \"" + filename + "\" from the current location.";
+				throw Exception("Unable to load file \"" + filename + "\" from the current location.", "", 1, Exception::ClientScriptException);
 			else
 			{			
-				msg = "Unable to load file \"" + filename + "\" from the following locations : ";
+				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", "", 1, Exception::ClientScriptException);
 
 				for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
-					msg  += "\n-> " + *it;
+				{
+					if(it->empty())
+						ex << Exception("-> [./]", "", 1, Exception::ClientScriptException);
+					else
+						ex << Exception("-> " + *it, "", 1, Exception::ClientScriptException);
+				}
+				
+				throw ex;
 			}
-
-			throw Exception(msg, __FILE__, __LINE__);
 		}
 		else if(possiblePaths.size()>1)
 		{
-			std::string msg = "Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ";
+			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", "", 1, Exception::ClientScriptException);
 
 			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
-				msg  += "\n-> " + *it;
+				ex << Exception("-> " + *it, "", 1, Exception::ClientScriptException);
 
-			throw Exception(msg, __FILE__, __LINE__);
+			throw ex;
 		}
 		//else
 
@@ -262,89 +265,109 @@
 
 		// Tests :
 		if((e.noName || e.name.empty()) && nameProperty>0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + " does not have a name.", __FILE__, __LINE__);
+			throw Exception(objectName + " does not have a name.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else if((!e.noName || !e.name.empty()) && nameProperty<0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should not have a name.", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should not have a name.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(maxArguments==0 && !e.arguments.empty())
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should not have arguments, but it has " + toString(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should not have arguments, but it has " + toString(e.arguments.size()) + ".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(minArguments>0 && e.arguments.empty())
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s).", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(static_cast<int>(e.arguments.size())!=minArguments && minArguments==maxArguments && minArguments>=0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have exactly "  + toString(minArguments) + " argument(s).", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should have exactly "  + toString(minArguments) + " argument(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(static_cast<int>(e.arguments.size())<minArguments && minArguments>=0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s), but it has only " + toString(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should have at least " + toString(minArguments) + " argument(s), but it has only " + toString(e.arguments.size()) + ".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(static_cast<int>(e.arguments.size())>maxArguments && maxArguments>=0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should have at most " + toString(maxArguments) + " argument(s), but it has " + toString(e.arguments.size()) + ".", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should have at most " + toString(maxArguments) + " argument(s), but it has " + toString(e.arguments.size()) + ".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(e.noBody && bodyProperty>0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " does not have a body.", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " does not have a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else if(!e.noBody && bodyProperty<0)
-			throw Exception("From line " + toString(e.startLine) + " : " + objectName + nameDecorator + " should not have a body.", __FILE__, __LINE__);
+			throw Exception(objectName + nameDecorator + " should not have a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 	}
 
-	void LayoutLoader::enhanceShaderSource(std::string& str)
+	ShaderSource LayoutLoader::enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine)
 	{
-		const char		openArg		= '(',
-					closeArg	= ')';
-		const std::string 	spacers 	= " \t\r\n\f\v",
-					endSpacers 	= " \t\r\n\f\v;(){}[],./\\|+*",
-					keyword 	= keywords[KW_LL_INSERT];
-
-		size_t pos = str.find(keyword);
-
-		while(pos!=std::string::npos)
+		const std::string keyword = keywords[KW_LL_INSERT];
+	
+		std::vector<std::string> 		lines;
+		std::vector<ShaderSource::LineInfo>	infos;
+		ShaderSource tmp(str, sourceName, startLine);
+		
+		for(int k=1; k<=tmp.getNumLines(); k++)
 		{
-			size_t k = pos + keyword.size();
-
-			// Find the following trailing openArg :
-			for(; k<str.size(); k++)
-			{
-				if(str[k]==openArg)
-					break;
-				else if(spacers.find(str[k])==std::string::npos)
-				{
-					k = str.size();
-					break;
-				}
-			}
-
-			// Possible errors :
-			if(k>=str.size())
-				throw Exception("Missing '(' after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
-
-			size_t 	begin 	= str.find_first_not_of(spacers, k);
-
-			if(begin==std::string::npos)
-				throw Exception("Missing name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
-
-			size_t 	end	= str.find(closeArg, begin);
-
-			if(end==std::string::npos)
-				throw Exception("Missing end to name after keyword \"" + keyword + "\" in ShaderSource object (or file).", __FILE__, __LINE__);
-
-			// Extract name :
-			std::string sharedCodeName = str.substr(begin+1, end-begin-1);
-
-			// Find it in the base :
-			std::map<std::string,std::string>::iterator it = sharedCodeList.find(sharedCodeName);
-
-			if(it==sharedCodeList.end())
-				throw Exception("SharedCode object \"" + sharedCodeName + "\" is not reference in the current database.", __FILE__, __LINE__);
-
-			// Replace :
-			str.replace(str.begin() + pos, str.begin() + end + 1, it->second.begin(), it->second.end());
-
-			// Search next occurence :
-			pos = str.find(keyword);
+			lines.push_back(tmp.getLine(k, false));
+			infos.push_back(tmp.getLineInfo(k));
 		}
 
-		// Make sure there is at least one line :
-		str += '\n';
+		for(size_t k=0; k<lines.size(); )
+		{
+			// Test if the current line contain the keyword :
+			const std::string& currentLine = lines[k];
+			const ShaderSource::LineInfo& currentInfo = infos[k];
+
+			if(currentLine.find(keyword)!=std::string::npos)
+			{
+				VanillaParser parser(currentLine, currentInfo.sourceName, currentInfo.lineNumber);
+				
+				if(parser.elements.empty()) // The INSERT might be commented out.
+				{
+					k++;
+					continue;
+				}
+				else if(parser.elements.size()>1)
+					throw Exception("Multiple elements found during parsing, instead of one " + std::string(keywords[KW_LL_INSERT]) + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				else if(parser.elements.front().strKeyword!=keywords[KW_LL_INSERT])
+					throw Exception("Bad keyword found : \"" + parser.elements.front().strKeyword + "\" instead of " + std::string(keywords[KW_LL_INSERT]) + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				
+				// Continue the tests :
+				preliminaryTests(parser.elements.front(), -1, 1, 1, -1, "Insert");
+				
+				const std::string sharedCodeName = parser.elements.front().arguments[0];
+
+				// Get it from the list :
+				std::map<std::string,ShaderSource>::iterator it = sharedCodeList.find(sharedCodeName); 
+				
+				if(it==sharedCodeList.end())
+					throw Exception("SharedCode object \"" + sharedCodeName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+			
+				// Else, generate the lists :
+				std::vector<std::string> 		sharedLines;
+				std::vector<ShaderSource::LineInfo>	sharedInfos;
+
+				for(int l=1; l<=it->second.getNumLines(); l++)
+				{
+					sharedLines.push_back(it->second.getLine(l, false));
+					sharedInfos.push_back(it->second.getLineInfo(l));
+				}
+
+				// Remove and insert :
+				lines.erase(lines.begin()+k);
+				infos.erase(infos.begin()+k);
+				lines.insert(lines.begin()+k, sharedLines.begin(), sharedLines.end());
+				infos.insert(infos.begin()+k, sharedInfos.begin(), sharedInfos.end());
+
+				// Do not change k and check if the inserted lines also require INSERT.
+			}
+			else
+				k++;
+		}
+
+		// Generate the final piece :
+		std::string 				content;
+		std::map<int,ShaderSource::LineInfo> 	linesInfo;
+
+		for(size_t k=0; k<lines.size(); k++)
+		{
+			content += lines[k] + '\n';
+			linesInfo[k+1] = infos[k];
+		}
+
+		return ShaderSource(content, sourceName, startLine, linesInfo);
 	}
 
 	void LayoutLoader::append(LayoutLoader& subLoader)
@@ -354,10 +377,10 @@
 			for( std::map<std::string, type >::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
 			{ \
 				if( varName.find( it->first ) != varName.end() ) \
-					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current pipeline.", __FILE__, __LINE__); \
+					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current script.", __FILE__, __LINE__, Exception::ClientScriptException); \
 			} \
 
-			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		std::string)
+			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		ShaderSource)
 			TEST_FOR_DOUBLES( formatList,		"Format", 		HdlTextureFormat)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	ShaderSource)
 			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryModel)
@@ -393,8 +416,9 @@
 		std::string resultingPath = currentPath + e.arguments[0];
 
 		if( e.arguments[0].empty() )
-			throw Exception("From line " + toString(e.startLine) + " : Path is empty.", __FILE__, __LINE__);
+			throw Exception("Path is empty.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
+		// Force delimiter :
 		if( resultingPath[resultingPath.size()-1]!='/' )
 			resultingPath.push_back('/');
 
@@ -403,6 +427,7 @@
 
 		if(it==dynamicPaths.end())
 			dynamicPaths.push_back(resultingPath);
+		// else : ignore.
 	}
 
 	void LayoutLoader::includeFile(const VanillaParserSpace::Element& e)
@@ -411,9 +436,9 @@
 		preliminaryTests(e, -1, 1, 1, -1, "IncludeFile");
 
 		if(e.arguments[0].find('\n')!=std::string::npos)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains a newline character.", __FILE__, __LINE__);
+			throw Exception("Cannot include file \"" + e.arguments[0] + "\" because its name contains a newline character.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else if(e.arguments[0].find('\\')!=std::string::npos)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '\\'.", __FILE__, __LINE__);
+			throw Exception("Cannot include file \"" + e.arguments[0] + "\" because its name contains the illegal character '\\'.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		LayoutLoader subLoader(*this); // 'this' is the master pipeline in that case.
 
@@ -421,12 +446,13 @@
 		std::string content;
 
 		loadFile(e.arguments[0], content, subLoader.currentPath);
+		std::string filename = subLoader.currentPath + e.arguments[0];
 
 		try
 		{
 			// Build all the elements :
 			std::string dummyMainPipelineName;
-			subLoader.process(content, dummyMainPipelineName);
+			subLoader.process(content, dummyMainPipelineName, filename);
 
 			// Append :
 			append(subLoader);
@@ -435,13 +461,15 @@
 		{
 			if(!subLoader.currentPath.empty())
 			{
-				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.currentPath + "\") : ", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.currentPath + "\") : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 	}
@@ -477,13 +505,13 @@
 			it = formatList.find(e.arguments[0]);
 
 			if(it==formatList.end())
-				throw Exception("From line " + toString(e.startLine) + " : The required format \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
+				throw Exception("The required format \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
 		std::map<std::string,HdlTextureFormat>::iterator it2 = formatList.find(e.name);
 
 		if(it2!=formatList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A Format Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A Format Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Check for possible arguments, to modify the texture :
 		// Get the data :
@@ -495,7 +523,7 @@
 			if(e.arguments[1]=="*")
 				w = it->second.getWidth();
 			else if(!fromString(e.arguments[1], w))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 		else
 			w = it->second.getWidth();
@@ -505,7 +533,7 @@
 			if(e.arguments[2]=="*")
 				h = it->second.getHeight();
 			else if(!fromString(e.arguments[2], h))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 		else
 			h = it->second.getHeight();
@@ -575,26 +603,26 @@
 			if(e.arguments[9]=="*")
 				mipmap = it->second.getMaxLevel();
 			else if(!fromString(e.arguments[9], mipmap))
-				throw Exception("From line " + toString(e.startLine) + " : Canno read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 		else
 			mipmap = it->second.getMaxLevel();
 
 		// Find possible errors :
 		if(mode==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read mode for format \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read mode for format \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(depth==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read depth for format \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read depth for format \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(minFilter==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read MinFilter for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read MinFilter for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(magFilter==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read MagFilter for format \"" + e.name + "\". Token : \"" + e.arguments[5] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read MagFilter for format \"" + e.name + "\". Token : \"" + e.arguments[5] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(sWrap==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read SWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[6] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read SWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[6] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(sWrap==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read TWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[7] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read TWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[7] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(mipmap<0)
-			throw Exception("From line " + toString(e.startLine) + " : Mipmap cannot be negative for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+			throw Exception("Mipmap cannot be negative for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Create and push (note the 0 base mipmap) :
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
@@ -614,13 +642,13 @@
 			it = geometryList.find(e.arguments[0]);
 
 			if(it==geometryList.end())
-				throw Exception("From line " + toString(e.startLine) + " : The required geometry \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
+				throw Exception("The required geometry \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
 		std::map<std::string,GeometryModel>::iterator it2 = geometryList.find(e.name);
 
 		if(it2!=geometryList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A GeometryModel Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A GeometryModel Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
 			geometryList.insert( std::pair<std::string, GeometryModel>(e.name, it->second) );
 	}
@@ -639,13 +667,13 @@
 			it = pipelineList.find(e.arguments[0]);
 
 			if(it==pipelineList.end())
-				throw Exception("From line " + toString(e.startLine) + " : The required pipeline \"" + e.arguments[0] + "\" was not found.", __FILE__, __LINE__);
+				throw Exception("The required pipeline \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
 		std::map<std::string,PipelineLayout>::iterator it2 = pipelineList.find(e.name);
 
 		if(it2!=pipelineList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A PipelineLayout Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A PipelineLayout Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
 	}
@@ -658,7 +686,7 @@
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find( e.name );
 
 		if(it==modules.end())
-			throw Exception("From line " + toString(e.startLine) + " : The module \"" + e.name + "\" was not loaded.", __FILE__, __LINE__);
+			throw Exception("The module \"" + e.name + "\" was not loaded.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		bool showManual = false;
 		std::string manual;
@@ -676,7 +704,7 @@
 			// Make the call : 
 			std::string subExecution;
 			module.apply(	e.arguments, 
-					e.getCleanBody(),	
+					e.body,	
 					currentPath, 
 					dynamicPaths,
 					sharedCodeList,
@@ -689,6 +717,9 @@
 					requiredFormatList,
 					requiredGeometryList,
 					requiredPipelineList,
+					e.sourceName,
+					e.startLine,
+					e.bodyLine,
 					subExecution);
 
 			if(!subExecution.empty())
@@ -703,30 +734,35 @@
 				{
 					// Build all the elements :
 					std::string dummyMainPipelineName;
-					subLoader.process(subExecution, dummyMainPipelineName);
+					subLoader.process(subExecution, dummyMainPipelineName, module.getName());
 
 					// Append :
 					append(subLoader);
 				}
 				catch(Exception& ex)
 				{
-					Exception m("Exception caught while processing code generated by Module \"" + e.name + "\" : ", __FILE__, __LINE__);
-					Exception d = ex + Exception("Generated code : \n" + subExecution, __FILE__, __LINE__);
-					throw m + d;
+					Exception m("Exception caught while processing code generated by Module \"" + e.name + "\" : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+					m << ex; 
+					m << Exception("Generated code : \n" + subExecution, e.sourceName, e.startLine, Exception::ClientScriptException);
+					throw m;
 				}
 			}
 		}
 		catch(Exception& ex)
 		{
-			Exception m("From line " + toString(e.startLine) + " : The module \"" + e.name + "\" reported an error : ", __FILE__, __LINE__);
+			Exception m("From line " + toString(e.startLine) + " : The module \"" + e.name + "\" reported an error : ", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(manual.empty() || !showManual)
-				throw m+ex;
+			{
+				m << ex;
+				throw m;
+			}
 			else
 			{
-				Exception ma("MODULE \"" + e.name + "\" MANUAL : \n" + manual, __FILE__, __LINE__);
-				Exception ey = ex + ma;
-				throw m+ey;
+				m << ex;
+				Exception ma("MODULE \"" + e.name + "\" MANUAL : \n" + manual, __FILE__, __LINE__, Exception::ClientScriptException);
+				m << ma;
+				throw m;
 			}
 		}
 	}
@@ -737,9 +773,9 @@
 		preliminaryTests(e, 1, 0, 0, 1, "SharedCode");
 
 		if(sharedCodeList.find(e.name)!=sharedCodeList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A SharedCode Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A SharedCode Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-		sharedCodeList.insert( std::pair<std::string, std::string>(e.name, e.getCleanBody()) );
+		sharedCodeList.insert( std::pair<std::string, ShaderSource>(e.name, ShaderSource(e.body, e.sourceName, e.bodyLine)) );
 	}
 
 	void LayoutLoader::buildFormat(const VanillaParserSpace::Element& e)
@@ -752,10 +788,10 @@
 		GLenum mode, depth, minFilter, magFilter, sWrap, tWrap;
 
 		if(!fromString(e.arguments[0], w))
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read width for format \"" + e.name + "\". Token : \"" + e.arguments[0] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(!fromString(e.arguments[1], h))
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		mode  = glFromString(e.arguments[2]);
 		depth = glFromString(e.arguments[3]);
@@ -783,29 +819,29 @@
 		if(e.arguments.size()>8)
 		{
 			if(!fromString(e.arguments[8], mipmap))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read mipmap for format \"" + e.name + "\". Token : \"" + e.arguments[8] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 		else
 			mipmap = 0;
 
 		// Find possible errors :
 		if(mode==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read mode for format \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read mode for format \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(depth==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read depth for format \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read depth for format \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(minFilter==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read MinFilter for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read MinFilter for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(magFilter==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read MagFilter for format \"" + e.name + "\". Token : \"" + e.arguments[5] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read MagFilter for format \"" + e.name + "\". Token : \"" + e.arguments[5] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(sWrap==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read SWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[6] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read SWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[6] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(sWrap==GL_FALSE)
-			throw Exception("From line " + toString(e.startLine) + " : Cannot read TWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[7] + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot read TWrapping for format \"" + e.name + "\". Token : \"" + e.arguments[7] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(mipmap<0)
-			throw Exception("From line " + toString(e.startLine) + " : Mipmap cannot be negative for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__);
+			throw Exception("Mipmap cannot be negative for format \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(formatList.find(e.name)!=formatList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A Format Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A Format Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Create and push (note the 0 base mipmap) :
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
@@ -818,12 +854,12 @@
 
 		// Complementary tests :
 		if(e.arguments.size()>0 && !e.noBody)
-			throw Exception("From line " + toString(e.startLine) + " : ShaderSource \"" + e.name + "\" cannot have both argument(s) and a body.", __FILE__, __LINE__);
+			throw Exception("ShaderSource \"" + e.name + "\" cannot have both argument(s) and a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(e.arguments.empty() && e.noBody)
-			throw Exception("From line " + toString(e.startLine) + " : ShaderSource \"" + e.name + "\" must have either an argument (filename) or a body (and not both).", __FILE__, __LINE__);
+			throw Exception("ShaderSource \"" + e.name + "\" must have either an argument (filename) or a body (and not both).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(formatList.find(e.name)!=formatList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A ShaderSource Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A ShaderSource Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Load data :
 		if(e.noBody)
@@ -836,31 +872,37 @@
 
 				// Custom load :
 				loadFile(e.arguments[0], content, usedPath);
+				const std::string filename = usedPath + e.arguments[0];
 
-				enhanceShaderSource(content);
+				std::map<int, ShaderSource::LineInfo> extrasInfo;
+				//enhanceShaderSource(content, extrasInfo);
+				ShaderSource s = enhanceShaderSource(content, filename);
 
-				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content, "ShaderSource:" + e.name, e.startLine) ) );
+				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, s) );
 			}
 			catch(Exception& ex)
 			{
-				Exception m("From line " + toString(e.startLine) + " : An exception was caught while building ShaderSource \"" + e.name + "\" (loading from file \"" + e.arguments[0] + "\", (possibly incomplete) path : \"" + usedPath + "\") : ", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("An exception was caught while building ShaderSource \"" + e.name + "\" (loading from file \"" + e.arguments[0] + "\", (possibly incomplete) path : \"" + usedPath + "\") : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 		else
 		{
 			try
 			{
-				std::string content = e.getCleanBody();
+				std::string content = e.body;
 
-				enhanceShaderSource(content);
+				std::map<int, ShaderSource::LineInfo> extrasInfo;
+				ShaderSource s = enhanceShaderSource(content, e.sourceName, e.bodyLine);
 
-				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, ShaderSource(content, "ShaderSource:" + e.name, e.startLine) ) );
+				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, s) );
 			}
 			catch(Exception& ex)
 			{
-				Exception m("From line " + toString(e.startLine) + " : An exception was caught while building ShaderSource \"" + e.name + "\" : ", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("An exception was caught while building ShaderSource \"" + e.name + "\" : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 	}
@@ -872,7 +914,7 @@
 
 		// Test for duplicata :
 		if(geometryList.find(e.name)!=geometryList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A Geometry Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A Geometry Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Find the first argument :
 		if(e.arguments[0]==keywords[KW_LL_STANDARD_QUAD])
@@ -882,43 +924,43 @@
 		else if(e.arguments[0]==keywords[KW_LL_GRID_2D])
 		{
 			if(e.arguments.size()!=3)
-				throw Exception("From line " + toString(e.startLine) + " : The model \"" + keywords[KW_LL_GRID_2D] + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("The model \"" + std::string(keywords[KW_LL_GRID_2D]) + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			int w, h;
 
 			if(!fromString(e.arguments[1], w))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read width for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read width for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
 			if(!fromString(e.arguments[2], h))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
 			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid2D(w,h) ) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_GRID_3D])
 		{
 			if(e.arguments.size()!=4)
-				throw Exception("From line " + toString(e.startLine) + " : The model \"" + keywords[KW_LL_GRID_3D] + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("The model \"" + std::string(keywords[KW_LL_GRID_3D]) + "\" requires to have exactly 4 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
 			int w, h, z;
 
 			if(!fromString(e.arguments[1], w))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read width for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read width for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(!fromString(e.arguments[2], h))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(!fromString(e.arguments[3], z))
-				throw Exception("From line " + toString(e.startLine) + " : Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid3D(w,h,z)) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_CUSTOM_MODEL])
 		{
 			if(e.arguments.size()!=2 && e.arguments.size()!=3)
-				throw Exception("From line " + toString(e.startLine) + " : The model \"" + keywords[KW_LL_CUSTOM_MODEL] + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("The model \"" + std::string(keywords[KW_LL_CUSTOM_MODEL]) + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(e.body.empty() || e.noBody)
-				throw Exception("From line " + toString(e.startLine) + " : The custom model \"" + e.name + "\" does not have a body.", __FILE__, __LINE__);
+				throw Exception("The custom model \"" + e.name + "\" does not have a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			try
 			{
@@ -937,7 +979,7 @@
 				GeometryPrimitives::CustomModel* g = NULL;
 
 				// Parse the text : 
-				VanillaParser parser(e.body, e.bodyLine);
+				VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 				// Classify the new data :
 				std::vector<LayoutLoaderKeyword> associatedKeywords;
@@ -973,31 +1015,31 @@
 						pArg = 0;
 
 						if(!fromString(parser.elements[k].arguments[pArg], x))
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read X for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+							throw Exception("Cannot read X for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 
 						pArg++;
 
 						if(!fromString(parser.elements[k].arguments[pArg], y))
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read Y for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+							throw Exception("Cannot read Y for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 
 						pArg++;
 
 						if(g->dim>=3)
 						{
 							if(!fromString(parser.elements[k].arguments[pArg], z))
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read Z for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+								throw Exception("Cannot read Z for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							pArg++;
 						}
 
 						if(g->hasTexCoord)
 						{
 							if(!fromString(parser.elements[k].arguments[pArg], u))
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read U for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+								throw Exception("Cannot read U for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							
 							pArg++;
 
 							if(!fromString(parser.elements[k].arguments[pArg], v))
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read V for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+								throw Exception("Cannot read V for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							
 							pArg++;
 						}
@@ -1008,19 +1050,19 @@
 						else if(g->dim==3)
 							g->newVertex3D(x, y, z, u, v);
 						else
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Internal error - unsupported number of dimensions.", __FILE__, __LINE__);
+							throw Exception("Internal error - unsupported number of dimensions.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 					}
 					else if(associatedKeywords[k]!=KW_LL_ELEMENT)
 					{
 							if( associatedKeywords[k]<LL_NumKeywords )
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
+								throw Exception("The keyword " + std::string(keywords[associatedKeywords[k]]) + " is not allowed in a Geometry definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							else
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Geometry definition (\"" + e.name + "\").", __FILE__, __LINE__);
+								throw Exception("Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Geometry definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 					}
 				}
 
 				if(g==NULL)
-					throw Exception("From line " + toString(e.startLine) + " : The custom model \"" + e.name + "\" does not have any vertex declared.", __FILE__, __LINE__);
+					throw Exception("The custom model \"" + e.name + "\" does not have any vertex declared.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 				// Second pass for elements : 
 				std::vector<GLuint> indices(g->numVerticesPerEl);
@@ -1034,7 +1076,7 @@
 						for(int pArg=0; pArg<g->numVerticesPerEl; pArg++)
 						{
 							if(!fromString(parser.elements[k].arguments[pArg], indices[pArg]))
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : Cannot read vertex index " + toString(pArg) + " for primitive element. Token : \"" + parser.elements[k].arguments[pArg] + "\".", __FILE__, __LINE__);
+								throw Exception("Cannot read vertex index " + toString(pArg) + " for primitive element. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						}
 
 						// Add it : 
@@ -1048,12 +1090,13 @@
 			}
 			catch(Exception& ex)
 			{
-				Exception m("From line " + toString(e.startLine) + " : Exception caught while building Geometry \"" + e.name + "\".", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("Exception caught while building Geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 		else
-			throw Exception("From line " + toString(e.startLine) + " : Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", __FILE__, __LINE__);
+			throw Exception("Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 	}
 
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
@@ -1070,11 +1113,11 @@
 		GeometryModel						*geometryPtr	 = NULL;
 
 		if(format==formatList.end())
-			throw Exception("From line " + toString(e.startLine) + " : No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+			throw Exception("No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(fragmentSource==sourceList.end())
-			throw Exception("From line " + toString(e.startLine) + " : No ShaderSource with name \"" + e.arguments[1] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+			throw Exception("No ShaderSource with name \"" + e.arguments[1] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(filterList.find(e.name)!=filterList.end())
-			throw Exception("From line " + toString(e.startLine) + " : A FilterLayout Object with the name \"" + e.name + "\" was already registered.", __FILE__, __LINE__);
+			throw Exception("A FilterLayout Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(e.arguments.size()>2)
 		{
@@ -1083,7 +1126,7 @@
 				vertexSource = sourceList.find(e.arguments[2]);
 
 				if(vertexSource==sourceList.end())
-					throw Exception("From line " + toString(e.startLine) + " : No ShaderSource with name \"" + e.arguments[2] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+					throw Exception("No ShaderSource with name \"" + e.arguments[2] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 				vertexSourcePtr = &vertexSource->second;
 			}
@@ -1096,7 +1139,7 @@
 				geometry = geometryList.find(e.arguments[3]);
 
 				if(geometry==geometryList.end())
-					throw Exception("From line " + toString(e.startLine) + " : No Geometry with name \"" + e.arguments[3] + "\" was registered and can be use in Filter \"" + e.name + "\".", __FILE__, __LINE__);
+					throw Exception("No Geometry with name \"" + e.arguments[3] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 				geometryPtr = &geometry->second;
 			}
@@ -1110,7 +1153,7 @@
 		{
 			try
 			{
-				VanillaParser parser(e.body, e.bodyLine);
+				VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 				// Classify :
 				std::map<GLenum, bool> setParametersTest;
@@ -1125,7 +1168,7 @@
 					if(glId==GL_CLEAR)
 					{
 						if(setParametersTest[GL_CLEAR])
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_CLEAR parameter was already set.", __FILE__, __LINE__); 
+							throw Exception("The GL_CLEAR parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException); 
 
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 						
@@ -1134,14 +1177,14 @@
 						else if(parser.elements[k].arguments[0]=="false")
 							filterLayout->second.disableClearing();
 						else
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Unknown settings \"" + parser.elements[k].arguments[0] + "\".", __FILE__, __LINE__); 
+							throw Exception("Unknown settings \"" + parser.elements[k].arguments[0] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException); 
 
 						setParametersTest[GL_CLEAR] = true;
 					}
 					else if(glId==GL_BLEND)
 					{
 						if(setParametersTest[GL_BLEND])
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_BLEND parameter was already set.", __FILE__, __LINE__);
+							throw Exception("The GL_BLEND parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 
 						preliminaryTests(parser.elements[k], -1, 3, 3, -1, e.name);
 
@@ -1156,7 +1199,7 @@
 					else if(glId==GL_DEPTH_TEST)
 					{
 						if(setParametersTest[GL_DEPTH_TEST])
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The GL_DEPTH_TEST parameter was already set.", __FILE__, __LINE__);
+							throw Exception("The GL_DEPTH_TEST parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
@@ -1167,13 +1210,14 @@
 						setParametersTest[GL_DEPTH_TEST] = true;
 					}
 					else
-						throw Exception("From line " + toString(parser.elements[k].startLine) + " : The parameter \"" + parser.elements[k].strKeyword + "\" is invalid. ", __FILE__, __LINE__);
+						throw Exception("The parameter \"" + parser.elements[k].strKeyword + "\" is invalid. ", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 				}
 			}
 			catch(Exception& ex)
 			{
-				Exception m("From line " + toString(e.startLine) + " : Exception caught while building FilterLayout \"" + e.name + "\".", __FILE__, __LINE__);
-				throw m + ex;
+				Exception m("Exception caught while building FilterLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 	}
@@ -1191,14 +1235,14 @@
 				std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(e.arguments.front());
 
 				if(it==pipelineList.end())
-					throw Exception("From line " + toString(e.startLine) + " : No PipelineLayout with name \"" + e.arguments.front() + "\" was registered and can be use as the Main Pipeline \"" + e.name + "\".", __FILE__, __LINE__);
+					throw Exception("No PipelineLayout with name \"" + e.arguments.front() + "\" was registered and can be use as the Main Pipeline \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 				
 				PipelineLayout pipeline = it->second;
 
 				// Check the body : 
 				if(!e.noBody)
 				{
-					VanillaParser parser(e.body, e.bodyLine);
+					VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 					// Classify the new data :
 					std::vector<LayoutLoaderKeyword> associatedKeywords;
@@ -1213,21 +1257,21 @@
 						{
 							case KW_LL_INPUT_PORTS :
 								if(inputPorts>=0)
-									throw Exception("From line " + toString(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+									throw Exception("The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 								else
 									inputPorts = k;
 								break;
 							case KW_LL_OUTPUT_PORTS :
 								if(outputPorts>=0)
-									throw Exception("From line " + toString(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+									throw Exception("The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 								else
 									outputPorts = k;
 								break;
 							default :
 								if( associatedKeywords[k]<LL_NumKeywords )
-									throw Exception("From line " + toString(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a Main Pipeline indirection  (\"" + e.name + "\").", __FILE__, __LINE__);
+									throw Exception("The keyword " + std::string(keywords[associatedKeywords[k]]) + " is not allowed in a Main Pipeline indirection  (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 								else
-									throw Exception("From line " + toString(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Main Pipeline indirection (\"" + e.name + "\").", __FILE__, __LINE__);
+									throw Exception("Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Main Pipeline indirection (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 								break;
 						}
 					}
@@ -1236,7 +1280,7 @@
 					if(inputPorts>=0)
 					{
 						if(static_cast<int>(parser.elements[inputPorts].arguments.size())!=pipeline.getNumInputPort())
-							throw Exception("From line " + toString(parser.elements[inputPorts].startLine) + " : The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumInputPort()) + " input ports while the declaration expects " + toString(parser.elements[inputPorts].arguments.size()) + " input ports.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumInputPort()) + " input ports while the declaration expects " + toString(parser.elements[inputPorts].arguments.size()) + " input ports.", parser.elements[inputPorts].sourceName, parser.elements[inputPorts].startLine, Exception::ClientScriptException);
 
 						for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 							pipeline.setInputPortName(k, parser.elements[inputPorts].arguments[k]);
@@ -1246,7 +1290,7 @@
 					if(outputPorts>=0)
 					{
 						if(static_cast<int>(parser.elements[outputPorts].arguments.size())!=pipeline.getNumOutputPort())
-							throw Exception("From line " + toString(parser.elements[outputPorts].startLine) + " : The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumOutputPort()) + " output ports while the declaration expects " + toString(parser.elements[outputPorts].arguments.size()) + " output ports.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumOutputPort()) + " output ports while the declaration expects " + toString(parser.elements[outputPorts].arguments.size()) + " output ports.", parser.elements[outputPorts].sourceName, parser.elements[outputPorts].startLine, Exception::ClientScriptException);
 
 						for(unsigned int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
 							pipeline.setOutputPortName(k, parser.elements[outputPorts].arguments[k]);
@@ -1266,7 +1310,7 @@
 			preliminaryTests(e, 1, 0, 0, 1, "PipelineLayout");
 
 			// Load the content of the body :
-			VanillaParser parser(e.body, e.bodyLine);
+			VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 			// Classify the new data :
 			std::vector<LayoutLoaderKeyword> associatedKeywords;
@@ -1283,13 +1327,13 @@
 				{
 					case KW_LL_INPUT_PORTS :
 						if(inputPorts>=0)
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							inputPorts = k;
 						break;
 					case KW_LL_OUTPUT_PORTS :
 						if(outputPorts>=0)
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							outputPorts = k;
 						break;
@@ -1301,22 +1345,22 @@
 						break; //OK
 					default :
 						if( associatedKeywords[k]<LL_NumKeywords )
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The keyword " + keywords[associatedKeywords[k]] + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("The keyword " + std::string(keywords[associatedKeywords[k]]) + " is not allowed in a PipelineLayout definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a PipelineLayout definition (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a PipelineLayout definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						break;
 				}
 			}
 
 			// This code was testing the presence of input ports. It was removed to allow for input-less pipeline.
 			//if(inputPorts<0)
-			//	throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+			//	throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
 			if(outputPorts<0)
-				throw Exception("From line " + toString(e.startLine) + " : The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+				throw Exception("The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(components==0)
-				throw Exception("From line " + toString(e.startLine) + " : The PipelineLayout \"" + e.name + "\" does not contain any sub-component (such as Filters or sub-Pipelines).", __FILE__, __LINE__);
+				throw Exception("The PipelineLayout \"" + e.name + "\" does not contain any sub-component (such as Filters or sub-Pipelines).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			// Create the object :
 			PipelineLayout layout(e.name);
@@ -1358,7 +1402,7 @@
 							filter = filterList.find(filterName);
 
 							if(filter==filterList.end())
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : No FilterLayout with name \"" + filterName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+								throw Exception("No FilterLayout with name \"" + filterName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							else
 								layout.add(filter->second, parser.elements[k].name);
 						}
@@ -1378,7 +1422,7 @@
 							pipeline = pipelineList.find(pipelineName);
 
 							if(pipeline==pipelineList.end())
-								throw Exception("From line " + toString(parser.elements[k].startLine) + " : No PipelineLayout with name \"" + pipelineName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+								throw Exception("No PipelineLayout with name \"" + pipelineName + "\" was registered and can be use in PipelineLayout \"" + e.name + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							else
 								layout.add(pipeline->second, parser.elements[k].name);
 						}
@@ -1401,7 +1445,7 @@
 
 					// Test the nature of the connection :
 					if(parser.elements[k].arguments[0]==keywords[KW_LL_THIS_PIPELINE] && parser.elements[k].arguments[1]==keywords[KW_LL_THIS_PIPELINE])
-						throw Exception("From line " + toString(parser.elements[k].startLine) + " : Direct connections between input and output are not allowed.", __FILE__, __LINE__);
+						throw Exception("Direct connections between input and output are not allowed.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 					else if(parser.elements[k].arguments[0]==keywords[KW_LL_THIS_PIPELINE])
 						layout.connectToInput(parser.elements[k].arguments[1], parser.elements[k].arguments[2], parser.elements[k].arguments[3]);
 					else if(parser.elements[k].arguments[2]==keywords[KW_LL_THIS_PIPELINE])
@@ -1420,17 +1464,18 @@
 		}
 		catch(Exception& ex)
 		{
-			Exception m("From line " + toString(e.startLine) + " : Exception caught while building PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
-			throw m + ex;
+			Exception m("Exception caught while building PipelineLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+			m << ex;
+			throw m;
 		}
 	}
 
-	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName)
+	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName)
 	{
 		try
 		{
 			// Parse :
-			VanillaParser rootParser(code);
+			VanillaParser rootParser(code, sourceName);
 
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
@@ -1447,7 +1492,7 @@
 				{
 					const VanillaParserSpace::Element& e = rootParser.elements[std::distance(associatedKeyword.begin(), secondUniqueIterator)];
 
-					throw Exception("From line " + toString(e.startLine) + " : Illegal second " + keywords[KW_LL_UNIQUE] + " identifier in file.", __FILE__, __LINE__);
+					throw Exception("Illegal second " + std::string(keywords[KW_LL_UNIQUE]) + " unique identifier in file.", e.sourceName, e.startLine, Exception::ClientScriptException);
 				}
 				else 
 				{
@@ -1504,28 +1549,29 @@
 							if(mainPipelineName.empty())
 								mainPipelineName = rootParser.elements[k].name;
 							else
-								throw Exception("From line " + toString(rootParser.elements[k].startLine) + " : A main pipeline (named \"" + mainPipelineName + "\") was already defined.", __FILE__, __LINE__);
+								throw Exception("A main pipeline (named \"" + mainPipelineName + "\") was already defined.", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						}
 					case KW_LL_PIPELINE_LAYOUT :
 						buildPipeline(rootParser.elements[k]);
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + toString(rootParser.elements[k].startLine) + " : The keyword " + keywords[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
+							throw Exception("The keyword " + std::string(keywords[associatedKeyword[k]]) + " is not allowed in a PipelineScript.", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						else
-							throw Exception("From line " + toString(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
+							throw Exception("Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						break;
 				}
 			}
 
 			// Check Errors :
 			if(mainPipelineName.empty() && !isSubLoader)
-				throw Exception("No main pipeline (\"" + std::string(keywords[KW_LL_PIPELINE_MAIN]) + "\") was defined in this code.", __FILE__, __LINE__);
+				throw Exception("No main pipeline (\"" + std::string(keywords[KW_LL_PIPELINE_MAIN]) + "\") was defined in this code.", rootParser.getSourceName(), 1, Exception::ClientScriptException);
 		}
 		catch(Exception& ex)
 		{
-			Exception m("Exception caught while processing pipeline script : ", __FILE__, __LINE__);
-			throw m + ex;
+			Exception m("Exception caught while processing pipeline script : ", sourceName, 1, Exception::ClientScriptException);
+			m << ex;
+			throw m;
 		}
 	}
 
@@ -1545,7 +1591,7 @@
 		try
 		{
 			// Load the content of the body :
-			VanillaParser parser(e.body, e.bodyLine);
+			VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 			// Classify the new data :
 			std::vector<LayoutLoaderKeyword> associatedKeywords;
@@ -1561,13 +1607,13 @@
 				{
 					case KW_LL_INPUT_PORTS :
 						if(inputPorts>=0)
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("The InputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							inputPorts = k;
 						break;
 					case KW_LL_OUTPUT_PORTS :
 						if(outputPorts>=0)
-							throw Exception("From line " + toString(parser.elements[k].startLine) + " : The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", __FILE__, __LINE__);
+							throw Exception("The OutputPorts have already been declared for this PipelineLayout (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							outputPorts = k;
 						break;
@@ -1590,15 +1636,16 @@
 			if(outputPorts<0)
 			{
 				if(mustHaveInputsAndOutputs)
-					throw Exception("From line " + toString(e.startLine) + " : The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
+					throw Exception("The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 			}			
 			else
 				outputs = parser.elements[outputPorts].arguments;
 		}
 		catch(Exception& ex)
 		{
-			Exception m("From line " + toString(e.startLine) + " : Exception caught while building PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__);
-			throw m + ex;
+			Exception m("Exception caught while building PipelineLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+			m << ex;
+			throw m;
 		}
 	}
 
@@ -1671,20 +1718,21 @@
 	}
 
 	/**
-	\fn AbstractPipelineLayout LayoutLoader::operator()(const std::string& source)
+	\fn AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName)
 	\brief Loads a pipeline layout from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
+	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
 	\return The newly loaded layout or raise an exception if any errors occur.
 	**/
-	AbstractPipelineLayout LayoutLoader::operator()(const std::string& source)
+	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName)
 	{
 		clean();
 
 		if(source.empty())
-			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
-		bool isAFile = false;
-		std::string content;
+		bool 		isAFile = false;
+		std::string 	content;
 
 		// Copy the path :
 		dynamicPaths = staticPaths;
@@ -1702,6 +1750,10 @@
 				dynamicPaths.push_back(currentPath);
 
 			loadFile(filename, content, currentPath);
+
+			if(sourceName.empty())
+				sourceName = currentPath + filename;
+			
 			isAFile = true;
 		}
 		else
@@ -1710,7 +1762,7 @@
 		try
 		{
 			std::string mainPipelineName;
-			process(content, mainPipelineName);
+			process(content, mainPipelineName, sourceName);
 
 			// Get the mainPipeline :
 			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
@@ -1721,18 +1773,21 @@
 		{
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, 1, Exception::ClientScriptException);
+				m << e;
+				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, 1, Exception::ClientScriptException);
+				m << e;
+				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while processing string : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing string : ", sourceName, 1, Exception::ClientScriptException);
+				m << e;
+				throw m;
 			}
 		}
 
@@ -1740,15 +1795,16 @@
 	}
 
 	/**
-	\fn Pipeline* LayoutLoader::operator()(const std::string& source, std::string pipelineName)
+	\fn Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName)
 	\brief Loads a pipeline from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param pipelineName The name of the unique instance created (or take the type name if left empty).
+	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
 	\return A pointer to the unique instance built on the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
 	**/
-	Pipeline* LayoutLoader::operator()(const std::string& source, std::string pipelineName)
+	Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName)
 	{
-		AbstractPipelineLayout layout = (*this)(source);
+		AbstractPipelineLayout layout = getPipelineLayout(source, sourceName);
 
 		if(pipelineName.empty())
 			pipelineName = layout.getTypeName();
@@ -1769,7 +1825,7 @@
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 
 		if(it!=requiredFormatList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			requiredFormatList.insert( std::pair<std::string, HdlTextureFormat>(name, fmt) );
 	}
@@ -1785,7 +1841,7 @@
 		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
 
 		if(it!=requiredGeometryList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the GeometryModel database.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the GeometryModel database.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			requiredGeometryList.insert( std::pair<std::string, GeometryModel>(name, mdl) );
 	}
@@ -1801,7 +1857,7 @@
 		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
 
 		if(it!=requiredPipelineList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the pipeline layouts database.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the pipeline layouts database.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			requiredPipelineList.insert( std::pair<std::string, PipelineLayout>(name, layout) );
 	}
@@ -1865,19 +1921,20 @@
 	}
 
 	/**
-	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source)
+	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName)
 	\brief List the resources contained in a script.
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
+	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
 	\return A LayoutLoader::PipelineScriptElements object containing all informations.
 	**/
-	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source)
+	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName)
 	{
 		PipelineScriptElements result;
 
 		clean();
 
 		if(source.empty())
-			throw Exception("LayoutLoader::listElements - The source is empty.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::listElements - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
 		bool isAFile = false;
 		std::string content;
@@ -1898,6 +1955,10 @@
 				dynamicPaths.push_back(currentPath);
 
 			loadFile(filename, content, currentPath);
+	
+			if(sourceName.empty())
+				sourceName = currentPath + filename;
+
 			isAFile = true;
 		}
 		else
@@ -1906,7 +1967,7 @@
 		try
 		{
 			// Parse :
-			VanillaParser rootParser(content);
+			VanillaParser rootParser(content, sourceName);
 
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
@@ -1981,29 +2042,32 @@
 						break;
 					default :
 						if(associatedKeyword[k]<LL_NumKeywords)
-							throw Exception("From line " + toString(rootParser.elements[k].startLine) + " : The keyword " + keywords[associatedKeyword[k]] + " is not allowed in a Pipeline file.", __FILE__, __LINE__);
+							throw Exception("The keyword " + std::string(keywords[associatedKeyword[k]]) + " is not allowed in a Pipeline file.", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						else
-							throw Exception("From line " + toString(rootParser.elements[k].startLine) + " : Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", __FILE__, __LINE__);
+							throw Exception("Unknown keyword : \"" + rootParser.elements[k].strKeyword + "\".", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						break;
 				}
 			}
 		}
-		catch(Exception& e)
+		catch(Exception& ex)
 		{
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, 1, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, 1, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while processing string : ", __FILE__, __LINE__);
-				throw m+e;
+				Exception m("Exception caught while processing string : ", sourceName, 1, Exception::ClientScriptException);
+				m << ex;
+				throw m;
 			}
 		}
 
@@ -2030,7 +2094,7 @@
 			it->second = m;
 		}
 		else
-			throw Exception("LayoutLoader::addModule - A module with the name \"" + m->getName() + " already exists.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::addModule - A module with the name \"" + m->getName() + " already exists.", __FILE__, __LINE__, Exception::ModuleException);
 	}
 
 	/**
@@ -2059,7 +2123,7 @@
 		std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.find(name);
 
 		if(it==modules.end())
-			throw Exception("LayoutLoader::module - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::module - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return *it->second;
 	}
@@ -2074,7 +2138,7 @@
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(name);
 
 		if(it==modules.end())
-			throw Exception("LayoutLoader::removeModule - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::removeModule - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 		{
 			delete it->second;
@@ -2095,7 +2159,7 @@
 		else if(k==LL_UnknownKeyword)
 			return "<Unknown Keyword>";
 		else
-			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + toString(k) + ".", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + toString(k) + ".", __FILE__, __LINE__, Exception::ModuleException);
 	}
 
 // LayoutWriter 
@@ -2114,9 +2178,9 @@
 	VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& hLayout, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
 		if(hLayout.getBaseLevel()!=0)
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : base level cannot be different than 0 (current : " + toString(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : base level cannot be different than 0 (current : " + toString(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
@@ -2141,7 +2205,7 @@
 	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
@@ -2157,7 +2221,7 @@
 	VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_GEOMETRY )) + " : name cannot be empty.", __FILE__, __LINE__);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_GEOMETRY )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
@@ -2224,7 +2288,7 @@
 				if(mdl.dim>2)
 					v.arguments.push_back( toString(mdl.z(k)) );
 				else if(mdl.dim!=2 && mdl.dim!=3)
-					throw Exception("LayoutWriter::write - Geometry : internal error, unsupported number of dimensions.", __FILE__, __LINE__);
+					throw Exception("LayoutWriter::write - Geometry : internal error, unsupported number of dimensions.", __FILE__, __LINE__, Exception::ModuleException);
 
 				if(mdl.hasTexCoord)
 				{
@@ -2381,7 +2445,7 @@
 					d.strKeyword	= LayoutLoader::getKeyword( KW_LL_PIPELINE_INSTANCE );
 					break;
 				default :
-					throw Exception("LayoutWriter::write - Internal error : unknown element type.", __FILE__, __LINE__);
+					throw Exception("LayoutWriter::write - Internal error : unknown element type.", __FILE__, __LINE__, Exception::ModuleException);
 			}
 
 			// Element to push outside the body :
@@ -2464,7 +2528,7 @@
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 		
 		if(!file.is_open())
-			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getTypeName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__);
+			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getTypeName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 
 		file << (*this)(pipelineLayout);
 

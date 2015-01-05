@@ -50,7 +50,7 @@ using namespace Glip::CoreGL;
 		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glDrawArrays, glDrawArraysEXT)
 
 		if(dimTexCoords!=0 && _texcoords==NULL)
-			throw Exception("HdlVBO::HdlVBO - attempt to create texcoords without any data", __FILE__, __LINE__);
+			throw Exception("HdlVBO::HdlVBO - attempt to create texcoords without any data", __FILE__, __LINE__, Exception::GLException);
 
 		/*std::cout << "Creating VBO : " << std::endl;
 		std::cout << "    Vertices : " << nVert << std::endl;

@@ -75,7 +75,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(shader==0)
-			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		// send the source code
 		const char* data = getSourceCstr();
@@ -121,12 +121,24 @@ using namespace Glip::CoreGL;
 
 			log[logSize] = 0;
 
-			std::string err = this->errorLog(std::string(log));
+			Exception detailedLog = this->errorLog(std::string(log));
 
 			delete[] log;
 
-			throw Exception("HdlShader::HdlShader - error while compiling the shader from " + getSourceName() + " : \n" + err, __FILE__, __LINE__);
+			// Clean other resources :
+			glDeleteShader(shader);
+
+			throw detailedLog;
 		}
+	}
+
+	HdlShader::~HdlShader(void)
+	{
+		glDeleteShader(shader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlShader::~HdlShader", "glDeleteShader()")
+		#endif
 	}
 
 	/**
@@ -141,23 +153,16 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn    GLenum HdlShader::getType(void) const
-	\brief Returns the kind of the shader for OpenGL (either GL_VERTEX_SHADER or GL_FRAGMENT_SHADER).
-	\return The Kind.
+	\brief Returns the type of the shader for OpenGL 
+	
+	Return the type of the shader, among :GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER.
+
+	\return The type of this shader.
 	**/
 	GLenum HdlShader::getType(void) const
 	{
 		return type;
 	}
-
-	HdlShader::~HdlShader(void)
-	{
-		glDeleteShader(shader);
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlShader::~HdlShader", "glDeleteShader()")
-		#endif
-	}
-
 
 // HdlProgram - Functions
 	/**
@@ -175,7 +180,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(program==0)
-			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		attachedFragmentShader = attachedVertexShader = 0;
 	}
@@ -203,7 +208,36 @@ using namespace Glip::CoreGL;
 		update(shd2, false);
 
 		// Link the program
-		valid = link();
+		try
+		{
+			valid = link();
+		}
+		catch(Exception& e)
+		{
+			glDeleteProgram(program);
+			throw e;
+		}
+	}
+
+	HdlProgram::~HdlProgram(void)
+	{
+		glDetachShader(program, attachedFragmentShader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedFragmentShader)")
+		#endif
+
+		glDetachShader(program, attachedVertexShader);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedVertexShader)")
+		#endif
+
+		glDeleteProgram(program);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDeleteProgram(program)")
+		#endif
 	}
 
 	/**
@@ -240,8 +274,6 @@ using namespace Glip::CoreGL;
 
 		if(link_status!=GL_TRUE)
 		{
-			//std::cout << "Error during Program linking" << std::endl;
-
 			// get the log
 			GLint logSize;
 
@@ -265,8 +297,7 @@ using namespace Glip::CoreGL;
 			std::string logstr(log);
 			delete[] log;
 
-			throw Exception("HdlProgram::link - Error during Program linking : \n" + logstr, __FILE__, __LINE__);
-			return false;
+			throw Exception("HdlProgram::link - Error during Program linking : \n" + logstr, __FILE__, __LINE__, Exception::ClientShaderException);
 		}
 		else
 		{
@@ -306,13 +337,13 @@ using namespace Glip::CoreGL;
 	\fn    void HdlProgram::update(const HdlShader& shader, bool lnk)
 	\brief Change a shader in the program.
 	\param shader The shader to add.
-	\param lnk Set to true if you want the program to be linked again.
+	\param lnk Set to true to have the program to be linked again.
 	**/
 	void HdlProgram::update(const HdlShader& shader, bool lnk)
 	{
-		if( shader.getType()==GL_VERTEX_SHADER )
+		if(shader.getType()==GL_VERTEX_SHADER)
 		{
-			if( attachedVertexShader !=0 )
+			if(attachedVertexShader!=0)
 			{
 				glDetachShader(program, attachedVertexShader);
 
@@ -328,7 +359,7 @@ using namespace Glip::CoreGL;
 				OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedVertexShader)")
 			#endif
 		}
-		else //shader.getType()==GL_FRAGMENT_SHADER
+		else if(shader.getType()==GL_FRAGMENT_SHADER)
 		{
 			if( attachedFragmentShader !=0 )
 			{
@@ -346,9 +377,12 @@ using namespace Glip::CoreGL;
 				OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedFragmentShader)")
 			#endif
 		}
+		else
+			throw Exception("HdlProgram::update - Incompatible or unknown shader type : " + glParamName(shader.getType()) + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		// Link the program
-		if(lnk) valid = link();
+		if(lnk) 
+			valid = link();
 	}
 
 	/**
@@ -408,7 +442,7 @@ using namespace Glip::CoreGL;
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -472,7 +506,7 @@ using namespace Glip::CoreGL;
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
 			if(loc==-1) \
-				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
+				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException); \
 			 \
 			switch(t) \
 			{ \
@@ -480,13 +514,13 @@ using namespace Glip::CoreGL;
 				case GL_##argT2##_VEC2 : 	glUniform2##argT3 (loc, v0, v1);		break; \
 				case GL_##argT2##_VEC3 : 	glUniform3##argT3 (loc, v0, v1, v2);		break; \
 				case GL_##argT2##_VEC4 : 	glUniform4##argT3 (loc, v0, v1, v2, v3);	break; \
-				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
 			} \
 			 \
 			GLenum err = glGetError(); \
 			 \
 			if(err!=GL_NO_ERROR) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__); \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException); \
 		} \
 
 	#define GENmodifyVarB( argT1, argT2, argT3)   \
@@ -497,7 +531,7 @@ using namespace Glip::CoreGL;
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
 			 \
 			if(loc==-1) \
-				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__); \
+				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException); \
 			 \
 			switch(t) \
 			{ \
@@ -505,13 +539,13 @@ using namespace Glip::CoreGL;
 				case GL_##argT2##_VEC2 : 	glUniform2##argT3##v(loc, 1, v);			break; \
 				case GL_##argT2##_VEC3 : 	glUniform3##argT3##v(loc, 1, v);			break; \
 				case GL_##argT2##_VEC4 : 	glUniform4##argT3##v(loc, 1, v);			break; \
-				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__); \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
 			} \
 			 \
 			GLenum err = glGetError(); \
 			 \
 			if(err!=GL_NO_ERROR) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__); \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException); \
 		}
 
 	GENmodifyVarA( int, INT, i)
@@ -530,7 +564,7 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if(loc==-1)
-			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		switch(t)
 		{
@@ -541,13 +575,13 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_MAT2 :	glUniformMatrix2fv(loc, 1, GL_FALSE, v);	break;
 			case GL_FLOAT_MAT3 :	glUniformMatrix3fv(loc, 1, GL_FALSE, v);	break;
 			case GL_FLOAT_MAT4 :	glUniformMatrix4fv(loc, 1, GL_FALSE, v);	break;
-			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -563,7 +597,7 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if(loc==-1)
-			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		switch(data.getGLType())
 		{
@@ -575,10 +609,10 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_VEC2 : 		glUniform2fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
 			case GL_FLOAT_VEC3 : 		glUniform3fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
 			case GL_FLOAT_VEC4 : 		glUniform4fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
-			case GL_DOUBLE :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::modifyVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_INT :			glUniform1iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
 			case GL_INT_VEC2 :		glUniform2iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
 			case GL_INT_VEC3 :		glUniform3iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
@@ -587,20 +621,20 @@ using namespace Glip::CoreGL;
 			case GL_UNSIGNED_INT_VEC2 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
 			case GL_UNSIGNED_INT_VEC3 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
 			case GL_UNSIGNED_INT_VEC4 :	glUniform1uiv(loc, 1, reinterpret_cast<const GLuint*>(data.getPtr()));			break;
-			case GL_BOOL :			throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL :			throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::modifyVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_FLOAT_MAT2 :		glUniformMatrix2fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
 			case GL_FLOAT_MAT3 :		glUniformMatrix3fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
 			case GL_FLOAT_MAT4 :		glUniformMatrix4fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
-			default :			throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			default :			throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(data.getGLType()) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(data.getGLType()) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -616,14 +650,14 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if (loc==-1)
-			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		glGetUniformiv(program, loc, ptr);
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -639,14 +673,14 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if (loc==-1)
-			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		glGetUniformuiv(program, loc, ptr);
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -661,14 +695,14 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if (loc==-1)
-			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		glGetUniformfv(program, loc, ptr);
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -683,22 +717,22 @@ using namespace Glip::CoreGL;
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
 		if(loc==-1)
-			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		switch(data.getGLType())
 		{
-			case GL_BYTE :			throw Exception("HdlProgram::getVar - Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_UNSIGNED_BYTE : 	throw Exception("HdlProgram::getVar - Unsigned Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_SHORT :			throw Exception("HdlProgram::getVar - Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_UNSIGNED_SHORT :	throw Exception("HdlProgram::getVar - Unsigned Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BYTE :			throw Exception("HdlProgram::getVar - Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_UNSIGNED_BYTE : 	throw Exception("HdlProgram::getVar - Unsigned Byte type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_SHORT :			throw Exception("HdlProgram::getVar - Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_UNSIGNED_SHORT :	throw Exception("HdlProgram::getVar - Unsigned Short type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_FLOAT : 		
 			case GL_FLOAT_VEC2 : 		
 			case GL_FLOAT_VEC3 : 		
 			case GL_FLOAT_VEC4 : 		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
-			case GL_DOUBLE :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_DOUBLE :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_INT :			
 			case GL_INT_VEC2 :		
 			case GL_INT_VEC3 :		
@@ -707,20 +741,20 @@ using namespace Glip::CoreGL;
 			case GL_UNSIGNED_INT_VEC2 :	
 			case GL_UNSIGNED_INT_VEC3 :	
 			case GL_UNSIGNED_INT_VEC4 :	glGetUniformuiv(program, loc, reinterpret_cast<GLuint*>(data.getPtr()));	break;
-			case GL_BOOL :			throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
-			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			case GL_BOOL :			throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC2 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC3 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_BOOL_VEC4 :		throw Exception("HdlProgram::getVar - Bool type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_FLOAT_MAT2 :		
 			case GL_FLOAT_MAT3 :		
 			case GL_FLOAT_MAT4 :		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
-			default :			throw Exception("HdlProgram::getVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__);
+			default :			throw Exception("HdlProgram::getVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
 
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -732,28 +766,7 @@ using namespace Glip::CoreGL;
 	bool HdlProgram::isUniformVariableValid(const std::string& varName)
 	{
 		return glGetUniformLocation(program, varName.c_str()) != -1;
-	}
-
-	HdlProgram::~HdlProgram(void)
-	{
-		glDetachShader(program, attachedFragmentShader);
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedFragmentShader)")
-		#endif
-
-		glDetachShader(program, attachedVertexShader);
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDetachShader(program, attachedVertexShader)")
-		#endif
-
-		glDeleteProgram(program);
-
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::~HdlProgram", "glDeleteProgram(program)")
-		#endif
-	}
+	}	
 
 // Static tools :
 	/**

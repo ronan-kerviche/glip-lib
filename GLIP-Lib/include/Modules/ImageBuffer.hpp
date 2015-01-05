@@ -30,7 +30,6 @@
 	#include "Core/OglInclude.hpp"
 	#include "Core/HdlDynamicData.hpp"
 	#include "Core/HdlTexture.hpp"
-	#include "Core/Exception.hpp"
 
 namespace Glip
 {

@@ -340,7 +340,7 @@ Loading Example :
 				std::vector<std::string>			dynamicPaths;
 				std::vector<LayoutLoaderKeyword>		associatedKeyword;
 				std::vector<std::string>			uniqueList;
-				std::map<std::string, std::string>		sharedCodeList;
+				std::map<std::string, ShaderSource>		sharedCodeList;
 				std::map<std::string, HdlTextureFormat> 	formatList;
 				std::map<std::string, ShaderSource> 		sourceList;
 				std::map<std::string, GeometryModel>		geometryList;
@@ -364,7 +364,7 @@ Loading Example :
 				bool	fileExists(const std::string& filename, std::string& source, const bool test=false);
 				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
 				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
-				void	enhanceShaderSource(std::string& str);
+				ShaderSource enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine=1);
 				void	append(LayoutLoader& subLoader);
 				void 	appendPath(const VanillaParserSpace::Element& e);
 				void	includeFile(const VanillaParserSpace::Element& e);
@@ -379,7 +379,7 @@ Loading Example :
 				void	buildGeometry(const VanillaParserSpace::Element& e);
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
-				void	process(const std::string& code, std::string& mainPipelineName);
+				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName);
 
 				void	listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs);
 
@@ -393,8 +393,8 @@ Loading Example :
 				void addToPaths(const std::vector<std::string>& paths);
 				bool removeFromPaths(const std::string& p);
 
-				AbstractPipelineLayout operator()(const std::string& source); //can be a file or directly the source
-				Pipeline* operator()(const std::string& source, std::string pipelineName);
+				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName=""); //can be a file or directly the source
+				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="");
 
 				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
@@ -402,7 +402,7 @@ Loading Example :
 				int  clearRequiredElements(void);
 				int  clearRequiredElements(const std::string& name);
 
-				PipelineScriptElements listElements(const std::string& source);
+				PipelineScriptElements listElements(const std::string& source, std::string sourceName="");
 
 				void addModule(LayoutLoaderModule* module, bool replace=false);
 				std::vector<std::string> listModules(void) const;

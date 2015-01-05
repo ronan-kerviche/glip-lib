@@ -351,6 +351,7 @@ namespace QVGL
 			QWidget* getInnerWidget(void);
 			void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
 			QGraphicsProxyWidget* getGraphicsProxy(void);
+			QPoint mapItemCoordinatesToGlobal(const QPoint& p);
 			QString getTitle(void);
 			void setTitle(QString title);
 			void setQVGLParent(MainWidget* _qvglParent);
@@ -360,6 +361,9 @@ namespace QVGL
 
 			static SubWidget* getPtrFromProxyItem(QGraphicsItem *item);
 			static SubWidget* getPtrFromProxyItem(QGraphicsProxyWidget *proxy);
+			static QPoint mapItemCoordinatesToGlobal(const QPoint& p, QGraphicsProxyWidget* ptr);
+			static QPoint mapItemCoordinatesToGlobal(const QPoint& p, QWidget* ptr);
+			static QPoint mapItemCoordinatesToGlobal(const QPoint& p, SubWidget* ptr);
 
 		public slots :
 			// Re-implement some of the QWidget functions : 

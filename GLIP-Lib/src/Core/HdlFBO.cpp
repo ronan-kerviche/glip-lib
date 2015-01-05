@@ -47,7 +47,7 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
 
 		if(isCompressed())
-			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + glParamName(getGLMode()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + glParamName(getGLMode()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlFBO::HdlFBO - Disabling Depth buffer." << std::endl;
@@ -58,7 +58,7 @@ using namespace Glip::CoreGL;
 		glGenFramebuffers(1, &fboID);
 
 		if(fboID==0)
-			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
 		else
 		{
 			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -108,7 +108,7 @@ using namespace Glip::CoreGL;
 
 		GLenum err = glGetError();
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlFBO::bindTextureToFBO - Texture can't be bound to the FBO, its format might be incompatible. (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
+			throw Exception("HdlFBO::bindTextureToFBO - Texture can't be bound to the FBO, its format might be incompatible. (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	void HdlFBO::unbindTextureFromFBO(int i)
@@ -129,7 +129,7 @@ using namespace Glip::CoreGL;
 	int HdlFBO::addTarget(void)
 	{
 		if(static_cast<int>(targets.size())>=getMaximumColorAttachment())
-			throw Exception("HdlFBO::addTarget - Can't add more target, limit reached : " + toString(getMaximumColorAttachment()) + " textures.", __FILE__, __LINE__);
+			throw Exception("HdlFBO::addTarget - Can't add more target, limit reached : " + toString(getMaximumColorAttachment()) + " textures.", __FILE__, __LINE__, Exception::GLException);
 		else
 		{
 			int i = targets.size();
@@ -167,14 +167,14 @@ using namespace Glip::CoreGL;
 			usedTarget = targets.size();
 
 		if(usedTarget>static_cast<int>(targets.size()))
-			throw Exception("HdlFBO::beginRendering - Can't render to " + toString(usedTarget) + " textures because the current number of targets is " + toString(targets.size()), __FILE__, __LINE__);
+			throw Exception("HdlFBO::beginRendering - Can't render to " + toString(usedTarget) + " textures because the current number of targets is " + toString(targets.size()), __FILE__, __LINE__, Exception::GLException);
 
 		// First run test : 
 		if(firstRendering) 
 		{
 			GLenum t = test();
 			if(t!=GL_FRAMEBUFFER_COMPLETE)
-				throw Exception("HdlFBO::beginRendering - FBO is incomplete, cannot render to target : " + glParamName(t) + ".", __FILE__, __LINE__);
+				throw Exception("HdlFBO::beginRendering - FBO is incomplete, cannot render to target : " + glParamName(t) + ".", __FILE__, __LINE__, Exception::GLException);
 			
 			firstRendering = false;
 		}
@@ -239,7 +239,7 @@ using namespace Glip::CoreGL;
 	HdlTexture* HdlFBO::operator[](int i)
 	{
 		if(i<0 || i>static_cast<int>(targets.size()))
-			throw Exception("HdlFBO::operator[] - Invalid index : " + toString(i) + " of " + toString(targets.size()), __FILE__, __LINE__);
+			throw Exception("HdlFBO::operator[] - Invalid index : " + toString(i) + " of " + toString(targets.size()), __FILE__, __LINE__, Exception::CoreException);
 		else
 			return targets[i];
 	}

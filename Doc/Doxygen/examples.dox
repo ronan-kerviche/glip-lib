@@ -337,7 +337,7 @@ We can improve the previous pipeline construction by building a script which wil
 	LayoutLoader loader;
 
 	// Load the pipeline layout from file :
-	PipelineLayout* pl = loader("gameOfLiFe.ppl");
+	PipelineLayout* pl = loader.getPipelineLayout("gameOfLiFe.ppl");
 
 	// Create two pipeline on this layout, they won't share any further information :
 	Pipeline* p1 = new Pipeline(pl, "Ping");
@@ -372,7 +372,7 @@ We can improve the previous pipeline construction by building a script which wil
 	loader.addRequiredElement("gridFormat", ourGridFormat);
 
 	// Load the pipeline layout from file :
-	PipelineLayout* pl = loader("gameOfLiFe.ppl");
+	PipelineLayout* pl = loader.getPipelineLayout("gameOfLiFe.ppl");
 	\endcode
 
 	All the previously described code remain identical.
@@ -784,7 +784,7 @@ Then we write a second script <i>sobel.ppl</i> :
 
 	load.addRequiredElement(sobelFormat,"sobelOutputFormat");
 
-	Pipeline* sobelPipeline = loader("sobel.ppl", "SobelPipeline");
+	Pipeline* sobelPipeline = loader.getPipeline("sobel.ppl", "SobelPipeline");
 
 	// ...
 
@@ -932,7 +932,7 @@ We use the ususal code to load and use this pipeline :
 	// Load the pipeline :
 	Loader loader;
 
-	Pipeline* reductionPipeline = loader("minMaxReduction.ppl", "MMSReductionPipeline");
+	Pipeline* reductionPipeline = loader.getPipeline("minMaxReduction.ppl", "MMSReductionPipeline");
 
 	// ...
 
@@ -1068,7 +1068,7 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	loader.addRequiredElement("inputTextureFormat", imageFormat);
 
 	// Create and load the pipeline :
-	Pipeline* histogramPipeline = loader("histogram.ppl", "HistogramPipeline");
+	Pipeline* histogramPipeline = loader.getPipeline("histogram.ppl", "HistogramPipeline");
 
 	// Write in the texture :
 	theTexture.write(/*...*/);
@@ -1149,7 +1149,7 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	// Give the size of the current texture : 
 	loader.addRequiredElement("inputTextureFormat", imageFormat);
 
-	Pipeline* prettyHistogramPipeline = loader("prettyHistogram.ppl", "PrettyHistogramPipeline");
+	Pipeline* prettyHistogramPipeline = loader.getPipeline("prettyHistogram.ppl", "PrettyHistogramPipeline");
 
 	// Write in the texture :
 	theTexture.write(/*...*/);

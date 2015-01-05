@@ -60,7 +60,8 @@ namespace Glip
 				};
 
 
-				std::string 			strKeyword,
+				std::string 			sourceName,
+								strKeyword,
 								name,
 								body;
 				std::vector<std::string>	arguments;
@@ -82,7 +83,9 @@ namespace Glip
 			// Parser Class : 
 			class GLIP_API VanillaParser 
 			{
-				private : 
+				private :
+					std::string sourceName;
+ 
 					bool compare(const std::string& code, int& k, const std::string token);
 					void testAndSaveCurrentElement(Element::Field& current, const Element::Field& next, Element& el);
 					void record(Element& el, const Element::Field& field, char c, int currentLine);
@@ -90,8 +93,9 @@ namespace Glip
 				public :
 					std::vector<Element>		elements;
 
-					VanillaParser(const std::string& code, int lineOffset=1);
-					const VanillaParser& operator<<(VanillaParser& subParser); 
+					VanillaParser(const std::string& code, const std::string& _sourceName="", int startLine=1);
+					const std::string& getSourceName(void) const;
+					VanillaParser& operator<<(const VanillaParser& subParser); 
 			};
 		}
 	}

@@ -244,7 +244,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			case GL_ALPHA:		return hasAlphaChannel();
 			case GL_LUMINANCE:	return hasLuminanceChannel();
 			default :
-				throw Exception("HdlTextureFormatDescriptor::hasChannel - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__);
+				throw Exception("HdlTextureFormatDescriptor::hasChannel - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -278,7 +278,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			case GL_ALPHA:		return alphaDepthInBits;
 			case GL_LUMINANCE:	return luminanceDepthInBits;
 			default :
-				throw Exception("HdlTextureFormatDescriptor::channelSizeInBits - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__);
+				throw Exception("HdlTextureFormatDescriptor::channelSizeInBits - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -298,7 +298,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			case GL_ALPHA:		return alphaType;
 			case GL_LUMINANCE:	return luminanceType;
 			default :
-				throw Exception("HdlTextureFormatDescriptor::channelType - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__);
+				throw Exception("HdlTextureFormatDescriptor::channelType - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -319,7 +319,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			case GL_LUMINANCE:	return indexLuminance;
 			case GL_NONE:		return -1;
 			default :
-				throw Exception("HdlTextureFormatDescriptor::channelIndex - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__);
+				throw Exception("HdlTextureFormatDescriptor::channelIndex - Unknown channel name : \"" + glParamName(channel) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -448,7 +448,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 				return textureFormatDescriptors[i];
 
 		//else
-			throw Exception("HdlTextureFormatDescriptorsList::get - No corresponding mode for : " + glParamName(modeID) + ".", __FILE__, __LINE__);
+			throw Exception("HdlTextureFormatDescriptorsList::get - No corresponding mode for : " + glParamName(modeID) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -473,7 +473,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			#undef TMP_SIZE
 			default :
 				//colSize = 0;
-				throw Exception("HdlTextureFormatDescriptorsList::getTypeDepth - cannot recognize color channel type " + glParamName(depth), __FILE__, __LINE__);
+				throw Exception("HdlTextureFormatDescriptorsList::getTypeDepth - cannot recognize color channel type " + glParamName(depth), __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 

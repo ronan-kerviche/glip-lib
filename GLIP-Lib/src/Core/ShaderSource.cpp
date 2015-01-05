@@ -22,11 +22,11 @@
 **/
 
 #include "Core/ShaderSource.hpp"
-#include "Core/Exception.hpp"
 #include "devDebugTools.hpp"
 #include "Core/OglInclude.hpp"
 
-    using namespace Glip::CoreGL;
+using namespace Glip;
+using namespace Glip::CoreGL;
 
 	std::string ShaderSource::portNameForFragColor = "outputTexture";
 
@@ -36,31 +36,36 @@
 	\param ss Source code of the shader, as a copy.
 	**/
 	ShaderSource::ShaderSource(const ShaderSource& ss)
-	{
-		source     		= ss.source;
-		sourceName 		= ss.sourceName;
-		inSamplers2D    	= ss.inSamplers2D;
-		uniformVars		= ss.uniformVars;
-		uniformVarsType		= ss.uniformVarsType;
-		outFragments    	= ss.outFragments;
-		compatibilityRequest	= ss.compatibilityRequest;
-		versionNumber		= ss.versionNumber;
-		sourceInfo		= ss.sourceInfo;
-		lineOffset		= ss.lineOffset;
-	}
+	 :	source(ss.source),
+		sourceName(ss.sourceName),
+		lineFirstChar(ss.lineFirstChar),
+		lineLength(ss.lineLength),
+		inSamplers2D(ss.inSamplers2D),
+		uniformVars(ss.uniformVars),
+		uniformVarsType(ss.uniformVarsType),
+		outFragments(ss.outFragments),
+		compatibilityRequest(ss.compatibilityRequest),
+		versionNumber(ss.versionNumber),
+		startLine(ss.startLine),
+		linesInfo(ss.linesInfo)
+	{ }
 
 	/**
-	\fn    ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
+	\fn    ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceName, int _startLine, const std::map<int,LineInfo>& _linesInfo)
 	\brief Constructor of ShaderSource, load from a standard string or a file.
 	\param src Source data (must have at least one '\n') or filename (without '\n').
-	\param _sourceInfo Some information about the source (if loaded from a Layout File for example).
-	\param _lineOffset Correction added to the debugger info (also if loaded from a Layout File for example).
+	\param _sourceName Name of the source.
+	\param _startLine Correction added to the debugger info (also if loaded from a Layout File for example).
+	\param _linesInfo Specific information about lines, see ShaderSource::linesInfo and ShaderSource::LineInfo.
+
+	If the source name is left blank and the src parameter is actually a filename, it will be copied as the source name.
 	**/
-	ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceInfo, int _lineOffset)
-	 :	sourceInfo(_sourceInfo),
+	ShaderSource::ShaderSource(const std::string& src, const std::string& _sourceName, int _startLine, const std::map<int,LineInfo>& _linesInfo)
+	 :	sourceName(_sourceName),
 		compatibilityRequest(false), 
 		versionNumber(0),  
-		lineOffset(_lineOffset)
+		startLine(_startLine),
+		linesInfo(_linesInfo)
 	{
 		size_t newline = src.find('\n');
 
@@ -72,10 +77,12 @@
 
 			// Did it fail?
 			if(!file.is_open())
-				throw Exception("ShaderSource::ShaderSource - Failed to open file : " + src, __FILE__, __LINE__);
+				throw Exception("ShaderSource::ShaderSource - Failed to open file : " + src, __FILE__, __LINE__, Exception::CoreException);
 
 			source.clear();
-			sourceName = src;
+			
+			if(sourceName.empty())
+				sourceName = src;
 
 			// Set starting position
 			file.seekg(0, std::ios::beg);
@@ -88,55 +95,37 @@
 			}
 		}
 		else
-		{
-			// Inner string
-			sourceName.clear();
-			source.clear();
 			source = src;
-		}
 
 		parseCode();
 	}
 
-	/**
-	\fn    std::string ShaderSource::getLine(int l)
-	\brief Get a line from the source code (delemiter : \\n).
-	\param l Index of desired line (start at 0).
-	\return Standard string or <error> in case of failure.
-	**/
-	std::string ShaderSource::getLine(int l)
+	ShaderSource::~ShaderSource(void)
+	{ }
+	
+	void ShaderSource::parseLines(void)
 	{
-		bool	firstTime = true;
-		size_t 	pre = 0,
-			pos = 0;
-
-		int i=0;
-
-		while(i<=l)
+		if(!source.empty())
 		{
-			if(firstTime)
-				firstTime = false;
-			else
+			size_t 	pre = 0,
+				pos = source.find('\n');
+
+			while(pre<source.length())
+			{
+				lineFirstChar.push_back(pre);
+
+				if(pos==std::string::npos)
+					pos = source.length()-1;
+
+				lineLength.push_back(pos-pre+1);
+
 				pre = pos+1;
-
-			pos = source.find('\n',pre);
-
-			if(pos==std::string::npos)
-				return "<ShaderSource::getLine - error>";
-
-			i++;
+				pos = source.find('\n', pre);	
+			}
 		}
-
-		std::string res = source.substr(pre, pos-pre);
-
-		size_t p2 = res.find_first_not_of(" \t");
-		if(p2!=std::string::npos)
-			return std::string(res.substr(p2));
-		else
-			return std::string(res);
 	}
 
-	bool ShaderSource::removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested)
+	bool ShaderSource::removeBlock(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested)
 	{
 		if(!nested)
 		{
@@ -234,40 +223,43 @@
 		// Compare typename to known types :
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
-		if(	str	== "float")				typeCode = GL_FLOAT;
-		else if(str	== "vec2")				typeCode = GL_FLOAT_VEC2;
-		else if(str	== "vec3")				typeCode = GL_FLOAT_VEC3;
-		else if(str	== "vec4")				typeCode = GL_FLOAT_VEC4;
-		else if(str	== "double")				typeCode = GL_DOUBLE;
-		else if(str	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
-		else if(str	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
-		else if(str	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
-		else if(str	== "int")				typeCode = GL_INT;
-		else if(str	== "ivec2")				typeCode = GL_INT_VEC2;
-		else if(str	== "ivec3")				typeCode = GL_INT_VEC3;
-		else if(str	== "ivec4")				typeCode = GL_INT_VEC4;
-		else if(str	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
-		else if(str	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
-		else if(str	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
-		else if(str	== "bool")				typeCode = GL_BOOL;
-		else if(str	== "bvec2")				typeCode = GL_BOOL_VEC2;
-		else if(str	== "bvec3")				typeCode = GL_BOOL_VEC3;
-		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
-		else if(str	== "mat2" || str=="mat2x2")		typeCode = GL_FLOAT_MAT2;
-		else if(str	== "mat3" || str=="mat3x3")		typeCode = GL_FLOAT_MAT3;
-		else if(str	== "mat4" || str=="mat4x4")		typeCode = GL_FLOAT_MAT4;
-		/*else if(str	== "mat2")				typeCode = GL_DOUBLE_MAT2;
-		else if(str	== "mat3")				typeCode = GL_DOUBLE_MAT3;
-		else if(str	== "mat4")				typeCode = GL_DOUBLE_MAT4;*/
-		else if(str	== "sampler2D")				typeCode = GL_SAMPLER_2D;
-		else if(str	== "usampler2D")			typeCode = GL_SAMPLER_2D;
-		else if(str	== "isampler2D")			typeCode = GL_SAMPLER_2D;
-		else if(str	== "sampler2DRect​")			typeCode = GL_SAMPLER_2D;
-		else if(str	== "usampler2DRect​")			typeCode = GL_SAMPLER_2D;
-		else if(str	== "isampler2DRect​")			typeCode = GL_SAMPLER_2D;
-		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
+		if(	str	== "float")			typeCode = GL_FLOAT;
+		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
+		else if(str	== "vec3")			typeCode = GL_FLOAT_VEC3;
+		else if(str	== "vec4")			typeCode = GL_FLOAT_VEC4;
+		else if(str	== "double")			typeCode = GL_DOUBLE;
+		else if(str	== "dvec2")			typeCode = GL_DOUBLE_VEC2;
+		else if(str	== "dvec3")			typeCode = GL_DOUBLE_VEC3;
+		else if(str	== "dvec4")			typeCode = GL_DOUBLE_VEC4;
+		else if(str	== "int")			typeCode = GL_INT;
+		else if(str	== "ivec2")			typeCode = GL_INT_VEC2;
+		else if(str	== "ivec3")			typeCode = GL_INT_VEC3;
+		else if(str	== "ivec4")			typeCode = GL_INT_VEC4;
+		else if(str	== "uvec2")			typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(str	== "uvec3")			typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(str	== "uvec4")			typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(str	== "bool")			typeCode = GL_BOOL;
+		else if(str	== "bvec2")			typeCode = GL_BOOL_VEC2;
+		else if(str	== "bvec3")			typeCode = GL_BOOL_VEC3;
+		else if(str	== "bvec4")			typeCode = GL_BOOL_VEC4;
+		else if(str	== "mat2" || str=="mat2x2")	typeCode = GL_FLOAT_MAT2;
+		else if(str	== "mat3" || str=="mat3x3")	typeCode = GL_FLOAT_MAT3;
+		else if(str	== "mat4" || str=="mat4x4")	typeCode = GL_FLOAT_MAT4;
+		/*else if(str	== "mat2")			typeCode = GL_DOUBLE_MAT2;
+		else if(str	== "mat3")			typeCode = GL_DOUBLE_MAT3;
+		else if(str	== "mat4")			typeCode = GL_DOUBLE_MAT4;*/
+		else if(str	== "sampler2D")			typeCode = GL_SAMPLER_2D;
+		else if(str	== "usampler2D")		typeCode = GL_SAMPLER_2D;
+		else if(str	== "isampler2D")		typeCode = GL_SAMPLER_2D;
+		else if(str   == "sampler2DRect")               typeCode = GL_SAMPLER_2D;
+		else if(str   == "usampler2DRect")              typeCode = GL_SAMPLER_2D;
+		else if(str   == "isampler2DRect")              typeCode = GL_SAMPLER_2D;
+		//else if(str	== "sampler2DRect​")	typeCode = GL_SAMPLER_2D;
+		//else if(str	== "usampler2DRect​")	typeCode = GL_SAMPLER_2D;
+		//else if(str	== "isampler2DRect​")	typeCode = GL_SAMPLER_2D;
+		else if(str	== "unsigned" && cpl=="int")	typeCode = GL_UNSIGNED_INT;
  		else
-			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__);
+			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__, Exception::GLException);
 
 		return typeCode;
 	}
@@ -277,28 +269,28 @@
 		// Compare typename to known types :
 		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
 		GLenum typeCode;
-		if(	str	== "float")				typeCode = GL_FLOAT;
-		else if(str	== "vec2")				typeCode = GL_FLOAT_VEC2;
-		else if(str	== "vec3")				typeCode = GL_FLOAT_VEC3;
-		else if(str	== "vec4")				typeCode = GL_FLOAT_VEC4;
-		else if(str	== "double")				typeCode = GL_DOUBLE;
-		else if(str	== "dvec2")				typeCode = GL_DOUBLE_VEC2;
-		else if(str	== "dvec3")				typeCode = GL_DOUBLE_VEC3;
-		else if(str	== "dvec4")				typeCode = GL_DOUBLE_VEC4;
-		else if(str	== "int")				typeCode = GL_INT;
-		else if(str	== "ivec2")				typeCode = GL_INT_VEC2;
-		else if(str	== "ivec3")				typeCode = GL_INT_VEC3;
-		else if(str	== "ivec4")				typeCode = GL_INT_VEC4;
-		else if(str	== "uvec2")				typeCode = GL_UNSIGNED_INT_VEC2;
-		else if(str	== "uvec3")				typeCode = GL_UNSIGNED_INT_VEC3;
-		else if(str	== "uvec4")				typeCode = GL_UNSIGNED_INT_VEC4;
-		else if(str	== "bool")				typeCode = GL_BOOL;
-		else if(str	== "bvec2")				typeCode = GL_BOOL_VEC2;
-		else if(str	== "bvec3")				typeCode = GL_BOOL_VEC3;
-		else if(str	== "bvec4")				typeCode = GL_BOOL_VEC4;
-		else if(str	== "unsigned" && cpl=="int")		typeCode = GL_UNSIGNED_INT;
+		if(	str	== "float")			typeCode = GL_FLOAT;
+		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
+		else if(str	== "vec3")			typeCode = GL_FLOAT_VEC3;
+		else if(str	== "vec4")			typeCode = GL_FLOAT_VEC4;
+		else if(str	== "double")			typeCode = GL_DOUBLE;
+		else if(str	== "dvec2")			typeCode = GL_DOUBLE_VEC2;
+		else if(str	== "dvec3")			typeCode = GL_DOUBLE_VEC3;
+		else if(str	== "dvec4")			typeCode = GL_DOUBLE_VEC4;
+		else if(str	== "int")			typeCode = GL_INT;
+		else if(str	== "ivec2")			typeCode = GL_INT_VEC2;
+		else if(str	== "ivec3")			typeCode = GL_INT_VEC3;
+		else if(str	== "ivec4")			typeCode = GL_INT_VEC4;
+		else if(str	== "uvec2")			typeCode = GL_UNSIGNED_INT_VEC2;
+		else if(str	== "uvec3")			typeCode = GL_UNSIGNED_INT_VEC3;
+		else if(str	== "uvec4")			typeCode = GL_UNSIGNED_INT_VEC4;
+		else if(str	== "bool")			typeCode = GL_BOOL;
+		else if(str	== "bvec2")			typeCode = GL_BOOL_VEC2;
+		else if(str	== "bvec3")			typeCode = GL_BOOL_VEC3;
+		else if(str	== "bvec4")			typeCode = GL_BOOL_VEC4;
+		else if(str	== "unsigned" && cpl=="int")	typeCode = GL_UNSIGNED_INT;
 		else
-			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + str + "\".", __FILE__, __LINE__);
+			throw Exception("ShaderSource::parseOutLin - Unknown or unsupported out type \"" + str + "\".", __FILE__, __LINE__, Exception::GLException);
 
 		return typeCode;
 	}
@@ -308,25 +300,28 @@
 		const std::string 	wordsDelim 	= ".,;/\\?*+-:#'\"",
 					endOfCodeLine 	= ";";
 
-		std::string line = source;
+		std::string tmpSource = source;
 
 		inSamplers2D.clear();
 		uniformVars.clear();
 		uniformVarsType.clear();
 		outFragments.clear();
 
+		// Parse the lines :
+		parseLines();
+
 		// Test compatibility needed :
-		bool hasGl_FragColor = line.find("gl_FragColor");
+		bool hasGl_FragColor = tmpSource.find("gl_FragColor");
 
 		// Clean the code :
-		while( removeBloc(line, "//", "\n", false) ) ;
-		while( removeBloc(line, "/*", "*/", false) ) ;
-		while( removeBloc(line, "{", "}", true) ) ;
-		while( removeBloc(line, "(", ")", true) ) ;
+		while( removeBlock(tmpSource, "//", "\n", false) ) ;
+		while( removeBlock(tmpSource, "/*", "*/", false) ) ;
+		while( removeBlock(tmpSource, "{", "}", true) ) ;
+		while( removeBlock(tmpSource, "(", ")", true) ) ;
 
 		// Clean what remains of the code :
 		std::vector<std::string> split;
-		wordSplit(line, split);
+		wordSplit(tmpSource, split);
 
 		if(split.empty())
 			return ;
@@ -365,7 +360,7 @@
 			else if(previousWasVersion)
 			{
 				if(!fromString(split[k], versionNumber))
-					throw Exception("ShaderSource::parseCode - GLSL version number cannot be read from string \"" + split[k] + "\".", __FILE__, __LINE__);
+					throw Exception("ShaderSource::parseCode - GLSL version number cannot be read from string \"" + split[k] + "\".", __FILE__, __LINE__, Exception::GLException);
 			}
 			else if(previousWasUniform && !readingVarNames && k<(split.size()-1))
 			{
@@ -406,55 +401,50 @@
 	}
 
 	/**
-	\fn    std::string ShaderSource::errorLog(std::string log)
+	\fn ShaderSource& ShaderSource::operator=(const ShaderSource& c)
+	\brief Copy operator.
+	\param c Source.
+	\return A reference to this.
+	**/
+	ShaderSource& ShaderSource::operator=(const ShaderSource& c)
+	{
+		source 			= c.source;
+		sourceName 		= c.sourceName;
+		lineFirstChar 		= c.lineFirstChar;
+		lineLength 		= c.lineLength;
+		inSamplers2D 		= c.inSamplers2D;
+		uniformVars 		= c.uniformVars;
+		uniformVarsType 	= c.uniformVarsType;
+		outFragments 		= c.outFragments;
+		compatibilityRequest 	= c.compatibilityRequest;
+		versionNumber 		= c.versionNumber;
+		linesInfo		= c.linesInfo;
+
+		return (*this);
+	}
+
+	/**
+	\fn Exception ShaderSource::errorLog(const std::string& log) const
 	\brief Add some source code information to the output shader compilation log.
 	\param log Input log to be mixed with source code.
 	\return Enhanced log.
 	**/
-	std::string ShaderSource::errorLog(std::string log)
-	{
-		bool 	firstLine = true,
-			prevLineEnhancement = false,
-			atLeastOneInfo = false;
-		int	incriminatedLine = 0;
+	Exception ShaderSource::errorLog(const std::string& log) const
+	{	
+		int incriminatedLine = 0;
 
 		const std::string 	delimAMDATI = "ERROR: 0:",
 					delimINTEL = "0:";
 		std::string buggyLine;
 		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
-		std::stringstream str("");
+		Exception result(">> Shader Compilation Log :", getSourceName(), startLine, Exception::ClientScriptException);
 		std::istringstream iss(log);
 		std::string line;
 
-		if(!sourceName.empty())
-		{
-			str << "Shader Name : " << sourceName << std::endl;
-			atLeastOneInfo = true;
-		}
-
-		if(!sourceInfo.empty())
-		{
-			str << "Shader Info : " << sourceInfo << std::endl;
-			atLeastOneInfo = true;
-		}
-
-		if(!atLeastOneInfo)
-			str << "Shader compilation log : " << std::endl;
-
-		while( std::getline( iss, line) )
+		while(std::getline(iss, line))
 		{
 			size_t	one = 0,
 				two = 0;
-
-			if(firstLine)
-				firstLine = false;
-			else if(v!=HandleOpenGL::vd_UNKNOWN && prevLineEnhancement)
-			{
-				str << std::endl;
-				prevLineEnhancement = true;
-			}
-
-			str << "    " << line << std::endl;
 
 			// Get the corresponding line :
 			buggyLine.clear();
@@ -466,7 +456,7 @@
 					if(fromString(line.substr(one, two-one), incriminatedLine))
 					{
 						incriminatedLine++;
-						buggyLine = getLine(incriminatedLine-2);
+						buggyLine = getLine(incriminatedLine-1, false);
 					}
 					break;
 				case HandleOpenGL::vd_INTEL :
@@ -474,15 +464,8 @@
 					if(one!=std::string::npos)
 					{
 						two = line.find('(',one+delimINTEL.size()+1);
-						if(two!=std::string::npos)
-						{
-							if(fromString(line.substr(one+delimINTEL.size(), two-one-delimINTEL.size()), incriminatedLine))
-							{
-								incriminatedLine++;
-								buggyLine = getLine(incriminatedLine-2);
-								prevLineEnhancement = true;
-							}
-						}
+						if(two!=std::string::npos && fromString(line.substr(one+delimINTEL.size(), two-one-delimINTEL.size()), incriminatedLine))
+							buggyLine = getLine(incriminatedLine, false);
 					}
 					break;
 				case HandleOpenGL::vd_AMDATI :
@@ -490,14 +473,8 @@
 					if(one!=std::string::npos)
 					{
 						two = line.find(':',one+delimAMDATI.size()+1);
-						if(two!=std::string::npos)
-						{
-							if(fromString(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
-							{
-								buggyLine = getLine(incriminatedLine-1);
-								prevLineEnhancement = true;
-							}
-						}
+						if(two!=std::string::npos && fromString(line.substr(one+delimAMDATI.size(), two-one-delimAMDATI.size()), incriminatedLine))
+							buggyLine = getLine(incriminatedLine, false);
 					}
 					break;
 				case HandleOpenGL::vd_UNKNOWN :
@@ -507,17 +484,25 @@
 			// Print log :
 			if(!buggyLine.empty())
 			{
-				str << "        At line ";
-				if(lineOffset>=0)
-					str << lineOffset + incriminatedLine;
-				else
-					str << incriminatedLine;
-
-				str << " : \"" << buggyLine << "\"" << std::endl;
+				LineInfo info = getLineInfo(incriminatedLine);
+				Exception a(line, info.sourceName, info.lineNumber, Exception::ClientScriptException);
+				Exception b(buggyLine, info.sourceName, info.lineNumber, Exception::ClientScriptException);
+				result << b << a; // Must be in reverse here!
+			}
+			else if(incriminatedLine>1)
+			{
+				LineInfo info = getLineInfo(incriminatedLine);
+				Exception e(line, info.sourceName, info.lineNumber, Exception::ClientScriptException);
+				result << e;
+			}
+			else
+			{
+				Exception e(line, getSourceName(), startLine, Exception::ClientScriptException);
+				result << e;
 			}
 		}
 
-		return std::string(str.str());
+		return result;
 	}
 
 	/**
@@ -552,7 +537,7 @@
 
 	/**
 	\fn    const std::string& ShaderSource::getSourceName(void) const
-	\brief Return the name of the source : the filename if it was loaded from a file or <Inner String> otherwise.
+	\brief Return the name of the source : the one given with the constructor if any, the filename if it was loaded from a file or a blank string otherwise.
 	\return A standard string.
 	**/
 	const std::string& ShaderSource::getSourceName(void) const
@@ -568,6 +553,59 @@
 	const char* ShaderSource::getSourceCstr(void) const
 	{
 		return source.c_str();
+	}
+
+	/**
+	\fn int ShaderSource::getNumLines(void) const
+	\brief Get the number of lines in this source.
+	\return The number of lines in the source.
+	**/
+	int ShaderSource::getNumLines(void) const
+	{
+		return lineFirstChar.size();
+	}
+
+	/**
+	\fn std::string ShaderSource::getLine(int l, bool withNewLine) const
+	\brief Get a specific line from the source.
+	\param l The line index. <b>The indices start at 1</b>.
+	\param withNewLine Set to true if the returned string must contain the new-line character.
+	\return A string containing the right excerpt, or an empty line if the index is out of bounds.
+	**/
+	std::string ShaderSource::getLine(int l, bool withNewLine) const
+	{
+		l--; // to 0 based indexing.
+		if(l<0 || l>=static_cast<int>(lineFirstChar.size()))
+			return "";
+		else if(!withNewLine && source[lineFirstChar[l]+lineLength[l]-1]=='\n')
+			return source.substr(lineFirstChar[l], lineLength[l]-1);
+		else
+			return source.substr(lineFirstChar[l], lineLength[l]);
+	}
+
+	/**
+	\fn ShaderSource::LineInfo ShaderSource::getLineInfo(int l) const
+	\brief Get information about the line at the given index.
+	\param l The line index. <b>The indices start at 1</b>.
+
+	See ShaderSource::linesInfo on how to supply specific line information.
+
+	\return A ShaderSource::LineInfo containing the required information, especially the real line number.
+	**/
+	ShaderSource::LineInfo ShaderSource::getLineInfo(int l) const
+	{
+		std::map<int, LineInfo>::const_iterator it=linesInfo.find(l);
+
+		if(it!=linesInfo.end())
+			return it->second;
+		else
+		{
+			LineInfo info;
+			info.sourceName = sourceName;
+			info.lineNumber = startLine+l-1;
+
+			return info;
+		}
 	}
 
 	/**

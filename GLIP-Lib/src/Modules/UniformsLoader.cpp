@@ -72,10 +72,10 @@
 		modified(false)
 	{
 		if(e.noName || e.name.empty())
-			throw Exception("From line " + toString(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__, Exception::ClientScriptException);
 
 		if(!e.noBody)
-			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" should not have a body.", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" should not have a body.", __FILE__, __LINE__, Exception::ClientScriptException);
 
 		// Set the name :
 		name = e.name;
@@ -89,7 +89,7 @@
 			const int expectedArgs = data->getNumElements();
 			delete data;
 			data = NULL;
-			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" of type \"" + e.strKeyword + "\" has " + toString(e.arguments.size()) + " arguments while it should have exactly " + toString(expectedArgs) + ".", __FILE__, __LINE__);
+			throw Exception("From line " + toString(e.startLine) + " : Element \"" + e.name + "\" of type \"" + e.strKeyword + "\" has " + toString(e.arguments.size()) + " arguments while it should have exactly " + toString(expectedArgs) + ".", __FILE__, __LINE__, Exception::ClientScriptException);
 		}
 
 		// Fill : 
@@ -101,7 +101,7 @@
 				double 	val = 0.0;
 		
 				if( !fromString( e.arguments[k], val ) )
-					throw Exception("From line " + toString(e.startLine) + " : Unable to read parameter " + toString(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__);
+					throw Exception("From line " + toString(e.startLine) + " : Unable to read parameter " + toString(k) + " in element \"" + e.name + "\" of type \"" + e.strKeyword + "\" (token : \"" + e.arguments[k] + "\").", __FILE__, __LINE__, Exception::ClientScriptException);
 				else
 					data->set( val, i, j);
 			}
@@ -162,7 +162,7 @@
 	const HdlDynamicData& UniformsLoader::Resource::object(void) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsLoader::Resource::object - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Resource::object - Data object not available.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return (*data);
 	}
@@ -175,7 +175,7 @@
 	HdlDynamicData& UniformsLoader::Resource::object(void)
 	{
 		if(data==NULL)
-			throw Exception("UniformsLoader::Resource::object - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Resource::object - Data object not available.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return (*data);
 	}
@@ -183,7 +183,7 @@
 	int UniformsLoader::Resource::applyTo(Filter& filter, bool forceWrite) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsLoader::Resource::applyTo - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Resource::applyTo - Data object not available.", __FILE__, __LINE__, Exception::ModuleException);
 		else if(modified || forceWrite)
 		{
 			filter.program().modifyVar(name, *data);
@@ -196,7 +196,7 @@
 	VanillaParserSpace::Element UniformsLoader::Resource::getCodeElement(void) const
 	{
 		if(data==NULL)
-			throw Exception("UniformsLoader::Resource::getCodeElement - Data object not available.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Resource::getCodeElement - Data object not available.", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
@@ -230,10 +230,10 @@
 	UniformsLoader::Node::Node(const VanillaParserSpace::Element& e)
 	{
 		if(e.noName || e.name.empty())
-			throw Exception("From line " + toString(e.startLine) + " : The element of type \"" + e.strKeyword + "\" should have a name.", __FILE__, __LINE__);
+			throw Exception("The element of type \"" + e.strKeyword + "\" should have a name.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(e.strKeyword!=keywords[KW_UL_FILTER] && e.strKeyword!=keywords[KW_UL_PIPELINE])
-			throw Exception("From line " + toString(e.startLine) + " : Unknown element type : \"" + e.strKeyword + "\".", __FILE__, __LINE__);
+			throw Exception("Unknown element type : \"" + e.strKeyword + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		name = e.name;
 
@@ -241,7 +241,7 @@
 					
 		if(!e.noBody && !e.body.empty())
 		{
-			VanillaParser parser(e.body, e.bodyLine);
+			VanillaParser parser(e.body, e.sourceName, e.bodyLine);
 
 			if(supposedToBeAFilter)
 			{
@@ -281,7 +281,7 @@
 					subNodes[current.getElementName(k)] = Node(current.getElementName(k), pipeline, current.pipelineLayout(k));
 					break;
 				default :
-					throw Exception("UniformsLoader::Node::Node - Unknown element type (internal error).", __FILE__, __LINE__);
+					throw Exception("UniformsLoader::Node::Node - Unknown element type (internal error).", __FILE__, __LINE__, Exception::ModuleException);
 			}
 		}
 	}
@@ -420,7 +420,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 					subNodes[it->first] = it->second;
 				else if(loadingFilter==ReplaceOnly)
-					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==ReplaceOnlySilent, nothing.
 			}
 			else
@@ -428,7 +428,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
 					itSub->second.softCopy(it->second, loadingFilter);
 				else if(loadingFilter==NewOnly)
-					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+					throw Exception("In " + getName() + " : The node with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==NewOnlySilent, nothing.
 			}
 		}
@@ -443,7 +443,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 					resources[it->first] = it->second;
 				else if(loadingFilter==ReplaceOnly)
-					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==ReplaceOnlySilent, nothing.
 			}
 			else
@@ -451,7 +451,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
 					itRes->second = it->second;
 				else if(loadingFilter==NewOnly)
-					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+					throw Exception("In " + getName() + " : The resource with the name \"" + it->first + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==NewOnlySilent, nothing.
 			}
 		}
@@ -589,7 +589,7 @@
 		std::map<std::string, Node>::const_iterator it = subNodes.find(nodeName);
 
 		if(it==subNodes.end())
-			throw Exception("UniformsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -605,7 +605,7 @@
 		std::map<std::string, Node>::iterator it = subNodes.find(nodeName);
 
 		if(it==subNodes.end())
-			throw Exception("UniformsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::subNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -625,7 +625,7 @@
 		std::map<std::string, Node>::iterator it = subNodes.find(nodeName);
 
 		if(it==subNodes.end())
-			throw Exception("UniformsLoader::Node::eraseNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::eraseNode - No sub-node named \"" + nodeName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			subNodes.erase(it);
 	}
@@ -739,7 +739,7 @@
 		std::map<std::string, Resource>::const_iterator it = resources.find(resourceName);
 
 		if(it==resources.end())
-			throw Exception("UniformsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -755,7 +755,7 @@
 		std::map<std::string, Resource>::iterator it = resources.find(resourceName);
 
 		if(it==resources.end())
-			throw Exception("UniformsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::resource - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -775,7 +775,7 @@
 		std::map<std::string, Resource>::iterator it = resources.find(resourceName);
 
 		if(it==resources.end())
-			throw Exception("UniformsLoader::Node::eraseNode - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::Node::eraseNode - No resource named \"" + resourceName + "\" is registered.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			resources.erase(it);
 	}
@@ -851,7 +851,7 @@
 			if(!current.doesElementExist(it->second.getName()))
 			{
 				if(!silent)
-					throw Exception("Missing element \"" + it->second.getName() + "\" in " + current.getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("Missing element \"" + it->second.getName() + "\" in " + current.getFullName() + ".", __FILE__, __LINE__, Exception::ModuleException);
 			}
 			else
 			{
@@ -872,7 +872,7 @@
 						c += it->second.applyTo(pipeline, current.pipelineLayout(id), forceWrite);
 						break;
 					default : 
-						throw Exception("Unknown element type (internal error).", __FILE__, __LINE__);
+						throw Exception("UniformsLoader::Node::applyTo - Unknown element type (internal error).", __FILE__, __LINE__, Exception::ModuleException);
 				}
 			}
 		}
@@ -889,7 +889,7 @@
 		if(!empty() && !isFilter())
 		{
 			if(!silent)
-				throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__);
+				throw Exception("Element \"" + filter.getFullName() + "\" is not registered as a filter by this Object.", __FILE__, __LINE__, Exception::ModuleException);
 			else
 				return 0;
 		}
@@ -994,7 +994,7 @@
 
 			// Did it fail?
 			if(!file.is_open())
-				throw Exception("UniformsLoader::load - Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
+				throw Exception("UniformsLoader::load - Cannot load file : \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 
 
 			source.clear();
@@ -1019,7 +1019,7 @@
 		// Load :
 		try
 		{
-			VanillaParser parser(source, lineOffset);
+			VanillaParser parser(source, filename, lineOffset);
 
 			for(std::vector<VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 			{
@@ -1034,7 +1034,7 @@
 						if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 							nodes[tmp.getName()] = tmp;
 						else if(loadingFilter==ReplaceOnly)
-							throw Exception("From line " + toString(it->startLine) + " : The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+							throw Exception("The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", it->sourceName, it->startLine, Exception::ClientScriptException);
 						//else loadingFilter==ReplaceOnlySilent, nothing
 					}
 					else
@@ -1042,7 +1042,7 @@
 						if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
 							similarIt->second.softCopy(tmp, loadingFilter);
 						else if(loadingFilter==NewOnly)
-							throw Exception("From line " + toString(it->startLine) + " : The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+							throw Exception("The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", it->sourceName, it->startLine, Exception::ClientScriptException);
 						//else loadingFilter==NewOnlySilent, nothing
 					}
 				}
@@ -1052,13 +1052,15 @@
 		{
 			if(!filename.empty())
 			{
-				Exception m("UniformsLoader::load - Unable to load uniforms data from file \"" + filename + "\" : ", __FILE__, __LINE__);
-				throw m + e;
+				Exception m("Unable to load uniforms data from file \"" + filename + "\" : ", filename, 0, Exception::ClientScriptException);
+				m << e;
+				throw m;
 			}
 			else
 			{
-				Exception m("UniformsLoader::load - Unable to load uniforms data : ", __FILE__, __LINE__);
-				throw m + e;
+				Exception m("Unable to load uniforms data : ", "", 0, Exception::ClientScriptException);
+				m << e;
+				throw m;
 			}
 		}
 	}
@@ -1079,7 +1081,7 @@
 			if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 				nodes[tmp.getName()] = tmp;
 			else if(loadingFilter==ReplaceOnly)
-				throw Exception("The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+				throw Exception("The element with the name \"" + tmp.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__, Exception::ModuleException);
 			//else loadingFilter==ReplaceOnlySilent, nothing.
 		}
 		else
@@ -1087,7 +1089,7 @@
 			if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
 				it->second.softCopy(tmp, loadingFilter);
 			else if(loadingFilter==NewOnly)
-				throw Exception("The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+				throw Exception("The element with the name \"" + tmp.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__, Exception::ModuleException);
 			//else loadingFilter==NewOnlySilent, nothing.
 		}
 	}
@@ -1109,7 +1111,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==NewOnly || loadingFilter==NewOnlySilent)
 					nodes[it->first] = it->second;
 				else if(loadingFilter==ReplaceOnly)
-					throw Exception("The element with the name \"" + it->second.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__);
+					throw Exception("The element with the name \"" + it->second.getName() + "\" is not currently registered (loadingFilter=ReplaceOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==ReplaceOnlySilent, nothing.
 			}
 			else
@@ -1117,7 +1119,7 @@
 				if(loadingFilter==LoadAll || loadingFilter==ReplaceOnly || loadingFilter==ReplaceOnlySilent)
 					similarIt->second.softCopy(it->second, loadingFilter);
 				else if(loadingFilter==NewOnly)
-					throw Exception("The element with the name \"" + it->second.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__);
+					throw Exception("The element with the name \"" + it->second.getName() + "\" is already registered (loadingFilter=NewOnly).", __FILE__, __LINE__, Exception::ModuleException);
 				//else loadingFilter==NewOnlySilent, nothing.
 			}
 		}
@@ -1152,7 +1154,7 @@
 		std::map<std::string, Node>::iterator it=nodes.find(name);
 
 		if(it==nodes.end())
-			throw Exception("UniformsLoader::clear - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::clear - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			nodes.erase(it);
 	}
@@ -1194,7 +1196,7 @@
 		std::map<const std::string, Node>::const_iterator it=nodes.find(name);
 
 		if(it==nodes.end())
-			throw Exception("UniformsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -1211,7 +1213,7 @@
 		std::map<const std::string, Node>::iterator it=nodes.find(name);
 
 		if(it==nodes.end())
-			throw Exception("UniformsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::getRootNode - No pipeline named \"" + name + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
 	}
@@ -1271,7 +1273,7 @@
 		if(it==nodes.end())
 		{
 			if(!silent)
-				throw Exception("UniformsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__);
+				throw Exception("UniformsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
 			else
 				return 0;
 		}
@@ -1287,8 +1289,9 @@
 			{
 				if(!silent)
 				{
-					Exception m("UniformsLoader::applyTo - Exception while modifying pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__);
-					throw m + e;
+					Exception m("UniformsLoader::applyTo - Exception while modifying pipeline " + pipeline.getFullName() + " : ", __FILE__, __LINE__, Exception::ModuleException);
+					m << e;
+					throw m;
 				}
 			}	
 
@@ -1330,7 +1333,7 @@
 		std::map<std::string, Node>::const_iterator it=nodes.find(name);
 
 		if(it==nodes.end())
-			throw Exception("UniformsLoader::getCode - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::getCode - No pipeline named \"" + name + "\" found.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second.getCodeElement().getCode();
 	}
@@ -1347,7 +1350,7 @@
 		file.open(filename.c_str(), std::ios_base::out);
 
 		if(!file.is_open())
-				throw Exception("UniformsLoader::writeToFile - Cannot load file : \"" + filename + "\".", __FILE__, __LINE__);
+			throw Exception("UniformsLoader::writeToFile - Cannot open file : \"" + filename + "\" for writing.", __FILE__, __LINE__, Exception::ModuleException);
 
 		file << getCode();
 
@@ -1367,6 +1370,6 @@
 		else if(k==UL_UnknownKeyword)
 			return "<Unknown Keyword>";
 		else
-			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + toString(k) + ".", __FILE__, __LINE__);
+			throw Exception("LayoutLoader::getKeyword - Invalid keyword of index " + toString(k) + ".", __FILE__, __LINE__, Exception::ModuleException);
 	}
 

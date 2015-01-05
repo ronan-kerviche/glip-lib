@@ -29,8 +29,10 @@ SHADER_SOURCE:rayTracerShader
 	// Output : 
 	out vec4	outputTexture;
 	
+	INSERT(outputFormatSize)
+
 	// Cameras : 
-	const vec2	screenSize	= vec2(INSERT(outputFormatSize));
+	const vec2	screenSize	= vec2(outputFormatSize);
 	uniform vec3 	eyePos 		= vec3(-0.01, -0.01, 1.9);
 	uniform vec2	eyeDirAngle	= vec2(-1.9, 0.3);
 	uniform float	focalLength	= 0.1;

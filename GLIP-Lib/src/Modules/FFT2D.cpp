@@ -48,10 +48,10 @@
 			test2 = h & (h - 1);
 
 		if( test1 || test2)
-			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__);
+			throw Exception("FFT2D::FFT2D - Width and Height must be a power of 2 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(w<4 || h<4)
-			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__);
+			throw Exception("FFT2D::FFT2D - Width and Height must be at least 4 (" + toString(w) + "x" + toString(h) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Fill bit reversal :
 			// Width :
@@ -571,13 +571,13 @@
 	void FFT2D::process(HdlTexture& input)
 	{
 		if(pipeline==NULL)
-			throw Exception("FFT2D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__);
+			throw Exception("FFT2D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(!useZeroPadding && (input.getWidth()!=w || input.getHeight()!=h))
-			throw Exception("FFT2D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__);
+			throw Exception("FFT2D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(useZeroPadding && (input.getWidth()>w || input.getHeight()>h))
-			throw Exception("FFT2D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__);
+			throw Exception("FFT2D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(useZeroPadding)
 		{
@@ -610,7 +610,7 @@
 		if(pipeline!=NULL)
 			return pipeline->out(0);
 		else
-			throw Exception("FFT2D::output - pipeline is NULL.", __FILE__, __LINE__);
+			throw Exception("FFT2D::output - pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
 	}
 
 	/**

@@ -52,7 +52,7 @@ SHARED_CODE:ColorPrimitives
 
 		delta = mx - mn;
 
-		if( mx != 0.0 )
+		if( mx != 0.0 ) // if!
 		{
 			hsv.y = delta / mx;
 

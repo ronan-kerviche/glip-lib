@@ -39,8 +39,27 @@
 		**/
 		class GLIP_API Exception : public std::exception
 		{
+			public :
+				/// Exception type.
+				enum Type
+				{
+					/// Unspecified exception (default if not specified).
+					UnspecifiedException,
+					/// From a core library component.
+					CoreException,
+					/// From a Module.
+					ModuleException,
+					/// From a glCall, or similar.
+					GLException,
+					/// From a failed shader compilation, with code provided by the client.
+					ClientShaderException,
+					/// From a failed script evaluaton, with code provided by the client.
+					ClientScriptException
+				};
+
 			private :
 				// Data :
+				Type			type;
 				std::string  		msg,
 							filename;
 				unsigned int		line;
@@ -54,21 +73,25 @@
 
 			public :
 				// Tools :
-				Exception(const std::string& m, std::string f="", unsigned int l=0);
+				Exception(const std::string& m, std::string f="", unsigned int l=0, const Type& t=UnspecifiedException);
 				Exception(const Exception& e);
 				virtual ~Exception(void) throw();
 
+				Type getType(void) const;
 				const char* what(void) const throw();
 				const char* message(void) const throw();
 				const char* file(void) const throw();
 				unsigned int lineNumber(void) const throw();
 
-				const Exception& operator+(const std::exception& e);
-				const Exception& operator+(const Exception& e);
+				Exception& operator=(const std::exception& e);
+				Exception& operator=(const Exception& e);
+				Exception& operator<<(const std::exception& e);
+				Exception& operator<<(const Exception& e);
 
 				int numSubExceptions(void) const throw();
 				const Exception& subException(int i);
 				void hideHeader(bool enabled=true);
+				bool isHeaderHidden(void) const;
 		};
 
 		// Tools

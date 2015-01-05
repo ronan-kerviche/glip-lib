@@ -27,9 +27,11 @@
 	// Includes
 	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"
-        #include <string>
-        #include <vector>
-        #include <fstream>
+	#include "Core/Exception.hpp"
+	#include <string>
+	#include <vector>
+	#include <map>
+	#include <fstream>
 
 	namespace Glip
 	{
@@ -52,42 +54,63 @@ The shader source will be parsed to find input and output ports name. In the cas
 **/
 			class GLIP_API ShaderSource
 			{
+				public :
+					/**
+					\class LineInfo
+					\brief Information about a specific line in ShaderSource.
+					**/
+					struct LineInfo
+					{
+						/// The number of the line (including the offset).
+						int lineNumber;
+						/// The name of the source (for example, the filename).
+						std::string sourceName;
+					};
+
 				private :
 					// Data
 					std::string 			source,
-									sourceName,
-									sourceInfo;
+									sourceName;
+					std::vector<size_t>		lineFirstChar,
+									lineLength;
 					std::vector<std::string> 	inSamplers2D;
 					std::vector<std::string> 	uniformVars;
 					std::vector<GLenum>		uniformVarsType;
 					std::vector<std::string> 	outFragments;
 					bool 				compatibilityRequest;
 					int 				versionNumber,
-									lineOffset;
+									startLine;
 
-					// Tools
-					std::string getLine(int l);
-					bool removeBloc(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested);
+					// Tools :
+					void parseLines(void);
+					bool removeBlock(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested);
 					void wordSplit(const std::string& line, std::vector<std::string>& split);
 					GLenum parseUniformTypeCode(const std::string& str, const std::string& cpl);
 					GLenum parseOutTypeCode(const std::string& str, const std::string& cpl);
 					void parseCode(void);
 
 				public :
-					// Static data
+					/// Name for the port mapping to gl_FragColor, if used.
 					static std::string portNameForFragColor;
 
-					// Tools
-					//ShaderSource(const char** src, bool eol = true, int lines=-1);
-					ShaderSource(const std::string& src, const std::string& _sourceInfo="", int _lineOffset=-1);
+					/// Map containing information about specific lines of this source. The key represent the line number <b>starting at 1</b>.
+					std::map<int, LineInfo>	linesInfo;
+
+					ShaderSource(const std::string& src, const std::string& _sourceName="", int startLine=1, const std::map<int,LineInfo>& _linesInfo=std::map<int,LineInfo>());
 					ShaderSource(const ShaderSource& ss);
+					~ShaderSource(void);
+
+					ShaderSource& operator=(const ShaderSource& c);
 
 					const std::string& getSource(void)     const;
 					const std::string& getSourceName(void) const;
-					const char*        getSourceCstr(void) const;
-					std::string        errorLog(std::string log);
-					bool		   requiresCompatibility(void) const;
-					int		   getVersion(void) const;
+					const char* getSourceCstr(void) const;
+					int getNumLines(void) const;
+					std::string getLine(int l, bool withNewLine=true) const;	
+					LineInfo getLineInfo(int l) const;
+					Exception errorLog(const std::string& log) const;
+					bool requiresCompatibility(void) const;
+					int  getVersion(void) const;
 
 					const std::vector<std::string>& getInputVars(void) const;
 					const std::vector<std::string>& getOutputVars(void) const;

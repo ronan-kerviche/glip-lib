@@ -219,7 +219,7 @@ delete data;
 				float HdlDynamicDataSpecial<T>::getf(const int& i, const int& j) const
 				{
 					if(!isInside(i, j))
-						throw Exception("HdlDynamicDataSpecial<T>::getf - Out of range.", __FILE__, __LINE__);
+						throw Exception("HdlDynamicDataSpecial<T>::getf - Out of range.", __FILE__, __LINE__, Exception::CoreException);
 					else
 						return static_cast<float>(data[ getIndex(i, j) ]);
 				}
@@ -228,7 +228,7 @@ delete data;
 				void HdlDynamicDataSpecial<T>::setf(const float& value, const int& i, const int& j)
 				{
 					if(!isInside(i, j))
-						throw Exception("HdlDynamicDataSpecial<T>::setf - Out of range.", __FILE__, __LINE__);
+						throw Exception("HdlDynamicDataSpecial<T>::setf - Out of range.", __FILE__, __LINE__, Exception::CoreException);
 					else
 						data[ getIndex(i, j) ] = static_cast<T>(value);
 				}
@@ -237,7 +237,7 @@ delete data;
 				double HdlDynamicDataSpecial<T>::get(const int& i, const int& j) const
 				{
 					if(!isInside(i, j))
-						throw Exception("HdlDynamicDataSpecial<T>::get - Out of range.", __FILE__, __LINE__);
+						throw Exception("HdlDynamicDataSpecial<T>::get - Out of range.", __FILE__, __LINE__, Exception::CoreException);
 					else
 						return static_cast<double>(data[ getIndex(i, j) ]);
 				}
@@ -246,7 +246,7 @@ delete data;
 				void HdlDynamicDataSpecial<T>::set(const double& value, const int& i, const int& j)
 				{
 					if(!isInside(i, j))
-						throw Exception("HdlDynamicDataSpecial<T>::set - Out of range.", __FILE__, __LINE__);
+						throw Exception("HdlDynamicDataSpecial<T>::set - Out of range.", __FILE__, __LINE__, Exception::CoreException);
 					else
 						data[ getIndex(i, j) ] = static_cast<T>(value);
 				}
@@ -267,7 +267,7 @@ delete data;
 				const HdlDynamicData& HdlDynamicDataSpecial<T>::operator=(const HdlDynamicData& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
-						throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__);
+						throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
 				
 					std::memcpy(data, cpy.getPtr(), getNumElements()*sizeof(T));
 				
@@ -997,9 +997,9 @@ delete data;
 				const HdlDynamicTable& HdlDynamicTableSpecial<T>::operator=(const HdlDynamicTable& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
-						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__);
+						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
 					if(cpy.getNumRows()!=getNumRows() || cpy.getNumColumns()!=getNumColumns() || cpy.getNumSlices()!=getNumSlices())
-						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data format does not match.", __FILE__, __LINE__);
+						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data format does not match.", __FILE__, __LINE__, Exception::CoreException);
 				
 					if(cpy.getAlignment()==getAlignment())
 						std::memcpy(data, cpy.getPtr(), getSize());

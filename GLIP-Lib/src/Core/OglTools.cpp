@@ -50,7 +50,7 @@ using namespace Glip::CoreGL;
 				if(err != GLEW_OK)
 				{
 					std::string error = reinterpret_cast<const char*>(glewGetErrorString(err));
-					throw Exception("HandleOpenGL::HandleOpenGL - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__);
+					throw Exception("HandleOpenGL::HandleOpenGL - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__, Exception::GLException);
 				}
 
 				// Update vendor :
@@ -68,7 +68,7 @@ using namespace Glip::CoreGL;
 				instance = this;
 			}
 			else
-				throw Exception("HandleOpenGL::HandleOpenGL - GLIP-LIB has already been initialized.", __FILE__, __LINE__);
+				throw Exception("HandleOpenGL::HandleOpenGL - GLIP-LIB has already been initialized.", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		HandleOpenGL::~HandleOpenGL(void)
@@ -91,7 +91,7 @@ using namespace Glip::CoreGL;
 			if(instance==NULL)
 				instance = new HandleOpenGL;
 			else
-				throw Exception("HandleOpenGL::init - GLIP-LIB has already been initialized.", __FILE__, __LINE__);
+				throw Exception("HandleOpenGL::init - GLIP-LIB has already been initialized.", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		/**
@@ -108,7 +108,7 @@ using namespace Glip::CoreGL;
 				instance = NULL;
 			}
 			else
-				throw Exception("HandleOpenGL::deinit - GLIP-LIB has never been initialized for this program.", __FILE__, __LINE__);
+				throw Exception("HandleOpenGL::deinit - GLIP-LIB has never been initialized for this program.", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		/**
@@ -648,6 +648,15 @@ using namespace Glip::CoreGL;
 		KEYWORD_PAIR( GL_LINEAR_MIPMAP_NEAREST )
 		KEYWORD_PAIR( GL_NEAREST_MIPMAP_LINEAR )
 		KEYWORD_PAIR( GL_LINEAR_MIPMAP_LINEAR )
+
+		// Shader types
+		KEYWORD_PAIR( GL_SHADER_TYPE )
+		KEYWORD_PAIR( GL_VERTEX_SHADER )
+		KEYWORD_PAIR( GL_FRAGMENT_SHADER )
+		KEYWORD_PAIR( GL_COMPUTE_SHADER )
+		KEYWORD_PAIR( GL_TESS_CONTROL_SHADER )
+        	KEYWORD_PAIR( GL_TESS_EVALUATION_SHADER )
+		KEYWORD_PAIR( GL_GEOMETRY_SHADER )
 
 		// Errors, (no-error)
 		KEYWORD_PAIR( GL_INVALID_ENUM )

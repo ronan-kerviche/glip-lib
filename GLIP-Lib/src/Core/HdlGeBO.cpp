@@ -57,7 +57,7 @@ using namespace Glip::CoreGL;
 		glGenBuffers(1, &bufferId);
 
 		if(bufferId==0)
-			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		// Bind it
 		glBindBuffer(infoTarget, bufferId);
@@ -195,7 +195,7 @@ using namespace Glip::CoreGL;
 			else if(target==GL_PIXEL_PACK_BUFFER_ARB)
 				access=GL_READ_ONLY_ARB;
 			else
-				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + glParamName(target), __FILE__, __LINE__);
+				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + glParamName(target), __FILE__, __LINE__, Exception::GLException);
 		}
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -272,7 +272,7 @@ using namespace Glip::CoreGL;
 			case GL_PIXEL_UNPACK_BUFFER_ARB :	return 2;
 			case GL_PIXEL_PACK_BUFFER_ARB :		return 3;
 			default :
-				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + glParamName(target), __FILE__, __LINE__);
+				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + glParamName(target), __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 

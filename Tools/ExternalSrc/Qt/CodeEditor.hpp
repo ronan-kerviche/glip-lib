@@ -216,10 +216,10 @@ namespace QGED
 			QVBoxLayout	layout;
 			QSplitter 	splitterLayout;
 			CodeEditor	editor;
-			QListWidget	errorsList;
+			QTreeWidget	errorsList;
 
 		private slots :
-			void errorItemDoubleClicked(QListWidgetItem* item);
+			void errorItemDoubleClicked(QTreeWidgetItem* item, int column);
 
 		public : 
 			CodeEditorContainer(QWidget* parent);

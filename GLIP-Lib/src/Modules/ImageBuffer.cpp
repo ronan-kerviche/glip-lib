@@ -24,6 +24,7 @@
 	#include <cstring>
 	#include <fstream>
 	#include "Modules/ImageBuffer.hpp"
+	#include "Core/Exception.hpp"
 
 	using namespace Glip;
 	using namespace Glip::CoreGL;
@@ -182,7 +183,7 @@
 	const ImageBuffer& ImageBuffer::operator<<(HdlTexture& texture)
 	{
 		if(!isCompatibleWith(texture))
-			throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 		{
 			// Bind ; 
@@ -195,7 +196,7 @@
 			
 			GLenum err = glGetError();
 			if(err!=GL_NO_ERROR)
-				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
+				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 			HdlTexture::unbind();
 
@@ -217,7 +218,7 @@
 	const ImageBuffer& ImageBuffer::operator<<(const ImageBuffer& image)
 	{
 		if(!isCompatibleWith(image))
-			throw Exception("ImageBuffer::operator<< - ImageBuffer objects are incompatible.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::operator<< - ImageBuffer objects are incompatible.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 		{
 			if(image.getAlignment()==getAlignment())
@@ -259,7 +260,7 @@
 	const ImageBuffer& ImageBuffer::operator>>(HdlTexture& texture) const
 	{
 		if(!isCompatibleWith(texture))
-			throw Exception("ImageBuffer::operator>> - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::operator>> - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 		{
 			// Bind : 
@@ -272,7 +273,7 @@
 
 			GLenum err = glGetError();
 			if(err!=GL_NO_ERROR)
-				throw Exception("ImageBuffer::operator>> - Unable to copy data to texture (glTexImage2D). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__);
+				throw Exception("ImageBuffer::operator>> - Unable to copy data to texture (glTexImage2D). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 			if( texture.getMaxLevel()>0 )
 			{
@@ -425,14 +426,14 @@
 		if(!file.is_open())
 		{
 			file.close();
-			throw Exception("ImageBuffer::load - Cannot open file \"" + filename + "\" for reading.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::load - Cannot open file \"" + filename + "\" for reading.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 
 		file.seekg(0, std::ios_base::end);
 		size_t fileLength = file.tellg();
 
 		if(fileLength<headerNumBytes)
-			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : header is to short.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : header is to short.", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Rewind : 
 		file.seekg(std::ios_base::beg);
@@ -450,7 +451,7 @@
 		if(signature!=headerSignature)
 		{
 			file.close();
-			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the file is not a raw file (version 0).", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the file is not a raw file (version 0).", __FILE__, __LINE__, Exception::ModuleException);
 		}
 
 		p += signature.size();
@@ -491,7 +492,7 @@
 		if(commentLength>maxCommentLength)
 		{
 			file.close();
-			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the comment embedded in the file is too long.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the comment embedded in the file is too long.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 
 		// Load comment, if necessary :
@@ -523,7 +524,7 @@
 		{
 			file.close();
 			delete imageBuffer;
-			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the image length does not match expectation.", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::load - Cannot read file \"" + filename + "\" : the image length does not match expectation.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 
 		// Else : load!
@@ -544,7 +545,7 @@
 	void ImageBuffer::write(const std::string& filename, const std::string& comment) const
 	{
 		if(comment.size()>maxCommentLength)
-			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\" : the comment is too long (it cannot exceed " + toString(maxCommentLength) + " characters).", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\" : the comment is too long (it cannot exceed " + toString(maxCommentLength) + " characters).", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Try to open for read : 
 		std::fstream file;
@@ -552,7 +553,7 @@
 		file.open( filename.c_str(), std::fstream::out | std::fstream::binary );
 
 		if(!file.is_open())
-			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\".", __FILE__, __LINE__);
+			throw Exception("ImageBuffer::write - Cannot write file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Signature :
 		file.write(headerSignature.c_str(), headerSignature.size());
@@ -981,7 +982,7 @@
 		}
 		else if(destFloattingOrNormalized && !srcFloattingOrNormalized)
 		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__);
+			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
 			/*const int maxChannels = 4;
 			char indices[maxChannels];
 
@@ -1003,11 +1004,11 @@
 		}
 		else if(!destFloattingOrNormalized && srcFloattingOrNormalized)
 		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__);
+			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 		else // destFloattingOrNormalized && srcFloattingOrNormalized
 		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__);
+			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 	}
 

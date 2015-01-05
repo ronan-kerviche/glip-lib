@@ -40,7 +40,7 @@
 				std::string errDescription = Glip::CoreGL::glErrorToString(&caughtError); \
 				if(caughtError) \
 				{ \
-					std::cout << functionName << " / " << callLine << " - Opengl error : " << errDescription << std::endl; \
+					std::cerr << functionName << " / " << callLine << " - Opengl error : " << errDescription << std::endl; \
 					Glip::CoreGL::glDebug(); \
 				} \
 			}

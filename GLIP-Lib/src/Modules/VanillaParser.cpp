@@ -45,6 +45,7 @@
 
 	const Element& Element::operator=(const Element& cpy)
 	{
+		sourceName	= cpy.sourceName;
 		strKeyword	= cpy.strKeyword;
 		name		= cpy.name;
 		body		= cpy.body;
@@ -65,6 +66,7 @@
 		noBody		= true;
 		startLine	= -1;
 		bodyLine	= -1;
+		sourceName.clear();
 		strKeyword.clear();
 		name.clear();
 		body.clear();
@@ -150,10 +152,10 @@
 
 				while(count>0)
 				{
-					if(cleanBody[endRemoval]==tab )
+					if(cleanBody[endRemoval]==tab)
 						count-=1;
 					else 
-						throw Exception("Element::getCleanBody - Out of range (internal error).", __FILE__, __LINE__);
+						throw Exception("Element::getCleanBody - Out of range (internal error).", __FILE__, __LINE__, Exception::ModuleException);
 
 					endRemoval++;
 				}
@@ -199,7 +201,7 @@
 		std::string res;
 
 		if(strKeyword.empty())
-			throw Exception("Element::getCode - No keyword defined.", __FILE__, __LINE__);
+			throw Exception("Element::getCode - No keyword defined.", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Header :
 		res += strKeyword;
@@ -250,7 +252,8 @@
 	}
 	
 // LayoutLoaderParser::VanillaParser
-	VanillaParser::VanillaParser(const std::string& code, int lineOffset)
+	VanillaParser::VanillaParser(const std::string& code, const std::string& _sourceName, int startLine)
+	 :	sourceName(_sourceName)
 	{
 		const std::string	spacers 		= " \t\r\n\f\v",
 				  	cmtMultiStart		= "/*",
@@ -262,7 +265,7 @@
 					monoLineComment		= false,
 					before			= true,
 					after			= false;
-		int 			currentLine		= lineOffset,
+		int 			currentLine		= startLine,
 					bracketLevel		= 0;
 		Element::Field 		currentField 		= Element::Keyword;
 		Element			el;
@@ -317,7 +320,7 @@
 			else if(code[k]==':')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ':' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("Unexpected character ':' when parsing arguments.", getSourceName(), currentLine, Exception::ClientScriptException);
 
 				testAndSaveCurrentElement(currentField, Element::Name, el);
 				el.noName = false;
@@ -327,7 +330,7 @@
 			else if(code[k]=='{')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '{' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("Unexpected character '{' when parsing arguments.", getSourceName(), currentLine, Exception::ClientScriptException);
 
 				testAndSaveCurrentElement(currentField, Element::Body, el);
 				el.noBody = false;
@@ -341,12 +344,12 @@
 			}
 			else if(code[k]=='}')
 			{
-				throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '}'.", __FILE__, __LINE__);
+				throw Exception("Unexpected character '}'.", getSourceName(), currentLine, Exception::ClientScriptException);
 			}
 			else if(code[k]=='(')
 			{
 				if(currentField==Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character '(' when parsing arguments.", __FILE__, __LINE__);
+					throw Exception("Unexpected character '(' when parsing arguments.", getSourceName(), currentLine, Exception::ClientScriptException);
 
 				testAndSaveCurrentElement(currentField, Element::Arguments, el);
 				el.noArgument = false;
@@ -356,7 +359,7 @@
 			else if(code[k]==',')
 			{
 				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ','.", __FILE__, __LINE__);
+					throw Exception("Unexpected character ','.", getSourceName(), currentLine, Exception::ClientScriptException);
 				else
 					el.arguments.push_back("");
 
@@ -366,7 +369,7 @@
 			else if(code[k]==')')
 			{
 				if(currentField!=Element::Arguments)
-					throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : unexpected character ')'.", __FILE__, __LINE__);
+					throw Exception("Unexpected character ')'.", getSourceName(), currentLine, Exception::ClientScriptException);
 				else
 					currentField = Element::AfterArguments;
 
@@ -387,7 +390,7 @@
 			}
 			else if(!isSpacer && after && currentField==Element::Arguments)
 			{
-				throw Exception("VanillaParser::VanillaParser - From line " + toString(currentLine) + " : missing delimiter ','.", __FILE__, __LINE__);
+				throw Exception("Missing delimiter ','.", getSourceName(), currentLine, Exception::ClientScriptException);
 			}
 			else if(!isSpacer && after)
 			{
@@ -400,10 +403,10 @@
 
 		// Test for possible end of input : 
 		if(bracketLevel>0)
-			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing '}'.", __FILE__, __LINE__);
+			throw Exception("Parsing error at the end of the input, missing '}'.", getSourceName(), currentLine, Exception::ClientScriptException);
 			
 		if(currentField==Element::Arguments)
-			throw Exception("VanillaParser::VanillaParser - Parsing error at the end of the input, missing ')'.", __FILE__, __LINE__);
+			throw Exception("Parsing error at the end of the input, missing ')'.", getSourceName(), currentLine, Exception::ClientScriptException);
 
 		// Force save the last element :
 		if(!el.empty())
@@ -425,6 +428,7 @@
 	{
 		if(next<=current && !el.empty())
 		{
+			el.sourceName = getSourceName();
 			elements.push_back(el);
 			el.clear();
 		}
@@ -448,23 +452,27 @@
 				el.arguments.back() += c;
 				break;
 			case Element::AfterArguments :
-				throw Exception("VanillaParser::record - Internal error : attempt to save field after parsing arguments.", __FILE__, __LINE__);
+				throw Exception("VanillaParser::record - Internal error : attempt to save field after parsing arguments.", __FILE__, __LINE__, Exception::ModuleException);
 			case Element::Body : 
 				el.body += c;
 				break;
 			case Element::Unknown : 
 			default :
-				throw Exception("VanillaParser::record - Internal error : unknown field.", __FILE__, __LINE__);
+				throw Exception("VanillaParser::record - Internal error : unknown field.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 
 		if(el.startLine==-1)
 			el.startLine = currentLine;
 	}
+
+	const std::string& VanillaParser::getSourceName(void) const
+	{
+		return sourceName;
+	}
 	
-	const VanillaParser& VanillaParser::operator<<(VanillaParser& subParser)
+	VanillaParser& VanillaParser::operator<<(const VanillaParser& subParser)
 	{
 		elements.insert(elements.end(), subParser.elements.begin(), subParser.elements.end());
-		subParser.elements.clear();
 
 		return (*this);
 	}

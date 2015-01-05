@@ -136,7 +136,7 @@ SHARED_CODE:printNumber
 		number  = sum(C(:).*2.^powers(:));
 	end
 
-		dot	4224
+	dot	4224
 	minus	512	
 	0	32319
 	1	31808
@@ -149,7 +149,7 @@ SHARED_CODE:printNumber
 	8	32447
 	9	32439
 
-		dot	131072
+	dot	131072
 	minus	1536
 	0	480599
 	1	279652

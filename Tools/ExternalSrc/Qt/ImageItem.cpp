@@ -17,6 +17,8 @@
 #include "ImageItem.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QDateTime>
+#include <QToolTip>
 #include "QMenuTools.hpp"
 
 #ifdef __USE_NETPBM__
@@ -213,6 +215,7 @@ using namespace QGIC;
 			throw Exception("[Internal Error] Inner buffer is null.", __FILE__, __LINE__);
 
 		imageBuffer	= new ImageBuffer(*imageItem.imageBuffer);
+		lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 	}
 
 	ImageItem::ImageItem(const QString& _filename)
@@ -225,6 +228,7 @@ using namespace QGIC;
 	{
 		load();
 		format = (*imageBuffer);
+		lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 	}
 
 	ImageItem::ImageItem(const QImage& qimage, const QString& _name)
@@ -237,6 +241,7 @@ using namespace QGIC;
 	{
 		toImageBuffer(qimage, imageBuffer);
 		format = (*imageBuffer);
+		lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 	}
 
 	ImageItem::ImageItem(const ImageBuffer& buffer, const QString& _name)
@@ -248,6 +253,7 @@ using namespace QGIC;
 		texture(NULL)
 	{
 		imageBuffer = new ImageBuffer(buffer);
+		lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 	}
 
 	ImageItem::ImageItem(HdlTexture& _texture, const QString& _name)
@@ -259,6 +265,7 @@ using namespace QGIC;
 		texture(NULL)
 	{
 		imageBuffer = new ImageBuffer(_texture);
+		lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 	}
 
 	ImageItem::~ImageItem(void)
@@ -482,7 +489,10 @@ using namespace QGIC;
 		if(texture==NULL)
 			throw Exception("ImageItem::getTexture - Texture is not currently on device.", __FILE__, __LINE__);
 		else
+		{
+			lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 			return (*texture);
+		}
 	}
 
 	HdlTexture* ImageItem::getTexturePtr(void)
@@ -490,7 +500,10 @@ using namespace QGIC;
 		if(texture==NULL)
 			throw Exception("ImageItem::getTexture - Texture is not currently on device.", __FILE__, __LINE__);
 		else
+		{
+			lastAccessTimeStamp = QDateTime::currentMSecsSinceEpoch();
 			return texture;
+		}
 	}
 
 	bool ImageItem::isSaved(void) const
@@ -550,6 +563,11 @@ using namespace QGIC;
 
 			delete qimage;
 		}
+	}
+	
+	qint64 ImageItem::getLastAccessTimeStamp(void) const
+	{
+		return lastAccessTimeStamp;
 	}
 
 	void ImageItem::remove(void)
@@ -644,6 +662,35 @@ using namespace QGIC;
 		}
 	}
 
+// ImageItemStorage::Record :
+	ImageItemsStorage::Record::Record(void)
+	 :	storage(NULL),
+		item(NULL)
+	{ }
+
+	ImageItemsStorage::Record::Record(const ImageItemsStorage::Record& c)
+	 :	storage(c.storage),
+		item(c.item)
+	{ }
+
+	ImageItemsStorage::Record::Record(ImageItemsStorage* _storage, ImageItem* _item)
+	 : 	storage(_storage),
+		item(_item)
+	{ }
+
+	ImageItemsStorage::Record& ImageItemsStorage::Record::operator=(const ImageItemsStorage::Record& c)
+	{
+		storage = c.storage;
+		item = c.item;
+
+		return (*this);
+	}
+
+	bool ImageItemsStorage::Record::operator<(const ImageItemsStorage::Record& b) const
+	{
+		return (item->getLastAccessTimeStamp() < b.item->getLastAccessTimeStamp());
+	}
+
 // ImageItemsStorage :
 	size_t ImageItemsStorage::maxOccupancy = 850 * 1024 * 1024; // 850 MB
 	QVector<ImageItemsStorage*> ImageItemsStorage::storagesList;
@@ -671,6 +718,19 @@ using namespace QGIC;
 
 		if(idx>=0)
 			storagesList.remove(idx);
+	}
+
+	QVector<ImageItemsStorage::Record> ImageItemsStorage::getFreeableRecords(void)
+	{
+		QVector<ImageItemsStorage::Record> result;
+
+		for(QVector<ImageItem*>::iterator it=imageItemsList.begin(); it!=imageItemsList.end(); it++)
+		{
+			if((*it)->isOnDevice() && !(*it)->isLockedToDevice())
+				result.push_back(Record(this, (*it)));
+		}
+
+		return result;
 	}
 
 	void ImageItemsStorage::imageItemDestroyed(void)
@@ -721,23 +781,7 @@ using namespace QGIC;
 	}
 
 	// Manage the storage : 
-	size_t ImageItemsStorage::getMaxOccupancy(void)
-	{
-		return maxOccupancy;
-	}
-
-	void ImageItemsStorage::setMaxOccupancy(size_t newMaxOccupancy)
-	{
-		size_t 	totalOccupancy = ImageItemsStorage::totalDeviceOccupancy();
-
-		if(totalOccupancy > newMaxOccupancy)
-			cleanStorages();
-
-		// Finally, set : 
-		maxOccupancy = newMaxOccupancy;
-	}
-
-	size_t ImageItemsStorage::thisStorageDeviceOccupancy(size_t* canBeFreed) const
+	size_t ImageItemsStorage::deviceOccupancy(size_t* canBeFreed) const
 	{
 		size_t occupancy = 0;
 
@@ -760,13 +804,34 @@ using namespace QGIC;
 		return occupancy;
 	}
 
-	void ImageItemsStorage::cleanThisStorage(void)
+	void ImageItemsStorage::clean(void)
 	{
 		for(QVector<ImageItem*>::iterator it=imageItemsList.begin(); it!=imageItemsList.end(); it++)
 		{
 			if((*it)->isOnDevice() && !(*it)->isLockedToDevice())
 				(*it)->unloadFromDevice();
 		}
+	}
+
+	size_t ImageItemsStorage::getMaxOccupancy(void)
+	{
+		return maxOccupancy;
+	}
+
+	void ImageItemsStorage::setMaxOccupancy(size_t newMaxOccupancy)
+	{
+		size_t 	totalOccupancy = ImageItemsStorage::totalDeviceOccupancy();
+
+		if(totalOccupancy > newMaxOccupancy)
+		{
+			cleanStorages();
+
+			// Prevent further cut :
+			newMaxOccupancy = std::max(newMaxOccupancy, ImageItemsStorage::totalDeviceOccupancy());
+		}
+
+		// Finally, set : 
+		maxOccupancy = newMaxOccupancy;
 	}
 
 	size_t ImageItemsStorage::totalDeviceOccupancy(size_t* canBeFreed)
@@ -778,12 +843,12 @@ using namespace QGIC;
 
 		for(QVector<ImageItemsStorage*>::iterator it=storagesList.begin(); it!=storagesList.end(); it++)
 		{
-			size_t thisStorageCanBeFreed = 0;
+			size_t currentCanBeFreed = 0;
 
-			totalOccupancy += (*it)->thisStorageDeviceOccupancy(&thisStorageCanBeFreed);
+			totalOccupancy += (*it)->deviceOccupancy(&currentCanBeFreed);
 			
 			if(canBeFreed!=NULL)
-				(*canBeFreed) += thisStorageCanBeFreed;
+				(*canBeFreed) += currentCanBeFreed;
 		}
 
 		return totalOccupancy;
@@ -792,7 +857,28 @@ using namespace QGIC;
 	void ImageItemsStorage::cleanStorages(void)
 	{
 		for(QVector<ImageItemsStorage*>::iterator it=storagesList.begin(); it!=storagesList.end(); it++)
-			(*it)->cleanThisStorage();
+			(*it)->clean();
+	}
+
+	void ImageItemsStorage::cleanStorages(size_t futureAdd)
+	{
+		QVector<Record> freeableRecords;
+
+		// Get the list of records which can be freed :
+		for(QVector<ImageItemsStorage*>::iterator it=storagesList.begin(); it!=storagesList.end(); it++)
+			freeableRecords << (*it)->getFreeableRecords();
+
+		// Sort it by timestamp, from newest to oldest access :
+		qSort(freeableRecords.begin(), freeableRecords.end());
+
+		// Unload the oldest, until you reach the futureAdd size :
+		size_t counter = 0;
+		for(QVector<Record>::iterator it=freeableRecords.end(); !freeableRecords.empty() && it!=freeableRecords.end() && counter<futureAdd;)
+		{
+			it--;
+			it->item->unloadFromDevice();
+			counter += it->item->getFormat().getSize();
+		}
 	}
 
 	bool ImageItemsStorage::checkMemSpaceAvailabilty(size_t futureAdd)
@@ -808,7 +894,7 @@ using namespace QGIC;
 			// If some occupancy can be freed to enable the storage : 
 			if( (totalOccupancy+futureAdd-canBeFreed) < maxOccupancy)
 			{
-				cleanStorages();
+				cleanStorages(futureAdd);
 				return true;
 			}
 			else
@@ -1750,11 +1836,6 @@ using namespace QGIC;
 			(*it)->remove();
 	}
 
-	/*void ImageItemsCollection::currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
-	{
-		std::cerr << "ImageItemsCollection::currentItemChanged - TODO" << std::endl;
-	}*/
-
 	void ImageItemsCollection::itemActivated(QTreeWidgetItem* item, int column)
 	{
 		if(item==NULL)
@@ -1769,6 +1850,33 @@ using namespace QGIC;
 
 		filterMenu.update(formats);
 		wrappingMenu.update(formats);
+
+		// Show selection information :
+		if(formats.size()>=2)
+		{
+			size_t totalOccupancy = 0;
+
+			for(QList<HdlTextureFormat>::const_iterator it=formats.begin(); it!=formats.end(); it++)
+				totalOccupancy += (*it).getSize();
+
+			QString tip = tr("%1 images selected.\n%2 total memory occupancy.").arg(formats.size()).arg(ImageItem::getSizeString(totalOccupancy));
+
+			#ifdef __USE_QVGL__	
+			if(parentWidget()!=NULL && parentWidget()->graphicsProxyWidget()!=NULL)
+			{	
+				// In the middle of the widget :
+				QPoint p = QVGL::SubWidget::mapItemCoordinatesToGlobal(QPoint(width()/2, height()/2), parentWidget()->graphicsProxyWidget());
+				QToolTip::showText(p, tip);
+			}
+			else
+			#endif
+			{
+				// On the cursor :
+				QToolTip::showText(QCursor::pos(), tip);
+			}
+		}
+		else
+			QToolTip::showText(QPoint(0,0),""); // Remove any tooltip.
 	}
 	
 	void ImageItemsCollection::openContextMenu(const QPoint& pos)

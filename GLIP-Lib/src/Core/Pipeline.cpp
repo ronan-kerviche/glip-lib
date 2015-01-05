@@ -68,7 +68,7 @@
 					elementsLayout.push_back(reinterpret_cast<AbstractComponentLayout*>(new AbstractPipelineLayout(c.pipelineLayout(i))));
 					break;
 				default:
-					throw Exception("AbstractPipelineLayout::AbstractPipelineLayout - Unknown type for copy for element in " + getFullName(), __FILE__, __LINE__);
+					throw Exception("AbstractPipelineLayout::AbstractPipelineLayout - Unknown type for copy for element in " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			}
 		}
 		//std::cout << "end copy of pipeline layout for " << getFullName() << std::endl;
@@ -87,7 +87,7 @@
 					delete &pipelineLayout(k);
 					break;
 				default:
-					throw Exception("AbstractPipelineLayout::~AbstractPipelineLayout - Unknown type for delete for element in " + getFullName(), __FILE__, __LINE__);
+					throw Exception("AbstractPipelineLayout::~AbstractPipelineLayout - Unknown type for delete for element in " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			}
 		}
 
@@ -108,7 +108,7 @@
 		checkElement(i);
 
 		if(elementsID[i]==ELEMENT_NOT_ASSOCIATED)
-			throw Exception("AbstractPipelineLayout::getElementID - Element " + toString(i) + " is not associated. Is this object part of a Pipeline?", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::getElementID - Element " + toString(i) + " is not associated. Is this object part of a Pipeline?", __FILE__, __LINE__, Exception::CoreException);
 
 		return elementsID[i];
 	}
@@ -145,7 +145,7 @@
 	AbstractPipelineLayout::Connection AbstractPipelineLayout::getConnection(int i) const
 	{
 		if(i<0 || i>=static_cast<int>(connections.size()))
-			throw Exception("AbstractPipelineLayout::getConnection - Bad connection ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::getConnection - Bad connection ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__, Exception::CoreException);
 		return connections[i];
 	}
 
@@ -157,7 +157,7 @@
 	void AbstractPipelineLayout::checkElement(int i) const
 	{
 		if(i<0 || i>=static_cast<int>(elementsLayout.size()))
-			throw Exception("AbstractPipelineLayout::checkElement - Bad element ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::checkElement - Bad element ID for "  + getFullName() + ", ID : " + toString(i), __FILE__, __LINE__, Exception::CoreException);
 	}
 
 	/**
@@ -211,7 +211,7 @@
 					numUniformVariables 	+= c;
 					break;
 				default:
-					throw Exception("AbstractPipelineLayout::getInfoElements - Unknown type for element in " + getFullName(), __FILE__, __LINE__);
+					throw Exception("AbstractPipelineLayout::getInfoElements - Unknown type for element in " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			}
 		}
 
@@ -229,7 +229,7 @@
 		std::vector<std::string>::const_iterator it = std::find(elementsName.begin(), elementsName.end(), name);
 
 		if(it==elementsName.end())
-			throw Exception("AbstractPipelineLayout::getElementIndex - Unable to find element \"" + name + "\" in pipeline layout " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::getElementIndex - Unable to find element \"" + name + "\" in pipeline layout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		else
 			return std::distance(elementsName.begin(), it);
 	}
@@ -310,7 +310,7 @@
 			case PIPELINE:
 				return *reinterpret_cast<AbstractPipelineLayout*>(elementsLayout[i]);
 			default :
-				throw Exception("AbstractPipelineLayout::componentLayout - Type not recognized for element in " + getFullName() + ".",__FILE__, __LINE__);
+				throw Exception("AbstractPipelineLayout::componentLayout - Type not recognized for element in " + getFullName() + ".",__FILE__, __LINE__, Exception::CoreException);
 		}
 	}
 
@@ -338,7 +338,7 @@
 		//std::cout << "ACCESSING FILTER (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=FILTER)
-			throw Exception("AbstractPipelineLayout::filterLayout - The element of index " + toString(i) + " exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::filterLayout - The element of index " + toString(i) + " exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		return *reinterpret_cast<AbstractFilterLayout*>(elementsLayout[i]);
 	}
 
@@ -353,7 +353,7 @@
 		//std::cout << "ACCESSING FILTER (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=FILTER)
-			throw Exception("AbstractPipelineLayout::filterLayout - The element \"" + name + "\" exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::filterLayout - The element \"" + name + "\" exists but is not a filter in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		return *reinterpret_cast<AbstractFilterLayout*>(elementsLayout[index]);
 	}
 
@@ -368,7 +368,7 @@
 		//std::cout << "ACCESSING PIPELINE (int)" << std::endl;
 		checkElement(i);
 		if(getElementKind(i)!=PIPELINE)
-			throw Exception("AbstractPipelineLayout::pipelineLayout - The element of index " + toString(i) + " exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::pipelineLayout - The element of index " + toString(i) + " exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		return *reinterpret_cast<AbstractPipelineLayout*>(elementsLayout[i]);
 	}
 
@@ -383,7 +383,7 @@
 		//std::cout << "ACCESSING PIPELINE (name)" << std::endl;
 		int index = getElementIndex(name);
 		if(getElementKind(index)!=PIPELINE)
-			throw Exception("AbstractPipelineLayout::pipelineLayout - The element \"" + name + "\" exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractPipelineLayout::pipelineLayout - The element \"" + name + "\" exists but is not a pipeline in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		return *reinterpret_cast<AbstractPipelineLayout*>(elementsLayout[index]);
 	}
@@ -449,10 +449,10 @@
 		if(id!=THIS_PIPELINE)
 		{
 			AbstractComponentLayout& src = componentLayout(id);
-			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + toString(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + toString(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 		else
-			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__);
+			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__, Exception::CoreException);
 	}
 
 	/*
@@ -601,7 +601,7 @@
 		}
 
 		if(exception && !res.empty())
-			throw Exception("PipelineLayout::check - The following errors has been found in the PipelineLayout " + getFullName() + " : " + res, __FILE__, __LINE__);
+			throw Exception("PipelineLayout::check - The following errors has been found in the PipelineLayout " + getFullName() + " : " + res, __FILE__, __LINE__, Exception::CoreException);
 		else if(!res.empty())
 			return false;
 
@@ -641,7 +641,7 @@
 	int PipelineLayout::add(const AbstractFilterLayout& filterLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		AbstractFilterLayout* tmp = new AbstractFilterLayout(filterLayout);
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -664,7 +664,7 @@
 	int PipelineLayout::add(const AbstractPipelineLayout& pipelineLayout, const std::string& name)
 	{
 		if(doesElementExist(name))
-			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::add - An element with the name " + name + " already exists in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		AbstractPipelineLayout* tmp = new AbstractPipelineLayout(pipelineLayout);
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -710,7 +710,7 @@
 	void PipelineLayout::connect(int filterOut, int portOut, int filterIn, int portIn)
 	{
 		if(filterOut==THIS_PIPELINE && filterIn==THIS_PIPELINE)
-			throw Exception("PipelineLayout::connect - can't connect directly an input to an output in pipeline " + getFullName() + ", you don't need that.", __FILE__, __LINE__);
+			throw Exception("PipelineLayout::connect - can't connect directly an input to an output in pipeline " + getFullName() + ", you don't need that.", __FILE__, __LINE__, Exception::CoreException);
 
 		if(filterOut!=THIS_PIPELINE)
 		{
@@ -734,11 +734,11 @@
 			{
 				if(filterIn!=THIS_PIPELINE)
 				{
-					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getFullName() + " on port " + componentLayout(filterIn).getInputPortName(portIn) + " in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to the destination : " + componentLayout(filterIn).getFullName() + " on port " + componentLayout(filterIn).getInputPortName(portIn) + " in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 				else
 				{
-					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getFullName() + " on port " + getInputPortName(portIn) + " in pipeline " + getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineLayout::connect - A connexion already exists to this pipeline output : " + getFullName() + " on port " + getInputPortName(portIn) + " in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -801,13 +801,15 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("PipelineLayout::connectToInput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 	}
 
@@ -841,13 +843,15 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("PipelineLayout::connectToOutput (str) - Caught an exception for the object " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 	}
 
@@ -865,7 +869,7 @@
 		{
 			// Check for previous existing connections
 			if(getNumConnections()!=0)
-				throw Exception("PipelineLayout::autoConnect - Layout for " + getFullName() + " has already connections and, thus, it is not eligible to auto-connect.", __FILE__, __LINE__);
+				throw Exception("PipelineLayout::autoConnect - Layout for " + getFullName() + " has already connections and, thus, it is not eligible to auto-connect.", __FILE__, __LINE__, Exception::CoreException);
 
 			// Check for double names in outputs :
 			std::map<std::string,int> outputNames;
@@ -886,7 +890,7 @@
 					// Check for doubles :
 					std::map<std::string,int>::iterator it = outputNames.find(name);
 					if(it!=outputNames.end())
-						throw Exception("PipelineLayout::autoConnect - Found another output having the same name \"" + name + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+						throw Exception("PipelineLayout::autoConnect - Found another output having the same name \"" + name + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 					else
 						outputNames[name] = i;
 				}
@@ -901,7 +905,7 @@
 					std::map<std::string,int>::iterator it = outputNames.find(cp.getInputPortName(j));
 
 					if(it==outputNames.end())
-						throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" + cp.getInputPortName(j) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+						throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" + cp.getInputPortName(j) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 					if(it->second!=THIS_PIPELINE)
 						connect(getElementName(it->second), it->first, getElementName(i), cp.getInputPortName(j));
@@ -916,18 +920,19 @@
 				std::map<std::string,int>::iterator it = outputNames.find(getOutputPortName(i));
 
 				if(it==outputNames.end())
-					throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" +getOutputPortName(i) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineLayout::autoConnect - No elements were found having an output named \"" +getOutputPortName(i) + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 				if(it->second!=THIS_PIPELINE)
 					connectToOutput(getElementName(it->second), it->first, getOutputPortName(i));
 				else
-					throw Exception("PipelineLayout::autoConnect - can't connect directly an input to an output in pipeline " + getFullName() + ", you don't need that.", __FILE__, __LINE__);
+					throw Exception("PipelineLayout::autoConnect - can't connect directly an input to an output in pipeline " + getFullName() + ", you don't need that.", __FILE__, __LINE__, Exception::CoreException);
 			}
 		}
 		catch(Exception& e)
 		{
-			Exception m("PipelineLayout::autoConnect - An error occured while building connection for " + getFullName() + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("PipelineLayout::autoConnect - An error occured while building connection for " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 	}
 
@@ -1002,8 +1007,9 @@
 		catch(Exception& e)
 		{
 			//std::cout << "in Pipeline : " << std::endl << e.what() << std::endl;
-			Exception m("Exception caught while building Pipeline " + getFullName() + " : ", __FILE__, __LINE__);
-			throw m + e;
+			Exception m("Exception caught while building Pipeline " + getFullName() + " : ", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 
 		broken		= false;
@@ -1099,7 +1105,7 @@
 					#endif
 				}
 				else
-					throw Exception("Unknown element kind.", __FILE__, __LINE__);
+					throw Exception("Unknown element kind.", __FILE__, __LINE__, Exception::CoreException);
 			}
 
 			// Then change the connections :
@@ -1148,7 +1154,7 @@
 
 					// Manage a possible error :
 					if(idx<0)
-						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getFullName() + ", port : " + toString(c.portOut) + ".", __FILE__, __LINE__);
+						throw Exception("Unable to find interior connection to element " + componentLayout(c.idOut).getFullName() + ", port : " + toString(c.portOut) + ".", __FILE__, __LINE__, Exception::CoreException);
 
 					// Finally : shorten the connection :
 					c.idOut = innerOutputConnections[idx].idOut;
@@ -1189,13 +1195,15 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::build - Error while building the pipeline " + getFullName() + " : ", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::build - Error while building the pipeline " + getFullName() + " : ", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::build - Error (std) while building the pipeline " + getFullName() + " : ", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::build - Error (std) while building the pipeline " + getFullName() + " : ", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -1280,7 +1288,7 @@
 				}
 
 				if(candidatesIdx.empty())
-					throw Exception("No available filter matches input conditions.", __FILE__, __LINE__);
+					throw Exception("No available filter matches input conditions.", __FILE__, __LINE__, Exception::CoreException);
 
 				// Find best candidate along the priority order (from highest to lowest) :
 				// 1 - A filter that has exactly the same format as a buffer which is currently unused, this buffer must as large as possible.
@@ -1347,7 +1355,7 @@
 				#endif
 
 				if(currentDecision>=5)
-					throw Exception("No correct decision was made.", __FILE__, __LINE__);
+					throw Exception("No correct decision was made.", __FILE__, __LINE__, Exception::CoreException);
 
 				// Create the action :
 				if(currentDecision==1)
@@ -1370,7 +1378,7 @@
 					actionsList.push_back( tmpActions[ fIdx ] );
 				}
 				else
-					throw Exception("Internal error : Unkown action decision (" + toString(currentDecision) + ").", __FILE__, __LINE__);
+					throw Exception("Internal error : Unkown action decision (" + toString(currentDecision) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 				// Find all the buffers read by the current actions and decrease their occupancy :
 				for(unsigned int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
@@ -1424,24 +1432,26 @@
 				}
 
 				if(noNextStep && !allProcessed)
-					throw Exception("The pipeline building process is stuck as some elements remains but cannot be integrated as they lack input.", __FILE__, __LINE__);
+					throw Exception("The pipeline building process is stuck as some elements remains but cannot be integrated as they lack input.", __FILE__, __LINE__, Exception::CoreException);
 			}
 			while(!allProcessed);
 
 			// Final tests :
 			if(filtersList.size()!=actionsList.size())
-				throw Exception("Some filters were omitted because their connections scheme does not allow usage.", __FILE__, __LINE__);
+				throw Exception("Some filters were omitted because their connections scheme does not allow usage.", __FILE__, __LINE__, Exception::CoreException);
 
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::allocateBuffers - Error while allocating the buffers in the pipeline " + getFullName() + " : ", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::allocateBuffers - Error while allocating the buffers in the pipeline " + getFullName() + " : ", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::allocateBuffers - Error (std) while allocating the buffers in the pipeline " + getFullName() + " : ", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::allocateBuffers - Error (std) while allocating the buffers in the pipeline " + getFullName() + " : ", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 
 		// Create the first cell : 
@@ -1480,7 +1490,7 @@
 		#endif
 
 		if(askDriver && currentCell==NULL)
-			throw Exception("Pipeline::getSize - Unable to get the sizes of the GL objects from the Driver as no cell is currently in use.", __FILE__, __LINE__);
+			throw Exception("Pipeline::getSize - Unable to get the sizes of the GL objects from the Driver as no cell is currently in use.", __FILE__, __LINE__, Exception::CoreException);
 
 		for(int i=0; i<bufferFormats.size(); i++)
 		{
@@ -1514,7 +1524,7 @@
 				totalTiming 	= 0;
 
 		if(currentCell==NULL)
-			throw Exception("Pipeline::process - No BufferCell was assigned.", __FILE__, __LINE__);
+			throw Exception("Pipeline::process - No BufferCell was assigned.", __FILE__, __LINE__, Exception::CoreException);
 
 		if(!GLEW_VERSION_3_3 && perfsMonitoring)
 		{
@@ -1575,8 +1585,9 @@
 				{
 					firstRun	= false;
 					broken 		= true;
-					Exception m("Pipeline::process - Exception caught in pipeline " + getFullName() + ", during processing : ", __FILE__, __LINE__);
-					throw m + e;
+					Exception m("Pipeline::process - Exception caught in pipeline " + getFullName() + ", during processing : ", __FILE__, __LINE__, Exception::CoreException);
+					m << e;
+					throw m;
 				}
 			}
 			else
@@ -1636,7 +1647,7 @@
 	Pipeline& Pipeline::operator<<(HdlTexture& texture)
 	{
 		if(static_cast<int>(inputsList.size())>=getNumInputPort())
-			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("Pipeline::operator<<(HdlTexture&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		inputsList.push_back(&texture);
 
@@ -1654,7 +1665,7 @@
 		for(int i=0; i<pipeline.getNumOutputPort(); i++)
 		{
 			if(static_cast<int>(inputsList.size())>=getNumInputPort())
-				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator<<(Pipeline&) - Too much arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 			inputsList.push_back(&pipeline.out(i));
 		}
@@ -1672,7 +1683,7 @@
 	{
 		// Check the number of arguments given :
 		if(static_cast<int>(inputsList.size())!=getNumInputPort() && a!=Reset)
-			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("Pipeline::operator<<(ActionType) - Too few arguments given to Pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		switch(a)
 		{
@@ -1682,7 +1693,7 @@
 				cleanInput();
 				break;
 			default:
-				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("Pipeline::operator<<(ActionType) - Unknown action for Pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		return *this;
@@ -1702,7 +1713,7 @@
 		if(cellID==0)
 		{
 			if(currentCell==NULL)
-				throw Exception("Pipeline::out - Unable to get the output " + getOutputPortName(i) + " as no cell is currently in use.", __FILE__, __LINE__);
+				throw Exception("Pipeline::out - Unable to get the output " + getOutputPortName(i) + " as no cell is currently in use.", __FILE__, __LINE__, Exception::CoreException);
 			else
 				return (*(*currentCell->buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
 		}
@@ -1711,7 +1722,7 @@
 			std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 			if(it==cells.end())
-				throw Exception("Pipeline::out - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
+				throw Exception("Pipeline::out - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__, Exception::CoreException);
 			else
 				return (*(*it->second->buffersList[ outputsList[i].bufferIdx ])[ outputsList[i].outputIdx ]);
 		}
@@ -1744,13 +1755,15 @@
 		}
 		catch(Exception& e)
 		{
-			Exception m("Pipeline::operator[int] - Error while processing request on filter ID : " + toString(filterID) + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::operator[int] - Error while processing request on filter ID : " + toString(filterID) + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 		catch(std::exception& e)
 		{
-			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + toString(filterID) + ".", __FILE__, __LINE__);
-			throw m+e;
+			Exception m("Pipeline::operator[int] - Error while processing request on filtr ID : " + toString(filterID) + ".", __FILE__, __LINE__, Exception::CoreException);
+			m << e;
+			throw m;
 		}
 	}
 
@@ -1829,7 +1842,7 @@
 					return it->first;
 			}
 
-			throw Exception("Pipeline::getCurrentCellID - The current cell is not listed (internal error).", __FILE__, __LINE__);
+			throw Exception("Pipeline::getCurrentCellID - The current cell is not listed (internal error).", __FILE__, __LINE__, Exception::CoreException);
 		}
 	}
 
@@ -1858,7 +1871,7 @@
 		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 		if(it==cells.end())
-			throw Exception("Pipeline::changeTargetBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
+			throw Exception("Pipeline::changeTargetBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__, Exception::CoreException);
 		else
 			currentCell = it->second;
 	}
@@ -1873,7 +1886,7 @@
 		std::map<int, BuffersCell*>::iterator it = cells.find(cellID);
 
 		if(it==cells.end())
-			throw Exception("Pipeline::removeBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__);
+			throw Exception("Pipeline::removeBufferCell - The cell ID " + toString(it->first) + " does not exist.", __FILE__, __LINE__, Exception::CoreException);
 		else
 		{
 			if(currentCell==it->second)
@@ -1935,7 +1948,7 @@
 		if(perfsMonitoring)
 			return perfs[ filtersGlobalIDsList[filterID] ];
 		else
-			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__);
+			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__, Exception::CoreException);
 	}
 
 	/**
@@ -1950,7 +1963,7 @@
 		if(perfsMonitoring)
 		{
 			if(action<0 || action>=static_cast<int>(actionsList.size()))
-				throw Exception("Pipeline::getTiming - Action index is outside of range.", __FILE__, __LINE__);
+				throw Exception("Pipeline::getTiming - Action index is outside of range.", __FILE__, __LINE__, Exception::CoreException);
 			else
 			{
 				filterName = filtersList[ actionsList[action].filterIdx ]->getFullName();
@@ -1958,7 +1971,7 @@
 			}
 		}
 		else
-			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__);
+			throw Exception("Pipeline::getTiming - Monitoring is disabled.", __FILE__, __LINE__, Exception::CoreException);
 	}
 
 
@@ -1972,6 +1985,6 @@
 		if(perfsMonitoring)
 			return totalPerf;
 		else
-			throw Exception("Pipeline::getTotalTiming - Monitoring is disabled.", __FILE__, __LINE__);
+			throw Exception("Pipeline::getTotalTiming - Monitoring is disabled.", __FILE__, __LINE__, Exception::CoreException);
 	}
 

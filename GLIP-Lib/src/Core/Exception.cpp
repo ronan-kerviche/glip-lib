@@ -26,19 +26,19 @@
 	using namespace Glip;
  
 	/**
-	\fn Exception::Exception(const std::string& m, std::string f, unsigned int l)
+	\fn Exception::Exception(const std::string& m, std::string f, unsigned int l, const Type& t)
 	\brief Exception constructor.
 	\param m Message.
 	\param f File name (__FILE__).
 	\param l Line number (__LINE__).
+	\param t Type of the exception (see Exception::Type).
 	**/
-	Exception::Exception(const std::string& m, std::string f, unsigned int l)
-	 :	msg(m), 
+	Exception::Exception(const std::string& m, std::string f, unsigned int l, const Type& t)
+	 :	type(t),
+		msg(m), 
 		filename(f), 
 		line(l), 
-		completeMsg(),
-		showHeader(true),
-		subExceptions()
+		showHeader(true)
 	{
 		if(filename!="")
 		{
@@ -55,7 +55,8 @@
 	\param e Copy.
 	**/
 	Exception::Exception(const Exception& e)
-	 :	msg(e.msg), 
+	 :	type(e.type),
+		msg(e.msg), 
 		filename(e.filename), 
 		line(e.line), 
 		completeMsg(e.completeMsg),
@@ -132,6 +133,16 @@
 	}
 
 	/**
+	\fn Exception::Type Exception::getType(void) const
+	\brief Get the type of the exception.
+	\return The type of this exception (see Exception::Type).
+	**/
+	Exception::Type Exception::getType(void) const
+	{
+		return type;
+	}
+
+	/**
 	\fn const char* Exception::what(void) const throw()
 	\brief Get the complete exception message.
 	\return C string.
@@ -185,12 +196,49 @@
 	}
 
 	/**
-	\fn const Exception& Exception::operator+(const std::exception& e)
+	\fn Exception& Exception::operator=(const std::exception& e)
+	\brief Copy an exception.
+	\param e Source exception.
+	\return Reference to this exception.
+	**/
+	Exception& Exception::operator=(const std::exception& e)
+	{
+		msg		= e.what();
+		line		= 0;
+		showHeader	= false;
+		filename.clear();
+		subExceptions.clear();	
+
+		updateCompleteMessage();
+
+		return (*this);
+	}
+
+	/**
+	\fn Exception& Exception::operator=(const Exception& e)
+	\brief Copy an exception.
+	\param e Source exception.
+	\return Reference to this exception.
+	**/
+	Exception& Exception::operator=(const Exception& e)
+	{
+		msg		= e.msg;
+		filename	= e.filename;
+		line		= e.line;
+		completeMsg	= e.completeMsg;
+		showHeader	= e.showHeader;
+		subExceptions	= e.subExceptions;
+
+		return (*this);
+	}
+
+	/**
+	\fn Exception& Exception::operator<<(const std::exception& e)
 	\brief Add the mesages of two exceptions.
 	\param e The original exception.
 	\return This exception message followed by the original exception message.
 	**/
-	const Exception& Exception::operator+(const std::exception& e)
+	Exception& Exception::operator<<(const std::exception& e)
 	{
 		subExceptions.push_back(Exception(e.what()));
 		subExceptions.push_back(Exception("<std::exception>"));
@@ -201,12 +249,12 @@
 	}
 
 	/**
-	\fn const Exception& Exception::operator+(const Exception& e)
+	\fn Exception& Exception::operator<<(const Exception& e)
 	\brief Add the mesages of two exceptions.
 	\param e The original Exception.
 	\return This exception message followed by the original exception message.
 	**/
-	const Exception& Exception::operator+(const Exception& e)
+	Exception& Exception::operator<<(const Exception& e)
 	{
 		if(!e.subExceptions.empty())
 			subExceptions.insert( subExceptions.end(), e.subExceptions.begin(), e.subExceptions.end() );
@@ -253,5 +301,15 @@
 	{
 		showHeader = !enabled;
 		updateCompleteMessage();
+	}
+
+	/**
+	\fn bool Exception::isHeaderHidden(void) const
+	\brief Test if the header will be shown in the exception message.
+	\return True if the header is hidden.
+	**/
+	bool Exception::isHeaderHidden(void) const
+	{
+		return !showHeader;
 	}
 

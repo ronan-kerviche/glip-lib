@@ -49,7 +49,7 @@ namespace Glip
 \class LayoutLoaderModule
 \brief Module description for the LayoutLoader class.
 
-You can write a Module MyModule for a LayoutLoader object, load it, and allow the user to use MODULE_CALL:MyModule. It will have limited access to the data of the LayoutLoader, and thus be able to create, modify or destroy formats, source codes, shaders, geometries, filters, pipelines, etc. Each Module has a name, a minimum and maximum number of arguments and the information on the need of a body or not.
+You can write a Module MyModule for a LayoutLoader object, load it, and allow the user to use CALL:MyModule. It will have limited access to the data of the LayoutLoader, and thus be able to create, modify or destroy formats, source codes, shaders, geometries, filters, pipelines, etc. Each Module has a name, a minimum and maximum number of arguments and the information on the need of a body or not.
 
 In order to ease the creation of modules, you will find Macros for accessing data given to the Module.
 
@@ -101,10 +101,10 @@ Example in a script file :
 	REQUIRED_FORMAT: fmt (inputFormat)
 
 	// Create a new format by copying inputFormat and changing the filtering : 
-	MODULE_CALL: FORMAT_CHANGE_FILTERING (fmt, GL_LINEAR, GL_LINEAR, fmt1)
+	CALL: FORMAT_CHANGE_FILTERING (fmt, GL_LINEAR, GL_LINEAR, fmt1)
 
 	// Create a new format by copying inputFormat and dividing by 2 its size : 
-	MODULE_CALL: FORMAT_SCALE_SIZE (fmt, 0.5, fmt2)
+	CALL: FORMAT_SCALE_SIZE (fmt, 0.5, fmt2)
 	\endcode
 
 Example, creating a simple Module :
@@ -146,7 +146,7 @@ Example, creating a simple Module :
 
 	Use in a script : 
 	\code 
-		MODULE_CALL: MyAdditionModule (someFormat, 128, newLargerFormat)
+		CALL: MyAdditionModule (someFormat, 128, newLargerFormat)
 	\endcode
 	
 **/
@@ -168,8 +168,8 @@ Example, creating a simple Module :
 				virtual ~LayoutLoaderModule(void);
 
 				/**
-				\fn virtual void LayoutLoaderModule::apply(	const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, std::string>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, const std::vector<std::string>&	staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, std::string& executionCode) = 0
-				\brief Interface of the module : this function will be called on each corresponding token MODULE_CALL for the LayoutLoader which has the module. 
+				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, ShaderSource>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, const std::vector<std::string>&	staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
+				\brief Interface of the module : this function will be called on each corresponding token CALL for the LayoutLoader which has the module. 
 				\param arguments 		The arguments of the called, their number has already been checked.
 				\param body 			The body of the call (might be empty), its presence has already been checked.
 				\param currentPath 		The currentPath in which the LayoutLoader is operating.
@@ -193,13 +193,16 @@ Example, creating a simple Module :
 								For easy access see #CONST_ITERATOR_TO_REQUIREDGEOMETRY, #REQUIREDGEOMETRY_MUST_EXIST, #REQUIREDGEOMETRY_MUST_NOT_EXIST.
 				\param requiredPipelineList	The list of static pipelines available.
 								For easy access see #CONST_ITERATOR_TO_REQUIREDPIPELINE, #REQUIREDPIPELINE_MUST_EXIST, #REQUIREDPIPELINE_MUST_NOT_EXIST.
+				\param sourceName		Name of the source from which the call was extracted.
+				\param startLine		Line index of the module call.
+				\param bodyLine			Line index of the body for this module call.
 				\param executionCode		The code which has to be run at after the function complete (leave it empty if no code needs to be run, the syntax of the code expected is the same as scripts).
 				**/
 				virtual void apply(	const std::vector<std::string>& 		arguments, 
 							const std::string&				body, 
 							const std::string&				currentPath,
 							std::vector<std::string>&			dynamicPaths,
-							std::map<std::string, std::string>&		sharedCodeList,
+							std::map<std::string, ShaderSource>&		sharedCodeList,
 							std::map<std::string, HdlTextureFormat>& 	formatList,
 							std::map<std::string, ShaderSource>& 		sourceList,
 							std::map<std::string, GeometryModel>&		geometryList,
@@ -209,6 +212,9 @@ Example, creating a simple Module :
 							const std::map<std::string,HdlTextureFormat>&	requiredFormatList,
 							const std::map<std::string,GeometryModel>&	requiredGeometryList,
 							const std::map<std::string,PipelineLayout>&	requiredPipelineList,
+							const std::string& sourceName,
+							const int startLine,
+							const int bodyLine,
 							std::string& executionCode) = 0;
 
 				const std::string& getName(void) const;
@@ -220,7 +226,7 @@ Example, creating a simple Module :
 
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
-				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase);
+				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName="", int bodyLine=1);
 		};
 
 		// Simple MACROS : 
@@ -234,7 +240,7 @@ Example, creating a simple Module :
 													const std::string&				body, \
 													const std::string&				currentPath, \
 													std::vector<std::string>&			dynamicPaths, \
-													std::map<std::string, std::string>&		sharedCodeList, \
+													std::map<std::string, ShaderSource>&		sharedCodeList, \
 													std::map<std::string, HdlTextureFormat>& 	formatList, \
 													std::map<std::string, ShaderSource>& 		sourceList, \
 													std::map<std::string, GeometryModel>&		geometryList, \
@@ -244,6 +250,9 @@ Example, creating a simple Module :
 													const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
 													const std::map<std::string,GeometryModel>&	requiredGeometryList, \
 													const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
+													const std::string& sourceName, \
+													const int startLine, \
+													const int bodyLine, \
 													std::string& executionCode); \
 									};
 
@@ -253,7 +262,7 @@ Example, creating a simple Module :
 																						const std::string&				body, \
 																						const std::string&				currentPath, \
 																						std::vector<std::string>&			dynamicPaths, \
-																						std::map<std::string, std::string>&		sharedCodeList, \
+																						std::map<std::string, ShaderSource>&		sharedCodeList, \
 																						std::map<std::string, HdlTextureFormat>& 	formatList, \
 																						std::map<std::string, ShaderSource>& 		sourceList, \
 																						std::map<std::string, GeometryModel>&		geometryList, \
@@ -263,24 +272,27 @@ Example, creating a simple Module :
 																						const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
 																						const std::map<std::string,GeometryModel>&	requiredGeometryList, \
 																						const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
+																						const std::string& sourceName, \
+																						const int startLine, \
+																						const int bodyLine, \
 																						std::string& executionCode)
 
 			#define __ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::iterator iteratorName = varName.find( elementName );
 			#define __CONST_ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::const_iterator iteratorName = varName.find( elementName );
-			#define __ELEMENT_MUST_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName==varName.end()) throw Exception("Element \"" + elementName + "\" was not found in \"" + #varName + "\".", __FILE__, __LINE__); }
-			#define __ELEMENT_MUST_NOT_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName!=varName.end()) throw Exception("Element \"" + elementName + "\" already exists in \"" + #varName + "\".", __FILE__, __LINE__); }
+			#define __ELEMENT_MUST_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName==varName.end()) throw Exception("Element \"" + elementName + "\" was not found in \"" + #varName + "\".", sourceName, startLine, Exception::ClientScriptException); }
+			#define __ELEMENT_MUST_NOT_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName!=varName.end()) throw Exception("Element \"" + elementName + "\" already exists in \"" + #varName + "\".", sourceName, startLine, Exception::ClientScriptException); }
 			#define __APPEND_NEW_ELEMENT(type, varName, elementName, element)	varName.insert( std::pair<std::string, type>( elementName, element ) );
 
 			/** ITERATOR_TO_SHAREDCODE( iteratorName, elementName )			Get an iterator on the Shared Code named elementName. **/
-			#define ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		__ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName)
+			#define ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		__ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		Get a constant iterator on the Shared Code named elementName. **/
-			#define CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )	__CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
 			/** SHAREDCODE_MUST_EXIST( elementName )				Check that the Shared Code named elementName must exist (raise an exception otherwise). **/
-			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
+			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
 			/** SHAREDCODE_MUST_NOT_EXIST( elementName )				Check that the Shared Code named elementName must not exist (raise an exception otherwise). **/
-			#define SHAREDCODE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(std::string, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sharedCodeList, elementName) }
+			#define SHAREDCODE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sharedCodeList, elementName) }
 			/** APPEND_NEW_SHAREDCODE(elementName, newElement)			Append the new element to the Shared Code list. **/
-			#define APPEND_NEW_SHAREDCODE(elementName, newElement)			__APPEND_NEW_ELEMENT(std::string, sharedCodeList, elementName, newElement)
+			#define APPEND_NEW_SHAREDCODE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sharedCodeList, elementName, newElement)
 
 			/** ITERATOR_TO_FORMAT( iteratorName, elementName )			Get an iterator on the Format named elementName. **/
 			#define ITERATOR_TO_FORMAT( iteratorName, elementName )			__ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
@@ -359,7 +371,7 @@ Example, creating a simple Module :
 			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
 			
 			/** CAST_ARGUMENT( argID, type, varName ) 				Cast the argument arguments[argID] to some type (and create the variable varName). Raise an exception if the cast fails. **/
-			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", __FILE__, __LINE__);
+			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
 
 		// Basic Modules : 
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHAREDCODE_DEFINED )

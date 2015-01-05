@@ -132,6 +132,15 @@
 		**/
 		void LayoutLoaderModule::addBasicModules(LayoutLoader& loader)
 		{
+			loader.addModule( new IF_SHAREDCODE_DEFINED );
+			loader.addModule( new IF_FORMAT_DEFINED );
+			loader.addModule( new IF_SHADERSOURCE_DEFINED );
+			loader.addModule( new IF_GEOMETRY_DEFINED );
+			loader.addModule( new IF_FILTERLAYOUT_DEFINED );
+			loader.addModule( new IF_PIPELINELAYOUT_DEFINED );
+			loader.addModule( new IF_REQUIREDFORMAT_DEFINED );
+			loader.addModule( new IF_REQUIREDGEOMETRY_DEFINED );
+			loader.addModule( new IF_REQUIREDPIPELINE_DEFINED );
 			loader.addModule( new FORMAT_CHANGE_SIZE );
 			loader.addModule( new FORMAT_SCALE_SIZE );
 			loader.addModule( new FORMAT_CHANGE_CHANNELS );
@@ -157,7 +166,7 @@
 		}
 
 		/**
-		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase)
+		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName, int bodyLine)
 		\brief Get true and false cases out of a body.
 	
 		In a if-statement you can write : 
@@ -176,10 +185,12 @@
 		\param body Body to extract the data from.
 		\param trueCase Body of the true statement (not modified is none is found).
 		\param falseCase Body of the false statement (not modified is none is found).
+		\param sourceName Name of the source.
+		\param bodyLine Line counter start index.
 		**/
-		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase)
+		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName, int bodyLine)
 		{
-			VanillaParser parser(body);
+			VanillaParser parser(body, sourceName, bodyLine);
 			bool 	trueCaseAlreadySet = false,
 				falseCaseAlreadySet = false;
 
@@ -188,7 +199,7 @@
 				if(it->strKeyword==LayoutLoader::getKeyword(KW_LL_TRUE) && !it->noBody)
 				{
 					if(trueCaseAlreadySet)
-						throw Exception("LayoutLoaderModule::getCases - True case already set.", __FILE__, __LINE__);
+						throw Exception("True case already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
 					
 					trueCase = it->getCleanBody();
 					trueCaseAlreadySet = true;
@@ -196,13 +207,13 @@
 				else if(it->strKeyword==LayoutLoader::getKeyword(KW_LL_FALSE)  && !it->noBody)
 				{
 					if(falseCaseAlreadySet)
-						throw Exception("LayoutLoaderModule::getCases - True case already set.", __FILE__, __LINE__);
+						throw Exception("False case already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
 
 					falseCase = it->getCleanBody();
 					falseCaseAlreadySet = true;
 				}				
 				else
-					throw Exception("LayoutLoaderModule::getCases - Unknown case keyword \"" + it->strKeyword + "\". Expected " + LayoutLoader::getKeyword(KW_LL_TRUE) + " or " + LayoutLoader::getKeyword(KW_LL_FALSE) + ".", __FILE__, __LINE__);
+					throw Exception("Unknown case keyword \"" + it->strKeyword + "\". Expected " + LayoutLoader::getKeyword(KW_LL_TRUE) + " or " + LayoutLoader::getKeyword(KW_LL_FALSE) + ".", it->sourceName, it->startLine, Exception::ClientScriptException);
 			}
 		}
 
@@ -221,11 +232,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_SHAREDCODE(it, arguments[0])
 
@@ -249,11 +261,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_FORMAT(it, arguments[0])
 
@@ -277,11 +290,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_SHADERSOURCE(it, arguments[0])
 
@@ -305,11 +319,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_GEOMETRY(it, arguments[0])
 
@@ -333,11 +348,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_FILTER(it, arguments[0])
 
@@ -361,11 +377,12 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_PIPELINE(it, arguments[0])
 
@@ -389,11 +406,12 @@
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDFORMAT(it, arguments[0])
 
@@ -417,11 +435,12 @@
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDGEOMETRY(it, arguments[0])
 
@@ -445,11 +464,12 @@
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDPIPELINE(it, arguments[0])
 
@@ -474,6 +494,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -491,7 +512,7 @@
 				newFmt.setHeight(h);
 
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -514,6 +535,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -528,7 +550,7 @@
 				{
 					CAST_ARGUMENT( 1, double, s) 	
 					if(s<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (s = " + toString(s) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (s = " + toString(s) + ").", sourceName, startLine, Exception::ClientScriptException);
 		
 					newFmt.setWidth( std::max(newFmt.getWidth() * s, 1.0) );
 					newFmt.setHeight( std::max(newFmt.getHeight() * s, 1.0) );
@@ -538,9 +560,9 @@
 					CAST_ARGUMENT( 1, double, sx)
 					CAST_ARGUMENT( 2, double, sy)
 					if(sx<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (sx = " + toString(sx) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (sx = " + toString(sx) + ").", sourceName, startLine, Exception::ClientScriptException);
 					if(sy<=0.0)
-						throw Exception("The scale cannot be negative or equal to zero (sy = " + toString(sy) + ").", __FILE__, __LINE__);
+						throw Exception("The scale cannot be negative or equal to zero (sy = " + toString(sy) + ").", sourceName, startLine, Exception::ClientScriptException);
 		
 					newFmt.setWidth( std::max(newFmt.getWidth() * sx, 1.0) );
 					newFmt.setHeight( std::max(newFmt.getHeight() * sy, 1.0) );
@@ -548,7 +570,7 @@
 
 				// Test : 
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -568,6 +590,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -597,6 +620,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -626,6 +650,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -656,6 +681,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 	
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -686,6 +712,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -716,6 +743,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -758,6 +786,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -800,6 +829,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -842,6 +872,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -884,6 +915,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -926,6 +958,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				int 	kBest 		= 0,
@@ -968,6 +1001,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)				
 
 				int 	kBest 		= 0,
@@ -1010,6 +1044,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)				
 
 				int 	kBest 		= 0,
@@ -1070,7 +1105,7 @@
 				std::string 	trueCase, 
 						falseCase;
 
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 
 				if(it->second.getSetting(setting)==value)
 					executionCode = trueCase;
@@ -1111,7 +1146,7 @@
 				std::string 	trueCase, 
 						falseCase;
 
-				getCases(body, trueCase, falseCase);
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 
 				if(it->second.getSetting(setting)>value)
 					executionCode = trueCase;
@@ -1134,6 +1169,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -1165,6 +1201,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -1200,6 +1237,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				const unsigned int startPipelines = 2;
@@ -1283,11 +1321,11 @@
 					{
 						// Standard check : 
 						if(itCurrentPipeline->second.getNumInputPort()>static_cast<int>(outputPortNames.size()))
-							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + toString(outputPortNames.size()) + " output ports.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + toString(outputPortNames.size()) + " output ports.", sourceName, startLine, Exception::ClientScriptException);
 
 						// Check the previous number of output : 
 						if(isStrict && itCurrentPipeline->second.getNumInputPort()!=static_cast<int>(outputPortNames.size()))
-							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + toString(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", __FILE__, __LINE__);
+							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + toString(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", sourceName, startLine, Exception::ClientScriptException);
 
 						// Make the connections : 
 						for(int k=0; k<itCurrentPipeline->second.getNumInputPort(); k++)
@@ -1350,8 +1388,8 @@
 				executionCode = requiredElements + "\n" + result.getCode();
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 2, 2, -1, true,	"Create a SHARED_SOURCE containing an ivec2 describing the size of the texture passed in argument.\n"
-											"For instance, can be used in a shader with : const ivec2 textureSize = INSERT(name);\n"
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 2, 2, -1, true,	"Create a SHARED_SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument.\n"
+											"For instance, can be used in a shader with : INSERT(name)\n"
 											"Arguments   : textureFormat, sharedCodeName\n")
 			{
 				UNUSED_PARAMETER(body)
@@ -1365,6 +1403,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
 				FORMAT_MUST_EXIST( arguments[0] )
@@ -1372,9 +1411,10 @@
 	
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
-				std::string str = "ivec2(" + toString(it->second.getWidth()) + ", " + toString(it->second.getHeight()) + ")";
+				std::string str = "const ivec2 " + arguments[1] + " = ivec2(" + toString(it->second.getWidth()) + ", " + toString(it->second.getHeight()) + ");\n";
+				// The newline is mandatory here, to avoid ShaderSource mistaking this for a filename.
 
-				APPEND_NEW_SHAREDCODE(arguments[1], str);
+				APPEND_NEW_SHAREDCODE(arguments[1], ShaderSource(str, sourceName, startLine));
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"
@@ -1393,16 +1433,18 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
-				Exception m("Error : " + arguments.front(), __FILE__, __LINE__);
+				Exception m("Error : " + arguments.front(), sourceName, startLine, Exception::ClientScriptException);
 
 				if(body.empty())
 					throw m;
 				else
 				{
-					Exception e(body, __FILE__, __LINE__);
-					throw m + e;
+					Exception e(body, sourceName, startLine, Exception::ClientScriptException);
+					m << e;
+					throw m;
 				}
 			}
 

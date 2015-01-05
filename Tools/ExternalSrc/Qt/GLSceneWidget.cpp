@@ -1176,6 +1176,11 @@ using namespace QVGL;
 		return graphicsProxy;
 	}
 
+	QPoint SubWidget::mapItemCoordinatesToGlobal(const QPoint& p)
+	{
+		return SubWidget::mapItemCoordinatesToGlobal(p, this);
+	}
+
 	QString SubWidget::getTitle(void)
 	{
 		return titleLabel.text();
@@ -1254,6 +1259,35 @@ using namespace QVGL;
 			return NULL;
 		else
 			return proxy->data(QGraphicsItemSubWidgetPointerKey).value<SubWidget*>();
+	}
+
+	QPoint SubWidget::mapItemCoordinatesToGlobal(const QPoint& p, QGraphicsProxyWidget* ptr)
+	{
+		if(ptr!=NULL && ptr->scene()!=NULL && !ptr->scene()->views().empty() && ptr->scene()->views().first()!=NULL && ptr->scene()->views().first()->viewport()!=NULL)
+		{
+			QGraphicsView *view = ptr->scene()->views().first();
+    			QPointF scenePos = ptr->mapToScene(p);
+    			QPoint viewPos = view->mapFromScene(scenePos);
+    			return view->viewport()->mapToGlobal(viewPos);
+		}
+		else
+			return QPoint(0,0);
+	}
+
+	QPoint SubWidget::mapItemCoordinatesToGlobal(const QPoint& p, QWidget* ptr)
+	{
+		if(ptr!=NULL)
+			return mapItemCoordinatesToGlobal(p, ptr->graphicsProxyWidget());
+		else
+			return QPoint(0,0);
+	}
+
+	QPoint SubWidget::mapItemCoordinatesToGlobal(const QPoint& p, SubWidget* ptr)
+	{
+		if(ptr!=NULL)
+			return mapItemCoordinatesToGlobal(p, ptr->graphicsProxy);
+		else
+			return QPoint(0,0);
 	}
 
 // PositionColorInfoMini : 

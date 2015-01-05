@@ -735,7 +735,7 @@ using namespace QGPM;
 
 		try
 		{
-			elements = loader.listElements(source);
+			elements = loader.listElements(source, "PipelineItem");
 		}
 		catch(Exception& e)
 		{
@@ -861,7 +861,7 @@ using namespace QGPM;
 					std::cout << "PipelineItem::compile - Unable to add requirement : " << name << std::endl;
 			}
 
-			pipeline = loader(source, "Pipeline");
+			pipeline = loader.getPipeline(source, "Pipeline", "PipelineItem");
 
 			checkUniforms();
 

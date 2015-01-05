@@ -100,7 +100,7 @@
 	void AbstractComponentLayout::checkInputPort(int i) const
 	{
 		if(i<0 || i>=getNumInputPort())
-			throw Exception("ComponentLayout - Bad input port ID for "  + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
+			throw Exception("ComponentLayout - Bad input port ID for "  + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__, Exception::CoreException);
 	}
 
 	/**
@@ -111,7 +111,7 @@
 	void AbstractComponentLayout::checkOutputPort(int i) const
 	{
 		if(i<0 || i>=getNumOutputPort())
-			throw Exception("ComponentLayout - Bad output port ID for " + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__);
+			throw Exception("ComponentLayout - Bad output port ID for " + getFullName() + " (ID = " + toString(i) + ").", __FILE__, __LINE__, Exception::CoreException);
 	}
 
 	/**
@@ -149,13 +149,13 @@
 			if(getNumInputPort()==1)
 				return 0;
 			else
-				throw Exception("AbstractComponentLayout::getInputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::getInputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
 
 		if(it==inputPorts.end())
-			throw Exception("AbstractComponentLayout::getInputPortID - Unable to find input port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractComponentLayout::getInputPortID - Unable to find input port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		return std::distance(inputPorts.begin(), it);
 	}
@@ -173,7 +173,7 @@
 			if(getNumInputPort()==1)
 				return true;
 			else
-				throw Exception("AbstractComponentLayout::doesInputPortExist( - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::doesInputPortExist( - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(inputPorts.begin(), inputPorts.end(), name);
@@ -216,13 +216,13 @@
 			if(getNumOutputPort()==1)
 				return 0;
 			else
-				throw Exception("AbstractComponentLayout::getOutputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::getOutputPortID - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
 
 		if(it==outputPorts.end())
-			throw Exception("AbstractComponentLayout::getOutputPortID - Unable to find output port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__);
+			throw Exception("AbstractComponentLayout::getOutputPortID - Unable to find output port \"" + name + "\" in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		return std::distance(outputPorts.begin(), it);
 	}
@@ -240,7 +240,7 @@
 			if(getNumOutputPort()==1)
 				return true;
 			else
-				throw Exception("AbstractComponentLayout::doesOutputPortExist - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__);
+				throw Exception("AbstractComponentLayout::doesOutputPortExist - Unable to use wildcard '*' in component " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 
 		std::vector<std::string>::const_iterator it = std::find(outputPorts.begin(), outputPorts.end(), name);
@@ -279,7 +279,7 @@
 	int ComponentLayout::addInputPort(const std::string& name)
 	{
 		if(doesInputPortExist(name))
-			throw Exception("ComponentLayout::addInputPort - Input port \"" + name + "\" already exists.", __FILE__, __LINE__);
+			throw Exception("ComponentLayout::addInputPort - Input port \"" + name + "\" already exists.", __FILE__, __LINE__, Exception::CoreException);
 		else
 		{
 			int id = inputPorts.size();
@@ -297,7 +297,7 @@
 	int ComponentLayout::addOutputPort(const std::string& name)
 	{
 		if(doesOutputPortExist(name))
-			throw Exception("ComponentLayout::addOutputPort - Output port \"" + name + "\" already exists.", __FILE__, __LINE__);
+			throw Exception("ComponentLayout::addOutputPort - Output port \"" + name + "\" already exists.", __FILE__, __LINE__, Exception::CoreException);
 		else
 		{
 			int id = outputPorts.size();

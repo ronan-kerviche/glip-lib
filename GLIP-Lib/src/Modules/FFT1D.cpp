@@ -47,10 +47,10 @@
 			test2 = floor(test1);
 
 		if(test1!=test2)
-			throw Exception("FFT1D::FFT1D - Size must be a power of 2.", __FILE__, __LINE__);
+			throw Exception("FFT1D::FFT1D - Size must be a power of 2.", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(size<4)
-			throw Exception("FFT1D::FFT1D - Size must be at least 4.", __FILE__, __LINE__);
+			throw Exception("FFT1D::FFT1D - Size must be at least 4.", __FILE__, __LINE__, Exception::ModuleException);
 
 		// Fill bit reversal :
 			float* data1 = new float[size*2];
@@ -383,13 +383,13 @@
 	void FFT1D::process(HdlTexture& input)
 	{
 		if(pipeline==NULL)
-			throw Exception("FFT1D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__);
+			throw Exception("FFT1D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(!useZeroPadding && (input.getWidth()!=size || input.getHeight()!=1))
-			throw Exception("FFT1D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__);
+			throw Exception("FFT1D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(useZeroPadding && (input.getWidth()>size || input.getHeight()!=1))
-			throw Exception("FFT1D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__);
+			throw Exception("FFT1D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(useZeroPadding)
 		{
@@ -420,7 +420,7 @@
 		if(pipeline!=NULL)
 			return pipeline->out(0);
 		else
-			throw Exception("FFT1D::output - pipeline is NULL.", __FILE__, __LINE__);
+			throw Exception("FFT1D::output - pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
 	}
 
 	/**

@@ -18,6 +18,7 @@
 #include "GLSLKeywords.hpp"
 #include "QMenuTools.hpp"
 #include <QFontDatabase>
+#include <QHeaderView>
 
 using namespace QGED;
 
@@ -978,10 +979,17 @@ using namespace QGED;
 		splitterLayout.addWidget(&errorsList);
 		layout.addWidget(&splitterLayout);
 
-		QObject::connect(&errorsList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(errorItemDoubleClicked(QListWidgetItem*))); 
+		QObject::connect(&errorsList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(errorItemDoubleClicked(QTreeWidgetItem*, int))); 
 
 		layout.setMargin(0);
 		layout.setSpacing(0);
+
+		QList<QString> errorsLabels;
+		errorsLabels << "Error";
+		errorsLabels << "Line";
+		errorsLabels << "File/Source";
+		errorsList.setHeaderLabels(errorsLabels);
+		errorsList.setIndentation(1);
 
 		clearErrors();
 	}
@@ -989,11 +997,13 @@ using namespace QGED;
 	CodeEditorContainer::~CodeEditorContainer(void)
 	{ }
 
-	void CodeEditorContainer::errorItemDoubleClicked(QListWidgetItem* item)
+	void CodeEditorContainer::errorItemDoubleClicked(QTreeWidgetItem* item, int column)
 	{
+		UNUSED_PARAMETER(column)
+
 		if(item!=NULL)
 		{
-			const int lineNumber = item->data(Qt::UserRole).toInt();
+			const int lineNumber = item->data(1, Qt::UserRole).toInt();
 
 			if(lineNumber>=1)
 				editor.gotoLine(lineNumber);
@@ -1019,52 +1029,67 @@ using namespace QGED;
 
 	void CodeEditorContainer::showErrors(Exception compilationError)
 	{
-		const std::string lineErrorDescriptors[2] = {"At line ", "From line "};
-		
 		QList<int> errorLines;
-
+	
 		errorsList.clear();
 
-		compilationError.hideHeader(true);
-		std::string line;
-		std::istringstream stream(compilationError.what());
+		const QColor	infoColor(128,128,128),
+				errorColor(255,255,255);
 
-		while(std::getline(stream, line))
+		for(int k=compilationError.numSubExceptions(); k>=0; k--)
 		{
-			QListWidgetItem* item = new QListWidgetItem(QString::fromStdString(line), &errorsList);
-			errorsList.addItem(item);
+			const Exception& e= (k==compilationError.numSubExceptions()) ? compilationError : compilationError.subException(k);
 
-			// Try to read the line number for the error :
-			item->setData(Qt::UserRole, QVariant::fromValue(-1));
-			for(unsigned int k=0; k<sizeof(lineErrorDescriptors)/sizeof(std::string); k++)
+			QTreeWidgetItem* item = new QTreeWidgetItem(&errorsList, static_cast<int>(e.getType()));
+			item->setText(0, e.message());
+			item->setText(1, tr("%1").arg(e.lineNumber()));
+			item->setText(2, e.file());
+			
+			errorsList.addTopLevelItem(item);
+
+			if(e.getType()==Exception::ClientShaderException || e.getType()==Exception::ClientScriptException || k==0)
 			{
-				size_t 	p = line.find(lineErrorDescriptors[k]);
-				if(p!=std::string::npos)
-				{
-					p+=lineErrorDescriptors[k].size();
-					size_t q = line.find(':', p);
-					int l = -1;
-					if(q!=std::string::npos && fromString(line.substr(p, q-p), l))
-					{
-						item->setData(Qt::UserRole, QVariant::fromValue(l));
-						errorLines.append(l);
-						break;
-					}
-				}
+				item->setForeground(0, QBrush(errorColor));
+				item->setForeground(1, QBrush(errorColor));
+				item->setForeground(2, QBrush(errorColor));
 			}
+			else
+			{
+				item->setForeground(0, QBrush(infoColor));
+				item->setForeground(1, QBrush(infoColor));
+				item->setForeground(2, QBrush(infoColor));
+			}
+
+			if(std::string(e.file())=="PipelineItem") // Should be temporary
+			{
+				errorLines.push_back(e.lineNumber());
+				item->setData(1, Qt::UserRole, e.lineNumber());
+			}
+			else
+				item->setData(1, Qt::UserRole, -1);
 		}
 
 		editor.highlightErrorLines(errorLines);
+	
+		// Resize the columns :
+		for(int k=0; k<errorsList.columnCount(); k++)
+			errorsList.resizeColumnToContents(k);
 
-		QListWidgetItem* firstItem = errorsList.item(0);
-		if(errorsList.count()>0 && firstItem!=NULL)
+		// Resize the box :
+		if(errorsList.topLevelItemCount()>0)
 		{
 			int newHeight = 0;
-			for(int k=0; k<errorsList.count(); k++)
+	
+			//if(errorsList.headerItem()!=NULL)
+			//	newHeight += errorsList.headerItem()->sizeHint(0).height()*2;
+			if(errorsList.header()!=NULL)
+				newHeight += errorsList.header()->height();
+
+			for(int k=0; k<errorsList.topLevelItemCount(); k++)
 				newHeight += (errorsList.sizeHintForRow(k) + 1);
 
 			QList<int> sizes = splitterLayout.sizes();
-			int totalHeight = 0; //std::accumulate(sizes.begin(), sizes.end(), 0); only in C++11
+			int totalHeight = 0; 
 			for(QList<int>::const_iterator it=sizes.begin(); it!=sizes.end(); it++)
 				totalHeight += *it;
 			
@@ -1076,8 +1101,6 @@ using namespace QGED;
 
 			splitterLayout.setSizes(sizes);
 		}
-		else
-			errorsList.addItem("(unspecified error)");
 
 		errorsList.show();
 	}
@@ -1614,7 +1637,7 @@ using namespace QGED;
 	
 	void CodeEditorSettings::setSettingsFromString(const std::string& str)
 	{
-		Glip::Modules::VanillaParserSpace::VanillaParser parser(str);
+		Glip::Modules::VanillaParserSpace::VanillaParser parser(str, "SOURCETOBEDEFINED");
 
 		#define READ_COLOR( varName ) \
 			if(it->strKeyword==GLIP_STR( varName )) \

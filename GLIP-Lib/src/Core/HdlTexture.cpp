@@ -88,7 +88,7 @@ using namespace Glip::CoreGL;
 	void HdlAbstractTextureFormat::setAlignment(int _alignment)
 	{
 		if(_alignment!=1 && _alignment!=4 && _alignment!=8)
-			throw Exception("HdlAbstractTextureFormat::setAlignment - Alignment value must be either 1, 4 or 8 (received : " + toString(_alignment) + ").", __FILE__, __LINE__);
+			throw Exception("HdlAbstractTextureFormat::setAlignment - Alignment value must be either 1, 4 or 8 (received : " + toString(_alignment) + ").", __FILE__, __LINE__, Exception::GLException);
 		else
 			alignment = _alignment; 
 	}
@@ -337,13 +337,13 @@ using namespace Glip::CoreGL;
 			case GL_GENERATE_MIPMAP :		return getMaxLevel()>0;
 			case GL_TEXTURE_INTERNAL_FORMAT :	return getGLMode();		
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
-			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("HdlAbstractTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__);
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("HdlAbstractTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__, Exception::GLException);
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
 			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
 			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
 			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel(), blueType )
 			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )
-			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		#undef TEXTURE_CHANNEL_TYPE
@@ -505,8 +505,8 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
-			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTextureFormat::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__);
-			default : 				throw Exception("HdlTextureFormat::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTextureFormat::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
+			default : 				throw Exception("HdlTextureFormat::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -541,7 +541,7 @@ using namespace Glip::CoreGL;
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);
 
 		if(vBorder!=0)
-			throw Exception("HdlTextureFormat::getTextureFormat - Texture has a non-null border.", __FILE__, __LINE__);
+			throw Exception("HdlTextureFormat::getTextureFormat - Texture has a non-null border.", __FILE__, __LINE__, Exception::GLException);
 
 		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	
 		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	
@@ -579,7 +579,7 @@ using namespace Glip::CoreGL;
 
 		// Test :
 		if(getBaseLevel()>getMaxLevel())
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__, Exception::GLException);
 
 		glEnable(GL_TEXTURE_2D);
 
@@ -592,7 +592,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(texID==0)
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		// Set it up :
 		glBindTexture(GL_TEXTURE_2D,texID);
@@ -610,7 +610,7 @@ using namespace Glip::CoreGL;
 		GLenum err = glGetError();
 
 		if(err)
-			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + toString(getBaseLevel()) + ", MaxLevel = " + toString(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + toString(getBaseLevel()) + ", MaxLevel = " + toString(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		HdlTexture::unbind();
 	}
@@ -640,7 +640,7 @@ using namespace Glip::CoreGL;
 
 		// Test :
 		if(getBaseLevel()>getMaxLevel())
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__);
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created : Base mipmap level (" + toString(getBaseLevel()) + ") is greater than maximum mipmap level (" + toString(getMaxLevel()) + ").", __FILE__, __LINE__, Exception::GLException);
 
 		bind();
 
@@ -802,8 +802,8 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
-			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__);
-			default : 				throw Exception("HdlTexture::setSetting : Throw unable to set parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__);
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
+			default : 				throw Exception("HdlTexture::setSetting : Throw unable to set parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
