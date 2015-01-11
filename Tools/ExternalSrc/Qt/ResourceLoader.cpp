@@ -80,7 +80,7 @@
 		else if(descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
 			qimage = new QImage(buffer.getWidth(), buffer.getHeight(), QImage::Format_ARGB32);		
 		else
-			throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+			throw Exception("Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 
 		// Copy to QImage : 
 		QColor value;
@@ -338,7 +338,7 @@
 				bufferImage = new QImage(texture.getWidth(), texture.getHeight(), QImage::Format_ARGB32);
 			}			
 			else
-				throw Exception("Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+				throw Exception("Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 
 			#ifndef __USE_PBO__
 				TextureReader reader("reader",texture.format());
@@ -631,7 +631,7 @@
 
 	void ImageLoaderInterface::updateLoadToolTip(void)
 	{
-		std::string tip = "Images will be loaded with the following parameters :\n    Minification filter \t : " + glParamName(minFilter) + "\n    Magnification filter \t : " + glParamName(magFilter) + "\n    S wrapping mode \t : " + glParamName(sWrapping) + "\n    T wrapping mode \t : " + glParamName(tWrapping) + "\n    Max Mipmap level \t : " + toString(maxMipmapLevel);
+		std::string tip = "Images will be loaded with the following parameters :\n    Minification filter \t : " + getGLEnumName(minFilter) + "\n    Magnification filter \t : " + getGLEnumName(magFilter) + "\n    S wrapping mode \t : " + getGLEnumName(sWrapping) + "\n    T wrapping mode \t : " + getGLEnumName(tWrapping) + "\n    Max Mipmap level \t : " + toString(maxMipmapLevel);
 		loadButton.setToolTip(tip.c_str());
 	}
 
@@ -639,7 +639,7 @@
 	{
 		if(getNumTextures()>0 && currentIndex.value()>0)
 		{
-			std::string tip = "Current image have the following parameters :\n    Minification filter \t : " + glParamName(currentTexture().getMinFilter()) + "\n    Magnification filter \t : " + glParamName(currentTexture().getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(currentTexture().getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(currentTexture().getTWrapping()) + "\n    Max Mipmap level \t : " + toString(currentTexture().getMaxLevel());
+			std::string tip = "Current image have the following parameters :\n    Minification filter \t : " + getGLEnumName(currentTexture().getMinFilter()) + "\n    Magnification filter \t : " + getGLEnumName(currentTexture().getMagFilter()) + "\n    S wrapping mode \t : " + getGLEnumName(currentTexture().getSWrapping()) + "\n    T wrapping mode \t : " + getGLEnumName(currentTexture().getTWrapping()) + "\n    Max Mipmap level \t : " + toString(currentTexture().getMaxLevel());
 			maxIndex.setToolTip(tip.c_str());
 		}
 		else
@@ -882,7 +882,7 @@
 			// Update the box :
 			for(int i=0; i<loadedPipeline->getNumOutputPort(); i++)
 			{
-				std::string portName = loadedPipeline->getOutputPortName(i) + " (" + toString(loadedPipeline->out(i).getWidth()) + "x" + toString(loadedPipeline->out(i).getHeight()) + "; " + glParamName(loadedPipeline->out(i).getGLMode()) + "; " + glParamName(loadedPipeline->out(i).getGLDepth()) + ")";
+				std::string portName = loadedPipeline->getOutputPortName(i) + " (" + toString(loadedPipeline->out(i).getWidth()) + "x" + toString(loadedPipeline->out(i).getHeight()) + "; " + getGLEnumName(loadedPipeline->out(i).getGLMode()) + "; " + getGLEnumName(loadedPipeline->out(i).getGLDepth()) + ")";
 				outputChoice.addItem(portName.c_str());
 			}
 

@@ -134,7 +134,7 @@
 	{
 		if(stream!=NULL)
 		{
-			std::string tip = "Current video have the following parameters :\n    Minification filter \t : " + glParamName(stream->out(0).getMinFilter()) + "\n    Magnification filter \t : " + glParamName(stream->out(0).getMagFilter()) + "\n    S wrapping mode \t : " + glParamName(stream->out(0).getSWrapping()) + "\n    T wrapping mode \t : " + glParamName(stream->out(0).getTWrapping()) + "\n    Max Mipmap level \t : " + to_string(stream->out(0).getMaxLevel()) + "\n    Number of buffers \t : " + to_string(stream->getNumOutputPort());
+			std::string tip = "Current video have the following parameters :\n    Minification filter \t : " + getGLEnumName(stream->out(0).getMinFilter()) + "\n    Magnification filter \t : " + getGLEnumName(stream->out(0).getMagFilter()) + "\n    S wrapping mode \t : " + getGLEnumName(stream->out(0).getSWrapping()) + "\n    T wrapping mode \t : " + getGLEnumName(stream->out(0).getTWrapping()) + "\n    Max Mipmap level \t : " + to_string(stream->out(0).getMaxLevel()) + "\n    Number of buffers \t : " + to_string(stream->getNumOutputPort());
 			infoLine.setToolTip(tip.c_str());
 
 			std::string info = "File : " + filename.toStdString() + " (" + to_string(stream->out(0).getWidth()) + "x" + to_string(stream->out(0).getHeight()) + ")";
@@ -149,7 +149,7 @@
 
 	void VideoControls::updateLoadToolTip(void)
 	{
-		std::string tip = "Videos will be loaded with the following parameters :\n    Minification filter \t : " + glParamName(minFilter) + "\n    Magnification filter \t : " + glParamName(magFilter) + "\n    S wrapping mode \t : " + glParamName(sWrapping) + "\n    T wrapping mode \t : " + glParamName(tWrapping) + "\n    Max Mipmap level \t : " + to_string(maxMipmapLevel) + "\n    Number of buffers \t : " + to_string(numFrameBuffered);
+		std::string tip = "Videos will be loaded with the following parameters :\n    Minification filter \t : " + getGLEnumName(minFilter) + "\n    Magnification filter \t : " + getGLEnumName(magFilter) + "\n    S wrapping mode \t : " + getGLEnumName(sWrapping) + "\n    T wrapping mode \t : " + getGLEnumName(tWrapping) + "\n    Max Mipmap level \t : " + to_string(maxMipmapLevel) + "\n    Number of buffers \t : " + to_string(numFrameBuffered);
 
 		loadVideoButton.setToolTip(tip.c_str());
 	}
@@ -379,12 +379,12 @@
 	void VideoRecordingDialog::updateFormat(const HdlAbstractTextureFormat& fmt)
 	{
 		int weight 	= fmt.getSize()/1024 + 1;
-		QString mode 	= glParamName(fmt.getGLMode()).c_str(),
-			depth 	= glParamName(fmt.getGLDepth()).c_str(),
-			minF	= glParamName(fmt.getMinFilter()).c_str(),
-			magF	= glParamName(fmt.getMagFilter()).c_str(),
-			sWrap	= glParamName(fmt.getSWrapping()).c_str(),
-			tWrap	= glParamName(fmt.getTWrapping()).c_str();
+		QString mode 	= getGLEnumName(fmt.getGLMode()).c_str(),
+			depth 	= getGLEnumName(fmt.getGLDepth()).c_str(),
+			minF	= getGLEnumName(fmt.getMinFilter()).c_str(),
+			magF	= getGLEnumName(fmt.getMagFilter()).c_str(),
+			sWrap	= getGLEnumName(fmt.getSWrapping()).c_str(),
+			tWrap	= getGLEnumName(fmt.getTWrapping()).c_str();
 
 		formatInfo1.setText(tr("%1x%2, %3, %4, %5 kB").arg(fmt.getWidth()).arg(fmt.getHeight()).arg(mode).arg(depth).arg(weight));
 		formatInfo2.setText(tr("%1 / %2").arg(minF).arg(magF));

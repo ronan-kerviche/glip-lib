@@ -26,6 +26,7 @@
 #include "Core/Exception.hpp"
 #include "Core/HdlVBO.hpp"
 #include <string>
+#include <algorithm>
 
 using namespace Glip;
 using namespace Glip::CoreGL;
@@ -177,92 +178,45 @@ using namespace Glip::CoreGL;
 
 // Errors Monitoring
 	/**
-	\fn std::string Glip::CoreGL::glErrorToString(bool* caughtError = NULL)
+	\fn std::string Glip::CoreGL::getGLErrorDescription(const GLenum& e)
 	\related HandleOpenGL
-	\brief Get a string corresponding to the last error raised by OpenGL.
-	\param caughtError Pointer to a boolean, will be set to true if an error is caught, or false otherwise.
-	\return A standard string containing human readable information.
+	\brief Get the description for a particular error code.
+	\param e The GL error code.
+	\return A std::string containing a description of the error or a string with the error code if it is unknown.
 	**/
-	std::string Glip::CoreGL::glErrorToString(bool* caughtError)
+	std::string Glip::CoreGL::getGLErrorDescription(const GLenum& e)
 	{
-		GLenum err = glGetError();
-
-		if(caughtError!=NULL)
-			(*caughtError) = err!=GL_NO_ERROR;
-
-		#define Err( errorcode, message) case errorcode: return message ;
-		switch(err)
+		#define MAP(errorcode, message) case errorcode: return message ;
+		switch(e)
 		{
-			Err( GL_INVALID_ENUM,					"Invalid Enum")
-			Err( GL_INVALID_VALUE,					"Invalid Value")
-			Err( GL_INVALID_OPERATION, 				"Invalid Operation")
-			Err( GL_STACK_OVERFLOW,					"Stack OverFlow")
-			Err( GL_STACK_UNDERFLOW,				"Stack UnderFlow")
-			Err( GL_OUT_OF_MEMORY,					"Out of Memory")
-			Err( GL_TABLE_TOO_LARGE,				"Table too large")
-			Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,		"Invalid framebuffer operation (possible incomplete texture)")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,		"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,	"The framebuffer does not have at least one image attached to it.")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,		"The value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER,		"GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,		"Either the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers; if the value of GL_TEXTURE_SAMPLES is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of GL_TEXTURE_SAMPLES or  if the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not the same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not GL_TRUE for all attached textures.")
-			Err( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,		"Any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.")
-			Err( GL_FRAMEBUFFER_UNSUPPORTED,			"Unsupported framebuffer (possible incompatibility with texture format)")
-			case GL_FRAMEBUFFER_COMPLETE :				return "(Framebuffer complete)";
-			case GL_NO_ERROR : 					return "(No error)";
-			default          : 					return "Unknown error (Code : " + toString(err) + ")";
+			MAP( GL_INVALID_ENUM,					"One or more GLenum parameter is incorrect.")
+			MAP( GL_INVALID_VALUE,					"One or more value is incorrect.")
+			MAP( GL_INVALID_OPERATION, 				"Operation is invalid.")
+			MAP( GL_STACK_OVERFLOW,					"Stack was overflowed.")
+			MAP( GL_STACK_UNDERFLOW,				"Stack was underflowed.")
+			MAP( GL_OUT_OF_MEMORY,					"No sufficient memory available to complete the operation.")
+			MAP( GL_TABLE_TOO_LARGE,				"Table is too large.")
+			MAP( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,		"Invalid framebuffer operation (possible incomplete texture).")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,		"Incomplete attachment for framebuffer (possible incompatibility with texture format).")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,	"The framebuffer does not have at least one image attached to it.")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,		"The value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER,		"GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,		"Either the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers; if the value of GL_TEXTURE_SAMPLES is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of GL_TEXTURE_SAMPLES or if the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not the same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not GL_TRUE for all attached textures.")
+			MAP( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,		"Any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.")
+			MAP( GL_FRAMEBUFFER_UNSUPPORTED,			"Unsupported framebuffer format (possible incompatibility with texture format).")
+			MAP( GL_FRAMEBUFFER_COMPLETE,				"(Framebuffer complete, no error).")
+			MAP( GL_NO_ERROR, 					"(No error).")
+			default          : 					return "Unknown error (code : " + toString(e) + ").";
 		}
 		#undef Err
-	}
+	}	
 
 	/**
-	\fn bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
-	\related HandleOpenGL
-	\brief Check for errors returned by OpenGL.
-	\param verbose If set to true, the error will be output on std::cout.
-	\param quietSituations If set to true, no print will be sent on std::cout in case there is no error.
-	\return true if an error occured.
-	**/
-	bool Glip::CoreGL::glErrors(bool verbose, bool quietSituations)
-	{
-		GLenum err = glGetError();
-
-		if(verbose)
-		{
-			#define Err( errorcode, message) case errorcode: std::cout << "OpenGL error : " << message << std::endl; break;
-			switch(err)
-			{
-				Err( GL_INVALID_ENUM,					"Invalid Enum")
-				Err( GL_INVALID_VALUE,					"Invalid Value")
-				Err( GL_INVALID_OPERATION, 				"Invalid Operation")
-				Err( GL_STACK_OVERFLOW,					"Stack OverFlow")
-				Err( GL_STACK_UNDERFLOW,				"Stack UnderFlow")
-				Err( GL_OUT_OF_MEMORY,					"Out of Memory")
-				Err( GL_TABLE_TOO_LARGE,				"Table too large")
-				Err( GL_INVALID_FRAMEBUFFER_OPERATION_EXT,		"Invalid framebuffer operation (possible incomplete texture)")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT,		"Incomplete attachment for framebuffer (possible incompatibility with texture format)")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT,	"The framebuffer does not have at least one image attached to it.")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER,		"The value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for any color attachment point(s) named by GL_DRAW_BUFFERi.")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER,		"GL_READ_BUFFER is not GL_NONE and the value of GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE is GL_NONE for the color attachment point named by GL_READ_BUFFER.")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE,		"Either the value of GL_RENDERBUFFER_SAMPLES is not the same for all attached renderbuffers; if the value of GL_TEXTURE_SAMPLES is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_RENDERBUFFER_SAMPLES does not match the value of GL_TEXTURE_SAMPLES or  if the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not the same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of GL_TEXTURE_FIXED_SAMPLE_LOCATIONS is not GL_TRUE for all attached textures.")
-				Err( GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS,		"Any framebuffer attachment is layered, and any populated attachment is not layered, or if all populated color attachments are not from textures of the same target.")
-				Err( GL_FRAMEBUFFER_UNSUPPORTED,			"Unsupported framebuffer (possible incompatibility with texture format)")
-				case GL_FRAMEBUFFER_COMPLETE :				if(quietSituations){ std::cout << "OpenGL error : Framebuffer complete" << std::endl; } break;
-				case GL_NO_ERROR : 					if(!quietSituations){ std::cout << "OpenGL error : No error recorded" << std::endl; } break;
-				default          :                       		std::cout << "OpenGL error : Unknown error (Code : " << err << ')' << std::endl; break;
-			}
-			#undef Err
-		}
-
-		return err!=GL_NO_ERROR;
-	}
-
-	/**
-	\fn void Glip::CoreGL::glDebug(void)
+	\fn void Glip::CoreGL::debugGL(void)
 	\related HandleOpenGL
 	\brief Print the current binding points state on std::cout (GL_TEXTURE_BINDING_1D, GL_TEXTURE_BINDING_2D, GL_TEXTURE_BINDING_3D, GL_ARRAY_BUFFER_BINDING, GL_ELEMENT_ARRAY_BUFFER_BINDING, GL_PIXEL_PACK_BUFFER_BINDING, GL_PIXEL_UNPACK_BUFFER_BINDING, GL_FRAMEBUFFER_BINDING, GL_TEXTURE_BUFFER_EXT, GL_CURRENT_PROGRAM).
 	**/
-	void Glip::CoreGL::glDebug(void)
+	void Glip::CoreGL::debugGL(void)
 	{
 		GLint param;
 
@@ -740,50 +694,68 @@ using namespace Glip::CoreGL;
 		#undef KEYWORD_PAIR
 	};
 
-	// OpenGL - Parameters Naming :
 	/**
 	\related HandleOpenGL
-	\fn std::string Glip::CoreGL::glParamName(GLenum param)
+	\fn std::string Glip::CoreGL::getGLEnumName(const GLenum& p)
 	\brief Get the parameter name as a string.
-	\param param The GLenum parameter.
+	\param p The GLenum parameter.
 	\return A standard string.
 	**/
-	std::string Glip::CoreGL::glParamName(GLenum param)
+	std::string Glip::CoreGL::getGLEnumName(const GLenum& p)
 	{
 		const int numTokens = static_cast<int>(sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair));
 
 		// Mixed name :
-		if(param==GL_POINTS || param==GL_ZERO || param==GL_FALSE)
+		if(p==GL_POINTS || p==GL_ZERO || p==GL_FALSE)
 			return "GL_POINTS/GL_ZERO/GL_NONE";
 
 		for(int i=0; i<numTokens; i++)
 		{
-			if(HandleOpenGL::glKeywords[i].value==param)
+			if(HandleOpenGL::glKeywords[i].value==p)
 				return HandleOpenGL::glKeywords[i].name;
 		}
 
-		// Default :
-		return "(Unknown OpenGL constant)";
+		throw Exception("Unknown GLenum code : " + toString(p) + ".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
 	\related HandleOpenGL
-	\fn GLenum Glip::CoreGL::glFromString(const std::string& name)
+	\fn GLenum Glip::CoreGL::getGLEnum(const std::string& s)
 	\brief Get the parameter from its name in a string.
-	\param name The GLenum parameter name.
-	\return The corresponding enum or GL_FALSE if no enum was found (which might be a valid answer).
+	\param s The GLenum parameter name.
+	\return The corresponding enum or throw an exception if no enum was found.
 	**/
-	GLenum Glip::CoreGL::glFromString(const std::string& name)
+	GLenum Glip::CoreGL::getGLEnum(const std::string& s)
 	{
 		const int numTokens = static_cast<int>(sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair));
 
 		for(int i=0; i<numTokens; i++)
 		{
-			if(HandleOpenGL::glKeywords[i].name==name)
+			if(HandleOpenGL::glKeywords[i].name==s)
 				return HandleOpenGL::glKeywords[i].value;
 		}
 
-		// Default :
-		return GL_FALSE;
+		throw Exception("Unknown GLenum : \"" + s + "\".", __FILE__, __LINE__, Exception::GLException);
+	}
+
+	/**
+	\related HandleOpenGL
+	\fn bool Glip::CoreGL::belongsToGLEnums(const GLenum& p, const GLenum* l, const size_t s)
+	\brief Test if a symbol belongs to a list of possible symbols.
+	\param p Symbol to be tested.
+	\param l List of symbols.
+	\param s Size of the list, in bytes.
+	\return True if the symbol belongs to the list.
+
+	Sample usage :
+	\code
+	const GLenum[] list = {GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA};
+	bool test = glTestList(symbol, list, sizeof(list));
+	\endcode
+	**/
+	bool Glip::CoreGL::belongsToGLEnums(const GLenum& p, const GLenum* l, const size_t s)
+	{
+		const size_t t = s/sizeof(GLenum);
+		return (std::find(l, l+t, p)!=(l+t));
 	}
 

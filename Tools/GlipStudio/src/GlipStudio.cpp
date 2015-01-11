@@ -84,13 +84,13 @@
 		pipelineManager->hide();
 
 		// Connections : 
-		QObject::connect(collection, 				SIGNAL(addViewRequest(QVGL::View*)), 					window, 				SLOT(addView(QVGL::View*)));
-		QObject::connect(editor->getCodeEditorPtr(), 		SIGNAL(compileSource(std::string, std::string, void*, const QObject*)), pipelineManager->getManagerPtr(), 	SLOT(compileSource(std::string, std::string, void*, const QObject*)));
-		QObject::connect(collection->getCollectionPtr(), 	SIGNAL(imageItemAdded(QGIC::ImageItem*)), 				pipelineManager->getManagerPtr(), 	SLOT(addImageItem(QGIC::ImageItem*)));
-		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewRequest(QVGL::View*)), 					window, 				SLOT(addView(QVGL::View*)));
-		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),			window, 				SLOT(addViewsTable(QVGL::ViewsTable*)));
-		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),		collection->getCollectionPtr(),		SLOT(addImageItem(HdlTexture*, const QString)));
-		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(editFile(const QString)),					editor->getCodeEditorPtr(),		SLOT(open(const QString&)));
+		QObject::connect(collection, 				SIGNAL(addViewRequest(QVGL::View*)), 							window, 				SLOT(addView(QVGL::View*)));
+		QObject::connect(editor->getCodeEditorPtr(), 		SIGNAL(compileSource(std::string, std::string, std::string, void*, const QObject*)), 	pipelineManager->getManagerPtr(), 	SLOT(compileSource(std::string, std::string, std::string, void*, const QObject*)));
+		QObject::connect(collection->getCollectionPtr(), 	SIGNAL(imageItemAdded(QGIC::ImageItem*)), 						pipelineManager->getManagerPtr(), 	SLOT(addImageItem(QGIC::ImageItem*)));
+		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewRequest(QVGL::View*)), 							window, 				SLOT(addView(QVGL::View*)));
+		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),					window, 				SLOT(addViewsTable(QVGL::ViewsTable*)));
+		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),				collection->getCollectionPtr(),		SLOT(addImageItem(HdlTexture*, const QString)));
+		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(editFile(const QString)),							editor->getCodeEditorPtr(),		SLOT(open(const QString&)));
 
 		window->resize(900, 600);
 		window->show();

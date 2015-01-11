@@ -54,42 +54,48 @@
 					/// From a failed shader compilation, with code provided by the client.
 					ClientShaderException,
 					/// From a failed script evaluaton, with code provided by the client.
-					ClientScriptException
+					ClientScriptException,
+					/// Client type exception.
+					ClientException
 				};
 
 			private :
 				// Data :
 				Type			type;
-				std::string  		msg,
+				std::string  		message,
 							filename;
-				unsigned int		line;
-				std::string		completeMsg;
-				bool			showHeader;
+				int			line;
+				std::string		completeMessage;
+				bool			subordinateException,
+							showHeader;
 				std::vector<Exception>	subExceptions;	
 
 				// Tools :
-				std::string header(bool showHeaderControl=true) const throw();
+				void cleanSubException(void);
+				std::string header(bool showHeaderControl=true) const;
 				void updateCompleteMessage(void);
 
 			public :
 				// Tools :
-				Exception(const std::string& m, std::string f="", unsigned int l=0, const Type& t=UnspecifiedException);
+				Exception(const std::string& m, std::string f="", int l=-1, const Type& t=UnspecifiedException);
 				Exception(const Exception& e);
 				virtual ~Exception(void) throw();
 
 				Type getType(void) const;
 				const char* what(void) const throw();
-				const char* message(void) const throw();
-				const char* file(void) const throw();
-				unsigned int lineNumber(void) const throw();
+				const std::string& getMessage(void) const throw();
+				const std::string& getFilename(void) const throw();
+				std::string getShortFilename(void) const;
+				int getLineNumber(void) const throw();
 
 				Exception& operator=(const std::exception& e);
 				Exception& operator=(const Exception& e);
 				Exception& operator<<(const std::exception& e);
 				Exception& operator<<(const Exception& e);
 
-				int numSubExceptions(void) const throw();
-				const Exception& subException(int i);
+				int getNumSubExceptions(void) const throw();
+				const Exception& getSubException(int i);
+				bool isSubException(void) const;
 				void hideHeader(bool enabled=true);
 				bool isHeaderHidden(void) const;
 		};

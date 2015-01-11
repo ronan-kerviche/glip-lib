@@ -81,7 +81,7 @@
 		name = e.name;
 
 		// Create the data : 
-		data = HdlDynamicData::build(glFromString(e.strKeyword));
+		data = HdlDynamicData::build(getGLEnum(e.strKeyword));
 
 		// Test : 
 		if(data->getNumElements()!=static_cast<int>(e.arguments.size()))
@@ -200,7 +200,7 @@
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword 	= glParamName(data->getGLType());
+		e.strKeyword 	= getGLEnumName(data->getGLType());
 		e.name		= name;
 		e.noName	= false;
 		

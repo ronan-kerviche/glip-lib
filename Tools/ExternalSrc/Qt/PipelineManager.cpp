@@ -735,7 +735,7 @@ using namespace QGPM;
 
 		try
 		{
-			elements = loader.listElements(source, "PipelineItem");
+			elements = loader.listElements(source, sourceName);
 		}
 		catch(Exception& e)
 		{
@@ -861,7 +861,7 @@ using namespace QGPM;
 					std::cout << "PipelineItem::compile - Unable to add requirement : " << name << std::endl;
 			}
 
-			pipeline = loader.getPipeline(source, "Pipeline", "PipelineItem");
+			pipeline = loader.getPipeline(source, "Pipeline", sourceName);
 
 			checkUniforms();
 
@@ -1115,12 +1115,13 @@ using namespace QGPM;
 		return res;
 	}
 
-	void PipelineItem::updateSource(const std::string& _source, const std::string& path)
+	void PipelineItem::updateSource(const std::string& _source, const std::string& path, const std::string& _sourceName)
 	{
 		loader.clearPaths();
 		loader.addToPaths(path);
 
 		source = _source + "\n";
+		sourceName = _sourceName;
 
 		preInterpret();
 
@@ -2027,14 +2028,14 @@ using namespace QGPM;
 		connectionsMenu.addImageItem(imageItem);
 	}
 
-	void PipelineManager::compileSource(std::string source, std::string path, void* identifier, const QObject* referrer)
+	void PipelineManager::compileSource(std::string source, std::string path, std::string sourceName, void* identifier, const QObject* referrer)
 	{
 		// Test if identifier already exists : 
 		QMap<void*, PipelineItem*>::iterator it = pipelineItems.find(identifier);
 
 		// Update : 
 		if(it!=pipelineItems.end())
-			it.value()->updateSource(source, path);
+			it.value()->updateSource(source, path, sourceName);
 		else
 		{
 			// Create a new pipeline :
@@ -2048,7 +2049,7 @@ using namespace QGPM;
 
 			emit pipelineItemAdded(pipelineItem);
 
-			pipelineItem->updateSource(source, path);
+			pipelineItem->updateSource(source, path, sourceName);
 		}
 	}
 

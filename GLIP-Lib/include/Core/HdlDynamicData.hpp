@@ -267,7 +267,7 @@ delete data;
 				const HdlDynamicData& HdlDynamicDataSpecial<T>::operator=(const HdlDynamicData& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
-						throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
+						throw Exception("HdlDynamicDataSpecial<T>::operator= - Data types do not match (target : \"" + getGLEnumName(cpy.getGLType()) + "\"; source : \"" + getGLEnumName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
 				
 					std::memcpy(data, cpy.getPtr(), getNumElements()*sizeof(T));
 				
@@ -997,7 +997,7 @@ delete data;
 				const HdlDynamicTable& HdlDynamicTableSpecial<T>::operator=(const HdlDynamicTable& cpy)
 				{
 					if(cpy.getGLType()!=getGLType())
-						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data types do not match (target : \"" + glParamName(cpy.getGLType()) + "\"; source : \"" + glParamName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
+						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data types do not match (target : \"" + getGLEnumName(cpy.getGLType()) + "\"; source : \"" + getGLEnumName(cpy.getGLType()) + "\").", __FILE__, __LINE__, Exception::CoreException);
 					if(cpy.getNumRows()!=getNumRows() || cpy.getNumColumns()!=getNumColumns() || cpy.getNumSlices()!=getNumSlices())
 						throw Exception("HdlDynamicTableSpecial<T>::operator= - Data format does not match.", __FILE__, __LINE__, Exception::CoreException);
 				

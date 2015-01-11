@@ -543,7 +543,7 @@
 			if(e.arguments[3]=="*")
 				mode = it->second.getGLMode();
 			else
-				mode = glFromString(e.arguments[3]);
+				mode = getGLEnum(e.arguments[3]);
 		}
 		else
 			mode = it->second.getGLMode();
@@ -553,7 +553,7 @@
 			if(e.arguments[4]=="*")
 				depth = it->second.getGLDepth();
 			else
-				depth = glFromString(e.arguments[4]);
+				depth = getGLEnum(e.arguments[4]);
 		}
 		else
 			depth = it->second.getGLDepth();
@@ -563,7 +563,7 @@
 			if(e.arguments[5]=="*")
 				minFilter = it->second.getMinFilter();
 			else
-				minFilter = glFromString(e.arguments[5]);
+				minFilter = getGLEnum(e.arguments[5]);
 		}
 		else
 			minFilter = it->second.getMinFilter();
@@ -573,7 +573,7 @@
 			if(e.arguments[6]=="*")
 				magFilter = it->second.getMagFilter();
 			else
-				magFilter = glFromString(e.arguments[6]);
+				magFilter = getGLEnum(e.arguments[6]);
 		}
 		else
 			magFilter = it->second.getMagFilter();
@@ -583,7 +583,7 @@
 			if(e.arguments[7]=="*")
 				sWrap = it->second.getSWrapping();
 			else
-				sWrap = glFromString(e.arguments[7]);
+				sWrap = getGLEnum(e.arguments[7]);
 		}
 		else
 			sWrap = it->second.getSWrapping();
@@ -593,7 +593,7 @@
 			if(e.arguments[8]=="*")
 				tWrap = it->second.getTWrapping();
 			else
-				tWrap = glFromString(e.arguments[8]);
+				tWrap = getGLEnum(e.arguments[8]);
 		}
 		else
 			tWrap = it->second.getTWrapping();
@@ -793,26 +793,26 @@
 		if(!fromString(e.arguments[1], h))
 			throw Exception("Cannot read height for format \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-		mode  = glFromString(e.arguments[2]);
-		depth = glFromString(e.arguments[3]);
+		mode  = getGLEnum(e.arguments[2]);
+		depth = getGLEnum(e.arguments[3]);
 
 		if(e.arguments.size()>4)
-			minFilter = glFromString(e.arguments[4]);
+			minFilter = getGLEnum(e.arguments[4]);
 		else
 			minFilter = GL_NEAREST;
 
 		if(e.arguments.size()>5)
-			magFilter = glFromString(e.arguments[5]);
+			magFilter = getGLEnum(e.arguments[5]);
 		else
 			magFilter = GL_NEAREST;
 
 		if(e.arguments.size()>6)
-			sWrap = glFromString(e.arguments[6]);
+			sWrap = getGLEnum(e.arguments[6]);
 		else
 			sWrap = GL_CLAMP;
 
 		if(e.arguments.size()>7)
-			tWrap = glFromString(e.arguments[7]);
+			tWrap = getGLEnum(e.arguments[7]);
 		else
 			tWrap = GL_CLAMP;
 
@@ -966,7 +966,7 @@
 			{
 				GLenum primitive;
 
-				primitive = glFromString(e.arguments[1]);
+				primitive = getGLEnum(e.arguments[1]);
 
 				bool hasTexCoord = false;
 
@@ -1163,7 +1163,7 @@
 
 				for(unsigned int k=0; k<parser.elements.size(); k++)
 				{
-					GLenum glId = glFromString(parser.elements[k].strKeyword);
+					GLenum glId = getGLEnum(parser.elements[k].strKeyword);
 					
 					if(glId==GL_CLEAR)
 					{
@@ -1172,9 +1172,9 @@
 
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 						
-						if(parser.elements[k].arguments[0]=="true")
+						if(parser.elements[k].arguments[0]==keywords[KW_LL_TRUE])
 							filterLayout->second.enableClearing();
-						else if(parser.elements[k].arguments[0]=="false")
+						else if(parser.elements[k].arguments[0]==keywords[KW_LL_FALSE])
 							filterLayout->second.disableClearing();
 						else
 							throw Exception("Unknown settings \"" + parser.elements[k].arguments[0] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException); 
@@ -1188,9 +1188,9 @@
 
 						preliminaryTests(parser.elements[k], -1, 3, 3, -1, e.name);
 
-						GLenum 	sFactor 	= glFromString(parser.elements[k].arguments[0]),
-							dFactor 	= glFromString(parser.elements[k].arguments[1]),
-							blendingEquation= glFromString(parser.elements[k].arguments[2]);
+						GLenum 	sFactor 	= getGLEnum(parser.elements[k].arguments[0]),
+							dFactor 	= getGLEnum(parser.elements[k].arguments[1]),
+							blendingEquation= getGLEnum(parser.elements[k].arguments[2]);
 
 						filterLayout->second.enableBlending(sFactor, dFactor, blendingEquation);
 
@@ -1203,7 +1203,7 @@
 							
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						GLenum  depthTestingFunction = glFromString(parser.elements[k].arguments[0]);
+						GLenum  depthTestingFunction = getGLEnum(parser.elements[k].arguments[0]);
 
 						filterLayout->second.enableDepthTesting(depthTestingFunction);
 		
@@ -2191,12 +2191,12 @@
 
 		e.arguments.push_back( toString( hLayout.getWidth() ) );
 		e.arguments.push_back( toString( hLayout.getHeight() ) );
-		e.arguments.push_back( glParamName( hLayout.getGLMode() ) );
-		e.arguments.push_back( glParamName( hLayout.getGLDepth() ) );
-		e.arguments.push_back( glParamName( hLayout.getMinFilter() ) );
-		e.arguments.push_back( glParamName( hLayout.getMagFilter() ) );
-		e.arguments.push_back( glParamName( hLayout.getSWrapping() ) );
-		e.arguments.push_back( glParamName( hLayout.getTWrapping() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getGLMode() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getGLDepth() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getMinFilter() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getMagFilter() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getSWrapping() ) );
+		e.arguments.push_back( getGLEnumName( hLayout.getTWrapping() ) );
 		e.arguments.push_back( toString( hLayout.getMaxLevel() ) );
 
 		return e;
@@ -2268,7 +2268,7 @@
 		else if(mdl.type==GeometryModel::CustomModel)
 		{
 			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_CUSTOM_MODEL ) );
-			e.arguments.push_back( glParamName(mdl.primitiveGL) );
+			e.arguments.push_back( getGLEnumName(mdl.primitiveGL) );
 
 			if( mdl.hasTexCoord )
 				e.arguments.push_back( "true" );

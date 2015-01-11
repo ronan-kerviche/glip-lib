@@ -552,7 +552,7 @@ namespace QGED
 			void closeAll(void);
 
 		signals :
-			void compileSource(std::string source, std::string path, void* identifier, const QObject* referrer);
+			void compileSource(std::string source, std::string path, std::string sourceName, void* identifier, const QObject* referrer);
 	};
 
 	#ifdef __USE_QVGL__

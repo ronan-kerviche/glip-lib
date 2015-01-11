@@ -301,10 +301,10 @@ using namespace QVGL;
 
 			toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(texture->getWidth()).arg(texture->getHeight()).arg(getSizeString(texture->getSize()));
 			toolTip += tr("<tr><td><i>Size (Driver)</i></td><td>:</td><td>%1</td></tr>").arg(getSizeString(texture->getSizeOnGPU(0)));
-			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture->getGLMode() ).c_str());
-			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture->getGLDepth() ).c_str());
-			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture->getMinFilter() ).c_str()).arg(glParamName(texture->getMagFilter() ).c_str());
-			toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture->getSWrapping() ).c_str()).arg(glParamName(texture->getTWrapping() ).c_str());
+			toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(texture->getGLMode() ).c_str());
+			toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(texture->getGLDepth() ).c_str());
+			toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(texture->getMinFilter() ).c_str()).arg(getGLEnumName(texture->getMagFilter() ).c_str());
+			toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(texture->getSWrapping() ).c_str()).arg(getGLEnumName(texture->getTWrapping() ).c_str());
 			toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(texture->getBaseLevel()).arg(texture->getMaxLevel());
 
 			for(QMap<QString, QString>::const_iterator it=infos.begin(); it!=infos.end(); it++)
@@ -1024,6 +1024,12 @@ using namespace QVGL;
 		event->accept();
 	}
 
+	void SubWidget::showEvent(QShowEvent* event)
+	{
+		// Make sure the widget is visible on the current portion of the scene :
+		resetPosition(false);
+	}
+
 	void SubWidget::addChild(QObject* pObject)
 	{
 		if(pObject && pObject->isWidgetType())
@@ -1231,6 +1237,36 @@ using namespace QVGL;
 	const SubWidget::AnchorMode& SubWidget::getAnchor(void) const
 	{
 		return anchorMode;
+	}
+
+	void SubWidget::resetPosition(bool force)
+	{
+		if(force)
+		{
+			setAnchor(AnchorFree);
+			move(0, TopBar::getHeight()); 
+		}
+		else if(anchorMode==AnchorFree && graphicsProxy!=NULL && graphicsProxy->scene()!=NULL)
+		{
+			const QRectF sceneRect = graphicsProxy->scene()->sceneRect();
+			const int safeBorder = 64; // pixels.
+			int 	currentX = x(),
+				currentY = y();
+
+			if((x()+safeBorder)>=sceneRect.width())
+				currentX = sceneRect.width() - safeBorder;
+
+			if((x()+width())<=safeBorder)
+				currentX = safeBorder - width();
+			
+			if((y()+safeBorder)>=sceneRect.height())
+				currentY = sceneRect.height()-safeBorder;
+
+			if((y()+height())<=safeBorder)
+				currentY = safeBorder - height();
+
+			move(currentX, currentY);
+		}
 	}
 
 	void SubWidget::show(void)
@@ -1847,7 +1883,7 @@ using namespace QVGL;
 		{
 			// If not, create it :
 			QTreeWidgetItem* rootItem = new QTreeWidgetItem(static_cast<int>(ptr->data().getGLType()));
-			rootItem->setText(0, QString::fromStdString(glParamName(ptr->data().getGLType())));			
+			rootItem->setText(0, QString::fromStdString(getGLEnumName(ptr->data().getGLType())));			
 
 			innerTreeWidget.addTopLevelItem(rootItem);
 			typeRoots[ptr->data().getGLType()] = rootItem;
@@ -3661,7 +3697,10 @@ using namespace QVGL;
 		if(!subWidget->isVisible())
 			subWidget->show();		// implement the Show (1st part)
 		else
+		{
+			subWidget->resetPosition(false);
 			subWidgetSelected(subWidget);	// implement the raise (2nd part)
+		}
 	}
 
 	void MainWidget::showSubWidget(void)

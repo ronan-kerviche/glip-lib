@@ -332,6 +332,7 @@ namespace QVGL
 			void mouseReleaseEvent(QMouseEvent* event);
 			void mouseDoubleClickEvent(QMouseEvent* event);
 			void wheelEvent(QWheelEvent* event);
+			void showEvent(QShowEvent* event);
 
 			void addChild(QObject* pObject);
 			void removeChild(QObject* pObject);
@@ -358,6 +359,7 @@ namespace QVGL
 			MainWidget* getQVGLParent(void);
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
+			void resetPosition(bool force=true);
 
 			static SubWidget* getPtrFromProxyItem(QGraphicsItem *item);
 			static SubWidget* getPtrFromProxyItem(QGraphicsProxyWidget *proxy);

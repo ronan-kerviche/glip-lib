@@ -16,16 +16,21 @@
 
 #include "CreateWindowlessContext.hpp"
 
-void createWindowlessContext(void)
+void createWindowlessContext(std::string displayName)
 {
 	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
 	glXMakeContextCurrentARB   = (glXMakeContextCurrentARBProc)   glXGetProcAddressARB( (const GLubyte *) "glXMakeContextCurrent"      );
 
-	const char *displayName = NULL;
-	Display* display = XOpenDisplay( displayName );
+	const char *displayNameCStr = (displayName.empty() ? NULL : displayName.c_str());
+	Display* display = XOpenDisplay( displayNameCStr );
 
 	if(display==NULL)
-		throw Glip::Exception("createWindowlessContext - Could not open a display.", __FILE__, __LINE__);
+	{
+		if(displayName.empty())
+			throw Glip::Exception("createWindowlessContext - Could not open a display (default).", __FILE__, __LINE__, Glip::Exception::GLException);
+		else
+			throw Glip::Exception("createWindowlessContext - Could not open the display \"" + displayName + "\".", __FILE__, __LINE__, Glip::Exception::GLException);
+	}
 
 	static int visualAttribs[] = { None };
 	int numberOfFramebufferConfigurations = 0;
@@ -54,6 +59,6 @@ void createWindowlessContext(void)
 	XSync( display, False );
 
 	if( !glXMakeContextCurrent(display, pbuffer, pbuffer, openGLContext) )
-		throw Glip::Exception("createWindowlessContext - Could not setup GL context.", __FILE__, __LINE__);
+		throw Glip::Exception("createWindowlessContext - Could not setup GL context.", __FILE__, __LINE__, Glip::Exception::GLException);
 }
 

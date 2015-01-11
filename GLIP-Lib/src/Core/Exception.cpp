@@ -26,25 +26,23 @@
 	using namespace Glip;
  
 	/**
-	\fn Exception::Exception(const std::string& m, std::string f, unsigned int l, const Type& t)
+	\fn Exception::Exception(const std::string& m, std::string f, int l, const Type& t)
 	\brief Exception constructor.
 	\param m Message.
 	\param f File name (__FILE__).
 	\param l Line number (__LINE__).
 	\param t Type of the exception (see Exception::Type).
 	**/
-	Exception::Exception(const std::string& m, std::string f, unsigned int l, const Type& t)
+	Exception::Exception(const std::string& m, std::string f, int l, const Type& t)
 	 :	type(t),
-		msg(m), 
+		message(m), 
 		filename(f), 
 		line(l), 
+		subordinateException(false),
 		showHeader(true)
 	{
-		if(filename!="")
-		{
-			size_t p = filename.find_last_of("/\\");
-			filename = filename.substr(p+1);
-		}
+		if(type==CoreException || type==ModuleException || type==GLException)
+			filename = getShortFilename();
 
 		updateCompleteMessage();
 	}
@@ -56,10 +54,11 @@
 	**/
 	Exception::Exception(const Exception& e)
 	 :	type(e.type),
-		msg(e.msg), 
+		message(e.message), 
 		filename(e.filename), 
 		line(e.line), 
-		completeMsg(e.completeMsg),
+		completeMessage(e.completeMessage),
+		subordinateException(e.subordinateException),
 		showHeader(e.showHeader),
 		subExceptions(e.subExceptions) 
 	{ }
@@ -69,48 +68,67 @@
 		subExceptions.clear();
 	}
 
+	void Exception::cleanSubException(void)
+	{
+		completeMessage.clear();
+		subordinateException = true;
+		subExceptions.clear();
+	}
+
+	std::string Exception::header(bool showHeaderControl) const
+	{
+		if(filename.empty() || !showHeaderControl)
+			return "";
+		else
+		{
+			if(line>=0)
+				return getShortFilename() + "; " + toString(line);
+			else
+				return getShortFilename();
+		}
+	}
+
 	void Exception::updateCompleteMessage(void)
 	{
-		completeMsg.clear();
+		const int nMessages = subExceptions.size() + 1;
+		const std::string mainHeader = header(showHeader);
 
-		int nMessages = subExceptions.size() + 1;
-
-		std::string h = header(showHeader);
+		completeMessage.clear();
 
 		if(nMessages==1)
 		{
-			if(h!="")
-				completeMsg += "[ " + h + " ] " + msg;
+			if(!mainHeader.empty())
+				completeMessage = "[ " + mainHeader + " ] " + message;
 			else
-				completeMsg += msg;
+				completeMessage = message;
 		} 
 		else
 		{
 			// Create all headers : 
-			std::vector<std::string> headers, messages;
+			std::vector<std::string> 	headers, 
+							messages;
 			size_t maxLength = 0;
 
-			if(!h.empty())
+			if(!mainHeader.empty())
 			{
-				headers.push_back( std::string("[ 1 | " + h + " ") );
+				headers.push_back(std::string("[ 1 | " + mainHeader + " ") );
 				maxLength = headers.back().size();
 			}
 			else
 				headers.push_back( std::string("[ 1 ") );
 
-			messages.push_back(msg);
+			messages.push_back(message);
 
 			for(int i=subExceptions.size()-1; i>=0; i--)
 			{
-				headers.push_back("");
-				std::string header = subExceptions[i].header(showHeader);
+				const std::string header = subExceptions[i].header(showHeader);
 
 				if(!header.empty())
-					headers.back() = "[ " + toString(subExceptions.size()-i+1) + " | " + header + " ";
+					headers.push_back("[ " + toString(subExceptions.size()-i+1) + " | " + header + " ");
 				else
-					headers.back() = "[ " + toString(subExceptions.size()-i+1) + " ";
+					headers.push_back("[ " + toString(subExceptions.size()-i+1) + " ");
 
-				messages.push_back(subExceptions[i].msg);
+				messages.push_back(subExceptions[i].message);
 
 				maxLength = std::max(maxLength, headers.back().size());
 			}
@@ -122,12 +140,12 @@
 			for(int k=0; k<static_cast<int>(headers.size()); k++)
 			{
 				if(k>0)
-					completeMsg += "\n";
+					completeMessage += "\n";
 
 				padded = blank;
 				padded.replace(0, headers[k].size(), headers[k]);
 				padded += "] ";
-				completeMsg += padded + messages[k];
+				completeMessage += padded + messages[k];
 			}
 		}
 	}
@@ -149,51 +167,53 @@
 	**/
 	const char* Exception::what(void) const throw()
 	{
-		return completeMsg.c_str();
+		return completeMessage.c_str();
 	}
 
 	/**
-	\fn const char* Exception::message(void) const throw()
+	\fn const std::string& Exception::getMessage(void) const throw()
 	\brief Get the exception message.
-	\return C string.
+	\return Reference to a std::string containing the message.
 	**/
-	const char* Exception::message(void) const throw()
+	const std::string& Exception::getMessage(void) const throw()
 	{
-		return msg.c_str();
+		return message;
 	}
 
 	/**
-	\fn const char* Exception::file(void) const throw()
+	\fn const std::string& Exception::getFilename(void) const throw()
 	\brief Get the filename the exception was generated from.
-	\return C string.
+	\return Reference to a std::string containing the filename.
 	**/
-	const char* Exception::file(void) const throw()
+	const std::string& Exception::getFilename(void) const throw()
 	{
-		return filename.c_str();
+		return filename;
 	}
 
 	/**
-	\fn unsigned int Exception::lineNumber(void) const throw()
+	\fn std::string Exception::getShortFilename(void) const
+	\brief Get the last part of the filename (following the last separator).
+	\return String containing the shortened filename.
+	**/
+	std::string Exception::getShortFilename(void) const
+	{
+		size_t p = filename.find_last_of("/\\");
+		
+		if(p==std::string::npos)
+			return filename;
+		else
+			return filename.substr(p+1);
+	}
+
+	/**
+	\fn int Exception::getLineNumber(void) const throw()
 	\brief Get the line number the exception was generated from.
 	\return The line number.
 	**/
-	unsigned int Exception::lineNumber(void) const throw()
+	int Exception::getLineNumber(void) const throw()
 	{
 		return line;
-	}
-
-	std::string Exception::header(bool showHeaderControl) const throw()
-	{
-		if(filename.empty() || !showHeaderControl)
-			return std::string();
-		else
-		{
-			if(line!=0)
-				return filename + "; " + toString(line);
-			else
-				return filename;
-		}
-	}
+	}	
 
 	/**
 	\fn Exception& Exception::operator=(const std::exception& e)
@@ -203,12 +223,12 @@
 	**/
 	Exception& Exception::operator=(const std::exception& e)
 	{
-		msg		= e.what();
+		message		= e.what();
+		type		= UnspecifiedException;
 		line		= 0;
 		showHeader	= false;
 		filename.clear();
-		subExceptions.clear();	
-
+		subExceptions.clear();
 		updateCompleteMessage();
 
 		return (*this);
@@ -222,12 +242,13 @@
 	**/
 	Exception& Exception::operator=(const Exception& e)
 	{
-		msg		= e.msg;
-		filename	= e.filename;
-		line		= e.line;
-		completeMsg	= e.completeMsg;
-		showHeader	= e.showHeader;
-		subExceptions	= e.subExceptions;
+		message			= e.message;
+		filename		= e.filename;
+		line			= e.line;
+		completeMessage		= e.completeMessage;
+		subordinateException	= e.subordinateException;
+		showHeader		= e.showHeader;
+		subExceptions		= e.subExceptions;
 
 		return (*this);
 	}
@@ -240,8 +261,9 @@
 	**/
 	Exception& Exception::operator<<(const std::exception& e)
 	{
-		subExceptions.push_back(Exception(e.what()));
-		subExceptions.push_back(Exception("<std::exception>"));
+		Exception ex(e.what());
+		ex.cleanSubException();
+		subExceptions.push_back(ex);
 
 		updateCompleteMessage();
 
@@ -259,8 +281,9 @@
 		if(!e.subExceptions.empty())
 			subExceptions.insert( subExceptions.end(), e.subExceptions.begin(), e.subExceptions.end() );
 
-		subExceptions.push_back(e);
-		subExceptions.back().subExceptions.clear();
+		Exception ex(e);
+		ex.cleanSubException();
+		subExceptions.push_back(ex);
 
 		updateCompleteMessage();
 
@@ -268,28 +291,37 @@
 	}
 
 	/**
-	\fn int Exception::numSubExceptions(void) const throw();
+	\fn int Exception::getNumSubExceptions(void) const throw();
 	\brief Get the number of sub-error embedded.
 	\return The number of sub-error embedded.
 	**/
-	int Exception::numSubExceptions(void) const throw()
+	int Exception::getNumSubExceptions(void) const throw()
 	{
 		return subExceptions.size();
 	}
 
 	/**
-	\fn const Exception& Exception::subException(int i)
+	\fn const Exception& Exception::getSubException(int i)
 	\brief Return the sub-error at index i.
 	\param i The index of the sub-error.
 	\return Return the sub-error corresponding at index i or raise an error if the index is invalid.
 	**/
-	const Exception& Exception::subException(int i)
+	const Exception& Exception::getSubException(int i)
 	{
-		if(i<0 || i>numSubExceptions())
-			throw Exception("Exception::subException - Index out of bounds (" + toString(i) + ", range is [0;" + toString(numSubExceptions()) + "].", __FILE__, __LINE__);
-
+		if(i<0 || i>getNumSubExceptions())
+			throw Exception("Exception::subException - Index out of bounds (" + toString(i) + ", range is [0;" + toString(getNumSubExceptions()) + "].", __FILE__, __LINE__);
 		else
 			return subExceptions[i];
+	}
+
+	/**
+	\fn bool Exception::isSubException(void) const
+	\brief Test if the exception is a subordinate.
+	\return True if the exception is a subordinate.
+	**/
+	bool Exception::isSubException(void) const
+	{
+		return subordinateException;
 	}
 
 	/**
@@ -299,8 +331,11 @@
 	**/
 	void Exception::hideHeader(bool enabled)
 	{
-		showHeader = !enabled;
-		updateCompleteMessage();
+		if(enabled==showHeader)
+		{
+			showHeader = !enabled;
+			updateCompleteMessage();
+		}
 	}
 
 	/**

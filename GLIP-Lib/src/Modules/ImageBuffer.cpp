@@ -196,7 +196,7 @@
 			
 			GLenum err = glGetError();
 			if(err!=GL_NO_ERROR)
-				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
+				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + getGLEnumName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 			HdlTexture::unbind();
 
@@ -273,7 +273,7 @@
 
 			GLenum err = glGetError();
 			if(err!=GL_NO_ERROR)
-				throw Exception("ImageBuffer::operator>> - Unable to copy data to texture (glTexImage2D). (OpenGL error : " + glParamName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
+				throw Exception("ImageBuffer::operator>> - Unable to copy data to texture (glTexImage2D). (OpenGL error : " + getGLEnumName(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 			if( texture.getMaxLevel()>0 )
 			{

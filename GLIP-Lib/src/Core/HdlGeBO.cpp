@@ -57,7 +57,10 @@ using namespace Glip::CoreGL;
 		glGenBuffers(1, &bufferId);
 
 		if(bufferId==0)
-			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
+		{
+			GLenum err = glGetError();
+			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. OpenGL error " + getGLEnumName(err) + " : " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+		}
 
 		// Bind it
 		glBindBuffer(infoTarget, bufferId);
@@ -169,7 +172,7 @@ using namespace Glip::CoreGL;
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			if(binding[getIDTarget(target)])
-				std::cout << "HdlGeBO::bind - Rebinding over : " << glParamName(target) << std::endl;
+				std::cout << "HdlGeBO::bind - Rebinding over : " << getGLEnumName(target) << std::endl;
 		#endif
 
 		glBindBuffer(target, bufferId);
@@ -195,7 +198,7 @@ using namespace Glip::CoreGL;
 			else if(target==GL_PIXEL_PACK_BUFFER_ARB)
 				access=GL_READ_ONLY_ARB;
 			else
-				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + glParamName(target), __FILE__, __LINE__, Exception::GLException);
+				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + getGLEnumName(target), __FILE__, __LINE__, Exception::GLException);
 		}
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -207,7 +210,7 @@ using namespace Glip::CoreGL;
 		HdlGeBO::unmap(target);
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Unmap - target : " << glParamName(target) << " access : " << glParamName(access) << " -> " ; glErrors(true, false);
+			std::cout << "    Unmap - target : " << getGLEnumName(target) << " access : " << getGLEnumName(access) << " -> " ; glErrors(true, false);
 		#endif
 
 		bind(target);
@@ -272,7 +275,7 @@ using namespace Glip::CoreGL;
 			case GL_PIXEL_UNPACK_BUFFER_ARB :	return 2;
 			case GL_PIXEL_PACK_BUFFER_ARB :		return 3;
 			default :
-				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + glParamName(target), __FILE__, __LINE__, Exception::GLException);
+				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + getGLEnumName(target), __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 

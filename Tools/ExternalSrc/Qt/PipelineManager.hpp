@@ -242,7 +242,8 @@ namespace QGPM
 		private : 
 			const QObject*				referrer;
 			LayoutLoader				loader;
-			std::string				source;
+			std::string				source,
+								sourceName;
 			QString					inputFormatString;
 			void*					identifier;
 			LayoutLoader::PipelineScriptElements	elements;
@@ -291,7 +292,7 @@ namespace QGPM
 			~PipelineItem(void);
 
 			QString getName(void) const;
-			void updateSource(const std::string& _source, const std::string& path);
+			void updateSource(const std::string& _source, const std::string& path, const std::string& _sourceName);
 			bool isValid(void) const;
 			const QVector<OutputPortItem*>&	getOutputPortItems(void) const;
 			int getNumInputPorts(void) const;
@@ -490,7 +491,7 @@ namespace QGPM
 
 		public slots : 
 			void addImageItem(QGIC::ImageItem* imageItem); 
-			void compileSource(std::string source, std::string path, void* identifier, const QObject* referrer);
+			void compileSource(std::string source, std::string path, std::string sourceName, void* identifier, const QObject* referrer);
 			void removeSource(void* _identifier);
 			void updateColumnSize(void);
 

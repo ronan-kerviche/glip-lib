@@ -34,13 +34,14 @@
 
 		size_t				memorySize;	
 		std::string 			pipelineFilename,
-						inputFormatString;
+						inputFormatString,
+						displayName;
 		std::vector<ProcessCommand> 	commands;
 
-		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, inputFormatString, commands);
+		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, inputFormatString, displayName, commands);
 	
 		if(returnCode==0)
-			returnCode = compute(pipelineFilename, memorySize, inputFormatString, commands);
+			returnCode = compute(pipelineFilename, memorySize, inputFormatString, displayName, commands);
 
 		return returnCode;
 	}

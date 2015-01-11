@@ -256,7 +256,7 @@ using namespace QGED;
 
 		painter.fillRect(event->rect(), bg);
 
-		const int	pixelOffset	= 2;
+		const int	pixelOffset	= -1;
 		QTextBlock 	block 		= firstVisibleBlock();
 		int 		blockNumber 	= block.blockNumber();
 		int 		top 		= (int) blockBoundingGeometry(block).translated(contentOffset()).top();
@@ -1036,15 +1036,33 @@ using namespace QGED;
 		const QColor	infoColor(128,128,128),
 				errorColor(255,255,255);
 
-		for(int k=compilationError.numSubExceptions(); k>=0; k--)
+		for(int k=compilationError.getNumSubExceptions(); k>=0; k--)
 		{
-			const Exception& e= (k==compilationError.numSubExceptions()) ? compilationError : compilationError.subException(k);
+			const Exception& e= (k==compilationError.getNumSubExceptions()) ? compilationError : compilationError.getSubException(k);
 
 			QTreeWidgetItem* item = new QTreeWidgetItem(&errorsList, static_cast<int>(e.getType()));
-			item->setText(0, e.message());
-			item->setText(1, tr("%1").arg(e.lineNumber()));
-			item->setText(2, e.file());
-			
+			item->setText(0, QString::fromStdString(e.getMessage()));
+
+			if(e.getType()==Exception::ClientShaderException || e.getType()==Exception::ClientScriptException)
+			{
+				item->setText(1, tr("%1").arg(e.getLineNumber()));
+				item->setText(2, QString::fromStdString(e.getFilename()));
+
+				if(e.getFilename()=="THIS" || e.getFilename()==editor.getFilename().toStdString())
+				{
+					errorLines.push_back(e.getLineNumber());
+					item->setData(1, Qt::UserRole, e.getLineNumber());
+				}
+				else
+					item->setData(1, Qt::UserRole, -1);
+			}
+			else
+			{
+				item->setText(1, "-");
+				item->setText(2, tr("GlipLib::%1").arg(QString::fromStdString(e.getShortFilename())));
+				item->setData(1, Qt::UserRole, -1);
+			}			
+
 			errorsList.addTopLevelItem(item);
 
 			if(e.getType()==Exception::ClientShaderException || e.getType()==Exception::ClientScriptException || k==0)
@@ -1059,14 +1077,6 @@ using namespace QGED;
 				item->setForeground(1, QBrush(infoColor));
 				item->setForeground(2, QBrush(infoColor));
 			}
-
-			if(std::string(e.file())=="PipelineItem") // Should be temporary
-			{
-				errorLines.push_back(e.lineNumber());
-				item->setData(1, Qt::UserRole, e.lineNumber());
-			}
-			else
-				item->setData(1, Qt::UserRole, -1);
 		}
 
 		editor.highlightErrorLines(errorLines);
@@ -2437,7 +2447,16 @@ using namespace QGED;
 		CodeEditorContainer* editor = getCurrentEditor();
 
 		if(editor!=NULL)
-			emit compileSource(editor->getEditor().getCurrentContent(), editor->getEditor().getPath().toStdString(), reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this));
+		{
+			std::string 	source 		= editor->getEditor().getCurrentContent(),
+					path		= editor->getEditor().getPath().toStdString(),
+					sourceName	= editor->getEditor().getFilename().toStdString();
+
+			if(sourceName.empty())
+				sourceName = "THIS";
+
+			emit compileSource(source, path, sourceName, reinterpret_cast<void*>(editor), reinterpret_cast<QObject*>(this));
+		}
 	}	
 
 	void CodeEditorTabs::closeTab(int tabID, bool imperative)

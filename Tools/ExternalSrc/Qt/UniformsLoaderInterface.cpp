@@ -410,9 +410,9 @@ using namespace QGUI;
 
 		// Set the name : 
 		if(resource.object().getNumRows()>1)
-			newNode->setText(0, tr("%1\n[%2]").arg(QString::fromStdString(resource.getName())).arg(glParamName(resource.object().getGLType()).c_str()));
+			newNode->setText(0, tr("%1\n[%2]").arg(QString::fromStdString(resource.getName())).arg(getGLEnumName(resource.object().getGLType()).c_str()));
 		else
-			newNode->setText(0, tr("%1 [%2]").arg(QString::fromStdString(resource.getName())).arg(glParamName(resource.object().getGLType()).c_str()));
+			newNode->setText(0, tr("%1 [%2]").arg(QString::fromStdString(resource.getName())).arg(getGLEnumName(resource.object().getGLType()).c_str()));
 
 		newNode->setData(0, Qt::UserRole, QString::fromStdString(resource.getName()));
 		newNode->setData(1, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(valuesInterface)));

@@ -600,7 +600,7 @@
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setGLMode( glFromString(arguments[1]) );
+				newFmt.setGLMode( getGLEnum(arguments[1]) );
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -630,7 +630,7 @@
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setGLDepth( glFromString(arguments[1]) );
+				newFmt.setGLDepth( getGLEnum(arguments[1]) );
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -660,8 +660,8 @@
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setMinFilter( glFromString(arguments[1]) );
-				newFmt.setMagFilter( glFromString(arguments[2]) );
+				newFmt.setMinFilter( getGLEnum(arguments[1]) );
+				newFmt.setMagFilter( getGLEnum(arguments[2]) );
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -691,8 +691,8 @@
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setSWrapping( glFromString(arguments[1]) );
-				newFmt.setTWrapping( glFromString(arguments[2]) );
+				newFmt.setSWrapping( getGLEnum(arguments[1]) );
+				newFmt.setTWrapping( getGLEnum(arguments[2]) );
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
@@ -1093,13 +1093,13 @@
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
 				// Get the value : 
-				GLenum setting = glFromString( arguments[1] );
+				GLenum setting = getGLEnum( arguments[1] );
 
 				// Special cast : 
 				unsigned int value;
 
 				if(!fromString(arguments[2], value))
-					value = glFromString( arguments[2] );
+					value = getGLEnum( arguments[2] );
 
 				// Get the cases : 
 				std::string 	trueCase, 
@@ -1134,13 +1134,13 @@
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
 				// Get the value : 
-				GLenum setting = glFromString( arguments[1] );
+				GLenum setting = getGLEnum( arguments[1] );
 
 				// Special cast : 
 				unsigned int value;
 
 				if(!fromString(arguments[2], value))
-					value = glFromString( arguments[2] );
+					value = getGLEnum( arguments[2] );
 
 				// Get the cases : 
 				std::string 	trueCase, 

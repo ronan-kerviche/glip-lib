@@ -1,0 +1,21 @@
+.glipDescrTable
+{
+	width : 100%;
+}
+
+.glipDescrHeaderRow
+{
+	color : #FFFFFF; 
+	background-color : #4444AA;
+}
+
+.glipDescrHeaderFirstColumn
+{
+	width : 20%;
+}
+
+.glipDescrRow
+{
+	background-color : #DDDDFF;
+}
+

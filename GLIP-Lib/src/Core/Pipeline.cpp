@@ -546,7 +546,7 @@
 				catch(Exception& e)
 				{
 					res += '\n';
-					res += e.message();
+					res += e.getMessage();
 				}
 			}
 
@@ -587,7 +587,7 @@
 			catch(Exception& e)
 			{
 				res += '\n';
-				res += e.message();
+				res += e.getMessage();
 			}
 		}
 

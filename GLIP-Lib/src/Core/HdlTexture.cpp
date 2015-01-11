@@ -343,7 +343,7 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
 			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel(), blueType )
 			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )
-			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
+			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + getGLEnumName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		#undef TEXTURE_CHANNEL_TYPE
@@ -505,8 +505,8 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
-			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTextureFormat::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
-			default : 				throw Exception("HdlTextureFormat::setSetting : Throw unable to get parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTextureFormat::setSetting : Parameter \"" + getGLEnumName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
+			default : 				throw Exception("HdlTextureFormat::setSetting : Throw unable to get parameter \"" + getGLEnumName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -592,7 +592,10 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(texID==0)
-			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
+		{
+			GLenum err = glGetError();
+			throw Exception("HdlTexture::HdlTexture - Texture can't be created. Last OpenGL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+		}
 
 		// Set it up :
 		glBindTexture(GL_TEXTURE_2D,texID);
@@ -608,9 +611,8 @@ using namespace Glip::CoreGL;
 			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 
 		GLenum err = glGetError();
-
-		if(err)
-			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + glParamName(getMinFilter()) + ", MagFilter = " + glParamName(getMagFilter()) + ", SWrapping = " + glParamName(getSWrapping()) + ", TWrapping = " + glParamName(getTWrapping()) + ", BaseLevel = " + toString(getBaseLevel()) + ", MaxLevel = " + toString(getMaxLevel()) + ". Last OpenGL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+		if(err!=GL_NO_ERROR)
+			throw Exception("HdlTexture::HdlTexture - One or more texture parameter cannot be set among : MinFilter = " + getGLEnumName(getMinFilter()) + ", MagFilter = " + getGLEnumName(getMagFilter()) + ", SWrapping = " + getGLEnumName(getSWrapping()) + ", TWrapping = " + getGLEnumName(getTWrapping()) + ", BaseLevel = " + toString(getBaseLevel()) + ", MaxLevel = " + toString(getMaxLevel()) + ". Last OpenGL error : " + getGLEnumName(err) + " : " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 
 		HdlTexture::unbind();
 	}
@@ -802,8 +804,8 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
-			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + glParamName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
-			default : 				throw Exception("HdlTexture::setSetting : Throw unable to set parameter \"" + glParamName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
+			case GL_TEXTURE_ALPHA_TYPE :		throw Exception("HdlTexture::setSetting : Parameter \"" + getGLEnumName(param) + "\" cannot be set.", __FILE__, __LINE__, Exception::GLException);
+			default : 				throw Exception("HdlTexture::setSetting : Throw unable to set parameter \"" + getGLEnumName(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 
@@ -1008,8 +1010,8 @@ using namespace Glip::CoreGL;
 			std::cout << std::endl;
 
 			std::cout << "    - Mode        : ";
-			if(tMode)		std::cout << "OK (" << glParamName(getGLMode()) << ')';
-			else			std::cout << "FAILED (API : " << glParamName(getGLMode()) << "; GL : " << glParamName(vMode) << ')';
+			if(tMode)		std::cout << "OK (" << getGLEnumName(getGLMode()) << ')';
+			else			std::cout << "FAILED (API : " << getGLEnumName(getGLMode()) << "; GL : " << getGLEnumName(vMode) << ')';
 			std::cout << std::endl;
 
 			std::cout << "    - Compression : ";
@@ -1018,13 +1020,13 @@ using namespace Glip::CoreGL;
 			std::cout << std::endl;
 
 			std::cout << "    - MagFilter   : ";
-			if(tMagFilter)		std::cout << "OK (" << glParamName(getMagFilter()) << ')';
-			else			std::cout << "FAILED (API : " << glParamName(getMagFilter()) << "; GL : " << glParamName(vMagFilter) << ')';
+			if(tMagFilter)		std::cout << "OK (" << getGLEnumName(getMagFilter()) << ')';
+			else			std::cout << "FAILED (API : " << getGLEnumName(getMagFilter()) << "; GL : " << getGLEnumName(vMagFilter) << ')';
 			std::cout << std::endl;
 
 			std::cout << "    - MinFilter   : ";
-			if(tMinFilter)		std::cout << "OK (" << glParamName(getMinFilter()) << ')';
-			else			std::cout << "FAILED (API : " << glParamName(getMinFilter()) << "; GL : " << glParamName(vMinFilter) << ')';
+			if(tMinFilter)		std::cout << "OK (" << getGLEnumName(getMinFilter()) << ')';
+			else			std::cout << "FAILED (API : " << getGLEnumName(getMinFilter()) << "; GL : " << getGLEnumName(vMinFilter) << ')';
 			std::cout << std::endl;
 
 			std::cout << "    - BaseLevel   : ";
@@ -1038,13 +1040,13 @@ using namespace Glip::CoreGL;
 			std::cout << std::endl;
 
 			std::cout << "    - SWrap       : ";
-			if(tSWrap)		std::cout << "OK (" << glParamName(getSWrapping()) << ')';
-			else			std::cout << "FAILED (API : " << glParamName(getSWrapping()) << "; GL : " << glParamName(vSWrap) << ')';
+			if(tSWrap)		std::cout << "OK (" << getGLEnumName(getSWrapping()) << ')';
+			else			std::cout << "FAILED (API : " << getGLEnumName(getSWrapping()) << "; GL : " << getGLEnumName(vSWrap) << ')';
 			std::cout << std::endl;
 
 			std::cout << "    - TWrap       : ";
-			if(tTWrap)		std::cout << "OK (" << glParamName(getTWrapping()) << ')';
-			else			std::cout << "FAILED (API : " << glParamName(getTWrapping()) << "; GL : " << glParamName(vTWrap) << ')';
+			if(tTWrap)		std::cout << "OK (" << getGLEnumName(getTWrapping()) << ')';
+			else			std::cout << "FAILED (API : " << getGLEnumName(getTWrapping()) << "; GL : " << getGLEnumName(vTWrap) << ')';
 			std::cout << std::endl;
 
 			std::cout << "    - MipMapGen   : ";

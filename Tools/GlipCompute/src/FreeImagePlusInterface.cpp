@@ -26,7 +26,7 @@
 		inputImage.load(filename.c_str());
 
 		if(!inputImage.isValid())
-			throw Glip::Exception("loadImage - Cannot load \"" + filename + "\".", __FILE__, __LINE__);
+			throw Glip::Exception("loadImage - Cannot load \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		FREE_IMAGE_COLOR_TYPE fipColorFormat = inputImage.getColorType();
 
@@ -53,7 +53,7 @@
 				planes 	= 4;
 				break;
 			default : 
-				throw Glip::Exception("Unknown/Unsupported color format for \"" + filename + "\".", __FILE__, __LINE__);
+				throw Glip::Exception("Unknown/Unsupported color format for \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 		}
 
 		GLenum depth = GL_NONE;				
@@ -74,7 +74,7 @@
 	 			depth = GL_UNSIGNED_INT;
 				break;
 			default : 
-				throw Glip::Exception("Unknown/Unsupported bit depth for \"" + filename + "\".", __FILE__, __LINE__);
+				throw Glip::Exception("Unknown/Unsupported bit depth for \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 		}
 
 		Glip::CoreGL::HdlTextureFormat format(inputImage.getWidth(), inputImage.getHeight(), mode, depth);
@@ -118,12 +118,12 @@
 			fipType = FIT_RGBAF;
 
 		if(fipType==FIT_UNKNOWN)
-			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible with FreeImage interface (" + Glip::toString(descriptor.numChannels()) + " channels, " + Glip::glParamName(depth) + " depth, " + Glip::toString(bpp) + " bits per pixel.)", __FILE__, __LINE__);
+			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible with FreeImage interface (" + Glip::toString(descriptor.numChannels()) + " channels, " + Glip::glParamName(depth) + " depth, " + Glip::toString(bpp) + " bits per pixel.)", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		fipImage outputImage(fipType, texture.getWidth(), texture.getHeight(), bpp);
 		
 		if(!outputImage.isValid())
-			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible.", __FILE__, __LINE__);
+			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible.", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		GLenum 	fipMode	= GL_NONE;
 
@@ -143,7 +143,7 @@
 				fipMode = GL_BGRA;
 				break;
 			default : 
-				throw Glip::Exception("[INTERNAL ERROR] Cannot swap channels for type : " + Glip::CoreGL::glParamName(texture.getGLMode()) + ".", __FILE__, __LINE__);
+				throw Glip::Exception("[INTERNAL ERROR] Cannot swap channels for type : " + Glip::CoreGL::glParamName(texture.getGLMode()) + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
 		}
 
 		texture.read(outputImage.accessPixels(), fipMode, GL_ZERO, 4);
@@ -152,6 +152,6 @@
 		bool test = outputImage.save(filename.c_str());
 
 		if(!test)
-			throw Glip::Exception("Could not save image to \"" + filename + "\".", __FILE__, __LINE__);
+			throw Glip::Exception("Could not save image to \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 	}
 

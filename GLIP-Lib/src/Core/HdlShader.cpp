@@ -75,7 +75,10 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(shader==0)
-			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
+		{
+			GLenum err = glGetError();
+			throw Exception("HdlShader::HdlShader - Unable to create the shader from " + getSourceName() + ". OpenGL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+		}
 
 		// send the source code
 		const char* data = getSourceCstr();
@@ -180,7 +183,10 @@ using namespace Glip::CoreGL;
 		#endif
 
 		if(program==0)
-			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + glParamName(glGetError()) + ".", __FILE__, __LINE__, Exception::GLException);
+		{
+			GLenum err = glGetError();
+			throw Exception("HdlProgram::HdlProgram - Program can't be created. Last OpenGL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+		}
 
 		attachedFragmentShader = attachedVertexShader = 0;
 	}
@@ -378,7 +384,7 @@ using namespace Glip::CoreGL;
 			#endif
 		}
 		else
-			throw Exception("HdlProgram::update - Incompatible or unknown shader type : " + glParamName(shader.getType()) + ".", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlProgram::update - Incompatible or unknown shader type : " + getGLEnumName(shader.getType()) + ".", __FILE__, __LINE__, Exception::CoreException);
 
 		// Link the program
 		if(lnk) 
@@ -440,9 +446,8 @@ using namespace Glip::CoreGL;
 		glBindFragDataLocation(program, frag, fragName.c_str());
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -504,23 +509,22 @@ using namespace Glip::CoreGL;
 			glGetError(); \
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
-			 \
+			\
 			if(loc==-1) \
 				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException); \
-			 \
+			\
 			switch(t) \
 			{ \
 				case GL_##argT2 : 		glUniform1##argT3 (loc, v0);			break; \
 				case GL_##argT2##_VEC2 : 	glUniform2##argT3 (loc, v0, v1);		break; \
 				case GL_##argT2##_VEC3 : 	glUniform3##argT3 (loc, v0, v1, v2);		break; \
 				case GL_##argT2##_VEC4 : 	glUniform4##argT3 (loc, v0, v1, v2, v3);	break; \
-				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + getGLEnumName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
 			} \
-			 \
+			\
 			GLenum err = glGetError(); \
-			 \
 			if(err!=GL_NO_ERROR) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException); \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + getGLEnumName(t) + "\" in variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException); \
 		} \
 
 	#define GENmodifyVarB( argT1, argT2, argT3)   \
@@ -529,23 +533,22 @@ using namespace Glip::CoreGL;
 			glGetError(); \
 			use(); \
 			GLint loc = glGetUniformLocation(program, varName.c_str()); \
-			 \
+			\
 			if(loc==-1) \
 				throw Exception("HdlProgram::modifyVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException); \
-			 \
+			\
 			switch(t) \
 			{ \
 				case GL_##argT2 : 		glUniform1##argT3##v(loc, 1, v);			break; \
 				case GL_##argT2##_VEC2 : 	glUniform2##argT3##v(loc, 1, v);			break; \
 				case GL_##argT2##_VEC3 : 	glUniform3##argT3##v(loc, 1, v);			break; \
 				case GL_##argT2##_VEC4 : 	glUniform4##argT3##v(loc, 1, v);			break; \
-				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
+				default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + getGLEnumName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException); \
 			} \
-			 \
+			\
 			GLenum err = glGetError(); \
-			 \
 			if(err!=GL_NO_ERROR) \
-				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException); \
+				throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + getGLEnumName(t) + "\" in variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException); \
 		}
 
 	GENmodifyVarA( int, INT, i)
@@ -575,13 +578,12 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_MAT2 :	glUniformMatrix2fv(loc, 1, GL_FALSE, v);	break;
 			case GL_FLOAT_MAT3 :	glUniformMatrix3fv(loc, 1, GL_FALSE, v);	break;
 			case GL_FLOAT_MAT4 :	glUniformMatrix4fv(loc, 1, GL_FALSE, v);	break;
-			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			default :		throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + getGLEnumName(t) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(t) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + getGLEnumName(t) + "\" in variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -628,13 +630,12 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_MAT2 :		glUniformMatrix2fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
 			case GL_FLOAT_MAT3 :		glUniformMatrix3fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
 			case GL_FLOAT_MAT4 :		glUniformMatrix4fv(loc, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(data.getPtr()));	break;
-			default :			throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			default :			throw Exception("HdlProgram::modifyVar - Unknown variable type or type mismatch for \"" + getGLEnumName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + glParamName(data.getGLType()) + "\" in variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::modifyVar - An error occurred when loading data of type \"" + getGLEnumName(data.getGLType()) + "\" in variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -649,15 +650,14 @@ using namespace Glip::CoreGL;
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
-		if (loc==-1)
+		if(loc==-1)
 			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		glGetUniformiv(program, loc, ptr);
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -672,15 +672,14 @@ using namespace Glip::CoreGL;
 		use();
 		GLint loc = glGetUniformLocation(program, varName.c_str());
 
-		if (loc==-1)
+		if(loc==-1)
 			throw Exception("HdlProgram::getVar - Wrong location, does this var exist : \"" + varName + "\"? Is it used in the program? (May be the GLCompiler swapped it because it is unused).", __FILE__, __LINE__, Exception::GLException);
 
 		glGetUniformuiv(program, loc, ptr);
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -700,9 +699,8 @@ using namespace Glip::CoreGL;
 		glGetUniformfv(program, loc, ptr);
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**
@@ -748,13 +746,12 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_MAT2 :		
 			case GL_FLOAT_MAT3 :		
 			case GL_FLOAT_MAT4 :		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
-			default :			throw Exception("HdlProgram::getVar - Unknown variable type or type mismatch for \"" + glParamName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			default :			throw Exception("HdlProgram::getVar - Unknown variable type or type mismatch for \"" + getGLEnumName(data.getGLType()) + "\" when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 		GLenum err = glGetError();
-
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlProgram::getVar - An error occurred when reading variable \"" + varName + "\" : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**

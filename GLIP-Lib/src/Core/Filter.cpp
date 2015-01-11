@@ -595,7 +595,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -615,7 +615,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -648,7 +648,7 @@
 				{
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + glParamName(err) + ".", __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err) + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 				else
 					firstRun 	= false; // First run completed successfully.

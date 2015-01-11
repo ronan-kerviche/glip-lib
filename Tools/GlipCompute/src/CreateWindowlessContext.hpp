@@ -29,6 +29,6 @@
 	static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
 	static glXMakeContextCurrentARBProc   glXMakeContextCurrentARB   = NULL;
 
-	extern void createWindowlessContext(void);
+	extern void createWindowlessContext(std::string displayName="");
 #endif 
 

@@ -174,7 +174,7 @@
 		else if(image.getChannelDepth()<=2)
 			header += "65535\n";
 		else
-			throw Exception("NetPBM::saveNetPBMToFile - Incompatible depth : \"" + glParamName(image.getGLDepth()) + "\".", __FILE__, __LINE__);
+			throw Exception("NetPBM::saveNetPBMToFile - Incompatible depth : \"" + getGLEnumName(image.getGLDepth()) + "\".", __FILE__, __LINE__);
 
 		// Write : 
 		file.write(header.c_str(), header.size());

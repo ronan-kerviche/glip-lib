@@ -163,7 +163,7 @@ using namespace QGIC;
 			else if(descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
 				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_ARGB32);		
 			else
-				throw Exception("toQImage - Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 		}
 		else
 		{
@@ -177,7 +177,7 @@ using namespace QGIC;
 			else if( (descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1)) && qimage->format()!=QImage::Format_ARGB32 )
 				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
 			else
-				throw Exception("toQImage - Cannot write texture of mode \"" + glParamName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
 		}
 
 		const int nChannels = qimage->bytesPerLine()/qimage->width();
@@ -604,10 +604,10 @@ using namespace QGIC;
 			toolTip += tr("<tr><td><i>Name</i></td><td>:</td><td>%1</td></tr>").arg(name);
 
 		toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(format.getWidth()).arg(format.getHeight()).arg(getSizeString(format.getSize()));
-		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(format.getGLMode() ).c_str());
-		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(format.getGLDepth() ).c_str());
-		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getMinFilter() ).c_str()).arg(glParamName(format.getMagFilter() ).c_str());
-		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(format.getSWrapping() ).c_str()).arg(glParamName(format.getTWrapping() ).c_str());
+		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(format.getGLMode() ).c_str());
+		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(format.getGLDepth() ).c_str());
+		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(format.getMinFilter() ).c_str()).arg(getGLEnumName(format.getMagFilter() ).c_str());
+		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(format.getSWrapping() ).c_str()).arg(getGLEnumName(format.getTWrapping() ).c_str());
 		toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(format.getBaseLevel()).arg(format.getMaxLevel());
 
 		for(QMap<QString, QString>::const_iterator it=otherInfos.begin(); it!=otherInfos.end(); it++)
@@ -629,10 +629,10 @@ using namespace QGIC;
 
 		toolTip += tr("<tr><td><i>Size</i></td><td>:</td><td>%1x%2 (%3)</td></tr>").arg(texture.getWidth()).arg(texture.getHeight()).arg(getSizeString(texture.getSize()));
 		toolTip += tr("<tr><td><i>Size (Driver)</i></td><td>:</td><td>%1</td></tr>").arg(getSizeString(texture.getSizeOnGPU(0)));
-		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture.getGLMode() ).c_str());
-		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(glParamName(texture.getGLDepth() ).c_str());
-		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture.getMinFilter() ).c_str()).arg(glParamName(texture.getMagFilter() ).c_str());
-		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(glParamName(texture.getSWrapping() ).c_str()).arg(glParamName(texture.getTWrapping() ).c_str());
+		toolTip += tr("<tr><td><i>Mode</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(texture.getGLMode() ).c_str());
+		toolTip += tr("<tr><td><i>Depth</i></td><td>:</td><td>%1</td></tr>").arg(getGLEnumName(texture.getGLDepth() ).c_str());
+		toolTip += tr("<tr><td><i>Filtering</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(texture.getMinFilter() ).c_str()).arg(getGLEnumName(texture.getMagFilter() ).c_str());
+		toolTip += tr("<tr><td><i>Wrapping</i></td><td>:</td><td>%1 / %2</td></tr>").arg(getGLEnumName(texture.getSWrapping() ).c_str()).arg(getGLEnumName(texture.getTWrapping() ).c_str());
 		toolTip += tr("<tr><td><i>Mipmap</i></td><td>:</td><td>%1 / %2</td></tr>").arg(texture.getBaseLevel()).arg(texture.getMaxLevel());
 
 		for(QMap<QString, QString>::const_iterator it=otherInfos.begin(); it!=otherInfos.end(); it++)
@@ -1054,7 +1054,7 @@ using namespace QGIC;
 				minLinearMipmapLinear.setChecked(true);
 				break;
 			default : 
-				throw Exception("FilterMenu::update - Unkwnown parameter \"" + glParamName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
+				throw Exception("FilterMenu::update - Unkwnown parameter \"" + getGLEnumName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
 		}
 
 		switch(format.getMagFilter())
@@ -1066,7 +1066,7 @@ using namespace QGIC;
 				magLinear.setChecked(true);
 				break;
 			default : 
-				throw Exception("FilterMenu::update - Unkwnown parameter \"" + glParamName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
+				throw Exception("FilterMenu::update - Unkwnown parameter \"" + getGLEnumName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
 		}
 	}
 
@@ -1279,7 +1279,7 @@ using namespace QGIC;
 					bothMirroredRepeat.setChecked(true);
 					break;
 				default : 
-					throw Exception("WrappingMenu::update - Unkwnown parameter \"" + glParamName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
+					throw Exception("WrappingMenu::update - Unkwnown parameter \"" + getGLEnumName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
 			}
 		}
 	
@@ -1302,7 +1302,7 @@ using namespace QGIC;
 				sMirroredRepeat.setChecked(true);
 				break;
 			default : 
-				throw Exception("WrappingMenu::update - Unkwnown parameter \"" + glParamName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
+				throw Exception("WrappingMenu::update - Unkwnown parameter \"" + getGLEnumName(format.getSWrapping()) + "\".", __FILE__, __LINE__);
 		}
 
 		switch(format.getTWrapping())
@@ -1323,7 +1323,7 @@ using namespace QGIC;
 				tMirroredRepeat.setChecked(true);
 				break;
 			default : 
-				throw Exception("WrappingMenu::update - Unkwnown parameter \"" + glParamName(format.getTWrapping()) + "\".", __FILE__, __LINE__);
+				throw Exception("WrappingMenu::update - Unkwnown parameter \"" + getGLEnumName(format.getTWrapping()) + "\".", __FILE__, __LINE__);
 		}
 	}
 
@@ -1670,7 +1670,7 @@ using namespace QGIC;
 		// Filtering : 
 		QString filteringStr;
 
-		filteringStr = tr("%1/%2; %3/%4").arg(glParamName(format.getSWrapping()).c_str()).arg(glParamName(format.getTWrapping()).c_str()).arg(glParamName(format.getMinFilter()).c_str()).arg(glParamName(format.getMagFilter()).c_str());
+		filteringStr = tr("%1/%2; %3/%4").arg(getGLEnumName(format.getSWrapping()).c_str()).arg(getGLEnumName(format.getTWrapping()).c_str()).arg(getGLEnumName(format.getMinFilter()).c_str()).arg(getGLEnumName(format.getMagFilter()).c_str());
 
 		item->setText(FilteringColumn, filteringStr);
 	}

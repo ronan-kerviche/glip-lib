@@ -585,9 +585,9 @@
 			case GL_TRIANGLE_STRIP_ADJACENCY : 
 			case GL_QUAD_STRIP :
 			case GL_POLYGON :
-				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unsupported primitive type : \"" + glParamName(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unsupported primitive type : \"" + getGLEnumName(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 			default : 
-				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unknown primitive type : \"" + glParamName(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unknown primitive type : \"" + getGLEnumName(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 		}
 	}
 
