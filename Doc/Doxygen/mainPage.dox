@@ -23,6 +23,9 @@
 \section sec_GlipStudio Glip-Studio
 	Prototype processing pipelines for images faster with Glip-Studio, the IDE for GLIP-Lib (\ref page_UseGlipStudio).
 
+\section sec_GlipCompute Glip-Compute
+	Window-less, command-line based tool for rendering with GLIP-Lib (\ref page_UseGlipCompute).
+
 \section sec_examples Demos
 	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
 	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.hpp">WindowRendering.hpp</a><BR>

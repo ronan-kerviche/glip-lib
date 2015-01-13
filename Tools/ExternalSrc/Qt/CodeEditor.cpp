@@ -1003,10 +1003,13 @@ using namespace QGED;
 
 		if(item!=NULL)
 		{
+			const QString source = item->data(2, Qt::UserRole).toString();
 			const int lineNumber = item->data(1, Qt::UserRole).toInt();
 
-			if(lineNumber>=1)
+			if(source=="THIS")
 				editor.gotoLine(lineNumber);
+			else
+				emit openFile(source, lineNumber);
 		}
 	}
 
@@ -1052,9 +1055,13 @@ using namespace QGED;
 				{
 					errorLines.push_back(e.getLineNumber());
 					item->setData(1, Qt::UserRole, e.getLineNumber());
+					item->setData(2, Qt::UserRole, "THIS");
 				}
 				else
-					item->setData(1, Qt::UserRole, -1);
+				{
+					item->setData(1, Qt::UserRole, e.getLineNumber());
+					item->setData(2, Qt::UserRole, QString::fromStdString(e.getFilename()));
+				}
 			}
 			else
 			{
@@ -1296,11 +1303,31 @@ using namespace QGED;
 	void SearchAndReplaceMenu::setCurrentCodeEditor(CodeEditor* currentCodeEditor)
 	{
 		target = currentCodeEditor;
+
+		searchPattern.setEnabled(true);
+		replaceString.setEnabled(true);
+		worldOnlyCheck.setEnabled(true);
+		matchCaseCheck.setEnabled(true);
+		backwardSearchCheck.setEnabled(true);
+		findNextAction.setEnabled(true);
+		replaceNextAction.setEnabled(true);
+		replaceAllAction.setEnabled(true);
+		clearHighlightAction.setEnabled(true);
 	}
 
 	void SearchAndReplaceMenu::clearCurrentCodeEditor(void)
 	{
-		target = NULL;	
+		target = NULL;
+	
+		searchPattern.setEnabled(false);
+		replaceString.setEnabled(false);
+		worldOnlyCheck.setEnabled(false);
+		matchCaseCheck.setEnabled(false);
+		backwardSearchCheck.setEnabled(false);
+		findNextAction.setEnabled(false);
+		replaceNextAction.setEnabled(false);
+		replaceAllAction.setEnabled(false);
+		clearHighlightAction.setEnabled(false);
 	}
 
 // CodeEditorSettings :
@@ -2145,7 +2172,7 @@ using namespace QGED;
 		addAction(&closeAction);
 
 		// Signals : 
-		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 		SLOT(changeToTab(int)));
+		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 		SLOT(changedToTab(int)));
 		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 		SLOT(closeTab(int)));
 		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 		SLOT(addTab(void)));
 		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 		SLOT(open()));
@@ -2218,6 +2245,21 @@ using namespace QGED;
 		else
 			return NULL;
 	}
+	
+	CodeEditorContainer* CodeEditorTabs::getEditor(int tabID)
+	{
+		if(tabID<0 || tabID>=tabBar.count())
+			return NULL;
+		else
+		{
+			const int idx = tabBar.tabData(tabID).toUInt();
+			QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
+			if(it!=editors.end())
+				return (*it);
+			else
+				return NULL;
+		}
+	}
 
 	int CodeEditorTabs::getTabIndex(CodeEditorContainer* editor)
 	{
@@ -2225,16 +2267,11 @@ using namespace QGED;
 			return -1;
 		else
 		{
-			int c = 0;
-
-			for( ; c<tabBar.count(); c++)
+			for(int c=0; c<tabBar.count(); c++)
 			{
-				int idx = tabBar.tabData(c).toUInt();
+				CodeEditorContainer* editor = getEditor(c);
 
-				QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
-
-				if(it!=editors.end())
-					if((*it)==editor)
+				if(editor!=NULL && editor==editor)
 						return c;
 			}
 		
@@ -2248,17 +2285,37 @@ using namespace QGED;
 			return -1;
 		else
 		{
-			int c = 0;
-
-			for( ; c<tabBar.count(); c++)
+			for(int c=0; c<tabBar.count(); c++)
 			{
-				int idx = tabBar.tabData(c).toUInt();
+				CodeEditorContainer* container = getEditor(c);
+				
+				if(container!=NULL && &container->getEditor()==editor)
+					return c;
+			}
+		
+			return -1;
+		}
+	}
 
-				QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
+	int CodeEditorTabs::getTabIndex(const QString& filename)
+	{
+		if(filename.isEmpty())
+			return -1;
+		else
+		{
+			const QFileInfo targetInfo(filename);
 
-				if(it!=editors.end())
-					if(&(*it)->getEditor()==editor)
+			for(int c=0; c<tabBar.count(); c++)
+			{
+				CodeEditorContainer* container = getEditor(c);	
+		
+				if(container!=NULL && !container->getEditor().getFilename().isEmpty())
+				{
+					const QFileInfo info(container->getEditor().getFilename());
+					
+					if(info==targetInfo)
 						return c;
+				}
 			}
 		
 			return -1;
@@ -2310,7 +2367,7 @@ using namespace QGED;
 		}
 	}
 
-	void CodeEditorTabs::addTab(const QString& filename)
+	void CodeEditorTabs::addTab(const QString& filename, int lineNumber)
 	{
 		static unsigned int counter = 0; 
 	
@@ -2329,8 +2386,9 @@ using namespace QGED;
 		ptr->getEditor().addSubMenu(&templateMenu);
 		ptr->getEditor().addSubMenu(&elementsMenu);
 
-		QObject::connect(&ptr->getEditor(), SIGNAL(titleChanged(void)),	this, SLOT(tabTitleChanged(void)));
-		QObject::connect(&ptr->getEditor(), SIGNAL(modified(bool)), 	this, SLOT(documentModified(bool)));
+		QObject::connect(&ptr->getEditor(), 	SIGNAL(titleChanged(void)),	this, SLOT(tabTitleChanged(void)));
+		QObject::connect(&ptr->getEditor(), 	SIGNAL(modified(bool)), 	this, SLOT(documentModified(bool)));
+		QObject::connect(ptr,			SIGNAL(openFile(QString, int)),	this, SLOT(open(const QString&, int)));
 
 		// Create the tab :
 		stack.addWidget(ptr);
@@ -2338,11 +2396,16 @@ using namespace QGED;
 		tabBar.setTabData(c, counter);
 		tabBar.setCurrentIndex(c);
 		searchAndReplaceMenu.setCurrentCodeEditor(&ptr->getEditor());
-
+		
 		counter++;
 
 		if(!filename.isEmpty())
+		{
 			ptr->getEditor().open(filename);
+	
+			if(lineNumber>0)
+				ptr->getEditor().gotoLine(lineNumber);
+		}
 
 		elementsMenu.track(&ptr->getEditor());
 	}
@@ -2384,40 +2447,77 @@ using namespace QGED;
 			editor->getEditor().insert(str);
 	}
 
-	void CodeEditorTabs::changeToTab(int tabID)
+	void CodeEditorTabs::changedToTab(int tabID)
 	{
-		int w = tabBar.tabData(tabID).toUInt();
-
-		if(editors.find(w)!=editors.end())
-		{
-			stack.setCurrentWidget(editors[w]);
-			searchAndReplaceMenu.setCurrentCodeEditor(&editors[w]->getEditor());
-		}
-		else
+		if(tabID<0)
 			searchAndReplaceMenu.clearCurrentCodeEditor();
+		else
+		{
+			CodeEditorContainer* container = getEditor(tabID);
+
+			if(container!=NULL)
+			{
+				stack.setCurrentWidget(container);
+				searchAndReplaceMenu.setCurrentCodeEditor(&container->getEditor());
+			}
+			else
+				searchAndReplaceMenu.clearCurrentCodeEditor();
+		}
 	}
 
-	void CodeEditorTabs::open(QStringList filenameList)
+	void CodeEditorTabs::addTab(void)
+	{
+		addTab("");
+	}
+
+	void CodeEditorTabs::open(QStringList filenameList, QVector<int> lineNumberList)
 	{
 		if(filenameList.empty())
+		{
 			filenameList = QFileDialog::getOpenFileNames(NULL, "Open Source File(s)", currentPath, "Source Files (*.ppl *.shr *.uvd *.txt)");
+			lineNumberList.fill(0, filenameList.size());
+		}
 
 		if(!filenameList.empty())
 		{
+			if(lineNumberList.empty() || filenameList.size()!=lineNumberList.size()) // silent failure.
+				lineNumberList.fill(0, filenameList.size());
+
+			QVector<int>::iterator ln=lineNumberList.begin();
 			for(QStringList::iterator it=filenameList.begin(); it!=filenameList.end(); it++)
 			{
-				addTab(*it);
-				recentFilesMenu.append(*it);
+				const int c = getTabIndex(*it);
+
+				if(c<0) // The file is not currently opened, open it in a new tab :
+				{
+					addTab(*it, *ln);
+					recentFilesMenu.append(*it);
+					ln++;
+				}
+				else // The file is currently opened, swith to the appropriate tab :
+				{
+					CodeEditorContainer* container = getEditor(c);
+
+					if(container!=NULL)
+					{
+						tabBar.setCurrentIndex(c);
+
+						// If the caller is required to goto to a definite line number :
+						if(*ln>0)
+							container->getEditor().gotoLine(*ln);
+					}
+				}		
 			}
 
 			setCurrentPath(filenameList.front());
 		}
 	}
 
-	void CodeEditorTabs::open(const QString& filename)
+	void CodeEditorTabs::open(const QString& filename, int lineNumber)
 	{
-		QStringList list(filename);
-		open(list);
+		QStringList 	filenameList(filename);
+		QVector<int>	lineNumberList(lineNumber);
+		open(filenameList, lineNumberList);
 	}
 
 	void CodeEditorTabs::save(void)
@@ -2461,16 +2561,14 @@ using namespace QGED;
 
 	void CodeEditorTabs::closeTab(int tabID, bool imperative)
 	{
-		int idx = tabBar.tabData(tabID).toUInt();
-
-		QMap<int, CodeEditorContainer*>::iterator it = editors.find(idx);
+		CodeEditorContainer* container = getEditor(tabID);
 
 		// If it exists, clear : 
-		if(it!=editors.end())
+		if(container!=NULL)
 		{
-			if((*it)->getEditor().isModified())
+			if(container->getEditor().isModified())
 			{
-				changeToTab(tabID);
+				changedToTab(tabID);
 
 				QMessageBox::StandardButton 	returnedButton;
 				QMessageBox::StandardButtons	buttons;
@@ -2480,21 +2578,21 @@ using namespace QGED;
 				else
 					buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
 
-				if((*it)->getEditor().getFilename().isEmpty())
+				if(container->getEditor().getFilename().isEmpty())
 					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), buttons);
 				else
-					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg((*it)->getEditor().getFilename()), buttons);
+					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(container->getEditor().getFilename()), buttons);
 
 				if(returnedButton==QMessageBox::Save)
-					return save(*it);
+					return save(container);
 				else if(returnedButton == QMessageBox::Cancel)
 					return ; // exit
 			}
 
 			tabBar.removeTab(tabID);
-			stack.removeWidget(*it);
-			delete (*it);
-			editors.erase(it);
+			stack.removeWidget(container);
+			delete container;
+			editors.remove(editors.key(container));
 		}
 	}
 

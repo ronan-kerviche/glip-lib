@@ -118,7 +118,7 @@
 			fipType = FIT_RGBAF;
 
 		if(fipType==FIT_UNKNOWN)
-			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible with FreeImage interface (" + Glip::toString(descriptor.numChannels()) + " channels, " + Glip::glParamName(depth) + " depth, " + Glip::toString(bpp) + " bits per pixel.)", __FILE__, __LINE__, Glip::Exception::ClientException);
+			throw Glip::Exception("Could not save image to \"" + filename + "\", format is incompatible with FreeImage interface (" + Glip::toString(descriptor.numChannels()) + " channels, " + Glip::getGLEnumName(depth) + " depth, " + Glip::toString(bpp) + " bits per pixel.)", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		fipImage outputImage(fipType, texture.getWidth(), texture.getHeight(), bpp);
 		
@@ -143,7 +143,7 @@
 				fipMode = GL_BGRA;
 				break;
 			default : 
-				throw Glip::Exception("[INTERNAL ERROR] Cannot swap channels for type : " + Glip::CoreGL::glParamName(texture.getGLMode()) + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
+				throw Glip::Exception("[INTERNAL ERROR] Cannot swap channels for type : " + Glip::CoreGL::getGLEnumName(texture.getGLMode()) + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
 		}
 
 		texture.read(outputImage.accessPixels(), fipMode, GL_ZERO, 4);

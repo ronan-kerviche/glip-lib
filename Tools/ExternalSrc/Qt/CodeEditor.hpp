@@ -231,6 +231,9 @@ namespace QGED
 		public slots : 
 			void clearErrors(void);
 			void showErrors(Exception compilationError);
+
+		signals:
+			void openFile(QString filename, int lineNumber);
 	};
 
 	class SearchAndReplaceMenu : public QMenu
@@ -520,8 +523,10 @@ namespace QGED
 			RecentFilesMenu			recentFilesMenu;
 
 			CodeEditorContainer* getCurrentEditor(void);
+			CodeEditorContainer* getEditor(int tabID);
 			int getTabIndex(CodeEditorContainer* editor);
 			int getTabIndex(CodeEditor* editor);
+			int getTabIndex(const QString& filename);
 			void setCurrentPath(QString path);
 			void save(CodeEditorContainer* editor);
 			void saveAs(CodeEditorContainer* editor, QString filename="");
@@ -531,18 +536,19 @@ namespace QGED
 			~CodeEditorTabs(void);
 
 		private slots :
+			void addTab(const QString& filename, int lineNumber=0);
 			void tabTitleChanged(void);
 			void documentModified(bool changed);
 			void insert(QString str);
-			void changeToTab(int tabID);
+			void changedToTab(int tabID);
 			void closeTab(int tabID, bool imperative=false);
 			void updateSettings(void);
 			void transferSourceCompilation(void);	
 
 		public slots :
-			void addTab(const QString& filename="");
-			void open(QStringList filenameList = QStringList());
-			void open(const QString& filename);
+			void addTab(void);
+			void open(QStringList filenameList=QStringList(), QVector<int> lineNumberList=QVector<int>());
+			void open(const QString& filename, int lineNumber=0);
 			void save(void);
 			void saveAs(const QString& filename="");
 			void saveAll(void);

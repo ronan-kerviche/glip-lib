@@ -38,6 +38,7 @@
 	#include <QMenuBar>
 	#include <QApplication>
 	#include <QClipboard> 
+	#include <QWidgetAction>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
@@ -163,11 +164,11 @@ namespace QGIC
 			void addImageItem(ImageItem* imageItem);
 
 			// Manage the storage : 
-			size_t deviceOccupancy(size_t* canBeFreed=NULL) const;
+			size_t getDeviceOccupancy(size_t* canBeFreed=NULL) const;
 			void clean(void);
 			static size_t getMaxOccupancy(void);
 			static void setMaxOccupancy(size_t newMaxOccupancy);
-			static size_t totalDeviceOccupancy(size_t* canBeFreed=NULL);
+			static size_t getTotalDeviceOccupancy(size_t* canBeFreed=NULL);
 			static void cleanStorages(void);
 			static void cleanStorages(size_t futureAdd);
 			static bool checkMemSpaceAvailabilty(size_t futureAdd);
@@ -286,6 +287,30 @@ namespace QGIC
 			~CollectionWidget(void);		
 	};
 
+	class ImageItemsCollectionSettings : public QMenu
+	{
+		Q_OBJECT
+
+		private :
+			QWidgetAction	widgetAction;
+			QWidget		widget;
+			QGridLayout	layout;
+			QSpinBox	newMaxOccupancySpinBox;
+			QLabel		currentMaxOccupancyTitleLabel,
+					currentMaxOccupancyLabel,
+					newMaxOccupancyLabel,
+					newMaxOccupancyUnitLabel;
+			QAction		saveAction;
+
+		private slots:
+			void update(void);
+			void changeMaxOccupancy(void);
+
+		public :
+			ImageItemsCollectionSettings(QWidget* parent=NULL);
+			~ImageItemsCollectionSettings(void);
+	};
+
 	class ImageItemsCollection : public QWidget
 	{
 		Q_OBJECT
@@ -318,6 +343,7 @@ namespace QGIC
 			FilterMenu				filterMenu;
 			WrappingMenu				wrappingMenu;
 			CollectionWidget			collectionWidget;
+			ImageItemsCollectionSettings		settingsMenu;
 
 			void updateAlternateColors(void);
 			void updateColumnSize(void);

@@ -1285,6 +1285,8 @@
 						for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 							pipeline.setInputPortName(k, parser.elements[inputPorts].arguments[k]);
 					}
+					else
+						throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redefine its input port(s).", __FILE__, __LINE__, Exception::ClientScriptException);
 
 					// Tests inputs : 
 					if(outputPorts>=0)
@@ -1295,7 +1297,11 @@
 						for(unsigned int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
 							pipeline.setOutputPortName(k, parser.elements[outputPorts].arguments[k]);
 					}
+					else
+						throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redefine its output port(s).", __FILE__, __LINE__, Exception::ClientScriptException);
 				}
+				else
+					throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redeclare its input and output ports.", __FILE__, __LINE__, Exception::ClientScriptException);
 
 				// Save :
 				pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, pipeline) );

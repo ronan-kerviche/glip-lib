@@ -92,197 +92,49 @@ namespace Glip
 
 The LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::Core::PipelineLayout or a Glip::Core::Pipeline that you can use directly or combined with other pipeline structures.
 
-The script must be structured with the following commands (but no special order is needed except standard declaration order) :
-
-- Protect file from being included twice and leading to redefinition errors : <BR>
-<b>UNIQUE</b>(<i>someUniqueString</i>) 
-
-- Format for the texture : <BR>
-<b>TEXTURE_FORMAT</b>:<i>format_name</i>(<i>integer width</i>, <i>integer height</i>, <i>GLEnum mode</i>, <i>GLEnum depth</i>, [ <i>GLEnum minFiltering</i>, <i>GLEnum maxFiltering</i>, <i>GLEnum sWrapping</i>, <i>GLEnum TWrapping</i>, <i>integer maximum_mipmap_level</i> ])
-
-- Required format to be provided by the application (for dynamic sizes). See LayoutLoader::addRequiredElement() : <BR>
-If the format is not found in the required element, it is searched in the known formats. You can also use character '*' to keep some of the parameters or replace them by specifying a new value. <BR>
-<b>REQUIRED_FORMAT</b>:<i>format_name</i>(<i>required_format_name</i> [, <i>integer width / *</i>, <i>integer height / *</i>, <i>GLEnum mode / *</i>, <i>GLEnum depth / *</i>, <i>GLEnum minFiltering / *</i>, <i>GLEnum maxFiltering / *</i>, <i>GLEnum sWrapping / *</i>, <i>GLEnum TWrapping / *</i>, <i>integer maximum_mipmap_level / *</i>])
-
-- Geometry : <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GeometryType</i>, <i>param1</i>, ... <i>paramN</i>) <BR>
-Examples : <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_2D</i>, <i>integer : width</i>, <i>integer : height</i>) <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>GRID_3D</i>, <i>integer : width</i>, <i>integer : height</i>, <i>integer : depth</i>) <BR>
-<b>GEOMETRY</b>:<i>geometry_name</i>(<i>CUSTOM_MODEL</i>, <i>GL Primitive (GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)</i>, [<i>true (if it has texcoord definition embedded)</i>]) <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a vertex (depending on the format) :</i> <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>VERTEX</b>( <i>x</i>, <i>y</i>, [<i>z</i>], [<i>u</i>, <i>v</i>]) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>Definition of a primitive element (depending on the format) :</i> <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>ELEMENT</b>( <i>a</i>, [<i>b</i>], [<i>c</i>], [<i>d</i>]) <BR>
-} <BR>
-
-- Required geometry to be provided by the application (for dynamic geometry models). See LayoutLoader::addRequiredElement() : <BR>
-<b>REQUIRED_GEOMETRY</b>:<i>geometry_name</i>(<i>required_geometry_name</i>)
-
-- Module call, see LayoutLoaderModule for more information : <BR>
-<b>CALL</b> : <i>module_name</i> (<i> module_arguments</i>) <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>(Optional)</i> <BR>
-} <BR>
-
-- Shader source code, from the same file : <BR>
-<b>SHADER_SOURCE</b>:<i>source_name</i> <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>source code</i> <BR>
-} <BR>
-
-- Shader source code, from the another file : <BR>
-<b>SHADER_SOURCE</b>:<i>source_name</i>(<i>string filename</i>)
-
-- Filter layout :
-<b>FILTER_LAYOUT</b>:<i>filter_layout_name</i>(<i>format_name</i>, <i>fragment_shader_source</i> [, <i>vertex_shader_source</i>/<b>DEFAULT_VERTEX_SHADER</b>, <i>geometry_name</i>]) <BR>
-[{<BR>
-&nbsp;&nbsp;&nbsp;&nbsp; GL_CLEAR(<i>true/false</i>)<BR>
-&nbsp;&nbsp;&nbsp;&nbsp; GL_BLEND(<i>sFactor</i>,<i>dFactor</i>,<i>blendingFunction</i>)<BR>
-&nbsp;&nbsp;&nbsp;&nbsp; GL_DEPTH_TEST(<i>depthTestFunction</i>)<BR>
-}]<BR>
-
-- Pipeline layout : <BR>
-<b>PIPELINE_LAYOUT</b>:<i>pipeline_layout_name</i> <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>INPUT_PORTS</b>(<i>input_port_name_1</i> [,<i>input_port_name_2</i>, ..., <i>input_port_name_n</i>] ) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>OUTPUT_PORTS</b>(<i>output_port_name_1</i> [,<i>output_port_name_2</i>, ..., <i>output_port_name_n</i>] ) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>FILTER_INSTANCE</b>:<i>filter_instance_name</i>(<i>filter_layout_name</i>) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>FILTER_INSTANCE</b>:<i>filter_layout_name</i> <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>PIPELINE_INSTANCE</b>:<i>pipeline_instance_name</i>(<i>pipeline_layout_name</i>) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>PIPELINE_INSTANCE</b>:<i>pipeline_layout_name</i> <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(THIS,<i>this_port_name</i>,<i>element_name</i>,<i>e_port_name</i>) // Connection to input. <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(<i>element_1_name</i>, <i>e1_port_name</i>, <i>element_2_name</i>, <i>e2_port_name</i>) // Connection between two elements (filter, pipeline), the connection goes from <i>element_1_name</i>::<i>e1_port_name</i> to <i>element_2_name</i>::<i>e2_port_name</i>. <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>CONNECTION</b>(<i>element_name</i>,<i>e_port_name</i>,THIS,<i>this_port_name</i>) // Connection to output. <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; ... <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>If you don't declare any connection, the loader will try to connect elements automatically using PipelineLayout::autoConnect(), make sure that the pipeline is compliant with the corresponding rules.</i> <BR>
-}
-
-- Required pipeline layout to be provided by the application (for decorators). See LayoutLoader::addRequiredElement() : <BR>
-<b>REQUIRED_PIPELINE</b>:<i>pipeline_layout_name</i>(required_pipeline_name)
-
-- Main pipeline layout (the layout at the end of the loading stage) : <BR>
-<i>Same description as PIPELINE_LAYOUT, but starting with </i> <b>PIPELINE_MAIN</b> <BR>
-Or, via an indirection : <BR>
-<b>PIPELINE_MAIN</b>:<i>main_pipeline_name</i>(<i>pipeline_layout_name</i>) <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>INPUT_PORTS</b>(<i>force_input_port_name_1</i> [,<i>force_input_port_name_2</i>, ..., <i>force_input_port_name_n</i>] ) <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>OUTPUT_PORTS</b>(<i>force_output_port_name_1</i> [,<i>force_output_port_name_2</i>, ..., <i>force_output_port_name_n</i>] ) <BR>
-}
-
-- Add to the search path : <BR>
-<b>ADD_PATH</b>(/some/path/) <BR>
-
-- Include another script, in order to use some of its definition (format, source, filter or pipeline layout) : <BR>
-<b>INCLUDE</b>(<i>string filename</i>)
-
-- Distribute code to the shaders code with the SHARED_CODE marker. Insert them in the SHADER_SOURCE elements by adding INSERT marker : <BR>
-<b>SHARED_CODE:shared_segment_name</b> <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>// shared code goes here...</i> <BR>
-} <BR>
-&nbsp;&nbsp; Then use : <BR>
-<b>SHADER_SOURCE</b>:<i>source_name</i> <BR>
-{ <BR>
-&nbsp;&nbsp;&nbsp;&nbsp; <b>INSERT(shared_segment_name)</b> // The shared code will be inserted here... <BR>
-} <BR>
-
-- Comments : C++ style.
-
-<i>Hello world pipeline example </i> (no processing, just resizing to <i>format</i>) :
-	\code
-	// The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
-	TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
-
-	// The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
-	SHADER_SOURCE:HelloWorld
-	{
-		#version 130
-
-		uniform sampler2D	texInput;
-		out     vec4 		texOutput;
-
-		void main()
-		{
-			// Get the input data :
-			vec4 col  = textureLod(texInput, gl_TexCoord[0].st, 0.0);
-
-			// Write the output data :
-			texOutput = col;
-		}
-	}
-
-	// Declare the filter layout :
-	FILTER_LAYOUT:helloFilter(format,HelloWorld)
-	// The filter layout will have one input port and one output port, which names are respectively texInput and texOutput.
-	// This information is gathered from the shader source HelloWorld, by analyzing the variables declared as uniform sampler2D for inputs and out vec4 for outputs.
-
-	PIPELINE_MAIN:pMainGradient
-	{
-		// Declare some input and output ports for this pipeline :
-		INPUT_PORTS(texInput)
-		OUTPUT_PORTS(texOutput)
-
-		// Declare one filter component : 
-		FILTER_INSTANCE:helloFilter
-		// We could also give it a special name ('instHello') : 
-		// FILTER_INSTANCE:instHello(helloFilter)
-
-		// Since the input and output port names we chose for the pipeline are the same than for the filter
-		// (as described in the shader source) then we don't need to do the connections (it will be made automatically).
-		// However one can imagine replacing the previous code by :
-		//
-		//INPUT_PORTS(input)
-		//OUTPUT_PORTS(output)
-		//
-		// In that case, we would have to declare the connections as :
-		//
-		//CONNECTION(THIS,input,instHello,texInput)
-		//CONNECTION(instHello,texOutput,THIS,texOutput)
-		//
-	}
-	\endcode
-
-Loading Example :
-	\code
-	try
-	{
-		// Load a PipelineLayout :
-		Loader loader;
-		PipelineLayout myLayout = loader("./path/pipeline.ppl");
-
-		// use it :
-		Pipeline* myPipeline1 = new Pipeline(myLayout,"Pipeline1");
-		Pipeline* myPipeline2 = new Pipeline(myLayout,"Pipeline2");
-
-		// For a single pipeline :
-		Pipeline* myPipelineU = loader("./path/otherPipeline.ppl","myPipelineName");
-
-		// use them, see Glip::CorePipeline::Pipeline documentation...
-
-		// Clean all :
-		delete myPipeline1;
-		delete myPipeline2;
-		delete myPipelineU;
-	}
-	catch(Exception& e)
-	{
-		std::cout << "An exception was caught : " << std::endl;
-		std::cout << e.what() << std::endl;
-	}
-	\endcode
-
 # Script Specifications ######
+
+## Structure
+<blockquote>
+<b><i>KEYWORD</i></b>(<i>argument0</i>[, ...])
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b>:<i>name</i>
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
+}
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b>:<i>name</i><br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
+}
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b>(<i>argument0</i>[, ...])<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
+}
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b>:<i>name</i>(<i>argument0</i>[, ...])
+</blockquote>
+<blockquote>
+<b><i>KEYWORD</i></b>:<i>name</i>(<i>argument0</i>[, ...])<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
+}
+</blockquote>
+
+These are the basic description structures the parser will attempt to match.
+
+## Comments
+
+Comments are C++/C, both single line and multiple lines are valid.
+
 ## Unique
 <blockquote>
 <b>UNIQUE</b>(<i>identifier</i>)
@@ -365,10 +217,10 @@ Define a texture format (Core::HdlTextureFormat). The first line shows the minim
 
 ### Required Format
 <blockquote>
-REQUIRED_FORMAT:<i>name</i>(<i>requiredFormatName</i>)
+<b>REQUIRED_FORMAT</b>:<i>name</i>(<i>requiredFormatName</i>)
 </blockquote>
 <blockquote>
-REQUIRED_FORMAT:<i>name</i>(<i>requiredFormatName</i>[, <i>newWidth</i>, <i>newHeight</i>, <i>newMode</i>, <i>newDepth</i>, <i>newMinFilter</i>, <i>newMagFilter</i>, <i>newSWrapping</i>, <i>newTWrapping</i>, <i>newMaxMipMapLevel</i>)
+<b>REQUIRED_FORMAT</b>:<i>name</i>(<i>requiredFormatName</i>[, <i>newWidth</i>, <i>newHeight</i>, <i>newMode</i>, <i>newDepth</i>, <i>newMinFilter</i>, <i>newMagFilter</i>, <i>newSWrapping</i>, <i>newTWrapping</i>, <i>newMaxMipMapLevel</i>)
 </blockquote>
 
 Define a texture format from a required resource. This enables the script to receive data from the program, as a dynamic specification.
@@ -391,7 +243,7 @@ Define a texture format from a required resource. This enables the script to rec
 ## Geometry
 ### Geometry
 <blockquote>
-GEOMETRY:<i>name</i>(<i>type</i>[, <i>argument0</i>, ...])
+<b>GEOMETRY</b>:<i>name</i>(<i>type</i>[, <i>argument0</i>, ...])
 </blockquote>
 
 Define a model, which can be used as the base drawing in a filter.
@@ -405,7 +257,7 @@ Define a model, which can be used as the base drawing in a filter.
 
 #### Grid2D
 <blockquote>
-GEOMETRY:<i>name</i>(GRID_2D, <i>width</i>, <i>height</i>)
+<b>GEOMETRY</b>:<i>name</i>(GRID_2D, <i>width</i>, <i>height</i>)
 </blockquote>
 
 Create a 2D grid of dots.
@@ -419,7 +271,7 @@ Create a 2D grid of dots.
 
 #### Grid3D
 <blockquote>
-GEOMETRY:<i>name</i>(GRID_3D, <i>width</i>, <i>height</i>, <i>depth</i>)
+<b>GEOMETRY</b>:<i>name</i>(GRID_3D, <i>width</i>, <i>height</i>, <i>depth</i>)
 </blockquote>
 
 Create a 3D grid of dots.
@@ -434,7 +286,7 @@ Create a 3D grid of dots.
 
 #### CustomModel
 <blockquote>
-GEOMETRY:<i>name</i>(CUSTOM_MODEL, <i>primitive</i>, <i>hasTexCoords</i>)<br>
+<b>GEOMETRY</b>:<i>name</i>(CUSTOM_MODEL, <i>primitive</i>, <i>hasTexCoords</i>)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
 }<br>
@@ -446,16 +298,16 @@ Create a custom geometry model.
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
 <tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the model.</td></tr>
 <tr class="glipDescrRow"><td><i>primitive</i></td>			<td>Type of the primitive.</td></tr>
-<tr class="glipDescrRow"><td><i>hasTexCoords</i></td>			<td>If the VERTEX data will contain the texture coordinates. Either TRUE or FALSE.</td><tr>
+<tr class="glipDescrRow"><td><i>hasTexCoords</i></td>			<td>If the VERTEX data will contain the texture coordinates. Either TRUE or FALSE.</td></tr>
 <tr class="glipDescrRow"><td><i>body</i></td>				<td>Contains a description of the geometry, using VERTEX and ELEMENT.</td></tr>
 </table>
 
 ##### Vertex
 <blockquote>
-VERTEX(<i>x</i>, <i>y</i>[, <i>u</i>, <i>v</i>])
+<b>VERTEX</b>(<i>x</i>, <i>y</i>[, <i>u</i>, <i>v</i>])
 </blockquote>
 <blockquote>
-VERTEX(<i>x</i>, <i>y</i>, <i>z</i>[, <i>u</i>, <i>v</i>])
+<b>VERTEX</b>(<i>x</i>, <i>y</i>, <i>z</i>[, <i>u</i>, <i>v</i>])
 </blockquote>
 
 Define a vertex. If the geometry was set to receive texture coordinates, the VERTEX data must have the U and V coordinates specified.
@@ -471,7 +323,7 @@ Define a vertex. If the geometry was set to receive texture coordinates, the VER
 
 ##### Element
 <blockquote>
-ELEMENT(<i>a</i>, [<i>b</i>, <i>c</i>, <i>d</i>])
+<b>ELEMENT</b>(<i>a</i>, [<i>b</i>, <i>c</i>, <i>d</i>])
 </blockquote>
 
 Define an element. An element is the polygon structure or primitive defined for the current geometry model. Only using GL_POINT wave the requirement for defining elements. The number of elements indices needed depend on the number of vertices per element.
@@ -486,7 +338,7 @@ Define an element. An element is the polygon structure or primitive defined for 
 
 ### Required Geometry
 <blockquote>
-REQUIRED_GEOMETRY:<i>name</i>(<i>requiredGeometryName</i>)
+<b>REQUIRED_GEOMETRY</b>:<i>name</i>(<i>requiredGeometryName</i>)
 </blockquote>
 
 Define a geometry model from a required geometry. This enables the script to receive data from the program, as a dynamic specification.
@@ -500,7 +352,7 @@ Define a geometry model from a required geometry. This enables the script to rec
 ## Shared Code
 ### Shared code
 <blockquote>
-SHARED_CODE:<i>name</i><br>
+<b>SHARED_CODE</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
 }
@@ -516,7 +368,7 @@ Define a portion of code which can be included in different source. Use INSERT t
 
 ### Insert
 <blockquote>
-INSERT(<i>sharedCodeName</i>)
+<b>INSERT</b>(<i>sharedCodeName</i>)
 </blockquote>
 
 Insert a shared code inside a source. This keyword must be inside, either another SHARED_CODE or a SHADER_SOURCE. This call must be on a single line, by itself (but possibly including comments).
@@ -528,13 +380,13 @@ Insert a shared code inside a source. This keyword must be inside, either anothe
 
 ## Shader Source
 <blockquote>
-SHADER_SOURCE:<i>name</i><br>
+<b>SHADER_SOURCE</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>code</i><br>
 }
 </blockquote>
 <blockquote>
-SHADER_SOURCE:<i>name</i>(<i>filename</i>)
+<b>SHADER_SOURCE</b>:<i>name</i>(<i>filename</i>)
 </blockquote>
 
 Define a shader source code.
@@ -549,10 +401,10 @@ Define a shader source code.
 ## Filter Layout
 ### Filter Layout
 <blockquote>
-FILTER_LAYOUT:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])
+<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])
 </blockquote>
 <blockquote>
-FILTER_LAYOUT:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])<br>
+<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>extraOptions</i><br>
 }
@@ -572,7 +424,7 @@ Define a filter layout.
 
 ### Clearing
 <blockquote>
-GL_CLEAR(<i>enabled</i>)
+<b>GL_CLEAR</b>(<i>enabled</i>)
 </blockquote>
 
 Enable the clear operation before computing the filter.
@@ -584,7 +436,7 @@ Enable the clear operation before computing the filter.
 
 ### Blending
 <blockquote>
-GL_BLEND(<i>sourceFactor</i>, <i>destinationFactor</i>, <i>blendingFunction</i>)
+<b>GL_BLEND</b>(<i>sourceFactor</i>, <i>destinationFactor</i>, <i>blendingFunction</i>)
 </blockquote>
 
 Enable blending in the filter and setup the parameters.
@@ -598,7 +450,7 @@ Enable blending in the filter and setup the parameters.
 
 ### Depth Test
 <blockquote>
-GL_DEPTH_TEST(depthTestFunction)
+<b>GL_DEPTH_TEST</b>(depthTestFunction)
 </blockquote>
 
 <table class="glipDescrTable">
@@ -609,7 +461,7 @@ GL_DEPTH_TEST(depthTestFunction)
 ## Pipeline Layout
 ### Pipeline Layout
 <blockquote>
-PIPELINE_LAYOUT:<i>name</i><br>
+<b>PIPELINE_LAYOUT</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>elements</i><br>
 }
@@ -625,8 +477,10 @@ Define a pipeline layout.
 
 #### Input Ports
 <blockquote>
-INPUT_PORTS(<i>portName0</i> [, ...])
+<b>INPUT_PORTS</b>(<i>portName0</i> [, ...])
 </blockquote>
+
+Define the input ports of a pipeline layout.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
@@ -636,8 +490,10 @@ INPUT_PORTS(<i>portName0</i> [, ...])
 
 #### Output Ports
 <blockquote>
-OUTPUT_PORTS(<i>portName0</i> [, ...])
+<b>OUTPUT_PORTS</b>(<i>portName0</i> [, ...])
 </blockquote>
+
+Define the output ports of a pipeline layout.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
@@ -647,47 +503,175 @@ OUTPUT_PORTS(<i>portName0</i> [, ...])
 
 #### Filter Instance
 <blockquote>
-FILTER_INSTANCE:<i>name</i>
+<b>FILTER_INSTANCE</b>:<i>name</i>
 </blockquote>
 <blockquote>
-FILTER_INSTANCE:<i>name</i>(<i>filterLayoutName</i>)
+<b>FILTER_INSTANCE</b>:<i>name</i>(<i>filterLayoutName</i>)
 </blockquote>
+
+Define a filter instance within a pipeline layout.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of this instance.</td></tr>
+<tr class="glipDescrRow"><td><i>filterLayoutName</i></td>		<td>The name of the layout to use. If the argument is not given, it will use the name of the instance instead.</td></tr>
+</table>
 
 #### Pipeline Instance
 <blockquote>
-PIPELINE_INSTANCE:<i>name</i>
+<b>PIPELINE_INSTANCE</b>:<i>name</i>
 </blockquote>
 <blockquote>
-PIPELINE_INSTANCE:<i>name</i>(<i>pipelineLayoutName</i>)
+<b>PIPELINE_INSTANCE</b>:<i>name</i>(<i>pipelineLayoutName</i>)
 </blockquote>
+
+Define a pipeline instance within a pipeline layout.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of this instance.</td></tr>
+<tr class="glipDescrRow"><td><i>filterLayoutName</i></td>		<td>The name of the layout to use. If the argument is not given, it will use the name of the instance instead.</td></tr>
+</table>
 
 #### Connection
 <blockquote>
-CONNECTION(<i>elementOutName</i>, <i>outputPortName</i>, <i>elementInName</i>, <i>inputPortName</i>)
+<b>CONNECTION</b>(<i>elementOutName</i>, <i>outputPortName</i>, <i>elementInName</i>, <i>inputPortName</i>)
 </blockquote>
+
+Define a connection from an output port to an input port. The data will <i>flow</i> from the output port <i>outputPortName</i> of the element <i>elementOutName</i> to the input port <i>inputPortName</i> of the element <i>elementInName</i>. If no connections are given in pipeline layout, the loader will attempt an automatic connection with the rules of PipelineLayout::autoConnect(). 
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>elementOutName</i></td>			<td>Element name (pipeline or filter) or the keyword THIS to get from an input port of the containing layout.</td></tr>
+<tr class="glipDescrRow"><td><i>outputPortName</i></td>			<td>Port name.</td></tr>
+<tr class="glipDescrRow"><td><i>elementInName</i></td>			<td>Element name (pipeline or filter) or the keyword THIS to get from an output port of the containing layout.</td></tr>
+<tr class="glipDescrRow"><td><i>inputPortName</i></td>			<td>Port name.</td></tr>
+</table>
 
 ### Required Pipeline
 <blockquote>
-REQUIRED_PIPELINE:<i>name</i>(<i>requiredPipelineName</i>)
+<b>REQUIRED_PIPELINE</b>:<i>name</i>(<i>requiredPipelineName</i>)
 </blockquote>
+
+Define a pipeline layout from a required resource. This enables the script to receive data from the program, as a dynamic specification.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the created layout.</td></tr>
+<tr class="glipDescrRow"><td><i>requiredPipelineName</i></td>		<td>Name of the required pipeline.</td></tr>
+</table>
 
 ### Main Pipeline
 <blockquote>
-MAIN_PIPELINE:<i>name</i><br>
+<b>MAIN_PIPELINE</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>elements</i><br>
 }<br>
 </blockquote>
 <blockquote>
-MAIN_PIPELINE:<i>name</i>(<i>basePipelineLayoutName</i>)<br>
+<b>MAIN_PIPELINE</b>:<i>name</i>(<i>basePipelineLayoutName</i>)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>ports</i><br>
 }
 </blockquote>
 
+Define the main pipeline layout defined in the script. If the script is included from another, this will be automatically changed to a pipeline layout. The higher script must contain such pipeline. In case of the layout inheritance, you must define the input and output ports names.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the pipeline layout.</td></tr>
+<tr class="glipDescrRow"><td><i>elements</i></td>			<td>Elements in the layout. See PIPELINE_LAYOUT.</td></tr>
+<tr class="glipDescrRow"><td><i>basePipelineLayoutName</i></td>		<td>Inherit layout from the layout which has this name.</td></tr>
+<tr class="glipDescrRow"><td><i>ports</i></td>				<td>Names of the input and output ports. See INPUT_PORTS and OUTPUT_PORTS</td></tr>
+</table>
+
 # Script Example #############
 ## Script ####################
+
+The following example is the a simple input to output copy with resize to 640x480 in RGB, 1 byte per component (whatever the input format is).
+
+\code
+// The output format (for the output texture). Note that the filtering parameters are of no use in this pipeline. They will be use in the next processing/display step :
+TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
+
+// The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
+SHADER_SOURCE:SimpleCopySource
+{
+	uniform sampler2D	textureInput;	// input texture.
+	out     vec4 		textureOutput;	// output texture.
+
+	void main()
+	{
+		// Get the input data :
+		vec4 c  = textureLod(textureInput, gl_TexCoord[0].st, 0.0);
+
+		// Write the output data :
+		textureOutput = c;
+	}
+}
+
+// Declare the filter layout :
+FILTER_LAYOUT:SimpleCopyFilter(format, SimpleCopySource)
+// The filter layout will have one input port and one output port, which names are respectively textureInput and textureOutput.
+// This information is gathered from the shader source SimpleCopySource, by analyzing the variables declared as uniform sampler2D for inputs and out vec4 for outputs.
+
+PIPELINE_MAIN:SimpleCopyPipeline
+{
+	// Declare some input and output ports for this pipeline :
+	INPUT_PORTS(textureInput)
+	OUTPUT_PORTS(textureOutput)
+
+	// Declare one filter component : 
+	FILTER_INSTANCE:SimpleCopyFilter
+
+	// Since the input and output port names we chose for the pipeline are the same as for the filter
+	// then we don't need to do the connections (it will be made automatically).
+	// However one can imagine replacing the previous code by :
+	//
+	//INPUT_PORTS(input)
+	//OUTPUT_PORTS(output)
+	//
+	// In that case, we would have to declare the connections as :
+	//
+	//CONNECTION(THIS,input,SimpleCopyFilter,textureInput)
+	//CONNECTION(SimpleCopyFilter,textureOutput,THIS,output)
+}
+\endcode
+
 ## Loading Code ##############
+
+The following code shows how to load a script with the API :
+
+\code
+try
+{
+	// Load a PipelineLayout :
+	LayoutLoader loader;
+	PipelineLayout myLayout = loader.getPipelineLayout("./path/pipeline.ppl");
+
+	// use it :
+	Pipeline* myPipeline1 = new Pipeline(myLayout,"Pipeline1");
+	Pipeline* myPipeline2 = new Pipeline(myLayout,"Pipeline2");
+
+	// For a single pipeline, the second string is the name of that particular instance :
+	Pipeline* myPipelineU = loader.getPipeline("./path/otherPipeline.ppl", "myPipelineName");
+
+	// use them, see Glip::CorePipeline::Pipeline documentation...
+
+	// Clean all :
+	delete myPipeline1;
+	delete myPipeline2;
+	delete myPipelineU;
+}
+catch(Exception& e)
+{
+	// If either the parsing of the script or the compilation of the shader(s) failed, you will receive a Glip::Exception.
+	// You can probe Glip::Exception::getType() to check the type of the error (which might be Glip::Exception::ClientScriptException or Glip::Exception::ClientShaderException, possibly another).
+	std::cout << "An exception was caught : " << std::endl;
+	std::cout << e.what() << std::endl;
+}
+\endcode
+
 
 **/
 		class GLIP_API LayoutLoader

@@ -1524,3 +1524,35 @@ Mouse wheel 					| Zoom in / out
 	
 **/
 
+/**
+	\page page_UseGlipCompute Tool : GlipCompute
+
+\section sec_IntroGlipCompute Presentation
+
+\section sec_CommandsGlipCompute Commands
+
+\section sec_XRemoteOpenGL X And Remote OpenGL
+	This section describes how to access remote computation capability of a server. It requires the server to be running a X Server with at least one display open. You will not be able to see any graphics via this method alone (graphics will be generated on the display (might be virtual) associated to the distant machine). But this might be sufficient and useful for <i>glip-compute</i>. It also requires you to have a session opened on the distant machine.
+
+	Steps :
+	- On the remote machine, save the following values (once, when you have physical access) :
+	\code
+	echo -e "LOCAL DISPLAY    : $DISPLAY\nLOCAL XAUTHORITY : $XAUTHORITY"	
+	\endcode
+	- Log to the machine via SSH and enable X forwarding :
+	\code
+	ssh -X username@remote
+	\endcode
+	- Have a look at the values of DISPLAY (should be something like :10.0) and XAUTHORITY (might be empty) :
+	\code
+	echo -e "REMOTE DISPLAY    : $DISPLAY\nREMOTE XAUTHORITY : $XAUTHORITY"
+	\endcode
+	- Change the values of $DISPLAY and $XAUTHORITY :
+	\code
+	export DISPLAY=<LOCAL DISPLAY VALUE>
+	export XAUTHORITY=<LOCAL XAUTHORITY VALUE>
+	\endcode
+	- Test with either <i>glxinfo</i>, <i>glewinfo</i> or <i>glip-compute</i>.
+
+**/
+

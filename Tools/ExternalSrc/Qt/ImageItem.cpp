@@ -335,8 +335,6 @@ using namespace QGIC;
 			throw Exception("[Internal Error] Inner buffer is null.", __FILE__, __LINE__);
 		else if(texture==NULL)
 		{
-			std::cout << "ImageItem::loadToDevice : " << ImageItemsStorage::checkMemSpaceAvailabilty(imageBuffer->getSize()) << std::endl;
-
 			// Test if it can be loaded on the GPU : 
 			if(ImageItemsStorage::checkMemSpaceAvailabilty(imageBuffer->getSize()))
 			{
@@ -781,7 +779,7 @@ using namespace QGIC;
 	}
 
 	// Manage the storage : 
-	size_t ImageItemsStorage::deviceOccupancy(size_t* canBeFreed) const
+	size_t ImageItemsStorage::getDeviceOccupancy(size_t* canBeFreed) const
 	{
 		size_t occupancy = 0;
 
@@ -820,21 +818,21 @@ using namespace QGIC;
 
 	void ImageItemsStorage::setMaxOccupancy(size_t newMaxOccupancy)
 	{
-		size_t 	totalOccupancy = ImageItemsStorage::totalDeviceOccupancy();
+		size_t 	totalOccupancy = ImageItemsStorage::getTotalDeviceOccupancy();
 
 		if(totalOccupancy > newMaxOccupancy)
 		{
 			cleanStorages();
 
 			// Prevent further cut :
-			newMaxOccupancy = std::max(newMaxOccupancy, ImageItemsStorage::totalDeviceOccupancy());
+			newMaxOccupancy = std::max(newMaxOccupancy, ImageItemsStorage::getTotalDeviceOccupancy());
 		}
 
 		// Finally, set : 
 		maxOccupancy = newMaxOccupancy;
 	}
 
-	size_t ImageItemsStorage::totalDeviceOccupancy(size_t* canBeFreed)
+	size_t ImageItemsStorage::getTotalDeviceOccupancy(size_t* canBeFreed)
 	{
 		size_t totalOccupancy = 0;
 
@@ -845,7 +843,7 @@ using namespace QGIC;
 		{
 			size_t currentCanBeFreed = 0;
 
-			totalOccupancy += (*it)->deviceOccupancy(&currentCanBeFreed);
+			totalOccupancy += (*it)->getDeviceOccupancy(&currentCanBeFreed);
 			
 			if(canBeFreed!=NULL)
 				(*canBeFreed) += currentCanBeFreed;
@@ -867,13 +865,13 @@ using namespace QGIC;
 		// Get the list of records which can be freed :
 		for(QVector<ImageItemsStorage*>::iterator it=storagesList.begin(); it!=storagesList.end(); it++)
 			freeableRecords << (*it)->getFreeableRecords();
-
+	
 		// Sort it by timestamp, from newest to oldest access :
 		qSort(freeableRecords.begin(), freeableRecords.end());
 
 		// Unload the oldest, until you reach the futureAdd size :
 		size_t counter = 0;
-		for(QVector<Record>::iterator it=freeableRecords.end(); !freeableRecords.empty() && it!=freeableRecords.end() && counter<futureAdd;)
+		for(QVector<Record>::iterator it=freeableRecords.end(); !freeableRecords.empty() && it!=freeableRecords.begin() && counter<futureAdd;)
 		{
 			it--;
 			it->item->unloadFromDevice();
@@ -886,13 +884,13 @@ using namespace QGIC;
 		size_t 	totalOccupancy	= 0,
 			canBeFreed	= 0;
 		
-		totalOccupancy = ImageItemsStorage::totalDeviceOccupancy(&canBeFreed);
+		totalOccupancy = ImageItemsStorage::getTotalDeviceOccupancy(&canBeFreed);
 
 		// If it cannot be added directly : 
 		if((totalOccupancy+futureAdd) > maxOccupancy)
 		{
 			// If some occupancy can be freed to enable the storage : 
-			if( (totalOccupancy+futureAdd-canBeFreed) < maxOccupancy)
+			if((totalOccupancy+futureAdd-canBeFreed) < maxOccupancy)
 			{
 				cleanStorages(futureAdd);
 				return true;
@@ -1461,6 +1459,64 @@ using namespace QGIC;
 		}
 	}
 
+// ImageItemsCollectionSettings :
+	ImageItemsCollectionSettings::ImageItemsCollectionSettings(QWidget* parent)
+	 :	QMenu("Settings", parent),
+		widgetAction(this),
+		widget(this),
+		layout(&widget),
+		newMaxOccupancySpinBox(&widget),
+		currentMaxOccupancyTitleLabel(" Current : ", &widget),
+		currentMaxOccupancyLabel(&widget),
+		newMaxOccupancyLabel(" Set maximum : ", &widget),
+		newMaxOccupancyUnitLabel(" MB", &widget),
+		saveAction("Save", this)
+	{
+		layout.addWidget(&currentMaxOccupancyTitleLabel,0, 0, 1, 1);
+		layout.addWidget(&currentMaxOccupancyLabel, 	0, 1, 1, 2);
+		layout.addWidget(&newMaxOccupancyLabel,		1, 0, 1, 1);
+		layout.addWidget(&newMaxOccupancySpinBox,	1, 1, 1, 1);
+		layout.addWidget(&newMaxOccupancyUnitLabel,	1, 2, 1, 1);
+
+		currentMaxOccupancyTitleLabel.setAlignment(Qt::AlignRight);
+		newMaxOccupancyLabel.setAlignment(Qt::AlignRight);
+
+		newMaxOccupancySpinBox.setSingleStep(8);
+
+		widgetAction.setDefaultWidget(&widget);
+		addAction(&widgetAction);
+		addAction(&saveAction);
+
+		QObject::connect(this,		SIGNAL(aboutToShow()),	this,	SLOT(update()));
+		QObject::connect(&saveAction, 	SIGNAL(triggered()), 	this, 	SLOT(changeMaxOccupancy()));
+	}
+
+	ImageItemsCollectionSettings::~ImageItemsCollectionSettings(void)
+	{
+		widgetAction.releaseWidget(&widget);
+	}
+	
+	void ImageItemsCollectionSettings::update(void)
+	{
+		const size_t	toMB			= 1024*1024;
+		size_t		freeable		= 0;
+		const size_t 	currentOccupancy	= ImageItemsStorage::getTotalDeviceOccupancy(&freeable) / toMB,
+				currentMaxOccupancy	= ImageItemsStorage::getMaxOccupancy() / toMB;
+		const int	percents		= (currentOccupancy*100)/currentMaxOccupancy;
+		freeable = freeable/toMB + 1;
+
+		newMaxOccupancySpinBox.setRange(std::max(16, static_cast<int>(freeable)), 16384);
+
+		currentMaxOccupancyLabel.setText(tr("%1 / %2 MB (%3%)").arg(currentOccupancy).arg(currentMaxOccupancy).arg(percents));
+		newMaxOccupancySpinBox.setValue(currentMaxOccupancy);
+	}
+
+	void ImageItemsCollectionSettings::changeMaxOccupancy(void)
+	{
+		const size_t toMB = 1024*1024;
+		ImageItemsStorage::setMaxOccupancy(newMaxOccupancySpinBox.value()*toMB);
+	}		
+
 // ImageItemsCollection : 
 	ImageItemsCollection::ImageItemsCollection(void)
 	 : 	layout(this),
@@ -1473,7 +1529,8 @@ using namespace QGIC;
 		imagesMenu("Images", this),
 		filterMenu(this),
 		wrappingMenu(this),
-		collectionWidget(this)
+		collectionWidget(this),
+		settingsMenu(this)
 	{
 		layout.addWidget(&menuBar);
 		layout.addWidget(&collectionWidget);
@@ -1509,6 +1566,7 @@ using namespace QGIC;
 		menuBar.addMenu(&wrappingMenu);
 		menuBar.addAction(&collectionWidget.moveUpAction);
 		menuBar.addAction(&collectionWidget.moveDownAction);
+		menuBar.addMenu(&settingsMenu);
 
 		QStringList listLabels;
 
@@ -1536,7 +1594,6 @@ using namespace QGIC;
 		collectionWidget.setHeaderLabels( listLabels );
 
 		// Connections :
-		//QObject::connect(&collectionWidget, 	SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), 	this, SLOT(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
 		QObject::connect(&collectionWidget, 	SIGNAL(itemActivated(QTreeWidgetItem*,int)),			this, SLOT(itemActivated(QTreeWidgetItem*,int)));
 		QObject::connect(&collectionWidget, 	SIGNAL(itemSelectionChanged()),					this, SLOT(itemSelectionChanged()));
 		QObject::connect(&collectionWidget,	SIGNAL(customContextMenuRequested(const QPoint&)),		this, SLOT(openContextMenu(const QPoint&)));
@@ -1943,7 +2000,7 @@ using namespace QGIC;
 
 	void ImageItemsCollection::addActionToMenu(QAction* action)
 	{
-		menuBar.addAction(action);
+		menuBar.insertAction(settingsMenu.menuAction(), action);
 	}
 
 	ImageItem* ImageItemsCollection::getImageItem(const QTreeWidgetItem& treeWidgetItem)

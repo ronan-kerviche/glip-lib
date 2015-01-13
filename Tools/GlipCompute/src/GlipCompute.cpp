@@ -317,7 +317,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 						else
 							command.outputFilenames = filenamesList;
 					}
-					else if(itSub->strKeyword==Glip::glParamName(GL_TEXTURE_MAG_FILTER) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_MIN_FILTER) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_WRAP_S) || itSub->strKeyword==Glip::glParamName(GL_TEXTURE_WRAP_T))
+					else if(itSub->strKeyword==Glip::getGLEnumName(GL_TEXTURE_MAG_FILTER) || itSub->strKeyword==Glip::getGLEnumName(GL_TEXTURE_MIN_FILTER) || itSub->strKeyword==Glip::getGLEnumName(GL_TEXTURE_WRAP_S) || itSub->strKeyword==Glip::getGLEnumName(GL_TEXTURE_WRAP_T))
 					{
 						// Test :
 						if(command.inputFilenames.empty())
@@ -326,7 +326,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" contains " + Glip::toString(itSub->arguments.size()) + " arguments while " + Glip::toString(command.inputFilenames.size()) + " inputs were defined.", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
 
 						// Find the target :
-						GLenum targetIndex = Glip::glFromString(itSub->strKeyword);
+						GLenum targetIndex = Glip::getGLEnum(itSub->strKeyword);
 						std::vector<unsigned int>* target = NULL;
 
 						// Test the target :		
@@ -354,7 +354,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 						// Load the values :
 						for(std::vector<std::string>::iterator itArg=itSub->arguments.begin(); itArg!=itSub->arguments.end(); itArg++)
 						{
-							GLenum glArg = Glip::glFromString(*itArg);
+							GLenum glArg = Glip::getGLEnum(*itArg);
 	
 							if(glArg==GL_FALSE)
 								throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\", cannot read argument : \"" + (*itArg) + "\".", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
