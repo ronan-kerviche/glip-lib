@@ -84,8 +84,8 @@
 					// OpenGL keyword :
 					struct GLIP_API KeywordPair
 					{
-						GLenum 		value;
-						std::string 	name;
+						GLenum 			value;
+						const std::string 	name;
 					};
 
 					static HandleOpenGL		*instance;
@@ -128,7 +128,7 @@
 			Sample usage :
 			\code
 			const GLenum[] list = {GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA};
-			bool test = glTestList(symbol, list);
+			bool test = belongsToGLEnums(symbol, list);
 			\endcode
 			**/
 			template<size_t N>

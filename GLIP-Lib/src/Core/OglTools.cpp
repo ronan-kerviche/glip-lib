@@ -750,7 +750,7 @@ using namespace Glip::CoreGL;
 	Sample usage :
 	\code
 	const GLenum[] list = {GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA};
-	bool test = glTestList(symbol, list, sizeof(list));
+	bool test = belongsToGLEnums(symbol, list, sizeof(list));
 	\endcode
 	**/
 	bool Glip::CoreGL::belongsToGLEnums(const GLenum& p, const GLenum* l, const size_t s)

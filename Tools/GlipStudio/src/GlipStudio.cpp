@@ -75,7 +75,6 @@
 		window->addSubWidget(editor);
 		window->addSubWidget(variableTracker);
 		window->addSubWidget(collection);
-		window->addViewsTable(collection->getMainViewsTablePtr());
 		window->addSubWidget(pipelineManager);
 
 		editor->hide();
@@ -85,8 +84,9 @@
 
 		// Connections : 
 		QObject::connect(collection, 				SIGNAL(addViewRequest(QVGL::View*)), 							window, 				SLOT(addView(QVGL::View*)));
+		QObject::connect(collection,				SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),					window,					SLOT(addViewsTable(QVGL::ViewsTable*)));
 		QObject::connect(editor->getCodeEditorPtr(), 		SIGNAL(compileSource(std::string, std::string, std::string, void*, const QObject*)), 	pipelineManager->getManagerPtr(), 	SLOT(compileSource(std::string, std::string, std::string, void*, const QObject*)));
-		QObject::connect(collection->getCollectionPtr(), 	SIGNAL(imageItemAdded(QGIC::ImageItem*)), 						pipelineManager->getManagerPtr(), 	SLOT(addImageItem(QGIC::ImageItem*)));
+		QObject::connect(collection->getCollectionPtr(), 	SIGNAL(imageItemAdded(QGIC::ImageItem*)), 						pipelineManager->getManagerPtr(), 	SLOT(addImageItem(QGIC::ImageItem*)));	
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewRequest(QVGL::View*)), 							window, 				SLOT(addView(QVGL::View*)));
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),					window, 				SLOT(addViewsTable(QVGL::ViewsTable*)));
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),				collection->getCollectionPtr(),		SLOT(addImageItem(HdlTexture*, const QString)));

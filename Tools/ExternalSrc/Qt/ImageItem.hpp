@@ -434,6 +434,7 @@ namespace QGIC
 
 		signals :
 			void addViewRequest(QVGL::View* view);	
+			void addViewsTableRequest(QVGL::ViewsTable* viewsTable);
 	};
 	#endif
 }

@@ -243,14 +243,12 @@ namespace QVGL
 			int 			a, b, w, h, H, topBarHeight;
 			float 			u, v;
 			QGraphicsSimpleTextItem	emptyNotification;
-			//bool 			visible;
 
 			void computeTableParameters(const QRectF& sceneViewWidget, int N=-1);
 			void getIndices(const Vignette* vignette, int& i, int& j) const;
 			QPoint getScenePosition(const int& i, const int& j) const;
 			QPoint getScenePosition(const Vignette* vignette) const;
 			QVariant itemChange(GraphicsItemChange change, const QVariant& value);
-			//void setVisible(bool enabled);
 
 		private slots : 
 			void resize(const QRectF& size);
@@ -272,10 +270,7 @@ namespace QVGL
 			View* getCurrentSelectedView(void) const;
 			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
 			QRectF getVignetteFrame(View* view) const;
-			//bool isVisible(void) const;
 			bool isClosed(void) const;
-
-			//void setVisible(bool enabled); // TEST, TO REMOVE
 
 		public slots :
 			void addView(View* view, bool resizeNow=true);
@@ -922,16 +917,15 @@ namespace QVGL
 			KeyboardState& getKeyboardState(void);
 			MouseState& getMouseState(void);
 			View* getCurrentView(void) const;
-			QList<View*>& getCurrentViewList(void); // To be removed in the future?
 			ViewsTable* getCurrentViewsTable(void);
 			void changeCurrentView(int targetID, bool showNow=true);
 			void hideCurrentView(void);
 			void changeCurrentViewsTable(int targetID);
 			void hideCurrentViewsTable(void);
 			void getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const;
-			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;							// correcting for the aspect ratio of the scene.
+			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;				// correcting for the aspect ratio of the scene.
 			float getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const;
-			float getAdaptationScaling(const float& imageRatio) const;									// correcting for the image filling the scene.
+			float getAdaptationScaling(const float& imageRatio) const;						// correcting for the image filling the scene.
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const;
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const;
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view=NULL) const;

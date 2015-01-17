@@ -2197,6 +2197,9 @@ using namespace QGIC;
 
 	void ImageItemsCollectionSubWidget::showMainViewsTable(void)
 	{
+		if(mainViewsTable.isClosed())
+			emit addViewsTableRequest(&mainViewsTable);
+
 		mainViewsTable.show();
 	}
 

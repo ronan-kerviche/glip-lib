@@ -1436,6 +1436,8 @@ using namespace QVGL;
 		QObject::connect(&toggleFullscreenAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&closeCurrentViewAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&closeAllViewsAction,				SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&closeCurrentViewsTableAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&closeAllViewsTableAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&toggleTemporaryHideAllSubWidgetsAction,	SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&hideAllSubWidgetsAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 
@@ -3623,7 +3625,10 @@ using namespace QVGL;
 		{
 			viewsTablesList.removeAt(idx);
 			glSceneViewWidget.removeItem(viewsTable);
-			viewsTable->disconnect(this);		
+			viewsTable->disconnect(this);
+
+			if(currentViewsTableIndex==idx)
+				changeCurrentViewsTable(currentViewsTableIndex);		
 		}
 	}
 
@@ -3643,17 +3648,22 @@ using namespace QVGL;
 		int idx = viewsTablesList.indexOf(viewsTable);
 
 		if(idx>=0)
+		{
 			viewsTablesList.removeAt(idx);
+
+			if(currentViewsTableIndex==idx)
+				changeCurrentViewsTable(currentViewsTableIndex);
+		}
 	}
 
 	void MainWidget::closeAllViewsTables(void)
 	{
-		while(!viewsTablesList.isEmpty())
+		while(viewsTablesList.size()>1) // Keep the main table
 		{
 			ViewsTable* viewsTable = viewsTablesList.back();
 
 			if(viewsTable!=mainViewsTable)
-				viewsTableClosed(viewsTable);
+				viewsTable->close();
 		}
 	}
 
@@ -3888,12 +3898,7 @@ using namespace QVGL;
 			return viewsList[currentViewIndex];
 		else
 			return NULL;
-	}
-
-	QList<View*>& MainWidget::getCurrentViewList(void)
-	{
-		return viewsList;
-	}
+	}	
 
 	ViewsTable* MainWidget::getCurrentViewsTable(void)
 	{
@@ -4178,6 +4183,9 @@ using namespace QVGL;
 	{
 		if(!viewsTablesList.contains(viewsTable))
 		{
+			for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
+				addView(it.key());
+
 			glSceneViewWidget.addItem(viewsTable);
 			viewsTablesList.append(viewsTable);
 
