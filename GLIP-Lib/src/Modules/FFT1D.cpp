@@ -33,502 +33,354 @@
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
+	using namespace Glip::Modules::FFTModules;
 
-	/**
-	\fn FFT1D::FFT1D(int _size, int flags)
-	\brief FFT1D constructor, will compute the 1D Fast Fourier Transformation on a 1D texture (will raise an exception otherwise). In both the input and the output, the red and green channels hold the real and complex part respectively.
-	\param _size Size of the data (1D), must be a power of two. It will raise an exception otherwise.
-	\param flags The flags associated for this computation (combined with | operator), see FFT1D::Flags.
-	**/
-	FFT1D::FFT1D(int _size, int flags)
-	 : bitReversal(NULL), wpTexture(NULL), pipeline(NULL), size(_size), shift((flags & Shifted)>0), inversed((flags & Inversed)>0), compMagnitude((flags & ComputeMagnitude)>0), useZeroPadding((flags & UseZeroPadding)>0), compatibilityMode((flags & CompatibilityMode)>0), performanceMonitoring(false), sumTime(0.0), sumSqTime(0.0), numProcesses(0)
+// FFTModules :
+	Flag getFlag(const std::string& str)
 	{
-		double 	test1 = log(size)/log(2),
-			test2 = floor(test1);
+		#define TEST(a, b, c) if(str== a || str== b) return c ;
+	
+		TEST("Shifted",			"SHIFTED", 		Shifted);
+		TEST("Inversed",		"INVERSED",		Inversed);
+		TEST("CompatibilityMode",	"COMPATIBILITY_MODE",	CompatibilityMode);
+
+		#undef TEST
+		
+		throw Exception("GenerateFFT1DPipeline::getFlag - Unknown flag name : \"" + str + "\".", __FILE__, __LINE__, Exception::ModuleException);
+	}
+
+// GenerateFFT1DPipeline :
+	GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
+	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
+					"Generate the 1D FFT Pipeline transformation.\n"
+					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"Arguments : width, name [, option, ...].",
+					2,
+					5, //2 base + 3 arguments
+					-1)
+	{ }
+
+	std::string GenerateFFT1DPipeline::generateRadix2Code(int width, int currentLevel, int flags)
+	{
+		// with		: the width of the texture.
+		// currentLevel : the current decimation level, between width (first pass) and 1 (last pass).
+
+		// Position testing : 
+		// f = @(x,l) mod((mod(x,l)-l/2),l)+floor(x/l)*l;
+		// f(0:7, 8)
+		// f(0:7, 4)
+
+		// Modulation testing : 
+		// g = @(x,l,w) floor(2*mod(x,l)/l).*mod(x,l/2)*(w/l);
+		// g(0:7, 8, 8)
+		// g(0:7, 4, 8)
+
+		std::string str;
+
+		str +="#version 130 \n";
+		str += "const float twoPi = 6.28318530718; \n";
+		str += "uniform sampler2D inputTexture; \n";
+
+		if((flags & CompatibilityMode)==0)
+			str += "out vec4 outputTexture; \n";
+		else
+			str += "vec4 outputTexture; \n";
+		
+		str += "\n";
+		str += "void main() \n";
+		str += "{ \n";
+		str += "    const int w = " + toString(width) + ", \n";
+		str += "              l = " + toString(currentLevel) + "; \n";
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";
+
+		if(width==currentLevel) // First pass
+		{
+			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";
+
+			if((flags & Shifted)!=0 && (flags & Inversed)!=0)
+			{
+				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+				str += "    posB = int(mod(posB + w/2, w)); \n";
+			}
+			
+			str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),0)); \n";
+			str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),0)); \n";
+		}		
+		else
+		{
+			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,0), 0); \n";
+			str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,0), 0); \n";
+		}
+
+		str += "    float c = cos(-twoPi*p/float(w)), \n";
+		str += "          s = sin(-twoPi*p/float(w)); \n"; 
+		
+
+		if(width==currentLevel) // First pass
+		{
+			if((flags & Inversed)!=0)
+			{
+				str += "    A.g = -A.g; \n"; // real
+				str += "    B.g = -B.g; \n"; // imaginary
+			}
+
+			str += "    outputTexture.r  = A.r + B.r; \n"; // real
+			str += "    outputTexture.g  = A.g + B.g; \n"; // imaginary
+			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; // real
+			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; // imaginary
+		}
+		else
+		{
+			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
+			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; // real
+			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; // imaginary
+			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; // real
+			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; // imaginary
+		}
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "} \n";
+
+		std::cout << "GenerateFFT1DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
+		std::cout << str << std::endl;
+
+		return str;
+	}
+
+	std::string GenerateFFT1DPipeline::generateLastShuffleCode(int width, int flags)
+	{
+		std::string str;
+
+		str +="#version 130 \n";
+		str += "uniform sampler2D inputTexture; \n";
+
+		if((flags & CompatibilityMode)==0)
+			str += "out vec4 outputTexture; \n";
+		else
+			str += "vec4 outputTexture; \n";
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "\n";
+		str += "void main() \n";
+		str += "{ \n";
+		str += "    const int w = " + toString(width) + "; \n";
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+
+		if((flags & Shifted)!=0 && (flags & Inversed)==0)
+			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+
+		str += "    int a = 0; \n";
+		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; // Bit reversal
+		str += "    int p = int(mod(a, w/2)); // Prepare for the folding. \n";
+		str += "    vec4 A = texelFetch(inputTexture, ivec2(p,0), 0); \n";
+		str += "    if(p<a) A.rg = A.ba; \n";
+	
+		if((flags & Inversed)!=0)
+			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";
+
+		str += "    A.ba = vec2(length(A.rg), 1.0); \n";
+		str += "    outputTexture = A; \n";
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "} \n";
+
+		std::cout << "GenerateFFT1DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
+		std::cout << str << std::endl;
+
+		return str;
+	}
+
+	PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags)
+	{
+		double 	test1 = std::log(width)/std::log(2),
+			test2 = std::floor(test1);
 
 		if(test1!=test2)
-			throw Exception("FFT1D::FFT1D - Size must be a power of 2.", __FILE__, __LINE__, Exception::ModuleException);
+			throw Exception("Size must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+		if(width<4)
+			throw Exception("Size must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
 
-		if(size<4)
-			throw Exception("FFT1D::FFT1D - Size must be at least 4.", __FILE__, __LINE__, Exception::ModuleException);
+		HdlTextureFormat format(width, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat halfFormat(width/2, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
+		pipelineLayout.addInput("inputTexture");
+		pipelineLayout.addOutput("outputTexture");
 
-		// Fill bit reversal :
-			float* data1 = new float[size*2];
+		std::string 	previousName = "",
+				firstFilterName = "";
 
-			for(unsigned short i=0; i<size; i++)
+		for(int l=width; l>1; l/=2)
+		{
+			ShaderSource shader(generateRadix2Code(width, l, flags), "<GenerateFFT1DPipeline::generate()>");
+			std::string name = "Filter"+ toString(l);
+			FilterLayout filterLayout(name, halfFormat, shader);
+			pipelineLayout.add(filterLayout,name);
+
+			if(previousName=="")
 			{
-				unsigned short r = reverse(i);
-
-				data1[2*i+0] = static_cast<float>(r)/static_cast<float>(size);
-				data1[2*i+1] = 0.0;
+				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+				firstFilterName = name;
 			}
-			HdlTextureFormat bitReversalFormat(size, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-			bitReversal = new HdlTexture(bitReversalFormat);
-			bitReversal->write(data1);
-			delete[] data1;
+			else
+				pipelineLayout.connect(previousName, "outputTexture", name, "inputTexture");
+			
+			previousName = name;
+		}
 
-		// Fill wpTexture :
-			float* data2 = new float[size/2*2];
-			for(int i=0; i<size/2; i++)
+		// Last : 
+		const std::string shuffleFilterName = "FilterShuffle";
+		ShaderSource shader(generateLastShuffleCode(width, flags), "<GenerateFFT1DPipeline::generate()>");
+		FilterLayout filterLayout(shuffleFilterName, format, shader);
+		pipelineLayout.add(filterLayout,shuffleFilterName);
+		pipelineLayout.connect(previousName, "outputTexture", shuffleFilterName, "inputTexture");
+
+		// Connect to output :
+		pipelineLayout.connectToOutput(shuffleFilterName, "outputTexture", "outputTexture");
+
+		return pipelineLayout;
+	}
+	
+	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT1DPipeline )
+	{
+		UNUSED_PARAMETER(body)
+		UNUSED_PARAMETER(currentPath)
+		UNUSED_PARAMETER(dynamicPaths)
+		UNUSED_PARAMETER(formatList)
+		UNUSED_PARAMETER(sharedCodeList)
+		UNUSED_PARAMETER(sourceList)
+		UNUSED_PARAMETER(geometryList)
+		UNUSED_PARAMETER(filterList)
+		UNUSED_PARAMETER(staticPaths)
+		UNUSED_PARAMETER(requiredFormatList)
+		UNUSED_PARAMETER(requiredGeometryList)
+		UNUSED_PARAMETER(requiredPipelineList)
+		UNUSED_PARAMETER(startLine)
+		UNUSED_PARAMETER(bodyLine)
+		UNUSED_PARAMETER(executionCode)		
+
+		PIPELINE_MUST_NOT_EXIST( arguments[1] )
+		CAST_ARGUMENT(0, int, width)
+
+		// Read the flags : 
+		int flags = 0;
+		for(unsigned int k=2; k<arguments.size(); k++)
+		{
+			FFTModules::Flag f = FFTModules::getFlag(arguments[k]);
+			flags = flags | static_cast<int>(f);
+		}
+
+		APPEND_NEW_PIPELINE(arguments[1], generate(width, flags))
+	}
+
+// GenerateFFT2DPipeline :
+	GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
+	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
+					"Generate the 1D FFT Pipeline transformation.\n"
+					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"Arguments : width, height, name [, option, ...].",
+					2,
+					6, //3 base + 3 arguments
+					-1)
+	{ }
+
+	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int currentLevel, int flags)
+	{
+		return "";
+	}
+
+	std::string GenerateFFT2DPipeline::generateLastShuffleCode(int width, int flags)
+	{
+		return "";
+	}
+
+	PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags)
+	{
+		/*double 	test1 = std::log(width)/std::log(2),
+			test2 = std::floor(test1);
+
+		if(test1!=test2)
+			throw Exception("Size must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+		if(width<4)
+			throw Exception("Size must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+
+		HdlTextureFormat format(width, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat halfFormat(width/2, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
+		pipelineLayout.addInput("inputTexture");
+		pipelineLayout.addOutput("outputTexture");
+
+		std::string 	previousName = "",
+				firstFilterName = "";
+
+		for(int l=width; l>1; l/=2)
+		{
+			ShaderSource shader(generateRadix2Code(width, l, flags), "<GenerateFFT1DPipeline::generate()>");
+			std::string name = "Filter"+ toString(l);
+			FilterLayout filterLayout(name, halfFormat, shader);
+			pipelineLayout.add(filterLayout,name);
+
+			if(previousName=="")
 			{
-				float a,b;
-				getWp(i,a,b);
-				data2[2*i+0] = a;
-				data2[2*i+1] = b;
+				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+				firstFilterName = name;
 			}
-			HdlTextureFormat wpTextureFormat(size/2, 1, GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-			wpTexture = new HdlTexture(wpTextureFormat);
-			wpTexture->write(data2);
-			delete[] data2;
-
-		// Clean
-			HdlTexture::unbind();
-
-		// Write the pipeline :
-		try
-		{
-			HdlTextureFormat fmt(size/2,1,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-			PipelineLayout playout("FFTPipeline");
-			playout.addInput("input");
-			playout.addInput("reversalTexture");
-			playout.addInput("wpTexture");
-			playout.addOutput("output");
-
-			int coeffp = size/2;
-			std::string 	previousName = "",
-					firstFilterName = "";
-
-			for(int i=1; i<=size/2; i*=2)
-			{
-				ShaderSource shader(generateCode(i,coeffp));
-				std::string name = "filter"+ toString(i);
-				FilterLayout fl("Radix2", fmt, shader);
-				playout.add(fl,name);
-
-				if(previousName=="")
-				{
-					playout.connectToInput("input", name, "inputTexture");
-					playout.connectToInput("reversalTexture", name, "reversalTexture");
-					firstFilterName = name;
-				}
-				else
-				{
-					playout.connect(previousName, "outputTexture", name, "inputTexture");
-					playout.connectToInput("wpTexture", name, "wpTexture");
-				}
-
-				previousName = name;
-
-				coeffp = coeffp/2;
-			}
-
-			// Add last filter :
-			HdlTextureFormat *fmtout = NULL;
-			if(compMagnitude)
-				fmtout = new HdlTextureFormat(size,1,GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 			else
-				fmtout = new HdlTextureFormat(size,1,GL_RG32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-
-			ShaderSource shader(generateFinalCode());
-			FilterLayout fl("ReOrder", *fmtout, shader);
-			playout.add(fl,"fReOrder");
-			playout.connect(previousName, "outputTexture", "fReOrder", "inputTexture");
-
-			// Connect to output :
-			playout.connectToOutput("fReOrder", "outputTexture", "output");
-
-			// Done :
-			pipeline = new Pipeline(playout, "instFFT");
-
-			//throw Exception("FFT1D is not available at the moment.", __FILE__, __LINE__);
-			//lnkFirstFilter = &((*pipeline)[firstFilterName]);
-
-			int id = pipeline->getElementID(firstFilterName);
-			lnkFirstFilter = &((*pipeline)[id]);
-
-			delete fmtout;
+				pipelineLayout.connect(previousName, "outputTexture", name, "inputTexture");
+			
+			previousName = name;
 		}
-		catch(Exception& e)
-		{
-			std::cout << "Caught an exception while writing the pipeline : " << std::endl;
-			std::cout << e.what() << std::endl;
-		}
+
+		// Last : 
+		const std::string shuffleFilterName = "FilterShuffle";
+		ShaderSource shader(generateLastShuffleCode(width, flags), "<GenerateFFT1DPipeline::generate()>");
+		FilterLayout filterLayout(shuffleFilterName, format, shader);
+		pipelineLayout.add(filterLayout,shuffleFilterName);
+		pipelineLayout.connect(previousName, "outputTexture", shuffleFilterName, "inputTexture");
+
+		// Connect to output :
+		pipelineLayout.connectToOutput(shuffleFilterName, "outputTexture", "outputTexture");
+
+		return pipelineLayout;*/
 	}
-
-	FFT1D::~FFT1D(void)
+	
+	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT2DPipeline )
 	{
-		delete bitReversal;
-		delete wpTexture;
-		delete pipeline;
-	}
+		UNUSED_PARAMETER(body)
+		UNUSED_PARAMETER(currentPath)
+		UNUSED_PARAMETER(dynamicPaths)
+		UNUSED_PARAMETER(formatList)
+		UNUSED_PARAMETER(sharedCodeList)
+		UNUSED_PARAMETER(sourceList)
+		UNUSED_PARAMETER(geometryList)
+		UNUSED_PARAMETER(filterList)
+		UNUSED_PARAMETER(staticPaths)
+		UNUSED_PARAMETER(requiredFormatList)
+		UNUSED_PARAMETER(requiredGeometryList)
+		UNUSED_PARAMETER(requiredPipelineList)
+		UNUSED_PARAMETER(startLine)
+		UNUSED_PARAMETER(bodyLine)
+		UNUSED_PARAMETER(executionCode)		
 
-	unsigned short FFT1D::reverse(unsigned short n)
-	{
-		unsigned short 	res = 0,
-				j = 1;
+		PIPELINE_MUST_NOT_EXIST( arguments[2] )
+		CAST_ARGUMENT(0, int, width)
+		CAST_ARGUMENT(1, int, height)
 
-		for(unsigned short i=size/2; i>0; i/=2)
+		// Read the flags : 
+		int flags = 0;
+		for(unsigned int k=3; k<arguments.size(); k++)
 		{
-			res += j*((i&n)>0);
-			j *= 2;
+			FFTModules::Flag f = FFTModules::getFlag(arguments[k]);
+			flags = flags | static_cast<int>(f);
 		}
 
-		return res;
+		APPEND_NEW_PIPELINE(arguments[2], generate(width, height, flags))
 	}
 
-	void FFT1D::getWp(unsigned int p, float& c, float& s)
-	{
-		const double PI = 3.14159265359;
-		double 	pd = static_cast<double>(p),
-			nd = static_cast<double>(size),
-			cd = cos(-2.0*PI*pd/nd),
-			sd = sin(-2.0*PI*pd/nd);
-		c = static_cast<float>(cd);
-		s = static_cast<float>(sd);
-	}
-
-	std::string FFT1D::generateCode(int delta, int coeffp)
-	{
-		// delta  : number of An coeffient (from 1 to size/2)
-		// coeffp : coefficient in the wp transformation
-		std::stringstream str;
-
-		str << "#version 130\n";
-		str << "precision mediump float;\n";
-		str << "\n";
-		str << "uniform sampler2D inputTexture; \n";
-
-		if(delta==1)
-		{
-			str << "uniform sampler2D reversalTexture; \n";
-
-			if(useZeroPadding)
-				str << "uniform int offset; \n";
-			else
-				str << "const int offset=0; \n";
-		}
-		else
-			str << "uniform sampler2D wpTexture; \n";
-
-		if(!compatibilityMode)
-			str << "out vec4 outputTexture; \n";
-
-		str << "\n";
-		str << "void main() \n";
-		str << "{ \n";
-
-		if(compatibilityMode)
-			str << "    vec4 outputTexture = vec4(0.0,0.0,0.0,0.0); \n";
-
-		if(delta==1)
-		{
-			str << "    const int sz     = " << size << "; \n";
-			str << "    const int hsz    = " << size/2 << "; \n";
-			str << "    const float pRev = " << 1.0f/static_cast<float>(size) << "; \n";
-			str << "    int globid       = int(gl_TexCoord[0].s*hsz); \n";
-			str << "    vec4 pA          = texelFetch(reversalTexture, ivec2(globid*2, 0), 0); \n";
-			str << "    vec4 pB          = texelFetch(reversalTexture, ivec2(globid*2+1, 0), 0); \n";
-			str << "    int ipA          = int(pA.s*sz); \n";
-			str << "    int ipB          = int(pB.s*sz); \n";
-
-			// ADD
-			if(shift && inversed)
-			{
-				str << "    if(ipA<hsz) ipA = ipA+hsz; \n";
-				str << "    else        ipA = ipA-hsz; \n";
-				str << "    if(ipB<hsz) ipB = ipB+hsz; \n";
-				str << "    else        ipB = ipB-hsz; \n";
-			}
-			// END ADD
-
-			str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA-offset,0), 0); \n";
-			str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB-offset,0), 0); \n";
-			str << "    outputTexture.r  = A.r + B.r;           //real part of Xp \n";
-
-			if(!inversed)
-				str << "    outputTexture.g  = A.g + B.g;   //imag part of Xp \n";
-			else
-				str << "    outputTexture.g  = - A.g - B.g; //imag part of Xp \n";
-
-			str << "    outputTexture.b  = A.r - B.r;           //real part of Xp+n/2 \n";
-
-			if(!inversed)
-				str << "    outputTexture.a  = A.g - B.g;   //imag part of Xp+n/2 \n";
-			else
-				str << "    outputTexture.a  = - A.g + B.g; //imag part of Xp+n/2 \n";
-		}
-		else
-		{
-			str << "    const int sz     = " << size << "; \n";
-			str << "    const int hsz    = " << size/2 << "; \n";
-			str << "    const int coeffp = " << coeffp << "; \n";
-			str << "    const int delta  = " << delta << "; \n";
-
-			// Find in which computing element and which block this is working :
-			str << "    int globid       = int(gl_TexCoord[0].s*hsz); \n";
-			str << "    int blockid      = globid/delta; \n";
-			str << "    int compid       = globid-blockid*delta; \n";
-
-			// Compute the position of the elements :
-			str << "    int mcompid      = compid; \n";
-			str << "    if(compid>=delta/2) \n";
-			str << "        mcompid      = compid - delta/2; \n";
-			str << "    int ipA          = blockid*delta+mcompid; \n";
-			str << "    int ipB          = ipA + delta/2; \n";
-
-			// Get the elements :
-			str << "    vec4 A           = texelFetch(inputTexture, ivec2(ipA,0), 0); \n";
-			str << "    vec4 B           = texelFetch(inputTexture, ivec2(ipB,0), 0); \n";
-			str << "    if(mcompid!=compid) \n";
-			str << "    { \n";
-			str << "        A.r          = A.b; \n";
-			str << "        A.g          = A.a; \n";
-			str << "        B.r          = B.b; \n";
-			str << "        B.g          = B.a; \n";
-			str << "    } \n";
-
-			// Get Wp
-			str << "    int ipWp         = compid*coeffp; \n";
-			str << "    vec4 wp          = texelFetch(wpTexture, ivec2(ipWp,0), 0); \n";
-
-			// Compute :
-			str << "    outputTexture.r  = A.r + wp.r*B.r - wp.g*B.g; //real part of Xp \n";
-			str << "    outputTexture.g  = A.g + wp.r*B.g + wp.g*B.r; //imag part of Xp \n";
-			str << "    outputTexture.b  = A.r - wp.r*B.r + wp.g*B.g; //real part of Xp+n/2 \n";
-			str << "    outputTexture.a  = A.g - wp.r*B.g - wp.g*B.r; //imag part of Xp+n/2 \n";
-		}
-
-		if(compatibilityMode)
-			str << "    gl_FragColor = outputTexture; \n";
-
-		str << "} \n";
-
-		return str.str();
-	}
-
-	std::string FFT1D::generateFinalCode(void)
-	{
-		std::stringstream str;
-
-		str << "#version 130\n";
-		str << "precision mediump float;\n";
-		str << "\n";
-		str << "uniform sampler2D inputTexture; \n";
-
-		if(!compatibilityMode)
-			str << "out vec4 outputTexture; \n";
-
-		str << "\n";
-		str << "void main() \n";
-		str << "{ \n";
-
-		if(compatibilityMode)
-			str << "    vec4 outputTexture = vec4(0.0,0.0,0.0,0.0); \n";
-
-		str << "    const int sz             = " << size << "; \n";
-		str << "    const int hsz            = " << size/2 << "; \n";
-		str << "    int globid               = int(gl_TexCoord[0].s*sz); \n";
-		str << "    int mglobid              = globid; \n";
-		str << "    if(globid>=hsz) \n";
-		str << "        mglobid              = globid - hsz; \n";
-		str << "    vec4 X                   = texelFetch(inputTexture, ivec2(mglobid,0), 0); \n";
-		str << "    if(globid<hsz) \n";
-		str << "    { \n";
-
-
-		if(shift && !inversed)
-		{
-			str << "        outputTexture.r      = X.b; \n";
-			str << "        outputTexture.g      = X.a; \n";
-			str << "    } \n";
-			str << "    else \n";
-			str << "    { \n";
-			str << "        outputTexture.r      = X.r; \n";
-			str << "        outputTexture.g      = X.g; \n";
-		}
-		else
-		{
-			str << "        outputTexture.r      = X.r; \n";
-			str << "        outputTexture.g      = X.g; \n";
-			str << "    } \n";
-			str << "    else \n";
-			str << "    { \n";
-			str << "        outputTexture.r      = X.b; \n";
-			str << "        outputTexture.g      = X.a; \n";
-		}
-		str << "    } \n";
-
-		if(inversed)
-		{
-			str << "    outputTexture.r =  outputTexture.r/sz; \n";
-			str << "    outputTexture.g = -outputTexture.g/sz; \n";
-		}
-
-		if(compMagnitude)
-			str << "    outputTexture.b      = sqrt(outputTexture.r*outputTexture.r+outputTexture.g*outputTexture.g); \n";
-
-		if(compatibilityMode)
-			str << "    gl_FragColor = outputTexture; \n";
-
-		str << "} \n";
-
-		return str.str();
-	}
-
-	/**
-	\fn void FFT1D::process(HdlTexture& input)
-	\brief This function compute the FFT over the data input which format is specified above.
-	\param input The input data for the FFT 1D.
-	**/
-	void FFT1D::process(HdlTexture& input)
-	{
-		if(pipeline==NULL)
-			throw Exception("FFT1D::process - Internal error : pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
-
-		if(!useZeroPadding && (input.getWidth()!=size || input.getHeight()!=1))
-			throw Exception("FFT1D::process - Wrong texture format (Zero padding is disabled).", __FILE__, __LINE__, Exception::ModuleException);
-
-		if(useZeroPadding && (input.getWidth()>size || input.getHeight()!=1))
-			throw Exception("FFT1D::process - Wrong texture format (Zero padding is enabled, input texture is too large).", __FILE__, __LINE__, Exception::ModuleException);
-
-		if(useZeroPadding)
-		{
-			// Update the offsets :
-			int 	offset = (size-input.getWidth())/2;
-
-			lnkFirstFilter->program().modifyVar("offset", GL_INT, offset);
-		}
-
-		(*pipeline) << input << (*bitReversal) << (*wpTexture) << Pipeline::Process;
-
-		if(performanceMonitoring)
-		{
-			double ts 	= pipeline->getTotalTiming();
-			sumTime 	+= ts;
-			sumSqTime	+= ts*ts;
-			numProcesses++;
-		}
-	}
-
-	/**
-	\fn HdlTexture& FFT1D::output(void)
-	\brief Returns a reference to the result of the last computation.
-	\return A reference to a HdlTexture object.
-	**/
-	HdlTexture& FFT1D::output(void)
-	{
-		if(pipeline!=NULL)
-			return pipeline->out(0);
-		else
-			throw Exception("FFT1D::output - pipeline is NULL.", __FILE__, __LINE__, Exception::ModuleException);
-	}
-
-	/**
-	\fn int FFT1D::getSize(bool askDriver)
-	\brief Get the size in bytes of the elements on the GPU for this module.
-	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
-	\return Size in bytes.
-	**/
-	int FFT1D::getSize(bool askDriver)
-	{
-		int size = 0;
-
-		size += pipeline->getSize(askDriver);
-
-		if(askDriver)
-		{
-			size += bitReversal->getSizeOnGPU();
-			size += wpTexture->getSizeOnGPU();
-		}
-		else
-		{
-			size += bitReversal->getSize();
-			size += wpTexture->getSize();
-		}
-
-		return size;
-	}
-
-	/**
-	\fn void FFT1D::enablePerfsMonitoring(void)
-	\brief Start performance monitoring for this instance.
-
-	If a monitoring session is already running, it will reset to zero.
-	**/
-	void	FFT1D::enablePerfsMonitoring(void)
-	{
-		if(!performanceMonitoring)
-		{
-			pipeline->enablePerfsMonitoring();
-			performanceMonitoring = true;
-		}
-
-		// Reset :
-		sumTime	= 0.0;
-		sumSqTime = 0.0;
-		numProcesses = 0;
-	}
-
-	/**
-	\fn void FFT1D::disablePerfsMonitoring(void)
-	\brief Stop performance monitoring for this instance.
-
-	This function will not erase performance monitoring results of the previous session.
-	**/
-	void	FFT1D::disablePerfsMonitoring(void)
-	{
-		if(performanceMonitoring)
-		{
-			pipeline->disablePerfsMonitoring();
-			performanceMonitoring = false;
-		}
-	}
-
-	/**
-	\fn bool FFT1D::isMonitoringPerfs(void)
-	\brief Test if this instance is currently in a performance monitoring session.
-	\return True if in such session.
-	**/
-	bool	FFT1D::isMonitoringPerfs(void)
-	{
-		return performanceMonitoring;
-	}
-
-	/**
-	\fn int	FFT1D::getNumProcesses(void)
-	\brief Get the number of process stages done in current monitoring session.
-	\return The number of process stages done.
-	**/
-	int	FFT1D::getNumProcesses(void)
-	{
-		return numProcesses;
-	}
-
-	/**
-	\fn double FFT1D::getMeanTime(void)
-	\brief Get the mean time for one process given the statistics on all processes done during this monitoring session.
-	\return Time in milliseconds.
-	**/
-	double	FFT1D::getMeanTime(void)
-	{
-		if(numProcesses==0)
-			return 0.0;
-		else
-			return sumTime/numProcesses;
-	}
-
-	/**
-	\fn double FFT1D::getStdDevTime(void)
-	\brief Get the standard deviation on time for one process given the statistics on all processes done during this monitoring session.
-	\return Time in milliseconds.
-	**/
-	double	FFT1D::getStdDevTime(void)
-	{
-		if(numProcesses==0)
-			return 0.0;
-		else
-		{
-			double m = getMeanTime();
-			return sqrt(sumSqTime/numProcesses - m*m);
-		}
-	}

@@ -25,6 +25,7 @@
 	#include "Modules/LayoutLoaderModules.hpp"
 	#include "Core/Exception.hpp"
 	#include "Modules/LayoutLoader.hpp"
+	#include "Modules/FFT1D.hpp"
 
 	// Namespaces :
 	using namespace Glip;
@@ -163,6 +164,8 @@
 			loader.addModule( new CHAIN_PIPELINES );
 			loader.addModule( new FORMAT_TO_CONSTANT );
 			loader.addModule( new ABORT_ERROR );
+			loader.addModule( new GenerateFFT1DPipeline );
+			loader.addModule( new GenerateFFT2DPipeline );
 		}
 
 		/**

@@ -43,6 +43,7 @@ namespace QGUI
 			static QVector<VariableRecord*>	records;
 			QString 			name;
 			int 				modification;
+			bool				locked;
 			HdlDynamicData* 		object;
 		
 			VariableRecord(void);
@@ -56,6 +57,8 @@ namespace QGUI
 			int getModificationIndex(void) const;
 			const HdlDynamicData& data(void) const;
 			HdlDynamicData& data(void);
+			bool isLocked(void) const;
+			void lock(bool enabled);
 			void declareUpdate(void);
 
 			static const VariableRecord* getRecord(const QString& name);	
@@ -64,6 +67,7 @@ namespace QGUI
 
 		signals :
 			void recordAdded(const QGUI::VariableRecord*);
+			void lockChanged(bool locked);
 			void updated(void);
 	};
 	

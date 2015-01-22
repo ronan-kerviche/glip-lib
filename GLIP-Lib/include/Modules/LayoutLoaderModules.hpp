@@ -250,11 +250,51 @@ Example, creating a simple Module :
 													const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
 													const std::map<std::string,GeometryModel>&	requiredGeometryList, \
 													const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
-													const std::string& sourceName, \
-													const int startLine, \
-													const int bodyLine, \
-													std::string& executionCode); \
+													const std::string& 				sourceName, \
+													const int 					startLine, \
+													const int 					bodyLine, \
+													std::string& 					executionCode); \
 									};
+			
+			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE Get the signature of the apply function. **/
+			#define LAYOUT_LOADER_MODULE_APPLY_SIGNATURE			void apply(const std::vector<std::string>& arguments,  \
+											const std::string&					body, \
+											const std::string&					currentPath, \
+											std::vector<std::string>&				dynamicPaths, \
+											std::map<std::string, ShaderSource>&			sharedCodeList, \
+											std::map<std::string, HdlTextureFormat>& 		formatList, \
+											std::map<std::string, ShaderSource>& 			sourceList, \
+											std::map<std::string, GeometryModel>&			geometryList, \
+											std::map<std::string, FilterLayout>& 			filterList, \
+											std::map<std::string, PipelineLayout>&			pipelineList, \
+											const std::vector<std::string>&				staticPaths, \
+											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
+											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
+											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
+											const std::string& 					sourceName, \
+											const int 						startLine, \
+											const int 						bodyLine, \
+											std::string& 						executionCode);
+
+			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE( className ) Get the implementation signature of the apply function. **/
+			#define LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( className )	void className :: apply(const std::vector<std::string>& arguments,  \
+											const std::string&					body, \
+											const std::string&					currentPath, \
+											std::vector<std::string>&				dynamicPaths, \
+											std::map<std::string, ShaderSource>&			sharedCodeList, \
+											std::map<std::string, HdlTextureFormat>& 		formatList, \
+											std::map<std::string, ShaderSource>& 			sourceList, \
+											std::map<std::string, GeometryModel>&			geometryList, \
+											std::map<std::string, FilterLayout>& 			filterList, \
+											std::map<std::string, PipelineLayout>&			pipelineList, \
+											const std::vector<std::string>&				staticPaths, \
+											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
+											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
+											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
+											const std::string& 					sourceName, \
+											const int 						startLine, \
+											const int 						bodyLine, \
+											std::string& 						executionCode)
 
 			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)			Source of a module. **/
 			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \

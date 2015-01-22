@@ -40,6 +40,8 @@ SHADER_SOURCE:WriteColorShader
 		}
 		else
 			outputTexture.rgb = a.rgb;
+
+		outputTexture.a = 1.0;
 	}
 }
 

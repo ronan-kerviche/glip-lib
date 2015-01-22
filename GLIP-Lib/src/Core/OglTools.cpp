@@ -735,7 +735,7 @@ using namespace Glip::CoreGL;
 				return HandleOpenGL::glKeywords[i].value;
 		}
 
-		throw Exception("Unknown GLenum : \"" + s + "\".", __FILE__, __LINE__, Exception::GLException);
+		throw Exception("Unknown GLenum keyword : \"" + s + "\".", __FILE__, __LINE__, Exception::GLException);
 	}
 
 	/**

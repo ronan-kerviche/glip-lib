@@ -29,6 +29,7 @@ using namespace QGUI;
 	 :	QObject(NULL),
 		name("REFERENCE"),
 		modification(-1),
+		locked(false),
 		object(NULL)
 	{ }
 
@@ -86,16 +87,30 @@ using namespace QGUI;
 			return (*object);
 	}
 
+	bool VariableRecord::isLocked(void) const
+	{
+		return locked;
+	}
+
+	void VariableRecord::lock(bool enabled)
+	{
+		locked = enabled;
+		emit lockChanged(enabled);
+	}
+
 	void VariableRecord::declareUpdate(void)
 	{
-		// Update the modification indices of all the other variables :
-		for(QVector<VariableRecord*>::iterator it=records.begin(); it!=records.end(); it++)
-			(*it)->modification++;
+		if(!locked)
+		{
+			// Update the modification indices of all the other variables :
+			for(QVector<VariableRecord*>::iterator it=records.begin(); it!=records.end(); it++)
+				(*it)->modification++;
 		
-		// Reset mine :
-		modification = 0;
+			// Reset mine :
+			modification = 0;
 
-		emit updated();
+			emit updated();
+		}	
 	}
 	
 	const VariableRecord* VariableRecord::getRecord(const QString& name)
