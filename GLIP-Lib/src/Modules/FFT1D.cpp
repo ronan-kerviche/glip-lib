@@ -224,7 +224,7 @@
 			FilterLayout filterLayout(name, halfFormat, shader);
 			pipelineLayout.add(filterLayout,name);
 
-			if(previousName=="")
+			if(previousName.empty())
 			{
 				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
 				firstFilterName = name;
@@ -291,28 +291,175 @@
 					-1)
 	{ }
 
-	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int currentLevel, int flags)
+	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int currentLevel, int flags, bool horizontal)
 	{
-		return "";
+		// Note that 'width' is generic here, it can be either the width or the height.
+
+		std::string str;
+
+		str +="#version 130 \n";
+		str += "const float twoPi = 6.28318530718; \n";
+		str += "uniform sampler2D inputTexture; \n";
+
+		if((flags & CompatibilityMode)==0)
+			str += "out vec4 outputTexture; \n";
+		else
+			str += "vec4 outputTexture; \n";
+		
+		str += "\n";
+		str += "void main() \n";
+		str += "{ \n";
+		str += "    const int w = " + toString(width) + ", \n";
+		str += "              l = " + toString(currentLevel) + "; \n";
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+
+		if(!horizontal)
+			str += "    pos.xy = pos.yx; \n";
+
+		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";
+
+		if(width==currentLevel) // First pass
+		{
+			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";
+
+			if((flags & Shifted)!=0 && (flags & Inversed)!=0)
+			{
+				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+				str += "    posB = int(mod(posB + w/2, w)); \n";
+			}
+			
+			if(horizontal)
+			{
+				str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),pos.y)); \n";
+				str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),pos.y)); \n";
+			}
+			else
+			{
+				str += "    vec4 A = texture(inputTexture, vec2(pos.y,(float(pos.x)+0.5)/float(w))); \n";
+				str += "    vec4 B = texture(inputTexture, vec2(pos.y,(float(posB)+0.5)/float(w))); \n";
+			}
+		}		
+		else
+		{
+			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,0), 0); \n";
+			str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,0), 0); \n";
+		}
+
+		str += "    float c = cos(-twoPi*p/float(w)), \n";
+		str += "          s = sin(-twoPi*p/float(w)); \n"; 
+		
+
+		if(width==currentLevel) // First pass
+		{
+			if((flags & Inversed)!=0)
+			{
+				str += "    A.g = -A.g; \n"; // real
+				str += "    B.g = -B.g; \n"; // imaginary
+			}
+
+			str += "    outputTexture.r  = A.r + B.r; \n"; // real
+			str += "    outputTexture.g  = A.g + B.g; \n"; // imaginary
+			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; // real
+			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; // imaginary
+		}
+		else
+		{
+			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
+			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; // real
+			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; // imaginary
+			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; // real
+			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; // imaginary
+		}
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "} \n";
+
+		std::cout << "GenerateFFT2DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
+		std::cout << str << std::endl;
+
+		return str;
 	}
 
-	std::string GenerateFFT2DPipeline::generateLastShuffleCode(int width, int flags)
+	std::string GenerateFFT2DPipeline::generateLastShuffleCode(int width, int flags, bool horizontal)
 	{
-		return "";
+		// Note that 'width' is generic here, it can be either the width or the height.
+
+		std::string str;
+
+		str +="#version 130 \n";
+		str += "uniform sampler2D inputTexture; \n";
+
+		if((flags & CompatibilityMode)==0)
+			str += "out vec4 outputTexture; \n";
+		else
+			str += "vec4 outputTexture; \n";
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "\n";
+		str += "void main() \n";
+		str += "{ \n";
+		str += "    const int w = " + toString(width) + "; \n";
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+
+		if(!horizontal)
+			str += "    pos.xy = pos.yx; \n";
+
+		if((flags & Shifted)!=0 && (flags & Inversed)==0)
+			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+
+		str += "    int a = 0; \n";
+		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; // Bit reversal
+		str += "    int p = int(mod(a, w/2)); // Prepare for the folding. \n";
+
+		if(horizontal)
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(p,p.y), 0); \n";
+		else
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(p.y, p), 0); \n";
+
+		str += "    if(p<a) A.rg = A.ba; \n";
+	
+		if((flags & Inversed)!=0)
+			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";
+
+		str += "    A.ba = vec2(length(A.rg), 1.0); \n";
+		str += "    outputTexture = A; \n";
+
+		if((flags & CompatibilityMode)!=0)
+			str += "    gl_FragColor = outputTexture; \n";
+
+		str += "} \n";
+
+		std::cout << "GenerateFFT2DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
+		std::cout << str << std::endl;
+
+		return str;
 	}
 
 	PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags)
 	{
-		/*double 	test1 = std::log(width)/std::log(2),
-			test2 = std::floor(test1);
+		double 	test1w = std::log(width)/std::log(2),
+			test2w = std::floor(test1w),
+			test1h = std::log(height)/std::log(2),
+			test2h = std::floor(test1h),
 
-		if(test1!=test2)
-			throw Exception("Size must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+		if(test1w!=test2w)
+			throw Exception("Width must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
 		if(width<4)
-			throw Exception("Size must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Width must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
 
-		HdlTextureFormat format(width, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-		HdlTextureFormat halfFormat(width/2, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		if(test1h!=test2h)
+			throw Exception("Width must be a power of 2 (current size : " + toString(height) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+		if(height<4)
+			throw Exception("Width must be at least 4 (current size : " + toString(height) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+
+		HdlTextureFormat format(width, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat halfWidthFormat(width/2, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+		HdlTextureFormat halfHeightFormat(width, height/2, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
 		pipelineLayout.addInput("inputTexture");
 		pipelineLayout.addOutput("outputTexture");
@@ -320,14 +467,15 @@
 		std::string 	previousName = "",
 				firstFilterName = "";
 
+		// Horizontal : 
 		for(int l=width; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(width, l, flags), "<GenerateFFT1DPipeline::generate()>");
-			std::string name = "Filter"+ toString(l);
-			FilterLayout filterLayout(name, halfFormat, shader);
+			ShaderSource shader(generateRadix2Code(width, l, flags, true), "<GenerateFFT2DPipeline::generate()>");
+			std::string name = "FilterH"+ toString(l);
+			FilterLayout filterLayout(name, halfWidthFormat, shader);
 			pipelineLayout.add(filterLayout,name);
 
-			if(previousName=="")
+			if(previousName.empty())
 			{
 				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
 				firstFilterName = name;
@@ -338,17 +486,37 @@
 			previousName = name;
 		}
 
+		// Intermediate shuffle : 
+		const std::string intermediateShuffleFilterName = "FilterIntermediateShuffle";
+		ShaderSource intermediateShader(generateLastShuffleCode(width, flags, true), "<GenerateFFT2DPipeline::generate()>");
+		FilterLayout intermediateFilterLayout(intermediateShuffleFilterName, format, intermediateShader);
+		pipelineLayout.add(intermediateFilterLayout,intermediateShuffleFilterName);
+		pipelineLayout.connect(previousName, "outputTexture", intermediateShuffleFilterName, "inputTexture");
+		previousName = intermediateShuffleFilterName;
+
+		// Vertical : 
+		for(int l=height; l>1; l/=2)
+		{
+			ShaderSource shader(generateRadix2Code(height, l, flags, false), "<GenerateFFT2DPipeline::generate()>");
+			std::string name = "FilterV"+ toString(l);
+			FilterLayout filterLayout(name, halfHeightFormat, shader);
+			pipelineLayout.add(filterLayout,name);
+
+			pipelineLayout.connect(previousName, "outputTexture", name, "inputTexture");
+			previousName = name;
+		}
+
 		// Last : 
-		const std::string shuffleFilterName = "FilterShuffle";
-		ShaderSource shader(generateLastShuffleCode(width, flags), "<GenerateFFT1DPipeline::generate()>");
-		FilterLayout filterLayout(shuffleFilterName, format, shader);
-		pipelineLayout.add(filterLayout,shuffleFilterName);
+		const std::string finalShuffleFilterName = "FilterFinalShuffle";
+		ShaderSource finalShader(generateLastShuffleCode(height, flags, false), "<GenerateFFT2DPipeline::generate()>");
+		FilterLayout finalFilterLayout(finalShuffleFilterName, format, finalShader);
+		pipelineLayout.add(finalFilterLayout, shuffleFilterName);
 		pipelineLayout.connect(previousName, "outputTexture", shuffleFilterName, "inputTexture");
 
 		// Connect to output :
 		pipelineLayout.connectToOutput(shuffleFilterName, "outputTexture", "outputTexture");
 
-		return pipelineLayout;*/
+		return pipelineLayout;
 	}
 	
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT2DPipeline )

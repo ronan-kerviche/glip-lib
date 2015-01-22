@@ -92,8 +92,8 @@ namespace Glip
 				
 
 			private :
-				static std::string generateRadix2Code(int width, int currentLevel, int flags);
-				static std::string generateLastShuffleCode(int width, int flags);
+				static std::string generateRadix2Code(int width, int currentLevel, int flags, bool horizontal);
+				static std::string generateLastShuffleCode(int width, int flags, bool horizontal);
 
 			public :
 				GenerateFFT2DPipeline(void);
