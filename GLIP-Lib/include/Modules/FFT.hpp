@@ -7,16 +7,16 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : FFT1D.hpp                                                                                 */
+/*     File          : FFT.hpp                                                                                   */
 /*     Original Date : August 20th 2012                                                                          */
 /*                                                                                                               */
-/*     Description   : 1D FFT for gray level input (real or complex).                                            */
+/*     Description   : FFT pipeline generators for gray level input (real and complex).                          */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
 /**
- * \file    FFT1D.hpp
- * \brief   1D FFT for gray level input (real or complex).
+ * \file    FFT.hpp
+ * \brief   FFT pipeline generators for gray level input (real and complex).
  * \author  R. KERVICHE
  * \date    August 20th 2012
 **/
@@ -49,15 +49,15 @@ namespace Glip
 				UseZeroPadding		= 0x0100,
 				///The computation will use of old gl_FragColor GLSL built-in variable.
 				CompatibilityMode	= 0x1000
-				// Update static Flag getFlag(const std::string& str)
+				// Update Flag getFlag(const std::string& str)
 			};
 
-			Flag getFlag(const std::string& str);
+			GLIP_API_FUNC Flag getFlag(const std::string& str);
 		}
 
 		/**
-		\class FFT1D
-		\brief Compute the 1D FFT for a gray level image (real or complex) in single precision.
+		\class GenerateFFT1DPipeline
+		\brief Generate a 1D FFT PipelineLayout.
 
 		<b>Warning</b> : This module might return erroneous result given that the driver will perform blind optimization.
 		Thus results might be of lower accuracy.
@@ -80,8 +80,8 @@ namespace Glip
 		};
 
 		/**
-		\class FFT2D
-		\brief Compute the 2D FFT for a gray level image (real or complex) in single precision.
+		\class GenerateFFT2DPipeline
+		\brief Generate a 2D FFT PipelineLayout.
 
 		<b>Warning</b> : This module might return erroneous result given that the driver will perform blind optimization.
 		Thus results might be of lower accuracy.
@@ -92,7 +92,7 @@ namespace Glip
 				
 
 			private :
-				static std::string generateRadix2Code(int width, int currentLevel, int flags, bool horizontal);
+				static std::string generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal);
 				static std::string generateLastShuffleCode(int width, int flags, bool horizontal);
 
 			public :

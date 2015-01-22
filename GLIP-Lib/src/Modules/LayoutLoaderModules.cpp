@@ -25,7 +25,7 @@
 	#include "Modules/LayoutLoaderModules.hpp"
 	#include "Core/Exception.hpp"
 	#include "Modules/LayoutLoader.hpp"
-	#include "Modules/FFT1D.hpp"
+	#include "Modules/FFT.hpp"
 
 	// Namespaces :
 	using namespace Glip;
@@ -173,17 +173,19 @@
 		\brief Get true and false cases out of a body.
 	
 		In a if-statement you can write : 
+		\code
 		IF(tatement)
 		{
 			TRUE
 			{
-				//...
+				...
 			}
 			FALSE
 			{
-				//...
+				...
 			}
 		}
+		\endcode
 
 		\param body Body to extract the data from.
 		\param trueCase Body of the true statement (not modified is none is found).

@@ -94,6 +94,8 @@ GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the f
 CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
 FORMAT_TO_CONSTANT		| Create a shared code object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat, nameSharedCode.
 ABORT_ERROR			| Return a user defined error. Argument : error description.
+GENERATE_FFT1D_PIPELINE		| Generate the 1D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, name [, option, ...].
+GENERATE_FFT2D_PIPELINE		| Generate the 2D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, height, name [, option, ...].
 </CENTER>
 
 Example in a script file : 

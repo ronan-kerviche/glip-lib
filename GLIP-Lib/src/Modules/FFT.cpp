@@ -7,16 +7,16 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
 /*                                                                                                               */
-/*     File          : FFT1D.cpp                                                                                 */
+/*     File          : FFT.cpp                                                                                   */
 /*     Original Date : August 20th 2012                                                                          */
 /*                                                                                                               */
-/*     Description   : 1D FFT for gray level input (real or complex).                                            */
+/*     Description   : FFT pipeline generators for gray level input (real and complex).                          */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
 /**
- * \file    FFT1D.cpp
- * \brief   1D FFT for gray level input (real or complex).
+ * \file    FFT.cpp
+ * \brief   FFT pipeline generators for gray level input (real and complex).
  * \author  R. KERVICHE
  * \date    August 20th 2012
 **/
@@ -24,7 +24,7 @@
 	// Includes
 	#include <cmath>
 	#include "Core/Exception.hpp"
-	#include "Modules/FFT1D.hpp"
+	#include "Modules/FFT.hpp"
 	#include "devDebugTools.hpp"
 	#include "Core/ShaderSource.hpp"
 	#include "Core/HdlShader.hpp"
@@ -36,20 +36,41 @@
 	using namespace Glip::Modules::FFTModules;
 
 // FFTModules :
-	Flag getFlag(const std::string& str)
+namespace Glip
+{
+	namespace Modules
 	{
-		#define TEST(a, b, c) if(str== a || str== b) return c ;
+		namespace FFTModules
+		{
+			/**
+			\fn Flag getFlag(const std::string& str)
+			\brief Get the flag corresponding to a string.
+			\param str Name of the flag.
+			\return The flag corresponding to the string or raise an Exception otherwise.
+			**/ 
+			Flag getFlag(const std::string& str)
+			{
+				#define TEST(a, b, c) if(str== a || str== b) return c ;
 	
-		TEST("Shifted",			"SHIFTED", 		Shifted);
-		TEST("Inversed",		"INVERSED",		Inversed);
-		TEST("CompatibilityMode",	"COMPATIBILITY_MODE",	CompatibilityMode);
+				TEST("Shifted",			"SHIFTED", 		Shifted);
+				TEST("Inversed",		"INVERSED",		Inversed);
+				TEST("CompatibilityMode",	"COMPATIBILITY_MODE",	CompatibilityMode);
 
-		#undef TEST
+				#undef TEST
 		
-		throw Exception("GenerateFFT1DPipeline::getFlag - Unknown flag name : \"" + str + "\".", __FILE__, __LINE__, Exception::ModuleException);
+				throw Exception("GenerateFFT1DPipeline::getFlag - Unknown flag name : \"" + str + "\".", __FILE__, __LINE__, Exception::ModuleException);
+			}
+		}
 	}
+}
 
 // GenerateFFT1DPipeline :
+	/**
+	\fn GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
+	\brief Module constructor.
+
+	This object can be added to a LayoutLoader via LayoutLoader::addModule().
+	**/
 	GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
 	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
 					"Generate the 1D FFT Pipeline transformation.\n"
@@ -198,6 +219,13 @@
 		return str;
 	}
 
+	/**
+	\fn PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags)
+	\brief Construct a pipeline performing a 1D FFT.
+	\param width Width of the signal.
+	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\return A complete pipeline layout.
+	**/
 	PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags)
 	{
 		double 	test1 = std::log(width)/std::log(2),
@@ -281,9 +309,15 @@
 	}
 
 // GenerateFFT2DPipeline :
+	/**
+	\fn GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
+	\brief Module constructor.
+
+	This object can be added to a LayoutLoader via LayoutLoader::addModule().
+	**/
 	GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
-	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
-					"Generate the 1D FFT Pipeline transformation.\n"
+	 :	LayoutLoaderModule(	"GENERATE_FFT2D_PIPELINE", 
+					"Generate the 2D FFT Pipeline transformation.\n"
 					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
 					"Arguments : width, height, name [, option, ...].",
 					2,
@@ -291,9 +325,9 @@
 					-1)
 	{ }
 
-	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int currentLevel, int flags, bool horizontal)
+	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal)
 	{
-		// Note that 'width' is generic here, it can be either the width or the height.
+		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
 
 		std::string str;
 
@@ -310,6 +344,7 @@
 		str += "void main() \n";
 		str += "{ \n";
 		str += "    const int w = " + toString(width) + ", \n";
+		str += "              h = " + toString(oppositeWidth) + ", \n";
 		str += "              l = " + toString(currentLevel) + "; \n";
 		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
 
@@ -318,7 +353,7 @@
 
 		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";
 
-		if(width==currentLevel) // First pass
+		if(width==currentLevel) // First pass in the current direction
 		{
 			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";
 
@@ -330,20 +365,30 @@
 			
 			if(horizontal)
 			{
-				str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),pos.y)); \n";
-				str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),pos.y)); \n";
+				// Also real first pass :
+				str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),(float(pos.y)+0.5)/float(h))); \n";
+				str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),(float(pos.y)+0.5)/float(h))); \n";
 			}
 			else
 			{
-				str += "    vec4 A = texture(inputTexture, vec2(pos.y,(float(pos.x)+0.5)/float(w))); \n";
-				str += "    vec4 B = texture(inputTexture, vec2(pos.y,(float(posB)+0.5)/float(w))); \n";
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";
 			}
 		}		
 		else
 		{
 			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,0), 0); \n";
-			str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,0), 0); \n";
+
+			if(horizontal)
+			{
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,pos.y), 0); \n";
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,pos.y), 0); \n";
+			}
+			else
+			{
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";
+			}
 		}
 
 		str += "    float c = cos(-twoPi*p/float(w)), \n";
@@ -417,9 +462,9 @@
 		str += "    int p = int(mod(a, w/2)); // Prepare for the folding. \n";
 
 		if(horizontal)
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(p,p.y), 0); \n";
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(p,pos.y), 0); \n";
 		else
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(p.y, p), 0); \n";
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,p), 0); \n";
 
 		str += "    if(p<a) A.rg = A.ba; \n";
 	
@@ -440,12 +485,20 @@
 		return str;
 	}
 
+	/**
+	\fn PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags)
+	\brief Construct a pipeline performing a 2D FFT.
+	\param width Width of the signal.
+	\param height Height of the signal.
+	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\return A complete pipeline layout.
+	**/
 	PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags)
 	{
 		double 	test1w = std::log(width)/std::log(2),
 			test2w = std::floor(test1w),
 			test1h = std::log(height)/std::log(2),
-			test2h = std::floor(test1h),
+			test2h = std::floor(test1h);
 
 		if(test1w!=test2w)
 			throw Exception("Width must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
@@ -460,7 +513,7 @@
 		HdlTextureFormat format(width, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		HdlTextureFormat halfWidthFormat(width/2, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		HdlTextureFormat halfHeightFormat(width, height/2, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
+		PipelineLayout pipelineLayout("FFT2D" + toString(width) + "x" + toString(height) + "Pipeline");
 		pipelineLayout.addInput("inputTexture");
 		pipelineLayout.addOutput("outputTexture");
 
@@ -470,7 +523,7 @@
 		// Horizontal : 
 		for(int l=width; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(width, l, flags, true), "<GenerateFFT2DPipeline::generate()>");
+			ShaderSource shader(generateRadix2Code(width, height, l, flags, true), "<GenerateFFT2DPipeline::generate()>");
 			std::string name = "FilterH"+ toString(l);
 			FilterLayout filterLayout(name, halfWidthFormat, shader);
 			pipelineLayout.add(filterLayout,name);
@@ -497,7 +550,7 @@
 		// Vertical : 
 		for(int l=height; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(height, l, flags, false), "<GenerateFFT2DPipeline::generate()>");
+			ShaderSource shader(generateRadix2Code(height, width, l, flags, false), "<GenerateFFT2DPipeline::generate()>");
 			std::string name = "FilterV"+ toString(l);
 			FilterLayout filterLayout(name, halfHeightFormat, shader);
 			pipelineLayout.add(filterLayout,name);
@@ -510,11 +563,11 @@
 		const std::string finalShuffleFilterName = "FilterFinalShuffle";
 		ShaderSource finalShader(generateLastShuffleCode(height, flags, false), "<GenerateFFT2DPipeline::generate()>");
 		FilterLayout finalFilterLayout(finalShuffleFilterName, format, finalShader);
-		pipelineLayout.add(finalFilterLayout, shuffleFilterName);
-		pipelineLayout.connect(previousName, "outputTexture", shuffleFilterName, "inputTexture");
+		pipelineLayout.add(finalFilterLayout, finalShuffleFilterName);
+		pipelineLayout.connect(previousName, "outputTexture", finalShuffleFilterName, "inputTexture");
 
 		// Connect to output :
-		pipelineLayout.connectToOutput(shuffleFilterName, "outputTexture", "outputTexture");
+		pipelineLayout.connectToOutput(finalShuffleFilterName, "outputTexture", "outputTexture");
 
 		return pipelineLayout;
 	}
