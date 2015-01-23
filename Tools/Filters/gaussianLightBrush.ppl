@@ -6,8 +6,8 @@ SHADER_SOURCE:gaussianLightBrushShader
 {
 	#version 130
 	
-	uniform sampler2D inputTexture, inputMask;
-	out vec4 outputTexture, outputMask;
+	uniform sampler2D initialMask, inputMask;
+	out vec4 outputMask;
 	
 	// Directly linked to the mouse left click position. Press and drag to paint.
 	uniform vec2 	VectorLastLeftPositionImage = vec2(0.0, 0.0); // Can be changed to VectorLastRightPositionImage	
@@ -18,15 +18,11 @@ SHADER_SOURCE:gaussianLightBrushShader
 	void main()
 	{
 		vec2 	pos 	= gl_TexCoord[0].st;
-		vec4 	color 	= textureLod(inputTexture, pos, 0),
-			mask	= textureLod(inputMask, pos, 0);
+		vec4 	init 	= textureLod(initialMask, pos, 0),
+			mask	= textureLod(inputMask, pos, 0) + init/1000.0;
 		vec2	mTex	= textureCoordinates(ivec2(VectorLastLeftPositionImage), inputTexture);
 
 		mask.r = min(1.0, mask.r + gaussian(distance(pos, mTex), radius));
-	
-		color.rgb = (1.0 + mask.r) * color.rgb;
-
-		outputTexture = color;
 		outputMask = mask;
 	}
 }

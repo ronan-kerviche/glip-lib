@@ -28,6 +28,27 @@
 using namespace Glip;
 using namespace Glip::CoreGL;
 
+// ShaderSource::LineInfo : 
+	/**
+	\fn ShaderSource::LineInfo::LineInfo(void)
+	\brief LineInfo constructor.
+	**/
+	ShaderSource::LineInfo::LineInfo(void)
+	 : 	lineNumber(0)
+	{ }
+
+	/**
+	\fn ShaderSource::LineInfo::LineInfo(const std::string& _sourceName, int _lineNumber)
+	\brief LineInfo constructor.
+	\param _sourceName The name of the source for the particular line.
+	\param _lineNumber The original line number in the given source.
+	**/
+	ShaderSource::LineInfo::LineInfo(const std::string& _sourceName, int _lineNumber)
+	 : 	lineNumber(_lineNumber),
+		sourceName(_sourceName)
+	{ }
+
+// ShaderSource : 
 	std::string ShaderSource::portNameForFragColor = "outputTexture";
 
 	/**
@@ -68,8 +89,9 @@ using namespace Glip::CoreGL;
 		linesInfo(_linesInfo)
 	{
 		size_t newline = src.find('\n');
-
-		if(newline==std::string::npos)
+	
+		// If no new-line character is found, and the source is not empty, consider it as a filename.
+		if(newline==std::string::npos && !src.empty())
 		{
 			// Open File
 			std::fstream file;
@@ -127,6 +149,9 @@ using namespace Glip::CoreGL;
 
 	bool ShaderSource::removeBlock(std::string& line, const std::string& bStart, const std::string& bEnd, bool nested)
 	{
+		if(line.empty())
+			return false;
+
 		if(!nested)
 		{
 			size_t pStart = line.find(bStart);
@@ -254,9 +279,9 @@ using namespace Glip::CoreGL;
 		else if(str   == "sampler2DRect")               typeCode = GL_SAMPLER_2D;
 		else if(str   == "usampler2DRect")              typeCode = GL_SAMPLER_2D;
 		else if(str   == "isampler2DRect")              typeCode = GL_SAMPLER_2D;
-		//else if(str	== "sampler2DRect​")	typeCode = GL_SAMPLER_2D;
-		//else if(str	== "usampler2DRect​")	typeCode = GL_SAMPLER_2D;
-		//else if(str	== "isampler2DRect​")	typeCode = GL_SAMPLER_2D;
+		//else if(str	== "sampler2DRect")	typeCode = GL_SAMPLER_2D;
+		//else if(str	== "usampler2DRect")	typeCode = GL_SAMPLER_2D;
+		//else if(str	== "isampler2DRect")	typeCode = GL_SAMPLER_2D;
 		else if(str	== "unsigned" && cpl=="int")	typeCode = GL_UNSIGNED_INT;
  		else
 			throw Exception("ShaderSource::parseUniformLine - Unknown or unsupported uniform type \"" + str + "\".", __FILE__, __LINE__, Exception::GLException);
@@ -418,6 +443,7 @@ using namespace Glip::CoreGL;
 		outFragments 		= c.outFragments;
 		compatibilityRequest 	= c.compatibilityRequest;
 		versionNumber 		= c.versionNumber;
+		startLine		= c.startLine;
 		linesInfo		= c.linesInfo;
 
 		return (*this);
@@ -506,7 +532,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    bool ShaderSource::requiresCompatibility(void) const
+	\fn bool ShaderSource::requiresCompatibility(void) const
 	\brief Returns true if this Shader is using gl_FragColor and no out vec4 variables (e.g. Mesa <9.0 compatibility for Intel Core I7 with HD Graphics (>2nd Generation)); no call to glBindFragDataLocation is needed). If true, the input vars are indexed on their order of appearance in the shader source.
 	\return Returns true if this Shader is using gl_FragColor and no out vec4 variables.
 	**/
@@ -516,7 +542,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    int ShaderSource::getVersion(void) const
+	\fn int ShaderSource::getVersion(void) const
 	\brief Returns the shader version defined in the source (with #version) as an integer.
 	\return Returns the version as an integer (e.g. 130 for 1.30) or 0 if no version was defined.
 	**/
@@ -526,7 +552,17 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const std::string& ShaderSource::getSource(void) const
+	\fn bool ShaderSource::empty(void) const
+	\brief Test if the source is empty.
+	\return True if the source is empty.
+	**/
+	bool ShaderSource::empty(void) const
+	{
+		return source.empty();
+	}
+
+	/**
+	\fn const std::string& ShaderSource::getSource(void) const
 	\brief Returns the source as a standard string.
 	\return A standard string.
 	**/
@@ -536,7 +572,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const std::string& ShaderSource::getSourceName(void) const
+	\fn const std::string& ShaderSource::getSourceName(void) const
 	\brief Return the name of the source : the one given with the constructor if any, the filename if it was loaded from a file or a blank string otherwise.
 	\return A standard string.
 	**/
@@ -546,7 +582,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    const char* ShaderSource::getSourceCstr(void) const
+	\fn const char* ShaderSource::getSourceCstr(void) const
 	\brief Returns the source as a characters table.
 	\return A const char* string (including \0).
 	**/

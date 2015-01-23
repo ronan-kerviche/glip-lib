@@ -28,6 +28,6 @@
 	#include "Modules/UniformsLoader.hpp"
 	#include "Modules/ImageBuffer.hpp"
 	#include "Modules/TextureReader.hpp"
-	#include "Modules/FFTD.hpp"
+	#include "Modules/FFT.hpp"
 
 #endif

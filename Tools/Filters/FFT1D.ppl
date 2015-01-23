@@ -2,7 +2,23 @@ TEXTURE_FORMAT:fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:plotFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:computationFormat(512, 1, GL_RGBA32F, GL_FLOAT)
 
-CALL:GENERATE_FFT1D_PIPELINE(512, FFTPipeline, SHIFTED)
+CALL:GENERATE_FFT1D_PIPELINE(512, FFTPipeline, SHIFTED, NO_INPUT)
+{
+	PRE
+	{
+		uniform vec4 parameters = vec4(0.1, 0.5, 0.0, 0.0);  
+
+		vec4 pre(in vec4 c, in float x)
+		{
+			if(x>=parameters.r && x<parameters.g)
+				c.r = 1.0;
+		
+			c.g = 1.0 - c.r;
+			return c;
+		}
+	}
+}
+
 CALL:GENERATE_FFT1D_PIPELINE(512, IFFTPipeline, INVERSED, SHIFTED)
 
 SHADER_SOURCE:Gen1DFunction
@@ -21,6 +37,8 @@ SHADER_SOURCE:Gen1DFunction
 		// Square :
 		if(gl_TexCoord[0].s>=parameters.r && gl_TexCoord[0].s<parameters.g)
 			outputTexture.r = 1.0;
+		
+		outputTexture.g = 1.0 - outputTexture.r;
 	}
 }
 
@@ -71,21 +89,22 @@ FILTER_LAYOUT:plotFilter(plotFormat,plotShader)
 
 PIPELINE_MAIN:FFTComputationPipeline
 {
-	OUTPUT_PORTS(outputTexture, functionValues, plotFunction, plotFFT, plotIFFT, plotModulation)
+	//OUTPUT_PORTS(outputTexture, functionValues, plotFunction, plotFFT, plotIFFT, plotModulation)
+	OUTPUT_PORTS(outputTexture, plotFFT, plotIFFT, plotModulation)
 
-	FILTER_INSTANCE:Gen1DFunction
+	//FILTER_INSTANCE:Gen1DFunction
 	PIPELINE_INSTANCE:FFTPipeline(FFTPipeline)
 	PIPELINE_INSTANCE:IFFTPipeline(IFFTPipeline)
 	FILTER_INSTANCE:WindowFilter
-	FILTER_INSTANCE:plotFunction(plotFilter)
+	//FILTER_INSTANCE:plotFunction(plotFilter)
 	FILTER_INSTANCE:plotFFT(plotFilter)
 	FILTER_INSTANCE:plotIFFT(plotFilter)
 	FILTER_INSTANCE:plotModulation(plotFilter)
 
-	CONNECTION(Gen1DFunction, outputTexture, FFTPipeline, inputTexture)
+	/*CONNECTION(Gen1DFunction, outputTexture, FFTPipeline, inputTexture)
 	CONNECTION(Gen1DFunction, outputTexture, plotFunction, functionValues)
 	CONNECTION(Gen1DFunction, outputTexture, THIS, functionValues)
-	CONNECTION(plotFunction, outputTexture, THIS, plotFunction)
+	CONNECTION(plotFunction, outputTexture, THIS, plotFunction)*/
 
 	CONNECTION(FFTPipeline, outputTexture, plotFFT, functionValues)
 	CONNECTION(FFTPipeline, outputTexture, THIS, outputTexture)

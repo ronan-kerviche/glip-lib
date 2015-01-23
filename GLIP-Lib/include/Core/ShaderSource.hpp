@@ -65,6 +65,9 @@ The shader source will be parsed to find input and output ports name. In the cas
 						int lineNumber;
 						/// The name of the source (for example, the filename).
 						std::string sourceName;
+
+						LineInfo(void);
+						LineInfo(const std::string& _sourceName, int _lineNumber);
 					};
 
 				private :
@@ -102,7 +105,8 @@ The shader source will be parsed to find input and output ports name. In the cas
 
 					ShaderSource& operator=(const ShaderSource& c);
 
-					const std::string& getSource(void)     const;
+					bool empty(void) const;
+					const std::string& getSource(void) const;
 					const std::string& getSourceName(void) const;
 					const char* getSourceCstr(void) const;
 					int getNumLines(void) const;
@@ -110,12 +114,12 @@ The shader source will be parsed to find input and output ports name. In the cas
 					LineInfo getLineInfo(int l) const;
 					Exception errorLog(const std::string& log) const;
 					bool requiresCompatibility(void) const;
-					int  getVersion(void) const;
+					int getVersion(void) const;
 
 					const std::vector<std::string>& getInputVars(void) const;
 					const std::vector<std::string>& getOutputVars(void) const;
 					const std::vector<std::string>& getUniformVars(void) const;
-					const std::vector<GLenum>&	getUniformTypes(void) const;
+					const std::vector<GLenum>& getUniformTypes(void) const;
 			};
 		}
 	}

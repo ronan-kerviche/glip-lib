@@ -1,0 +1,53 @@
+REQUIRED_FORMAT:realPartComputationFormat(inputFormat0, *, *, GL_RGB, *, GL_LINEAR, GL_LINEAR)
+TEXTURE_FORMAT:computationFormat(256, 256, GL_RGBA32F, GL_FLOAT)
+
+CALL:GENERATE_FFT2D_PIPELINE(256, 256, FFTPipeline, SHIFTED)
+{
+	PRE
+	{
+		vec4 pre(in vec4 c, in vec2 x)
+		{
+			return c * vec4(1.0, 0.0, 0.0, 0.0);
+		}
+	}
+}
+CALL:GENERATE_FFT2D_PIPELINE(256, 256, IFFTPipeline, INVERSED, SHIFTED)
+
+SHADER_SOURCE:WindowShader
+{
+	#version 130
+	uniform sampler2D 	fourierDomain;
+	out vec4		modulation,
+				modulated;
+	uniform float 		windowSize = 1000.0;
+
+	void main()
+	{
+		vec4 f = texture(fourierDomain, gl_TexCoord[0].st);
+		modulation = vec4(0.0, 0.0, 0.0, 1.0);
+
+		modulation.r = exp(-2.0*((gl_TexCoord[0].s-0.5)*(gl_TexCoord[0].s-0.5) + (gl_TexCoord[0].t-0.5)*(gl_TexCoord[0].t-0.5))/(windowSize*windowSize/10000.0));
+
+		modulated = f * modulation.r;
+	}
+}
+
+FILTER_LAYOUT:WindowFilter(computationFormat, WindowShader)
+
+PIPELINE_MAIN:FFTComputationPipeline
+{
+	INPUT_PORTS(inputTexture)
+	OUTPUT_PORTS(outputTexture, fourierDomain, modulated, modulation)
+
+	PIPELINE_INSTANCE:FFTPipeline(FFTPipeline)
+	PIPELINE_INSTANCE:IFFTPipeline(IFFTPipeline)
+	FILTER_INSTANCE:WindowFilter
+
+	CONNECTION(THIS, inputTexture, FFTPipeline, inputTexture)
+	CONNECTION(FFTPipeline, outputTexture, THIS, fourierDomain)
+	CONNECTION(FFTPipeline, outputTexture, WindowFilter, fourierDomain)
+	CONNECTION(WindowFilter, modulation, THIS, modulation)
+	CONNECTION(WindowFilter, modulated, THIS, modulated)
+	CONNECTION(WindowFilter, modulated, IFFTPipeline, inputTexture)
+	CONNECTION(IFFTPipeline, outputTexture, THIS, outputTexture)
+}

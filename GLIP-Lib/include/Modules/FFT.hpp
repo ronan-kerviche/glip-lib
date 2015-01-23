@@ -42,13 +42,15 @@ namespace Glip
 			enum Flag
 			{
 				///Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
-				Shifted			= 0x0001,
+				Shifted			= 0x00001,
 				///Perform the reciprocal transform, iFFT : FFT(X*)* / N.
-				Inversed		= 0x0010,
+				Inversed		= 0x00010,
 				///Use zero padding for input texture which are smaller than the transform size.
-				UseZeroPadding		= 0x0100,
+				UseZeroPadding		= 0x00100,
 				///The computation will use of old gl_FragColor GLSL built-in variable.
-				CompatibilityMode	= 0x1000
+				CompatibilityMode	= 0x01000,
+				/// Pipelines have no input (the user must provide a PRE-function).
+				NoInput			= 0x10000
 				// Update Flag getFlag(const std::string& str)
 			};
 
@@ -64,19 +66,16 @@ namespace Glip
 		**/
 		class GLIP_API GenerateFFT1DPipeline : public LayoutLoaderModule
 		{
-			public :
-				
-
 			private :
-				static std::string generateRadix2Code(int width, int currentLevel, int flags);
-				static std::string generateLastShuffleCode(int width, int flags);
+				static ShaderSource generateRadix2Code(int width, int currentLevel, int flags, const ShaderSource& pre);
+				static ShaderSource generateLastShuffleCode(int width, int flags, const ShaderSource& post);
 
 			public :
 				GenerateFFT1DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
 
-				static PipelineLayout generate(int width, int flags = 0);
+				static PipelineLayout generate(int width, int flags = 0, const ShaderSource& pre=std::string(), const ShaderSource& post=std::string());
 		};
 
 		/**
@@ -88,19 +87,16 @@ namespace Glip
 		**/
 		class GLIP_API GenerateFFT2DPipeline : public LayoutLoaderModule
 		{
-			public :
-				
-
 			private :
-				static std::string generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal);
-				static std::string generateLastShuffleCode(int width, int flags, bool horizontal);
+				static ShaderSource generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal, const ShaderSource& pre);
+				static ShaderSource generateLastShuffleCode(int width, int oppositeWidth, int flags, bool horizontal, const ShaderSource& post);
 
 			public :
 				GenerateFFT2DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
 
-				static PipelineLayout generate(int width, int height, int flags = 0);
+				static PipelineLayout generate(int width, int height, int flags = 0, const ShaderSource& pre=std::string(), const ShaderSource& post=std::string());
 		};
 	}
 }

@@ -34,6 +34,7 @@
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 	using namespace Glip::Modules::FFTModules;
+	using namespace Glip::Modules::VanillaParserSpace;
 
 // FFTModules :
 namespace Glip
@@ -54,7 +55,9 @@ namespace Glip
 	
 				TEST("Shifted",			"SHIFTED", 		Shifted);
 				TEST("Inversed",		"INVERSED",		Inversed);
+				TEST("UseZeroPadding",		"USE_ZERO_PADDING",	UseZeroPadding);
 				TEST("CompatibilityMode",	"COMPATIBILITY_MODE",	CompatibilityMode);
+				TEST("NoInput",			"NO_INPUT",		NoInput);
 
 				#undef TEST
 		
@@ -75,13 +78,18 @@ namespace Glip
 	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
 					"Generate the 1D FFT Pipeline transformation.\n"
 					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"Body : PRE block, contains a filtering function to be applied before the FFT.\n"
+					"                  vec4 pre(in vec4 colorFromTexture, in float x)\n"
+					"       POST block, contains a filtering function to be applied after the FFT.\n"
+					"                  vec4 post(in vec4 colorAfterFFT, in float x)\n"
+					"       Both of these block can declare their own uniform variables.\n"
 					"Arguments : width, name [, option, ...].",
 					2,
-					5, //2 base + 3 arguments
-					-1)
+					7, //2 base + 5 arguments
+					0)
 	{ }
 
-	std::string GenerateFFT1DPipeline::generateRadix2Code(int width, int currentLevel, int flags)
+	ShaderSource GenerateFFT1DPipeline::generateRadix2Code(int width, int currentLevel, int flags, const ShaderSource& pre)
 	{
 		// with		: the width of the texture.
 		// currentLevel : the current decimation level, between width (first pass) and 1 (last pass).
@@ -96,150 +104,248 @@ namespace Glip
 		// g(0:7, 8, 8)
 		// g(0:7, 4, 8)
 
-		std::string str;
+		int lineCounter = 1;
+		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
 
-		str +="#version 130 \n";
-		str += "const float twoPi = 6.28318530718; \n";
-		str += "uniform sampler2D inputTexture; \n";
+		std::string str;
+		std::map<int,ShaderSource::LineInfo> linesInfo;
+
+		str +="#version 130 \n";													PUSH_LINE_INFO
+		str += "const float twoPi = 6.28318530718; \n";											PUSH_LINE_INFO
+		
+		if(width!=currentLevel || (flags & NoInput)==0) // Not First pass or has an input
+		{
+			str += "uniform sampler2D inputTexture; \n";										PUSH_LINE_INFO
+		}
 
 		if((flags & CompatibilityMode)==0)
-			str += "out vec4 outputTexture; \n";
+		{
+			str += "out vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
 		else
-			str += "vec4 outputTexture; \n";
-		
-		str += "\n";
-		str += "void main() \n";
-		str += "{ \n";
-		str += "    const int w = " + toString(width) + ", \n";
-		str += "              l = " + toString(currentLevel) + "; \n";
-		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
-		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";
+		{
+			str += "vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
+
+		if(width==currentLevel && !pre.empty()) // First pass and pre-function
+		{
+			str += pre.getSource();
+			for(int k=0; k<pre.getNumLines(); k++)
+				linesInfo[lineCounter+k] = pre.getLineInfo(k+1);
+
+			lineCounter += pre.getNumLines();
+		}
+
+		str += "\n";															PUSH_LINE_INFO
+		str += "void main() \n";													PUSH_LINE_INFO
+		str += "{ \n";															PUSH_LINE_INFO
+		str += "    const int w = " + toString(width) + ", \n";										PUSH_LINE_INFO
+		str += "              l = " + toString(currentLevel) + "; \n";									PUSH_LINE_INFO
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";										PUSH_LINE_INFO
+		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";						PUSH_LINE_INFO
 
 		if(width==currentLevel) // First pass
 		{
-			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";
+			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";					PUSH_LINE_INFO
 
 			if((flags & Shifted)!=0 && (flags & Inversed)!=0)
 			{
-				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
-				str += "    posB = int(mod(posB + w/2, w)); \n";
+				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";								PUSH_LINE_INFO
+				str += "    posB = int(mod(posB + w/2, w)); \n";								PUSH_LINE_INFO
 			}
 			
-			str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),0)); \n";
-			str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),0)); \n";
+			str += "    vec2 ivA = vec2((float(pos.x)+0.5)/float(w),0), \n";							PUSH_LINE_INFO
+			str += "         ivB = vec2((float(posB)+0.5)/float(w),0); \n";								PUSH_LINE_INFO
+
+			if((flags & NoInput)==0)
+			{
+				str += "    vec4 A = texture(inputTexture, ivA); \n";								PUSH_LINE_INFO
+				str += "    vec4 B = texture(inputTexture, ivB); \n";								PUSH_LINE_INFO
+			}
+			else
+			{
+				str += "    vec4 A = vec4(0.0, 0.0, 0.0, 0.0); \n";								PUSH_LINE_INFO
+				str += "    vec4 B = vec4(0.0, 0.0, 0.0, 0.0); \n";								PUSH_LINE_INFO
+			}
+
+			// Apply the pre-function, if given : 
+			if(!pre.empty())
+			{
+				str += "    A = pre(A, ivA.x); \n";										PUSH_LINE_INFO
+				str += "    B = pre(B, ivB.x); \n";										PUSH_LINE_INFO
+			}
 		}		
 		else
 		{
-			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,0), 0); \n";
-			str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,0), 0); \n";
+			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";					PUSH_LINE_INFO
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,0), 0); \n";							PUSH_LINE_INFO
+			str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,0), 0); \n";							PUSH_LINE_INFO
 		}
 
-		str += "    float c = cos(-twoPi*p/float(w)), \n";
-		str += "          s = sin(-twoPi*p/float(w)); \n"; 
+		str += "    float c = cos(-twoPi*p/float(w)), \n";										PUSH_LINE_INFO
+		str += "          s = sin(-twoPi*p/float(w)); \n"; 										PUSH_LINE_INFO
 		
 
 		if(width==currentLevel) // First pass
 		{
 			if((flags & Inversed)!=0)
 			{
-				str += "    A.g = -A.g; \n"; // real
-				str += "    B.g = -B.g; \n"; // imaginary
+				str += "    A.g = -A.g; \n"; /* real */										PUSH_LINE_INFO
+				str += "    B.g = -B.g; \n"; /* imaginary */									PUSH_LINE_INFO
 			}
 
-			str += "    outputTexture.r  = A.r + B.r; \n"; // real
-			str += "    outputTexture.g  = A.g + B.g; \n"; // imaginary
-			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; // real
-			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; // imaginary
+			str += "    outputTexture.r  = A.r + B.r; \n"; /* real */								PUSH_LINE_INFO
+			str += "    outputTexture.g  = A.g + B.g; \n"; /* imaginary */								PUSH_LINE_INFO
+			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */						PUSH_LINE_INFO
+			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */					PUSH_LINE_INFO
 		}
 		else
 		{
 			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
-			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; // real
-			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; // imaginary
-			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; // real
-			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; // imaginary
+			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */					PUSH_LINE_INFO
+			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */					PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		{
+			str += "    gl_FragColor = outputTexture; \n";										PUSH_LINE_INFO
+		}
 
-		str += "} \n";
+		str += "} \n";															PUSH_LINE_INFO
 
 		std::cout << "GenerateFFT1DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
 		std::cout << str << std::endl;
 
-		return str;
+		#undef PUSH_LINE_INFO
+
+		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}
 
-	std::string GenerateFFT1DPipeline::generateLastShuffleCode(int width, int flags)
+	ShaderSource GenerateFFT1DPipeline::generateLastShuffleCode(int width, int flags, const ShaderSource& post)
 	{
 		std::string str;
+		std::map<int,ShaderSource::LineInfo> linesInfo;
 
-		str +="#version 130 \n";
-		str += "uniform sampler2D inputTexture; \n";
+		int lineCounter = 1;
+		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
+
+		str +="#version 130 \n";													PUSH_LINE_INFO	
+		str += "uniform sampler2D inputTexture; \n";											PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)==0)
-			str += "out vec4 outputTexture; \n";
+		{
+			str += "out vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}		
 		else
-			str += "vec4 outputTexture; \n";
+		{
+			str += "vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
 
-		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		if(!post.empty())
+		{
+			str += post.getSource();
+			for(int k=0; k<post.getNumLines(); k++)
+				linesInfo[lineCounter+k] = post.getLineInfo(k+1);
 
-		str += "\n";
-		str += "void main() \n";
-		str += "{ \n";
-		str += "    const int w = " + toString(width) + "; \n";
-		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+			lineCounter += post.getNumLines();
+		}
+
+		str += "\n";															PUSH_LINE_INFO
+		str += "void main() \n";													PUSH_LINE_INFO
+		str += "{ \n";															PUSH_LINE_INFO
+		str += "    const int w = " + toString(width) + "; \n";										PUSH_LINE_INFO
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";										PUSH_LINE_INFO
 
 		if((flags & Shifted)!=0 && (flags & Inversed)==0)
-			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+		{
+			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";									PUSH_LINE_INFO
+		}
 
-		str += "    int a = 0; \n";
-		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; // Bit reversal
-		str += "    int p = int(mod(a, w/2)); // Prepare for the folding. \n";
-		str += "    vec4 A = texelFetch(inputTexture, ivec2(p,0), 0); \n";
-		str += "    if(p<a) A.rg = A.ba; \n";
+		str += "    int a = 0; \n";													PUSH_LINE_INFO
+		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; /* Bit reversal */ 			PUSH_LINE_INFO
+		str += "    int p = int(mod(a, w/2)); \n";											PUSH_LINE_INFO
+		str += "    vec4 A = texelFetch(inputTexture, ivec2(p,0), 0); \n";								PUSH_LINE_INFO
+		str += "    if(p<a) A.rg = A.ba; \n";												PUSH_LINE_INFO
 	
 		if((flags & Inversed)!=0)
-			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";
+		{
+			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";									PUSH_LINE_INFO
+		}
 
-		str += "    A.ba = vec2(length(A.rg), 1.0); \n";
-		str += "    outputTexture = A; \n";
+		str += "    A.ba = vec2(length(A.rg), 1.0); \n";										PUSH_LINE_INFO
+
+		// Apply the post-function, if given : 
+		if(!post.empty())
+		{
+			str += "    A = post(A, gl_FragCoord.x/float(width)); \n";								PUSH_LINE_INFO
+		}
+
+		str += "    outputTexture = A; \n";												PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		{
+			str += "    gl_FragColor = outputTexture; \n";										PUSH_LINE_INFO
+		}
 
-		str += "} \n";
+		str += "} \n";															PUSH_LINE_INFO
 
 		std::cout << "GenerateFFT1DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
 		std::cout << str << std::endl;
 
-		return str;
+		#undef PUSH_LINE_INFO
+
+		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}
 
 	/**
-	\fn PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags)
+	\fn PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags, const std::string& pre, const std::string& post)
 	\brief Construct a pipeline performing a 1D FFT.
 	\param width Width of the signal.
 	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\param pre Add a filtering function before the transform.
+	\param post Add a filtering function after the transform.
 	\return A complete pipeline layout.
+
+	The <b>pre-function</b> will be inserted before the transform. It should be a block of code declaring the function <i>pre</i> as in the following example : 
+	\code
+	vec4 pre(in vec4 colorFromTexture, in float x)
+	{
+		return modifiedColor;
+	}
+	\endcode
+
+	The <b>post-function</b> will be inserted after the transform. It should be a block of code declaring the function <i>post</i> as in the following example : 
+	\code
+	vec4 post(in vec4 colorAfterFFT, in float x)
+	{
+		return modifiedColor;
+	}
+	\endcode
+
+	Each time, the position is normalized from 0.0 to 1.0. You are allowed to declare uniform variables in these filters.
 	**/
-	PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags)
+	PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags, const ShaderSource& pre, const ShaderSource& post)
 	{
 		double 	test1 = std::log(width)/std::log(2),
 			test2 = std::floor(test1);
 
 		if(test1!=test2)
-			throw Exception("Size must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Size must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ModuleException);
 		if(width<4)
-			throw Exception("Size must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Size must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ModuleException);
+
+		if((flags & NoInput)!=0 && pre.empty())
+			throw Exception("A PRE-function must be provided when using the flag NoInput.", __FILE__, __LINE__, Exception::ModuleException);
 
 		HdlTextureFormat format(width, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		HdlTextureFormat halfFormat(width/2, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
-		pipelineLayout.addInput("inputTexture");
+
+		if((flags & NoInput)==0)
+			pipelineLayout.addInput("inputTexture");
+
 		pipelineLayout.addOutput("outputTexture");
 
 		std::string 	previousName = "",
@@ -247,14 +353,16 @@ namespace Glip
 
 		for(int l=width; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(width, l, flags), "<GenerateFFT1DPipeline::generate()>");
+			ShaderSource shader = generateRadix2Code(width, l, flags, pre);
 			std::string name = "Filter"+ toString(l);
 			FilterLayout filterLayout(name, halfFormat, shader);
 			pipelineLayout.add(filterLayout,name);
 
 			if(previousName.empty())
 			{
-				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+				if((flags & NoInput)==0)
+					pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+
 				firstFilterName = name;
 			}
 			else
@@ -265,7 +373,7 @@ namespace Glip
 
 		// Last : 
 		const std::string shuffleFilterName = "FilterShuffle";
-		ShaderSource shader(generateLastShuffleCode(width, flags), "<GenerateFFT1DPipeline::generate()>");
+		ShaderSource shader = generateLastShuffleCode(width, flags, post);
 		FilterLayout filterLayout(shuffleFilterName, format, shader);
 		pipelineLayout.add(filterLayout,shuffleFilterName);
 		pipelineLayout.connect(previousName, "outputTexture", shuffleFilterName, "inputTexture");
@@ -278,11 +386,9 @@ namespace Glip
 	
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT1DPipeline )
 	{
-		UNUSED_PARAMETER(body)
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(dynamicPaths)
 		UNUSED_PARAMETER(formatList)
-		UNUSED_PARAMETER(sharedCodeList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(geometryList)
 		UNUSED_PARAMETER(filterList)
@@ -291,7 +397,6 @@ namespace Glip
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(startLine)
-		UNUSED_PARAMETER(bodyLine)
 		UNUSED_PARAMETER(executionCode)		
 
 		PIPELINE_MUST_NOT_EXIST( arguments[1] )
@@ -305,7 +410,65 @@ namespace Glip
 			flags = flags | static_cast<int>(f);
 		}
 
-		APPEND_NEW_PIPELINE(arguments[1], generate(width, flags))
+		// Read PRE and POST functions : 
+		ShaderSource pre(""), post("");
+
+		if(!body.empty())
+		{
+			VanillaParser parser(body, sourceName, bodyLine);
+			bool 	preAlreadySet = false,
+				postAlreadySet = false;
+
+			for(std::vector<Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+			{
+				if(it->strKeyword=="PRE")
+				{
+					if(preAlreadySet)
+						throw Exception("PRE code already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
+				
+					if(it->arguments.size()==1 && it->noBody)
+					{
+						SHAREDCODE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						pre = its->second;
+					}
+					else if(it->noArgument && !it->body.empty())
+					{
+						ShaderSource src(it->body, it->sourceName, it->bodyLine);
+						pre = src;
+					}
+					else 
+						throw Exception("The PRE code can have either one argument or one body.", it->sourceName, it->startLine, Exception::ClientScriptException);
+
+					preAlreadySet = true;
+				}
+				else if(it->strKeyword=="POST")
+				{
+					if(postAlreadySet)
+						throw Exception("POST code already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
+				
+					if(it->arguments.size()==1 && it->noBody)
+					{
+						SHAREDCODE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						post = its->second;
+					}
+					else if(it->noArgument && !it->body.empty())
+					{
+						ShaderSource src(it->body, it->sourceName, it->bodyLine);
+						post = src;
+					}
+					else 
+						throw Exception("The PRE code can have either one argument or one body.", it->sourceName, it->startLine, Exception::ClientScriptException);
+
+					preAlreadySet = true;
+				}				
+				else
+					throw Exception("Unknown keyword \"" + it->strKeyword + "\". Expected PRE or POST.", it->sourceName, it->startLine, Exception::ClientScriptException);
+			}
+		}
+			
+		APPEND_NEW_PIPELINE(arguments[1], generate(width, flags, pre, post))
 	}
 
 // GenerateFFT2DPipeline :
@@ -319,170 +482,256 @@ namespace Glip
 	 :	LayoutLoaderModule(	"GENERATE_FFT2D_PIPELINE", 
 					"Generate the 2D FFT Pipeline transformation.\n"
 					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"Body : PRE block, contains a filtering function to be applied before the FFT.\n"
+					"                  vec4 pre(in vec4 colorFromTexture, in vec2 x)\n"
+					"       POST block, contains a filtering function to be applied after the FFT.\n"
+					"                  vec4 post(in vec4 colorAfterFFT, in vec2 x)\n"
+					"       Both of these block can declare their own uniform variables.\n"
 					"Arguments : width, height, name [, option, ...].",
 					2,
-					6, //3 base + 3 arguments
-					-1)
+					8, //3 base + 5 arguments
+					0)
 	{ }
 
-	std::string GenerateFFT2DPipeline::generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal)
+	ShaderSource GenerateFFT2DPipeline::generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal, const ShaderSource& pre)
 	{
 		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
 
-		std::string str;
+		int lineCounter = 1;
+		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
 
-		str +="#version 130 \n";
-		str += "const float twoPi = 6.28318530718; \n";
-		str += "uniform sampler2D inputTexture; \n";
+		std::string str;
+		std::map<int,ShaderSource::LineInfo> linesInfo;
+
+		str +="#version 130 \n";													PUSH_LINE_INFO
+		str += "const float twoPi = 6.28318530718; \n";											PUSH_LINE_INFO
+		
+		if(!horizontal || width!=currentLevel || (flags & NoInput)==0) // Not First pass or has an input
+		{
+			str += "uniform sampler2D inputTexture; \n";										PUSH_LINE_INFO
+		}
 
 		if((flags & CompatibilityMode)==0)
-			str += "out vec4 outputTexture; \n";
+		{
+			str += "out vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
 		else
-			str += "vec4 outputTexture; \n";
-		
-		str += "\n";
-		str += "void main() \n";
-		str += "{ \n";
-		str += "    const int w = " + toString(width) + ", \n";
-		str += "              h = " + toString(oppositeWidth) + ", \n";
-		str += "              l = " + toString(currentLevel) + "; \n";
-		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+		{
+			str += "vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
+
+		if(horizontal && width==currentLevel && !pre.empty()) // First pass and pre-function
+		{
+			str += pre.getSource();
+			for(int k=0; k<pre.getNumLines(); k++)
+				linesInfo[lineCounter+k] = pre.getLineInfo(k+1);
+
+			lineCounter += pre.getNumLines();
+		}
+
+		str += "\n";															PUSH_LINE_INFO
+		str += "void main() \n";													PUSH_LINE_INFO
+		str += "{ \n";															PUSH_LINE_INFO
+		str += "    const int w = " + toString(width) + ", \n";										PUSH_LINE_INFO
+		str += "              h = " + toString(oppositeWidth) + ", \n";									PUSH_LINE_INFO
+		str += "              l = " + toString(currentLevel) + "; \n";									PUSH_LINE_INFO
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";										PUSH_LINE_INFO
 
 		if(!horizontal)
-			str += "    pos.xy = pos.yx; \n";
+		{
+			str += "    pos.xy = pos.yx; \n";											PUSH_LINE_INFO
+		}
 
-		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";
+		str += "    int posB = int(mod((mod(pos.x, l) - l/2), l) + int(pos.x/l)*l); \n";						PUSH_LINE_INFO
 
 		if(width==currentLevel) // First pass in the current direction
 		{
-			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";
+			str += "    float p = floor((2*mod(pos.x+w/2,w))/w)*floor(mod(pos.x+w/2, w/2)); \n";					PUSH_LINE_INFO
 
 			if((flags & Shifted)!=0 && (flags & Inversed)!=0)
 			{
-				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
-				str += "    posB = int(mod(posB + w/2, w)); \n";
+				str += "    pos.x = int(mod(pos.x + w/2, w)); \n";								PUSH_LINE_INFO
+				str += "    posB = int(mod(posB + w/2, w)); \n";								PUSH_LINE_INFO
 			}
 			
 			if(horizontal)
 			{
 				// Also real first pass :
-				str += "    vec4 A = texture(inputTexture, vec2((float(pos.x)+0.5)/float(w),(float(pos.y)+0.5)/float(h))); \n";
-				str += "    vec4 B = texture(inputTexture, vec2((float(posB)+0.5)/float(w),(float(pos.y)+0.5)/float(h))); \n";
+				str += "    vec2 ivA = vec2((float(pos.x)+0.5)/float(w),(float(pos.y)+0.5)/float(h)), \n";			PUSH_LINE_INFO
+				str += "         ivB = vec2((float(posB)+0.5)/float(w),(float(pos.y)+0.5)/float(h)); \n";			PUSH_LINE_INFO
+
+				if((flags & NoInput)==0)
+				{
+					str += "    vec4 A = texture(inputTexture, ivA); \n";							PUSH_LINE_INFO
+					str += "    vec4 B = texture(inputTexture, ivB); \n";							PUSH_LINE_INFO
+				}
+				else
+				{
+					str += "    vec4 A = vec4(0.0, 0.0, 0.0, 0.0); \n";							PUSH_LINE_INFO
+					str += "    vec4 B = vec4(0.0, 0.0, 0.0, 0.0); \n";							PUSH_LINE_INFO
+				}
+
+				// Apply the pre-function, if given : 
+				if(!pre.empty())
+				{
+					str += "    A = pre(A, ivA); \n";									PUSH_LINE_INFO
+					str += "    B = pre(B, ivB); \n";									PUSH_LINE_INFO
+				}
 			}
 			else
 			{
-				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";
-				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";					PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";					PUSH_LINE_INFO
 			}
 		}		
 		else
 		{
-			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";
+			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";					PUSH_LINE_INFO
 
 			if(horizontal)
 			{
-				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,pos.y), 0); \n";
-				str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,pos.y), 0); \n";
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.x,pos.y), 0); \n";					PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(posB,pos.y), 0); \n";					PUSH_LINE_INFO
 			}
 			else
 			{
-				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";
-				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";
+				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";					PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";					PUSH_LINE_INFO
 			}
 		}
 
-		str += "    float c = cos(-twoPi*p/float(w)), \n";
-		str += "          s = sin(-twoPi*p/float(w)); \n"; 
+		str += "    float c = cos(-twoPi*p/float(w)), \n";										PUSH_LINE_INFO
+		str += "          s = sin(-twoPi*p/float(w)); \n"; 										PUSH_LINE_INFO
 		
 
 		if(width==currentLevel) // First pass
 		{
 			if((flags & Inversed)!=0)
 			{
-				str += "    A.g = -A.g; \n"; // real
-				str += "    B.g = -B.g; \n"; // imaginary
+				str += "    A.g = -A.g; \n"; /* real */										PUSH_LINE_INFO
+				str += "    B.g = -B.g; \n"; /* imaginary */									PUSH_LINE_INFO
 			}
 
-			str += "    outputTexture.r  = A.r + B.r; \n"; // real
-			str += "    outputTexture.g  = A.g + B.g; \n"; // imaginary
-			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; // real
-			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; // imaginary
+			str += "    outputTexture.r  = A.r + B.r; \n"; /* real */								PUSH_LINE_INFO
+			str += "    outputTexture.g  = A.g + B.g; \n"; /* imaginary */								PUSH_LINE_INFO
+			str += "    outputTexture.b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */						PUSH_LINE_INFO
+			str += "    outputTexture.a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */					PUSH_LINE_INFO
 		}
 		else
 		{
-			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
-			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; // real
-			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; // imaginary
-			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; // real
-			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; // imaginary
+			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";									PUSH_LINE_INFO
+			str += "    outputTexture.r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    outputTexture.g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */					PUSH_LINE_INFO
+			str += "    outputTexture.b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    outputTexture.a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */					PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		{
+			str += "    gl_FragColor = outputTexture; \n";										PUSH_LINE_INFO
+		}
 
 		str += "} \n";
+
+		#undef PUSH_LINE_INFO
 
 		std::cout << "GenerateFFT2DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
 		std::cout << str << std::endl;
 
-		return str;
+		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}
 
-	std::string GenerateFFT2DPipeline::generateLastShuffleCode(int width, int flags, bool horizontal)
+	ShaderSource GenerateFFT2DPipeline::generateLastShuffleCode(int width, int oppositeWidth, int flags, bool horizontal, const ShaderSource& post)
 	{
-		// Note that 'width' is generic here, it can be either the width or the height.
+		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
 
 		std::string str;
+		std::map<int,ShaderSource::LineInfo> linesInfo;
 
-		str +="#version 130 \n";
-		str += "uniform sampler2D inputTexture; \n";
+		int lineCounter = 1;
+		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
+
+		str += "#version 130 \n";													PUSH_LINE_INFO
+		str += "uniform sampler2D inputTexture; \n";											PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)==0)
-			str += "out vec4 outputTexture; \n";
+		{
+			str += "out vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}		
 		else
-			str += "vec4 outputTexture; \n";
+		{
+			str += "vec4 outputTexture; \n";											PUSH_LINE_INFO
+		}
 
-		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		if(!horizontal && !post.empty())
+		{
+			str += post.getSource();
+			for(int k=0; k<post.getNumLines(); k++)
+				linesInfo[lineCounter+k] = post.getLineInfo(k+1);
 
-		str += "\n";
-		str += "void main() \n";
-		str += "{ \n";
-		str += "    const int w = " + toString(width) + "; \n";
-		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";
+			lineCounter += post.getNumLines();
+		}
+
+		str += "\n";															PUSH_LINE_INFO
+		str += "void main() \n";													PUSH_LINE_INFO
+		str += "{ \n";															PUSH_LINE_INFO
+		str += "    const int w = " + toString(width) + ", \n";										PUSH_LINE_INFO
+		str += "              h = " + toString(oppositeWidth) + "; \n";									PUSH_LINE_INFO
+		str += "    ivec2 pos = ivec2(gl_FragCoord.xy); \n";										PUSH_LINE_INFO
 
 		if(!horizontal)
-			str += "    pos.xy = pos.yx; \n";
+		{
+			str += "    pos.xy = pos.yx; \n";											PUSH_LINE_INFO
+		}
 
 		if((flags & Shifted)!=0 && (flags & Inversed)==0)
-			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";
+		{
+			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";									PUSH_LINE_INFO
+		}
 
 		str += "    int a = 0; \n";
-		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; // Bit reversal
-		str += "    int p = int(mod(a, w/2)); // Prepare for the folding. \n";
+		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; /* Bit reversal */			PUSH_LINE_INFO
+		str += "    int p = int(mod(a, w/2));  \n";											PUSH_LINE_INFO
 
 		if(horizontal)
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(p,pos.y), 0); \n";
+		{
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(p,pos.y), 0); \n";							PUSH_LINE_INFO
+		}
 		else
-			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,p), 0); \n";
+		{
+			str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,p), 0); \n";							PUSH_LINE_INFO
+		}
 
-		str += "    if(p<a) A.rg = A.ba; \n";
+		str += "    if(p<a) A.rg = A.ba; \n";												PUSH_LINE_INFO
 	
 		if((flags & Inversed)!=0)
-			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";
+		{
+			str += "    A.rg = A.rg * vec2(1.0, -1.0)/w; \n";									PUSH_LINE_INFO
+		}
 
-		str += "    A.ba = vec2(length(A.rg), 1.0); \n";
-		str += "    outputTexture = A; \n";
+		str += "    A.ba = vec2(length(A.rg), 1.0); \n";										PUSH_LINE_INFO
+
+		// Apply the post-function, if given : 
+		if(!horizontal && !post.empty())
+		{
+			str += "    A = post(A, gl_FragCoord.xy/vec2(h, w)); \n";								PUSH_LINE_INFO
+		}
+
+		str += "    outputTexture = A; \n";												PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
-			str += "    gl_FragColor = outputTexture; \n";
+		{
+			str += "    gl_FragColor = outputTexture; \n";										PUSH_LINE_INFO
+		}
 
-		str += "} \n";
+		str += "} \n";															PUSH_LINE_INFO
+
+		#undef PUSH_LINE_INFO
 
 		std::cout << "GenerateFFT2DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
 		std::cout << str << std::endl;
 
-		return str;
+		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}
 
 	/**
@@ -491,9 +740,29 @@ namespace Glip
 	\param width Width of the signal.
 	\param height Height of the signal.
 	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\param pre Add a filtering function before the transform.
+	\param post Add a filtering function after the transform.
 	\return A complete pipeline layout.
+
+	The <b>pre-function</b> will be inserted before the transform. It should be a block of code declaring the function <i>pre</i> as in the following example : 
+	\code
+	vec4 pre(in vec4 colorFromTexture, in vec2 pos)
+	{
+		return modifiedColor;
+	}
+	\endcode
+
+	The <b>post-function</b> will be inserted after the transform. It should be a block of code declaring the function <i>post</i> as in the following example : 
+	\code
+	vec4 post(in vec4 colorAfterFFT, in vec2 pos)
+	{
+		return modifiedColor;
+	}
+	\endcode
+
+	Each time, the position is normalized from 0.0 to 1.0. You are allowed to declare uniform variables in these filters.
 	**/
-	PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags)
+	PipelineLayout GenerateFFT2DPipeline::generate(int width, int height, int flags, const ShaderSource& pre, const ShaderSource& post)
 	{
 		double 	test1w = std::log(width)/std::log(2),
 			test2w = std::floor(test1w),
@@ -501,20 +770,26 @@ namespace Glip
 			test2h = std::floor(test1h);
 
 		if(test1w!=test2w)
-			throw Exception("Width must be a power of 2 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Width must be a power of 2 (current value : " + toString(width) + ").", __FILE__, __LINE__, Exception::ModuleException);
 		if(width<4)
-			throw Exception("Width must be at least 4 (current size : " + toString(width) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Width must be at least 4 (current value : " + toString(width) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
 		if(test1h!=test2h)
-			throw Exception("Width must be a power of 2 (current size : " + toString(height) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Height must be a power of 2 (current value : " + toString(height) + ").", __FILE__, __LINE__, Exception::ModuleException);
 		if(height<4)
-			throw Exception("Width must be at least 4 (current size : " + toString(height) + ").", __FILE__, __LINE__, Exception::ClientScriptException);
+			throw Exception("Height must be at least 4 (current value : " + toString(height) + ").", __FILE__, __LINE__, Exception::ModuleException);
+
+		if((flags & NoInput)!=0 && pre.empty())
+			throw Exception("A PRE-function must be provided when using the flag NoInput.", __FILE__, __LINE__, Exception::ModuleException);
 
 		HdlTextureFormat format(width, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		HdlTextureFormat halfWidthFormat(width/2, height, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		HdlTextureFormat halfHeightFormat(width, height/2, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_NEAREST);
 		PipelineLayout pipelineLayout("FFT2D" + toString(width) + "x" + toString(height) + "Pipeline");
-		pipelineLayout.addInput("inputTexture");
+
+		if((flags & NoInput)==0)
+			pipelineLayout.addInput("inputTexture");
+
 		pipelineLayout.addOutput("outputTexture");
 
 		std::string 	previousName = "",
@@ -523,14 +798,16 @@ namespace Glip
 		// Horizontal : 
 		for(int l=width; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(width, height, l, flags, true), "<GenerateFFT2DPipeline::generate()>");
+			ShaderSource shader = generateRadix2Code(width, height, l, flags, true, pre);
 			std::string name = "FilterH"+ toString(l);
 			FilterLayout filterLayout(name, halfWidthFormat, shader);
 			pipelineLayout.add(filterLayout,name);
 
 			if(previousName.empty())
 			{
-				pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+				if((flags & NoInput)==0)
+					pipelineLayout.connectToInput("inputTexture", name, "inputTexture");
+
 				firstFilterName = name;
 			}
 			else
@@ -541,7 +818,7 @@ namespace Glip
 
 		// Intermediate shuffle : 
 		const std::string intermediateShuffleFilterName = "FilterIntermediateShuffle";
-		ShaderSource intermediateShader(generateLastShuffleCode(width, flags, true), "<GenerateFFT2DPipeline::generate()>");
+		ShaderSource intermediateShader = generateLastShuffleCode(width, height, flags, true, post);
 		FilterLayout intermediateFilterLayout(intermediateShuffleFilterName, format, intermediateShader);
 		pipelineLayout.add(intermediateFilterLayout,intermediateShuffleFilterName);
 		pipelineLayout.connect(previousName, "outputTexture", intermediateShuffleFilterName, "inputTexture");
@@ -550,7 +827,7 @@ namespace Glip
 		// Vertical : 
 		for(int l=height; l>1; l/=2)
 		{
-			ShaderSource shader(generateRadix2Code(height, width, l, flags, false), "<GenerateFFT2DPipeline::generate()>");
+			ShaderSource shader = generateRadix2Code(height, width, l, flags, false, pre);
 			std::string name = "FilterV"+ toString(l);
 			FilterLayout filterLayout(name, halfHeightFormat, shader);
 			pipelineLayout.add(filterLayout,name);
@@ -561,7 +838,7 @@ namespace Glip
 
 		// Last : 
 		const std::string finalShuffleFilterName = "FilterFinalShuffle";
-		ShaderSource finalShader(generateLastShuffleCode(height, flags, false), "<GenerateFFT2DPipeline::generate()>");
+		ShaderSource finalShader = generateLastShuffleCode(height, width, flags, false, post);
 		FilterLayout finalFilterLayout(finalShuffleFilterName, format, finalShader);
 		pipelineLayout.add(finalFilterLayout, finalShuffleFilterName);
 		pipelineLayout.connect(previousName, "outputTexture", finalShuffleFilterName, "inputTexture");
@@ -574,11 +851,9 @@ namespace Glip
 	
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT2DPipeline )
 	{
-		UNUSED_PARAMETER(body)
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(dynamicPaths)
 		UNUSED_PARAMETER(formatList)
-		UNUSED_PARAMETER(sharedCodeList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(geometryList)
 		UNUSED_PARAMETER(filterList)
@@ -587,7 +862,6 @@ namespace Glip
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(startLine)
-		UNUSED_PARAMETER(bodyLine)
 		UNUSED_PARAMETER(executionCode)		
 
 		PIPELINE_MUST_NOT_EXIST( arguments[2] )
@@ -600,6 +874,64 @@ namespace Glip
 		{
 			FFTModules::Flag f = FFTModules::getFlag(arguments[k]);
 			flags = flags | static_cast<int>(f);
+		}
+
+		// Read PRE and POST functions : 
+		ShaderSource pre(""), post("");
+
+		if(!body.empty())
+		{
+			VanillaParser parser(body, sourceName, bodyLine);
+			bool 	preAlreadySet = false,
+				postAlreadySet = false;
+
+			for(std::vector<Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+			{
+				if(it->strKeyword=="PRE")
+				{
+					if(preAlreadySet)
+						throw Exception("PRE code already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
+				
+					if(it->arguments.size()==1 && it->noBody)
+					{
+						SHAREDCODE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						pre = its->second;
+					}
+					else if(it->noArgument && !it->body.empty())
+					{
+						ShaderSource src(it->body, it->sourceName, it->bodyLine);
+						pre = src;
+					}
+					else 
+						throw Exception("The PRE code can have either one argument or one body.", it->sourceName, it->startLine, Exception::ClientScriptException);
+
+					preAlreadySet = true;
+				}
+				else if(it->strKeyword=="POST")
+				{
+					if(postAlreadySet)
+						throw Exception("POST code already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
+				
+					if(it->arguments.size()==1 && it->noBody)
+					{
+						SHAREDCODE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						post = its->second;
+					}
+					else if(it->noArgument && !it->body.empty())
+					{
+						ShaderSource src(it->body, it->sourceName, it->bodyLine);
+						post = src;
+					}
+					else 
+						throw Exception("The PRE code can have either one argument or one body.", it->sourceName, it->startLine, Exception::ClientScriptException);
+
+					preAlreadySet = true;
+				}				
+				else
+					throw Exception("Unknown keyword \"" + it->strKeyword + "\". Expected PRE or POST.", it->sourceName, it->startLine, Exception::ClientScriptException);
+			}
 		}
 
 		APPEND_NEW_PIPELINE(arguments[2], generate(width, height, flags))
