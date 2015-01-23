@@ -934,6 +934,6 @@ namespace Glip
 			}
 		}
 
-		APPEND_NEW_PIPELINE(arguments[2], generate(width, height, flags))
+		APPEND_NEW_PIPELINE(arguments[2], generate(width, height, flags, pre, post))
 	}
 

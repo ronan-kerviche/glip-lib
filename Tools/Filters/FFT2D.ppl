@@ -1,17 +1,31 @@
 REQUIRED_FORMAT:realPartComputationFormat(inputFormat0, *, *, GL_RGB, *, GL_LINEAR, GL_LINEAR)
-TEXTURE_FORMAT:computationFormat(256, 256, GL_RGBA32F, GL_FLOAT)
+TEXTURE_FORMAT:computationFormat(512, 512, GL_RGBA32F, GL_FLOAT)
 
-CALL:GENERATE_FFT2D_PIPELINE(256, 256, FFTPipeline, SHIFTED)
+CALL:GENERATE_FFT2D_PIPELINE(512, 512, FFTPipeline, SHIFTED)
 {
 	PRE
 	{
+		uniform vec4 selection = vec4(1.0, 0.0, 0.0, 0.0);
+
 		vec4 pre(in vec4 c, in vec2 x)
 		{
-			return c * vec4(1.0, 0.0, 0.0, 0.0);
+			c.r = dot(c, selection)/(selection.r + selection.g + selection.b);
+			c.gba = vec3(0.0, 0.0, 0.0);
+			return c;
 		}
 	}
 }
-CALL:GENERATE_FFT2D_PIPELINE(256, 256, IFFTPipeline, INVERSED, SHIFTED)
+CALL:GENERATE_FFT2D_PIPELINE(512, 512, IFFTPipeline, INVERSED, SHIFTED)
+{
+	POST
+	{
+		vec4 post(in vec4 c, in vec2 x)
+		{
+			c.gb = c.rr;
+			return c;
+		}
+	}
+}
 
 SHADER_SOURCE:WindowShader
 {
