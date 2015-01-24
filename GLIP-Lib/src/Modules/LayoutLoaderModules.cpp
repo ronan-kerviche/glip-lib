@@ -157,6 +157,9 @@
 			loader.addModule( new FORMAT_MAXIMUM_PIXELS );
 			loader.addModule( new FORMAT_MINIMUM_ELEMENTS );
 			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
+			loader.addModule( new FORMAT_SMALLER_POWER_OF_TWO );
+			loader.addModule( new FORMAT_LARGER_POWER_OF_TWO );
+			loader.addModule( new FORMAT_SWITCH_DIMENSIONS );
 			loader.addModule( new IF_FORMAT_SETTING_MATCH );
 			loader.addModule( new IF_FORMAT_SETTING_LARGERTHAN );
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
@@ -166,6 +169,24 @@
 			loader.addModule( new ABORT_ERROR );
 			loader.addModule( new GenerateFFT1DPipeline );
 			loader.addModule( new GenerateFFT2DPipeline );
+		}
+
+		/**
+		\fn bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)
+		\brief Convert a keyword to a boolean.
+		\param arg The keyword (expected to be either TRUE or FALSE).
+		\param sourceName Name of the source.
+		\param bodyLine Corresponding line number in the source.
+		\return True or false depending on the content of arg or raise an exception if the value is not any of these two symbols.
+		**/
+		bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)
+		{
+			if(arg==LayoutLoader::getKeyword(KW_LL_FALSE))
+				return false;
+			else if(arg==LayoutLoader::getKeyword(KW_LL_TRUE))
+				return true;
+			else
+				throw Exception("Unknown boolean keyword \"" + arg + "\". Expected " + LayoutLoader::getKeyword(KW_LL_TRUE) + " or " + LayoutLoader::getKeyword(KW_LL_FALSE) + ".", sourceName, line, Exception::ClientScriptException);
 		}
 
 		/**
@@ -1075,6 +1096,124 @@
 				HdlTextureFormat newFmt = it->second;
 
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SMALLER_POWER_OF_TWO, 2, 3, -1, true,"Generate a new format clamped to the closest smaller power of 2.\n"
+												"Arguments : nameFormat, nameNew [, strict].\n"
+												"            strict can be either TRUE or FALSE (dafault).")
+			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionCode)
+
+				FORMAT_MUST_EXIST( arguments[0] );
+				FORMAT_MUST_NOT_EXIST( arguments[1] );
+
+				bool strict = false;
+				if(arguments.size()==3)
+					strict = getBoolean(arguments[2]);
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				
+				HdlTextureFormat newFmt = it->second;
+	
+				if(!strict)
+				{
+					newFmt.setWidth( std::floor(std::log2(newFmt.getWidth())) );
+					newFmt.setWidth( std::floor(std::log2(newFmt.getHeight())) );
+				}
+				else
+				{
+					newFmt.setWidth( std::floor(std::log2(newFmt.getWidth()-1.0)) );
+					newFmt.setWidth( std::floor(std::log2(newFmt.getHeight()-1.0)) );
+				}
+
+				APPEND_NEW_FORMAT( arguments[1], newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_LARGER_POWER_OF_TWO, 2, 3, -1, true, "Generate a new format clamped to the closest larger power of 2.\n"
+												"Arguments : nameFormat, nameNew [, strict].\n"
+												"            strict can be either TRUE or FALSE (dafault).")
+			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionCode)
+
+				FORMAT_MUST_EXIST( arguments[0] );
+				FORMAT_MUST_NOT_EXIST( arguments[1] );
+
+				bool strict = false;
+				if(arguments.size()==3)
+					strict = getBoolean(arguments[2]);
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				
+				HdlTextureFormat newFmt = it->second;
+	
+				if(!strict)
+				{
+					newFmt.setWidth( std::ceil(std::log2(newFmt.getWidth())) );
+					newFmt.setWidth( std::ceil(std::log2(newFmt.getHeight())) );
+				}
+				else
+				{
+					newFmt.setWidth( std::ceil(std::log2(newFmt.getWidth()+1.0)) );
+					newFmt.setWidth( std::ceil(std::log2(newFmt.getHeight()+1.0)) );
+				}
+
+				APPEND_NEW_FORMAT( arguments[1], newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SWITCH_DIMENSIONS, 2, 2, -1, true,	"Switch the width and height values, save as a new format.\n"
+												"Arguments : nameFormat, nameNew.")
+			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionCode)
+
+				FORMAT_MUST_EXIST( arguments[0] );
+				FORMAT_MUST_NOT_EXIST( arguments[1] );
+			
+				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+
+				HdlTextureFormat newFmt = it->second;
+				newFmt.setWidth( it->second.getHeight() );
+				newFmt.setHeight( it->second.getWidth() );
+
+				APPEND_NEW_FORMAT( arguments[1], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1, true, 	"Match if a format setting is equal to a value (integer or GL keyword).\n"

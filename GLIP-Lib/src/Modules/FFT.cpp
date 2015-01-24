@@ -77,13 +77,14 @@ namespace Glip
 	GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
 	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
 					"Generate the 1D FFT Pipeline transformation.\n"
-					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
-					"Body : PRE block, contains a filtering function to be applied before the FFT.\n"
-					"                  vec4 pre(in vec4 colorFromTexture, in float x)\n"
-					"       POST block, contains a filtering function to be applied after the FFT.\n"
-					"                  vec4 post(in vec4 colorAfterFFT, in float x)\n"
-					"       Both of these block can declare their own uniform variables.\n"
-					"Arguments : width, name [, option, ...].",
+					"Arguments : width, name [, option, ...].\n"
+					"            Width and height can be either numerals or the name of an existing format.\n"
+					"            Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"            Body : PRE block, contains a filtering function to be applied before the FFT.\n"
+					"                       vec4 pre(in vec4 colorFromTexture, in float x)\n"
+					"            POST block, contains a filtering function to be applied after the FFT.\n"
+					"                       vec4 post(in vec4 colorAfterFFT, in float x)\n"
+					"            Both of these block can declare their own uniform variables.",
 					2,
 					7, //2 base + 5 arguments
 					0)
@@ -400,7 +401,16 @@ namespace Glip
 		UNUSED_PARAMETER(executionCode)		
 
 		PIPELINE_MUST_NOT_EXIST( arguments[1] )
-		CAST_ARGUMENT(0, int, width)
+
+		int width = 0;
+		CONST_ITERATOR_TO_FORMAT( itFormat, arguments.front() )
+		if(VALID_ITERATOR_TO_FORMAT( itFormat ))
+			width = itFormat->second.getWidth();
+		else
+		{
+			CAST_ARGUMENT(0, int, _width)
+			width = _width;
+		}
 
 		// Read the flags : 
 		int flags = 0;
@@ -481,13 +491,14 @@ namespace Glip
 	GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
 	 :	LayoutLoaderModule(	"GENERATE_FFT2D_PIPELINE", 
 					"Generate the 2D FFT Pipeline transformation.\n"
-					"Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
-					"Body : PRE block, contains a filtering function to be applied before the FFT.\n"
-					"                  vec4 pre(in vec4 colorFromTexture, in vec2 x)\n"
-					"       POST block, contains a filtering function to be applied after the FFT.\n"
-					"                  vec4 post(in vec4 colorAfterFFT, in vec2 x)\n"
-					"       Both of these block can declare their own uniform variables.\n"
-					"Arguments : width, height, name [, option, ...].",
+					"Arguments : width, height, name [, option, ...].\n"
+					"            Width and height can be either numerals or the name of an existing format.\n"
+					"            Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
+					"            Body : PRE block, contains a filtering function to be applied before the FFT.\n"
+					"                        vec4 pre(in vec4 colorFromTexture, in vec2 x)\n"
+					"                   POST block, contains a filtering function to be applied after the FFT.\n"
+					"                        vec4 post(in vec4 colorAfterFFT, in vec2 x)\n"
+					"            Both of these block can declare their own uniform variables.",
 					2,
 					8, //3 base + 5 arguments
 					0)
@@ -496,6 +507,7 @@ namespace Glip
 	ShaderSource GenerateFFT2DPipeline::generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal, const ShaderSource& pre)
 	{
 		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
+		// Horizontal must be first.
 
 		int lineCounter = 1;
 		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
@@ -580,8 +592,28 @@ namespace Glip
 			}
 			else
 			{
+				// Second pass, read from first horizontal pass compressed format :
+				if((flags & Shifted)!=0 && (flags & Inversed)==0)
+				{
+					str += "    pos.y = int(mod(pos.y + w/2, w)); \n";							PUSH_LINE_INFO
+				}
+
+				str += "    int a = 0; \n";											PUSH_LINE_INFO
+				str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.y/k),2))*(w/(2*k)); \n"; 			PUSH_LINE_INFO
+				str += "    pos.y = int(mod(a, w/2));  \n";									PUSH_LINE_INFO
+
+				// Read : 
 				str += "    vec4 A = texelFetch(inputTexture, ivec2(pos.y,pos.x), 0); \n";					PUSH_LINE_INFO
 				str += "    vec4 B = texelFetch(inputTexture, ivec2(pos.y,posB), 0); \n";					PUSH_LINE_INFO
+
+				// read from first horizontal pass, second part : 
+				str += "    if(pos.y<a) { A.rg = A.ba; B.rg = B.ba; } \n";							PUSH_LINE_INFO
+
+				if((flags & Inversed)!=0)
+				{
+					str += "    A.rg = A.rg * vec2(1.0, -1.0)/h; \n";							PUSH_LINE_INFO
+					str += "    B.rg = B.rg * vec2(1.0, -1.0)/h; \n";							PUSH_LINE_INFO
+				}
 			}
 		}		
 		else
@@ -644,6 +676,7 @@ namespace Glip
 	ShaderSource GenerateFFT2DPipeline::generateLastShuffleCode(int width, int oppositeWidth, int flags, bool horizontal, const ShaderSource& post)
 	{
 		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
+		// Horizontal must be first.
 
 		std::string str;
 		std::map<int,ShaderSource::LineInfo> linesInfo;
@@ -689,7 +722,7 @@ namespace Glip
 			str += "    pos.x = int(mod(pos.x + w/2, w)); \n";									PUSH_LINE_INFO
 		}
 
-		str += "    int a = 0; \n";
+		str += "    int a = 0; \n";													PUSH_LINE_INFO
 		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; /* Bit reversal */			PUSH_LINE_INFO
 		str += "    int p = int(mod(a, w/2));  \n";											PUSH_LINE_INFO
 
@@ -816,13 +849,13 @@ namespace Glip
 			previousName = name;
 		}
 
-		// Intermediate shuffle : 
-		const std::string intermediateShuffleFilterName = "FilterIntermediateShuffle";
+		// Intermediate shuffle (not needed anymore) : 
+		/*const std::string intermediateShuffleFilterName = "FilterIntermediateShuffle";
 		ShaderSource intermediateShader = generateLastShuffleCode(width, height, flags, true, post);
 		FilterLayout intermediateFilterLayout(intermediateShuffleFilterName, format, intermediateShader);
 		pipelineLayout.add(intermediateFilterLayout,intermediateShuffleFilterName);
 		pipelineLayout.connect(previousName, "outputTexture", intermediateShuffleFilterName, "inputTexture");
-		previousName = intermediateShuffleFilterName;
+		previousName = intermediateShuffleFilterName;*/
 
 		// Vertical : 
 		for(int l=height; l>1; l/=2)
@@ -865,8 +898,29 @@ namespace Glip
 		UNUSED_PARAMETER(executionCode)		
 
 		PIPELINE_MUST_NOT_EXIST( arguments[2] )
-		CAST_ARGUMENT(0, int, width)
-		CAST_ARGUMENT(1, int, height)
+		//CAST_ARGUMENT(0, int, width)
+		//CAST_ARGUMENT(1, int, height)
+
+		int 	width = 0,
+			height = 0;
+
+		CONST_ITERATOR_TO_FORMAT( itFormatWidth, arguments[0] )
+		if(VALID_ITERATOR_TO_FORMAT( itFormatWidth ))
+			width = itFormatWidth->second.getWidth();
+		else
+		{
+			CAST_ARGUMENT(0, int, _width)
+			width = _width;
+		}
+
+		CONST_ITERATOR_TO_FORMAT( itFormatHeight, arguments[1] )
+		if(VALID_ITERATOR_TO_FORMAT( itFormatHeight ))
+			height = itFormatHeight->second.getHeight();
+		else
+		{
+			CAST_ARGUMENT(0, int, _height)
+			height = _height;
+		}
 
 		// Read the flags : 
 		int flags = 0;

@@ -61,8 +61,35 @@ namespace Glip
 		\class GenerateFFT1DPipeline
 		\brief Generate a 1D FFT PipelineLayout.
 
-		<b>Warning</b> : This module might return erroneous result given that the driver will perform blind optimization.
-		Thus results might be of lower accuracy.
+		<b>Warning</b> : This module might return low accuracy or even erroneous result if the driver performs a blind optimization.
+
+		The FFT is computed in single precision. The pipeline will have the input port <i>inputTexture</i> and the output port <i>outputTexture</i>. The input texture will have the real part in its red channel and the imaginary part in its green channel. 
+
+		Here is an example of PRE and POST functions given when creating the pipeline via a LayoutLoader script. Note that you can provide the content of the blocks PRE and POST directly to the GenerateFFT1DPipeline::generate function.
+		\code
+		CALL:GENERATE_FFT1D_PIPELINE(512, FFTPipelineLayout)
+		{
+			PRE
+			{
+				uniform vec4 selection = vec4(1.0, 0.0, 0.0, 0.0);
+
+				vec4 pre(in vec4 c, in int x) // c will contain the color of the texture, sampled at the right position, x is the position (normalized in the [0, 1] range).
+				{
+					c.r = dot(c, selection)/(selection.r + selection.g + selection.b); // Select which channel (or combination to use as the real data.
+					c.gba = vec3(0.0, 0.0, 0.0); // Do not set any imaginary data (green channel). Both blue and alpha channels are omitted.
+					return c;
+				}
+			}
+			POST
+			{
+				vec4 post(in vec4 c, in int x) // c will contain the color of the texture, sampled at the right position, x is the position (normalized in the [0, 1] range).
+				{
+					c.g = c.r; // copy the real value of the FFT transform (red channel) to the imaginary value (green channel).
+					return c;
+				}
+			}
+		}
+		\endcode
 		**/
 		class GLIP_API GenerateFFT1DPipeline : public LayoutLoaderModule
 		{
@@ -82,8 +109,35 @@ namespace Glip
 		\class GenerateFFT2DPipeline
 		\brief Generate a 2D FFT PipelineLayout.
 
-		<b>Warning</b> : This module might return erroneous result given that the driver will perform blind optimization.
-		Thus results might be of lower accuracy.
+		<b>Warning</b> : This module might return low accuracy or even erroneous result if the driver performs a blind optimization.
+
+		The FFT is computed in single precision. The pipeline will have the input port <i>inputTexture</i> and the output port <i>outputTexture</i>. The input texture will have the real part in its red channel and the imaginary part in its green channel. 
+
+		Here is an example of PRE and POST functions given when creating the pipeline via a LayoutLoader script. Note that you can provide the content of the blocks PRE and POST directly to the GenerateFFT1DPipeline::generate function.
+		\code
+		CALL:GENERATE_FFT2D_PIPELINE(512, 512, FFTPipelineLayout)
+		{
+			PRE
+			{
+				uniform vec4 selection = vec4(1.0, 0.0, 0.0, 0.0);
+
+				vec4 pre(in vec4 c, in vec2 x) // c will contain the color of the texture, sampled at the right position, x is the position vector (normalized in the [0, 1] range).
+				{
+					c.r = dot(c, selection)/(selection.r + selection.g + selection.b); // Select which channel (or combination to use as the real data.
+					c.gba = vec3(0.0, 0.0, 0.0); // Do not set any imaginary data (green channel). Both blue and alpha channels are omitted.
+					return c;
+				}
+			}
+			POST
+			{
+				vec4 post(in vec4 c, in vec2 x) // c will contain the color of the texture, sampled at the right position, x is the position vector (normalized in the [0, 1] range).
+				{
+					c.g = c.r; // copy the real value of the FFT transform (red channel) to the imaginary value (green channel).
+					return c;
+				}
+			}
+		}
+		\endcode
 		**/
 		class GLIP_API GenerateFFT2DPipeline : public LayoutLoaderModule
 		{

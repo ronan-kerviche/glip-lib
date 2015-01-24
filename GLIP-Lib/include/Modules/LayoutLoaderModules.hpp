@@ -87,6 +87,9 @@ FORMAT_MINIMUM_PIXELS		| Find the format having the smallest number of pixels, s
 FORMAT_MAXIMUM_PIXELS		| Find the format having the largest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
+FORMAT_SMALLER_POWER_OF_TWO	| Generate a new format clamped to the closest smaller power of 2. Arguments : nameFormat, nameNew [, strict].
+FORMAT_LARGER_POWER_OF_TWO	| Generate a new format clamped to the closest larger power of 2. Arguments : nameFormat, nameNew [, strict].
+FORMAT_SWITCH_DIMENSIONS	| Switch the width and height values, save as a new format, Arguments : nameFormat, nameNew.
 IF_FORMAT_SETTING_MATCH		| Match if a format setting is equal to a value (integer). Arguments : nameFormat, nameSetting, value.
 IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value (integer or GL keyword). Arguments : nameFormat, nameSetting, value.
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
@@ -228,6 +231,7 @@ Example, creating a simple Module :
 
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
+				static bool getBoolean(const std::string& arg, const std::string& sourceName="", int line=1);
 				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName="", int bodyLine=1);
 		};
 
@@ -329,6 +333,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		__ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		Get a constant iterator on the Shared Code named elementName. **/
 			#define CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_SHAREDCODE( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_SHAREDCODE( iteratorName )			( iteratorName != sharedCodeList.end() )
 			/** SHAREDCODE_MUST_EXIST( elementName )				Check that the Shared Code named elementName must exist (raise an exception otherwise). **/
 			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
 			/** SHAREDCODE_MUST_NOT_EXIST( elementName )				Check that the Shared Code named elementName must not exist (raise an exception otherwise). **/
@@ -340,6 +346,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_FORMAT( iteratorName, elementName )			__ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		Get a constant iterator on the Format named elementName. **/
 			#define CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		__CONST_ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_FORMAT( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_FORMAT( iteratorName )			( iteratorName != formatList.end() )
 			/** FORMAT_MUST_EXIST( elementName )					Check that the Format named elementName must exist (raise an exception otherwise). **/
 			#define FORMAT_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, formatList, elementName) }
 			/** FORMAT_MUST_NOT_EXIST( elementName )				Check that the Format named elementName must not exist (raise an exception otherwise). **/
@@ -351,6 +359,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )		__ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )		Get a constant iterator on the Shader Source named elementName. **/
 			#define CONST_ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_SHADERSOURCE( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_SHADERSOURCE( iteratorName )			( iteratorName != sourceList.end() )
 			/** SHADERSOURCE_MUST_EXIST( elementName )				Check that the Shader Source named elementName must exist (raise an exception otherwise). **/
 			#define SHADERSOURCE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sourceList, elementName) }
 			/** SHADERSOURCE_MUST_NOT_EXIST( elementName )				Check that the Shader Source named elementName must not exist (raise an exception otherwise). **/
@@ -362,6 +372,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		Get a constant iterator on the Geometry named elementName. **/
 			#define CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__CONST_ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_GEOMETRY( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_GEOMETRY( iteratorName )			( iteratorName != geometryList.end() )
 			/** GEOMETRY_MUST_EXIST( elementName )					Check that the Geometry named elementName must exist (raise an exception otherwise). **/
 			#define GEOMETRY_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, geometryList, elementName) }
 			/** GEOMETRY_MUST_NOT_EXIST( elementName )				Check that the Geometry named elementName must not exist (raise an exception otherwise). **/
@@ -373,6 +385,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_FILTER( iteratorName, elementName )			__ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_FILTER( iteratorName, elementName )		Get a constant iterator on the Filter named elementName. **/
 			#define CONST_ITERATOR_TO_FILTER( iteratorName, elementName )		__CONST_ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_FILTER( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_FILTER( iteratorName )			( iteratorName != filterList.end() )
 			/** FILTER_MUST_EXIST( elementName )					Check that the Filter named elementName must exist (raise an exception otherwise). **/
 			#define FILTER_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, filterList, elementName) }
 			/** FILTER_MUST_NOT_EXIST( elementName )				Check that the Filter named elementName must not exist (raise an exception otherwise). **/
@@ -384,6 +398,8 @@ Example, creating a simple Module :
 			#define ITERATOR_TO_PIPELINE( iteratorName, elementName )		__ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_PIPELINE( iteratorName, elementName )		Get a constant iterator on the Pipeline named elementName. **/
 			#define CONST_ITERATOR_TO_PIPELINE( iteratorName, elementName )		__CONST_ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_PIPELINE( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_PIPELINE( iteratorName )			( iteratorName != pipelineList.end() )
 			/** PIPELINE_MUST_EXIST( elementName )					Check that the Pipeline named elementName must exist (raise an exception otherwise). **/
 			#define PIPELINE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, pipelineList, elementName) }
 			/** PIPELINE_MUST_NOT_EXIST( elementName )				Check that the Pipeline named elementName must not exist (raise an exception otherwise). **/
@@ -393,6 +409,8 @@ Example, creating a simple Module :
 			
 			/** CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	Get a constant iterator on the Required Format named elementName. **/
 			#define CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	__CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_REQUIREDFORMAT( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_REQUIREDFORMAT( iteratorName )		( iteratorName != requiredFormatList.end() )
 			/** REQUIREDFORMAT_MUST_EXIST( elementName )				Check that the Required Format named elementName must exist (raise an exception otherwise). **/
 			#define REQUIREDFORMAT_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
 			/** REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			Check that the Required Format named elementName must not exist (raise an exception otherwise). **/
@@ -400,6 +418,8 @@ Example, creating a simple Module :
 
 			/** CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	Get a constant iterator on the Required Geometry named elementName. **/
 			#define CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	__CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )		( iteratorName != requiredGeometryList.end() )
 			/** REQUIREDGEOMETRY_MUST_EXIST( elementName )				Check that the Required Geometry named elementName must exist (raise an exception otherwise). **/
 			#define REQUIREDGEOMETRY_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
 			/** REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			Check that the Required Geometry named elementName must not exist (raise an exception otherwise). **/
@@ -407,13 +427,15 @@ Example, creating a simple Module :
 
 			/** CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	Get a constant iterator on the Required Pipeline named elementName. **/
 			#define CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	__CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )		( iteratorName != requiredPipelineList.end() )
 			/** REQUIREDPIPELINE_MUST_EXIST( elementName )				Check that the Required Pipeline named elementName must exist (raise an exception otherwise). **/
 			#define REQUIREDPIPELINE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
 			/** REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			Check that the Required Pipeline named elementName must not exist (raise an exception otherwise). **/
 			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
 			
 			/** CAST_ARGUMENT( argID, type, varName ) 				Cast the argument arguments[argID] to some type (and create the variable varName). Raise an exception if the cast fails. **/
-			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " \"" + arguments[argID] + "\" to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
+			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " (\"" + arguments[argID] + "\") to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
 
 		// Basic Modules : 
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHAREDCODE_DEFINED )
@@ -440,6 +462,9 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_PIXELS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MINIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SMALLER_POWER_OF_TWO )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_LARGER_POWER_OF_TWO )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SWITCH_DIMENSIONS )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_MATCH )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_LARGERTHAN )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
