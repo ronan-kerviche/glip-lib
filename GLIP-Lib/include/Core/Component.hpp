@@ -111,6 +111,7 @@
 			{
 				private :
 					std::string instanceName;
+
 				protected :
 					// Tools
 					Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName);

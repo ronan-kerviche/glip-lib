@@ -79,7 +79,7 @@ using namespace Glip::CoreGL;
 		buildUsage  = infoUsage;
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "HdlGeBO::HdlGeBO - New GeBO, errors : "; glErrors(true, false);
+			std::cout << "HdlGeBO::HdlGeBO - New GeBO : " << getGLErrorDescription(glGetError()) << std::endl;
 		#endif
 	}
 
@@ -204,19 +204,19 @@ using namespace Glip::CoreGL;
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlGeBO::map - Infos : " << std::endl;
 			std::cout << "    glDebug : " << std::endl;
-			glDebug();
+			debugGL();
 		#endif
 
 		HdlGeBO::unmap(target);
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Unmap - target : " << getGLEnumName(target) << " access : " << getGLEnumName(access) << " -> " ; glErrors(true, false);
+			std::cout << "    Unmap - target : " << getGLEnumName(target) << " access : " << getGLEnumName(access) << " : " << getGLErrorDescription(glGetError()) << std::endl;
 		#endif
 
 		bind(target);
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Bind : "; glErrors(true, false);
+			std::cout << "    Bind : " << getGLErrorDescription(glGetError()) << std::endl;
 			std::cout << "HdlGeBO::map - Done." << std::endl;
 		#endif
 
@@ -310,8 +310,8 @@ using namespace Glip::CoreGL;
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 				std::cout << "HdlGeBO::unmap - Infos : " << std::endl;
-				glDebug();
-				std::cout << "    "; glErrors(true, false);
+				debugGL();
+				std::cout << "    " << getGLErrorDescription(glGetError()) << std::endl;
 			#endif
 		}
 	}

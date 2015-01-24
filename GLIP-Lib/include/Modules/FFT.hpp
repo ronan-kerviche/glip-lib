@@ -98,6 +98,9 @@ namespace Glip
 				static ShaderSource generateLastShuffleCode(int width, int flags, const ShaderSource& post);
 
 			public :
+				static const std::string 	inputPortName,
+								outputPortName;
+
 				GenerateFFT1DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
@@ -146,6 +149,9 @@ namespace Glip
 				static ShaderSource generateLastShuffleCode(int width, int oppositeWidth, int flags, bool horizontal, const ShaderSource& post);
 
 			public :
+				static const std::string 	inputPortName,
+								outputPortName;
+
 				GenerateFFT2DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE

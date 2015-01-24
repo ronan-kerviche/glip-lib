@@ -24,6 +24,7 @@
 #include <algorithm>
 #include "Core/Exception.hpp"
 #include "Core/Component.hpp"
+#include "devDebugTools.hpp"
 
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
@@ -35,7 +36,7 @@
 	\param type The typename of the object.
 	**/
 	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName)
-	 : typeName(_typeName)
+	 : 	typeName(_typeName)
 	{ }
 
 	/**
@@ -46,7 +47,9 @@
 	\param _outputPorts The list of the names of the input ports.
 	**/
 	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
-	 : typeName(_typeName), inputPorts(_inputPorts), outputPorts(_outputPorts)
+	 : 	typeName(_typeName), 
+		inputPorts(_inputPorts),
+		outputPorts(_outputPorts)
 	{ }
 
 	/**
@@ -55,17 +58,12 @@
 	\param c Copy.
 	**/
 	AbstractComponentLayout::AbstractComponentLayout(const AbstractComponentLayout& c)
+	 : 	typeName(c.typeName),
+		inputPorts(c.inputPorts),
+		outputPorts(c.outputPorts)
 	{
 		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Copying ReadOnly Component Layout " << getName() << std::endl;
-		#endif
-
-		typeName	= c.typeName;
-		inputPorts	= c.inputPorts;
-		outputPorts	= c.outputPorts;
-
-		#ifdef __DEVELOPMENT_VERBOSE__
-			std::cout << "Size : " << inputPorts.size() << std::endl;
+			std::cout << "Copying AbstractComponentLayout " << getName() << std::endl;
 		#endif
 	}
 
@@ -255,7 +253,7 @@
 	\param _typeName Typename of the component.
 	**/
 	ComponentLayout::ComponentLayout(const std::string& _typeName)
-	 : AbstractComponentLayout(_typeName)
+	 : 	AbstractComponentLayout(_typeName)
 	{ }
 
 	/**
@@ -264,7 +262,7 @@
 	\param c Copy.
 	**/
 	ComponentLayout::ComponentLayout(const AbstractComponentLayout& c)
-	 : AbstractComponentLayout(c)
+	 : 	AbstractComponentLayout(c)
 	{ }
 
 	ComponentLayout::~ComponentLayout(void)
@@ -342,7 +340,8 @@
 	\param _instanceName The name of the component.
 	**/
 	Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
-	 : AbstractComponentLayout(_typeName, _inputPorts, _outputPorts), instanceName(_instanceName)
+	 : 	AbstractComponentLayout(_typeName, _inputPorts, _outputPorts), 
+		instanceName(_instanceName)
 	{ }
 
 	/**
@@ -352,7 +351,8 @@
 	\param _instanceName The name of the component.
 	**/
 	Component::Component(const AbstractComponentLayout& c, const std::string& _instanceName)
-	 : AbstractComponentLayout(c), instanceName(_instanceName)
+	 : 	AbstractComponentLayout(c), 
+		instanceName(_instanceName)
 	{ }
 
 	Component::~Component(void)

@@ -176,7 +176,7 @@
 		\brief Convert a keyword to a boolean.
 		\param arg The keyword (expected to be either TRUE or FALSE).
 		\param sourceName Name of the source.
-		\param bodyLine Corresponding line number in the source.
+		\param line Corresponding line number in the source.
 		\return True or false depending on the content of arg or raise an exception if the value is not any of these two symbols.
 		**/
 		bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)

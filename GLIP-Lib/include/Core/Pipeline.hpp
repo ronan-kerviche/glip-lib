@@ -310,8 +310,7 @@ the buffers cell which represents the needed buffers for one full computation. A
 					std::vector<HdlTexture*> 		inputsList;
 					BufferFormatsCell			bufferFormats;
 					std::map<int, BuffersCell*>		cells;
-					BuffersCell*				currentCell;
-					//std::vector<HdlFBO*>			buffersList;		
+					BuffersCell*				currentCell;		
 					std::vector<Filter*>			filtersList;					
 					std::vector<ActionHub>			actionsList;
 					std::vector<OutputHub>			outputsList;

@@ -6,7 +6,7 @@ CALL:GENERATE_FFT1D_PIPELINE(fmt, FFTPipeline, SHIFTED, NO_INPUT)
 {
 	PRE
 	{
-		uniform vec4 parameters = vec4(0.1, 0.5, 0.0, 0.0);  
+		uniform vec4 parameters = vec4(0.1, 0.5, 0.0, 0.0);
 
 		vec4 pre(in vec4 c, in float x)
 		{

@@ -1089,7 +1089,7 @@
 				else if(currentElKind==PIPELINE)
 				{
 					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-							std::cout << "    Adding a new Pipeline" << std::endl;
+						std::cout << "    Adding a new Pipeline" << std::endl;
 					#endif
 					originalLayout.setElementID(k, currentIdx);
 					localToGlobalIdx.push_back(currentIdx);
@@ -1116,14 +1116,14 @@
 				bool saveConnection = true;
 				Connection c = getConnection(k);
 
-				// If the output is this pipeline :
+				// If the output is this pipeline (an input port) :
 				if(c.idOut==THIS_PIPELINE)
 					c.idOut = thisPipelineIdx;
 				else if(getElementKind(c.idOut)==PIPELINE) // or is a pipeline...
 				{
 					const int elIdx = localToGlobalIdx[c.idOut];
 
-					// We have identify a connection for which the source is actually the output of a pipeline.
+					// We have identified a connection for which the source is actually the output of a pipeline.
 					// This means that this connection is either already identified in innerOutputConnections
 					// (and thus removed from localConections) or that we have to find first.
 
@@ -1190,6 +1190,27 @@
 					connections.push_back(c);
 			}
 
+			// Sanitize the localConnections : 
+			if(thisPipelineIdx==THIS_PIPELINE)
+			{
+				// This is made only at the tope level.
+				// The main goal is to find remaining connections which are connected to the output port of a sub-pipeline
+				// but have prolongation. They must be forgotten (the data will not be used).
+
+				for(std::vector<Connection>::iterator it = localConnections.begin(); it!=localConnections.end(); )
+				{
+					// If the connection input is not a registered filter, then remove (C++03) : 
+					if(filtersGlobalID.find(it->idIn)==filtersGlobalID.end())
+					{
+						std::vector<Connection>::iterator e = it;
+						it++;
+						localConnections.erase(e);
+					}
+					else
+						it++;
+				}
+			}
+
 			// Finally, append to the connections list :
 			connections.insert(connections.end(), localConnections.begin(), localConnections.end());
 		}
@@ -1215,6 +1236,42 @@
 	{
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "ALLOCATE" << std::endl;
+
+			std::cout << "    Connections list : " << std::endl;
+			for(std::vector<Connection>::const_iterator it=connections.begin(); it!=connections.end(); it++)
+			{
+				std::cout << "        From " << it->idOut << "::" << it->portOut << " to " << it->idIn << "::" << it->portIn << std::endl;
+
+				std::string 	outElement, 
+						outPort,
+						inElement,
+						inPort;
+
+				if(it->idOut==THIS_PIPELINE) // An input port of this pipeline
+				{
+					outElement = "<THIS:" + getName() + ">";
+					outPort = Component::getInputPortName(it->portOut);
+				}
+				else
+				{
+					outElement = filtersList[filtersGlobalIDsList[it->idOut]]->getName();
+					outPort = filtersList[filtersGlobalIDsList[it->idOut]]->getOutputPortName(it->portOut);
+				}
+
+				if(it->idIn==THIS_PIPELINE) // An output port of this pipeline
+				{
+					inElement = "<THIS:" + getName() + ">";
+					inPort = Component::getOutputPortName(it->portIn);
+				}
+				else
+				{
+					inElement = filtersList[filtersGlobalIDsList[it->idIn]]->getName();
+					inPort = filtersList[filtersGlobalIDsList[it->idIn]]->getInputPortName(it->portIn);
+				}
+
+				std::cout << "            > " << outElement << "::" << outPort << " to " << inElement << "::" << inPort << std::endl;
+			}
+			std::cout << "    End connections list." << std::endl;
 		#endif
 
 		try
@@ -1277,7 +1334,6 @@
 				std::vector<int> candidatesIdx;
 				for(unsigned int k=0; k<requestedInputConnections.size(); k++)
 				{
-					//std::cout << k << " -> " << requestedInputConnections[k] << std::endl;
 					if(requestedInputConnections[k]==0)
 					{
 						candidatesIdx.push_back(k);

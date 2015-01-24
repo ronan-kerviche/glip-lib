@@ -33,6 +33,8 @@ if(WIN32) # Windows specifics
 else() # Linux specifics
 	#For Cleaning purpose :
 	set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall -Wextra")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 endif()
 
 set(LIBRARY_OUTPUT_PATH lib/)
