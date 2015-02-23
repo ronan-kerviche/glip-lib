@@ -24,70 +24,49 @@ using namespace QGED;
 
 // Highlighter
 	Highlighter::Highlighter(QTextDocument *parent)
-	 : QSyntaxHighlighter(parent), highlightEnabled(true)
+	 : 	QSyntaxHighlighter(parent), 
+		highlightEnabled(true)
 	{
 		HighlightingRule rule;
 
 		// GLSL Keywords :
-			QStringList glslkeywordPatterns;
-
 			for(int i=0; i<GLSLLanguage::KW_END; i++)
 			{
-				std::string str = std::string("\\b") + GLSLLanguage::GLSLKeywords[i] + "\\b";
-				glslkeywordPatterns << str.c_str();
-			}
-
-			foreach(const QString& pattern, glslkeywordPatterns)
-			{
-				rule.pattern = QRegExp(pattern);
-				rule.format = &glslkeywordFormat;
+				rule.pattern = QRegExp(tr("\\b%1\\b").arg(GLSLLanguage::GLSLKeywords[i]));
+				rule.format = &glslKeywordFormat;
 				highlightingRules.append(rule);
 			}
 
-		// GLSL Functions : 
-			QStringList glslfunctionPatterns;
-
+		// GLSL Functions : 	
 			for(int i=0; i<GLSLLanguage::FN_END; i++)
 			{
-				std::string str = std::string("\\b") + GLSLLanguage::GLSLFunctions[i] + "\\b";
-				glslfunctionPatterns << str.c_str();
-			}
-
-			foreach(const QString& pattern, glslfunctionPatterns)
-			{
-				rule.pattern = QRegExp(pattern);
-				rule.format = &glslfunctionFormat;
+				rule.pattern = QRegExp(tr("\\b%1\\b").arg(GLSLLanguage::GLSLFunctions[i]));
+				rule.format = &glslFunctionFormat;
 				highlightingRules.append(rule);
 			}
 
-		// GLIP LayoutLoader Keywords : 
-			QStringList glipllkeywordPatterns;
-
-			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
+		// GLSL Defines :
+			for(int i=0; i<GLSLLanguage::MC_END; i++)
 			{
-				std::string str = std::string("\\b") + LayoutLoader::getKeyword(static_cast<Glip::Modules::LayoutLoaderKeyword>(i)) + "\\b";
-				glipllkeywordPatterns << str.c_str();
+				QString pattern = tr("%1\\b").arg(GLSLLanguage::GLSLMacros[i]);
+				pattern.replace("#", "#\\b"); // Need to make the sharp sign outside of the word boundary '\b'
+				rule.pattern = QRegExp(pattern);
+				rule.format = &glslMacroFormat;
+				highlightingRules.append(rule);
 			}
 
-			foreach(const QString& pattern, glipllkeywordPatterns)
+		// GLIP LayoutLoader Keywords : 	
+			for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
 			{
-				rule.pattern = QRegExp(pattern);
+				rule.pattern = QRegExp(tr("\\b%1\\b").arg(LayoutLoader::getKeyword(static_cast<Glip::Modules::LayoutLoaderKeyword>(i))));
 				rule.format = &glipLayoutLoaderKeywordFormat;
 				highlightingRules.append(rule);
 			}
 
 		// GLIP Uniform Loader Keywords : 
-			QStringList glipulkeywordPatterns;
-
 			for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
 			{
-				std::string str = std::string("\\b") + UniformsLoader::getKeyword(static_cast<UniformsLoaderKeyword>(i)) + "\\b";
-				glipulkeywordPatterns << str.c_str();
-			}
-
-			foreach(const QString& pattern, glipulkeywordPatterns)
-			{
-				rule.pattern = QRegExp(pattern);
+				rule.pattern = QRegExp(tr("\\b%1\\b").arg(UniformsLoader::getKeyword(static_cast<UniformsLoaderKeyword>(i))));
 				rule.format = &glipUniformLoaderKeywordFormat;
 				highlightingRules.append(rule);
 			}
@@ -172,16 +151,18 @@ using namespace QGED;
 	void Highlighter::updateSettings(const CodeEditorSettings& settings)
 	{
 		// Color : 
-		glslkeywordFormat.setForeground(		settings.getGLSLKeywordColor() );
-		glslfunctionFormat.setForeground(		settings.getGLSLFunctionColor() );
+		glslKeywordFormat.setForeground(		settings.getGLSLKeywordColor() );
+		glslFunctionFormat.setForeground(		settings.getGLSLFunctionColor() );
+		glslMacroFormat.setForeground(			settings.getGLSLMacroColor() );
 		glipLayoutLoaderKeywordFormat.setForeground(	settings.getGLIPLayoutLoaderKeywordColor() );
 		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
 		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
 		multiLineCommentFormat.setForeground(		settings.getCommentsColor() );
 
 		// Font : 
-		glslkeywordFormat.setFont(			settings.getKeywordFont() );
-		glslfunctionFormat.setFont(			settings.getKeywordFont() );	
+		glslKeywordFormat.setFont(			settings.getKeywordFont() );
+		glslFunctionFormat.setFont(			settings.getKeywordFont() );
+		glslMacroFormat.setFont(			settings.getKeywordFont() );	
 		glipLayoutLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
 		glipUniformLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
 		singleLineCommentFormat.setFont(		settings.getKeywordFont() );
@@ -196,7 +177,8 @@ using namespace QGED;
 
 // LineNumberArea 
 	LineNumberArea::LineNumberArea(CodeEditor *editor)
-	 : QWidget(editor), codeEditor(editor)
+	 : 	QWidget(editor), 
+		codeEditor(editor)
 	{ }
 
 	void LineNumberArea::paintEvent(QPaintEvent *event)
@@ -1336,6 +1318,7 @@ using namespace QGED;
 		layout(this),
 		glslKeywordColorLabel("GLSL Keywords"),
 		glslFunctionColorLabel("GLSL Functions"),
+		glslMacroColorLabel("GLSL Macros"),
 		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
 		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
 		commentsColorLabel("Comments"),
@@ -1356,19 +1339,21 @@ using namespace QGED;
 			// Colors : 
 				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
 				layoutColors.addWidget(&glslFunctionColorLabel, 		1, 0);
-				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	2, 0);
-				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	3, 0);
-				layoutColors.addWidget(&commentsColorLabel, 			4, 0);
-				layoutColors.addWidget(&braceMatchingColorLabel,		5, 0);
-				layoutColors.addWidget(&searchColorLabel, 			6, 0);
+				layoutColors.addWidget(&glslMacroColorLabel,			2, 0);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	3, 0);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	4, 0);
+				layoutColors.addWidget(&commentsColorLabel, 			5, 0);
+				layoutColors.addWidget(&braceMatchingColorLabel,		6, 0);
+				layoutColors.addWidget(&searchColorLabel, 			7, 0);
 
 				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
 				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
-				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	2, 1);
-				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	3, 1);
-				layoutColors.addWidget(&commentsColorButton, 			4, 1);
-				layoutColors.addWidget(&braceMatchingColorButton,		5, 1);
-				layoutColors.addWidget(&searchColorButton,			6, 1);
+				layoutColors.addWidget(&glslMacroColorButton,			2, 1);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	3, 1);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	4, 1);
+				layoutColors.addWidget(&commentsColorButton, 			5, 1);
+				layoutColors.addWidget(&braceMatchingColorButton,		6, 1);
+				layoutColors.addWidget(&searchColorButton,			7, 1);
 
 				groupColors.setTitle("Highlight colors");
 				groupColors.setLayout(&layoutColors);
@@ -1376,6 +1361,7 @@ using namespace QGED;
 				// Connect : 
 				connect(&glslKeywordColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glslFunctionColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glslMacroColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
@@ -1437,6 +1423,7 @@ using namespace QGED;
 		// Colors : 
 		glslKeywordColorButton.setStyleSheet(			tr("background:%1;").arg(glslKeywordColor.name()) );
 		glslFunctionColorButton.setStyleSheet(			tr("background:%1;").arg(glslFunctionColor.name()) );
+		glslMacroColorButton.setStyleSheet(			tr("background:%1;").arg(glslMacroColor.name()) );
 		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
 		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
 		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
@@ -1465,6 +1452,7 @@ using namespace QGED;
 		// Colors :
 		glslKeywordColor		= glslKeywordColorButton.palette().color(QPalette::Window);
 		glslFunctionColor		= glslFunctionColorButton.palette().color(QPalette::Window);
+		glslMacroColor			= glslMacroColorButton.palette().color(QPalette::Window);
 		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
 		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
 		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
@@ -1497,6 +1485,8 @@ using namespace QGED;
 			title = "GLSL Keywords Color";
 		else if(target==&glslFunctionColorButton)
 			title = "GLSL Functions Color";
+		else if(target==&glslMacroColorButton)
+			title = "GLSL Macros Color";
 		else if(target==&glipLayoutLoaderKeywordColorButton)
 			title = "GLIP Layout Loader Keywords Color";
 		else if(target==&glipUniformLoaderKeywordColorButton)
@@ -1566,6 +1556,7 @@ using namespace QGED;
 		// Colors : 
 		glslKeywordColor		= QColor(255,	128,	0);
 		glslFunctionColor		= QColor(85,	255,	0);
+		glslMacroColor			= QColor(208,	32,	32);
 		glipLayoutLoaderKeywordColor	= QColor(255, 	51, 	255);
 		glipUniformLoaderKeywordColor	= QColor(51, 	255, 	255);
 		commentsColor			= QColor(51,	153,	255);
@@ -1597,6 +1588,7 @@ using namespace QGED;
 
 	const QColor& 			CodeEditorSettings::getGLSLKeywordColor(void) const			{ return glslKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLSLFunctionColor(void) const			{ return glslFunctionColor; }
+	const QColor&			CodeEditorSettings::getGLSLMacroColor(void) const			{ return glslMacroColor; }
 	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
@@ -1648,6 +1640,7 @@ using namespace QGED;
 	
 			SAVE_COLOR( glslKeywordColor )
 			SAVE_COLOR( glslFunctionColor )
+			SAVE_COLOR( glslMacroColor )
 			SAVE_COLOR( glipLayoutLoaderKeywordColor )
 			SAVE_COLOR( glipUniformLoaderKeywordColor )
 			SAVE_COLOR( commentsColor )
@@ -1737,6 +1730,7 @@ using namespace QGED;
 		{
 			READ_COLOR( glslKeywordColor )
 			READ_COLOR( glslFunctionColor )
+			READ_COLOR( glslMacroColor )
 			READ_COLOR( glipLayoutLoaderKeywordColor )
 			READ_COLOR( glipUniformLoaderKeywordColor )
 			READ_COLOR( commentsColor )

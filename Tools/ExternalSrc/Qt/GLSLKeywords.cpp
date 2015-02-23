@@ -391,3 +391,19 @@ using namespace GLSLLanguage;
 		"gl_WorkGroupSize\0"
 	};
 
+	const char* GLSLLanguage::GLSLMacros[] = 
+	{
+		"#define\0",
+		"#if\0",
+		"#ifdef\0",
+		"#ifndef\0",
+		"#else\0",
+		"#elif\0",
+		"#endif\0",
+		"#version\0",
+		"#extension\0",
+		"#line\0",
+		"#__FILE__\0",
+		"#__LINE__\0"
+	};
+

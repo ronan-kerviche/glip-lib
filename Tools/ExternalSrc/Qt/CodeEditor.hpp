@@ -97,8 +97,9 @@ namespace QGED
 				searchExpression;
 
 			bool		highlightEnabled;
-			QTextCharFormat glslkeywordFormat,
-					glslfunctionFormat,
+			QTextCharFormat glslKeywordFormat,
+					glslFunctionFormat,
+					glslMacroFormat,
 					glipLayoutLoaderKeywordFormat,
 					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
@@ -282,6 +283,7 @@ namespace QGED
 			const int		defaultFontSize;
 			QColor 			glslKeywordColor,
 						glslFunctionColor,
+						glslMacroColor,
 						glipLayoutLoaderKeywordColor,
 						glipUniformLoaderKeywordColor,
 						commentsColor,
@@ -305,6 +307,7 @@ namespace QGED
 						layoutMisc;
 			QLabel			glslKeywordColorLabel,
 						glslFunctionColorLabel,
+						glslMacroColorLabel,
 						glipLayoutLoaderKeywordColorLabel,
 						glipUniformLoaderKeywordColorLabel,
 						commentsColorLabel,
@@ -312,6 +315,7 @@ namespace QGED
 						searchColorLabel;
 			QPushButton		glslKeywordColorButton,
 						glslFunctionColorButton,
+						glslMacroColorButton,
 						glipLayoutLoaderKeywordColorButton,
 						glipUniformLoaderKeywordColorButton,
 						commentsColorButton,
@@ -344,6 +348,7 @@ namespace QGED
 
 			const QColor& getGLSLKeywordColor(void) const;
 			const QColor& getGLSLFunctionColor(void) const;
+			const QColor& getGLSLMacroColor(void) const;
 			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
 			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
 			const QColor& getCommentsColor(void) const;
