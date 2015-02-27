@@ -255,7 +255,7 @@
 
 	/**
 	\fn Exception& Exception::operator<<(const std::exception& e)
-	\brief Add the mesages of two exceptions.
+	\brief Concatenate the mesages of two exceptions.
 	\param e The original exception.
 	\return This exception message followed by the original exception message.
 	**/
@@ -272,15 +272,15 @@
 
 	/**
 	\fn Exception& Exception::operator<<(const Exception& e)
-	\brief Add the mesages of two exceptions.
+	\brief Concatenate the mesages of two exceptions.
 	\param e The original Exception.
 	\return This exception message followed by the original exception message.
 	**/
 	Exception& Exception::operator<<(const Exception& e)
 	{
 		if(!e.subExceptions.empty())
-			subExceptions.insert( subExceptions.end(), e.subExceptions.begin(), e.subExceptions.end() );
-
+			subExceptions.insert(subExceptions.end(), e.subExceptions.begin(), e.subExceptions.end());
+	
 		Exception ex(e);
 		ex.cleanSubException();
 		subExceptions.push_back(ex);
@@ -288,6 +288,44 @@
 		updateCompleteMessage();
 
 		return *this;
+	}
+
+	/**
+	\fn void Exception::append(const Exception& e)
+	\brief Concatenate the messages of two exceptions. Note that this is a reversed version of operator<<.
+	\param e A sub Exception.
+	**/
+	void Exception::append(const Exception& e)
+	{
+		Exception ex(e);
+		ex.cleanSubException();
+		subExceptions.push_back(ex);
+
+		if(!e.subExceptions.empty())
+		{
+			for(unsigned int k=e.subExceptions.size()-1; k>0; k++)
+				subExceptions.push_back(e.subExceptions[k]);
+			subExceptions.push_back(e.subExceptions.front());
+		}
+
+		updateCompleteMessage();
+	}
+
+	/**
+	\fn void Exception::prepend(const Exception& e)
+	\brief Concatenate the messages of two exceptions. Use this version to serially concatenate multiple descriptions.
+	\param e A sub Exception.
+	**/
+	void Exception::prepend(const Exception& e)
+	{	
+		if(!e.subExceptions.empty())
+			subExceptions.insert(subExceptions.begin(), e.subExceptions.begin(), e.subExceptions.end());
+		
+		Exception ex(e);
+		ex.cleanSubException();
+		subExceptions.insert(subExceptions.begin(), ex);
+
+		updateCompleteMessage();
 	}
 
 	/**

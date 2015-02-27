@@ -44,7 +44,7 @@ namespace Glip
 		namespace FFTModules
 		{
 			/**
-			\fn Flag getFlag(const std::string& str)
+			\fn Flag Glip::Modules::FFTModules::getFlag(const std::string& str)
 			\brief Get the flag corresponding to a string.
 			\param str Name of the flag.
 			\return The flag corresponding to the string or raise an Exception otherwise.
@@ -307,7 +307,7 @@ namespace Glip
 	\fn PipelineLayout GenerateFFT1DPipeline::generate(int width, int flags, const std::string& pre, const std::string& post)
 	\brief Construct a pipeline performing a 1D FFT.
 	\param width Width of the signal.
-	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\param flags Possible flags associated to the transformation (see Glip::Modules::FFTModules::Flag).
 	\param pre Add a filtering function before the transform.
 	\param post Add a filtering function after the transform.
 	\return A complete pipeline layout.
@@ -822,7 +822,7 @@ namespace Glip
 	\brief Construct a pipeline performing a 2D FFT.
 	\param width Width of the signal.
 	\param height Height of the signal.
-	\param flags Possible flags associated to the transformation (see  Glip::Modules::FFTModules::Flag).
+	\param flags Possible flags associated to the transformation (see Glip::Modules::FFTModules::Flag).
 	\param pre Add a filtering function before the transform.
 	\param post Add a filtering function after the transform.
 	\return A complete pipeline layout.

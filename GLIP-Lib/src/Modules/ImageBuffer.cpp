@@ -191,7 +191,7 @@
 
 			glPixelStorei(GL_PACK_ALIGNMENT, getAlignment());
 
-			// Read : 
+			// Read :
 			glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), table->getPtr());
 			
 			GLenum err = glGetError();

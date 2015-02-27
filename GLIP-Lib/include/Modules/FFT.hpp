@@ -38,16 +38,16 @@ namespace Glip
 	{
 		namespace FFTModules
 		{
-			///Flag describing the computation options.
-			enum Flag
+			/// Flag describing the computation options.
+			enum FFTFlag
 			{
-				///Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
+				/// Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
 				Shifted			= 0x00001,
-				///Perform the reciprocal transform, iFFT : FFT(X*)* / N.
+				/// Perform the reciprocal transform, iFFT : FFT(X*)* / N.
 				Inversed		= 0x00010,
-				///Use zero padding for input texture which are smaller than the transform size.
+				/// Use zero padding for input texture which are smaller than the transform size.
 				UseZeroPadding		= 0x00100,
-				///The computation will use of old gl_FragColor GLSL built-in variable.
+				/// The computation will use of old gl_FragColor GLSL built-in variable.
 				CompatibilityMode	= 0x01000,
 				/// Pipelines have no input (the user must provide a PRE-function).
 				NoInput			= 0x10000
@@ -60,6 +60,7 @@ namespace Glip
 		/**
 		\class GenerateFFT1DPipeline
 		\brief Generate a 1D FFT PipelineLayout.
+		\related FFTModules
 
 		<b>Warning</b> : This module might return low accuracy or even erroneous result if the driver performs a blind optimization.
 
@@ -111,12 +112,13 @@ namespace Glip
 		/**
 		\class GenerateFFT2DPipeline
 		\brief Generate a 2D FFT PipelineLayout.
+		\related FFTModules
 
 		<b>Warning</b> : This module might return low accuracy or even erroneous result if the driver performs a blind optimization.
 
 		The FFT is computed in single precision. The pipeline will have the input port <i>inputTexture</i> and the output port <i>outputTexture</i>. The input texture will have the real part in its red channel and the imaginary part in its green channel. 
 
-		Here is an example of PRE and POST functions given when creating the pipeline via a LayoutLoader script. Note that you can provide the content of the blocks PRE and POST directly to the GenerateFFT1DPipeline::generate function.
+		Here is an example of PRE and POST functions given when creating the pipeline via a LayoutLoader script. Note that you can provide the content of the blocks PRE and POST directly to the GenerateFFT2DPipeline::generate function.
 		\code
 		CALL:GENERATE_FFT2D_PIPELINE(512, 512, FFTPipelineLayout)
 		{

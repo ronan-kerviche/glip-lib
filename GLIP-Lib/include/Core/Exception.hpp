@@ -93,6 +93,8 @@
 				Exception& operator<<(const std::exception& e);
 				Exception& operator<<(const Exception& e);
 
+				void append(const Exception& e);
+				void prepend(const Exception& e);
 				int getNumSubExceptions(void) const throw();
 				const Exception& getSubException(int i);
 				bool isSubException(void) const;

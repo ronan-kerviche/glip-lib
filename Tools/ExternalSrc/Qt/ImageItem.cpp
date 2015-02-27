@@ -29,25 +29,29 @@
 	#include "LibRawInterface.hpp"
 #endif
 
-// To remove : 
-#include <QElapsedTimer>
+// Test :
+//#define __TIME_LOADING__
+#ifdef __TIME_LOADING__ 
+	#include <QElapsedTimer>
+#endif
 
 using namespace QGIC;
 
 // QImage tools : 
 	void toImageBuffer(const QImage& qimage, ImageBuffer*& imageBuffer)
 	{
-		// TEST : 
-		std::cout << "toImageBuffer" << std::endl;
-		std::cout << "  width          : " << qimage.width() << std::endl;
-		std::cout << "  bytes per line : " << qimage.bytesPerLine() << std::endl;
-		std::cout << "  size           : " << qimage.byteCount() << std::endl;
-		std::cout << "  allGray        : " << qimage.allGray() << std::endl;
-		std::cout << "  isGrayscale    : " << qimage.isGrayscale() << std::endl;
-		std::cout << "  hasAlpha       : " << qimage.hasAlphaChannel() << std::endl;
+		#ifdef __TIME_LOADING__
+			std::cout << "toImageBuffer" << std::endl;
+			std::cout << "  width          : " << qimage.width() << std::endl;
+			std::cout << "  bytes per line : " << qimage.bytesPerLine() << std::endl;
+			std::cout << "  size           : " << qimage.byteCount() << std::endl;
+			std::cout << "  allGray        : " << qimage.allGray() << std::endl;
+			std::cout << "  isGrayscale    : " << qimage.isGrayscale() << std::endl;
+			std::cout << "  hasAlpha       : " << qimage.hasAlphaChannel() << std::endl;
 
-		QElapsedTimer timer;
-		timer.start();
+			QElapsedTimer timer;
+			timer.start();
+		#endif
 
 		// Create the format : 
 		GLenum mode = GL_NONE;
@@ -84,9 +88,6 @@ using namespace QGIC;
 		// Iterators : 
 		HdlDynamicTableIterator source(*original),
 					dest(*buffer);
-
-		std::cout << "ImageBuffer row size : " << imageBuffer->getTable().getRowSize() << std::endl;
-		std::cout << "            size     : " << imageBuffer->getSize() << std::endl;
 
 		if(original->getNumSlices()==1)
 		{
@@ -131,13 +132,17 @@ using namespace QGIC;
 
 		itDst.blit(itSrc);*/
 
-		std::cout << "The loading operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		#ifdef __TIME_LOADING__
+			std::cout << "The loading operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		#endif
 	}
 
 	void toQImage(ImageBuffer& imageBuffer, QImage*& qimage)
 	{
-		QElapsedTimer timer;
-		timer.start();
+		#ifdef __TIME_LOADING__
+			QElapsedTimer timer;
+			timer.start();
+		#endif
 
 		// Get the mode :
 		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( imageBuffer.getGLMode() );
@@ -198,7 +203,9 @@ using namespace QGIC;
 
 		itDst.blit(itSrc);
 
-		std::cout << "The writing operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		#ifdef __TIME_LOADING__
+			std::cout << "The writing operation took " << timer.elapsed() << " milliseconds" << std::endl;
+		#endif
 	}
 
 // ImageItem : 
@@ -1895,6 +1902,8 @@ using namespace QGIC;
 
 	void ImageItemsCollection::itemActivated(QTreeWidgetItem* item, int column)
 	{
+		UNUSED_PARAMETER(column)
+
 		if(item==NULL)
 			return ;
 

@@ -194,11 +194,11 @@ using namespace QGED;
 // CodeEditor
 	CodeEditor::CodeEditor(QWidget *parent)
 	 : 	QPlainTextEdit(parent),
-		currentFilename(""),
 		highlightLine(false),
 		braceMatching(false),
-		lineNumberArea(NULL),
-		highLighter(NULL)
+		currentFilename(""),
+		highLighter(NULL),
+		lineNumberArea(NULL)
 	{
 		lineNumberArea = new LineNumberArea(this);
 		updateLineNumberAreaWidth(0);
@@ -309,6 +309,7 @@ using namespace QGED;
 
 	void CodeEditor::updateLineNumberAreaWidth(int newBlockCount)
 	{
+		UNUSED_PARAMETER(newBlockCount)
 		this->setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 	}
 
@@ -983,7 +984,7 @@ using namespace QGED;
 	{
 		UNUSED_PARAMETER(column)
 
-		if(item!=NULL)
+		if(item!=NULL && item->data(0, Qt::UserRole).toBool())
 		{
 			const QString source = item->data(2, Qt::UserRole).toString();
 			const int lineNumber = item->data(1, Qt::UserRole).toInt();
@@ -1021,12 +1022,16 @@ using namespace QGED;
 		const QColor	infoColor(128,128,128),
 				errorColor(255,255,255);
 
+		// Generate the compilation error report :
 		for(int k=compilationError.getNumSubExceptions(); k>=0; k--)
 		{
 			const Exception& e= (k==compilationError.getNumSubExceptions()) ? compilationError : compilationError.getSubException(k);
 
 			QTreeWidgetItem* item = new QTreeWidgetItem(&errorsList, static_cast<int>(e.getType()));
 			item->setText(0, QString::fromStdString(e.getMessage()));
+			QFont font = item->font(0); // Setting the font is not effective?
+			font.setFixedPitch(true);
+			item->setFont(0, font);
 
 			if(e.getType()==Exception::ClientShaderException || e.getType()==Exception::ClientScriptException)
 			{
@@ -1036,17 +1041,20 @@ using namespace QGED;
 				if(e.getFilename()=="THIS" || e.getFilename()==editor.getFilename().toStdString())
 				{
 					errorLines.push_back(e.getLineNumber());
+					item->setData(0, Qt::UserRole, true);
 					item->setData(1, Qt::UserRole, e.getLineNumber());
 					item->setData(2, Qt::UserRole, "THIS");
 				}
 				else
 				{
+					item->setData(0, Qt::UserRole, true);
 					item->setData(1, Qt::UserRole, e.getLineNumber());
 					item->setData(2, Qt::UserRole, QString::fromStdString(e.getFilename()));
 				}
 			}
 			else
 			{
+				item->setData(0, Qt::UserRole, false);
 				item->setText(1, "-");
 				item->setText(2, tr("GlipLib::%1").arg(QString::fromStdString(e.getShortFilename())));
 				item->setData(1, Qt::UserRole, -1);
@@ -1056,15 +1064,13 @@ using namespace QGED;
 
 			if(e.getType()==Exception::ClientShaderException || e.getType()==Exception::ClientScriptException || k==0)
 			{
-				item->setForeground(0, QBrush(errorColor));
-				item->setForeground(1, QBrush(errorColor));
-				item->setForeground(2, QBrush(errorColor));
+				for(int k=0; k<item->columnCount(); k++)
+					item->setForeground(k, QBrush(errorColor));
 			}
 			else
 			{
-				item->setForeground(0, QBrush(infoColor));
-				item->setForeground(1, QBrush(infoColor));
-				item->setForeground(2, QBrush(infoColor));
+				for(int k=0; k<item->columnCount(); k++)
+					item->setForeground(k, QBrush(infoColor));
 			}
 		}
 
@@ -1315,6 +1321,7 @@ using namespace QGED;
 // CodeEditorSettings :
 	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
 	 : 	QWidget(parent),
+		defaultFontSize( fontInfo().pointSize() ),
 		layout(this),
 		glslKeywordColorLabel("GLSL Keywords"),
 		glslFunctionColorLabel("GLSL Functions"),
@@ -1324,14 +1331,13 @@ using namespace QGED;
 		commentsColorLabel("Comments"),
 		braceMatchingColorLabel("Matching braces"),
 		searchColorLabel("Search"),
-		highlightKeywordsCheck("Highlight keywords"),
-		highlightCurrentLineCheck("Highlight current line"),
-		braceMatchingCheck("Enable brace matching"),
 		okButton("OK"),
 		applyButton("Apply"),
 		cancelButton("Cancel"),
 		resetButton("Reset"),
-		defaultFontSize( fontInfo().pointSize() )
+		highlightKeywordsCheck("Highlight keywords"),
+		highlightCurrentLineCheck("Highlight current line"),
+		braceMatchingCheck("Enable brace matching")	
 	{
 		resetSettings();
 		
@@ -1875,7 +1881,7 @@ using namespace QGED;
 
 // ElementsMenu :
 	EditorDataMenu::EditorDataMenu(ElementsMenu* _parent, CodeEditor* _editor)
-	 : 	QMenu(tr("Untitled_%1").arg(QString().sprintf("%08p", reinterpret_cast<void*>(_editor))), _parent->parentWidget()),
+	 : 	QMenu(tr("Untitled_%1").arg(QString().sprintf("%8p", reinterpret_cast<void*>(_editor))), _parent->parentWidget()),
 		deltaRescan(20000),
 		parent(_parent),
 		editor(_editor),
@@ -1920,7 +1926,7 @@ using namespace QGED;
 			{ \
 				QMenu* tmp = addMenu(tr( name " (%1)").arg(elements. listName .size())); \
 				\
-				for(int k=0; k<elements. listName .size(); k++) \
+				for(unsigned int k=0; k<elements. listName .size(); k++) \
 					tmp->addAction(elements. listName [k].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements. listName [k].c_str()); \
 			}
 
@@ -1939,18 +1945,18 @@ using namespace QGED;
 		{
 			QMenu* tmp = addMenu(tr("Pipelines (%1)").arg(elements.pipelines.size()));
 
-			for(int k=0; k<elements.pipelines.size(); k++)
+			for(unsigned int k=0; k<elements.pipelines.size(); k++)
 			{
 				tmp->addAction(elements.pipelines[k].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelines[k].c_str());
 
 				QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineInputs[k].size()));
 
-				for(int ki=0; ki<elements.pipelineInputs[k].size(); ki++)
+				for(unsigned int ki=0; ki<elements.pipelineInputs[k].size(); ki++)
 					i->addAction(elements.pipelineInputs[k][ki].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelineInputs[k][ki].c_str());
 
 				QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.pipelines[k].c_str()).arg(elements.pipelineOutputs[k].size()));
 
-				for(int ko=0; ko<elements.pipelineOutputs[k].size(); ko++)
+				for(unsigned int ko=0; ko<elements.pipelineOutputs[k].size(); ko++)
 					o->addAction(elements.pipelineOutputs[k][ko].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.pipelineOutputs[k][ko].c_str());
 			}
 		}
@@ -1963,12 +1969,12 @@ using namespace QGED;
 
 			QMenu* i = tmp->addMenu(tr("Inputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineInputs.size()));
 
-			for(int ki=0; ki<elements.mainPipelineInputs.size(); ki++)
+			for(unsigned int ki=0; ki<elements.mainPipelineInputs.size(); ki++)
 				i->addAction(elements.mainPipelineInputs[ki].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipelineInputs[ki].c_str());
 
 			QMenu* o = tmp->addMenu(tr("Outputs of %1 (%2)").arg(elements.mainPipeline.c_str()).arg(elements.mainPipelineOutputs.size()));
 
-			for(int ko=0; ko<elements.mainPipelineOutputs.size(); ko++)
+			for(unsigned int ko=0; ko<elements.mainPipelineOutputs.size(); ko++)
 				o->addAction(elements.mainPipelineOutputs[ko].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipelineOutputs[ko].c_str());
 		}
 	}
@@ -2425,6 +2431,7 @@ using namespace QGED;
 
 	void CodeEditorTabs::documentModified(bool changed)
 	{
+		UNUSED_PARAMETER(changed)
 		CodeEditor* ptr = reinterpret_cast<CodeEditor*>(QObject::sender());
 
 		int tabID = getTabIndex(ptr);

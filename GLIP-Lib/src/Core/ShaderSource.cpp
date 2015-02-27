@@ -21,6 +21,7 @@
  * \date    August 15th 2011
 **/
 
+#include <algorithm>
 #include "Core/ShaderSource.hpp"
 #include "devDebugTools.hpp"
 #include "Core/OglInclude.hpp"
@@ -458,9 +459,9 @@ using namespace Glip::CoreGL;
 	Exception ShaderSource::errorLog(const std::string& log) const
 	{	
 		int incriminatedLine = 0;
-
 		const std::string 	delimAMDATI = "ERROR: 0:",
 					delimINTEL = "0:";
+		std::vector<int>	linesReported;
 		std::string buggyLine;
 		HandleOpenGL::SupportedVendor v = HandleOpenGL::getVendorID();
 		Exception result(">> Shader Compilation Log :", getSourceName(), startLine, Exception::ClientScriptException);
@@ -512,22 +513,32 @@ using namespace Glip::CoreGL;
 			{
 				LineInfo info = getLineInfo(incriminatedLine);
 				Exception a(line, info.sourceName, info.lineNumber, Exception::ClientScriptException);
-				Exception b(buggyLine, info.sourceName, info.lineNumber, Exception::ClientScriptException);
-				result << b << a; // Must be in reverse here!
+				result.prepend(a);		
+
+				// Report the buggy line only once :
+				if(std::find(linesReported.begin(), linesReported.end(), incriminatedLine)==linesReported.end())
+				{
+					Exception b(buggyLine, info.sourceName, info.lineNumber, Exception::ClientScriptException);
+					result.prepend(b);
+					linesReported.push_back(incriminatedLine);
+				}
 			}
 			else if(incriminatedLine>1)
 			{
 				LineInfo info = getLineInfo(incriminatedLine);
 				Exception e(line, info.sourceName, info.lineNumber, Exception::ClientScriptException);
-				result << e;
+				result.prepend(e);
+
+				if(std::find(linesReported.begin(), linesReported.end(), incriminatedLine)==linesReported.end())
+					linesReported.push_back(incriminatedLine);
 			}
 			else
 			{
 				Exception e(line, getSourceName(), startLine, Exception::ClientScriptException);
-				result << e;
+				result.prepend(e);
 			}
 		}
-
+	
 		return result;
 	}
 

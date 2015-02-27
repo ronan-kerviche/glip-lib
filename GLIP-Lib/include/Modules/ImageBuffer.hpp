@@ -42,6 +42,7 @@ namespace Glip
 /**
 \class ImageBuffer
 \brief Host-side image buffer.
+\related PixelIterator
 **/
 		class GLIP_API ImageBuffer : public HdlAbstractTextureFormat
 		{
@@ -91,7 +92,7 @@ namespace Glip
 
 /**
 \class PixelIterator
-\brief Iterator-like element for ImageBuffer
+\brief Iterator-like element for ImageBuffer.
 **/
 		class GLIP_API PixelIterator : protected HdlDynamicTableIterator
 		{
