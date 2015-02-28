@@ -30,7 +30,7 @@
 ** THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "glew.h"
+#include "Core/glew.h"
 
 #if defined(_WIN32)
 #  include "Core/wglew.h"

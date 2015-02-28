@@ -144,12 +144,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Component.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Devices.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Exception.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Filter.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Geometry.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\glew.h" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\glxew.h" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlDynamicData.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlFBO.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlGeBO.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlPBO.hpp" />
@@ -164,24 +164,21 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\wglew.h" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\devDebugTools.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\GLIPLib.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT1D.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT2D.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ImageBuffer.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoader.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoaderModules.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\Modules.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ProceduralInput.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\TextureReader.hpp" />
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\UniformsVarsLoader.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\UniformsLoader.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\VanillaParser.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Component.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Devices.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Exception.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Filter.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Geometry.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\glew.c" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlDynamicData.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlFBO.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlGeBO.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlPBO.cpp" />
@@ -192,14 +189,11 @@
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\OglTools.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Pipeline.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\ShaderSource.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT1D.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT2D.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ImageBuffer.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoader.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoaderModules.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ProceduralInput.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\TextureReader.cpp" />
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\UniformsVarsLoader.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\UniformsLoader.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\VanillaParser.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

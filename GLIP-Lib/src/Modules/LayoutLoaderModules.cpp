@@ -1130,13 +1130,13 @@
 	
 				if(!strict)
 				{
-					newFmt.setWidth( std::floor(std::log2(newFmt.getWidth())) );
-					newFmt.setWidth( std::floor(std::log2(newFmt.getHeight())) );
+					newFmt.setWidth( std::floor(std::log(newFmt.getWidth())/std::log(2.0)) );
+					newFmt.setWidth( std::floor(std::log(newFmt.getHeight())/std::log(2.0)) );
 				}
 				else
 				{
-					newFmt.setWidth( std::floor(std::log2(newFmt.getWidth()-1.0)) );
-					newFmt.setWidth( std::floor(std::log2(newFmt.getHeight()-1.0)) );
+					newFmt.setWidth( std::floor(std::log(newFmt.getWidth()-1.0)/std::log(2.0)) );
+					newFmt.setWidth( std::floor(std::log(newFmt.getHeight()-1.0)/std::log(2.0)) );
 				}
 
 				APPEND_NEW_FORMAT( arguments[1], newFmt )
@@ -1174,13 +1174,13 @@
 	
 				if(!strict)
 				{
-					newFmt.setWidth( std::ceil(std::log2(newFmt.getWidth())) );
-					newFmt.setWidth( std::ceil(std::log2(newFmt.getHeight())) );
+					newFmt.setWidth( std::ceil(std::log(newFmt.getWidth())/std::log(2.0)) );
+					newFmt.setWidth( std::ceil(std::log(newFmt.getHeight())/std::log(2.0)) );
 				}
 				else
 				{
-					newFmt.setWidth( std::ceil(std::log2(newFmt.getWidth()+1.0)) );
-					newFmt.setWidth( std::ceil(std::log2(newFmt.getHeight()+1.0)) );
+					newFmt.setWidth( std::ceil(std::log(newFmt.getWidth()+1.0)/std::log(2.0)) );
+					newFmt.setWidth( std::ceil(std::log(newFmt.getHeight()+1.0)/std::log(2.0)) );
 				}
 
 				APPEND_NEW_FORMAT( arguments[1], newFmt )

@@ -114,6 +114,7 @@
 		{
 			QString path = QDir::currentPath();
 
+			std::cout << "Preparing exception : " << stylesheetFile.fileName().toStdString() << " and " << path.toStdString() << std::endl;
 			Exception e("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (from " + path.toStdString() + ").", __FILE__, __LINE__); 
 
 			qCritical() << e.what();

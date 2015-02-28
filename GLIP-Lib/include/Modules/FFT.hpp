@@ -39,7 +39,7 @@ namespace Glip
 		namespace FFTModules
 		{
 			/// Flag describing the computation options.
-			enum FFTFlag
+			enum Flag
 			{
 				/// Shift the final result if the transform is direct or expect the input to be shifted if it is the reciprocal transform.
 				Shifted			= 0x00001,
@@ -99,13 +99,12 @@ namespace Glip
 				static ShaderSource generateLastShuffleCode(int width, int flags, const ShaderSource& post);
 
 			public :
-				static const std::string 	inputPortName,
-								outputPortName;
-
 				GenerateFFT1DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
 
+				static const std::string getInputPortName(void);
+				static const std::string getOutputPortName(void);
 				static PipelineLayout generate(int width, int flags = 0, const ShaderSource& pre=std::string(), const ShaderSource& post=std::string());
 		};
 
@@ -151,13 +150,12 @@ namespace Glip
 				static ShaderSource generateLastShuffleCode(int width, int oppositeWidth, int flags, bool horizontal, const ShaderSource& post);
 
 			public :
-				static const std::string 	inputPortName,
-								outputPortName;
-
 				GenerateFFT2DPipeline(void);
 
 				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
 
+				static const std::string getInputPortName(void);
+				static const std::string getOutputPortName(void);
 				static PipelineLayout generate(int width, int height, int flags = 0, const ShaderSource& pre=std::string(), const ShaderSource& post=std::string());
 		};
 	}

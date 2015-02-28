@@ -68,9 +68,6 @@ namespace Glip
 }
 
 // GenerateFFT1DPipeline :
-	const std::string 	GenerateFFT1DPipeline::inputPortName	= "inputTexture",
-				GenerateFFT1DPipeline::outputPortName	= "outputTexture";
-
 	/**
 	\fn GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
 	\brief Module constructor.
@@ -92,6 +89,16 @@ namespace Glip
 					7, //2 base + 5 arguments
 					0)
 	{ }
+
+	const std::string GenerateFFT1DPipeline::getInputPortName(void)
+	{
+		return "inputTexture";
+	}
+
+	const std::string GenerateFFT1DPipeline::getOutputPortName(void)
+	{
+		return "outputTexture";
+	}
 
 	ShaderSource GenerateFFT1DPipeline::generateRadix2Code(int width, int currentLevel, int flags, const ShaderSource& pre)
 	{
@@ -119,16 +126,16 @@ namespace Glip
 		
 		if(width!=currentLevel || (flags & NoInput)==0) // Not First pass or has an input
 		{
-			str += "uniform sampler2D " + inputPortName + "; \n";									PUSH_LINE_INFO
+			str += "uniform sampler2D " + getInputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 		else
 		{
-			str += "vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 
 		if(width==currentLevel && !pre.empty()) // First pass and pre-function
@@ -163,8 +170,8 @@ namespace Glip
 
 			if((flags & NoInput)==0)
 			{
-				str += "    vec4 A = texture(" + inputPortName + ", ivA); \n";							PUSH_LINE_INFO
-				str += "    vec4 B = texture(" + inputPortName + ", ivB); \n";							PUSH_LINE_INFO
+				str += "    vec4 A = texture(" + getInputPortName() + ", ivA); \n";						PUSH_LINE_INFO
+				str += "    vec4 B = texture(" + getInputPortName() + ", ivB); \n";						PUSH_LINE_INFO
 			}
 			else
 			{
@@ -182,8 +189,8 @@ namespace Glip
 		else
 		{
 			str += "    float p = floor((2*mod(pos.x,l))/l)*floor(mod(pos.x, l/2))*(w/l); \n";					PUSH_LINE_INFO
-			str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(pos.x,0), 0); \n";						PUSH_LINE_INFO
-			str += "    vec4 B = texelFetch(" + inputPortName + ", ivec2(posB,0), 0); \n";						PUSH_LINE_INFO
+			str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(pos.x,0), 0); \n";					PUSH_LINE_INFO
+			str += "    vec4 B = texelFetch(" + getInputPortName() + ", ivec2(posB,0), 0); \n";					PUSH_LINE_INFO
 		}
 
 		str += "    float c = cos(-twoPi*p/float(w)), \n";										PUSH_LINE_INFO
@@ -198,23 +205,23 @@ namespace Glip
 				str += "    B.g = -B.g; \n"; /* imaginary */									PUSH_LINE_INFO
 			}
 
-			str += "    " + outputPortName + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
-			str += "    " + outputPortName + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
-			str += "    " + outputPortName + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
-			str += "    " + outputPortName + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
 		}
 		else
 		{
 			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
-			str += "    " + outputPortName + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + outputPortName + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
@@ -236,15 +243,15 @@ namespace Glip
 		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
 
 		str +="#version 130 \n";													PUSH_LINE_INFO	
-		str += "uniform sampler2D " + inputPortName + "; \n";										PUSH_LINE_INFO
+		str += "uniform sampler2D " + getInputPortName() + "; \n";									PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}		
 		else
 		{
-			str += "vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 
 		if(!post.empty())
@@ -270,7 +277,7 @@ namespace Glip
 		str += "    int a = 0; \n";													PUSH_LINE_INFO
 		str += "    for(int k=w/2; k>=1; k=k/2) a = a + int(mod(int(pos.x/k),2))*(w/(2*k)); \n"; /* Bit reversal */ 			PUSH_LINE_INFO
 		str += "    int p = int(mod(a, w/2)); \n";											PUSH_LINE_INFO
-		str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(p,0), 0); \n";							PUSH_LINE_INFO
+		str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(p,0), 0); \n";						PUSH_LINE_INFO
 		str += "    if(p<a) A.rg = A.ba; \n";												PUSH_LINE_INFO
 	
 		if((flags & Inversed)!=0)
@@ -286,11 +293,11 @@ namespace Glip
 			str += "    A = post(A, gl_FragCoord.x/float(width)); \n";								PUSH_LINE_INFO
 		}
 
-		str += "    " + outputPortName + " = A; \n";											PUSH_LINE_INFO
+		str += "    " + getOutputPortName() + " = A; \n";											PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + outputPortName + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
@@ -351,9 +358,9 @@ namespace Glip
 		PipelineLayout pipelineLayout("FFT1D" + toString(width) + "Pipeline");
 
 		if((flags & NoInput)==0)
-			pipelineLayout.addInput(inputPortName);
+			pipelineLayout.addInput(getInputPortName());
 
-		pipelineLayout.addOutput(outputPortName);
+		pipelineLayout.addOutput(getOutputPortName());
 
 		std::string 	previousName = "",
 				firstFilterName = "";
@@ -368,15 +375,15 @@ namespace Glip
 			if(previousName.empty()) // First element
 			{
 				if((flags & NoInput)==0)
-					pipelineLayout.connectToInput(inputPortName, name, inputPortName);
+					pipelineLayout.connectToInput(getInputPortName(), name, getInputPortName());
 
 				if(!pre.empty())
 				{
 					// Add the ports declared in PRE :
 					for(std::vector<std::string>::const_iterator it=pre.getInputVars().begin(); it!=pre.getInputVars().end(); it++)
 					{
-						if((*it)==inputPortName && (flags & NoInput)==0)
-							throw Exception("The PRE function cannot declare the input port \"" + inputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+						if((*it)==getInputPortName() && (flags & NoInput)==0)
+							throw Exception("The PRE function cannot declare the input port \"" + getInputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
 						else
 						{
 							pipelineLayout.addInput(*it);
@@ -388,7 +395,7 @@ namespace Glip
 				firstFilterName = name;
 			}
 			else
-				pipelineLayout.connect(previousName, outputPortName, name, inputPortName);
+				pipelineLayout.connect(previousName, getOutputPortName(), name, getInputPortName());
 			
 			previousName = name;
 		}
@@ -398,15 +405,15 @@ namespace Glip
 		ShaderSource shader = generateLastShuffleCode(width, flags, post);
 		FilterLayout filterLayout(shuffleFilterName, format, shader);
 		pipelineLayout.add(filterLayout,shuffleFilterName);
-		pipelineLayout.connect(previousName, outputPortName, shuffleFilterName, inputPortName);
+		pipelineLayout.connect(previousName, getOutputPortName(), shuffleFilterName, getInputPortName());
 		
 		// Add the ports declared in post : 
 		if(!post.empty())
 		{
 			for(std::vector<std::string>::const_iterator it=post.getInputVars().begin(); it!=post.getInputVars().end(); it++)
 			{
-				if((*it)==inputPortName && (flags & NoInput)==0)
-					throw Exception("The POST function cannot declare the input port \"" + inputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+				if((*it)==getInputPortName() && (flags & NoInput)==0)
+					throw Exception("The POST function cannot declare the input port \"" + getInputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
 				else
 				{
 					pipelineLayout.addInput(*it);
@@ -416,9 +423,9 @@ namespace Glip
 
 			for(std::vector<std::string>::const_iterator it=post.getOutputVars().begin(); it!=post.getOutputVars().end(); it++)
 			{
-				if((*it)==outputPortName && !post.requiresCompatibility())
-					throw Exception("The POST function cannot declare the output port \"" + outputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
-				else if((*it)!=outputPortName)
+				if((*it)==getOutputPortName() && !post.requiresCompatibility())
+					throw Exception("The POST function cannot declare the output port \"" + getOutputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+				else if((*it)!=getOutputPortName())
 				{
 					pipelineLayout.addOutput(*it);
 					pipelineLayout.connectToOutput(shuffleFilterName, *it, *it);
@@ -427,7 +434,7 @@ namespace Glip
 		}
 
 		// Connect to output :
-		pipelineLayout.connectToOutput(shuffleFilterName, outputPortName, outputPortName);
+		pipelineLayout.connectToOutput(shuffleFilterName, getOutputPortName(), getOutputPortName());
 
 		return pipelineLayout;
 	}
@@ -529,9 +536,6 @@ namespace Glip
 	}
 
 // GenerateFFT2DPipeline :
-	const std::string 	GenerateFFT2DPipeline::inputPortName	= "inputTexture",
-				GenerateFFT2DPipeline::outputPortName	= "outputTexture";
-
 	/**
 	\fn GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
 	\brief Module constructor.
@@ -554,6 +558,16 @@ namespace Glip
 					0)
 	{ }
 
+	const std::string GenerateFFT2DPipeline::getInputPortName(void)
+	{
+		return "inputTexture";
+	}
+
+	const std::string GenerateFFT2DPipeline::getOutputPortName(void)
+	{
+		return "outputTexture";
+	}
+
 	ShaderSource GenerateFFT2DPipeline::generateRadix2Code(int width, int oppositeWidth, int currentLevel, int flags, bool horizontal, const ShaderSource& pre)
 	{
 		// Note that 'width' is generic here, it can be either the width or the height. 'oppositeWidth' is given as the other dimension.
@@ -570,16 +584,16 @@ namespace Glip
 		
 		if(!horizontal || width!=currentLevel || (flags & NoInput)==0) // Not First pass or has an input
 		{
-			str += "uniform sampler2D " + inputPortName + "; \n";									PUSH_LINE_INFO
+			str += "uniform sampler2D " + getInputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 		else
 		{
-			str += "vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 
 		if(horizontal && width==currentLevel && !pre.empty()) // First pass and pre-function
@@ -624,8 +638,8 @@ namespace Glip
 
 				if((flags & NoInput)==0)
 				{
-					str += "    vec4 A = texture(" + inputPortName + ", ivA); \n";						PUSH_LINE_INFO
-					str += "    vec4 B = texture(" + inputPortName + ", ivB); \n";						PUSH_LINE_INFO
+					str += "    vec4 A = texture(" + getInputPortName() + ", ivA); \n";					PUSH_LINE_INFO
+					str += "    vec4 B = texture(" + getInputPortName() + ", ivB); \n";					PUSH_LINE_INFO
 				}
 				else
 				{
@@ -653,8 +667,8 @@ namespace Glip
 				str += "    pos.y = int(mod(a, w/2));  \n";									PUSH_LINE_INFO
 
 				// Read : 
-				str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(pos.y,pos.x), 0); \n";				PUSH_LINE_INFO
-				str += "    vec4 B = texelFetch(" + inputPortName + ", ivec2(pos.y,posB), 0); \n";				PUSH_LINE_INFO
+				str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(pos.y,pos.x), 0); \n";			PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(" + getInputPortName() + ", ivec2(pos.y,posB), 0); \n";				PUSH_LINE_INFO
 
 				// read from first horizontal pass, second part : 
 				str += "    if(pos.y<a) { A.rg = A.ba; B.rg = B.ba; } \n";							PUSH_LINE_INFO
@@ -672,13 +686,13 @@ namespace Glip
 
 			if(horizontal)
 			{
-				str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(pos.x,pos.y), 0); \n";				PUSH_LINE_INFO
-				str += "    vec4 B = texelFetch(" + inputPortName + ", ivec2(posB,pos.y), 0); \n";				PUSH_LINE_INFO
+				str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(pos.x,pos.y), 0); \n";			PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(" + getInputPortName() + ", ivec2(posB,pos.y), 0); \n";				PUSH_LINE_INFO
 			}
 			else
 			{
-				str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(pos.y,pos.x), 0); \n";				PUSH_LINE_INFO
-				str += "    vec4 B = texelFetch(" + inputPortName + ", ivec2(pos.y,posB), 0); \n";				PUSH_LINE_INFO
+				str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(pos.y,pos.x), 0); \n";			PUSH_LINE_INFO
+				str += "    vec4 B = texelFetch(" + getInputPortName() + ", ivec2(pos.y,posB), 0); \n";				PUSH_LINE_INFO
 			}
 		}
 
@@ -694,23 +708,23 @@ namespace Glip
 				str += "    B.g = -B.g; \n"; /* imaginary */									PUSH_LINE_INFO
 			}
 
-			str += "    " + outputPortName + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
-			str += "    " + outputPortName + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
-			str += "    " + outputPortName + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
-			str += "    " + outputPortName + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
 		}
 		else
 		{
 			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";									PUSH_LINE_INFO
-			str += "    " + outputPortName + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + outputPortName + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + outputPortName + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 
 		str += "} \n";
@@ -735,15 +749,15 @@ namespace Glip
 		#define PUSH_LINE_INFO { linesInfo[lineCounter] = ShaderSource::LineInfo(__FILE__, __LINE__); lineCounter++; }
 
 		str += "#version 130 \n";													PUSH_LINE_INFO
-		str += "uniform sampler2D " + inputPortName + "; \n";										PUSH_LINE_INFO
+		str += "uniform sampler2D " + getInputPortName() + "; \n";									PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}		
 		else
 		{
-			str += "vec4 " + outputPortName + "; \n";										PUSH_LINE_INFO
+			str += "vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
 		}
 
 		if(!horizontal && !post.empty())
@@ -778,11 +792,11 @@ namespace Glip
 
 		if(horizontal)
 		{
-			str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(p,pos.y), 0); \n";						PUSH_LINE_INFO
+			str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(p,pos.y), 0); \n";					PUSH_LINE_INFO
 		}
 		else
 		{
-			str += "    vec4 A = texelFetch(" + inputPortName + ", ivec2(pos.y,p), 0); \n";						PUSH_LINE_INFO
+			str += "    vec4 A = texelFetch(" + getInputPortName() + ", ivec2(pos.y,p), 0); \n";					PUSH_LINE_INFO
 		}
 
 		str += "    if(p<a) A.rg = A.ba; \n";												PUSH_LINE_INFO
@@ -800,11 +814,11 @@ namespace Glip
 			str += "    A = post(A, gl_FragCoord.xy/vec2(h, w)); \n";								PUSH_LINE_INFO
 		}
 
-		str += "    " + outputPortName + " = A; \n";											PUSH_LINE_INFO
+		str += "    " + getOutputPortName() + " = A; \n";											PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + outputPortName + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
@@ -874,9 +888,9 @@ namespace Glip
 		PipelineLayout pipelineLayout("FFT2D" + toString(width) + "x" + toString(height) + "Pipeline");
 
 		if((flags & NoInput)==0)
-			pipelineLayout.addInput(inputPortName);
+			pipelineLayout.addInput(getInputPortName());
 
-		pipelineLayout.addOutput(outputPortName);
+		pipelineLayout.addOutput(getOutputPortName());
 
 		std::string 	previousName = "",
 				firstFilterName = "";
@@ -892,15 +906,15 @@ namespace Glip
 			if(previousName.empty())
 			{
 				if((flags & NoInput)==0)
-					pipelineLayout.connectToInput(inputPortName, name, inputPortName);
+					pipelineLayout.connectToInput(getInputPortName(), name, getInputPortName());
 
 				if(!pre.empty())
 				{
 					// Add the ports declared in PRE :
 					for(std::vector<std::string>::const_iterator it=pre.getInputVars().begin(); it!=pre.getInputVars().end(); it++)
 					{
-						if((*it)==inputPortName && (flags & NoInput)==0)
-							throw Exception("The PRE function cannot declare the input port \"" + inputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+						if((*it)==getInputPortName() && (flags & NoInput)==0)
+							throw Exception("The PRE function cannot declare the input port \"" + getInputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
 						else
 						{
 							pipelineLayout.addInput(*it);
@@ -912,7 +926,7 @@ namespace Glip
 				firstFilterName = name;
 			}
 			else
-				pipelineLayout.connect(previousName, outputPortName, name, inputPortName);
+				pipelineLayout.connect(previousName, getOutputPortName(), name, getInputPortName());
 			
 			previousName = name;
 		}
@@ -922,7 +936,7 @@ namespace Glip
 		ShaderSource intermediateShader = generateLastShuffleCode(width, height, flags, true, post);
 		FilterLayout intermediateFilterLayout(intermediateShuffleFilterName, format, intermediateShader);
 		pipelineLayout.add(intermediateFilterLayout,intermediateShuffleFilterName);
-		pipelineLayout.connect(previousName, outputPortName, intermediateShuffleFilterName, inputPortName);
+		pipelineLayout.connect(previousName, getOutputPortName(), intermediateShuffleFilterName, inputPortName);
 		previousName = intermediateShuffleFilterName;*/
 
 		// Vertical : 
@@ -933,7 +947,7 @@ namespace Glip
 			FilterLayout filterLayout(name, halfHeightFormat, shader);
 			pipelineLayout.add(filterLayout,name);
 
-			pipelineLayout.connect(previousName, outputPortName, name, inputPortName);
+			pipelineLayout.connect(previousName, getOutputPortName(), name, getInputPortName());
 			previousName = name;
 		}
 
@@ -942,15 +956,15 @@ namespace Glip
 		ShaderSource finalShader = generateLastShuffleCode(height, width, flags, false, post);
 		FilterLayout finalFilterLayout(finalShuffleFilterName, format, finalShader);
 		pipelineLayout.add(finalFilterLayout, finalShuffleFilterName);
-		pipelineLayout.connect(previousName, outputPortName, finalShuffleFilterName, inputPortName);
+		pipelineLayout.connect(previousName, getOutputPortName(), finalShuffleFilterName, getInputPortName());
 
 		// Add the ports declared in post : 
 		if(!post.empty())
 		{
 			for(std::vector<std::string>::const_iterator it=post.getInputVars().begin(); it!=post.getInputVars().end(); it++)
 			{
-				if((*it)==inputPortName && (flags & NoInput)==0)
-					throw Exception("The POST function cannot declare the input port \"" + inputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+				if((*it)==getInputPortName() && (flags & NoInput)==0)
+					throw Exception("The POST function cannot declare the input port \"" + getInputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
 				else
 				{
 					pipelineLayout.addInput(*it);
@@ -960,9 +974,9 @@ namespace Glip
 
 			for(std::vector<std::string>::const_iterator it=post.getOutputVars().begin(); it!=post.getOutputVars().end(); it++)
 			{
-				if((*it)==outputPortName && !post.requiresCompatibility())
-					throw Exception("The POST function cannot declare the output port \"" + outputPortName + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
-				else if((*it)!=outputPortName)
+				if((*it)==getOutputPortName() && !post.requiresCompatibility())
+					throw Exception("The POST function cannot declare the output port \"" + getOutputPortName() + "\" as it is already used.", __FILE__, __LINE__, Exception::ModuleException);
+				else if((*it)!=getOutputPortName())
 				{
 					pipelineLayout.addOutput(*it);
 					pipelineLayout.connectToOutput(finalShuffleFilterName, *it, *it);
@@ -971,7 +985,7 @@ namespace Glip
 		}
 
 		// Connect to output :
-		pipelineLayout.connectToOutput(finalShuffleFilterName, outputPortName, outputPortName);
+		pipelineLayout.connectToOutput(finalShuffleFilterName, getOutputPortName(), getOutputPortName());
 
 		return pipelineLayout;
 	}

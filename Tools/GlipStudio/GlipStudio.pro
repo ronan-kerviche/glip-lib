@@ -1,5 +1,4 @@
-CONFIG 	+= 	qt \
-		debug
+CONFIG 	+= 	qt
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,10 +12,18 @@ unix: 		LIBS += ../../GLIP-Lib/lib/libglip.so -lraw -fopenmp
 win32:Debug:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Debug/GLIP-Lib.lib
 win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 
-DEFINES +=	"__USE_QVGL__" \		# Define GUI elements 
+unix:DEFINES +=	"__USE_QVGL__" \		# Define GUI elements
 		"__MAKE_VARIABLES__" \		# Allow modules to distribut some of their variables
 		"__USE_NETPBM__" \		# Load PPM / PGM files
 		"__USE_LIBRAW__"		# Load Raw files (such as CR2 and NEF with the help of LibRaw
+
+win32:Debug:DEFINES +=	"__USE_QVGL__" \
+			"__MAKE_VARIABLES__" \
+			"__USE_NETPBM__"
+
+win32:Release:DEFINES +="__USE_QVGL__" \
+			"__MAKE_VARIABLES__" \
+			"__USE_NETPBM__"
 
 INCLUDEPATH +=	../ExternalSrc/Qt \
 		../ExternalSrc/NetPBM \

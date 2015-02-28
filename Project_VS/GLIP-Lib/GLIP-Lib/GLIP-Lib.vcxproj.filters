@@ -24,9 +24,6 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Devices.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\Exception.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,12 +75,6 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Core\wglew.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT1D.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT2D.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ImageBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -96,16 +87,16 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\Modules.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ProceduralInput.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\TextureReader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\UniformsVarsLoader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\VanillaParser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Core\HdlDynamicData.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\UniformsLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -114,9 +105,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Component.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Devices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Exception.cpp">
@@ -158,12 +146,6 @@
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\ShaderSource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT1D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT2D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ImageBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -173,16 +155,16 @@
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoaderModules.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ProceduralInput.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\TextureReader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\UniformsVarsLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\VanillaParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Core\HdlDynamicData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\UniformsLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
