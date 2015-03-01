@@ -2031,7 +2031,7 @@
 						result.geometries.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_FILTER_LAYOUT :
-						preliminaryTests(rootParser.elements[k], 1, 2, 6, -1, "FilterLayout");
+						preliminaryTests(rootParser.elements[k], 1, 2, 4, 0, "FilterLayout");
 						result.filtersLayout.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_PIPELINE_MAIN :

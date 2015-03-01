@@ -21,6 +21,9 @@
 			void loadStyleSheet(void);
 			void loadFonts(void);
 
+		protected slots : 
+			void processQuitRequest(void);
+
 		public :
 			GlipStudio(int& argc, char** argv);
 			~GlipStudio(void);

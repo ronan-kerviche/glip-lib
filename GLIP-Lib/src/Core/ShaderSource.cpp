@@ -482,7 +482,6 @@ using namespace Glip::CoreGL;
 					two = line.find(')');
 					if(fromString(line.substr(one, two-one), incriminatedLine))
 					{
-						incriminatedLine++;
 						buggyLine = getLine(incriminatedLine-1, false);
 					}
 					break;

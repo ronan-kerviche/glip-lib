@@ -1269,6 +1269,11 @@ using namespace QVGL;
 		}
 	}
 
+	bool SubWidget::readyToQuit(void)
+	{
+		return true;
+	}
+
 	void SubWidget::show(void)
 	{
 		QWidget::show();
@@ -1387,6 +1392,7 @@ using namespace QVGL;
 		subWidgetsMenu("Widgets", this),
 		toggleFullscreenAction("Toggle Fullscreen", this),
 		openSettingsAction("Settings", this),
+		openInfosAction("Infos", this),
 		quitAction("Quit", this),
 		viewsSeparator(NULL),
 		closeCurrentViewAction("Close view", this),	
@@ -1431,9 +1437,11 @@ using namespace QVGL;
 		QObject::connect(&viewsTablesMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&subWidgetsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&signalMapper,					SIGNAL(mapped(int)),		this, SLOT(transferActionSignal(int)));
+		QObject::connect(&openInfosAction,				SIGNAL(triggered()), 		this, SIGNAL(requestOpenInfos()));
 
 		// Signals mapping : 
 		QObject::connect(&toggleFullscreenAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
+		QObject::connect(&quitAction,					SIGNAL(triggered()), 		&signalMapper, SLOT(map()));
 		QObject::connect(&closeCurrentViewAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&closeAllViewsAction,				SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 		QObject::connect(&closeCurrentViewsTableAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
@@ -1442,6 +1450,7 @@ using namespace QVGL;
 		QObject::connect(&hideAllSubWidgetsAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
 
 		signalMapper.setMapping(&toggleFullscreenAction,		ActionToggleFullscreen);
+		signalMapper.setMapping(&quitAction,				ActionQuit);
 		signalMapper.setMapping(&closeCurrentViewAction, 		ActionCloseView);
 		signalMapper.setMapping(&closeAllViewsAction,			ActionCloseAllViews);
 		signalMapper.setMapping(&closeCurrentViewsTableAction, 		ActionCloseViewsTable);
@@ -1452,6 +1461,7 @@ using namespace QVGL;
 		// Init menus : 
 		mainMenu.addAction(&toggleFullscreenAction);
 		mainMenu.addAction(&openSettingsAction);
+		mainMenu.addAction(&openInfosAction);
 		mainMenu.addAction(&quitAction);
 
 		viewsSeparator = viewsMenu.addSeparator();
@@ -1808,8 +1818,7 @@ using namespace QVGL;
 	}
 
 // SettingsDialog : 
-	SettingsDialog::SettingsDialog(QWidget* parent)
-	 : QWidget(parent)
+	SettingsDialog::SettingsDialog(void)
 	{
 
 	}
@@ -1819,10 +1828,51 @@ using namespace QVGL;
 
 	}
 
+// InfosDialog :
+	InfosDialog::InfosDialog(void)
+	 :	message(NULL)
+	{
+		// Create the message : 
+		int pointSize = message.font().pointSize();
+		message.setTextFormat(Qt::RichText);
+		message.setTextInteractionFlags(Qt::TextBrowserInteraction);
+		message.setOpenExternalLinks(true);
+		message.setText( tr(	"<center><p style=\"font-size:%2pt; font-style:bold\">GlipStudio</p></center>"
+					"<center><p style=\"font-size:%1pt; font-style:bold\">GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library).<br>\n"
+					"Find more information, documentation and examples at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p></center>"
+					"<center><p style=\"font-size:%3pt; font-style:italic\">Copyright &copy; 2010-2015, Ronan Kerviche, MIT License</p></center>"
+					"<p style=\"margin-left:1em; margin-right:1em; font-size:%4pt; color:#AAAAAA;\"> Permission is hereby granted, free of charge, to any person obtaining a copy<br>\n"
+					"of this software and associated documentation files (the \"Software\"), to deal<br>\n"
+					"in the Software without restriction, including without limitation the rights<br>\n"
+					"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell<br>\n"
+					"copies of the Software, and to permit persons to whom the Software is<br>\n"
+					"furnished to do so, subject to the following conditions:<br>\n"
+					"<br>\n"
+					"The above copyright notice and this permission notice shall be included in<br>\n"
+					"all copies or substantial portions of the Software.<br>\n"
+					"<br>\n"
+					"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR<br>\n"
+					"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,<br>\n"
+					"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE<br>\n"
+					"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER<br>\n"
+					"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,<br>\n"
+					"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN<br>\n"
+					"THE SOFTWARE.\n</p>"
+					"<center><table><tr><td><b><i>Binary build date</i></b> : </td><td>%5; %6</td></tr><tr><td><b><i>Hardware vendor : </i></b></td><td>%7</td></tr><tr><td><b><i>Renderer : </i></b></td><td>%8</td></tr><tr><td><b><i>OpenGL version : </i></b></td><td>%9</td></tr><tr><td><b><i>GLSL version : </i></b></td><td>%10</td></tr></table></center>"
+					).arg(pointSize).arg(pointSize+5).arg(pointSize+2).arg(pointSize).arg(__DATE__).arg(__TIME__).arg(QString::fromStdString(HandleOpenGL::getVendorName())).arg(QString::fromStdString(HandleOpenGL::getRendererName())).arg(QString::fromStdString(HandleOpenGL::getVersion())).arg(QString::fromStdString(HandleOpenGL::getGLSLVersion())) );
+
+		// Add the inner widget :
+		setInnerWidget(&message);
+		setTitle("About");
+	}
+
+	InfosDialog::~InfosDialog(void)
+	{ }
+
 #ifdef __MAKE_VARIABLES__ 
 // VariablesTrackerSubWidget 
 	VariablesTrackerSubWidget::VariablesTrackerSubWidget(void)
-	 : innerTreeWidget(NULL)
+	 :	innerTreeWidget(NULL)
 	{
 		// Add the inner widget :
 		setInnerWidget(&innerTreeWidget);
@@ -3062,6 +3112,13 @@ using namespace QVGL;
 		QGraphicsView::resizeEvent(event);
    	}
 
+	void GLSceneViewWidget::closeEvent(QCloseEvent *event)
+	{
+		// Arrived here because this widget is full-screen and received a ALT-F4.
+		// But we want to make sure that the rest of the application is ok with that.
+		event->ignore();
+	}
+
 	void GLSceneViewWidget::addSubWidget(SubWidget* subWidget)
 	{
 		QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
@@ -3266,6 +3323,7 @@ using namespace QVGL;
 	 :	QWidget(parent), 
 		container(QBoxLayout::LeftToRight, this),
 		glSceneViewWidget(this, &topBar, &bottomBar),
+		infosDialog(NULL),
 		currentViewIndex(-1),
 		currentViewsTableIndex(-1),
 		mainViewsTable(NULL),
@@ -3295,14 +3353,13 @@ using namespace QVGL;
 		QObject::connect(&topBar,		SIGNAL(changeViewRequest(View*)),		this, 		SLOT(viewRequireDisplay(View*)));
 		QObject::connect(&topBar,		SIGNAL(changeViewsTableRequest(ViewsTable*)),	this, 		SLOT(viewsTableRequireDisplay(ViewsTable*)));
 		QObject::connect(&topBar,		SIGNAL(requestAction(ActionID)),		this, 		SLOT(processAction(ActionID)));
+		QObject::connect(&topBar,		SIGNAL(requestOpenInfos()),			this,		SLOT(processOpenInfosRequest()));
 		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, 		SLOT(showSubWidget(SubWidget*)));
 		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, 		SLOT(barSelected(BottomBar*)));
 
 		// Create main table view : 
 		mainViewsTable = new ViewsTable("Main Table");
 		addViewsTable(mainViewsTable);
-
-		std::cout << '[' << __LINE__ << "] Temporary, always showing table." << std::endl;
 		changeCurrentViewsTable(0);
 
 		// Add new views to the main table : 
@@ -3319,6 +3376,7 @@ using namespace QVGL;
 			(*it)->qvglParent = NULL;
 
 		viewsList.clear();
+		delete infosDialog;
 	}
 
 	void MainWidget::updateMouseStateData(void)
@@ -3872,6 +3930,33 @@ using namespace QVGL;
 		}
 	}
 
+	void MainWidget::processOpenInfosRequest(void)
+	{
+		if(infosDialog==NULL)
+		{
+			infosDialog = new InfosDialog();
+			addSubWidget(infosDialog);
+		}
+		else
+			infosDialog->show();
+	}
+
+	bool MainWidget::processQuitRequest(void)
+	{
+		// Send the quit signal to all the SubWidgets :
+		bool test = true;
+		for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); (it!=subWidgetsList.end()) && test; it++)
+			test = test && (*it)->readyToQuit();
+		
+		if(test)
+		{
+			// Send signal upward : 
+			emit requestQuit();
+		}
+
+		return test;
+	}
+
 	KeyboardState& MainWidget::getKeyboardState(void)
 	{
 		return keyboardState;
@@ -4137,6 +4222,17 @@ using namespace QVGL;
 		}
 	}
 
+	void MainWidget::closeEvent(QCloseEvent *event)
+	{
+		// Test first : 
+		bool result = processQuitRequest();
+
+		if(!result)
+			event->ignore();
+		else // accept : 
+			QWidget::closeEvent(event);
+	}
+
 	float MainWidget::getSceneRatio(void) const
 	{
 		QRectF rect = sceneRect();
@@ -4165,8 +4261,6 @@ using namespace QVGL;
 			viewsList.append(view);
 
 			view->qvglParent = this;
-
-			std::cout << "QVGL::MainWidget::addView : " << view << std::endl;
 
 			// Connect actions : 
 			QObject::connect(view, SIGNAL(requireDisplay()),	this, SLOT(viewRequireDisplay()));
@@ -4318,7 +4412,7 @@ using namespace QVGL;
 				closeAllViews();
 				break;
 			case ActionCloseViewsTable : 
-				if(currentViewsTable!=NULL) currentViewsTable->close();
+				if(currentViewsTable!=NULL && currentViewsTable!=mainViewsTable) currentViewsTable->close();
 				break;
 			case ActionCloseAllViewsTables : 
 				closeAllViewsTables();
@@ -4346,6 +4440,9 @@ using namespace QVGL;
 				break;
 			case ActionHideAllSubWidgets :
 				hideAllSubWidgets();
+				break;
+			case ActionQuit :
+				processQuitRequest();
 				break;
 			case NoAction :
 				break;

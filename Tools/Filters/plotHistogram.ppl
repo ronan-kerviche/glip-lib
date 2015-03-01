@@ -15,6 +15,7 @@ SHADER_SOURCE:PlotHistogramShader
 	out vec4 outputTexture;
 
 	uniform float scale = 1.0;
+	uniform int noBackground = 0;
 
 	void main()
 	{
@@ -22,19 +23,16 @@ SHADER_SOURCE:PlotHistogramShader
 		vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
 		vec4 col = textureLod(inputTexture, pos, 0);
 
-		if(pos.t>(1.0-hist.r*scale) )
-			outputTexture.r = 1.0;
-		else
-			outputTexture.r = col.r;
-		if(pos.t>(1.0-hist.g*scale) )
-			outputTexture.g = 1.0;
-		else
-			outputTexture.g = col.g;
-		if(pos.t>(1.0-hist.b*scale) )
-			outputTexture.b = 1.0;
-		else
-			outputTexture.b = col.b;
+		bool 	rTest = (pos.t>(1.0-hist.r*scale)),
+			gTest = (pos.t>(1.0-hist.g*scale)),
+			bTest = (pos.t>(1.0-hist.b*scale));
 
+		if(noBackground>0 && (rTest || gTest || bTest))
+			col = vec4(0.0, 0.0, 0.0, 1.0);
+
+		outputTexture.r = rTest ? 1.0 : col.r;
+		outputTexture.g = gTest ? 1.0 : col.g;
+		outputTexture.b = bTest ? 1.0 : col.b;
 		outputTexture.a = 1.0;
 	}
 }

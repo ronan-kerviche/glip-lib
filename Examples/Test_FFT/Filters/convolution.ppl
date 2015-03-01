@@ -29,10 +29,10 @@ SHADER_SOURCE:shader
 
 FILTER_LAYOUT:filter(outputFormat,shader)
 
-PIPELINE_MAIN:pMain()
+PIPELINE_MAIN:pMain
 {
 	INPUT_PORTS(inText)
 	OUTPUT_PORTS(outText)
-	FILTER_INSTANCE:inst_filter(filter)
+	FILTER_INSTANCE:filter
 }
 

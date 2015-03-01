@@ -455,74 +455,6 @@
 			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__, Exception::CoreException);
 	}
 
-	/*
-	fn std::string AbstractPipelineLayout::getConnectionDestinationsName(int source, int port)
-	brief Get the name of the elements linked to the output.
-	param source The ID of the output element.
-	param port The port of the output element.
-	return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
-	
-	std::string AbstractPipelineLayout::getConnectionDestinationsName(int source, int port)
-	{
-		std::vector<Connection> res = getConnectionDestinations(source, port);
-		std::string result;
-
-		std::cerr << "Using possibly deprecated function AbstractPipelineLayout::getConnectionDestinationsName." << std::endl;
-
-		for(std::vector<Connection>::iterator it=res.begin(); it!=res.end(); it++)
-		{
-			AbstractComponentLayout& tmp = componentLayout((*it).idIn);
-			//OLD : result += tmp.getFullName() + SEPARATOR + tmp.getInputPortNameExtended((*it).portIn) + "\n";
-			result += tmp.getInputPortName( (*it).portIn );
-		}
-
-		return result;
-	}
-
-	fn std::string AbstractPipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
-	brief Get the name of the elements linked to the output.
-	param source The name of the output element.
-	param port The name of the port of the output element.
-	return A standard string containing all the elements name linked to the output or raise an exception if any errors occur.
-	
-	std::string AbstractPipelineLayout::getConnectionDestinationsName(const std::string& source, const std::string& port)
-	{
-		int id = getElementIndex(source);
-		int p  = componentLayout(id).getOutputPortID(port);
-		return getConnectionDestinationsName(id, p);
-	}*/
-
-	/*
-	fn std::string AbstractPipelineLayout::getConnectionSourceName(int dest, int port)
-	brief Get the name of the element linked to the input.
-	param dest The ID of the input element.
-	param port The port of the input element.
-	return A standard string containing the element name linked to the input or raise an exception if any errors occur.
-
-	std::string AbstractPipelineLayout::getConnectionSourceName(int dest, int port)
-	{
-		Connection c = getConnectionSource(dest, port);
-		AbstractComponentLayout& tmp = componentLayout(c.idOut);
-
-		std::cerr << "Using possibly deprecated function AbstractPipelineLayout::getConnectionSourceName." << std::endl;
-		//return tmp.getFullName() + SEPARATOR + tmp.getInputPortNameExtended(c.portOut) + "\n";
-
-		return tmp.getInputPortName(c.portOut);
-	}
-
-	fn std::string AbstractPipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
-	brief Get the name of the element linked to the input.
-	param dest The name of the input element.
-	param port The name of the port of the input element.
-	return A standard string containing the element name linked to the input or raise an exception if any errors occur.
-	
-	std::string AbstractPipelineLayout::getConnectionSourceName(const std::string& dest, const std::string& port)
-	{
-		int id = getElementIndex(dest);
-		int p  = componentLayout(id).getOutputPortID(port);
-		return getConnectionSourceName(id, p);
-	}*/
-
 	/**
 	\fn bool AbstractPipelineLayout::check(bool exception)
 	\brief Check the validity of the pipeline layout.
@@ -549,16 +481,6 @@
 					res += e.getMessage();
 				}
 			}
-
-			// Removing this segment, as some output can be ignored in the pipeline.
-			/*for(int j=0; j<tmp.getNumOutputPort(); j++)
-			{
-				if(getConnectionDestinations(i,j).empty())
-				{
-					res += '\n';
-					res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getTypeName() + "\") output port \"" + tmp.getOutputPortName(i) + "\" is not connected.";
-				}
-			}*/
 
 			// Checking that, at least one connection is used : 
 			bool test = false;
@@ -747,8 +669,6 @@
 		c.portOut = portOut;
 		c.idIn    = filterIn;
 		c.portIn  = portIn;
-
-		//std::cout << "Connexion de " << filterOut << ':' << portOut << " à " << filterIn << ':' << portIn << std::endl;
 
 		connections.push_back(c);
 	}
@@ -2033,7 +1953,7 @@
 
 	/**
 	\fn double Pipeline::getTotalTiming(void)
-	\brief Get total time ellapsed for last run.
+	\brief Get total time elapsed for last run.
 	\return Time in milliseconds needed to apply the whole pipeline (counting everything and flushing after each filter).
 	**/
 	double Pipeline::getTotalTiming(void)

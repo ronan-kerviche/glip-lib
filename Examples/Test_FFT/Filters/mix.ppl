@@ -1,6 +1,6 @@
 REQUIRED_FORMAT:outputFormat(format)
 
-SHADER_SOURCE:mixShader()
+SHADER_SOURCE:mixShader
 {
 	#version 130
 	precision mediump float;
@@ -22,10 +22,10 @@ SHADER_SOURCE:mixShader()
 
 FILTER_LAYOUT:fMix(outputFormat,mixShader)
 
-PIPELINE_MAIN:pMix()
+PIPELINE_MAIN:pMix
 {
 	INPUT_PORTS(convolved, original)
 	OUTPUT_PORTS(outText)
-	FILTER_INSTANCE:instMix(fMix)
+	FILTER_INSTANCE:fMix
 }
 

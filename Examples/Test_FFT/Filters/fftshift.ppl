@@ -1,6 +1,6 @@
-TEXTURE_FORMAT:format(512,256,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST);
+TEXTURE_FORMAT:format(512,256,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
-SHADER_SOURCE:shader()
+SHADER_SOURCE:shader
 {
 	#version 130
 	precision mediump float;
@@ -27,9 +27,9 @@ SHADER_SOURCE:shader()
 	}
 }
 
-FILTER_LAYOUT:filter(format,shader);
+FILTER_LAYOUT:filter(format,shader)
 
-PIPELINE_MAIN:pMain()
+PIPELINE_MAIN:pMain
 {
 	INPUT_PORTS(i0);
 	OUTPUT_PORTS(o0);

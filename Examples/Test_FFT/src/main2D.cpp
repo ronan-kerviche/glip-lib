@@ -75,7 +75,9 @@
 		{
 			double 	timeGOL  = 0.0,
 				timeConv = 0.0,
-				timeMix  = 0.0;
+				timeMix  = 0.0,
+				timeFFT	 = 0.0,
+				timeIFFT = 0.0;
 			int i=0;
 
 			// Initialize GLIP-LIB
@@ -103,16 +105,17 @@
 			PipelineLayout pl("Main_GameOfLife");
 
 			// Add one input and one output :
-			pl.addInput("Input");
-			pl.addOutput("Output");
+			pl.addInput("inputTexture");
+			pl.addOutput("outputTexture");
 
 			// Add an instance of the filter fl :
 			pl.add(fl, "GameOfLife");
 
 			// Connect the elements :
-			pl.connectToInput("Input", "GameOfLife", "inText");
-			pl.connectToOutput("GameOfLife", "outText", "Output");
+			//pl.connectToInput("Input", "GameOfLife", "inputTexture");
+			//pl.connectToOutput("GameOfLife", "outText", "outputTexture");
 			// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
+			pl.autoConnect();
 
 			// Create two pipeline on this layout, they won't share any further information :
 			Pipeline* p1 = new Pipeline(pl, "Ping");
@@ -139,25 +142,25 @@
 			(*p2) << start << Pipeline::Process;
 
 			// FFT :
-			FFT2D fft2D(fmt.getWidth(), fmt.getHeight(), FFT2D::Shifted);
-			FFT2D ifft2D(fft2D.w, fft2D.h, FFT2D::Inversed | FFT2D::ComputeMagnitude | FFT2D::Shifted);
+			Pipeline* fft2D = new Pipeline(GenerateFFT2DPipeline::generate(fmt.getWidth(), fmt.getHeight(), FFTModules::Shifted), "FFT2D");
+			Pipeline* ifft2D = new Pipeline(GenerateFFT2DPipeline::generate(fmt.getWidth(), fmt.getHeight(), FFTModules::Inversed | FFTModules::Shifted), "IFFT2D");
 
 			// Convolution :
 			LayoutLoader loader;
-			loader.addRequiredElement("format", fft2D.output().format());
-			Pipeline conv( loader("./Filters/convolution.ppl") ,"Convolution");
+			loader.addRequiredElement("format", fft2D->out().format());
+			Pipeline conv( loader.getPipelineLayout("./Filters/convolution.ppl") ,"Convolution");
 
 			loader.clearRequiredElements("format");
 			loader.addRequiredElement("format", fmt);
-			Pipeline mix( loader("./Filters/mix.ppl") ,"mix");
+			Pipeline mix( loader.getPipelineLayout("./Filters/mix.ppl") ,"mix");
 
 			p1->enablePerfsMonitoring();
 			p2->enablePerfsMonitoring();
 			conv.enablePerfsMonitoring();
 			mix.enablePerfsMonitoring();
 
-			fft2D.enablePerfsMonitoring();
-			ifft2D.enablePerfsMonitoring();
+			fft2D->enablePerfsMonitoring();
+			ifft2D->enablePerfsMonitoring();
 
 			// Geometry : 
 			GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
@@ -182,32 +185,37 @@
 					// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
 					(*p1) << p2->out(0) << Pipeline::Process;
 					timeGOL += p1->getTotalTiming();
-					fft2D.process(p1->out(0));
+					(*fft2D) << p1->out(0) << Pipeline::Process;
+					timeFFT += fft2D->getTotalTiming();
 				}
 				else
 				{
 					(*p2) << p1->out(0) << Pipeline::Process;
 					timeGOL += p2->getTotalTiming();
-					fft2D.process(p2->out(0));
+					(*fft2D) << p2->out(0) << Pipeline::Process;
+					timeFFT += fft2D->getTotalTiming();
 				}
 
-				conv << fft2D.output() << Pipeline::Process;
+				conv << fft2D->out() << Pipeline::Process;
 				timeConv += conv.getTotalTiming();
-				ifft2D.process(conv.out(0));
+				(*ifft2D) << conv.out(0) << Pipeline::Process;
+				timeIFFT += ifft2D->getTotalTiming();
 
 				if(i%2==0)
-					mix << p1->out(0) << ifft2D.output() << Pipeline::Process;
+					mix << p1->out(0) << ifft2D->out() << Pipeline::Process;
 				else
-					mix << p2->out(0) << ifft2D.output() << Pipeline::Process;
+					mix << p2->out(0) << ifft2D->out() << Pipeline::Process;
 				timeMix += mix.getTotalTiming();
 
 				if(showConvolved)
 					mix.out(0).bind();
 				else
+				{
 					if(i%2==0)
 						p1->out(0).bind();
 					else
 						p2->out(0).bind();
+				}
 
 				quad.draw();
 
@@ -219,28 +227,20 @@
 				// Check if ESC key was pressed or window was closed
 				running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 
-				glfwSleep(0.1);
+				//glfwSleep(0.03);
 			}
 
 			log << "Total number of processes : " << i << std::endl;
 			log << "Mean duration for GOL     : " << timeGOL/i << " ms" << std::endl;
 			log << "Mean duration for CONV    : " << timeConv/i << " ms" << std::endl;
 			log << "Mean duration for MIX     : " << timeMix/i << " ms" << std::endl;
-			log << "FFT1D" << std::endl;
-			log << "    Number of processes   : " << fft2D.getNumProcesses() << std::endl;
-			log << "    Mean time             : " << fft2D.getMeanTime() << " ms" << std::endl;
-			log << "    Std Dev on time       : " << fft2D.getStdDevTime() << " ms" << std::endl;
-			log << "iFFT1D" << std::endl;
-			log << "    Number of processes   : " << ifft2D.getNumProcesses() << std::endl;
-			log << "    Mean time             : " << ifft2D.getMeanTime() << " ms" << std::endl;
-			log << "    Std Dev on time       : " << ifft2D.getStdDevTime() << " ms" << std::endl;
-
-			fft2D.disablePerfsMonitoring();
-			ifft2D.disablePerfsMonitoring();
-
+			log << "Mean duration for FFT2D   : " << timeFFT/i << " ms" << std::endl;
+			log << "Mean duration for IFFT2D   : " << timeIFFT/i << " ms" << std::endl;
 			log << "> End" << std::endl;
 			log.close();
 
+			delete ifft2D;
+			delete fft2D;
 			delete p1;
 			delete p2;
 

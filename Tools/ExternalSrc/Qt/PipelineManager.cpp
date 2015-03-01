@@ -21,6 +21,8 @@
 
 using namespace QGPM;
 
+//#define __VERBOSE_PIPELINE_ITEMS__ 
+
 // Connection : 
 	Connection::Connection(void)
 	{ }
@@ -54,7 +56,9 @@ using namespace QGPM;
 
 	void ConnectionToImageItem::imageItemDestroyed(void)
 	{
-		std::cout << "ConnectionToImageItem::imageItemDestroyed - " << imageItem << " from connection " << this << std::endl;
+		#ifdef __VERBOSE_PIPELINE_ITEMS__
+			std::cout << "ConnectionToImageItem::imageItemDestroyed - " << imageItem << " from connection " << this << std::endl;
+		#endif
 
 		imageItem = NULL;
 
@@ -160,7 +164,9 @@ using namespace QGPM;
 	{
 		if(pipelineItem!=NULL)
 		{
-			std::cout << "ConnectionToPipelineOutput::pipelineItemStatusChanged" << std::endl;
+			#ifdef __VERBOSE_PIPELINE_ITEMS__
+				std::cout << "ConnectionToPipelineOutput::pipelineItemStatusChanged" << std::endl;
+			#endif
 			emit Connection::statusChanged(pipelineItem->isValid());
 		}
 	}
@@ -356,7 +362,9 @@ using namespace QGPM;
 			QObject::connect(connection, SIGNAL(connectionClosed(void)), 		this, SLOT(connectionDestroyed(void)));
 
 			// Set the connection : 
-			std::cout << "InputPortItem::connect : " << connection->getName().toStdString() << std::endl;
+			#ifdef __VERBOSE_PIPELINE_ITEMS__
+				std::cout << "InputPortItem::connect : " << connection->getName().toStdString() << std::endl;
+			#endif
 			setText(1, connection->getName());
 			
 
@@ -524,7 +532,9 @@ using namespace QGPM;
 
 	HdlTexture& OutputPortItem::out(void)
 	{
-		std::cout << "OutputPortItem::out - Index : " << portIdx << std::endl;
+		#ifdef __VERBOSE_PIPELINE_ITEMS__
+			std::cout << "OutputPortItem::out - Index : " << portIdx << std::endl;
+		#endif
 
 		if(!isValid())
 			throw Exception("OutputPortItem::out - Output port is invalid.", __FILE__, __LINE__);
@@ -563,7 +573,9 @@ using namespace QGPM;
 
 	void OutputPortItem::computationFinished(int computeCount, QVector<const void*> resourceChain)
 	{
-		std::cout << "OutputPortItem::computationFinished - Index : " << portIdx << std::endl;
+		#ifdef __VERBOSE_PIPELINE_ITEMS__
+			std::cout << "OutputPortItem::computationFinished - Index : " << portIdx << std::endl;
+		#endif
 
 		// Update the texture link, if necessary : 
 		if(view!=NULL && parentPipelineItem!=NULL && parentPipelineItem->isValid())
@@ -852,13 +864,19 @@ using namespace QGPM;
 				// Test the connection (take it as valid if it is invalid but part of this pipeline, a self connection) : 
 				if(baseTest && inputPortItems[k]->getConnection()->isValid())
 				{
-					std::cout << "PipelineItem::compile - Adding requirement : " << name << std::endl;
+					#ifdef __VERBOSE_PIPELINE_ITEMS__
+						std::cout << "PipelineItem::compile - Adding requirement : " << name << std::endl;
+					#endif
 					loader.addRequiredElement(name, inputPortItems[k]->getConnection()->getFormat());
 				} 
 				else if(baseTest && inputPortItems[k]->getConnection()->selfTest(this))
-					std::cout << "PipelineItem::compile - Not adding requirement (self connection)." << std::endl;
-				else 
-					std::cout << "PipelineItem::compile - Unable to add requirement : " << name << std::endl;
+				{
+					#ifdef __VERBOSE_PIPELINE_ITEMS__
+						std::cout << "PipelineItem::compile - Not adding requirement (self connection)." << std::endl;
+					#endif
+				}
+				else
+					throw Exception("PipelineItem::compile - Unable to add requirement : " + name, __FILE__, __LINE__);
 			}
 
 			pipeline = loader.getPipeline(source, "Pipeline", sourceName);
@@ -1039,7 +1057,9 @@ using namespace QGPM;
 
 	void PipelineItem::connectionStatusChanged(int portIdx, bool validity)
 	{
-		std::cout << "PipelineItem::connectionStatusChanged - Port : " << portIdx << std::endl;
+		#ifdef __VERBOSE_PIPELINE_ITEMS__
+			std::cout << "PipelineItem::connectionStatusChanged - Port : " << portIdx << std::endl;
+		#endif
 	}
 
 	void PipelineItem::connectionClosed(int portIdx)
@@ -1372,7 +1392,9 @@ using namespace QGPM;
 						title = tr("Starting at %1...").arg(imageItems[p]->getName());
 		
 					QAction* action = imageItemsMenu.addAction(title);
-					std::cout << "ConnectionsMenu::buildMenu - Adding action, parent : " << action->parentWidget() << " (" << this << ", " << &imageItemsMenu << ")" << std::endl;
+					#ifdef __VERBOSE_PIPELINE_ITEMS__
+						std::cout << "ConnectionsMenu::buildMenu - Adding action, parent : " << action->parentWidget() << " (" << this << ", " << &imageItemsMenu << ")" << std::endl;
+					#endif
 
 					// Construct the potential connection map : 
 					PotentialConnections* potentialConnections = new PotentialConnections;
@@ -1994,8 +2016,6 @@ using namespace QGPM;
 	
 	void PipelineManager::removePipeline(PipelineItem* pipelineItem)
 	{
-		std::cout << "PipelineManager::removePipeline : " << pipelineItem << std::endl;
-
 		QMap<void*, PipelineItem*>::iterator it=pipelineItems.begin();
 
 		for(; it!=pipelineItems.end(); it++)
@@ -2003,8 +2023,6 @@ using namespace QGPM;
 			if(it.value()==pipelineItem)
 				break ;
 		}
-	
-		std::cout << "PipelineManager::removePipeline : " << (it!=pipelineItems.end()) << std::endl;
 
 		if(it!=pipelineItems.end())
 		{

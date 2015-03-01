@@ -1,0 +1,97 @@
+TEXTURE_FORMAT:outputLogoFormat(512, 512, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+CALL:FORMAT_TO_CONSTANT(outputLogoFormat, outputLogoFormat)
+
+SHARED_CODE:glipLogoShader
+{
+	#ifndef MODIFY_GLIP_LOGO
+	const float 	thickness = 0.150,
+			aaThicknes = 0.002,
+			xOutterLow = 0.2,
+			xInnerLow = 0.3,
+			xInnerHigh = 0.73,
+			xOutterHigh = 0.8,
+			yLineTop = 0.2,
+			yLineMiddle = 0.5,
+			yLineBottom = 0.8;
+	#endif
+	
+	float dSegment(vec2 p, vec2 a, vec2 b)
+	{
+		float l = (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y);
+		float t = dot(p - a, b - a) / l;
+		if (t < 0.0)
+			return distance(p, a);
+		else if (t > 1.0)
+			return distance(p, b);
+		else
+			return distance(p, a + t * (b - a));
+	}
+
+	float dRed(vec2 p)
+	{
+		float d = min(dSegment(p, vec2(xOutterLow, yLineMiddle), vec2(xInnerLow, yLineMiddle)),
+			  min(dSegment(p, vec2(xInnerLow, yLineMiddle), vec2(xInnerHigh, yLineTop)),
+			      dSegment(p, vec2(xInnerHigh, yLineTop), vec2(xOutterHigh, yLineTop)) ));
+		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+	}
+
+	float dGreen(vec2 p)
+	{
+		float d = min(dSegment(p, vec2(xOutterLow, yLineTop), vec2(xInnerLow, yLineTop)),
+			  min(dSegment(p, vec2(xInnerLow, yLineTop), vec2(xInnerHigh, yLineBottom)),
+			      dSegment(p, vec2(xInnerHigh, yLineBottom), vec2(xOutterHigh, yLineBottom)) ));
+		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+	}
+
+	float dBlue(vec2 p)
+	{
+		float d = min(dSegment(p, vec2(xOutterLow, yLineBottom), vec2(xInnerLow, yLineBottom)),
+			  min(dSegment(p, vec2(xInnerLow, yLineBottom), vec2(xInnerHigh, yLineMiddle)),
+			      dSegment(p, vec2(xInnerHigh, yLineMiddle), vec2(xOutterHigh, yLineMiddle)) ));
+		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+	}
+
+	vec4 getLogo(vec2 p)
+	{
+		vec4 l = vec4(dRed(p), dGreen(p), dBlue(p), 0.0);
+		l = vec4(l.r*(1.0-l.g)*(1.0-l.b), l.g*(1.0-l.b), l.b, max(l.r, max(l.g, l.b)));
+		return l;
+	}
+}
+
+SHADER_SOURCE:glipShader
+{
+	#version 130
+	out vec4 logo;
+
+	INSERT(outputLogoFormat)
+	
+	//#define MODIFY_GLIP_LOGO
+	#ifdef MODIFY_GLIP_LOGO
+	uniform float 	thickness = 0.150,
+			aaThicknes = 0.002,
+			xOutterLow = 0.2,
+			xInnerLow = 0.3,
+			xInnerHigh = 0.73,
+			xOutterHigh = 0.8,
+			yLineTop = 0.2,
+			yLineMiddle = 0.5,
+			yLineBottom = 0.8;
+	#endif
+
+	INSERT(glipLogoShader)
+
+	void main(void)
+	{
+		vec2 p = gl_FragCoord.xy/outputLogoFormat;
+		logo = getLogo(p);
+	}
+}
+
+FILTER_LAYOUT:glipFilter(outputLogoFormat, glipShader)
+
+PIPELINE_MAIN:glipPipeline
+{
+	OUTPUT_PORTS(logo)
+	FILTER_INSTANCE:glipFilter
+}

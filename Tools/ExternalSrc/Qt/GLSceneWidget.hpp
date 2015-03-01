@@ -115,6 +115,7 @@ namespace QVGL
 		ActionPreviousSubWidget,
 		ActionToggleTemporaryHideAllSubWidgets,
 		ActionHideAllSubWidgets,
+		ActionQuit,
 		// Add new actions before this line
 		NumActions,
 		NoAction
@@ -355,6 +356,7 @@ namespace QVGL
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
 			void resetPosition(bool force=true);
+			virtual bool readyToQuit(void);
 
 			static SubWidget* getPtrFromProxyItem(QGraphicsItem *item);
 			static SubWidget* getPtrFromProxyItem(QGraphicsProxyWidget *proxy);
@@ -410,6 +412,7 @@ namespace QVGL
 								subWidgetsMenu;
 				QAction				toggleFullscreenAction,
 								openSettingsAction,
+								openInfosAction,
 								quitAction,
 								*viewsSeparator,
 								closeCurrentViewAction,	
@@ -471,8 +474,9 @@ namespace QVGL
 				void changeViewRequest(View* targetView);
 				void changeViewsTableRequest(ViewsTable* targetViewsTable);
 				void requestAction(ActionID);
+				void requestOpenInfos(void);
 				void showSubWidgetRequest(SubWidget* targetWidget);
-				void selected(TopBar* ptr);
+				void selected(TopBar* ptr);				
 		};
 	
 		class BottomBar : public QWidget
@@ -501,15 +505,27 @@ namespace QVGL
 				void selected(BottomBar*);
 		};
 
-		class SettingsDialog : public QWidget
+		class SettingsDialog : public SubWidget
 		{
 			Q_OBJECT
 
 			private : 
 
 			public : 
-				SettingsDialog(QWidget* parent=NULL);
+				SettingsDialog(void);
 				~SettingsDialog(void);
+		};
+
+		class InfosDialog : public SubWidget
+		{
+			Q_OBJECT
+
+			private : 
+				QLabel message;
+
+			public : 
+				InfosDialog(void);
+				~InfosDialog(void);
 		};
 
 	#ifdef __MAKE_VARIABLES__
@@ -820,6 +836,7 @@ namespace QVGL
 
 			// Functions :
 			void resizeEvent(QResizeEvent *event);
+			void closeEvent(QCloseEvent *event);
 
 		public : 
 			GLSceneViewWidget(MainWidget* _Parent, TopBar* topBar=NULL, BottomBar* bottomBar=NULL);
@@ -840,9 +857,6 @@ namespace QVGL
 			void update(void);
 
 			static void sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order=Qt::DescendingOrder);
-
-		//signals : 
-			//void resized(QSize newSize);
 	};
 	
 	class MainWidget : public QWidget
@@ -855,6 +869,7 @@ namespace QVGL
 			MouseState			mouseState;
 			TopBar				topBar;
 			BottomBar			bottomBar;
+			InfosDialog			*infosDialog;
 			GLSceneViewWidget  		glSceneViewWidget;
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
@@ -875,43 +890,47 @@ namespace QVGL
 			void setMouseCursor(Qt::CursorShape cursorShape);
 
 			// Views : 
-				void viewRequireDisplay(View* view);
-				void viewRequireDisplay(void);
-				void viewChangeSelection(View* view);
-				void viewUpdated(View* view);
-				void viewUpdated(void);
-				void viewClosed(View* view);
-				void viewClosed(void);
-				void viewDestroyed(void);
-				void closeAllViews(void);
+			void viewRequireDisplay(View* view);
+			void viewRequireDisplay(void);
+			void viewChangeSelection(View* view);
+			void viewUpdated(View* view);
+			void viewUpdated(void);
+			void viewClosed(View* view);
+			void viewClosed(void);
+			void viewDestroyed(void);
+			void closeAllViews(void);
 
 			// ViewsTable :
-				void viewsTableRequireDisplay(ViewsTable* viewsTable);
-				void viewsTableRequireDisplay(void);
-				void viewsTableClosed(ViewsTable* viewsTable);
-				void viewsTableClosed(void);
-				void viewsTableDestroyed(void);
-				void closeAllViewsTables(void);
+			void viewsTableRequireDisplay(ViewsTable* viewsTable);
+			void viewsTableRequireDisplay(void);
+			void viewsTableClosed(ViewsTable* viewsTable);
+			void viewsTableClosed(void);
+			void viewsTableDestroyed(void);
+			void closeAllViewsTables(void);
 
 			// Widgets : 	
-				void subWidgetSelected(SubWidget* subWidget);
-				void subWidgetSelected(void);
-				void showSubWidget(SubWidget* subWidget);
-				void showSubWidget(void);
-				void hideSubWidget(SubWidget* subWidget);
-				void hideSubWidget(void);
-				void subWidgetClosed(SubWidget* subWidget);
-				void subWidgetClosed(void);
-				void subWidgetDestroyed(void);
-				void nextSubWidget(void);
-				void previousSubWidget(void);
-				void temporaryHideAllSubWidgets(bool enabled = true);
-				void toggleTemporaryHideAllSubWidgets(void);
-				void hideAllSubWidgets(void);
+			void subWidgetSelected(SubWidget* subWidget);
+			void subWidgetSelected(void);
+			void showSubWidget(SubWidget* subWidget);
+			void showSubWidget(void);
+			void hideSubWidget(SubWidget* subWidget);
+			void hideSubWidget(void);
+			void subWidgetClosed(SubWidget* subWidget);
+			void subWidgetClosed(void);
+			void subWidgetDestroyed(void);
+			void nextSubWidget(void);
+			void previousSubWidget(void);
+			void temporaryHideAllSubWidgets(bool enabled = true);
+			void toggleTemporaryHideAllSubWidgets(void);
+			void hideAllSubWidgets(void);
 
 			// Bars : 
-				void barSelected(TopBar* bar);
-				void barSelected(BottomBar* bar);
+			void barSelected(TopBar* bar);
+			void barSelected(BottomBar* bar);
+
+			// Special : 
+			void processOpenInfosRequest(void);
+			bool processQuitRequest(void);
 
 		protected :
 			KeyboardState& getKeyboardState(void);
@@ -931,6 +950,9 @@ namespace QVGL
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view=NULL) const;
 			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;
 			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view=NULL) const;
+		
+			// Events : 
+			void closeEvent(QCloseEvent *event);
 
 			friend class GLScene;
 			friend class GLSceneViewWidget;
@@ -956,6 +978,7 @@ namespace QVGL
 			void viewAdded(View*);
 			void viewsTableAdded(ViewsTable*);
 			void subWidgetAdded(SubWidget*);
+			void requestQuit(void);
 	};
 }
 

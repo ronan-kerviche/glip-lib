@@ -16,12 +16,11 @@ SHADER_SOURCE:HistogramVertexShader
 
 	uniform sampler2D inputTexture;
 
-	const vec2 reducedFormat = vec2(INSERT(reducedFormat));
+	INSERT(reducedFormat)
 
 	void main()
 	{
 		// Vertex texture fetching :
-		//vec4 col = texture(inputTexture, gl_Vertex.xy/reducedFormat);
 		vec4 col = texelFetch(inputTexture, ivec2(gl_Vertex.xy), 0);
 		float sel = 0.0;
 		// Compute the "Payload"
@@ -35,14 +34,17 @@ SHADER_SOURCE:HistogramVertexShader
 			gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
 			sel = col.g;
 		}
-		else // Blue plane
+		else if(gl_Vertex.z==2.0) // Blue plane
 		{
 			gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
 			sel = col.b;
 		}
-		// Only on [0.0,1.0] interval :
-		sel = clamp(sel, 0.0, 1.0);
-		// Done
+		else // Discard
+		{
+			gl_FrontColor = vec4(0.0,0.0,0.0,1.0);
+			sel = -1.0;
+		}
+
 		gl_Position = vec4((sel-0.5)*2.0, 0.0, 0.0, 1.0); // set new point position to the color intensity in [-1.0,1.0] interval.
 	}
 }
@@ -54,12 +56,13 @@ SHADER_SOURCE:HistogramFragmentShader
 
 	out vec4 histogramBins;
 
-	const vec2 reducedFormat = vec2(INSERT(reducedFormat));
+	INSERT(reducedFormat)
 
 	void main()
 	{
 		// Prepare normalization constant :
-		float nrm = 1.0/(reducedFormat.s*reducedFormat.t);
+		float nrm = 1.0/float(reducedFormat.s*reducedFormat.t);
+		// Write :
 		histogramBins = gl_Color*nrm;
 		histogramBins.a = 1.0;
 	}
@@ -67,7 +70,8 @@ SHADER_SOURCE:HistogramFragmentShader
 
 FILTER_LAYOUT:HistogramFilter(histogramBinsFormat, HistogramFragmentShader, HistogramVertexShader, grid)
 {
-	GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD)
+	// Set the blending so that we sum the counts :
+	GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD) 
 }
 
 PIPELINE_MAIN:HistogramPipeline

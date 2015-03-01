@@ -26,16 +26,6 @@
 \section sec_GlipCompute Glip-Compute
 	Window-less, command-line based tool for rendering with GLIP-Lib (\ref page_UseGlipCompute).
 
-\section sec_examples Demos
-	Adapter for Qt Code, based on <i>OutputDevice</i> (implements full control over translation, rotation, zoom with mouse and keyboard) :<BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.hpp">WindowRendering.hpp</a><BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/WindowRendering.cpp">WindowRendering.cpp</a><BR>
-	Other tools in the repository : <a href="http://sourceforge.net/p/glip-lib/code/ci/master/tree/Examples/ExternalTools/">Examples/ExternalTools/</a><BR>
-	GLFW "Hello World" - Game of Life :<BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/mainGLFW.cpp">mainGLFW.cpp</a><BR>
-	&nbsp;&nbsp;&nbsp;&nbsp; <a href="./sources/game.glsl">game.glsl</a><BR>
-	Other samples in the repository : <a href="http://sourceforge.net/p/glip-lib/code/ci/master/tree/Examples/">Examples/</a>
-
 \section sec_contacts Contacts
 	<b>For all questions, bug reports or others, you can send an email to the users mailing list : <a href="mailto:glip-lib-users@lists.sourceforge.net">glip-lib-users@lists.sourceforge.net</a> or the developers mailing list : <a href="mailto:glip-lib-devl@lists.sourceforge.net">glip-lib-devl@lists.sourceforge.net</a></b>. For subscriptions and archive see <a href="http://sourceforge.net/p/glip-lib/mailman/">http://sourceforge.net/p/glip-lib/mailman/</a>.
 

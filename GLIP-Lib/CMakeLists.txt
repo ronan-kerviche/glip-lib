@@ -7,8 +7,7 @@ project(GLIP)
 
 set(CMAKE_BUILD_TYPE Release)
 
-# To track the compilation process
-#set(CMAKE_VERBOSE_MAKEFILE on )
+set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wextra")
 
 if(WIN32) # Windows specifics
 	# MAKE SURE THAT YOUR PATH CONTAINS THE DIRECTORY TO ALL MINGW BINARIES
@@ -28,14 +27,14 @@ if(WIN32) # Windows specifics
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
 
-	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32 -std=c++11 -pedantic -Wall -Wextra")
+	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
 
 else() # Linux specifics
-	#For Cleaning purpose :
-	set(CMAKE_CXX_FLAGS "-std=c++11 -pedantic -Wall -Wextra")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+	# None
 endif()
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 set(LIBRARY_OUTPUT_PATH lib/)
 

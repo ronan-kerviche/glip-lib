@@ -131,7 +131,7 @@ namespace Glip
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 		else
 		{
@@ -206,28 +206,28 @@ namespace Glip
 			}
 
 			str += "    " + getOutputPortName() + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */						PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 		}
 		else
 		{
 			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";
 			str += "    " + getOutputPortName() + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 			str += "    " + getOutputPortName() + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
 
-		std::cout << "GenerateFFT1DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
-		std::cout << str << std::endl;
+		//std::cout << "GenerateFFT1DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
+		//std::cout << str << std::endl;
 
 		#undef PUSH_LINE_INFO
 
@@ -247,7 +247,7 @@ namespace Glip
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}		
 		else
 		{
@@ -293,17 +293,17 @@ namespace Glip
 			str += "    A = post(A, gl_FragCoord.x/float(width)); \n";								PUSH_LINE_INFO
 		}
 
-		str += "    " + getOutputPortName() + " = A; \n";											PUSH_LINE_INFO
+		str += "    " + getOutputPortName() + " = A; \n";										PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
 
-		std::cout << "GenerateFFT1DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
-		std::cout << str << std::endl;
+		//std::cout << "GenerateFFT1DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
+		//std::cout << str << std::endl;
 
 		#undef PUSH_LINE_INFO
 
@@ -589,7 +589,7 @@ namespace Glip
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}
 		else
 		{
@@ -709,30 +709,30 @@ namespace Glip
 			}
 
 			str += "    " + getOutputPortName() + ".r  = A.r + B.r; \n"; /* real */							PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */							PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */					PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = A.g + B.g; \n"; /* imaginary */						PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".b  = (A.r - B.r)*c - (A.g - B.g)*s; \n"; /* real */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (A.r - B.r)*s + (A.g - B.g)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 		}
 		else
 		{
 			str += "    float g = float(posB>pos.x)*2.0 - 1.0; \n";									PUSH_LINE_INFO
 			str += "    " + getOutputPortName() + ".r  = (g*A.r + B.r)*c - (g*A.g + B.g)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".g  = (g*A.r + B.r)*s + (g*A.g + B.g)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 			str += "    " + getOutputPortName() + ".b  = (g*A.b + B.b)*c - (g*A.a + B.a)*s; \n"; /* real */				PUSH_LINE_INFO
-			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */				PUSH_LINE_INFO
+			str += "    " + getOutputPortName() + ".a  = (g*A.b + B.b)*s + (g*A.a + B.a)*c; \n"; /* imaginary */			PUSH_LINE_INFO
 		}
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		str += "} \n";
 
 		#undef PUSH_LINE_INFO
 
-		std::cout << "GenerateFFT2DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
-		std::cout << str << std::endl;
+		//std::cout << "GenerateFFT2DPipeline::generateStepCode(" << width << ", " << currentLevel << ")" << std::endl;
+		//std::cout << str << std::endl;
 
 		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}
@@ -753,7 +753,7 @@ namespace Glip
 
 		if((flags & CompatibilityMode)==0)
 		{
-			str += "out vec4 " + getOutputPortName() + "; \n";										PUSH_LINE_INFO
+			str += "out vec4 " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
 		}		
 		else
 		{
@@ -814,19 +814,19 @@ namespace Glip
 			str += "    A = post(A, gl_FragCoord.xy/vec2(h, w)); \n";								PUSH_LINE_INFO
 		}
 
-		str += "    " + getOutputPortName() + " = A; \n";											PUSH_LINE_INFO
+		str += "    " + getOutputPortName() + " = A; \n";										PUSH_LINE_INFO
 
 		if((flags & CompatibilityMode)!=0)
 		{
-			str += "    gl_FragColor = " + getOutputPortName() + "; \n";									PUSH_LINE_INFO
+			str += "    gl_FragColor = " + getOutputPortName() + "; \n";								PUSH_LINE_INFO
 		}
 
 		str += "} \n";															PUSH_LINE_INFO
 
 		#undef PUSH_LINE_INFO
 
-		std::cout << "GenerateFFT2DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
-		std::cout << str << std::endl;
+		//std::cout << "GenerateFFT2DPipeline::generateLastShuffleCode(" << width << ")" << std::endl;
+		//std::cout << str << std::endl;
 
 		return ShaderSource(str, "<GenerateFFT1DPipeline::generate(" + toString(width) +")>", 1, linesInfo);
 	}

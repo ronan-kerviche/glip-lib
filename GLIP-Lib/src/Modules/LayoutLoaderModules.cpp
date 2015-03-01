@@ -22,6 +22,7 @@
 **/
 
 	// Includes : 
+	#include <cmath>
 	#include "Modules/LayoutLoaderModules.hpp"
 	#include "Core/Exception.hpp"
 	#include "Modules/LayoutLoader.hpp"

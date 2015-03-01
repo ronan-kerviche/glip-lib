@@ -19,6 +19,8 @@
 #include <QMessageBox>
 #include <QFileInfo>
 
+//#define __VERBOSE_UNIFORMS__ 
+
 using namespace QGUI;
 
 // VariableRecord :
@@ -262,7 +264,9 @@ using namespace QGUI;
 	
 		resource.object().set(v, i, j);
 
-		std::cout << "ValuesInterface::pushModificationToResource - Pushing " << index << ", " << i << ", " << j << " = " << v << std::endl;
+		#ifdef __VERBOSE_UNIFORMS__ 
+			std::cout << "ValuesInterface::pushModificationToResource - Pushing " << index << ", " << i << ", " << j << " = " << v << std::endl;
+		#endif
 
 		// Set resource as modified : 
 		resource.modified = true;

@@ -66,11 +66,11 @@
 					///Flags describing the component kind.
 					enum ComponentKind
 					{
-						///For this pipeline (internal use).
+						/// For this pipeline (internal use).
 						THIS_PIPELINE = -1,
-						///For filters.
+						/// For filters.
 						FILTER        =  0,
-						///For pipelines.
+						/// For pipelines.
 						PIPELINE      =  1
 					};
 
@@ -138,10 +138,6 @@
 					AbstractPipelineLayout& 	pipelineLayout(const std::vector<std::string>& path); // Cannot be const as it can return itself.
 
 					Connection              	getConnection(int i) const;
-					//std::string 			getConnectionDestinationsName(int filterSource, int port);
-					//std::string 			getConnectionDestinationsName(const std::string& filterSource, const std::string& port);
-					//std::string 			getConnectionSourceName(int filterDestination, int port);
-					//std::string 			getConnectionSourceName(const std::string& filterDestination, const std::string& port);
 					bool 				check(bool exception = true);
 			};
 
