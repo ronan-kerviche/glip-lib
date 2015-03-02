@@ -5,7 +5,7 @@ SHARED_CODE:glipLogoShader
 {
 	#ifndef MODIFY_GLIP_LOGO
 	const float 	thickness = 0.150,
-			aaThicknes = 0.002,
+			aaThicknes = 0.001,
 			xOutterLow = 0.2,
 			xInnerLow = 0.3,
 			xInnerHigh = 0.73,

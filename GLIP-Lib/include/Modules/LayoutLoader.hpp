@@ -204,6 +204,7 @@ Define a texture format (Core::HdlTextureFormat). The first line shows the minim
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the texture format created.</td></tr>
 <tr class="glipDescrRow"><td><i>width</i></td>				<td>Width in pixels of the format.</td></tr>
 <tr class="glipDescrRow"><td><i>height</i></td>				<td>Height in pixels of the format.</td></tr>
 <tr class="glipDescrRow"><td><i>mode</i></td>				<td>Mode of the format, among GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA, etc.</td></tr>
@@ -326,7 +327,7 @@ Define a vertex. If the geometry was set to receive texture coordinates, the VER
 <b>ELEMENT</b>(<i>a</i>, [<i>b</i>, <i>c</i>, <i>d</i>])
 </blockquote>
 
-Define an element. An element is the polygon structure or primitive defined for the current geometry model. Only using GL_POINT wave the requirement for defining elements. The number of elements indices needed depend on the number of vertices per element.
+Define an element. An element is the polygon structure or primitive defined for the current geometry model. Only using GL_POINT waive the requirement for defining elements. The number of elements indices needed depend on the number of vertices per element.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
@@ -530,7 +531,7 @@ Define a pipeline instance within a pipeline layout.
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
 <tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of this instance.</td></tr>
-<tr class="glipDescrRow"><td><i>filterLayoutName</i></td>		<td>The name of the layout to use. If the argument is not given, it will use the name of the instance instead.</td></tr>
+<tr class="glipDescrRow"><td><i>pipelineLayoutName</i></td>		<td>The name of the layout to use. If the argument is not given, it will use the name of the instance instead.</td></tr>
 </table>
 
 #### Connection

@@ -788,12 +788,13 @@ using namespace QVGL;
 	}
 
 // SubWidget :
-	SubWidget::SubWidget(void)
+	SubWidget::SubWidget(const Flag _flags)
 	 : 	layout(this),
 		titleBar(&titleWidget),
 		titleLabel(this),
 		hideButton(this),
 		widget(NULL),
+		flags(_flags),
 		motionActive(false),
 		resizeActive(false),
 		resizeHorizontalLock(false),
@@ -854,6 +855,7 @@ using namespace QVGL;
 
 		if(!event->isAccepted() && qvglParent!=NULL)
 		{
+			const bool resizeable = (flags & NotResizeable)==0;
 			const QPoint 	cw 		 = mapFromGlobal(event->globalPos());
 					mousePress  	 = mapToParent(cw);
 					sizeAtMousePress = size();
@@ -862,7 +864,7 @@ using namespace QVGL;
 			offset = mousePress - pos(); 
 
 			const int borderResize = 2 * layout.margin();
-			resizeActive = (cw.x()<borderResize) || ((width()-cw.x())<borderResize) || ((height()-cw.y())<borderResize); // All borders except the title.
+			resizeActive = resizeable && ((cw.x()<borderResize) || ((width()-cw.x())<borderResize) || ((height()-cw.y())<borderResize)); // All borders except the title.
 			motionActive = !resizeActive;
 
 			// Further test on the resize action : 
@@ -921,15 +923,17 @@ using namespace QVGL;
 			}
 			else if(motionActive)
 			{
+				const bool anchorable = (flags & NotAnchorable)==0;
+
 				// Get the new position : 
 				const QPoint	c = mapToParent(mapFromGlobal(event->globalPos())),
 						p = c - offset;
 
-				if(c.x()<=0)
+				if(anchorable && c.x()<=0)
 					setAnchor(AnchorLeft);
-				else if(c.x()>=(sceneRect.width()-1))
+				else if(anchorable && c.x()>=(sceneRect.width()-1))
  					setAnchor(AnchorRight);
-				else if(c.y()<=0 || c.y()>=(sceneRect.height()-1))
+				else if(anchorable && (c.y()<=0 || c.y()>=(sceneRect.height()-1)))
 				{
 					setAnchor(AnchorMaximized);
 					offset = c - pos();
@@ -1006,10 +1010,15 @@ using namespace QVGL;
 
 		if(qvglParent!=NULL && titleWidget.underMouse())
 		{
-			if(anchorMode!=AnchorMaximized)
-				setAnchor(AnchorMaximized);
-			else
-				setAnchor(AnchorFree);
+			const bool maximizable = (flags & NotMaximizable)==0;
+
+			if(maximizable)
+			{
+				if(anchorMode!=AnchorMaximized)
+					setAnchor(AnchorMaximized);
+				else
+					setAnchor(AnchorFree);
+			}
 		}
 
 		// Absorb all : 
@@ -1830,7 +1839,8 @@ using namespace QVGL;
 
 // InfosDialog :
 	InfosDialog::InfosDialog(void)
-	 :	message(NULL)
+	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable)),
+		message(NULL)
 	{
 		// Create the message : 
 		int pointSize = message.font().pointSize();
@@ -1864,10 +1874,18 @@ using namespace QVGL;
 		// Add the inner widget :
 		setInnerWidget(&message);
 		setTitle("About");
+
+		// Signals : 
+		QObject::connect(this, SIGNAL(closed()), this, SLOT(closedSlot()));
 	}
 
 	InfosDialog::~InfosDialog(void)
 	{ }
+
+	void InfosDialog::closedSlot(void)
+	{
+		std::cout << "InforsDialog closed!" << std::endl;
+	}
 
 #ifdef __MAKE_VARIABLES__ 
 // VariablesTrackerSubWidget 
@@ -3934,11 +3952,18 @@ using namespace QVGL;
 	{
 		if(infosDialog==NULL)
 		{
-			infosDialog = new InfosDialog();
+			infosDialog = new InfosDialog;
 			addSubWidget(infosDialog);
+			QObject::connect(infosDialog, SIGNAL(hideRequest(SubWidget*)), this, SLOT(closeInfos(void)));
 		}
 		else
 			infosDialog->show();
+	}
+
+	void MainWidget::closeInfos(void)
+	{
+		infosDialog->deleteLater();
+		infosDialog = NULL;
 	}
 
 	bool MainWidget::processQuitRequest(void)

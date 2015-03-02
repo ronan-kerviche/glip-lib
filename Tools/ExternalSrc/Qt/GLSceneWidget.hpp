@@ -295,6 +295,14 @@ namespace QVGL
 		Q_OBJECT
 
 		public : 
+			enum Flag
+			{
+				NotResizeable	= 1,
+				NotAnchorable	= 2,
+				NotMaximizable	= 4,
+				NoFlag		= 0
+			};
+
 			enum AnchorMode
 			{
 				AnchorFree	= 0,
@@ -312,6 +320,7 @@ namespace QVGL
 			QWidget			*widget;
 			MainWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
+			const Flag		flags;
 			bool 			motionActive,
 						resizeActive,
 						resizeHorizontalLock,
@@ -341,7 +350,7 @@ namespace QVGL
 			void graphicsProxyDestroyed(void);
 
 		public : 
-			SubWidget(void);
+			SubWidget(const Flag _flags=SubWidget::NoFlag);
 			virtual ~SubWidget(void);
 
 			void setInnerWidget(QWidget* _widget);
@@ -522,6 +531,9 @@ namespace QVGL
 
 			private : 
 				QLabel message;
+
+			private slots : 
+				void closedSlot(void);
 
 			public : 
 				InfosDialog(void);
@@ -930,6 +942,7 @@ namespace QVGL
 
 			// Special : 
 			void processOpenInfosRequest(void);
+			void closeInfos(void);
 			bool processQuitRequest(void);
 
 		protected :
