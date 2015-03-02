@@ -1621,7 +1621,7 @@ using namespace QVGL;
 		if(subWidget!=NULL && it!=subWidgetsActions.end())
 		{
 			subWidgetsMenu.removeAction(it.value());
-			delete it.value();
+			it.value()->deleteLater();
 			subWidgetsActions.erase(it);
 		}
 	}
