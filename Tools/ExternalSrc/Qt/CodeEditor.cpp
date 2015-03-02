@@ -103,6 +103,9 @@ using namespace QGED;
 			highlightingRules.append(rule);*/
 	}
 
+	Highlighter::~Highlighter(void)
+	{ }
+
 	void Highlighter::highlightBlock(const QString &text)
 	{
 		if( highlightEnabled )
@@ -179,6 +182,9 @@ using namespace QGED;
 	LineNumberArea::LineNumberArea(CodeEditor *editor)
 	 : 	QWidget(editor), 
 		codeEditor(editor)
+	{ }
+
+	LineNumberArea::~LineNumberArea(void)
 	{ }
 
 	void LineNumberArea::paintEvent(QPaintEvent *event)
@@ -436,7 +442,7 @@ using namespace QGED;
 			duplicateMenu(menu, *subMenus[k]);
 
 		menu->exec(event->globalPos());
-		delete menu;
+		menu->deleteLater();
 	}
 
 	void CodeEditor::matchBraces(QTextCursor& current, bool& acceptableMatch, QTextCursor& result)
@@ -2015,7 +2021,7 @@ using namespace QGED;
 
 		if(it!=menus.end())
 		{
-			delete it.value();
+			it.value()->deleteLater();
 			menus.erase(it);
 		}
 
@@ -2592,7 +2598,7 @@ using namespace QGED;
 
 			tabBar.removeTab(tabID);
 			stack.removeWidget(container);
-			delete container;
+			container->deleteLater();
 			editors.remove(editors.key(container));
 		}
 	}

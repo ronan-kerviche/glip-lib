@@ -1,0 +1,122 @@
+INCLUDE(RayMarcherUtils.ppl)
+TEXTURE_FORMAT:outputFormat(1280, 720, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST)
+CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
+
+SHADER_SOURCE:rayMarcherTestShader
+{
+	#version 130
+	precision highp float;
+
+	INSERT(outputFormatSize)
+
+	// Primitives :
+	float plane(vec3 p)
+	{
+		return p.y;
+	}
+
+	float sphere(vec3 p, float radius)
+	{
+		return length(p)-radius;
+	}
+
+	float torus(vec3 p, vec2 t)
+	{
+		return length(vec2(length(p.xz)-t.x,p.y))-t.y;
+	}
+
+	float length8(vec2 p)
+	{
+		p = p*p; p = p*p; p = p*p;
+		return pow( p.x + p.y, 1.0/8.0 );
+	}
+
+
+	float torus82(vec3 p, vec2 t)
+	{
+		vec2 q = vec2(length(p.xz)-t.x,p.y);
+		return length8(q)-t.y;
+	}
+
+	// Operators :
+	vec2 opUnion(vec2 d1, vec2 d2)
+	{
+		return (d1.x<d2.x) ? d1 : d2;
+	}
+
+	// Scene settings :
+	uniform vec3 	eyePos = vec3(3.7, 2.8, 8.4),
+			eyeTarget = vec3(0, 0.6, 5);
+	uniform float 	focalLength = 0.5;
+	uniform vec3 	lightPos = vec3(2.8, 2, 4.3),
+			lightDir = vec3(-1.8, -0.5, 0.7),
+			lightCol = vec3(1, 1, 1.5);
+	uniform float 	lightSpan = 0.5, // cos
+			lightProfile = 0.2,
+			lightStrength = 10.0;
+
+	float test(vec3 p)
+	{
+		return length(max(abs(p-vec3(0,0,5))-0.5,0.0));
+	}
+
+	vec4 sceneMap(in vec3 p)
+	{
+		vec2 r;
+		r = 	opUnion( vec2(plane(p), 1), 
+			opUnion( vec2(sphere(p-lightPos, 0.1), 1024),
+			opUnion( vec2(sphere(p-vec3(0,1.2,5.0), 0.5), 2),
+			opUnion( vec2(torus82(p-vec3(0,1.2,5.0), vec2(1.0, 0.1)), 2),
+			opUnion( vec2(torus82(p-vec3(0,1.2,5.0), vec2(1.3, 0.1)), 2),
+			opUnion( vec2(torus82(p-vec3(0,1.2,5.0), vec2(1.6, 0.1)), 2),
+				 vec2(test(p), 3)
+				))))));
+	
+		float 	d = distance(p, lightPos),
+			a = exp(-p.y)/2.0,
+			s = 1.0*exp(-p.y/10.0)/(d*d);
+		return vec4(r, a, s);
+	}
+
+	vec4 renderMaterial(float material, float dist, float absorption, float scattering, in vec3 pos, in vec3 normal)
+	{
+		vec4 col = vec4(0, 0, 0, 1);
+		
+		if(material>0)
+		{
+			if(material<=1.0)
+				col = mod(floor(5.0*pos.z) + floor(5.0*pos.x), 2.0)*vec4(0.3,0.3,0.3,0)+vec4(0.3,0.3,0.3,1);
+			else
+				col = vec4(1,floor((sin(pos.y*20-1.5)*2+1)*16)/16,0.5,1);
+
+			// Simple shading :
+			vec3 u = pos - lightPos;
+			float l = length(u);
+			u = u/l;
+			float s = max(dot(-u, normal),0) * max(pow((max(dot(u, normalize(lightDir)), lightSpan)-lightSpan)/(1.0-lightSpan), lightProfile), 0) / max(l*l, 1) * lightStrength;
+			col = col * max(s,0.1) * vec4(lightCol,1);
+
+			col = (material>=1024) ? vec4(1,1,1,1) : col;
+		}
+
+		col.rgb = col.rgb * max(1.0 - absorption,0) + scattering * lightCol/max(1.0,dist*dist);
+
+		return col;
+	}
+	
+	INSERT(RayMarcherUtils)
+
+	void main()
+	{
+		vec4 c = renderScene(outputFormatSize, eyePos, eyeTarget, focalLength, 100, 0.0, 0.01, 100.0);
+		gl_FragColor = vec4(pow(c.rgb, vec3(1, 1, 1)/2.2), 1.0);
+	}
+}
+
+FILTER_LAYOUT:rayMarcherTestFilter(outputFormat, rayMarcherTestShader)
+
+PIPELINE_MAIN:rayMarcherTestPipeline
+{
+	OUTPUT_PORTS(outputTexture)
+	FILTER_INSTANCE:rayMarcherTestFilter
+}

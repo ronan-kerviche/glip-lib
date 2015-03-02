@@ -713,7 +713,7 @@ using namespace QGIC;
 		{
 			(*it)->disconnect(this);
 			disconnect(*it);
-			delete (*it);
+			(*it)->deleteLater();
 		}
 
 		imageItemsList.clear();
@@ -757,7 +757,7 @@ using namespace QGIC;
 		if(idx>=0)
 		{
 			imageItemsList[idx]->disconnect(this);
-			delete imageItemsList[idx];
+			imageItemsList[idx]->deleteLater();
 			imageItemsList.remove(idx);
 		}
 	}
@@ -2169,7 +2169,7 @@ using namespace QGIC;
 			// Prevent any of these two objects to popup cleaning request
 			it.key()->disconnect(this);
 			it.value()->disconnect(this);
-			delete it.value();
+			it.value()->deleteLater();
 			views.erase(it);
 		}
 	}

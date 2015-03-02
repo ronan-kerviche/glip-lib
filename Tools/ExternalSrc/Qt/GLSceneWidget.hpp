@@ -146,7 +146,7 @@ namespace QVGL
 
 			View(const QString& _name);
 			View(HdlTexture* _texture, const QString& _name);
-			~View(void);
+			virtual ~View(void);
 
 			bool isValid(void) const;
 			const HdlAbstractTextureFormat& getFormat(void) const;
@@ -259,7 +259,7 @@ namespace QVGL
 
 		public :
 			ViewsTable(const QString& tableName);
-			~ViewsTable(void);
+			virtual ~ViewsTable(void);
 
 			QMap<View*, Vignette*>::iterator begin(void);
 			QMap<View*, Vignette*>::const_iterator begin(void) const;
@@ -397,7 +397,7 @@ namespace QVGL
 
 			public : 
 				PositionColorInfoMini(void);
-				~PositionColorInfoMini(void);
+				virtual ~PositionColorInfoMini(void);
 
 				void setWindowOpacity(qreal level);
 
@@ -461,7 +461,7 @@ namespace QVGL
 
 			public :
 				TopBar(void);
-				~TopBar(void);
+				virtual ~TopBar(void);
 
 				void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
 				QGraphicsProxyWidget* getGraphicsProxy(void);
@@ -505,7 +505,7 @@ namespace QVGL
 
 			public :
 				BottomBar(void);
-				~BottomBar(void);
+				virtual ~BottomBar(void);
 
 				void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);
 				QGraphicsProxyWidget* getGraphicsProxy(void);
@@ -522,7 +522,7 @@ namespace QVGL
 
 			public : 
 				SettingsDialog(void);
-				~SettingsDialog(void);
+				virtual ~SettingsDialog(void);
 		};
 
 		class InfosDialog : public SubWidget
@@ -537,7 +537,7 @@ namespace QVGL
 
 			public : 
 				InfosDialog(void);
-				~InfosDialog(void);
+				virtual ~InfosDialog(void);
 		};
 
 	#ifdef __MAKE_VARIABLES__
@@ -560,7 +560,7 @@ namespace QVGL
 		
 			public :
 				VariablesTrackerSubWidget(void);
-				~VariablesTrackerSubWidget(void);
+				virtual ~VariablesTrackerSubWidget(void);
 		};
 	#endif
 
@@ -577,7 +577,7 @@ namespace QVGL
 			
 		public : 
 			ContextWidget(QGLContext* ctx, QWidget* parent=NULL);
-			~ContextWidget(void);
+			virtual ~ContextWidget(void);
 	};
 
 	class KeyboardState : public QObject
@@ -599,7 +599,7 @@ namespace QVGL
 
 		public : 
 			KeyboardState(void);
-			~KeyboardState(void);
+			virtual ~KeyboardState(void);
 
 			ActionID getActionAssociatedToKey(const QKeySequence& keySequence) const;
 			ActionID getActionAssociatedToKey(const QKeyEvent* event) const;
@@ -776,7 +776,7 @@ namespace QVGL
 
 		public : 
 			MouseState(void);
-			~MouseState(void);
+			virtual ~MouseState(void);
 
 			void clear(void);
 			const QList<VectorID>& getVectorIDs(void) const;
@@ -833,7 +833,7 @@ namespace QVGL
 
 		public : 
 			GLScene(MainWidget* _Parent);
-			~GLScene(void);
+			virtual ~GLScene(void);
 	};
 
 	class GLSceneViewWidget : public QGraphicsView
@@ -852,7 +852,7 @@ namespace QVGL
 
 		public : 
 			GLSceneViewWidget(MainWidget* _Parent, TopBar* topBar=NULL, BottomBar* bottomBar=NULL);
-			~GLSceneViewWidget(void);
+			virtual ~GLSceneViewWidget(void);
 
 			void addSubWidget(SubWidget* subWidget);
 			void addItem(QGraphicsItem* item);
@@ -972,7 +972,7 @@ namespace QVGL
 			
 		public :
 			MainWidget(QWidget* parent=NULL);
-			~MainWidget(void);
+			virtual ~MainWidget(void);
 
 			const KeyboardState& getKeyboardState(void) const;
 			const MouseState& getMouseState(void) const;

@@ -113,6 +113,7 @@ namespace QGED
 
 		public:
 			Highlighter(QTextDocument *parent = 0);
+			virtual ~Highlighter(void);
 
 			QTextCharFormat format(int position) const;
 			void updateSettings(const CodeEditorSettings& settings);
@@ -130,6 +131,7 @@ namespace QGED
 
 		public :
 			LineNumberArea(CodeEditor *editor);
+			virtual ~LineNumberArea(void);
 			QSize sizeHint() const;
 	};
 
@@ -224,7 +226,7 @@ namespace QGED
 
 		public : 
 			CodeEditorContainer(QWidget* parent);
-			~CodeEditorContainer(void);
+			virtual ~CodeEditorContainer(void);
 
 			const CodeEditor& getEditor(void) const;
 			CodeEditor& getEditor(void);
@@ -267,7 +269,7 @@ namespace QGED
 
 		public :
 			SearchAndReplaceMenu(QWidget* parent=NULL);
-			~SearchAndReplaceMenu(void);
+			virtual ~SearchAndReplaceMenu(void);
 
 			QAction* getAction(void);
 			void setCurrentCodeEditor(CodeEditor* currentCodeEditor);
@@ -344,7 +346,7 @@ namespace QGED
 
 		public : 
 			CodeEditorSettings(QWidget* parent=NULL);
-			~CodeEditorSettings(void);
+			virtual ~CodeEditorSettings(void);
 
 			const QColor& getGLSLKeywordColor(void) const;
 			const QColor& getGLSLFunctionColor(void) const;
@@ -443,7 +445,7 @@ namespace QGED
 
 			public : 
 				EditorDataMenu(ElementsMenu* _parent, CodeEditor* _editor);
-				~EditorDataMenu(void);
+				virtual ~EditorDataMenu(void);
 
 			public slots :
 				void update(void);
@@ -464,7 +466,7 @@ namespace QGED
 
 		public : 
 			ElementsMenu(QWidget* parent=NULL);
-			~ElementsMenu(void);
+			virtual ~ElementsMenu(void);
 
 			void track(CodeEditor* editor);
 
@@ -485,7 +487,7 @@ namespace QGED
 
 		public :
 			RecentFilesMenu(QWidget* parent=NULL);
-			~RecentFilesMenu(void);
+			virtual ~RecentFilesMenu(void);
 
 			const QList<QString>& getList(void) const;
 
@@ -538,7 +540,7 @@ namespace QGED
 
 		public :
 			CodeEditorTabs(void);
-			~CodeEditorTabs(void);
+			virtual ~CodeEditorTabs(void);
 
 		private slots :
 			void addTab(const QString& filename, int lineNumber=0);

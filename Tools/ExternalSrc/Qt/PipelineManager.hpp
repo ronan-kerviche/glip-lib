@@ -99,7 +99,7 @@ namespace QGPM
 
 		public : 
 			ConnectionToImageItem(QGIC::ImageItem* _imageItem);
-			~ConnectionToImageItem(void);
+			virtual ~ConnectionToImageItem(void);
 
 			bool isValid(void) const;
 			bool isReady(void) const;
@@ -127,7 +127,7 @@ namespace QGPM
 
 		public :
 			ConnectionToPipelineOutput(PipelineItem* _pipelineItem, int _outputIdx);
-			~ConnectionToPipelineOutput(void);
+			virtual ~ConnectionToPipelineOutput(void);
 
 			bool isValid(void) const;
 			bool isReady(void) const;
@@ -163,7 +163,7 @@ namespace QGPM
 
 		public :
 			InputPortItem(PipelineItem* _parentPipeline, int _portIdx);
-			~InputPortItem(void);
+			virtual ~InputPortItem(void);
 
 			PipelineItem* getParentPipelineItem(void) const;
 			QString getName(void) const;
@@ -210,7 +210,7 @@ namespace QGPM
 
 		public : 
 			OutputPortItem(PipelineItem* _parentPipeline, int _portIdx);
-			~OutputPortItem(void);
+			virtual ~OutputPortItem(void);
 
 			PipelineItem* getParentPipelineItem(void) const;
 			QString getName(void) const;
@@ -289,7 +289,7 @@ namespace QGPM
 
 		public :
 			PipelineItem(void* _identifier, const QObject* _referrer);
-			~PipelineItem(void);
+			virtual ~PipelineItem(void);
 
 			QString getName(void) const;
 			void updateSource(const std::string& _source, const std::string& path, const std::string& _sourceName);
@@ -370,7 +370,7 @@ namespace QGPM
 
 		public : 
 			ConnectionsMenu(QWidget* parent=NULL);
-			~ConnectionsMenu(void);
+			virtual ~ConnectionsMenu(void);
 
 			void addToMenu(QMenu& menu);
 		
@@ -404,7 +404,7 @@ namespace QGPM
 
 		public : 
 			OutputsMenu(QWidget* parent=NULL);
-			~OutputsMenu(void);
+			virtual ~OutputsMenu(void);
 
 			void addToMenu(QMenu& menu);
 
@@ -448,7 +448,7 @@ namespace QGPM
 
 		public : 
 			PipelineMenu(QWidget* parent=NULL);
-			~PipelineMenu(void);
+			virtual ~PipelineMenu(void);
 
 			void addToMenu(QMenu& menu);
 
@@ -485,7 +485,7 @@ namespace QGPM
 
 		public : 
 			PipelineManager(void);
-			~PipelineManager(void);
+			virtual ~PipelineManager(void);
 
 			static QTreeWidgetItem* getRoot(QTreeWidgetItem* item);
 
@@ -513,7 +513,7 @@ namespace QGPM
 
 		public : 
 			PipelineManagerSubWidget(void);
-			~PipelineManagerSubWidget(void);
+			virtual ~PipelineManagerSubWidget(void);
 
 			PipelineManager* getManagerPtr(void);
 	};

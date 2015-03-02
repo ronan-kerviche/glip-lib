@@ -752,7 +752,7 @@ using namespace QVGL;
 			if(scene()!=NULL)
 				scene()->removeItem(vignettesList[view]);
 
-			delete vignettesList[view];
+			vignettesList[view]->deleteLater();
 			vignettesList.remove(view);
 
 			if(resizeNow)
@@ -1593,7 +1593,7 @@ using namespace QVGL;
 		if(view!=NULL && it!=viewsActions.end())
 		{
 			viewsMenu.removeAction(it.value());
-			delete it.value();
+			it.value()->deleteLater();
 			viewsActions.erase(it);
 		}
 	}
@@ -1607,7 +1607,7 @@ using namespace QVGL;
 		if(viewTable!=NULL && it!=viewsTablesActions.end())
 		{
 			viewsTablesMenu.removeAction(it.value());
-			delete it.value();
+			it.value()->deleteLater();
 			viewsTablesActions.erase(it);
 		}
 	}

@@ -79,7 +79,7 @@ namespace QGIC
 			ImageItem(const QImage& qimage, const QString& _name);
 			ImageItem(const ImageBuffer& buffer, const QString& _name);
 			ImageItem(HdlTexture& _texture, const QString& _name);
-			~ImageItem(void);
+			virtual ~ImageItem(void);
 			
 			bool isOnDevice(void) const;
 			bool loadToDevice(void);
@@ -129,7 +129,7 @@ namespace QGIC
 			void removed(void);
 	};
 
-	class ImageItemsStorage : QObject
+	class ImageItemsStorage : public QObject
 	{
 		Q_OBJECT
 
@@ -158,7 +158,7 @@ namespace QGIC
 
 		public : 
 			ImageItemsStorage(void);
-			~ImageItemsStorage(void);
+			virtual ~ImageItemsStorage(void);
 
 			bool hasImageItem(ImageItem* imageItem) const;
 			void addImageItem(ImageItem* imageItem);
@@ -202,7 +202,7 @@ namespace QGIC
 
 		public : 
 			FilterMenu(QWidget* parent=NULL);
-			~FilterMenu(void);
+			virtual ~FilterMenu(void);
 
 			void update(void);
 			void update(const HdlAbstractTextureFormat& format);
@@ -284,7 +284,7 @@ namespace QGIC
 				moveDownAction;
  
 			CollectionWidget(QWidget* parent=NULL);
-			~CollectionWidget(void);		
+			virtual ~CollectionWidget(void);		
 	};
 
 	class ImageItemsCollectionSettings : public QMenu
@@ -308,7 +308,7 @@ namespace QGIC
 
 		public :
 			ImageItemsCollectionSettings(QWidget* parent=NULL);
-			~ImageItemsCollectionSettings(void);
+			virtual ~ImageItemsCollectionSettings(void);
 	};
 
 	class ImageItemsCollection : public QWidget
@@ -381,7 +381,7 @@ namespace QGIC
 
 		public : 
 			ImageItemsCollection(void);
-			~ImageItemsCollection(void);
+			virtual ~ImageItemsCollection(void);
 
 			void addActionToMenu(QAction* action);
 
@@ -427,7 +427,7 @@ namespace QGIC
 
 		public :
 			ImageItemsCollectionSubWidget(void);
-			~ImageItemsCollectionSubWidget(void);	
+			virtual ~ImageItemsCollectionSubWidget(void);	
 
 			QVGL::ViewsTable* getMainViewsTablePtr(void);
 			ImageItemsCollection* getCollectionPtr(void);

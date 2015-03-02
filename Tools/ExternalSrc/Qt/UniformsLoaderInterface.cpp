@@ -716,7 +716,8 @@ using namespace QGUI;
 
 		if(it!=recordActions.end())
 		{
-			delete it.value();
+			if(it.value()!=NULL)
+				it.value()->deleteLater();
 			recordActions.erase(it);
 		}
 	}	

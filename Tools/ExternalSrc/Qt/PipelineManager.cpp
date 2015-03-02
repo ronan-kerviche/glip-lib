@@ -314,11 +314,17 @@ using namespace QGPM;
 
 	void InputPortItem::connectionDestroyed(void)
 	{
-		delete view;
-		view = NULL;
-		delete connection;
-		connection = NULL;
-	
+		if(view!=NULL)
+		{
+			view->deleteLater();
+			view = NULL;
+		}
+		if(connection!=NULL)
+		{
+			connection->deleteLater();
+			connection = NULL;
+		}	
+
 		setText(1, "");
 		setForeground(0, QBrush(Qt::red));
 		setToolTip(1, "");
@@ -328,8 +334,11 @@ using namespace QGPM;
 
 	void InputPortItem::viewClosed(void)
 	{
-		delete view;
-		view = NULL;
+		if(view!=NULL)
+		{
+			view->deleteLater();
+			view = NULL;
+		}
 	}
 
 	PipelineItem* InputPortItem::getParentPipelineItem(void) const
@@ -766,13 +775,15 @@ using namespace QGPM;
 		// Remove the ports which are in excess : 
 		while(elements.mainPipelineInputs.size()<inputPortItems.size())
 		{
-			delete inputPortItems.last();
+			if(inputPortItems.last()!=NULL)
+				inputPortItems.last()->deleteLater();
 			inputPortItems.pop_back();
 		}
 
 		while(elements.mainPipelineOutputs.size()<outputPortItems.size())
 		{
-			delete outputPortItems.last();
+			if(outputPortItems.last()!=NULL)
+				outputPortItems.last()->deleteLater();
 			outputPortItems.pop_back();
 		}
 
@@ -901,7 +912,7 @@ using namespace QGPM;
 		if(uniformsNode!=NULL)
 		{
 			uniformsNode->applyTo(*pipeline, true, true); // Silent!
-			delete uniformsNode;
+			uniformsNode->deleteLater();
 			uniformsNode = NULL;
 		}
 		
@@ -1359,7 +1370,7 @@ using namespace QGPM;
 	{
 		for(QMap<QAction*, PotentialConnections*>::iterator it=potentialConnectionsMap.begin(); it!=potentialConnectionsMap.end(); it++)
 		{	
-			delete it.key();
+			it.key()->deleteLater();
 			delete it.value();
 		}
 		potentialConnectionsMap.clear();
@@ -1446,7 +1457,10 @@ using namespace QGPM;
 				if(!subMenu->actions().isEmpty())
 					pipelineItemsMenu.addMenu(subMenu);
 				else
+				{
 					delete subMenu;
+					subMenu = NULL;
+				}
 			}
 
 			if(itemsCount==0)
@@ -1665,6 +1679,7 @@ using namespace QGPM;
 			imageItem->copyToClipboard();
 
 			delete imageItem;
+			imageItem = NULL;
 		}
 	}
 
@@ -2026,7 +2041,7 @@ using namespace QGPM;
 
 		if(it!=pipelineItems.end())
 		{
-			delete it.value();
+			it.value()->deleteLater();
 			pipelineItems.erase(it);
 		}
 	}
@@ -2077,7 +2092,7 @@ using namespace QGPM;
 		
 		if(it!=pipelineItems.end())
 		{
-			delete it.value();
+			it.value()->deleteLater();
 			pipelineItems.erase(it);
 		}
 	}
