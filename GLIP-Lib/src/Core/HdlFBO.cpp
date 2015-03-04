@@ -47,7 +47,7 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
 
 		if(isCompressed())
-			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + getGLEnumName(getGLMode()) + ".", __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + getGLEnumNameSafe(getGLMode()) + ".", __FILE__, __LINE__, Exception::GLException);
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlFBO::HdlFBO - Disabling Depth buffer." << std::endl;
@@ -60,7 +60,7 @@ using namespace Glip::CoreGL;
 		if(fboID==0)
 		{
 			GLenum err = glGetError();
-			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlFBO::HdlFBO - FBO can't be created. Last OpenGL error : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 		}
 		else
 		{
@@ -111,7 +111,7 @@ using namespace Glip::CoreGL;
 
 		GLenum err = glGetError();
 		if(err!=GL_NO_ERROR)
-			throw Exception("HdlFBO::bindTextureToFBO - Texture can't be bound to the FBO, its format might be incompatible. OpenGL error " + getGLEnumName(err) + " : " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+			throw Exception("HdlFBO::bindTextureToFBO - Texture can't be bound to the FBO, its format might be incompatible. OpenGL error " + getGLEnumNameSafe(err) + " : " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 	}
 
 	void HdlFBO::unbindTextureFromFBO(int i)
@@ -177,7 +177,7 @@ using namespace Glip::CoreGL;
 		{
 			GLenum t = test();
 			if(t!=GL_FRAMEBUFFER_COMPLETE)
-				throw Exception("HdlFBO::beginRendering - FBO is incomplete, cannot render to target : " + getGLEnumName(t) + ".", __FILE__, __LINE__, Exception::GLException);
+				throw Exception("HdlFBO::beginRendering - FBO is incomplete, cannot render to target : " + getGLEnumNameSafe(t) + ".", __FILE__, __LINE__, Exception::GLException);
 			
 			firstRendering = false;
 		}

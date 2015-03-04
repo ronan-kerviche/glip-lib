@@ -99,7 +99,7 @@ namespace QGED
 			bool		highlightEnabled;
 			QTextCharFormat glslKeywordFormat,
 					glslFunctionFormat,
-					glslMacroFormat,
+					glslPreprocessorFormat,
 					glipLayoutLoaderKeywordFormat,
 					glipUniformLoaderKeywordFormat,
 					singleLineCommentFormat,
@@ -285,7 +285,7 @@ namespace QGED
 			const int		defaultFontSize;
 			QColor 			glslKeywordColor,
 						glslFunctionColor,
-						glslMacroColor,
+						glslPreprocessorColor,
 						glipLayoutLoaderKeywordColor,
 						glipUniformLoaderKeywordColor,
 						commentsColor,
@@ -309,7 +309,7 @@ namespace QGED
 						layoutMisc;
 			QLabel			glslKeywordColorLabel,
 						glslFunctionColorLabel,
-						glslMacroColorLabel,
+						glslPreprocessorColorLabel,
 						glipLayoutLoaderKeywordColorLabel,
 						glipUniformLoaderKeywordColorLabel,
 						commentsColorLabel,
@@ -317,7 +317,7 @@ namespace QGED
 						searchColorLabel;
 			QPushButton		glslKeywordColorButton,
 						glslFunctionColorButton,
-						glslMacroColorButton,
+						glslPreprocessorColorButton,
 						glipLayoutLoaderKeywordColorButton,
 						glipUniformLoaderKeywordColorButton,
 						commentsColorButton,
@@ -350,7 +350,7 @@ namespace QGED
 
 			const QColor& getGLSLKeywordColor(void) const;
 			const QColor& getGLSLFunctionColor(void) const;
-			const QColor& getGLSLMacroColor(void) const;
+			const QColor& getGLSLPreprocessorColor(void) const;
 			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
 			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
 			const QColor& getCommentsColor(void) const;

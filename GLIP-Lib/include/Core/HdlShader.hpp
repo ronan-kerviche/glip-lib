@@ -64,39 +64,39 @@ namespace Glip
 		**/
 		class GLIP_API HdlProgram
 		{
+			public :
+				static const int numShaderTypes = 6; 
+
 			private :
 				// Data
 				bool 				valid;
 				GLuint 				program;
-				GLuint 				attachedVertexShader, 
+				GLuint 				attachedShaders[HandleOpenGL::numShaderTypes], 
 								attachedFragmentShader;
 				std::vector<std::string>	activeUniforms;
 				std::vector<GLenum>		activeTypes;
 
-				// Functions
-				bool link(void);
 			public :
 				// Functions
 				HdlProgram(void);
-				HdlProgram(const HdlShader& shd1, const HdlShader& shd2);
 				~HdlProgram(void);
 
-				bool isValid(void);
-
-				void update(const HdlShader& shader, bool lnk = true);
+				bool isValid(void) const;
+				void updateShader(const HdlShader& shader, bool linkNow = true);
+				void link(void);
 				void use(void);
 
 				const std::vector<std::string>& getUniformsNames(void) const;
 				const std::vector<GLenum>& getUniformsTypes(void) const;
 
 				void setFragmentLocation(const std::string& fragName, int frag);
-				void modifyVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0);
-				void modifyVar(const std::string& varName, GLenum type, int* v);
-				void modifyVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0);
-				void modifyVar(const std::string& varName, GLenum type, unsigned int* v);
-				void modifyVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0);
-				void modifyVar(const std::string& varName, GLenum type, float* v);
-				void modifyVar(const std::string& varName, const HdlDynamicData& data);
+				void setVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0);
+				void setVar(const std::string& varName, GLenum type, int* v);
+				void setVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0);
+				void setVar(const std::string& varName, GLenum type, unsigned int* v);
+				void setVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0);
+				void setVar(const std::string& varName, GLenum type, float* v);
+				void setVar(const std::string& varName, const HdlDynamicData& data);
 
 				void getVar(const std::string& varName, int* ptr);
 				void getVar(const std::string& varName, unsigned int* ptr);

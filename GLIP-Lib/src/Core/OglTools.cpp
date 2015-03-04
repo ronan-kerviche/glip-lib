@@ -176,6 +176,27 @@ using namespace Glip::CoreGL;
 				return std::string("<Error : OpenGL version is less than 2.0>");
 		}
 
+		/**
+		\fn unsigned int HandleOpenGL::getShaderTypeIndex(GLenum shaderType)
+		\brief Get the index of a shader type.
+		\param shaderType The shader type : GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER.
+		\return The index associated with the type.
+		**/
+		unsigned int HandleOpenGL::getShaderTypeIndex(GLenum shaderType)
+		{
+			switch(shaderType)
+			{
+				case GL_VERTEX_SHADER :			return 0;
+				case GL_FRAGMENT_SHADER : 		return 1;
+				case GL_COMPUTE_SHADER : 		return 2;
+				case GL_TESS_CONTROL_SHADER : 		return 3;
+				case GL_TESS_EVALUATION_SHADER : 	return 4;
+				case GL_GEOMETRY_SHADER : 		return 5;
+				default : 
+					throw Exception("HdlProgram::getShaderIndex - Unknown shader type : " + getGLEnumNameSafe(shaderType) + ".", __FILE__, __LINE__, Exception::GLException);
+			}
+		}
+
 // Errors Monitoring
 	/**
 	\fn std::string Glip::CoreGL::getGLErrorDescription(const GLenum& e)
@@ -720,6 +741,30 @@ using namespace Glip::CoreGL;
 
 	/**
 	\related HandleOpenGL
+	\fn std::string Glip::CoreGL::getGLEnumNameSage(const GLenum& p)
+	\brief Get the parameter name as a string.
+	\param p The GLenum parameter.
+	\return A standard string or <Unknown:ID> where ID is the decimal representation of the enum.
+	**/
+	std::string Glip::CoreGL::getGLEnumNameSafe(const GLenum& p) throw()
+	{
+		const int numTokens = static_cast<int>(sizeof(HandleOpenGL::glKeywords)/sizeof(HandleOpenGL::KeywordPair));
+
+		// Mixed name :
+		if(p==GL_POINTS || p==GL_ZERO || p==GL_FALSE)
+			return "GL_POINTS/GL_ZERO/GL_NONE";
+
+		for(int i=0; i<numTokens; i++)
+		{
+			if(HandleOpenGL::glKeywords[i].value==p)
+				return HandleOpenGL::glKeywords[i].name;
+		}
+
+		return std::string("<Unknown:") + toString(p) + ">";
+	}
+
+	/**
+	\related HandleOpenGL
 	\fn GLenum Glip::CoreGL::getGLEnum(const std::string& s)
 	\brief Get the parameter from its name in a string.
 	\param s The GLenum parameter name.
@@ -744,7 +789,7 @@ using namespace Glip::CoreGL;
 	\brief Test if a symbol belongs to a list of possible symbols.
 	\param p Symbol to be tested.
 	\param l List of symbols.
-	\param s Size of the list, in bytes.
+	\param s Size of the list, in bytes (from sizeof, for instance).
 	\return True if the symbol belongs to the list.
 
 	Sample usage :

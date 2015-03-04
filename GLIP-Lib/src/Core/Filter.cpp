@@ -22,6 +22,7 @@
 **/
 
 #include <algorithm>
+#include <set>
 #include "Core/Exception.hpp"
 #include "Core/Filter.hpp"
 #include "Core/HdlTexture.hpp"
@@ -35,42 +36,6 @@
     using namespace Glip::CorePipeline;
 
 // Tools
-	/**
-	\fn std::string getStandardVertexSource(int versionNumber=0)
-	\brief Build the standard vertex shader.
-	\param versionNumber The targeted version as an integer. It won't be included by default (0).
-	\return Standard string containing the GLSL code.
-	**/
-	std::string getStandardVertexSource(int versionNumber=0)
-	{
-		std::stringstream str;
-
-		if(versionNumber>0)
-			str << "#version " << versionNumber << std::endl;
-		else if(versionNumber>130)
-			str << "in vec4 vertex;" << std::endl;
-
-		str << "void main()" << std::endl;
-		str << "{" << std::endl;
-		//str << "    gl_FrontColor = gl_Color;" << std::endl;
-
-		/*for(int i=0; i<nUnits; i++)
-			str << "    gl_TexCoord[" << i << "] = gl_TextureMatrix[" << i << "] * gl_MultiTexCoord" << i << "; \n";
-
-		str << "    gl_Position = gl_ModelViewMatrix * gl_Vertex; \n } \n";*/
-
-		str << "    gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;" << std::endl;
-
-		if(versionNumber<=130)
-			str << "    gl_Position = ftransform();" << std::endl;
-		else
-			str << "    gl_Position = vertex;" << std::endl;
-
-		str << "}" << std::endl;
-
-		return std::string(str.str());
-	}
-
 	// AbstractFilterLayout
 	/**
 	\fn AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
@@ -80,20 +45,20 @@
 	**/
 	AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
 	 : 	AbstractComponentLayout(type), 
-		HdlAbstractTextureFormat(f), 
-		vertexSource(NULL), 
-		fragmentSource(NULL), 
+		HdlAbstractTextureFormat(f),
 		geometryModel(NULL), 
 		clearing(true),
 		blending(false),
 		depthTesting(false),
-		isStandardVertex(true),
 		isStandardGeometry(true),
 		sFactor(GL_ONE),
 		dFactor(GL_ONE),
 		blendingEquation(GL_FUNC_ADD),
 		depthTestingFunction(GL_LESS)
-	{ }
+	{
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			shaderSources[k] = NULL;
+	}
 
 	/**
 	\fn AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
@@ -102,31 +67,27 @@
 	**/
 	AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
 	 :	AbstractComponentLayout(c), 
-		HdlAbstractTextureFormat(c), 
-		vertexSource(NULL), 
-		fragmentSource(NULL), 
+		HdlAbstractTextureFormat(c),
 		geometryModel(NULL), 
 		clearing(c.clearing),
 		blending(c.blending), 
 		depthTesting(c.depthTesting),
-		isStandardVertex(c.isStandardVertex), 
 		isStandardGeometry(c.isStandardGeometry),
 		sFactor(c.sFactor),
 		dFactor(c.dFactor),
 		blendingEquation(c.blendingEquation),
 		depthTestingFunction(c.depthTestingFunction)
 	{
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			shaderSources[k] = NULL;
+
 		try
 		{
-			if(c.vertexSource!=NULL)
-				vertexSource   = new ShaderSource(*c.vertexSource);
-			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - vertexSource is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-
-			if(c.fragmentSource!=NULL)
-				fragmentSource = new ShaderSource(*c.fragmentSource);
-			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - fragmentSource is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			{
+				if(c.shaderSources[k]!=NULL)
+					shaderSources[k] = new ShaderSource(*c.shaderSources[k]);
+			}
 
 			if(c.geometryModel!=NULL)
 				geometryModel = new GeometryModel(*c.geometryModel);
@@ -136,12 +97,13 @@
 		catch(Exception& e)
 		{
 			// Clean : 
-			delete vertexSource;
-			delete fragmentSource;
-			delete geometryModel;
+			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			{
+				delete shaderSources[k];
+				shaderSources[k] = NULL;
+			}
 
-			vertexSource 	= NULL;
-			fragmentSource	= NULL;
+			delete geometryModel;
 			geometryModel	= NULL;
 
 			throw e;
@@ -151,35 +113,20 @@
 
 	AbstractFilterLayout::~AbstractFilterLayout(void)
 	{
-		delete vertexSource;
-		delete fragmentSource;
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			delete shaderSources[k];
 		delete geometryModel;
 	}
 
 	/**
-	\fn ShaderSource& AbstractFilterLayout::getVertexSource(void) const
-	\brief Get the ShaderSource object of the vertex shader used by the filter.
-	\return ShaderSource object reference.
+	\fn const ShaderSource* AbstractFilterLayout::getShaderSource(GLenum shaderType) const
+	\brief Access the shader source of a particular type of shader. 
+	\param shaderType The type of the targeted shader source, among GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER.
+	\return Pointer to the ShaderSource or NULL if no source was defined.
 	**/
-	ShaderSource& AbstractFilterLayout::getVertexSource(void) const
+	const ShaderSource* AbstractFilterLayout::getShaderSource(GLenum shaderType) const
 	{
-		if(vertexSource==NULL)
-			throw Exception("FilterLayout::getVertexSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-
-		return *vertexSource;
-	}
-
-	/**
-	\fn ShaderSource& AbstractFilterLayout::getFragmentSource(void) const
-	\brief Get the ShaderSource object of the fragment shader used by the filter.
-	\return ShaderSource object reference.
-	**/
-	ShaderSource& AbstractFilterLayout::getFragmentSource(void) const
-	{
-		if(fragmentSource==NULL)
-			throw Exception("FilterLayout::getFragmentSource - The source has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-
-		return *fragmentSource;
+		return shaderSources[HandleOpenGL::getShaderTypeIndex(shaderType)];
 	}
 
 	/**
@@ -196,6 +143,15 @@
 	}
 
 	/**
+	\fn bool AbstractFilterLayout::isStandardGeometryModel(void) const
+	\return true if the filter will be using a standard quad as geometry.
+	**/
+	bool AbstractFilterLayout::isStandardGeometryModel(void) const
+	{
+		return isStandardGeometry;
+	}
+
+	/**
 	\fn bool AbstractFilterLayout::isClearingEnabled(void) const
 	\return true if clearing is enabled.		
 	**/
@@ -203,7 +159,26 @@
 	{
 		return clearing;
 	}
-	
+
+	/**
+	\fn int AbstractFilterLayout::getNumUniformVars(void) const
+	\return The cumulative number of uniform variables.
+	**/
+	int AbstractFilterLayout::getNumUniformVars(void) const
+	{
+		std::set<std::string> uniformVarsSet;
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+		{
+			if(shaderSources[k]!=NULL)
+			{
+				const std::vector<std::string>& uniformVars = shaderSources[k]->getUniformVars();
+				uniformVarsSet.insert(uniformVars.begin(), uniformVars.end());
+			}
+		}
+
+		return uniformVarsSet.size();
+	}
+
 	/**
 	\fn void AbstractFilterLayout::enableClearing(void)
 	\brief Enables clearing operation (the destination buffer is cleared before each operation).
@@ -320,15 +295,6 @@
 		depthTesting = false;
 	}
 
-	/**
-	\fn bool AbstractFilterLayout::isStandardVertexSource(void) const
-	\return true if the filter will be using a standard vertex program.
-	\fn bool AbstractFilterLayout::isStandardGeometryModel(void) const
-	\return true if the filter will be using a standard quad as geometry.
-	**/
-	bool AbstractFilterLayout::isStandardVertexSource(void) const	{ return isStandardVertex; }
-	bool AbstractFilterLayout::isStandardGeometryModel(void) const	{ return isStandardGeometry; }
-
 	// FilterLayout
 	/**
 	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
@@ -345,10 +311,15 @@
 		HdlAbstractTextureFormat(fout),
 		AbstractFilterLayout(type, fout)
 	{
-		fragmentSource = new ShaderSource(fragment);
+		ShaderSource* fragmentSource = new ShaderSource(fragment);
+		shaderSources[HandleOpenGL::getShaderTypeIndex(GL_FRAGMENT_SHADER)] = fragmentSource;
 
+		ShaderSource* vertexSource = NULL;
 		if(vertex!=NULL)
+		{
 			vertexSource = new ShaderSource(*vertex);
+			shaderSources[HandleOpenGL::getShaderTypeIndex(GL_VERTEX_SHADER)] = vertexSource;
+		}
 
 		if(geometry!=NULL)
 		{
@@ -389,22 +360,6 @@
 
 		for(std::vector<std::string>::iterator it=varsOut.begin(); it!=varsOut.end(); it++)
 			addOutputPort(*it);
-
-		// If there is no vertexSource
-		if(vertexSource==NULL)
-		{
-			// Build one :
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "FilterLayout::FilterLayout - Using for vertex shader : " << std::endl;
-				std::cout << getStandardVertexSource(fragmentSource->getVersion()) << std::endl;
-			#endif
-
-			vertexSource = new ShaderSource(getStandardVertexSource(fragmentSource->getVersion()));
-
-			isStandardVertex = true;
-		}
-		else
-			isStandardVertex = false;
 	}
 
 // Filter
@@ -419,13 +374,14 @@
 		Component(c, name),
 		HdlAbstractTextureFormat(c), 
 		AbstractFilterLayout(c),
-		vertexShader(NULL), 
-		fragmentShader(NULL), 
 		prgm(NULL), 
 		geometry(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
+
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			shaders[k] = NULL;
 
 		firstRun	= true;
 		broken		= true; // Wait for complete initialization.
@@ -442,26 +398,31 @@
 
 		try
 		{
-			// Build the shaders :
-			vertexShader	= new HdlShader(GL_VERTEX_SHADER, getVertexSource());
-			fragmentShader	= new HdlShader(GL_FRAGMENT_SHADER, getFragmentSource());
-			prgm		= new HdlProgram(*vertexShader, *fragmentShader);
+			// Build the shaders and the program : 
+			prgm 	= new HdlProgram;
+
+			const GLenum listShaderTypeEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+			for(unsigned int k=0; k<(sizeof(listShaderTypeEnum)/sizeof(GLenum)); k++)
+			{
+				const ShaderSource* ptr = getShaderSource(listShaderTypeEnum[k]);
+				if(ptr!=NULL)
+				{
+					shaders[k] = new HdlShader(listShaderTypeEnum[k], *ptr);
+					prgm->updateShader(*shaders[k], false);
+				}
+			}
+			prgm->link();
 		}
 		catch(Exception& e)
 		{
-			delete vertexShader;
-			delete fragmentShader;
-			delete prgm;
+			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			{
+				delete shaders[k];
+				shaders[k] = NULL;
+			}
 
-			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-			m << e;
-			throw m;
-		}
-		catch(std::exception& e)
-		{
-			delete vertexShader;
-			delete fragmentShader;
 			delete prgm;
+			prgm = NULL;
 
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			m << e;
@@ -472,9 +433,14 @@
 		{
 			// Set the names of the samplers :
 			for(int i=0; i<getNumInputPort(); i++)
-				prgm->modifyVar(getInputPortName(i), GL_INT, i);
+				prgm->setVar(getInputPortName(i), GL_INT, i);
 
-			if(!fragmentShader->requiresCompatibility())
+			// Test : 
+			bool allRequireCompatibility = true;
+			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+				allRequireCompatibility = allRequireCompatibility && (shaders[k]==NULL || shaders[k]->requiresCompatibility());
+
+			if(!allRequireCompatibility)
 			{
 				for(int i=0; i<getNumOutputPort(); i++)
 					prgm->setFragmentLocation(getOutputPortName(i), i);
@@ -484,19 +450,14 @@
 		}
 		catch(Exception& e)
 		{
-			delete vertexShader;
-			delete fragmentShader;
-			delete prgm;
+			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			{
+				delete shaders[k];
+				shaders[k] = NULL;
+			}
 
-			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-			m << e;
-			throw m;
-		}
-		catch(std::exception& e)
-		{
-			delete vertexShader;
-			delete fragmentShader;
 			delete prgm;
+			prgm = NULL;
 
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			m << e;
@@ -513,8 +474,8 @@
 	Filter::~Filter(void)
 	{
 		delete prgm;
-		delete vertexShader;
-		delete fragmentShader;
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+			delete shaders[k];
 		delete geometry;
 	}
 
@@ -595,7 +556,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after initialization, GL error : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -615,7 +576,7 @@
 
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after drawing operation, GL error : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::CoreException);
 				}
 			}
 
@@ -648,7 +609,7 @@
 				{
 					firstRun 	= false;
 					broken 		= true;
-					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + getGLEnumName(err) + " - " + getGLErrorDescription(err) + ".", __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Filter::process : Exception caught on first run of filter " + getFullName() + ". The error occured after deinitialization, GL error : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err) + ".", __FILE__, __LINE__, Exception::CoreException);
 				}
 				else
 					firstRun 	= false; // First run completed successfully.

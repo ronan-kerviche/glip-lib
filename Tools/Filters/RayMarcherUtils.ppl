@@ -1,17 +1,74 @@
 /*
 	Ray Marcher Utilities Program.
 	
-	Some part of this code uses primitives proposed by Inigo Quilez.
+	Some part of this code uses primitives and source originally proposed by Inigo Quilez.
 	See his articles on http://www.iquilezles.org/ and https://www.shadertoy.com/.
 */
 
 SHARED_CODE:RayMarcherUtils
 {
-	// vec4 sceneMap(in vec3 p)
-	// return vec4(distance of a ray to the scene, material code, absorption, scattering).
+	// Will requires : 
+	vec2 sceneMap(vec3 p);
+	vec4 renderMaterial(vec3 pos, vec3 normal, float material, float d, float absorption, float scattering);
 
-	// vec4 renderMaterial(float material, float dist, float absorption, float scattering, in vec3 pos, in vec3 normal)
-	// Return the material of a shape.
+	// Can require : 
+	#ifdef RM_USE_ABSORPTION
+		float absorption(vec3 p, vec3 dir, float d);
+	#endif
+	#ifdef RM_USE_SCATTERING
+		float scattering(vec3 p, vec3 dir, float d);
+	#endif
+
+	// Primitives :
+	float plane(vec3 p)
+	{
+		return p.y;
+	}
+
+	float sphere(vec3 p, float radius)
+	{
+		return length(p)-radius;
+	}
+
+	float torus(vec3 p, vec2 t)
+	{
+		return length(vec2(length(p.xz)-t.x,p.y))-t.y;
+	}
+
+	float length8(vec2 p)
+	{
+		p = p*p; p = p*p; p = p*p;
+		return pow( p.x + p.y, 1.0/8.0 );
+	}
+
+	float torus82(vec3 p, vec2 t)
+	{
+		vec2 q = vec2(length(p.xz)-t.x,p.y);
+		return length8(q)-t.y;
+	}
+
+	// Operators :
+	vec2 opUnion(vec2 d1, vec2 d2)
+	{
+		return (d1.x<d2.x) ? d1 : d2;
+	}
+
+	float opSubstraction(float d1, float d2)
+	{
+		return max(-d1,d2);
+	}
+
+	float opIntersection(float d1, float d2)
+	{
+		return max(d1,d2);
+	}
+
+	// Core functions : 
+	float sceneMapSimple(vec3 p)
+	{
+		vec2 tmp = sceneMap(p);
+		return tmp.x;
+	}
 
 	mat3 computeCameraMatrix(in vec3 p, in vec3 target, float roll)
 	{
@@ -29,13 +86,18 @@ SHARED_CODE:RayMarcherUtils
 		float a = 0.0, s = 0.0;
 		for(int i=0; i<numSteps; i++)
 		{
-			vec4 res = sceneMap(rayOrigin+rayDirection*d);
+			vec3 p = rayOrigin+rayDirection*d;
+			vec2 res = sceneMap(p);
 			if(res.x<dNear || d>dMax)
 				break;
 			d += res.x;
 			m = res.y;
-			a += res.z*res.x;
-			s += res.w*res.x;
+			#ifdef RM_USE_ABSORPTION
+				a += absorption(p, rayDirection, res.x);
+			#endif
+			#ifdef RM_USE_SCATTERING
+				s += scattering(p, rayDirection, res.x);
+			#endif
 		}
 		if(d>dMax)
 			m = -1.0;
@@ -56,10 +118,32 @@ SHARED_CODE:RayMarcherUtils
 		mat3 camera = computeCameraMatrix(eyePos, eyeTarget, 0.0);
 		vec2 o = (vec2(gl_FragCoord.xy)/vec2(formatSize) - vec2(0.5, 0.5)) * vec2(1.0, -float(formatSize.y)/float(formatSize.x));
 		vec3 rayOrigin = vec3(o, 0.0) + eyePos,
-		     rayDirection = normalize(camera*vec3(o.xy, focalLength));
+		     rayDirection = normalize(camera*vec3(o, focalLength));
 		vec4 res = castRay(rayOrigin, rayDirection, numSteps, dMin, dNear, dMax);
 		vec3 p = rayOrigin + rayDirection * res.x;
 		vec3 n = calcNormal(p);
-		return renderMaterial(res.y, res.x, res.z, res.w, p, n);
+		return renderMaterial(p, n, res.y, res.x, res.z, res.w);
+	}
+
+	// Other tools : 
+	float softShadow(vec3 rayOrigin, vec3 lightPos, float dNearLight, float kShadowSoftness)
+	{
+		const int maxStep = 64;
+		const float dNearIntersect = 0.000001;
+		vec3 rayDirection = lightPos - rayOrigin;
+		float dMax = length(rayDirection) - dNearLight;
+		rayDirection = normalize(rayDirection);
+		float res = 1.0;
+		int k = 0;
+		for(float d=0.0; d<dMax && k<maxStep; )
+		{
+			float closest = sceneMapSimple(rayOrigin + rayDirection*d);
+			if(closest<dNearIntersect)
+				return 0.0;
+			res = min(res, kShadowSoftness*closest/d);
+			d += closest;
+			k++;
+		}
+		return res;
 	}
 }

@@ -2351,12 +2351,17 @@
 		VanillaParserSpace::Element e1 = LayoutWriter::write(fLayout, fmtName);
 		code += e1.getCode() + "\n\n";
 		
-		VanillaParserSpace::Element e2 = LayoutWriter::write(fLayout.getFragmentSource(), fragName);
-		code += e2.getCode() + "\n\n";
-
-		if(!fLayout.isStandardVertexSource())
+		if(fLayout.getShaderSource(GL_FRAGMENT_SHADER)!=NULL)
 		{
-			VanillaParserSpace::Element e3 = LayoutWriter::write(fLayout.getVertexSource(), vertName);
+			VanillaParserSpace::Element e2 = LayoutWriter::write(*fLayout.getShaderSource(GL_FRAGMENT_SHADER), fragName);
+			code += e2.getCode() + "\n\n";
+		}
+		else
+			throw Exception("LayoutWriter::write - The filter layout " + fLayout.getFullName() + " has no fragment shader.", __FILE__, __LINE__, Exception::ModuleException); 		
+
+		if(fLayout.getShaderSource(GL_VERTEX_SHADER)!=NULL)
+		{
+			VanillaParserSpace::Element e3 = LayoutWriter::write(*fLayout.getShaderSource(GL_VERTEX_SHADER), vertName);
 			code += e3.getCode() + "\n\n";
 
 			e.arguments.push_back( vertName );

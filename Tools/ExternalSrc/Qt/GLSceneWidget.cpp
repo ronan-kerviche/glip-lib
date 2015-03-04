@@ -2839,13 +2839,15 @@ using namespace QVGL;
 		{	
 			quad = new GeometryInstance(GeometryPrimitives::ReversedQuad(), GL_STATIC_DRAW_ARB);
 
+			
 			ShaderSource 	sourceVertex(vertexShaderSource),
 					sourcePixel(fragmentShaderSource);
-
 			HdlShader 	vertexShader(GL_VERTEX_SHADER, sourceVertex),
 					pixelShader(GL_FRAGMENT_SHADER, sourcePixel);
-
-			shaderProgram	= new HdlProgram( vertexShader, pixelShader);
+			shaderProgram	= new HdlProgram;
+			shaderProgram->updateShader(vertexShader,false);
+			shaderProgram->updateShader(pixelShader,false);
+			shaderProgram->link();
 		}
 		catch(Exception& e)
 		{
@@ -2879,13 +2881,13 @@ using namespace QVGL;
 		adaptationScale = qvglParent->getAdaptationScaling(view->getImageRatio());
 
 		// Load the data : 
-		shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
-		shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
-		shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
-		shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
-		shaderProgram->modifyVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
-		shaderProgram->modifyVar("angle",		GL_FLOAT,	view->angle);
-		shaderProgram->modifyVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+		shaderProgram->setVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
+		shaderProgram->setVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
+		shaderProgram->setVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
+		shaderProgram->setVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
+		shaderProgram->setVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
+		shaderProgram->setVar("angle",		GL_FLOAT,	view->angle);
+		shaderProgram->setVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
 
 		// Draw : 
 		view->prepareToDraw();
@@ -2908,13 +2910,13 @@ using namespace QVGL;
 		adaptationScale = qvglParent->getAdaptationScaling(sceneRatio, view->getImageRatio());
 
 		// Load the data : 
-		shaderProgram->modifyVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
-		shaderProgram->modifyVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
-		shaderProgram->modifyVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
-		shaderProgram->modifyVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
-		shaderProgram->modifyVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
-		shaderProgram->modifyVar("angle",		GL_FLOAT,	view->angle);
-		shaderProgram->modifyVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+		shaderProgram->setVar("imageScale", 		GL_FLOAT_VEC2,	imageScale);
+		shaderProgram->setVar("sceneScale", 		GL_FLOAT_VEC2,	sceneScale);
+		shaderProgram->setVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
+		shaderProgram->setVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
+		shaderProgram->setVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
+		shaderProgram->setVar("angle",		GL_FLOAT,	view->angle);
+		shaderProgram->setVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
 
 		// Draw : 
 		view->prepareToDraw();

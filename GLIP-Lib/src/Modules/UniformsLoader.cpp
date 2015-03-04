@@ -186,7 +186,7 @@
 			throw Exception("UniformsLoader::Resource::applyTo - Data object not available.", __FILE__, __LINE__, Exception::ModuleException);
 		else if(modified || forceWrite)
 		{
-			filter.program().modifyVar(name, *data);
+			filter.program().setVar(name, *data);
 			return 1;
 		}
 		else

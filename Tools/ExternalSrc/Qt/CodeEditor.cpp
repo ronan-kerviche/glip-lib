@@ -46,12 +46,12 @@ using namespace QGED;
 			}
 
 		// GLSL Defines :
-			for(int i=0; i<GLSLLanguage::MC_END; i++)
+			for(int i=0; i<GLSLLanguage::PP_END; i++)
 			{
-				QString pattern = tr("%1\\b").arg(GLSLLanguage::GLSLMacros[i]);
+				QString pattern = tr("%1\\b").arg(GLSLLanguage::GLSLPreprocessor[i]);
 				pattern.replace("#", "#\\b"); // Need to make the sharp sign outside of the word boundary '\b'
 				rule.pattern = QRegExp(pattern);
-				rule.format = &glslMacroFormat;
+				rule.format = &glslPreprocessorFormat;
 				highlightingRules.append(rule);
 			}
 
@@ -156,7 +156,7 @@ using namespace QGED;
 		// Color : 
 		glslKeywordFormat.setForeground(		settings.getGLSLKeywordColor() );
 		glslFunctionFormat.setForeground(		settings.getGLSLFunctionColor() );
-		glslMacroFormat.setForeground(			settings.getGLSLMacroColor() );
+		glslPreprocessorFormat.setForeground(		settings.getGLSLPreprocessorColor() );
 		glipLayoutLoaderKeywordFormat.setForeground(	settings.getGLIPLayoutLoaderKeywordColor() );
 		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
 		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
@@ -165,7 +165,7 @@ using namespace QGED;
 		// Font : 
 		glslKeywordFormat.setFont(			settings.getKeywordFont() );
 		glslFunctionFormat.setFont(			settings.getKeywordFont() );
-		glslMacroFormat.setFont(			settings.getKeywordFont() );	
+		glslPreprocessorFormat.setFont(			settings.getKeywordFont() );	
 		glipLayoutLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
 		glipUniformLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
 		singleLineCommentFormat.setFont(		settings.getKeywordFont() );
@@ -1331,7 +1331,7 @@ using namespace QGED;
 		layout(this),
 		glslKeywordColorLabel("GLSL Keywords"),
 		glslFunctionColorLabel("GLSL Functions"),
-		glslMacroColorLabel("GLSL Macros"),
+		glslPreprocessorColorLabel("GLSL Preprocessor"),
 		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
 		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
 		commentsColorLabel("Comments"),
@@ -1351,7 +1351,7 @@ using namespace QGED;
 			// Colors : 
 				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
 				layoutColors.addWidget(&glslFunctionColorLabel, 		1, 0);
-				layoutColors.addWidget(&glslMacroColorLabel,			2, 0);
+				layoutColors.addWidget(&glslPreprocessorColorLabel,		2, 0);
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	3, 0);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	4, 0);
 				layoutColors.addWidget(&commentsColorLabel, 			5, 0);
@@ -1360,7 +1360,7 @@ using namespace QGED;
 
 				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
 				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
-				layoutColors.addWidget(&glslMacroColorButton,			2, 1);
+				layoutColors.addWidget(&glslPreprocessorColorButton,		2, 1);
 				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	3, 1);
 				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	4, 1);
 				layoutColors.addWidget(&commentsColorButton, 			5, 1);
@@ -1373,7 +1373,7 @@ using namespace QGED;
 				// Connect : 
 				connect(&glslKeywordColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glslFunctionColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&glslMacroColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glslPreprocessorColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
 				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
@@ -1435,7 +1435,7 @@ using namespace QGED;
 		// Colors : 
 		glslKeywordColorButton.setStyleSheet(			tr("background:%1;").arg(glslKeywordColor.name()) );
 		glslFunctionColorButton.setStyleSheet(			tr("background:%1;").arg(glslFunctionColor.name()) );
-		glslMacroColorButton.setStyleSheet(			tr("background:%1;").arg(glslMacroColor.name()) );
+		glslPreprocessorColorButton.setStyleSheet(		tr("background:%1;").arg(glslPreprocessorColor.name()) );
 		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
 		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
 		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
@@ -1464,7 +1464,7 @@ using namespace QGED;
 		// Colors :
 		glslKeywordColor		= glslKeywordColorButton.palette().color(QPalette::Window);
 		glslFunctionColor		= glslFunctionColorButton.palette().color(QPalette::Window);
-		glslMacroColor			= glslMacroColorButton.palette().color(QPalette::Window);
+		glslPreprocessorColor		= glslPreprocessorColorButton.palette().color(QPalette::Window);
 		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
 		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
 		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
@@ -1497,8 +1497,8 @@ using namespace QGED;
 			title = "GLSL Keywords Color";
 		else if(target==&glslFunctionColorButton)
 			title = "GLSL Functions Color";
-		else if(target==&glslMacroColorButton)
-			title = "GLSL Macros Color";
+		else if(target==&glslPreprocessorColorButton)
+			title = "GLSL Preprocessor Color";
 		else if(target==&glipLayoutLoaderKeywordColorButton)
 			title = "GLIP Layout Loader Keywords Color";
 		else if(target==&glipUniformLoaderKeywordColorButton)
@@ -1568,7 +1568,7 @@ using namespace QGED;
 		// Colors : 
 		glslKeywordColor		= QColor(255,	128,	0);
 		glslFunctionColor		= QColor(85,	255,	0);
-		glslMacroColor			= QColor(208,	32,	32);
+		glslPreprocessorColor		= QColor(208,	32,	32);
 		glipLayoutLoaderKeywordColor	= QColor(255, 	51, 	255);
 		glipUniformLoaderKeywordColor	= QColor(51, 	255, 	255);
 		commentsColor			= QColor(51,	153,	255);
@@ -1600,7 +1600,7 @@ using namespace QGED;
 
 	const QColor& 			CodeEditorSettings::getGLSLKeywordColor(void) const			{ return glslKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLSLFunctionColor(void) const			{ return glslFunctionColor; }
-	const QColor&			CodeEditorSettings::getGLSLMacroColor(void) const			{ return glslMacroColor; }
+	const QColor&			CodeEditorSettings::getGLSLPreprocessorColor(void) const		{ return glslPreprocessorColor; }
 	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
 	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
@@ -1652,7 +1652,7 @@ using namespace QGED;
 	
 			SAVE_COLOR( glslKeywordColor )
 			SAVE_COLOR( glslFunctionColor )
-			SAVE_COLOR( glslMacroColor )
+			SAVE_COLOR( glslPreprocessorColor )
 			SAVE_COLOR( glipLayoutLoaderKeywordColor )
 			SAVE_COLOR( glipUniformLoaderKeywordColor )
 			SAVE_COLOR( commentsColor )
@@ -1742,7 +1742,7 @@ using namespace QGED;
 		{
 			READ_COLOR( glslKeywordColor )
 			READ_COLOR( glslFunctionColor )
-			READ_COLOR( glslMacroColor )
+			READ_COLOR( glslPreprocessorColor )
 			READ_COLOR( glipLayoutLoaderKeywordColor )
 			READ_COLOR( glipUniformLoaderKeywordColor )
 			READ_COLOR( commentsColor )

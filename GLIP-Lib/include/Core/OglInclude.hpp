@@ -80,6 +80,9 @@
 						vd_UNKNOWN
 					};
 
+					// Number of different shader types : 
+					static const unsigned int numShaderTypes = 6; // See GL_SHADER_TYPE and GL_*_SHADER
+
 				private :
 					// OpenGL keyword :
 					struct GLIP_API KeywordPair
@@ -104,9 +107,11 @@
 					static std::string 	getRendererName(void);
 					static std::string 	getVersion(void);
 					static std::string 	getGLSLVersion(void);
+					static unsigned int	getShaderTypeIndex(GLenum shaderType);
 
 					// Friend functions :
 					GLIP_API friend std::string getGLEnumName(const GLenum& p);
+					GLIP_API friend std::string getGLEnumNameSafe(const GLenum& p) throw();
 					GLIP_API friend GLenum getGLEnum(const std::string& s);
 			};
 
@@ -114,6 +119,7 @@
 			GLIP_API_FUNC std::string	getGLErrorDescription(const GLenum& e);
 			GLIP_API_FUNC void 		debugGL(void);
 			GLIP_API_FUNC std::string 	getGLEnumName(const GLenum& p);
+			GLIP_API_FUNC std::string 	getGLEnumNameSafe(const GLenum& p) throw();
 			GLIP_API_FUNC GLenum 		getGLEnum(const std::string& s);
 			GLIP_API_FUNC bool		belongsToGLEnums(const GLenum& p, const GLenum* list, const size_t s);
 
@@ -127,15 +133,14 @@
 
 			Sample usage :
 			\code
-			const GLenum[] list = {GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA};
+			const GLenum list[] = {GL_RED, GL_LUMINANCE, GL_RGB, GL_RGBA};
 			bool test = belongsToGLEnums(symbol, list);
 			\endcode
 			**/
 			template<size_t N>
 			bool belongsToGLEnums(const GLenum& p, const GLenum (&list) [N])
 			{
-				const size_t s = N/sizeof(GLenum);
-				return (std::find(list, list+s, p)!=(list+s));
+				return (std::find(list, list+N, p)!=(list+N));
 			}
 		}
 	}

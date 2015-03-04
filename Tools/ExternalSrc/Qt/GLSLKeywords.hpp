@@ -398,24 +398,27 @@ namespace GLSLLanguage
 
 	extern const char* GLSLFunctions[];
 
-	enum Macro
+	enum Preprocessor
 	{
-		MC_define,
-		MC_if,
-		MC_ifdef,
-		MC_ifndef,
-		MC_else,
-		MC_elif,
-		MC_endif,
-		MC_version,
-		MC_extension,
-		MC_line,
-		MC___file__,
-		MC___line__,
-		MC_END
+		PP_define,
+		PP_undef,
+		PP_if,
+		PP_ifdef,
+		PP_ifndef,
+		PP_else,
+		PP_elif,
+		PP_endif,
+		PP_error,
+		PP_pragma,
+		PP_version,
+		PP_extension,
+		PP_line,
+		PP___file__,
+		PP___line__,
+		PP_END
 	};
 
-	extern const char* GLSLMacros[];
+	extern const char* GLSLPreprocessor[];
 }
 
 #endif 

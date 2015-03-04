@@ -59,13 +59,12 @@
 			{
 				private :
 					// Data
-					ShaderSource 	*vertexSource,
-							*fragmentSource;
+					ShaderSource 	*shaderSources[HandleOpenGL::numShaderTypes];
 					GeometryModel	*geometryModel;
 					bool		clearing,
 							blending,
 							depthTesting,
-							isStandardVertex, 
+							//isStandardVertex, 
 							isStandardGeometry;
 					GLenum		sFactor,
 							dFactor,
@@ -83,10 +82,14 @@
 					// Tools
 					AbstractFilterLayout(const AbstractFilterLayout&);
 					virtual ~AbstractFilterLayout(void);
-					ShaderSource& getVertexSource(void) const;
-					ShaderSource& getFragmentSource(void) const;
+					//ShaderSource* getShaderSource(void) const;
+					//ShaderSource& getFragmentSource(void) const;
+					const ShaderSource* getShaderSource(GLenum shaderType) const;
 					GeometryModel& getGeometryModel(void) const;
 
+					bool isStandardVertexSource(void) const;
+					bool isStandardGeometryModel(void) const;
+					int getNumUniformVars(void) const;
 					bool isClearingEnabled(void) const;
 					void enableClearing(void);
 					void disableClearing(void);
@@ -99,10 +102,7 @@
 					bool isDepthTestingEnabled(void) const;
 					const GLenum& getDepthTestingFunction(void) const;
 					void enableDepthTesting(const GLenum& _depthTestingFunction = GL_LESS);
-					void disableDepthTesting(void);	
-
-					bool isStandardVertexSource(void) const;
-					bool isStandardGeometryModel(void) const;
+					void disableDepthTesting(void);
 			};
 
 			/**
@@ -124,10 +124,9 @@
 			{
 				private :
 					// Data
-					HdlShader*  			vertexShader;
-					HdlShader*  			fragmentShader;
-					HdlProgram* 			prgm;
-					GeometryInstance*		geometry;
+					HdlShader  			*shaders[HandleOpenGL::numShaderTypes];
+					HdlProgram 			*prgm;
+					GeometryInstance		*geometry;
 					bool				firstRun,
 									broken;
 					std::vector<HdlTexture*>	arguments;

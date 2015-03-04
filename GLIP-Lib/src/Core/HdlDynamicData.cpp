@@ -84,7 +84,7 @@
 			case GL_FLOAT_MAT4 :
 							return GL_FLOAT;
 			default :
-				throw Exception("HdlDynamicData::getRelatedGLSupportingType - Unknown GL type identifier : \"" + getGLEnumName(t) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("HdlDynamicData::getRelatedGLSupportingType - Unknown GL type identifier : \"" + getGLEnumNameSafe(t) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
 		}
 	}
 
@@ -260,7 +260,7 @@
 		else	GENERATE_ELM( GL_FLOAT_MAT3,		float,		3,	3 )
 		else	GENERATE_ELM( GL_FLOAT_MAT4,		float,		4, 	4 )
 		else
-			throw Exception("HdlDynamicData::build - Unknown GL type identifier : \"" + getGLEnumName(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlDynamicData::build - Unknown GL type identifier : \"" + getGLEnumNameSafe(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
 
 		return res;
 
@@ -313,7 +313,7 @@
 		else	COPY_ELM( GL_FLOAT_MAT3,		float,		3,	3 )
 		else	COPY_ELM( GL_FLOAT_MAT4,		float,		4, 	4 )
 		else
-			throw Exception("HdlDynamicData::copy - Unknown GL type identifier : \"" + getGLEnumName(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlDynamicData::copy - Unknown GL type identifier : \"" + getGLEnumNameSafe(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
 
 		return res;
 
@@ -576,7 +576,7 @@
 
 		#define ERROR_ELM(glType) \
 			if(type== glType ) \
-				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + getGLEnumName(type) + "\" : Illegal type.", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + getGLEnumNameSafe(type) + "\" : Illegal type.", __FILE__, __LINE__, Exception::CoreException);
 			
 
 			GENERATE_ELM( 	GL_BYTE,		char)
@@ -607,7 +607,7 @@
 		else	ERROR_ELM(  	GL_FLOAT_MAT3)
 		else	ERROR_ELM( 	GL_FLOAT_MAT4)
 		else
-			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + getGLEnumName(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + getGLEnumNameSafe(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
 
 		return res;
 
@@ -642,7 +642,7 @@
 
 		#define ERROR_ELM(glType) \
 			if(type== glType ) \
-				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + getGLEnumName(type) + "\" : Illegal type.", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("HdlDynamicTable::build - Unable to build a table of type \"" + getGLEnumNameSafe(type) + "\" : Illegal type.", __FILE__, __LINE__, Exception::CoreException);
 			
 
 			GENERATE_ELM( 	GL_BYTE,		char)
@@ -673,7 +673,7 @@
 		else	ERROR_ELM(  	GL_FLOAT_MAT3)
 		else	ERROR_ELM( 	GL_FLOAT_MAT4)
 		else
-			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + getGLEnumName(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlDynamicTable::build - Unknown GL type identifier : \"" + getGLEnumNameSafe(type) + "\".", __FILE__, __LINE__, Exception::CoreException);
 
 		return res;
 
@@ -709,7 +709,7 @@
 		else	COPY_ELM( GL_UNSIGNED_INT,		unsigned int)
 		else	COPY_ELM( GL_BOOL,			int)
 		else
-			throw Exception("HdlDynamicTable::copy - Unknown GL type identifier : \"" + getGLEnumName(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("HdlDynamicTable::copy - Unknown GL type identifier : \"" + getGLEnumNameSafe(cpy.getGLType()) + "\" (internal error).", __FILE__, __LINE__, Exception::CoreException);
 
 		return res;
 

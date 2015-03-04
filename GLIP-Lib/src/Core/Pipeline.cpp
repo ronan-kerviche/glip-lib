@@ -201,7 +201,7 @@
 			{
 				case FILTER:
 					numFilters++;
-					numUniformVariables += filterLayout(i).getFragmentSource().getUniformVars().size() + filterLayout(i).getVertexSource().getUniformVars().size();
+					numUniformVariables += filterLayout(i).getNumUniformVars();
 					break;
 				case PIPELINE:
 					//tmp = reinterpret_cast<AbstractPipelineLayout*>(elementsLayout[i]);
