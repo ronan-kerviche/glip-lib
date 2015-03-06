@@ -957,6 +957,7 @@
 	void HdlDynamicTableIterator::sliceBegin(void)
 	{
 		position -= static_cast<size_t>(d) * table.getElementSize();
+		d = 0;
 	}
 
 	/**
@@ -966,6 +967,7 @@
 	void HdlDynamicTableIterator::sliceEnd(void)
 	{
 		position += static_cast<size_t>(table.getNumSlices()-d-1) * table.getElementSize();
+		d = table.getNumSlices() - 1;
 	}
 
 	/**

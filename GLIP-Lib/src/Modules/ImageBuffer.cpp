@@ -760,6 +760,7 @@
 	void PixelIterator::lineEnd(void)
 	{
 		HdlDynamicTableIterator::rowEnd();
+		HdlDynamicTableIterator::sliceBegin();
 	}
 
 	/**
@@ -879,7 +880,21 @@
 			return (*reinterpret_cast<const char*>(&v)==0);
 		}
 
-		void memParse(char* dst, char* src, const char* indices, const int s)
+		bool isIdentical(const char* indices, const int s, const int s2)
+		{
+			if(s!=s2)
+				return false;
+
+			for(int k=0; k<s; k++)
+			{
+				if(indices[k]!=k)
+					return false;
+			}
+
+			return true;
+		}
+
+		inline void memParse(char* dst, const char* src, const char* indices, const int s)
 		{
 			for(int k=0; k<s; k++)
 			{
@@ -895,13 +910,13 @@
 	\param maxWidth The maximum width to copy.
 	\param maxHeight The maximum height to copy.
 	**/
-	void PixelIterator::blit(PixelIterator& src, int maxWidth, int maxHeight)
+	void PixelIterator::blit(PixelIterator& src, int maxWidth, int maxHeight, const bool reversedColumns, const bool reversedRows)
 	{
 		bool 		destFloattingOrNormalized 	= (image.getTable().isNormalized() || image.getTable().isFloatingPointType()),
 				srcFloattingOrNormalized	= (src.image.getTable().isNormalized() || src.image.getTable().isFloatingPointType());
 
-		const int	w = (maxWidth<0) ? (std::min(src.getDistanceToRightBorder(), getDistanceToRightBorder())) : (std::min(src.getDistanceToRightBorder(), std::min(getDistanceToRightBorder(), maxWidth))),
-				h = (maxHeight<0) ? (std::min(src.getDistanceToBottomBorder(),getDistanceToBottomBorder())) : (std::min(src.getDistanceToBottomBorder(), std::min(getDistanceToBottomBorder(), maxHeight)));
+		const int	w = (maxWidth<0) ? (std::min((reversedColumns ? (src.getX()+1) : src.getDistanceToRightBorder()), getDistanceToRightBorder())) : (std::min((reversedColumns ? (src.getX()+1) : src.getDistanceToRightBorder()), std::min(getDistanceToRightBorder(), maxWidth))),
+				h = (maxHeight<0) ? (std::min((reversedRows ? (src.getY()+1) : src.getDistanceToBottomBorder()),getDistanceToBottomBorder())) : (std::min((reversedRows ? (src.getY()+1) : src.getDistanceToBottomBorder()), std::min(getDistanceToBottomBorder(), maxHeight)));
 
 		const int 	dstOriginX	= getX(),
 				dstOriginY	= getY(),
@@ -911,7 +926,7 @@
 		if(!destFloattingOrNormalized && !srcFloattingOrNormalized)
 		{
 			// Generate the shifting layout : 
-			const int 	largestLayout 	= 256;
+			const int 	largestLayout 	= 256; // 64bits x 4 channels
 			char		indices[largestLayout];
 
 			std::memset(reinterpret_cast<void*>(indices), -1, largestLayout); // Fill with 0xFF
@@ -950,44 +965,58 @@
 				}
 			}
 
-			// Prepare to copy : 
-			char 	bufferSrc[largestLayout],
-				bufferDst[largestLayout];
+			const bool identicalLayout = isIdentical(indices, getPixelSize(), src.getPixelSize());
 
-			std::memset(reinterpret_cast<void*>(bufferSrc), 0, largestLayout);
-			std::memset(reinterpret_cast<void*>(bufferDst), 0, largestLayout);
-
-			for(int y=0; y<h; y++)
+			// Copy : 
+			if(identicalLayout && !reversedColumns)
 			{
-				for(int x=0; x<w; x++)
+				// Boost the output in the case of identical layouts : 
+				for(int y=0; y<h; y++)
 				{
-					// Copy the current pixel : 
-					std::memcpy(reinterpret_cast<void*>(bufferSrc), src.getPtr(), src.getPixelSize());
-
-					// Shift and adapt : 
-					memParse(reinterpret_cast<char*>(bufferDst), reinterpret_cast<char*>(bufferSrc), indices, getPixelSize());
+					std::memcpy(reinterpret_cast<char*>(getPtr()), reinterpret_cast<const char*>(src.getPtr()), w*getPixelSize());
 					
-					// Copy the result : 
-					std::memcpy(getPtr(), reinterpret_cast<void*>(bufferDst), getPixelSize());
-				
-					// Move to the next pixel : 
-					src.nextPixel();
-					nextPixel();
+					// Move back in the window : 
+					if(reversedRows)
+						src.jumpTo(srcOriginX, srcOriginY-y-1);
+					else
+						src.jumpTo(srcOriginX, srcOriginY+y+1);
+					jumpTo(dstOriginX, dstOriginY+y+1);
 				}
+			}
+			else // General case : 
+			{
+				for(int y=0; y<h; y++)
+				{
+					for(int x=0; x<w; x++)
+					{
+						// Shift and adapt : 
+						memParse(reinterpret_cast<char*>(getPtr()), reinterpret_cast<char*>(src.getPtr()), indices, getPixelSize());
+
+						// Move to the next pixel : 
+						if(reversedColumns)
+							src.previousPixel();
+						else
+							src.nextPixel();
+						nextPixel();
+					}
 				
-				// Move back in the window : 
-				src.jumpTo(srcOriginX, srcOriginY+y+1);
-				jumpTo(dstOriginX, dstOriginY+y+1);
+					// Move back in the window : 
+					if(reversedRows)
+						src.jumpTo(srcOriginX, srcOriginY-y-1);
+					else
+						src.jumpTo(srcOriginX, srcOriginY+y+1);
+					jumpTo(dstOriginX, dstOriginY+y+1);
+				}
 			}
 		}
-		else if(destFloattingOrNormalized && !srcFloattingOrNormalized)
+		else if(destFloattingOrNormalized!=srcFloattingOrNormalized)
 		{
 			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
 			/*const int maxChannels = 4;
 			char indices[maxChannels];
 
+			// Get the layout : 
 			std::memset(reinterpret_cast<void*>(indices), -1, maxChannels);
-
 			for(int p=0; p<image.getNumChannels(); p++)
 				indices[p] = src.image.getDescriptor().channelIndex( image.getDescriptor().channelAtIndex(p) );
 
@@ -997,14 +1026,12 @@
 			{
 				for(int x=0; x<w; x++)
 				{
-					for(int k=0; k<image.getNumChannels(); k++)
-						
+					for(int k=0; k<getNumChannels(); k++)
+					{
+							
+					}
 				}
 			}*/
-		}
-		else if(!destFloattingOrNormalized && srcFloattingOrNormalized)
-		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
 		}
 		else // destFloattingOrNormalized && srcFloattingOrNormalized
 		{

@@ -39,6 +39,7 @@ using namespace QGUI;
 	 :	QObject(parent),
 		name(_name),
 		modification(0),
+		locked(false),
 		object(NULL)
 	{ 
 		object = HdlDynamicData::build(type);

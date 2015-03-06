@@ -794,13 +794,13 @@ using namespace QVGL;
 		titleLabel(this),
 		hideButton(this),
 		widget(NULL),
+		qvglParent(NULL),
+		graphicsProxy(NULL),
 		flags(_flags),
 		motionActive(false),
 		resizeActive(false),
 		resizeHorizontalLock(false),
 		resizeVerticalLock(false),
-		qvglParent(NULL),
-		graphicsProxy(NULL),
 		anchorMode(AnchorFree)
 	{
 		installEventFilter(this);
@@ -1035,6 +1035,8 @@ using namespace QVGL;
 
 	void SubWidget::showEvent(QShowEvent* event)
 	{
+		UNUSED_PARAMETER(event)
+
 		// Make sure the widget is visible on the current portion of the scene :
 		resetPosition(false);
 	}
@@ -1131,6 +1133,8 @@ using namespace QVGL;
 			case AnchorMaximized:
 				move(0, TopBar::getHeight());
 				resize(sceneRect.width(), sceneRect.height()-TopBar::getHeight());
+				break;
+			default :
 				break;
 		}
 	}
@@ -1395,6 +1399,7 @@ using namespace QVGL;
 	TopBar::TopBar(void)
 	 : 	graphicsProxy(NULL),
 		bar(this),
+		menuBar(this),
 		mainMenu("Menu", this),
 		viewsMenu("Views", this),
 		viewsTablesMenu("Tables", this),
@@ -1409,11 +1414,10 @@ using namespace QVGL;
 		viewsTablesSeparator(NULL),
 		closeCurrentViewsTableAction("Close table", this), 
 		closeAllViewsTableAction("Close all tables", this),
+		subWidgetsSeparator(NULL),
 		toggleTemporaryHideAllSubWidgetsAction("Hide all widgets", this),
 		hideAllSubWidgetsAction("Close all widgets", this),
-		subWidgetsSeparator(NULL),
-		signalMapper(this),
-		menuBar(this)
+		signalMapper(this)
 	{
 		if(singleton==NULL)
 			singleton = this;
@@ -1911,6 +1915,8 @@ using namespace QVGL;
 
 		// Be notified if other variables are added :
 		QObject::connect(QGUI::VariableRecord::getReferenceRecord(), SIGNAL(recordAdded(const QGUI::VariableRecord*)), this, SLOT(variableAdded(const QGUI::VariableRecord*)));
+
+		resize(384, height());
 	}
 
 	VariablesTrackerSubWidget::~VariablesTrackerSubWidget(void)
@@ -2205,7 +2211,7 @@ using namespace QVGL;
 			keysActionsAssociations.remove(*it);
 
 		// Insert the sequences separately : 
-		for(int k=0; k<keySequence.count(); k++)
+		for(unsigned int k=0; k<keySequence.count(); k++)
 		{
 			QKeySequence ks(keySequence[k]);
 
@@ -2837,7 +2843,7 @@ using namespace QVGL;
 
 		try
 		{	
-			quad = new GeometryInstance(GeometryPrimitives::ReversedQuad(), GL_STATIC_DRAW_ARB);
+			quad = new GeometryInstance(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
 
 			
 			ShaderSource 	sourceVertex(vertexShaderSource),
@@ -2886,8 +2892,8 @@ using namespace QVGL;
 		shaderProgram->setVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
 		shaderProgram->setVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
 		shaderProgram->setVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
-		shaderProgram->setVar("angle",		GL_FLOAT,	view->angle);
-		shaderProgram->setVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+		shaderProgram->setVar("angle",			GL_FLOAT,	view->angle);
+		shaderProgram->setVar("homothecyScale",		GL_FLOAT,	view->homothecyScale);
 
 		// Draw : 
 		view->prepareToDraw();
@@ -2915,8 +2921,8 @@ using namespace QVGL;
 		shaderProgram->setVar("adaptationScale", 	GL_FLOAT,	adaptationScale);
 		shaderProgram->setVar("viewCenter",		GL_FLOAT_VEC2,	view->viewCenter);
 		shaderProgram->setVar("homothecyCenter",	GL_FLOAT_VEC2,	view->homothecyCenter);
-		shaderProgram->setVar("angle",		GL_FLOAT,	view->angle);
-		shaderProgram->setVar("homothecyScale",	GL_FLOAT,	view->homothecyScale);
+		shaderProgram->setVar("angle",			GL_FLOAT,	view->angle);
+		shaderProgram->setVar("homothecyScale",		GL_FLOAT,	view->homothecyScale);
 
 		// Draw : 
 		view->prepareToDraw();
@@ -2942,6 +2948,9 @@ using namespace QVGL;
 
 	void GLScene::drawBackground(QPainter* painter, const QRectF& rect)
 	{
+		UNUSED_PARAMETER(painter)
+		UNUSED_PARAMETER(rect)
+
 		HdlTexture::unbind();
 
 		glClearColor(0.1, 0.1, 0.1, 1.0);
@@ -3296,32 +3305,38 @@ using namespace QVGL;
 
 	void GLSceneViewWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
 	{
-		unsigned char rgb[3];
+		if(glScene!=NULL && x>=0 && x<glScene->width() && y>=0 && y<glScene->height())
+		{
+			unsigned char rgb[3];
 
-		glReadBuffer( GL_BACK );
+			glReadBuffer(GL_BACK);
 
-		// Subtle point here : the frame buffer is verticaly flipped!
-		glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+			// Subtle point here : the frame buffer is verticaly flipped!
+			glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
 
-		// Split : 
-		red 	= rgb[0];
-		green	= rgb[1];
-		blue	= rgb[2];
+			// Split : 
+			red 	= rgb[0];
+			green	= rgb[1];
+			blue	= rgb[2];
+		}
 	}
 
 	void GLSceneViewWidget::getColorAt(int x, int y, QColor& c)
 	{
-		unsigned char rgb[3];
+		if(glScene!=NULL && x>=0 && x<glScene->width() && y>=0 && y<glScene->height())
+		{
+			unsigned char rgb[3];
 
-		glReadBuffer( GL_BACK );
+			glReadBuffer(GL_BACK);
 
-		// Subtle point here : the frame buffer is verticaly flipped!
-		glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
+			// Subtle point here : the frame buffer is verticaly flipped!
+			glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
 
-		// Split : 
-		c.setRed(rgb[0]);
-		c.setGreen(rgb[1]);
-		c.setBlue(rgb[2]);
+			// Split : 
+			c.setRed(rgb[0]);
+			c.setGreen(rgb[1]);
+			c.setBlue(rgb[2]);
+		}
 	}
 
 	void GLSceneViewWidget::update(void)
@@ -3342,8 +3357,8 @@ using namespace QVGL;
 	MainWidget::MainWidget(QWidget* parent)
 	 :	QWidget(parent), 
 		container(QBoxLayout::LeftToRight, this),
-		glSceneViewWidget(this, &topBar, &bottomBar),
 		infosDialog(NULL),
+		glSceneViewWidget(this, &topBar, &bottomBar),		
 		currentViewIndex(-1),
 		currentViewsTableIndex(-1),
 		mainViewsTable(NULL),

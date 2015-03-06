@@ -104,7 +104,9 @@ using namespace QGED;
 	}
 
 	Highlighter::~Highlighter(void)
-	{ }
+	{
+		setDocument(NULL);
+	}
 
 	void Highlighter::highlightBlock(const QString &text)
 	{
@@ -220,10 +222,8 @@ using namespace QGED;
 
 	CodeEditor::~CodeEditor(void)
 	{
-		blockSignals(true);
-
-		delete highLighter;
-		delete lineNumberArea;
+		highLighter->deleteLater();
+		lineNumberArea->deleteLater();
 	}	
 
 	int CodeEditor::lineNumberAreaWidth(void) const
@@ -1897,7 +1897,7 @@ using namespace QGED;
 
 		_parent->addMenu(this);
 
-		QObject::connect(editor->document(), SIGNAL(contentsChanged()), this, SLOT(conditionalUpdate()));
+		QObject::connect(editor->document(),	SIGNAL(contentsChanged()), 	this, SLOT(conditionalUpdate()));
 
 		timer.start();
 	}
@@ -2033,8 +2033,8 @@ using namespace QGED;
 	{
 		EditorDataMenu* editorDataMenu = new EditorDataMenu(this, editor);	
 		menus[editor] = editorDataMenu;
-		QObject::connect(editor, SIGNAL(destroyed(void)), this, SLOT(editorDestroyed(void)));
-		
+		QObject::connect(editor, 		SIGNAL(destroyed(void)), this, SLOT(editorDestroyed(void)));
+		QObject::connect(editor->document(), 	SIGNAL(destroyed(void)), this, SLOT(editorDestroyed(void))); // Which ever comes first.
 		setEnabled(true);
 	}
 

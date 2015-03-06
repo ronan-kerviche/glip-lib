@@ -63,9 +63,7 @@ using namespace QGIC;
 		else
 			mode = GL_RGB;
 
-		//const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(mode);
-
-		HdlTextureFormat textureFormat( qimage.width(), qimage.height(), mode, GL_UNSIGNED_BYTE );
+		HdlTextureFormat textureFormat(qimage.width(), qimage.height(), mode, GL_UNSIGNED_BYTE);
 		
 		if(imageBuffer==NULL)
 		{
@@ -78,59 +76,25 @@ using namespace QGIC;
 				throw Exception("toImageBuffer - imageBuffer has an incompatible format.", __FILE__, __LINE__);
 		}
 	
-		// Qt as either GL_BGRA, GL_UNSIGNED_BYTE or GL_LUMINANCE and GL_UNSIGNED_BYTE internal representation
+		// Qt as either GL_BGRA, GL_UNSIGNED_BYTE or GL_LUMINANCE and GL_UNSIGNED_BYTE internal representation.
 
 		// Prepare the copy :
-		const int 		nChannels 	= imageBuffer->getNumChannels();
-		HdlDynamicTable 	*original 	= HdlDynamicTable::buildProxy(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), qimage.bytesPerLine()/qimage.width(), false, 4), 
-					*buffer		= HdlDynamicTable::buildProxy(imageBuffer->getPtr(), GL_UNSIGNED_BYTE, qimage.width(), qimage.height(), nChannels, false, 4); // not normalized, 4 byes alignment
+		GLenum 	qtMode = (qimage.bytesPerLine()/qimage.width()==1) ? GL_LUMINANCE : GL_BGRA,
+			fakeMode = (qtMode==GL_BGRA && mode==GL_LUMINANCE) ? GL_RED : mode;
 
-		// Iterators : 
-		HdlDynamicTableIterator source(*original),
-					dest(*buffer);
+		HdlTextureFormat fakeDstFormat(qimage.width(), qimage.height(), fakeMode, GL_UNSIGNED_BYTE);
+		ImageBuffer 	original(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), HdlTextureFormat(qimage.width(), qimage.height(), qtMode, GL_UNSIGNED_BYTE), 4),
+				destination(imageBuffer->getPtr(), fakeDstFormat, 4);
 
-		if(original->getNumSlices()==1)
-		{
-			// all gray :
-			std::memcpy(imageBuffer->getPtr(), qimage.bits(), imageBuffer->getSize());
-		}
-		else
-		{
-			#define SHUFFLE_AND_COPY( ... ) \
-				{ \
-					while(source.isValid()) \
-					{ \
-						const unsigned char* pixel = reinterpret_cast<unsigned char*>(source.getPtr()); \
-						source.nextSlice(); \
-						const unsigned char data[4] = __VA_ARGS__ ; \
-						dest.writeBytes(reinterpret_cast<const void*>(data), nChannels); \
-						dest.nextSlice(); \
-					} \
-				}
+		PixelIterator 	itSrc(original),
+				itDst(destination);
 
-			if(nChannels==1)	SHUFFLE_AND_COPY( {*(pixel+2), 	0, 		0, 		0} )
-			else if(nChannels==2)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	0, 		0} )
-			else if(nChannels==3)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	*(pixel+0), 	0} )
-			else if(nChannels==4)	SHUFFLE_AND_COPY( {*(pixel+2), 	*(pixel+1), 	*(pixel+0), 	*(pixel+3)} )
+		// Move to the beginning of the last line of the source : 
+		itSrc.imageEnd();
+		itSrc.lineBegin();
 
-			#undef SHUFFLE_AND_COPY
-		}
+		itDst.blit(itSrc, -1, -1, false, true); // reversed rows.
 
-		delete original;
-		delete buffer;
-
-		// Fastest (but consume too much memory) : 
-		/*imageBuffer 	= new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGBA, GL_UNSIGNED_BYTE));
-		std::memcpy(imageBuffer->getBuffer(), const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), imageBuffer->getSize());*/
-
-		// Third method, cleanest, but a bit slow because the shuffling is decided dynamically :
-		/*ImageBuffer source(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), HdlTextureFormat(qimage.width(), qimage.height(), GL_BGRA, GL_UNSIGNED_BYTE));
-		imageBuffer = new ImageBuffer(HdlTextureFormat(qimage.width(), qimage.height(), GL_RGB, GL_UNSIGNED_BYTE));
-
-		PixelIterator 	itSrc(source),
-				itDst(*imageBuffer);
-
-		itDst.blit(itSrc);*/
 
 		#ifdef __TIME_LOADING__
 			std::cout << "The loading operation took " << timer.elapsed() << " milliseconds" << std::endl;
@@ -200,8 +164,10 @@ using namespace QGIC;
 
 		PixelIterator 	itSrc(imageBuffer),
 				itDst(destination);
+		itSrc.imageEnd();
+		itSrc.lineBegin();
 
-		itDst.blit(itSrc);
+		itDst.blit(itSrc, -1, -1, false, true); // reversed rows.
 
 		#ifdef __TIME_LOADING__
 			std::cout << "The writing operation took " << timer.elapsed() << " milliseconds" << std::endl;
@@ -300,7 +266,7 @@ using namespace QGIC;
 			throw Exception("File \"" + _filename.toStdString() + "\" does not exist.", __FILE__, __LINE__);
 
 		// Load : 
-		if(QString::compare(path.completeSuffix(), "raw", Qt::CaseInsensitive)==0)
+		if(QString::compare(path.completeSuffix(), "grw", Qt::CaseInsensitive)==0)
 		{
 			std::string comment;
 
@@ -308,7 +274,7 @@ using namespace QGIC;
 
 			if(!comment.empty())
 			{
-				std::cout << "Comment in RAW file \"" << _filename.toStdString() << "\" : " << std::endl;
+				std::cout << "Comment in GLIP-RAW file \"" << _filename.toStdString() << "\" : " << std::endl;
 				std::cout << comment << std::endl;
 			}
 		}
@@ -526,7 +492,7 @@ using namespace QGIC;
 			
 		if(QString::compare(path.completeSuffix(), "ppm", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "pgm", Qt::CaseInsensitive)==0)
 			NetPBM::saveNetPBMToFile(*imageBuffer, _filename.toStdString());
-		else if(QString::compare(path.completeSuffix(), "raw", Qt::CaseInsensitive)==0)
+		else if(QString::compare(path.completeSuffix(), "grw", Qt::CaseInsensitive)==0)
 			imageBuffer->write(_filename.toStdString(), "Written by GlipStudio.");
 		else
 		{

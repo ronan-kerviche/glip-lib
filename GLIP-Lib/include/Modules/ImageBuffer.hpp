@@ -129,7 +129,7 @@ namespace Glip
 				void writeNormalized(const float& value, const GLenum& channel);
 				void writePixel(PixelIterator& it);
 
-				void blit(PixelIterator& src, int maxWidth=-1, int maxHeight=-1);
+				void blit(PixelIterator& src, int maxWidth=-1, int maxHeight=-1, const bool reversedColumns=false, const bool reversedRows=false);
 		};
 	}
 }

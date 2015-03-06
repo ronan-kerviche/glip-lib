@@ -116,7 +116,7 @@ SHARED_CODE:RayMarcherUtils
 	vec4 renderScene(const ivec2 formatSize, const vec3 eyePos, const vec3 eyeTarget, const float focalLength, const int numSteps, const float dMin, const float dNear, const float dMax)
 	{
 		mat3 camera = computeCameraMatrix(eyePos, eyeTarget, 0.0);
-		vec2 o = (vec2(gl_FragCoord.xy)/vec2(formatSize) - vec2(0.5, 0.5)) * vec2(1.0, -float(formatSize.y)/float(formatSize.x));
+		vec2 o = (gl_FragCoord.xy - vec2(formatSize)/2.0)/max(float(formatSize.x),float(formatSize.y));
 		vec3 rayOrigin = vec3(o, 0.0) + eyePos,
 		     rayDirection = normalize(camera*vec3(o, focalLength));
 		vec4 res = castRay(rayOrigin, rayDirection, numSteps, dMin, dNear, dMax);
