@@ -276,12 +276,20 @@ namespace QGED
 			void clearCurrentCodeEditor(void);
 	};
 
+	#ifndef __USE_QVGL__
 	class CodeEditorSettings : public QWidget
+	#else
+	class CodeEditorSettings : public QVGL::SubWidget
+	#endif
 	{
 		Q_OBJECT
 
 		private :
 			// Data : 
+			#ifdef __USE_QVGL__
+			QWidget			innerWidget;
+			#endif
+			QWidget*		widgetPtr;
 			const int		defaultFontSize;
 			QColor 			glslKeywordColor,
 						glslFunctionColor,
@@ -345,7 +353,7 @@ namespace QGED
 			void quitDialog(void);
 
 		public : 
-			CodeEditorSettings(QWidget* parent=NULL);
+			CodeEditorSettings(void);
 			virtual ~CodeEditorSettings(void);
 
 			const QColor& getGLSLKeywordColor(void) const;
@@ -525,7 +533,7 @@ namespace QGED
 							compileAction;
 			TemplateMenu			templateMenu;
 			ElementsMenu			elementsMenu;
-			CodeEditorSettings		settings;
+			CodeEditorSettings		*settings;
 			SearchAndReplaceMenu		searchAndReplaceMenu;
 			RecentFilesMenu			recentFilesMenu;
 
@@ -541,6 +549,7 @@ namespace QGED
 		public :
 			CodeEditorTabs(void);
 			virtual ~CodeEditorTabs(void);
+			CodeEditorSettings& getEditorSettings(void);
 
 		private slots :
 			void addTab(const QString& filename, int lineNumber=0);
@@ -565,14 +574,21 @@ namespace QGED
 			void closeAll(void);
 
 		signals :
+			void showEditorSettings(void);
 			void compileSource(std::string source, std::string path, std::string sourceName, void* identifier, const QObject* referrer);
 	};
 
 	#ifdef __USE_QVGL__
 	class CodeEditorTabsSubWidget : public QVGL::SubWidget
 	{	
+		Q_OBJECT
+
 		private : 
 			CodeEditorTabs codeEditorTabs;
+
+		private slots : 
+			void showEditorSettings(void);
+			void closeEditorSettings(void);
 
 		public :
 			CodeEditorTabsSubWidget(void);

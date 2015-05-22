@@ -270,7 +270,7 @@ namespace QVGL
 			void setName(const QString& newName);
 			View* getCurrentSelectedView(void) const;
 			void getGLPositionOfVignette(const Vignette* vignette, int& x, int& y) const;
-			QRectF getVignetteFrame(View* view) const;
+			QRectF getVignetteFrame(const View* view) const;
 			bool isClosed(void) const;
 
 		public slots :
@@ -360,7 +360,7 @@ namespace QVGL
 			QPoint mapItemCoordinatesToGlobal(const QPoint& p);
 			QString getTitle(void);
 			void setTitle(QString title);
-			void setQVGLParent(MainWidget* _qvglParent);
+			virtual void setQVGLParent(MainWidget* _qvglParent);
 			MainWidget* getQVGLParent(void);
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
@@ -377,6 +377,7 @@ namespace QVGL
 			// Re-implement some of the QWidget functions : 
 			void show(void);
 			void hide(void);
+			void close(void);
 
 		signals  :
 			void titleChanged(void);
@@ -546,9 +547,9 @@ namespace QVGL
 			Q_OBJECT
 
 			private :
-				QTreeWidget						innerTreeWidget;
-				QMap<GLenum, QTreeWidgetItem*>				typeRoots;
-				QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>	items;
+				QTreeWidget					innerTreeWidget;
+				QMap<GLenum, QTreeWidgetItem*>			typeRoots;
+				QMap<QGUI::VariableRecord*, QTreeWidgetItem*>	items;
 
 				void updateAlternateColors(void);
 
@@ -556,7 +557,12 @@ namespace QVGL
 				void variableAdded(const QGUI::VariableRecord* ptr);
 				void variableUpdated(const QGUI::VariableRecord* ptr);
 				void variableUpdated(void);
+				void variableLockChanged(const QGUI::VariableRecord* ptr, bool locked);
+				void variableLockChanged(bool locked);
 				void variableDeleted(void);
+				void lockSelection(void);
+				void unlockSelection(void);
+				void execCustomContextMenu(const QPoint& pos);
 		
 			public :
 				VariablesTrackerSubWidget(void);
@@ -624,11 +630,13 @@ namespace QVGL
 				GlBasis			= 1,
 				QuadBasis		= 2,
 				ImageBasis		= 3,
-				PixelRelativeBasis	= 4,	// "Relative" correspond to displacements (no offset calculation needed)
-				GlRelativeBasis		= 5,
-				QuadRelativeBasis	= 6,
-				ImageRelativeBasis	= 7,
-				NumBasis		= 8
+				FragmentBasis		= 4,
+				PixelRelativeBasis	= 5,	// "Relative" correspond to displacements (no offset calculation needed)
+				GlRelativeBasis		= 6,
+				QuadRelativeBasis	= 7,
+				ImageRelativeBasis	= 8,
+				FragmentRelativeBasis	= 9,
+				NumBasis		= 10
 			};
 
 			enum VectorID
@@ -637,61 +645,73 @@ namespace QVGL
 				VectorLastLeftClickGl			= VectorLastLeftClick + GlBasis,
 				VectorLastLeftClickQuad			= VectorLastLeftClick + QuadBasis,
 				VectorLastLeftClickImage		= VectorLastLeftClick + ImageBasis,
+				VectorLastLeftClickFragment		= VectorLastLeftClick + FragmentBasis,
 
 				VectorLastLeftPosition			= 1 * NumBasis,
 				VectorLastLeftPositionGl		= VectorLastLeftPosition + GlBasis,
 				VectorLastLeftPositionQuad		= VectorLastLeftPosition + QuadBasis,
 				VectorLastLeftPositionImage		= VectorLastLeftPosition + ImageBasis,
+				VectorLastLeftPositionFragment		= VectorLastLeftPosition + FragmentBasis,
 
 				VectorLastLeftShift			= 2 * NumBasis + PixelRelativeBasis,	// Will force the following to relative
 				VectorLastLeftShiftGl			= VectorLastLeftShift + GlBasis,
 				VectorLastLeftShiftQuad			= VectorLastLeftShift + QuadBasis,
 				VectorLastLeftShiftImage		= VectorLastLeftShift + ImageBasis,
+				VectorLastLeftShiftFragment		= VectorLastLeftShift + FragmentBasis,
 
 				VectorLastLeftRelease			= 3 * NumBasis,
 				VectorLastLeftReleaseGl			= VectorLastLeftRelease + GlBasis,
 				VectorLastLeftReleaseQuad		= VectorLastLeftRelease + QuadBasis,
 				VectorLastLeftReleaseImage		= VectorLastLeftRelease + ImageBasis,
+				VectorLastLeftReleaseFragment		= VectorLastLeftRelease + FragmentBasis,
 
 				VectorLastLeftCompletedVector		= 4 * NumBasis,
 				VectorLastLeftCompletedVectorGl		= VectorLastLeftCompletedVector + GlBasis,
 				VectorLastLeftCompletedVectorQuad	= VectorLastLeftCompletedVector + QuadBasis,
 				VectorLastLeftCompletedVectorImage	= VectorLastLeftCompletedVector + ImageBasis,
+				VectorLastLeftCompletedVectorFragment	= VectorLastLeftCompletedVector + FragmentBasis,
 
 				VectorLastRightClick			= 5 * NumBasis,
 				VectorLastRightClickGl			= VectorLastRightClick + GlBasis,
 				VectorLastRightClickQuad		= VectorLastRightClick + QuadBasis,
 				VectorLastRightClickImage		= VectorLastRightClick + ImageBasis,
+				VectorLastRightClickFragment		= VectorLastRightClick + FragmentBasis,
 
 				VectorLastRightPosition			= 6 * NumBasis,
 				VectorLastRightPositionGl		= VectorLastRightPosition + GlBasis,
 				VectorLastRightPositionQuad		= VectorLastRightPosition + QuadBasis,
 				VectorLastRightPositionImage		= VectorLastRightPosition + ImageBasis,
+				VectorLastRightPositionFragment		= VectorLastRightPosition + FragmentBasis,
 
 				VectorLastRightShift			= 7 * NumBasis + PixelRelativeBasis,	// Will force the following to relative
 				VectorLastRightShiftGl			= VectorLastRightShift + GlBasis,
 				VectorLastRightShiftQuad		= VectorLastRightShift + QuadBasis,
 				VectorLastRightShiftImage		= VectorLastRightShift + ImageBasis,
+				VectorLastRightShiftFragment		= VectorLastRightShift + FragmentBasis,
 
 				VectorLastRightRelease			= 8 * NumBasis,
 				VectorLastRightReleaseGl		= VectorLastRightRelease + GlBasis,
 				VectorLastRightReleaseQuad		= VectorLastRightRelease + QuadBasis,
 				VectorLastRightReleaseImage		= VectorLastRightRelease + ImageBasis,
+				VectorLastRightReleaseFragment		= VectorLastRightRelease + FragmentBasis,
 
 				VectorLastRightCompletedVector		= 9 * NumBasis,
 				VectorLastRightCompletedVectorGl	= VectorLastRightCompletedVector + GlBasis,
 				VectorLastRightCompletedVectorQuad	= VectorLastRightCompletedVector + QuadBasis,
 				VectorLastRightCompletedVectorImage	= VectorLastRightCompletedVector + ImageBasis,
+				VectorLastRightCompletedVectorFragment	= VectorLastRightCompletedVector + FragmentBasis,
 
 				VectorLastWheelUp			= 10 * NumBasis,
 				VectorLastWheelUpGl			= VectorLastWheelUp + GlBasis,
 				VectorLastWheelUpQuad			= VectorLastWheelUp + QuadBasis,
 				VectorLastWheelUpImage			= VectorLastWheelUp + ImageBasis,
+				VectorLastWheelUpFragment		= VectorLastWheelUp + FragmentBasis,
 
 				VectorLastWheelDown			= 11 * NumBasis,
 				VectorLastWheelDownGl			= VectorLastWheelDown + GlBasis,
 				VectorLastWheelDownQuad			= VectorLastWheelDown + QuadBasis,
 				VectorLastWheelDownImage		= VectorLastWheelDown + ImageBasis,
+				VectorLastWheelDownFragment		= VectorLastWheelDown + FragmentBasis,
 		
 				InvalidVectorID				= 65535
 				// ALSO UPDATE VALIDATE
@@ -783,6 +803,7 @@ namespace QVGL
 			const QList<ColorID>& getColorIDs(void) const;
 			bool isVectorModified(const VectorID& id) const;
 			bool isColorModified(const ColorID& id) const;
+			bool readColorRequired(const ColorID& id) const;
 			const QPointF& getVector(const VectorID& id) const;
 			const QColor& getColor(const ColorID& id) const;
 			bool isWheelDeltaModified(void) const;
@@ -960,9 +981,10 @@ namespace QVGL
 			float getAdaptationScaling(const float& imageRatio) const;						// correcting for the image filling the scene.
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const;
 			void toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const;
-			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view=NULL) const;
-			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view=NULL) const;
-			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view=NULL) const;
+			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, const View* view=NULL) const;
+			void toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const View* view=NULL) const;
+			void toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, const View* view=NULL) const;
+			void toFragmentCoordinates(const float& xQuad, const float& yQuad, float& xFrag, float& yFrag, bool isRelative, const View* view=NULL) const;
 		
 			// Events : 
 			void closeEvent(QCloseEvent *event);

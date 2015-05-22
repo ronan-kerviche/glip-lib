@@ -696,9 +696,9 @@ using namespace QVGL;
 		}
 	}
 	
-	QRectF ViewsTable::getVignetteFrame(View* view) const
+	QRectF ViewsTable::getVignetteFrame(const View* view) const
 	{
-		QMap<View*, Vignette*>::const_iterator it = vignettesList.find(view);
+		QMap<View*, Vignette*>::const_iterator it = vignettesList.find(const_cast<View*>(view));
 
 		if(it!=vignettesList.end())
 			return it.value()->boundingRect();
@@ -1299,6 +1299,12 @@ using namespace QVGL;
 		emit hideRequest(this);
 	}
 
+	void SubWidget::close(void)
+	{
+		QWidget::close();
+		emit closed();
+	}
+
 	SubWidget* SubWidget::getPtrFromProxyItem(QGraphicsItem* item)
 	{
 		if(item==NULL)
@@ -1760,9 +1766,9 @@ using namespace QVGL;
 
 			// Signals :
 			widgetsSignalMapper.setMapping(action, reinterpret_cast<QObject*>(subWidget));
-			QObject::connect(action,	SIGNAL(triggered(void)), 	&widgetsSignalMapper, 	SLOT(map()));
+			QObject::connect(action,	SIGNAL(triggered(void)), 	 &widgetsSignalMapper, 	SLOT(map()));
 			QObject::connect(subWidget,	SIGNAL(closed(void)), 		this, 			SLOT(subWidgetClosed(void)));
-			QObject::connect(subWidget,	SIGNAL(destroyed(void)), 	this, 			SLOT(subWidgetClosed(void)));
+			QObject::connect(subWidget,	SIGNAL(destroyed(void)), 	 this, 			SLOT(subWidgetClosed(void)));
 		}
 	}
 
@@ -1906,6 +1912,7 @@ using namespace QVGL;
 		innerTreeWidget.setHeaderLabels(headersList);
 		innerTreeWidget.setColumnCount(2);
 		innerTreeWidget.setIndentation(16);
+		innerTreeWidget.setContextMenuPolicy(Qt::CustomContextMenu);
 		innerTreeWidget.setSelectionMode(QAbstractItemView::ExtendedSelection);
 
 		// Add the already existing variables :
@@ -1913,8 +1920,9 @@ using namespace QVGL;
 		for(QVector<QGUI::VariableRecord*>::const_iterator it=variables.begin(); it!=variables.end(); it++)
 			variableAdded(*it);	
 
-		// Be notified if other variables are added :
+		// Be notified if other variables are added, and add other signals :
 		QObject::connect(QGUI::VariableRecord::getReferenceRecord(), SIGNAL(recordAdded(const QGUI::VariableRecord*)), this, SLOT(variableAdded(const QGUI::VariableRecord*)));
+		QObject::connect(&innerTreeWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(execCustomContextMenu(const QPoint&)));
 
 		resize(384, height());
 	}
@@ -1972,13 +1980,14 @@ using namespace QVGL;
 		variableItem->setText(0, ptr->getName());
 
 		itRoot.value()->addChild(variableItem);
-		items[ptr] = variableItem;
+		items[const_cast<QGUI::VariableRecord*>(ptr)] = variableItem;
 
 		// Update the content of the newly created content :
 		variableUpdated(ptr);
 
 		// Connect :
 		QObject::connect(ptr, SIGNAL(updated(void)), 	this, SLOT(variableUpdated(void)));
+		QObject::connect(ptr, SIGNAL(lockChanged(bool)),this, SLOT(variableLockChanged(bool)));
 		QObject::connect(ptr, SIGNAL(destroyed(void)), 	this, SLOT(variableDeleted(void)));
 
 		// Resize :
@@ -1990,7 +1999,7 @@ using namespace QVGL;
 	void VariablesTrackerSubWidget::variableUpdated(const QGUI::VariableRecord* ptr)
 	{
 		// Find the variable :
-		QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(ptr);
+		QMap<QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(const_cast<QGUI::VariableRecord*>(ptr));
 	
 		if(it!=items.end())
 		{
@@ -2033,17 +2042,65 @@ using namespace QVGL;
 		variableUpdated(ptr);
 	}
 
+	void VariablesTrackerSubWidget::variableLockChanged(const QGUI::VariableRecord* ptr, bool locked)
+	{
+		// Find the variable :
+		QMap<QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(const_cast<QGUI::VariableRecord*>(ptr));
+	
+		if(it!=items.end())
+		{
+			if(locked)
+				it.value()->setText(0, tr("%1 [Locked]").arg(ptr->getName()));
+			else
+				it.value()->setText(0, ptr->getName());
+		}
+	}
+
+	void VariablesTrackerSubWidget::variableLockChanged(bool locked)
+	{
+		const QGUI::VariableRecord* ptr = reinterpret_cast<QGUI::VariableRecord*>(QObject::sender());
+		variableLockChanged(ptr, locked);
+	}
+
 	void VariablesTrackerSubWidget::variableDeleted(void)
 	{
 		// Find the variable :
-		const QGUI::VariableRecord* ptr = reinterpret_cast<QGUI::VariableRecord*>(QObject::sender());
-		QMap<const QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(ptr);
+		QGUI::VariableRecord* ptr = reinterpret_cast<QGUI::VariableRecord*>(QObject::sender());
+		QMap<QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it = items.find(ptr);
 		
 		if(it!=items.end())
 		{
 			delete it.value();
 			items.erase(it);
 		}
+	}
+
+	void VariablesTrackerSubWidget::lockSelection(void)
+	{
+		QList<QTreeWidgetItem*> selection = innerTreeWidget.selectedItems();
+		for(QMap<QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it=items.begin(); it!=items.end(); it++)
+		{
+			if(selection.contains(it.value()))
+				it.key()->lock(true);
+		}
+	}
+	
+	void VariablesTrackerSubWidget::unlockSelection(void)
+	{
+		QList<QTreeWidgetItem*> selection = innerTreeWidget.selectedItems();
+		for(QMap<QGUI::VariableRecord*, QTreeWidgetItem*>::iterator it=items.begin(); it!=items.end(); it++)
+		{
+			if(selection.contains(it.value()))
+				it.key()->lock(false);
+		}
+	}
+
+	void VariablesTrackerSubWidget::execCustomContextMenu(const QPoint& pos)
+	{
+		QMenu contextMenu(&innerTreeWidget);
+		contextMenu.addAction("Lock", this, SLOT(lockSelection(void)));
+		contextMenu.addAction("Unlock", this, SLOT(unlockSelection(void)));
+		contextMenu.exec(innerTreeWidget.viewport()->mapToGlobal(pos));
 	}
 #endif
 
@@ -2306,61 +2363,73 @@ using namespace QVGL;
 			NAME_MAP( VectorLastLeftClickGl )
 			NAME_MAP( VectorLastLeftClickQuad )
 			NAME_MAP( VectorLastLeftClickImage )
+			NAME_MAP( VectorLastLeftClickFragment )
 
 			NAME_MAP( VectorLastLeftPosition )
 			NAME_MAP( VectorLastLeftPositionGl )
 			NAME_MAP( VectorLastLeftPositionQuad )
 			NAME_MAP( VectorLastLeftPositionImage )
+			NAME_MAP( VectorLastLeftPositionFragment )
 
 			NAME_MAP( VectorLastLeftShift )
 			NAME_MAP( VectorLastLeftShiftGl )
 			NAME_MAP( VectorLastLeftShiftQuad )
 			NAME_MAP( VectorLastLeftShiftImage )
+			NAME_MAP( VectorLastLeftShiftFragment )
 
 			NAME_MAP( VectorLastLeftRelease )
 			NAME_MAP( VectorLastLeftReleaseGl )
 			NAME_MAP( VectorLastLeftReleaseQuad )
 			NAME_MAP( VectorLastLeftReleaseImage )
+			NAME_MAP( VectorLastLeftReleaseFragment )
 
 			NAME_MAP( VectorLastLeftCompletedVector )
 			NAME_MAP( VectorLastLeftCompletedVectorGl )
 			NAME_MAP( VectorLastLeftCompletedVectorQuad )
 			NAME_MAP( VectorLastLeftCompletedVectorImage )
+			NAME_MAP( VectorLastLeftCompletedVectorFragment )
 
 			NAME_MAP( VectorLastRightClick )
 			NAME_MAP( VectorLastRightClickGl )
 			NAME_MAP( VectorLastRightClickQuad )
 			NAME_MAP( VectorLastRightClickImage )
+			NAME_MAP( VectorLastRightClickFragment )
 
 			NAME_MAP( VectorLastRightPosition )
 			NAME_MAP( VectorLastRightPositionGl )
 			NAME_MAP( VectorLastRightPositionQuad )
 			NAME_MAP( VectorLastRightPositionImage )
+			NAME_MAP( VectorLastRightPositionFragment )
 
 			NAME_MAP( VectorLastRightShift )
 			NAME_MAP( VectorLastRightShiftGl )
 			NAME_MAP( VectorLastRightShiftQuad )
 			NAME_MAP( VectorLastRightShiftImage )
+			NAME_MAP( VectorLastRightShiftFragment )
 
 			NAME_MAP( VectorLastRightRelease )
 			NAME_MAP( VectorLastRightReleaseGl )
 			NAME_MAP( VectorLastRightReleaseQuad )
 			NAME_MAP( VectorLastRightReleaseImage )
+			NAME_MAP( VectorLastRightReleaseFragment )
 
 			NAME_MAP( VectorLastRightCompletedVector )
 			NAME_MAP( VectorLastRightCompletedVectorGl )
 			NAME_MAP( VectorLastRightCompletedVectorQuad )
 			NAME_MAP( VectorLastRightCompletedVectorImage )
+			NAME_MAP( VectorLastRightCompletedVectorFragment )
 
 			NAME_MAP( VectorLastWheelUp )
 			NAME_MAP( VectorLastWheelUpGl )
 			NAME_MAP( VectorLastWheelUpQuad )
 			NAME_MAP( VectorLastWheelUpImage )
+			NAME_MAP( VectorLastWheelUpFragment )
 
 			NAME_MAP( VectorLastWheelDown )
 			NAME_MAP( VectorLastWheelDownGl )
 			NAME_MAP( VectorLastWheelDownQuad )
 			NAME_MAP( VectorLastWheelDownImage )
+			NAME_MAP( VectorLastWheelDownFragment )
 			
 		#undef NAME_MAP
 
@@ -2633,6 +2702,22 @@ using namespace QVGL;
 	
 		if(it!=colors.end())
 			return (it.value()->modification==1);
+		else
+			return false;
+	}
+
+	bool MouseState::readColorRequired(const ColorID& id) const
+	{
+		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);
+	
+		if(it!=colors.end())
+		{
+			#ifdef __MAKE_VARIABLES__
+			return !it.value()->record->isLocked();
+			#else
+			return true;
+			#endif
+		}
 		else
 			return false;
 	}
@@ -3417,6 +3502,8 @@ using namespace QVGL;
 	void MainWidget::updateMouseStateData(void)
 	{
 		const QList<MouseState::VectorID>& vectorIDs = mouseState.getVectorIDs();
+		const View* currentView = getCurrentView();
+		const ViewsTable* currentViewsTable = getCurrentViewsTable();
 
 		for(QList<MouseState::VectorID>::const_iterator it=vectorIDs.begin(); it!=vectorIDs.end(); it++)
 		{
@@ -3431,12 +3518,14 @@ using namespace QVGL;
 					xQuad	= 0.0f, 
 					yQuad	= 0.0f,
 					xImg	= 0.0f,
-					yImg	= 0.0f;
+					yImg	= 0.0f,
+					xFrag	= 0.0f,
+					yFrag	= 0.0f;
 
-				QPointF vPixel = mouseState.getVector(*it); //mouseState.invisibleGetVector(*it);
+				QPointF vPixel = mouseState.getVector(*it);
 
-				View* currentView = getCurrentView();
-				ViewsTable* currentViewsTable = getCurrentViewsTable();
+				//View* currentView = getCurrentView();
+				//ViewsTable* currentViewsTable = getCurrentViewsTable();
 
 				if(currentView!=NULL && currentViewsTable==NULL)
 				{
@@ -3444,6 +3533,7 @@ using namespace QVGL;
 					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative);
 					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative);
 					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
+					toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isBasisRelative); 
 				}
 				else if(currentView!=NULL)
 				{
@@ -3452,13 +3542,15 @@ using namespace QVGL;
 
 					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative, rect);
 					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative, rect, currentView);
-					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
+					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative, currentView);
+					toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isBasisRelative, currentView); 
 				}
 
 				mouseState.setVector(*it, vPixel); // Clear the require update flag.
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::GlBasis), 	QPointF(xGl, yGl));
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::QuadBasis),	QPointF(xQuad, yQuad));
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::ImageBasis),	QPointF(xImg, yImg));
+				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::GlBasis), 		QPointF(xGl, yGl));
+				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::QuadBasis),		QPointF(xQuad, yQuad));
+				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::ImageBasis),		QPointF(xImg, yImg));
+				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::FragmentBasis),	QPointF(xFrag, yFrag));
 
 				// Update the corresponding color : 
 				if(mouseState.getFunctionMode()==MouseState::ModeCollection)
@@ -3466,10 +3558,9 @@ using namespace QVGL;
 					MouseState::ColorID colorID = mouseState.getCorrespondingColorID(*it);
 					QColor color;
 
-					if(colorID!=MouseState::InvalidColorID)
+					if(colorID!=MouseState::InvalidColorID && mouseState.readColorRequired(colorID))
 					{
 						getColorAt(vPixel.x(), vPixel.y(), color);
-
 						mouseState.setColor(colorID, color);
 					}
 
@@ -3843,6 +3934,12 @@ using namespace QVGL;
 			// Remove this view from the list :
 			subWidgetsList.removeAt(idx);
 
+			// Try removing : 
+			glSceneViewWidget.removeItem(subWidget->getGraphicsProxy());
+			subWidget->getGraphicsProxy()->setWidget(NULL);
+			subWidget->getGraphicsProxy()->deleteLater();
+			subWidget->setGraphicsProxy(NULL);
+
 			// Disconnect : 
 			subWidget->disconnect(this);
 			subWidget->setQVGLParent(NULL);
@@ -4158,7 +4255,7 @@ using namespace QVGL;
 		toGlCoordinates(x, y, xGl, yGl, isRelative, sceneRect());
 	}
 
-	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, View* view) const
+	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, const View* view) const
 	{
 		// Input coordinates are assumed relative in the window.
 
@@ -4237,12 +4334,12 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, View* view) const
+	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const View* view) const
 	{
 		toQuadCoordinates(xGl, yGl, xQuad, yQuad, isRelative, sceneRect(), view);
 	}
 
-	void MainWidget::toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, View* view) const
+	void MainWidget::toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, const View* view) const
 	{
 		if(view==NULL)
 			view = getCurrentView();
@@ -4261,6 +4358,28 @@ using namespace QVGL;
 		{
 			xImg = xQuad*view->getFormat().getWidth()/2.0f;
 			yImg = -yQuad*view->getFormat().getHeight()/2.0f;
+		}
+	}
+
+	void MainWidget::toFragmentCoordinates(const float& xQuad, const float& yQuad, float& xFrag, float& yFrag, bool isRelative, const View* view) const
+	{
+		if(view==NULL)
+			view = getCurrentView();
+
+		if(view==NULL || !view->isValid())
+		{
+			xFrag = 0.0f;
+			yFrag = 0.0f;
+		}
+		else if(!isRelative)
+		{
+			xFrag = (xQuad + 1.0f)*view->getFormat().getWidth()/2.0f;
+			yFrag = (yQuad + 1.0f)*view->getFormat().getHeight()/2.0f;
+		}
+		else
+		{
+			xFrag = xQuad*view->getFormat().getWidth()/2.0f;
+			yFrag = yQuad*view->getFormat().getHeight()/2.0f;
 		}
 	}
 
@@ -4338,7 +4457,7 @@ using namespace QVGL;
 
 	void MainWidget::addSubWidget(SubWidget* subWidget)
 	{
-		if(!subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
+		if(subWidget!=NULL && !subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
 		{
 			glSceneViewWidget.addSubWidget(subWidget);
 			
@@ -4346,20 +4465,21 @@ using namespace QVGL;
 			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 	this, SLOT(subWidgetSelected(SubWidget*)));
 			QObject::connect(subWidget, SIGNAL(showRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
 			QObject::connect(subWidget, SIGNAL(hideRequest(SubWidget*)),	this, SLOT(hideSubWidget(SubWidget*)));
+			QObject::connect(subWidget, SIGNAL(closed(void)),		this, SLOT(subWidgetClosed(void)));
 			QObject::connect(subWidget, SIGNAL(destroyed()),		this, SLOT(subWidgetDestroyed()));
 
 			// Save link : 
 			subWidget->setQVGLParent(this);
 			subWidgetsList.append(subWidget);
 
-			// Move and show : 
+			// Move but show only if it is currently visible : 
 			subWidget->move(0, topBar.height());
 			subWidget->show();
 
 			// Update : 
 			emit subWidgetAdded(subWidget);
 		}
-		else if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this)
+		else if(subWidget!=NULL && subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this)
 			subWidgetSelected(subWidget);
 	}
 

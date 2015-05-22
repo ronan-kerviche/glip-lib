@@ -59,7 +59,6 @@ using namespace QGUI;
 			referenceRecord = NULL;
 
 		int idx = records.indexOf(this);
-
 		if(idx>=0)
 			records.remove(idx);
 	}

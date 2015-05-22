@@ -9,6 +9,7 @@ SHARED_CODE:printNumber
 	float printNumber(in float number, in vec2 position, in float maxChars, in vec2 charSize)
 	{
 		vec2 localPos = vec2(gl_FragCoord.xy-position);
+		localPos.y = charSize.y - localPos.y;
 
 		if(localPos.x<0.0 || localPos.y<0.0 || localPos.x>=(maxChars*charSize.x) || localPos.y>=charSize.y)
 			return 0.0;
@@ -49,7 +50,7 @@ SHARED_CODE:printNumber
 			}
 
 			vec2 subLocalPos = floor((localPos - currentCharPos*vec2(charSize.x, 0.0))/charSize*vec2(4.0, 5.0));
-			float index = subLocalPos.x * 5.0 + subLocalPos.y;//subLocalPos.y * 4.0 + subLocalPos.x;
+			float index = subLocalPos.x * 5.0 + subLocalPos.y;
 			return floor(mod(currentChar/pow(2.0, index), 2.0));
 		}
 	}

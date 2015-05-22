@@ -294,8 +294,8 @@
 	{
 		const std::string keyword = keywords[KW_LL_INSERT];
 	
-		std::vector<std::string> 		lines;
-		std::vector<ShaderSource::LineInfo>	infos;
+		std::vector<std::string> lines;
+		std::vector<ShaderSource::LineInfo> infos;
 		ShaderSource tmp(str, sourceName, startLine);
 		
 		for(int k=1; k<=tmp.getNumLines(); k++)
@@ -358,8 +358,8 @@
 		}
 
 		// Generate the final piece :
-		std::string 				content;
-		std::map<int,ShaderSource::LineInfo> 	linesInfo;
+		std::string content;
+		std::map<int,ShaderSource::LineInfo> linesInfo;
 
 		for(size_t k=0; k<lines.size(); k++)
 		{

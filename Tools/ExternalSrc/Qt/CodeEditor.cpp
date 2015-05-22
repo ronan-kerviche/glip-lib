@@ -997,7 +997,7 @@ using namespace QGED;
 
 			if(source=="THIS")
 				editor.gotoLine(lineNumber);
-			else
+			else if(!source.isEmpty())
 				emit openFile(source, lineNumber);
 		}
 	}
@@ -1325,10 +1325,16 @@ using namespace QGED;
 	}
 
 // CodeEditorSettings :
-	CodeEditorSettings::CodeEditorSettings(QWidget* parent)
-	 : 	QWidget(parent),
+	CodeEditorSettings::CodeEditorSettings(void)
+	 : 	
+	#ifndef __USE_QVGL__
+		widgetPtr(this),
+	#else
+		QVGL::SubWidget(static_cast<QVGL::SubWidget::Flag>(QVGL::SubWidget::NotResizeable | QVGL::SubWidget::NotAnchorable | QVGL::SubWidget::NotMaximizable)),
+		widgetPtr(&innerWidget),
+	#endif
 		defaultFontSize( fontInfo().pointSize() ),
-		layout(this),
+		layout(widgetPtr),
 		glslKeywordColorLabel("GLSL Keywords"),
 		glslFunctionColorLabel("GLSL Functions"),
 		glslPreprocessorColorLabel("GLSL Preprocessor"),
@@ -1423,6 +1429,11 @@ using namespace QGED;
 
 		// Final update :
 			updateGUI();
+
+		#ifdef __USE_QVGL__
+			setInnerWidget(&innerWidget);
+			setTitle("Code Editor Settings");
+		#endif
 	}
 
 	CodeEditorSettings::~CodeEditorSettings(void)
@@ -1512,7 +1523,7 @@ using namespace QGED;
 		else
 			throw Exception("CodeEditorSettings::changeColor - Unknown color picker (internal error).", __FILE__, __LINE__);
 
-		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), this, title);
+		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), NULL, title);
 
 		// If the user pressed 'Ok' : 
 		if(result.isValid())
@@ -2132,6 +2143,7 @@ using namespace QGED;
 		compileAction("Compile", this),
 		templateMenu(this),
 		elementsMenu(this),
+		settings(NULL),
 		searchAndReplaceMenu(this),
 		recentFilesMenu(this)
 	{
@@ -2177,6 +2189,8 @@ using namespace QGED;
 
 		addAction(&closeAction);
 
+		settings = new CodeEditorSettings;
+
 		// Signals : 
 		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 		SLOT(changedToTab(int)));
 		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 		SLOT(closeTab(int)));
@@ -2188,10 +2202,14 @@ using namespace QGED;
 		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(saveAll()));
 		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 		SLOT(closeTab()));
 		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(closeAll()));
-		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settings, 	SLOT(show()));
+		#ifndef __USE_QVGL__
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					settings, 	SLOT(show()));
+		#else
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					this, 		SIGNAL(showEditorSettings()));
+		#endif
 		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,		SLOT(insert(QString)));
 		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,		SLOT(insert(QString)));
-		QObject::connect(&settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
+		QObject::connect(settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
 		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 		SLOT(transferSourceCompilation(void)));
 
 		// Shortcuts : 
@@ -2235,6 +2253,12 @@ using namespace QGED;
 	{ 
 		while(tabBar.count()>0)
 			closeTab(0, true);
+		delete settings;
+	}
+	
+	CodeEditorSettings& CodeEditorTabs::getEditorSettings(void)
+	{
+		return (*settings);
 	}
 
 	CodeEditorContainer* CodeEditorTabs::getCurrentEditor(void)
@@ -2388,7 +2412,7 @@ using namespace QGED;
 		// Create the widget : 
 		CodeEditorContainer* ptr = new CodeEditorContainer(this);
 		editors[counter] = ptr;
-		ptr->getEditor().updateSettings(settings);
+		ptr->getEditor().updateSettings(*settings);
 		ptr->getEditor().addSubMenu(&templateMenu);
 		ptr->getEditor().addSubMenu(&elementsMenu);
 
@@ -2546,7 +2570,7 @@ using namespace QGED;
 	void CodeEditorTabs::updateSettings(void)
 	{
 		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
-			(*it)->getEditor().updateSettings(settings);
+			(*it)->getEditor().updateSettings(*settings);
 	}
 
 	void CodeEditorTabs::transferSourceCompilation(void)
@@ -2644,10 +2668,27 @@ using namespace QGED;
 		setInnerWidget(&codeEditorTabs);
 		setTitle("Code Editor");
 		resize(512, 512);
+
+		QObject::connect(&codeEditorTabs, SIGNAL(showEditorSettings(void)), this, SLOT(showEditorSettings(void)));
 	}
 	
 	CodeEditorTabsSubWidget::~CodeEditorTabsSubWidget(void)
 	{ }
+
+	void CodeEditorTabsSubWidget::showEditorSettings(void)
+	{
+		QVGL::MainWidget* parent = getQVGLParent();
+		if(parent!=NULL)
+		{
+			parent->addSubWidget(&codeEditorTabs.getEditorSettings());
+			QObject::connect(&codeEditorTabs.getEditorSettings(), SIGNAL(hideRequest(SubWidget*)), this, SLOT(closeEditorSettings(void)));
+		}
+	}
+
+	void CodeEditorTabsSubWidget::closeEditorSettings(void)
+	{
+		codeEditorTabs.getEditorSettings().close();
+	}
 
 	CodeEditorTabs* CodeEditorTabsSubWidget::getCodeEditorPtr(void)
 	{

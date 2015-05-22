@@ -410,7 +410,10 @@
 
 		// Force save the last element :
 		if(!el.empty())
+		{
+			el.sourceName = getSourceName();
 			elements.push_back(el);
+		}
 	}
 
 	bool VanillaParser::compare(const std::string& code, int& k, const std::string token)
