@@ -295,31 +295,32 @@
 		depthTesting = false;
 	}
 
-	// FilterLayout
+// FilterLayout
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
+	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
-	\param fragment The ShaderSource of the fragement shader.
-	\param vertex The ShaderSource of the vertex shader (if left to NULL, the standard vertex shader is generated).
+	\param fragmentSource The ShaderSource of the fragement shader.
 	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex, GeometryModel* geometry)
+	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry)
 	 : 	AbstractComponentLayout(type),  
 		ComponentLayout(type),
 		HdlAbstractTextureFormat(fout),
 		AbstractFilterLayout(type, fout)
 	{
-		ShaderSource* fragmentSource = new ShaderSource(fragment);
-		shaderSources[HandleOpenGL::getShaderTypeIndex(GL_FRAGMENT_SHADER)] = fragmentSource;
+		// Copy the source : 
+		ShaderSource* _fragmentSource = new ShaderSource(fragmentSource);
+		shaderSources[HandleOpenGL::getShaderTypeIndex(GL_FRAGMENT_SHADER)] = _fragmentSource;
 
-		ShaderSource* vertexSource = NULL;
-		if(vertex!=NULL)
-		{
-			vertexSource = new ShaderSource(*vertex);
-			shaderSources[HandleOpenGL::getShaderTypeIndex(GL_VERTEX_SHADER)] = vertexSource;
-		}
+		// Create the ports : 
+		std::vector<std::string> varsIn = _fragmentSource->getInputVars(),
+					 varsOut = _fragmentSource->getOutputVars();
+		for(std::vector<std::string>::const_iterator it=varsIn.begin(); it!=varsIn.end(); it++)
+			addInputPort(*it);
+		for(std::vector<std::string>::const_iterator it=varsOut.begin(); it!=varsOut.end(); it++)
+			addOutputPort(*it);
 
 		if(geometry!=NULL)
 		{
@@ -331,35 +332,58 @@
 			geometryModel = new GeometryPrimitives::StandardQuad;
 			isStandardGeometry = true;
 		}
+	}
 
-		// Analyze sources to get the variables and the outputs
-		std::vector<std::string> varsIn  = fragmentSource->getInputVars();
-		if(vertexSource!=NULL)
+	/**
+	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry)
+	\brief FilterLayout constructor.
+	\param type The typename of the filter layout.
+	\param fout The texture format of all the outputs.
+	\param sources List of all the sources, map to their respective types (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER), the objects will be copied.
+	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
+	**/
+	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry)
+	 : 	AbstractComponentLayout(type),  
+		ComponentLayout(type),
+		HdlAbstractTextureFormat(fout),
+		AbstractFilterLayout(type, fout)
+	{
+		if(sources.empty())
+			throw Exception("FilterLayout::FilterLayout - No ShaderSource provided.", __FILE__, __LINE__, Exception::CoreException);
+
+		// Copy the sources, and the find the input/output variables : 
+		std::set<std::string>	varsIn,
+					varsOut;
+		for(std::map<GLenum, ShaderSource*>::const_iterator it=sources.begin(); it!=sources.end(); it++)
 		{
-			// Add also vertex inputs if needed
-			std::vector<std::string> varsInVertex = vertexSource->getInputVars();
-
-			// Push them!
-			for(std::vector<std::string>::iterator it=varsInVertex.begin(); it!=varsInVertex.end(); it++)
+			if(it->second!=NULL)
 			{
-				if(std::find(varsIn.begin(), varsIn.end(), *it)==varsIn.end())
-					varsIn.push_back(*it);
-				else
-				{
-					#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-						std::cout << "FilterLayout::FilterLayout - omitting variable name : " << *it << " in " << type << " because it already exits in the Fragment Shader." << std::endl;
-					#endif
-				}
+				shaderSources[HandleOpenGL::getShaderTypeIndex(it->first)] = new ShaderSource(*it->second);
+			
+				std::vector<std::string> currentVarsIn = it->second->getInputVars(),
+							 currentVarsOut = it->second->getOutputVars();
+				varsIn.insert(currentVarsIn.begin(), currentVarsIn.end());
+				varsOut.insert(currentVarsOut.begin(), currentVarsOut.end());
 			}
 		}
-		std::vector<std::string> varsOut = fragmentSource->getOutputVars();
-
 		// Build Ports :
-		for(std::vector<std::string>::iterator it=varsIn.begin(); it!=varsIn.end(); it++)
+		for(std::set<std::string>::const_iterator it=varsIn.begin(); it!=varsIn.end(); it++)
 			addInputPort(*it);
 
-		for(std::vector<std::string>::iterator it=varsOut.begin(); it!=varsOut.end(); it++)
+		for(std::set<std::string>::const_iterator it=varsOut.begin(); it!=varsOut.end(); it++)
 			addOutputPort(*it);
+
+		// Add the geometry : 
+		if(geometry!=NULL)
+		{
+			geometryModel = new GeometryModel(*geometry);
+			isStandardGeometry = false;
+		}
+		else
+		{
+			geometryModel = new GeometryPrimitives::StandardQuad;
+			isStandardGeometry = true;
+		}
 	}
 
 // Filter
@@ -490,7 +514,6 @@
 		if(id<0 || id>getNumInputPort())
 			throw Exception("Filter::setInputForNextRendering - Index out of range", __FILE__, __LINE__, Exception::CoreException);
 		arguments[id] = ptr;
-		//std::cout << "Adding : " << arguments[id] << " at " << id << std::endl;
 	}
 
 	/**
@@ -532,10 +555,7 @@
 
 		// Link the textures
 			for(int i=0; i<getNumInputPort(); i++)
-			{
-				//std::cout << "Using : " << arguments[i] << std::endl;
 				arguments[i]->bind(i);
-			}
 
 		// Prepare geometry
 			glLoadIdentity();
@@ -592,10 +612,7 @@
 
 		// Unload
 			for(int i=0; i<getNumInputPort(); i++)
-			{
-				//std::cout << "Unbinding " << i << std::endl;
 				HdlTexture::unbind(i);
-			}
 
 		// End rendering
 			renderer.endRendering();

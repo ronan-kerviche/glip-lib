@@ -280,7 +280,7 @@
 			throw Exception("ComponentLayout::addInputPort - Input port \"" + name + "\" already exists.", __FILE__, __LINE__, Exception::CoreException);
 		else
 		{
-			int id = inputPorts.size();
+			const int id = inputPorts.size();
 			inputPorts.push_back(name);
 			return id;
 		}
@@ -298,7 +298,7 @@
 			throw Exception("ComponentLayout::addOutputPort - Output port \"" + name + "\" already exists.", __FILE__, __LINE__, Exception::CoreException);
 		else
 		{
-			int id = outputPorts.size();
+			const int id = outputPorts.size();
 			outputPorts.push_back(name);
 			return id;
 		}

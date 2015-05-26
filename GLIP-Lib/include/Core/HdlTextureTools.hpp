@@ -38,70 +38,45 @@
 			**/
 			struct GLIP_API HdlTextureFormatDescriptor
 			{
-								/// Name of the mode (GL_RGB, GL_RGBA, etc.).
-				const GLenum 			modeID;
-								/// Index of the red component (or -1 if the channel does not exist).
-				const char			indexRed,
-								/// Index of the green component (or -1 if the channel does not exist).
-								indexGreen,
-								/// Index of the blue component (or -1 if the channel does not exist).
-								indexBlue,
-								/// Index of the alpha component (or -1 if the channel does not exist).
-								indexAlpha,
-								/// Index of the luminance component (or -1 if the channel does not exist).
-								indexLuminance;
-								/// True if it is a compressed mode.
-				const bool			isCompressed,
-								/// True if it is associated with a floating point depth.
-								isFloating;
-								/// The generic mode (e.g. GL_RG32F will have GL_RG).
-				const GLenum			aliasMode,
-								/// If the mode is uncompressed, this will be the corresponding compressed mode. Otherwise it will the corresponding uncompressed mode.
-								correspondingModeForCompressing,
-								/// The required depth for this mode or GL_NONE if none (e.g. GL_RGBA32F will have GL_FLOAT).
-								forcedDepthID;
-								/// Total pixel size, including all components, in bytes, rounded up.
-				const unsigned int		pixelSizeInBytes,
-								/// Total exact pixel size, including all components, in bits.
-								pixelSizeInBits,
-								/// Size of the red component for a single pixel, in bits.
-								redDepthInBits,
-								/// Size of the green component for a single pixel, in bits.
-								greenDepthInBits,
-								/// Size of the blue component for a single pixel, in bits.
-								blueDepthInBits,
-								/// Size of the alpha component for a single pixel, in bits.
-								alphaDepthInBits,
-								/// Size of the luminance, or intensity, component for a single pixel, in bits.
-								luminanceDepthInBits;
-								/// Type of the red component (GL_NONE if no type is defined or the channel does not exist).
-				const GLenum			redType,
-								/// Type of the green component (GL_NONE if no type is defined or the channel does not exist).
-								greenType,
-								/// Type of the blue component (GL_NONE if no type is defined or the channel does not exist).
-								blueType,
-								/// Type of the alpha component (GL_NONE if no type is defined or the channel does not exist).
-								alphaType,
-								/// Type of the luminance component (GL_NONE if no type is defined or the channel does not exist).
-								luminanceType;			
-				
-				// Tools : 
-				int numChannels(void) const;
-				bool hasRedChannel(void) const;
-				bool hasGreenChannel(void) const;
-				bool hasBlueChannel(void) const;
-				bool hasAlphaChannel(void) const;
-				bool hasLuminanceChannel(void) const;
+				#define HdlTextureFormatDescriptor_MaxNumChannels (4)
+
+				/// Name of the mode (GL_RGB, GL_RGBA, etc.).
+				const GLenum	mode,
+				/// Name of the alias mode (simplified mode, GL_RGB, GL_RGBA, etc.).
+						aliasMode,
+				/// Name of the corresponding uncompressed mode (the same as mode if not a compressed format).
+						uncompressedMode,
+				/// Name of the corresponding compressed mode (the same as mode if already a compressed format).
+						compressedMode;
+				/// Number of channels.
+				const int	numChannels;
+				/// Channels content (GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA, GL_LUMINANCE, etc.) or GL_NONE if empty.
+				const GLenum	channels[HdlTextureFormatDescriptor_MaxNumChannels];
+				/// Size of the channels in bits or 0 if empty.
+				const int	channelsSizeInBits[HdlTextureFormatDescriptor_MaxNumChannels];
+				/// Depth associated with the channel or GL_NONE if no type is enforced or if channel is empty.
+				const GLenum	channelsDepth[HdlTextureFormatDescriptor_MaxNumChannels];
+				/// If the format is in floating point.
+				const bool	isFloatingPoint,
+				/// If the format is compressed.
+						isCompressed,
+				/// If the format is supported.
+						isSupported;
+
+				bool isDepthValid(GLenum depth) const;
 				bool hasChannel(GLenum channel) const;
+				int getChannelIndex(GLenum channel) const;
+				int getChannelOffsetInBits(int channelIndex, GLenum depth) const;
+				int getChannelOffset(int channelIndex, GLenum depth) const;
+				int getChannelSizeInBits(int channelIndex, GLenum depth) const;
+				int getChannelSize(int channelIndex, GLenum depth) const;
+				int getPixelSizeInBits(GLenum depth) const;
 				int getPixelSize(GLenum depth) const;
-				unsigned int channelSizeInBits(GLenum channel) const;
-				GLenum channelType(GLenum channel) const;
-				int channelIndex(GLenum channel) const;
-				GLenum channelAtIndex(int idx) const;
-				std::vector<GLenum> getChannelsList(void) const;
-				std::vector<int> getOffsetsList(void) const;
-				GLenum getCompressedMode(void) const;
-				GLenum getUncompressedMode(void) const;
+						
+				static int getTypeDepth(GLenum depth);
+				static void getShuffle(const HdlTextureFormatDescriptor& dst, const HdlTextureFormatDescriptor& src, char* shuffleIndex, const int length);
+				static int getBitShuffle(const HdlTextureFormatDescriptor& dst, const GLenum& dstDepth, const HdlTextureFormatDescriptor& src, const GLenum& srcDepth, char* shuffleBitIndex, const int length, bool* isBlack=NULL);
+				static void applyBitShuffle(char* dst, const char* src, const char* shuffleBitIndex, const int length);
 			};
 
 			/**
@@ -125,7 +100,6 @@
 						static int getNumDescriptors(void);
 						static const HdlTextureFormatDescriptor& get(int id);
 						static const HdlTextureFormatDescriptor& get(const GLenum& modeID);
-						static int getTypeDepth(GLenum depth);
 			};	
 		}
 	}

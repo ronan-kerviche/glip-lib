@@ -1924,7 +1924,9 @@ using namespace QVGL;
 		QObject::connect(QGUI::VariableRecord::getReferenceRecord(), SIGNAL(recordAdded(const QGUI::VariableRecord*)), this, SLOT(variableAdded(const QGUI::VariableRecord*)));
 		QObject::connect(&innerTreeWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(execCustomContextMenu(const QPoint&)));
 
-		resize(384, height());
+		const QFontInfo fontInfo(font());
+		const int em = fontInfo.pixelSize();
+		resize(40*em, height());
 	}
 
 	VariablesTrackerSubWidget::~VariablesTrackerSubWidget(void)

@@ -25,6 +25,7 @@
 #define __GLIPLIB_FILTER__
 
 	// Includes
+	#include <map>
 	#include "devDebugTools.hpp"
 	#include "Core/LibTools.hpp"
         #include "Core/Component.hpp"
@@ -82,8 +83,6 @@
 					// Tools
 					AbstractFilterLayout(const AbstractFilterLayout&);
 					virtual ~AbstractFilterLayout(void);
-					//ShaderSource* getShaderSource(void) const;
-					//ShaderSource& getFragmentSource(void) const;
 					const ShaderSource* getShaderSource(GLenum shaderType) const;
 					GeometryModel& getGeometryModel(void) const;
 
@@ -111,9 +110,12 @@
 			**/
 			class GLIP_API FilterLayout : virtual public ComponentLayout, virtual public AbstractFilterLayout
 			{
+				private : 
+					void scanPorts(void);
 				public :
 					// Tools
-					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragment, ShaderSource* vertex = NULL, GeometryModel* geometry = NULL);
+					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry = NULL);
+					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry = NULL);
 			};
 
 			/**

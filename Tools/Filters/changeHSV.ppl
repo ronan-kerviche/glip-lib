@@ -2,7 +2,7 @@
 	Transfer the image in HSV to apply some corrections, and transfer back to RGB.
 */
 
-REQUIRED_FORMAT:outputFormat0(inputFormat0)
+REQUIRED_FORMAT:outputFormat0(inputFormat0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
 INCLUDE(colors.ppl)
 

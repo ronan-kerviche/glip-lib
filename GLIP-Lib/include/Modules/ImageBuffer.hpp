@@ -64,6 +64,8 @@ namespace Glip
 				const HdlTextureFormatDescriptor& getDescriptor(void) const;
 				void* getPtr(void);
 				const void* getPtr(void) const;
+				void* getRowPtr(int i);
+				const void* getRowPtr(int i) const;
 				HdlDynamicTable& getTable(void);
 				const HdlDynamicTable& getTable(void) const;
 
@@ -79,6 +81,7 @@ namespace Glip
 				const ImageBuffer& operator>>(ImageBuffer& image) const;
 				const ImageBuffer& operator>>(void* bytes) const;
 
+				bool isInside(const int& x, const int& y) const;
 				bool isInside(const int& x, const int& y, const GLenum& channel) const;
 				int getIndex(const int& x, const int& y, const GLenum& channel) const;
 				long long get(const int& x, const int& y, const GLenum& channel) const;
@@ -86,50 +89,10 @@ namespace Glip
 				float getNormalized(const int& x, const int& y, const GLenum& channel) const;
 				void setNormalized(const float& value, const int& x, const int& y, const GLenum& channel);
 
+				void blit(const ImageBuffer& src, const int& xSrc=0, const int& ySrc=0, const int& xDst=0, const int& yDst=0, int _width=0, int _height=0, const bool xFlip=false, const bool yFlip=false);
+
 				static ImageBuffer* load(const std::string& filename, std::string* comment=NULL);
 				void write(const std::string& filename, const std::string& comment="") const;
-		};
-
-/**
-\class PixelIterator
-\brief Iterator-like element for ImageBuffer.
-**/
-		class GLIP_API PixelIterator : protected HdlDynamicTableIterator
-		{
-			private :
-				ImageBuffer& image;
-
-			public : 
-				PixelIterator(ImageBuffer& _image);
-				PixelIterator(const PixelIterator& copy);
-				~PixelIterator(void);
-
-				const ImageBuffer& getImage(void) const;
-				ImageBuffer& getImage(void);
-				bool isValid(void) const;
-				size_t getPixelSize(void) const;
-				int getX(void) const;
-				int getY(void) const;
-				int getDistanceToBottomBorder(void) const;
-				int getDistanceToRightBorder(void) const;
-				
-				void nextPixel(void);
-				void previousPixel(void);
-				void nextLine(void);
-				void previousLine(void);
-				void lineBegin(void);
-				void lineEnd(void);
-				void imageBegin(void);
-				void imageEnd(void);
-				void jumpTo(const int& x, const int& y);
-	
-				const void* getPtr(void) const;
-				void* getPtr(void);
-				float readNormalized(const GLenum& channel) const;
-				void writeNormalized(const float& value, const GLenum& channel);
-				void writePixel(PixelIterator& it);
-
-				void blit(PixelIterator& src, int maxWidth=-1, int maxHeight=-1, const bool reversedColumns=false, const bool reversedRows=false);
 		};
 	}
 }

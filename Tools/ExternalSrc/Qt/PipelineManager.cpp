@@ -398,16 +398,17 @@ using namespace QGPM;
 		return connection;
 	}
 
-	void InputPortItem::setName(std::string& name)
+	void InputPortItem::setName(const std::string& name)
 	{
-		QString currentName = text(0);
+		const QString	currentName = text(0),
+				newName = QString::fromStdString(name);
 
 		// If there is a change in name, it means a change a purpose.
 		// Drop the connection to avoid misconnection.
-		if(currentName!=QString::fromStdString(name) && !currentName.isEmpty())
+		if(currentName!=newName && !currentName.isEmpty())
 			connectionDestroyed();
 
-		setText(0, name.c_str());
+		setText(0, newName);
 	}
 
 	InputPortItem* InputPortItem::getPtrFromGenericItem(QTreeWidgetItem* item)
@@ -484,16 +485,18 @@ using namespace QGPM;
 			view->infos["Filename"] = filename;
 	}
 
-	void OutputPortItem::setName(std::string& name)
+	void OutputPortItem::setName(const std::string& name)
 	{
-		QString currentName = text(0);
+		const QString	currentName = text(0),
+				newName = QString::fromStdString(name);
+		
 
 		// If there is a change in name, it means a change a purpose.
 		// Drop the connection to avoid misconnection.
-		if(currentName!=QString::fromStdString(name) && !currentName.isEmpty())
+		if(currentName!=newName && !currentName.isEmpty())
 			emit discardConnection();
 
-		setText(0, name.c_str());
+		setText(0, newName);
 		setText(1, "(invalid)");
 		updateToolTip();
 	}
@@ -704,7 +707,7 @@ using namespace QGPM;
 		{
 			QString result = inputFormatString;
 
-			result.replace("%s", elements.mainPipelineInputs[idx].c_str());
+			result.replace("%s", QString::fromStdString(elements.mainPipelineInputs[idx]));
 			result.replace("%d",  QString::number(idx));
 
 			return result.toStdString();
@@ -715,6 +718,8 @@ using namespace QGPM;
 	{
 		if(!elements.mainPipeline.empty())
 			setText(0, QString::fromStdString(elements.mainPipeline));
+		else if(pipeline!=NULL)
+			setText(0, QString::fromStdString(pipeline->getName()));
 		else
 			setText(0, "(Untitled Pipeline)");
 
@@ -770,8 +775,47 @@ using namespace QGPM;
 		updateStatusString();
 	}
 
+	void PipelineItem::addInputPortItem(int id, const std::string& name)
+	{
+		InputPortItem* inputPortItem = new InputPortItem(this, id);
+		inputPortItem->setName(name);
+		
+		QObject::connect(inputPortItem, SIGNAL(connectionAdded(int)),					this, 		SLOT(connectionAdded(int)));
+		QObject::connect(inputPortItem, SIGNAL(connectionContentModified(int, QVector<const void*>)),	this, 		SLOT(connectionContentModified(int, QVector<const void*>)));
+		QObject::connect(inputPortItem, SIGNAL(connectionContentFormatModified(int)),			this, 		SLOT(connectionContentFormatModified(int)));
+		QObject::connect(inputPortItem, SIGNAL(connectionStatusChanged(int,bool)),			this, 		SLOT(connectionStatusChanged(int,bool)));
+		QObject::connect(inputPortItem, SIGNAL(connectionClosed(int)),					this, 		SLOT(connectionClosed(int)));
+		QObject::connect(inputPortItem, SIGNAL(addViewRequest(QVGL::View*)),				this, 		SIGNAL(addViewRequest(QVGL::View*)));
+		QObject::connect(inputPortItem, SIGNAL(updateColumnSize(void)),					this, 		SIGNAL(updateColumnSize(void)));
+		
+		inputPortItems.push_back(inputPortItem);
+		inputsNode.addChild(inputPortItem);
+
+		emit pipelineInputPortAdded(inputPortItem);
+	}
+
+	void PipelineItem::addOutputPortItem(int id, const std::string& name)
+	{
+		OutputPortItem* outputPortItem = new OutputPortItem(this, id);
+		outputPortItem->setName(name);
+
+		QObject::connect(this, 		SIGNAL(computationFinished(int, QVector<const void*>)),		outputPortItem,	SLOT(computationFinished(int, QVector<const void*>)));
+		QObject::connect(outputPortItem,SIGNAL(addViewRequest(QVGL::View*)),				this, 		SIGNAL(addViewRequest(QVGL::View*)));
+		QObject::connect(outputPortItem,SIGNAL(updateColumnSize(void)),					this,		SIGNAL(updateColumnSize(void)));
+		QObject::connect(this, 		SIGNAL(pipelineDestroyed(void)),				outputPortItem,	SLOT(pipelineDestroyed(void)));
+
+		outputPortItems.push_back(outputPortItem);
+		outputsNode.addChild(outputPortItem);
+
+		emit pipelineOutputPortAdded(outputPortItem);
+	}
+
 	void PipelineItem::refurnishPortItems(void)
 	{
+		// In the case where the PIPELINE_MAIN is not visible by the preparser, do not update now and update only after compiling (see PipelineItem::refurnishPortItems(const PipelineLayout& layout)) :
+		if(elements.mainPipeline.empty())
+			return;
+
 		// Remove the ports which are in excess : 
 		while(elements.mainPipelineInputs.size()<inputPortItems.size())
 		{
@@ -787,7 +831,7 @@ using namespace QGPM;
 			outputPortItems.pop_back();
 		}
 
-		// Update the existing port : 
+		// Update the existing ports : 
 		for(int k=0; k<inputPortItems.size(); k++)
 			inputPortItems[k]->setName(elements.mainPipelineInputs[k]);
 
@@ -796,40 +840,10 @@ using namespace QGPM;
 
 		// Create new ports : 
 		for(int k=inputPortItems.size(); k<elements.mainPipelineInputs.size(); k++)
-		{
-			InputPortItem* inputPortItem = new InputPortItem(this, k);
-			inputPortItem->setName(elements.mainPipelineInputs[k]);
-			
-			QObject::connect(inputPortItem, SIGNAL(connectionAdded(int)),					this, 		SLOT(connectionAdded(int)));
-			QObject::connect(inputPortItem, SIGNAL(connectionContentModified(int, QVector<const void*>)),	this, 		SLOT(connectionContentModified(int, QVector<const void*>)));
-			QObject::connect(inputPortItem, SIGNAL(connectionContentFormatModified(int)),			this, 		SLOT(connectionContentFormatModified(int)));
-			QObject::connect(inputPortItem, SIGNAL(connectionStatusChanged(int,bool)),			this, 		SLOT(connectionStatusChanged(int,bool)));
-			QObject::connect(inputPortItem, SIGNAL(connectionClosed(int)),					this, 		SLOT(connectionClosed(int)));
-			QObject::connect(inputPortItem, SIGNAL(addViewRequest(QVGL::View*)),				this, 		SIGNAL(addViewRequest(QVGL::View*)));
-			QObject::connect(inputPortItem, SIGNAL(updateColumnSize(void)),					this, 		SIGNAL(updateColumnSize(void)));
-			
-			inputPortItems.push_back(inputPortItem);
-			inputsNode.addChild(inputPortItem);
-
-			emit pipelineInputPortAdded(inputPortItem);
-		}
+			addInputPortItem(k, elements.mainPipelineInputs[k]);
 
 		for(int k=outputPortItems.size(); k<elements.mainPipelineOutputs.size(); k++)
-		{
-			// Output port item : 
-			OutputPortItem* outputPortItem = new OutputPortItem(this, k);
-			outputPortItem->setName(elements.mainPipelineOutputs[k]);
-
-			QObject::connect(this, 		SIGNAL(computationFinished(int, QVector<const void*>)),		outputPortItem,	SLOT(computationFinished(int, QVector<const void*>)));
-			QObject::connect(outputPortItem,SIGNAL(addViewRequest(QVGL::View*)),				this, 		SIGNAL(addViewRequest(QVGL::View*)));
-			QObject::connect(outputPortItem,SIGNAL(updateColumnSize(void)),					this,		SIGNAL(updateColumnSize(void)));
-			QObject::connect(this, 		SIGNAL(pipelineDestroyed(void)),				outputPortItem,	SLOT(pipelineDestroyed(void)));
-
-			outputPortItems.push_back(outputPortItem);
-			outputsNode.addChild(outputPortItem);
-
-			emit pipelineOutputPortAdded(outputPortItem);
-		}
+			addOutputPortItem(k, elements.mainPipelineOutputs[k]);
 
 		inputsNode.setText(0, tr("Inputs (%1)").arg(elements.mainPipelineInputs.size()));
 		inputsNode.setExpanded(true);
@@ -837,7 +851,48 @@ using namespace QGPM;
 		outputsNode.setExpanded(true);
 		setExpanded(true);
 
-		// Force update :
+		// Force column size update :
+		emit updateColumnSize();
+	}
+
+	void PipelineItem::refurnishPortItems(const PipelineLayout& layout)
+	{
+		// Remove the ports which are in excess : 
+		while(layout.getNumInputPort()<inputPortItems.size())
+		{
+			if(inputPortItems.last()!=NULL)
+				inputPortItems.last()->deleteLater();
+			inputPortItems.pop_back();
+		}
+
+		while(layout.getNumOutputPort()<outputPortItems.size())
+		{
+			if(outputPortItems.last()!=NULL)
+				outputPortItems.last()->deleteLater();
+			outputPortItems.pop_back();
+		}
+
+		// Update the existing ports : 
+		for(int k=0; k<inputPortItems.size(); k++)
+			inputPortItems[k]->setName(layout.getInputPortName(k));
+
+		for(int k=0; k<outputPortItems.size(); k++)
+			outputPortItems[k]->setName(layout.getOutputPortName(k));	
+
+		// Create new ports : 
+		for(int k=inputPortItems.size(); k<layout.getNumInputPort(); k++)
+			addInputPortItem(k, layout.getInputPortName(k));
+
+		for(int k=outputPortItems.size(); k<layout.getNumOutputPort(); k++)
+			addOutputPortItem(k, layout.getOutputPortName(k));
+
+		inputsNode.setText(0, tr("Inputs (%1)").arg(layout.getNumInputPort()));
+		inputsNode.setExpanded(true);
+		outputsNode.setText(0, tr("Outputs (%1)").arg(layout.getNumOutputPort()));
+		outputsNode.setExpanded(true);
+		setExpanded(true);
+
+		// Force column size update :
 		emit updateColumnSize();
 	}
 
@@ -892,6 +947,8 @@ using namespace QGPM;
 
 			pipeline = loader.getPipeline(source, "Pipeline", sourceName);
 
+			refurnishPortItems(*pipeline);
+
 			checkUniforms();
 
 			checkCells();
@@ -933,7 +990,8 @@ using namespace QGPM;
 		{
 			bool selfConnectionTest = false;
 
-			for(int k=0; k<elements.mainPipelineInputs.size(); k++)
+			//for(int k=0; k<elements.mainPipelineInputs.size(); k++)
+			for(int k=0; k<getNumInputPorts(); k++)
 			{
 				if(k<inputPortItems.size() && inputPortItems[k]!=NULL && inputPortItems[k]->getConnection()!=NULL && inputPortItems[k]->getConnection()->isValid())
 					selfConnectionTest = selfConnectionTest || inputPortItems[k]->getConnection()->selfTest(this);
@@ -995,7 +1053,7 @@ using namespace QGPM;
 					resourceChain.push_back( inputPortItems[k]->getConnection()->getIdentification() );
 				}
 				else 
-					throw Exception("PipelineItem::compute -  Cannot use connection for port \"" + pipeline->getInputPortName(k) + "\" of " + pipeline->getFullName() + ".", __FILE__, __LINE__);
+					throw Exception("PipelineItem::compute - Cannot use connection for port \"" + pipeline->getInputPortName(k) + "\" of " + pipeline->getFullName() + ".", __FILE__, __LINE__);
 			}
 
 			// Compute : 
@@ -1108,13 +1166,18 @@ using namespace QGPM;
 	{
 		if(!elements.mainPipeline.empty())
 			return QString::fromStdString(elements.mainPipeline);
+		else if(pipeline!=NULL)
+			return QString::fromStdString(pipeline->getTypeName());
 		else
 			return QString("(Untitled Pipeline)");
 	}
 
 	int PipelineItem::getNumInputPorts(void) const
 	{
-		return elements.mainPipelineInputs.size();
+		if(pipeline!=NULL)
+			return pipeline->getNumInputPort();
+		else
+			return elements.mainPipelineInputs.size();
 	}
 
 	QString PipelineItem::getInputPortName(int idx) const
@@ -1123,6 +1186,8 @@ using namespace QGPM;
 
 		if(idx>=0 && idx<elements.mainPipelineInputs.size())
 			res = QString::fromStdString(elements.mainPipelineInputs[idx]);
+		else if(pipeline!=NULL && idx>=0 && idx<pipeline->getNumInputPort())
+			res = QString::fromStdString(pipeline->getInputPortName(idx));
 		else
 			res = tr("(Untitled input port #%1)").arg(idx);
 
@@ -1131,7 +1196,10 @@ using namespace QGPM;
 
 	int PipelineItem::getNumOutputPorts(void) const
 	{
-		return elements.mainPipelineOutputs.size();
+		if(pipeline!=NULL)
+			return pipeline->getNumOutputPort();
+		else
+			return elements.mainPipelineOutputs.size();
 	}
 
 	QString PipelineItem::getOutputPortName(int idx) const
@@ -1140,6 +1208,8 @@ using namespace QGPM;
 
 		if(idx>=0 && idx<elements.mainPipelineOutputs.size())
 			res = QString::fromStdString(elements.mainPipelineOutputs[idx]);
+		else if(pipeline!=NULL && idx>=0 && idx<pipeline->getNumOutputPort())
+			res = QString::fromStdString(pipeline->getOutputPortName(idx));
 		else
 			res = tr("(Untitled output port #%1)").arg(idx);
 
@@ -2109,6 +2179,10 @@ using namespace QGPM;
 	{
 		setInnerWidget(&manager);
 		setTitle("Pipeline Manager");
+
+		const QFontInfo fontInfo(font());
+		const int em = fontInfo.pixelSize();
+		resize(32*em, 32*em);
 	}
 
 	PipelineManagerSubWidget::~PipelineManagerSubWidget(void)

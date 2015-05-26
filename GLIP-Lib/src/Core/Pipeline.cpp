@@ -810,7 +810,7 @@
 					// Check for doubles :
 					std::map<std::string,int>::iterator it = outputNames.find(name);
 					if(it!=outputNames.end())
-						throw Exception("PipelineLayout::autoConnect - Found another output having the same name \"" + name + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+						throw Exception("PipelineLayout::autoConnect - Found another output having the same name \"" + name + "\" from component \"" + cp.getFullName() + "\" for PipelineLayout " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 					else
 						outputNames[name] = i;
 				}

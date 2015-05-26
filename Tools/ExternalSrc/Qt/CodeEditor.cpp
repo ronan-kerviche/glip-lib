@@ -2667,7 +2667,11 @@ using namespace QGED;
 	{
 		setInnerWidget(&codeEditorTabs);
 		setTitle("Code Editor");
-		resize(512, 512);
+
+		// Resize : 
+		const QFontInfo fontInfo(font());
+		const int em = fontInfo.pixelSize();
+		resize(64*em, 64*em);
 
 		QObject::connect(&codeEditorTabs, SIGNAL(showEditorSettings(void)), this, SLOT(showEditorSettings(void)));
 	}

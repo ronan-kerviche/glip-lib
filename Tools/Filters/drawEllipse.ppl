@@ -18,18 +18,14 @@ SHADER_SOURCE:drawEllipseShader
 	
 	void main()
 	{
-		// The current fragment position : 
-		vec2 pos = gl_TexCoord[0].st;
-
 		// Read the base level of the texture at the current position : 
-		vec4 col = textureLod(inputTexture, pos, 0);
+		vec4 col = textureLod(inputTexture, gl_TexCoord[0].st, 0);
 	
-		vec2	c	= vec2(center.x,-center.y)/2.0f+vec2(0.5f,0.5f),
-			r	= radii/2.0;
-		vec2	v	= pos-c;
-			v.x	/= r.x;
-			v.y	/= r.y;
-		float 	val 	= dot(v,v);
+		//vec2	c	= center.x,-center.y)/2.0f+vec2(0.5f,0.5f),
+		vec2	v	= gl_FragCoord.xy-center;
+			v.x	/= radii.x;
+			v.y	/= radii.y;
+		float 	val 	= length(v);
 
 		if(val<=1.0f && val+thickness>=1.0f)
 			col.rgb = color;

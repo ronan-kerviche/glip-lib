@@ -68,9 +68,12 @@ SHADER_SOURCE:HistogramFragmentShader
 	}
 }
 
-FILTER_LAYOUT:HistogramFilter(histogramBinsFormat, HistogramFragmentShader, HistogramVertexShader, grid)
+FILTER_LAYOUT:HistogramFilter(histogramBinsFormat)
 {
 	// Set the blending so that we sum the counts :
+	GL_FRAGMENT_SHADER(HistogramFragmentShader)
+	GL_VERTEX_SHADER(HistogramVertexShader)
+	GL_RENDER(grid)
 	GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD) 
 }
 

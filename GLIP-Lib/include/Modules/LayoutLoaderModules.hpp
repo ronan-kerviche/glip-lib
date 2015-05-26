@@ -96,6 +96,7 @@ GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the f
 GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
 CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
 FORMAT_TO_CONSTANT		| Create a shared code object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat, nameSharedCode.
+SINGLE_FILTER_PIPELINE		| Create a pipeline with a single filter. Arguments : pipelineName, outputTextureFormat. Body : fragment shader source.
 ABORT_ERROR			| Return a user defined error. Argument : error description.
 GENERATE_FFT1D_PIPELINE		| Generate the 1D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, name [, option, ...].
 GENERATE_FFT2D_PIPELINE		| Generate the 2D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, height, name [, option, ...].
@@ -173,7 +174,7 @@ Example, creating a simple Module :
 				virtual ~LayoutLoaderModule(void);
 
 				/**
-				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, ShaderSource>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, const std::vector<std::string>&	staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
+				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, ShaderSource>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
 				\brief Interface of the module : this function will be called on each corresponding token CALL for the LayoutLoader which has the module. 
 				\param arguments 		The arguments of the called, their number has already been checked.
 				\param body 			The body of the call (might be empty), its presence has already been checked.
@@ -191,6 +192,7 @@ Example, creating a simple Module :
 								For easy access see #ITERATOR_TO_FILTER, #CONST_ITERATOR_TO_FILTER, #FILTER_MUST_EXIST, #FILTER_MUST_NOT_EXIST and #APPEND_NEW_FILTER.
 				\param pipelineList		The list of pipelines currently loaded.
 								For easy access see #ITERATOR_TO_PIPELINE, #CONST_ITERATOR_TO_PIPELINE, #PIPELINE_MUST_EXIST, #PIPELINE_MUST_NOT_EXIST and #APPEND_NEW_PIPELINE.
+				\param mainPipelineName		The name of the current main pipeline, if already parsed.
 				\param staticPaths		The list of static paths (known for all load operations).
 				\param requiredFormatList	The list of static formats available.
 								For easy access see #CONST_ITERATOR_TO_REQUIREDFORMAT, #REQUIREDFORMAT_MUST_EXIST, #REQUIREDFORMAT_MUST_NOT_EXIST.
@@ -213,6 +215,7 @@ Example, creating a simple Module :
 							std::map<std::string, GeometryModel>&		geometryList,
 							std::map<std::string, FilterLayout>& 		filterList,
 							std::map<std::string, PipelineLayout>&		pipelineList,
+							std::string&					mainPipelineName, 
 							const std::vector<std::string>&			staticPaths,
 							const std::map<std::string,HdlTextureFormat>&	requiredFormatList,
 							const std::map<std::string,GeometryModel>&	requiredGeometryList,
@@ -252,6 +255,7 @@ Example, creating a simple Module :
 													std::map<std::string, GeometryModel>&		geometryList, \
 													std::map<std::string, FilterLayout>& 		filterList, \
 													std::map<std::string, PipelineLayout>&		pipelineList, \
+													std::string&					mainPipelineName, \
 													const std::vector<std::string>&			staticPaths, \
 													const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
 													const std::map<std::string,GeometryModel>&	requiredGeometryList, \
@@ -273,6 +277,7 @@ Example, creating a simple Module :
 											std::map<std::string, GeometryModel>&			geometryList, \
 											std::map<std::string, FilterLayout>& 			filterList, \
 											std::map<std::string, PipelineLayout>&			pipelineList, \
+											std::string&						mainPipelineName, \
 											const std::vector<std::string>&				staticPaths, \
 											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
 											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
@@ -293,6 +298,7 @@ Example, creating a simple Module :
 											std::map<std::string, GeometryModel>&			geometryList, \
 											std::map<std::string, FilterLayout>& 			filterList, \
 											std::map<std::string, PipelineLayout>&			pipelineList, \
+											std::string&						mainPipelineName, \
 											const std::vector<std::string>&				staticPaths, \
 											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
 											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
@@ -314,6 +320,7 @@ Example, creating a simple Module :
 																						std::map<std::string, GeometryModel>&		geometryList, \
 																						std::map<std::string, FilterLayout>& 		filterList, \
 																						std::map<std::string, PipelineLayout>&		pipelineList, \
+																						std::string&					mainPipelineName, \
 																						const std::vector<std::string>&			staticPaths, \
 																						const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
 																						const std::map<std::string,GeometryModel>&	requiredGeometryList, \
@@ -471,6 +478,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( CHAIN_PIPELINES )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_TO_CONSTANT )
+			LAYOUT_LOADER_MODULE_DEFINITION( SINGLE_FILTER_PIPELINE )
 			LAYOUT_LOADER_MODULE_DEFINITION( ABORT_ERROR )
 	}
 }

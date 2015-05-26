@@ -336,12 +336,10 @@ using namespace Glip::CoreGL;
 		// Parse the lines :
 		parseLines();
 
-		// Test compatibility needed :
-		bool hasGl_FragColor = tmpSource.find("gl_FragColor");
-
 		// Clean the code :
 		while( removeBlock(tmpSource, "//", "\n", false) ) ;
-		while( removeBlock(tmpSource, "/*", "*/", false) ) ;
+		while( removeBlock(tmpSource, "/*", "*/", false) ) ;		
+		const bool hasGl_FragColor = (tmpSource.find("gl_FragColor")!=std::string::npos); // Test if this is using a gl_FragColor (not in a comment).
 		while( removeBlock(tmpSource, "{", "}", true) ) ;
 		while( removeBlock(tmpSource, "(", ")", true) ) ;
 
@@ -419,7 +417,8 @@ using namespace Glip::CoreGL;
 		if(outFragments.empty() && hasGl_FragColor)
 		{
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable gl_FragColor, falling into compatibility mode." << std::endl;
+				std::cout << "ShaderSource::parseGlobals - Shader " << getSourceName() << " has no out vec4 variable but is using gl_FragColor, falling into compatibility mode." << std::endl;
+				std::cout << source << std::endl;
 			#endif
 			outFragments.push_back(portNameForFragColor);
 			compatibilityRequest = true;

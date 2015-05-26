@@ -167,6 +167,7 @@
 			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
 			loader.addModule( new CHAIN_PIPELINES );
 			loader.addModule( new FORMAT_TO_CONSTANT );
+			loader.addModule( new SINGLE_FILTER_PIPELINE );
 			loader.addModule( new ABORT_ERROR );
 			loader.addModule( new GenerateFFT1DPipeline );
 			loader.addModule( new GenerateFFT2DPipeline );
@@ -255,6 +256,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -284,6 +286,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -313,6 +316,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -342,6 +346,7 @@
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -371,6 +376,7 @@
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -400,6 +406,7 @@
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -430,6 +437,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
@@ -459,6 +467,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredPipelineList)
@@ -488,6 +497,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -517,6 +527,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -558,6 +569,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -613,6 +625,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -643,6 +656,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -673,6 +687,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -704,6 +719,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -735,6 +751,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -766,6 +783,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -809,6 +827,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -852,6 +871,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -895,6 +915,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -938,6 +959,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -981,6 +1003,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1024,6 +1047,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1067,6 +1091,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1111,6 +1136,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1155,6 +1181,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1198,6 +1225,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1228,6 +1256,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1269,6 +1298,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1301,7 +1331,7 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1, true,	"Create a 2D grid geometry of the same size as the format in argument.\n"
 												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
-												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
+												"            normalized : if 'TRUE' (case sensitive) the geometry will be in the range [0, 1].")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1310,6 +1340,7 @@
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1325,7 +1356,7 @@
 				bool normalized = false;
 
 				if(arguments.size()>=3)
-					normalized = (arguments[2]=="true");
+					normalized = getBoolean(arguments[2], sourceName, startLine);
 
 				// Build the new geometry : 
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
@@ -1333,7 +1364,7 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1, true,	"Create a 3D grid geometry of the same size as the format in argument.\n"
 												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
-												"            normalized : if 'true' (case sensitive) the geometry will be in the range [0, 1].")
+												"            normalized : if 'TRUE' (case sensitive) the geometry will be in the range [0, 1].")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1342,6 +1373,7 @@
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1357,7 +1389,7 @@
 				bool normalized = false;
 
 				if(arguments.size()>=3)
-					normalized = (arguments[2]=="true");
+					normalized = getBoolean(arguments[2], sourceName, startLine);
 
 				// Build the new geometry : 
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
@@ -1365,7 +1397,7 @@
 
 			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1, true, 	"Create a pipeline by connecting the pipelines passed in arguments, in line.\n"
 											"Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...\n"
-											"            isStrict if 'true' (case sensitive) the pipelines connection are enforced strictly (if outputs of\n"
+											"            isStrict if 'TRUE' (case sensitive) the pipelines connection are enforced strictly (if outputs of\n"
 											"                     the first pipeline are not equal to the number of input of the second pipeline,\n"
 											"                     then the module will report an error.\n")
 			{
@@ -1378,6 +1410,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1392,7 +1425,7 @@
 				PIPELINE_MUST_NOT_EXIST( arguments[0] );
 
 				// Get the arguments : 
-				const bool 	isStrict	= (arguments[1]=="true");
+				const bool isStrict = getBoolean(arguments[1], sourceName, startLine);
 
 				result.strKeyword 	= LayoutLoader::getKeyword(KW_LL_PIPELINE_LAYOUT);
 				result.name		= arguments[0];
@@ -1544,6 +1577,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
@@ -1562,6 +1596,52 @@
 				APPEND_NEW_SHAREDCODE(arguments[1], ShaderSource(str, sourceName, startLine));
 			}
 
+			LAYOUT_LOADER_MODULE_APPLY(SINGLE_FILTER_PIPELINE, 2, 3, 1, true, 	"Create a pipeline with a single filter.\n"
+												"Arguments : pipelineName, outputTextureFormat\n"
+												"Body      : fragment shader source.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sharedCodeList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionCode)
+
+				PIPELINE_MUST_NOT_EXIST( arguments[0] )
+				FORMAT_MUST_EXIST( arguments[1] )
+				CONST_ITERATOR_TO_FORMAT( formatIterator, arguments[1] )
+
+				const std::string& pipelineName = arguments[0];
+				const std::string& filterName = pipelineName + "_filter";
+
+				ShaderSource fragmentSource(body);
+				FilterLayout filter(filterName, formatIterator->second, fragmentSource);
+				PipelineLayout pipeline(pipelineName);
+
+				// Create the ports : 
+				for(int i=0; i<filter.getNumInputPort(); i++)
+					pipeline.addInput(filter.getInputPortName(i));
+				for(int i=0; i<filter.getNumOutputPort(); i++)
+					pipeline.addOutput(filter.getOutputPortName(i));
+				
+				// Add the filter and connect : 
+				pipeline.add(filter, filterName);
+				pipeline.autoConnect();
+				
+				// Save : 
+				APPEND_NEW_PIPELINE(pipelineName, pipeline)
+
+				// Set as the main pipeline : 
+				if(arguments.size()>=3 && getBoolean(arguments[2], sourceName, startLine))
+					mainPipelineName = pipelineName;
+			}
+
 			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"
 											"Argument    : error description.\n"
 											"Body (opt.) : more complete description of the error.")
@@ -1574,6 +1654,7 @@
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)

@@ -337,7 +337,8 @@ delete data;
 					bool isNormalized(void) const;
 					bool isInside(const int& j, const int& i, const int& d) const;
 					int getIndex(const int& j, const int& i, const int& d) const;
-					size_t getPosition(const int& j, const int& i, const int& d) const;
+					size_t getOffset(const int& j, const int& i, const int& d) const;
+					size_t getRowOffset(const int& i) const;
 
 					/**
 					\fn virtual float getf(const int& j=0, const int& i=0, const int& d=0) const = 0;
@@ -480,110 +481,110 @@ delete data;
 					virtual void set(void* value, const int& j=0, const int& i=0, const int& d=0) const = 0;
 
 					/**
-					\fn virtual float readf(const void* position) const = 0;
-					\brief Reading a floatting point value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual float readf(size_t offset) const = 0;
+					\brief Reading a floatting point value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to float.
 					**/
-					virtual float readf(const void* position) const = 0;
+					virtual float readf(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writef(const float& value, void* position) = 0;
-					\brief Write a floatting point value at the given position (presumed within the table).
+					\fn virtual void writef(const float& value, size_t offset) = 0;
+					\brief Write a floatting point value at the given position.
 					\param value Floatting point value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writef(const float& value, void* position) = 0;
+					virtual void writef(const float& value, size_t offset) = 0;
 
 					/**
-					\fn virtual double readd(const void* position) const = 0;
-					\brief Reading a floatting point value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual double readd(size_t offset) const = 0;
+					\brief Reading a floatting point value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to double.
 					**/
-					virtual double readd(const void* position) const = 0;
+					virtual double readd(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writed(const double& value, void* position) = 0;
-					\brief Write a floatting point value at the given position (presumed within the table).
+					\fn virtual void writed(const double& value, size_t offset) = 0;
+					\brief Write a floatting point value at the given position.
 					\param value Floatting point value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writed(const double& value, void* position) = 0;
+					virtual void writed(const double& value, size_t offset) = 0;
 
 					/**
-					\fn virtual long long readl(const void* position) const = 0;
-					\brief Reading an integer value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual long long readl(size_t offset) const = 0;
+					\brief Reading an integer value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to long long.
 					**/
-					virtual long long readl(const void* position) const = 0;
+					virtual long long readl(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writel(const long long& value, void* position) = 0;
-					\brief Write an integer value at the given position (presumed within the table).
+					\fn virtual void writel(const long long& value, size_t offset) = 0;
+					\brief Write an integer value at the given position.
 					\param value Integer value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writel(const long long& value, void* position) = 0;
+					virtual void writel(const long long& value, size_t offset) = 0;
 
 					/**
-					\fn virtual int readi(const void* position) const = 0;
-					\brief Reading an integer value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual int readi(size_t offset) const = 0;
+					\brief Reading an integer value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to int.
 					**/
-					virtual int readi(const void* position) const = 0;
+					virtual int readi(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writei(const int& value, void* position) = 0;
-					\brief Write an integer value at the given position (presumed within the table).
+					\fn virtual void writei(const int& value, size_t offset) = 0;
+					\brief Write an integer value at the given position.
 					\param value Integer value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writei(const int& value, void* position) = 0;
+					virtual void writei(const int& value, size_t offset) = 0;
 
 					/**
-					\fn virtual unsigned char readb(const void* position) const = 0;
-					\brief Reading an integer value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual unsigned char readb(size_t offset) const = 0;
+					\brief Reading an integer value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to unsigned char.
 					**/
-					virtual unsigned char readb(const void* position) const = 0;
+					virtual unsigned char readb(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writeb(const unsigned char& value, void* position) = 0;
-					\brief Write an integer value at the given position (presumed within the table).
+					\fn virtual void writeb(const unsigned char& value, size_t offset) = 0;
+					\brief Write an integer value at the given position.
 					\param value Integer value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writeb(const unsigned char& value, void* position) = 0;
+					virtual void writeb(const unsigned char& value, size_t offset) = 0;
 
 					/**
-					\fn virtual float readNormalized(const void* position) const = 0;
-					\brief Reading an integer value from the given position (presumed within the table).
-					\param position Position in the table (direct data access).
+					\fn virtual float readNormalized(size_t offset) const = 0;
+					\brief Reading an integer value from the given position.
+					\param offset Offset in the table.
 					\return Value at the given position, casted to a normalized range.
 					**/
-					virtual float readNormalized(const void* position) const = 0;
+					virtual float readNormalized(size_t offset) const = 0;
 
 					/**
-					\fn virtual void writeNormalized(const float& value, void* position) = 0;
-					\brief Write a normalized value at the given position (presumed within the table).
+					\fn virtual void writeNormalized(const float& value, size_t offset) = 0;
+					\brief Write a normalized value at the given position.
 					\param value Normalized value to write.
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void writeNormalized(const float& value, void* position) = 0;
+					virtual void writeNormalized(const float& value, size_t offset) = 0;
 
 					/**
-					\fn virtual void write(const void* value, void* position) = 0;
+					\fn virtual void write(const void* value, size_t offset) = 0;
 					\brief Write a shapeless value at the given position (presumed within the table and of the same type).
 					\param value Shapeless value (of the same type as for the table).
-					\param position Position in the table (direct data access).
+					\param offset Offset in the table.
 					**/
-					virtual void write(const void* value, void* position) = 0;
+					virtual void write(const void* value, size_t offset) = 0;
 
-					void writeBytes(const void* value, size_t length, void* position);
+					void writeBytes(const void* value, size_t length, size_t offset);
 
 					/**
 					\fn virtual const void* getPtr(void) const = 0;
@@ -622,6 +623,8 @@ delete data;
 					\return Reference to this object.
 					**/
 					virtual const HdlDynamicTable& operator=(const HdlDynamicTable& cpy) = 0;
+
+					void memset(unsigned char c);
 
 					static HdlDynamicTable* build(const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized=false, int _alignment=1);
 					static HdlDynamicTable* buildProxy(void* buffer, const GLenum& type, const int& _columns, const int& _rows, const int& _slices, bool _normalized=false, int _alignment=1);
@@ -664,19 +667,19 @@ delete data;
 					void* get(const int& j=0, const int& i=0, const int& d=0) const;
 					void set(void* value, const int& j=0, const int& i=0, const int& d=0) const ;
 
-					float readf(const void* position) const;
-					void writef(const float& value, void* position);
-					double readd(const void* position) const;
-					void writed(const double& value, void* position);
-					long long readl(const void* position) const;
-					void writel(const long long& value, void* position);
-					int readi(const void* position) const;
-					void writei(const int& value, void* position);
-					unsigned char readb(const void* position) const;
-					void writeb(const unsigned char& value, void* position);
-					float readNormalized(const void* position) const;
-					void writeNormalized(const float& value, void* position);
-					void write(const void* value, void* position);
+					float readf(size_t offset) const;
+					void writef(const float& value, size_t offset);
+					double readd(size_t offset) const;
+					void writed(const double& value, size_t offset);
+					long long readl(size_t offset) const;
+					void writel(const long long& value, size_t offset);
+					int readi(size_t offset) const;
+					void writei(const int& value, size_t offset);
+					unsigned char readb(size_t offset) const;
+					void writeb(const unsigned char& value, size_t offset);
+					float readNormalized(size_t offset) const;
+					void writeNormalized(const float& value, size_t offset);
+					void write(const void* value, size_t offset);
 
 					const void* getPtr(void) const;
 					void* getPtr(void);
@@ -739,234 +742,234 @@ delete data;
 				float HdlDynamicTableSpecial<T>::getf(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return static_cast<float>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<float>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::setf(const float& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = HdlDynamicTableSpecial<float>::normalize(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = HdlDynamicTableSpecial<float>::normalize(value);
 				}
 
 				template<typename T>
 				double HdlDynamicTableSpecial<T>::getd(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return static_cast<double>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<double>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::setd(const double& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = HdlDynamicTableSpecial<double>::normalize(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = HdlDynamicTableSpecial<double>::normalize(value);
 				}
 
 				template<typename T>
 				long long HdlDynamicTableSpecial<T>::getl(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return static_cast<long long>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<long long>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::setl(const long long& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = HdlDynamicTableSpecial<long long>::normalize(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = HdlDynamicTableSpecial<long long>::normalize(value);
 				}
 
 				template<typename T>
 				int HdlDynamicTableSpecial<T>::geti(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return static_cast<int>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<int>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::seti(const int& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = HdlDynamicTableSpecial<int>::normalize(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = HdlDynamicTableSpecial<int>::normalize(value);
 				}
 
 				template<typename T>
 				unsigned char HdlDynamicTableSpecial<T>::getb(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return static_cast<unsigned char>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<unsigned char>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::setb(const unsigned char& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = HdlDynamicTableSpecial<unsigned char>::normalize(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = HdlDynamicTableSpecial<unsigned char>::normalize(value);
 				}
 
 				template<typename T>
 				float HdlDynamicTableSpecial<T>::getNormalized(const int& j, const int& i, const int& d) const
 				{
 					if(!isNormalized())
-						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 					else
-						return static_cast<float>(*reinterpret_cast<T*>(data + getPosition(j, i, d)));
+						return static_cast<float>(*reinterpret_cast<T*>(data + getOffset(j, i, d)));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::setNormalized(const float& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(HdlDynamicTableSpecial<float>::denormalize(value));
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(HdlDynamicTableSpecial<float>::denormalize(value));
 					else
-						(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 				}
 
 				template<typename T>
 				void* HdlDynamicTableSpecial<T>::get(const int& j, const int& i, const int& d) const
 				{
-					return reinterpret_cast<void*>(data + getPosition(j, i, d));
+					return reinterpret_cast<void*>(data + getOffset(j, i, d));
 				}
 
 				template<typename T>
 				void HdlDynamicTableSpecial<T>::set(void* value, const int& j, const int& i, const int& d) const
 				{
-					(*reinterpret_cast<T*>(data + getPosition(j, i, d))) = (*reinterpret_cast<T*>(value));
+					(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = (*reinterpret_cast<T*>(value));
 				}
 
 				template<typename T>
-				float HdlDynamicTableSpecial<T>::readf(const void* position) const
+				float HdlDynamicTableSpecial<T>::readf(size_t offset) const
 				{
 					if(!isNormalized())
-						return static_cast<float>(*reinterpret_cast<const T*>(position));
+						return static_cast<float>(*reinterpret_cast<const T*>(data+offset));
 					else
-						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<float>::denormalize(*reinterpret_cast<const T*>(data+offset));
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writef(const float& value, void* position)
+				void HdlDynamicTableSpecial<T>::writef(const float& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<float>::normalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<float>::normalize(value);
 				}
 		
 				template<typename T>
-				double HdlDynamicTableSpecial<T>::readd(const void* position) const
+				double HdlDynamicTableSpecial<T>::readd(size_t offset) const
 				{
 					if(!isNormalized())
-						return static_cast<double>(*reinterpret_cast<const T*>(position));
+						return static_cast<double>(*reinterpret_cast<const T*>(data+offset));
 					else
-						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<double>::denormalize(*reinterpret_cast<const T*>(data+offset));
 				}
 		
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writed(const double& value, void* position)
+				void HdlDynamicTableSpecial<T>::writed(const double& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<double>::normalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<double>::normalize(value);
 				}
 
 				template<typename T>
-				long long HdlDynamicTableSpecial<T>::readl(const void* position) const
+				long long HdlDynamicTableSpecial<T>::readl(size_t offset) const
 				{
 					if(!isNormalized())
-						return static_cast<long long>(*reinterpret_cast<const T*>(position));
+						return static_cast<long long>(*reinterpret_cast<const T*>(data+offset));
 					else
-						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<long long>::denormalize(*reinterpret_cast<const T*>(data+offset));
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writel(const long long& value, void* position)
+				void HdlDynamicTableSpecial<T>::writel(const long long& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<long long>::normalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<long long>::normalize(value);
 				}
 
 				template<typename T>
-				int HdlDynamicTableSpecial<T>::readi(const void* position) const
+				int HdlDynamicTableSpecial<T>::readi(size_t offset) const
 				{
 					if(!isNormalized())
-						return static_cast<int>(*reinterpret_cast<const T*>(position));
+						return static_cast<int>(*reinterpret_cast<const T*>(data+offset));
 					else
-						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<int>::denormalize(*reinterpret_cast<const T*>(data+offset));
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writei(const int& value, void* position)
+				void HdlDynamicTableSpecial<T>::writei(const int& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<int>::normalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<int>::normalize(value);
 				}
 
 				template<typename T>
-				unsigned char HdlDynamicTableSpecial<T>::readb(const void* position) const
+				unsigned char HdlDynamicTableSpecial<T>::readb(size_t offset) const
 				{
 					if(!isNormalized())
-						return static_cast<unsigned char>(*reinterpret_cast<const T*>(position));
+						return static_cast<unsigned char>(*reinterpret_cast<const T*>(data+offset));
 					else
-						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<unsigned char>::denormalize(*reinterpret_cast<const T*>(data+offset));
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writeb(const unsigned char& value, void* position)
+				void HdlDynamicTableSpecial<T>::writeb(const unsigned char& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 					else
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<unsigned char>::normalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<unsigned char>::normalize(value);
 				}
 
 				template<typename T>
-				float HdlDynamicTableSpecial<T>::readNormalized(const void* position) const
+				float HdlDynamicTableSpecial<T>::readNormalized(size_t offset) const
 				{
 					if(!isNormalized())
-						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<const T*>(position));
+						return HdlDynamicTableSpecial<T>::normalize(*reinterpret_cast<const T*>(data+offset));
 					else
-						return static_cast<float>(*reinterpret_cast<const T*>(position));
+						return static_cast<float>(*reinterpret_cast<const T*>(data+offset));
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::writeNormalized(const float& value, void* position)
+				void HdlDynamicTableSpecial<T>::writeNormalized(const float& value, size_t offset)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(position)) = HdlDynamicTableSpecial<T>::denormalize(value);
+						(*reinterpret_cast<T*>(data+offset)) = HdlDynamicTableSpecial<T>::denormalize(value);
 					else
-						(*reinterpret_cast<T*>(position)) = static_cast<T>(value);
+						(*reinterpret_cast<T*>(data+offset)) = static_cast<T>(value);
 				}
 
 				template<typename T>
-				void HdlDynamicTableSpecial<T>::write(const void* value, void* position)
+				void HdlDynamicTableSpecial<T>::write(const void* value, size_t offset)
 				{
-					(*reinterpret_cast<T*>(position)) = (*reinterpret_cast<const T*>(value));
+					(*reinterpret_cast<T*>(data+offset)) = (*reinterpret_cast<const T*>(value));
 				}
 
 				template<typename T>
@@ -1024,74 +1027,6 @@ delete data;
 				{
 					return static_cast<T>(t * (static_cast<float>(std::numeric_limits<T>::max()) - static_cast<float>(std::numeric_limits<T>::min())) + static_cast<float>(std::numeric_limits<T>::min()));
 				}
-
-/**
-\class HdlDynamicTableIterator
-\brief Iterator-like element for HdlDynamicTable
-**/
-			class GLIP_API HdlDynamicTableIterator
-			{
-				private : 
-					HdlDynamicTable& 	table;
-					int 			i,
-								j,
-								d;
-					unsigned char* 		position;
-
-					void checkSliceUpperBorder(void);
-					void checkSliceLowerBorder(void);
-					void checkRowUpperBorder(void);
-					void checkRowLowerBorder(void);
-
-				public : 
-					HdlDynamicTableIterator(HdlDynamicTable& _table);
-					HdlDynamicTableIterator(const HdlDynamicTableIterator& copy);
-					virtual ~HdlDynamicTableIterator(void);
-
-					// Information : 
-					const HdlDynamicTable& getTable(void) const;
-					HdlDynamicTable& getTable(void);
-					bool isValid(void) const;
-					const int& getRowIndex(void) const;
-					const int& getColumnIndex(void) const;
-					const int& getSliceIndex(void) const;
-					int getDistanceToBottomBorder(void) const;
-					int getDistanceToRightBorder(void) const;					
-
-					// Move : 
-					void nextElement(void);
-					void previousElement(void);
-					void nextSlice(void);
-					void previousSlice(void);
-					void sliceBegin(void);
-					void sliceEnd(void);
-					void nextRow(void);
-					void previousRow(void);
-					void rowBegin(void);
-					void rowEnd(void);
-					void tableBegin(void);
-					void tableEnd(void);
-					void jumpTo(const int& _j, const int& _i, const int& _d);
-
-					// Read/write : 
-					const void* getPtr(void) const;
-					void* getPtr(void);
-					float readf(void) const;
-					void writef(const float& value);
-					double readd(void) const;
-					void writed(const double& value);
-					long long readl(void) const;
-					void writel(const long long& value);
-					int readi(void) const;
-					void writei(const int& value);
-					unsigned char readb(void) const;
-					void writeb(const unsigned char& value);
-					float readNormalized(void) const;
-					void writeNormalized(const float& value);
-					void write(const void* value);
-					void writeBytes(const void* value, size_t length);
-					void write(const HdlDynamicTableIterator& it);
-			};
 		}
 	}
 

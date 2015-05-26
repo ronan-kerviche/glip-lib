@@ -678,7 +678,7 @@
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
 	}
 
-	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e)
+	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName)
 	{
 		// Find the name of the module : 
 		preliminaryTests(e, 1, -1, -1, 0, "RequiredPipeline");
@@ -702,7 +702,8 @@
 			preliminaryTests(e, 1, module.getMinNumArguments(), module.getMaxNumArguments(), module.bodyPresenceTest(), "Module \"" + module.getName() + "\"");
 
 			// Make the call : 
-			std::string subExecution;
+			std::string 	_mainPipelineName = mainPipelineName,
+					subExecution;
 			module.apply(	e.arguments, 
 					e.body,	
 					currentPath, 
@@ -713,6 +714,7 @@
 					geometryList,
 					filterList,
 					pipelineList,
+					_mainPipelineName, 
 					staticPaths,
 					requiredFormatList,
 					requiredGeometryList,
@@ -721,6 +723,12 @@
 					e.startLine,
 					e.bodyLine,
 					subExecution);
+
+			// Test if the main pipeline name is now different
+			if(_mainPipelineName!=mainPipelineName && !mainPipelineName.empty())
+				throw Exception("A main pipeline (named \"" + mainPipelineName + "\") was already defined.", e.sourceName, e.startLine, Exception::ClientScriptException);
+			else
+				mainPipelineName = _mainPipelineName;
 
 			if(!subExecution.empty())
 			{
@@ -1102,53 +1110,37 @@
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests :
-		preliminaryTests(e, 1, 2, 4, 0, "FilterLayout");
-
+		preliminaryTests(e, 1, 1, 2, 0, "FilterLayout");
+		
 		// Find the format :
-		std::map<std::string,HdlTextureFormat>::iterator 	format		 = formatList.find(e.arguments[0]);
-		std::map<std::string,ShaderSource>::iterator 		fragmentSource	 = sourceList.find(e.arguments[1]),
-							 		vertexSource;
-		std::map<std::string, GeometryModel>::iterator		geometry;
-		ShaderSource						*vertexSourcePtr = NULL;
-		GeometryModel						*geometryPtr	 = NULL;
-
+		std::map<std::string,HdlTextureFormat>::iterator format = formatList.find(e.arguments[0]);
 		if(format==formatList.end())
 			throw Exception("No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
-		if(fragmentSource==sourceList.end())
-			throw Exception("No ShaderSource with name \"" + e.arguments[1] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
-		if(filterList.find(e.name)!=filterList.end())
-			throw Exception("A FilterLayout Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-		if(e.arguments.size()>2)
+		// Find the shaders, the geometry, the settings : 
+		std::map<GLenum,ShaderSource*> shaders;
+		GeometryModel *geometryPtr = NULL;
+		
+		bool clearingSet = false;
+			bool enableClearing = false;
+		bool blendingSet = false;
+			GLenum	blendingSFactor = GL_NONE,
+				blendingDFactor = GL_NONE,
+				blendingEquation = GL_NONE;
+		bool depthTestingSet = false;
+			GLenum depthTestingFunction = GL_NONE;
+
+		// If the fragment source name is provided in the arguments : 
+		if(e.arguments.size()>1)
 		{
-			if(e.arguments[2]!=keywords[KW_LL_DEFAULT_VERTEX_SHADER])
-			{
-				vertexSource = sourceList.find(e.arguments[2]);
-
-				if(vertexSource==sourceList.end())
-					throw Exception("No ShaderSource with name \"" + e.arguments[2] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
-
-				vertexSourcePtr = &vertexSource->second;
-			}
+			std::map<std::string,ShaderSource>::iterator fragmentSource = sourceList.find(e.arguments[1]);
+			if(fragmentSource==sourceList.end())
+				throw Exception("No ShaderSource with name \"" + e.arguments[1] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+			else
+				shaders[GL_FRAGMENT_SHADER] = &fragmentSource->second;
 		}
 
-		if(e.arguments.size()>3)
-		{
-			if(e.arguments[3]!=keywords[KW_LL_STANDARD_QUAD])
-			{
-				geometry = geometryList.find(e.arguments[3]);
-
-				if(geometry==geometryList.end())
-					throw Exception("No Geometry with name \"" + e.arguments[3] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
-
-				geometryPtr = &geometry->second;
-			}
-		}
-
-		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, fragmentSource->second, vertexSourcePtr, geometryPtr) ) );
-
-		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
-
+		// Scan the body for possible other shaders, geometry and settings :
 		if(!e.noBody && !e.body.empty())
 		{
 			try
@@ -1157,25 +1149,138 @@
 
 				// Classify :
 				std::map<GLenum, bool> setParametersTest;
-				setParametersTest[GL_CLEAR]	= false;
-				setParametersTest[GL_BLEND]	= false;
-				setParametersTest[GL_DEPTH_TEST]= false;
+				setParametersTest[GL_VERTEX_SHADER]		= false;
+				setParametersTest[GL_FRAGMENT_SHADER]		= (shaders.find(GL_FRAGMENT_SHADER)!=shaders.end()); // The fragment shader is not already set.
+				setParametersTest[GL_COMPUTE_SHADER]		= false;
+				setParametersTest[GL_TESS_CONTROL_SHADER]	= false;
+				setParametersTest[GL_TESS_EVALUATION_SHADER]	= false;
+				setParametersTest[GL_GEOMETRY_SHADER]		= false;
+				setParametersTest[GL_CLEAR]			= false;
+				setParametersTest[GL_BLEND]			= false;
+				setParametersTest[GL_DEPTH_TEST]		= false;
+				setParametersTest[GL_RENDER]			= false;
 
 				for(unsigned int k=0; k<parser.elements.size(); k++)
 				{
 					GLenum glId = getGLEnum(parser.elements[k].strKeyword);
 					
-					if(glId==GL_CLEAR)
+					if(glId==GL_VERTEX_SHADER)
+					{
+						if(setParametersTest[GL_VERTEX_SHADER])
+							throw Exception("The GL_VERTEX_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_VERTEX_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_VERTEX_SHADER] = &source->second;
+				
+						setParametersTest[GL_VERTEX_SHADER] = true;
+					}
+					else if(glId==GL_FRAGMENT_SHADER)
+					{
+						if(setParametersTest[GL_FRAGMENT_SHADER])
+							throw Exception("The GL_FRAGMENT_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_FRAGMENT_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_FRAGMENT_SHADER] = &source->second;
+
+						setParametersTest[GL_FRAGMENT_SHADER] = true;
+					}
+					else if(glId==GL_COMPUTE_SHADER)
+					{
+						if(setParametersTest[GL_COMPUTE_SHADER])
+							throw Exception("The GL_COMPUTE_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_COMPUTE_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_COMPUTE_SHADER] = &source->second;
+
+						setParametersTest[GL_COMPUTE_SHADER] = true;
+					}
+					else if(glId==GL_TESS_CONTROL_SHADER)
+					{
+						if(setParametersTest[GL_TESS_CONTROL_SHADER])
+							throw Exception("The GL_TESS_CONTROL_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_TESS_CONTROL_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_TESS_CONTROL_SHADER] = &source->second;
+
+						setParametersTest[GL_TESS_CONTROL_SHADER] = true;
+					}
+					else if(glId==GL_TESS_EVALUATION_SHADER)
+					{
+						if(setParametersTest[GL_TESS_EVALUATION_SHADER])
+							throw Exception("The GL_TESS_EVALUATION_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_TESS_EVALUATION_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_TESS_EVALUATION_SHADER] = &source->second;
+
+						setParametersTest[GL_TESS_EVALUATION_SHADER] = true;
+					}
+					else if(glId==GL_GEOMETRY_SHADER)
+					{
+						if(setParametersTest[GL_GEOMETRY_SHADER])
+							throw Exception("The GL_GEOMETRY_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+		
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						if(source==sourceList.end())
+							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_GEOMETRY_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							shaders[GL_GEOMETRY_SHADER] = &source->second;
+
+						setParametersTest[GL_GEOMETRY_SHADER] = true;
+					}
+					else if(glId==GL_RENDER)
+					{
+						if(setParametersTest[GL_RENDER])
+							throw Exception("The GL_GEOMETRY_SHADER parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+
+						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
+
+						std::map<std::string,GeometryModel>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
+						if(geometry==geometryList.end())
+							throw Exception("No Geometry with name \"" + e.arguments[0] + "\" was registered.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+						else
+							geometryPtr = &geometry->second;
+		
+						setParametersTest[GL_RENDER] = true;
+					}
+					else if(glId==GL_CLEAR)
 					{
 						if(setParametersTest[GL_CLEAR])
 							throw Exception("The GL_CLEAR parameter was already set.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException); 
 
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 						
+						clearingSet = true;
 						if(parser.elements[k].arguments[0]==keywords[KW_LL_TRUE])
-							filterLayout->second.enableClearing();
+							enableClearing = true;
 						else if(parser.elements[k].arguments[0]==keywords[KW_LL_FALSE])
-							filterLayout->second.disableClearing();
+							enableClearing = false;
 						else
 							throw Exception("Unknown settings \"" + parser.elements[k].arguments[0] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException); 
 
@@ -1188,12 +1293,10 @@
 
 						preliminaryTests(parser.elements[k], -1, 3, 3, -1, e.name);
 
-						GLenum 	sFactor 	= getGLEnum(parser.elements[k].arguments[0]),
-							dFactor 	= getGLEnum(parser.elements[k].arguments[1]),
-							blendingEquation= getGLEnum(parser.elements[k].arguments[2]);
-
-						filterLayout->second.enableBlending(sFactor, dFactor, blendingEquation);
-
+						blendingSet	= true;
+						blendingSFactor = getGLEnum(parser.elements[k].arguments[0]),
+						blendingDFactor = getGLEnum(parser.elements[k].arguments[1]),
+						blendingEquation= getGLEnum(parser.elements[k].arguments[2]);
 						setParametersTest[GL_BLEND] = true;
 					}
 					else if(glId==GL_DEPTH_TEST)
@@ -1203,10 +1306,9 @@
 							
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						GLenum  depthTestingFunction = getGLEnum(parser.elements[k].arguments[0]);
+						depthTestingSet = true;
+						depthTestingFunction = getGLEnum(parser.elements[k].arguments[0]);
 
-						filterLayout->second.enableDepthTesting(depthTestingFunction);
-		
 						setParametersTest[GL_DEPTH_TEST] = true;
 					}
 					else
@@ -1220,6 +1322,23 @@
 				throw m;
 			}
 		}
+
+		// Construct : 
+		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, shaders, geometryPtr) ) );
+		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
+
+		// Apply the options, if needed : 
+		if(clearingSet)
+		{
+			if(enableClearing)	filterLayout->second.enableClearing();
+			else			filterLayout->second.disableClearing();
+		}
+
+		if(blendingSet)
+			filterLayout->second.enableBlending(blendingSFactor, blendingDFactor, blendingEquation);
+
+		if(depthTestingSet)
+			filterLayout->second.enableDepthTesting(depthTestingFunction);
 	}
 
 	void LayoutLoader::buildPipeline(const VanillaParserSpace::Element& e)
@@ -1535,7 +1654,7 @@
 						buildRequiredPipeline(rootParser.elements[k]);
 						break;
 					case KW_LL_CALL :
-						moduleCall(rootParser.elements[k]);
+						moduleCall(rootParser.elements[k], mainPipelineName);
 						break;
 					case KW_LL_FORMAT_LAYOUT :
 						buildFormat(rootParser.elements[k]);
@@ -1557,6 +1676,7 @@
 							else
 								throw Exception("A main pipeline (named \"" + mainPipelineName + "\") was already defined.", rootParser.elements[k].sourceName, rootParser.elements[k].startLine, Exception::ClientScriptException);
 						}
+						// And ...
 					case KW_LL_PIPELINE_LAYOUT :
 						buildPipeline(rootParser.elements[k]);
 						break;
@@ -1772,6 +1892,9 @@
 
 			// Get the mainPipeline :
 			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
+
+			if(it==pipelineList.end())
+				throw Exception("Main pipeline \"" + mainPipelineName + "\" was not found.", sourceName, 1, Exception::ClientScriptException);
 
 			return AbstractPipelineLayout(it->second);
 		}
@@ -2125,6 +2248,22 @@
 	\return A constant reference to the targeted module or raise an exception otherwise.
 	**/
 	const LayoutLoaderModule& LayoutLoader::module(const std::string& name) const
+	{
+		std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.find(name);
+
+		if(it==modules.end())
+			throw Exception("LayoutLoader::module - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
+		else
+			return *it->second;
+	}
+
+	/**
+	\fn LayoutLoaderModule& LayoutLoader::module(const std::string& name)
+	\brief Access a loaded module from its name.
+	\param name The name of the module to access.
+	\return A constant reference to the targeted module or raise an exception otherwise.
+	**/
+	LayoutLoaderModule& LayoutLoader::module(const std::string& name)
 	{
 		std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.find(name);
 

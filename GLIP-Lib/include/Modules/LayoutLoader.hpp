@@ -402,10 +402,10 @@ Define a shader source code.
 ## Filter Layout
 ### Filter Layout
 <blockquote>
-<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])
+<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>[, <i>fragmentShaderSourceName</i>])
 </blockquote>
 <blockquote>
-<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>, <i>fragmentShaderSourceName</i>[, <i>vertexShaderSourceName</i>, <i>geometryName</i>])<br>
+<b>FILTER_LAYOUT</b>:<i>name</i>(<i>outputFormatName</i>[, <i>fragmentShaderSourceName</i>])<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>extraOptions</i><br>
 }
@@ -420,7 +420,36 @@ Define a filter layout.
 <tr class="glipDescrRow"><td><i>fragmentShaderSourceName</i></td>	<td>Name of the fragment shader source.</td></tr>
 <tr class="glipDescrRow"><td><i>vertexShaderSourceName</i></td>		<td>Name of the vertex shader source. Use DEFAULT_VERTEX_SHADER to get the default vertex shader.</td></tr>
 <tr class="glipDescrRow"><td><i>geometryName</i></td>			<td>Name of the geometry model.</td></tr>
-<tr class="glipDescrRow"><td><i>extraOptions</i></td>			<td>Set of options for the filter layout : GL_CLEAR, GL_BLEND, GL_DEPTH_TEST</td></tr>
+<tr class="glipDescrRow"><td><i>extraOptions</i></td>			<td>Set of shaders, among GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER. Specific Geometry model with GL_RENDER. Set of options for the filter layout : GL_CLEAR, GL_BLEND, GL_DEPTH_TEST</td></tr>
+</table>
+
+### Shaders
+<blockquote>
+<b>GL_VERTEX_SHADER</b>(<i>name</i>)<br>
+<b>GL_FRAGMENT_SHADER</b>(<i>name</i>)<br>
+<b>GL_COMPUTE_SHADER</b>(<i>name</i>)<br>
+<b>GL_TESS_CONTROL_SHADER</b>(<i>name</i>)<br>
+<b>GL_TESS_EVALUATION_SHADER</b>(<i>name</i>)<br>
+<b>GL_GEOMETRY_SHADER</b>(<i>name</i>)
+</blockquote>
+
+Add other shader sources to the filter.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the ShaderSource to be used.</td></tr>
+</table>
+
+### Geometry Model
+<blockquote>
+<b>GL_RENDER</b>(<i>name</i>)
+</blockquote>
+
+Specify the GeometryModel to be used (default is a standard quad).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the GeometryModel to be used.</td></tr>
 </table>
 
 ### Clearing
@@ -764,7 +793,7 @@ catch(Exception& e)
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
-				void    moduleCall(const VanillaParserSpace::Element& e);
+				void    moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName);
 				void	buildSharedCode(const VanillaParserSpace::Element& e);
 				void	buildFormat(const VanillaParserSpace::Element& e);
 				void	buildShaderSource(const VanillaParserSpace::Element& e);
@@ -791,14 +820,15 @@ catch(Exception& e)
 				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
 				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout);
-				int  clearRequiredElements(void);
-				int  clearRequiredElements(const std::string& name);
+				int clearRequiredElements(void);
+				int clearRequiredElements(const std::string& name);
 
 				PipelineScriptElements listElements(const std::string& source, std::string sourceName="");
 
 				void addModule(LayoutLoaderModule* module, bool replace=false);
 				std::vector<std::string> listModules(void) const;
 				const LayoutLoaderModule& module(const std::string& name) const;
+				LayoutLoaderModule& module(const std::string& name);
 				void removeModule(const std::string& name);
 
 				static const char* getKeyword(LayoutLoaderKeyword k); 

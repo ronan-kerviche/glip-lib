@@ -23,9 +23,9 @@ SHADER_SOURCE:PlotHistogramShader
 		vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
 		vec4 col = textureLod(inputTexture, pos, 0);
 
-		bool 	rTest = (pos.t>(1.0-hist.r*scale)),
-			gTest = (pos.t>(1.0-hist.g*scale)),
-			bTest = (pos.t>(1.0-hist.b*scale));
+		bool 	rTest = (pos.t<hist.r*scale),
+			gTest = (pos.t<hist.g*scale),
+			bTest = (pos.t<hist.b*scale);
 
 		if(noBackground>0 && (rTest || gTest || bTest))
 			col = vec4(0.0, 0.0, 0.0, 1.0);

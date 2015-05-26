@@ -480,16 +480,27 @@
 	}
 
 	/**
-	\fn size_t HdlDynamicTable::getPosition(const int& j, const int& i, const int& d) const
+	\fn size_t HdlDynamicTable::getOffset(const int& j, const int& i, const int& d) const
 	\brief Get the distance in memory, from the beginning of the table to the targeted element.
 	\param j The index of the column.
 	\param i The index of the row.
 	\param d The index of the slice.
-	\return The distance to the beginning of the table in bytes.
+	\return The distance to the beginning of the table, in bytes.
 	**/
-	size_t HdlDynamicTable::getPosition(const int& j, const int& i, const int& d) const
+	size_t HdlDynamicTable::getOffset(const int& j, const int& i, const int& d) const
 	{
 		return static_cast<size_t>(i)*getRowSize() + static_cast<size_t>(j*getNumSlices() + d)*getElementSize();
+	}
+	
+	/**
+	\fn size_t HdlDynamicTable::getRowOffset(const int& i) const
+	\brief Get the offset for the beginning of a row.
+	\param i The index of the row.
+	\return The distance to the beginning of the table, in bytes.
+	**/
+	size_t HdlDynamicTable::getRowOffset(const int& i) const
+	{
+		return static_cast<size_t>(i)*getRowSize();
 	}
 
 	/**
@@ -539,15 +550,25 @@
 	}
 
 	/**
-	\fn void HdlDynamicTable::writeBytes(const void* value, size_t length, void* position)
+	\fn void HdlDynamicTable::writeBytes(const void* value, size_t length, size_t offset)
 	\brief Write a shapeless value array at the given position.
 	\param value Shapeless value.
 	\param length The amount of data to write (in bytes).
-	\param position Position in the table (direct data access).
+	\param offset Offset in the table.
 	**/
-	void HdlDynamicTable::writeBytes(const void* value, size_t length, void* position)
+	void HdlDynamicTable::writeBytes(const void* value, size_t length, size_t offset)
 	{
-		std::memcpy(position, value, length);
+		std::memcpy(reinterpret_cast<char*>(getPtr())+offset, value, length);
+	}
+
+	/**
+	\fn void HdlDynamicTable::memset(unsigned char c)
+	\brief Clear the array.
+	\param c Character to be used to clear the array.
+	**/
+	void HdlDynamicTable::memset(unsigned char c)
+	{
+		std::memset(getPtr(), c, getSize());
 	}
 
 	/**
@@ -744,495 +765,5 @@
 				return t;
 			}
 		}
-	}
-
-// HdlDynamicTableIterator :
-	/**
-	\fn HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
-	\brief Create an iterator over a table. Table must exist at all time. The iterator is initialized to the beginning of the table.
-	\param _table The table to run over.
-	**/
-	HdlDynamicTableIterator::HdlDynamicTableIterator(HdlDynamicTable& _table)
-	 :	table(_table),
-		i(0),
-		j(0),
-		d(0),
-		position(reinterpret_cast<unsigned char*>(_table.getPtr()))
-	{ }
-
-	/**
-	\fn HdlDynamicTableIterator::HdlDynamicTableIterator(const HdlDynamicTableIterator& copy)
-	\brief Copy constructor.
-	\param copy Original iterator.
-	**/
-	HdlDynamicTableIterator::HdlDynamicTableIterator(const HdlDynamicTableIterator& copy)
-	 :	table(copy.table),
-		i(copy.i),
-		j(copy.j),
-		d(copy.d),
-		position(copy.position)
-	{ }
-
-	HdlDynamicTableIterator::~HdlDynamicTableIterator(void)
-	{ }
-
-	void HdlDynamicTableIterator::checkSliceUpperBorder(void)
-	{
-		if(d>=table.getNumSlices())
-		{
-			d = 0;
-			j++;
-		}
-	}
-
-	void HdlDynamicTableIterator::checkSliceLowerBorder(void)
-	{
-		if(d<0)
-		{
-			d = table.getNumSlices()-1;
-			j--;
-		}
-	}
-
-	void HdlDynamicTableIterator::checkRowUpperBorder(void)
-	{
-		if(j>=table.getNumColumns())
-		{
-			j = 0;
-			i++;
-
-			position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
-		}
-	}
-
-	void HdlDynamicTableIterator::checkRowLowerBorder(void)
-	{
-		if(j<0)
-		{
-			j = table.getNumColumns()-1;
-			i--;
-
-			position = reinterpret_cast<unsigned char*>(table.getRowPtr(i)) + static_cast<size_t>(table.getNumColumns() * table.getNumSlices() - 1) * table.getElementSize();
-		}
-	}
-	
-	/**
-	\fn const HdlDynamicTable& HdlDynamicTableIterator::getTable(void) const
-	\brief Access the parent table.
-	\return A constant reference to the parent table of this iterator.
-	**/
-	const HdlDynamicTable& HdlDynamicTableIterator::getTable(void) const
-	{
-		return table;
-	}
-
-	/**
-	\fn HdlDynamicTable& HdlDynamicTableIterator::getTable(void)
-	\brief Access the parent table.
-	\return A reference to the parent table of this iterator.
-	**/
-	HdlDynamicTable& HdlDynamicTableIterator::getTable(void)
-	{
-		return table;
-	}
-
-	/**
-	\fn bool HdlDynamicTableIterator::isValid(void) const
-	\brief Check if the iterator is still valid.
-	\return True if the iterator is valid (can be used for I/O operation).
-	**/
-	bool HdlDynamicTableIterator::isValid(void) const
-	{
-		return table.isInside(j, i, d);
-	}
-
-	/**
-	\fn const int& HdlDynamicTableIterator::getRowIndex(void) const
-	\brief Get the current row index.
-	\return The current row index (might not be inside the table).
-	**/
-	const int& HdlDynamicTableIterator::getRowIndex(void) const
-	{
-		return i;
-	}
-
-	/**
-	\fn const int& HdlDynamicTableIterator::getColumnIndex(void) const
-	\brief Get the current column index.
-	\return The current column index (might not be inside the table).
-	**/
-	const int& HdlDynamicTableIterator::getColumnIndex(void) const
-	{
-		return j;
-	}
-
-	/**
-	\fn const int& HdlDynamicTableIterator::getSliceIndex(void) const
-	\brief Get the current slice index.
-	\return The current slice index (might not be inside the table).
-	**/
-	const int& HdlDynamicTableIterator::getSliceIndex(void) const
-	{
-		return d;
-	}
-
-	/**
-	\fn int HdlDynamicTableIterator::getDistanceToBottomBorder(void) const
-	\brief Get the number of elements between the current position and the bottom border (this element is included).
-	\return Height minus current row index.
-	**/
-	int HdlDynamicTableIterator::getDistanceToBottomBorder(void) const
-	{
-		return table.getNumRows() - getRowIndex();
-	}
-
-	/**
-	\fn int HdlDynamicTableIterator::getDistanceToRightBorder(void) const
-	\brief Get the number of elements between the current position and the right border (this element is included).
-	\return Width minus current column index.
-	**/
-	int HdlDynamicTableIterator::getDistanceToRightBorder(void) const
-	{
-		return table.getNumColumns() - getColumnIndex();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::nextElement(void)
-	\brief Move to the next element.
-	**/
-	void HdlDynamicTableIterator::nextElement(void)
-	{
-		d++;
-		position += table.getElementSize();
-		
-		checkSliceUpperBorder();
-		checkRowUpperBorder();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::previousElement(void)
-	\brief Move to the previous element.
-	**/
-	void HdlDynamicTableIterator::previousElement(void)
-	{
-		d--;
-		position -= table.getElementSize();
-
-		checkSliceLowerBorder();
-		checkRowLowerBorder();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::nextSlice(void)
-	\brief Move to the beginning of the next slice.
-	**/
-	void HdlDynamicTableIterator::nextSlice(void)
-	{
-		position += static_cast<size_t>(table.getNumSlices()-d) * table.getElementSize();
-		d = 0;
-		j++;
-		
-		checkSliceUpperBorder();
-		checkRowUpperBorder();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::previousSlice(void)
-	\brief Move to the beginning of the previous slice.
-	**/
-	void HdlDynamicTableIterator::previousSlice(void)
-	{
-		position -= static_cast<size_t>(table.getNumSlices() + d) * table.getElementSize();
-		d = 0;
-		j--;
-		
-		checkSliceLowerBorder();
-		checkRowLowerBorder();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::sliceBegin(void)
-	\brief Move to the beginning of the current slice.
-	**/
-	void HdlDynamicTableIterator::sliceBegin(void)
-	{
-		position -= static_cast<size_t>(d) * table.getElementSize();
-		d = 0;
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::sliceEnd(void)
-	\brief Move to the end of the current slice (last element).
-	**/
-	void HdlDynamicTableIterator::sliceEnd(void)
-	{
-		position += static_cast<size_t>(table.getNumSlices()-d-1) * table.getElementSize();
-		d = table.getNumSlices() - 1;
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::nextRow(void)
-	\brief Move to the beginning of the next row.
-	**/
-	void HdlDynamicTableIterator::nextRow(void)
-	{
-		d = 0;
-		j = 0;
-		i++;
-		
-		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::previousRow(void)
-	\brief Move to the beginning of the previous row
-	**/
-	void HdlDynamicTableIterator::previousRow(void)
-	{
-		d = 0;
-		j = 0;
-		i--;
-		
-		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::rowBegin(void)
-	\brief Move to the beginning of the current row.
-	**/
-	void HdlDynamicTableIterator::rowBegin(void)
-	{
-		d = 0;
-		j = 0;
-		
-		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::rowEnd(void)
-	\brief Move to the end of the current row (last element).
-	**/
-	void HdlDynamicTableIterator::rowEnd(void)
-	{
-		d = table.getNumSlices()-1;
-		j = table.getNumColumns()-1;
-		
-		position = reinterpret_cast<unsigned char*>(table.getRowPtr(i)) + static_cast<size_t>(table.getNumColumns() * table.getNumSlices() - 1) * table.getElementSize();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::tableBegin(void)
-	\brief Move to the beginning of the table.
-	**/
-	void HdlDynamicTableIterator::tableBegin(void)
-	{
-		i = 0;
-		j = 0;
-		d = 0;
-
-		position = reinterpret_cast<unsigned char*>(table.getPtr());
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::tableEnd(void)
-	\brief Move to the end of the table (last element).
-	**/
-	void HdlDynamicTableIterator::tableEnd(void)
-	{
-		i = table.getNumRows()-1;
-		j = table.getNumColumns()-1;
-		d = table.getNumSlices()-1;
-
-		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getSize() - table.getElementSize();
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::jumpTo(const int& _j, const int& _i, const int& _d)
-	\brief Jump to a different element.
-	\param _j The index of the column.
-	\param _i The index of the row.
-	\param _d The index of the slice.
-	**/
-	void HdlDynamicTableIterator::jumpTo(const int& _j, const int& _i, const int& _d)
-	{
-		j = _j;
-		i = _i;
-		d = _d;
-		position = reinterpret_cast<unsigned char*>(table.getPtr()) + table.getPosition(_j, _i, _d);	
-	}
-
-	/**
-	\fn const void* HdlDynamicTableIterator::getPtr(void) const
-	\brief Get the pointer to the current position.
-	\return Pointer to the current position.
-	**/
-	const void* HdlDynamicTableIterator::getPtr(void) const
-	{
-		return reinterpret_cast<void*>(position);
-	}
-
-	/**
-	\fn void* HdlDynamicTableIterator::getPtr(void)
-	\brief Get the pointer to the current position.
-	\return Pointer to the current position.
-	**/
-	void* HdlDynamicTableIterator::getPtr(void)
-	{
-		return reinterpret_cast<void*>(position);
-	}
-
-	/**
-	\fn float HdlDynamicTableIterator::readf(void) const
-	\brief Read the current value as a floatting point value
-	\return The current value casted as a float.
-	**/
-	float HdlDynamicTableIterator::readf(void) const
-	{
-		return table.readf(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writef(const float& value)
-	\brief Write a floatting point value to the current position.
-	\param value The floatting point value to write.
-	**/
-	void HdlDynamicTableIterator::writef(const float& value)
-	{
-		table.writef(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn double HdlDynamicTableIterator::readd(void) const
-	\brief Read the current value as a floatting point value
-	\return The current value casted as a double.
-	**/
-	double HdlDynamicTableIterator::readd(void) const
-	{
-		return table.readd(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writed(const double& value)
-	\brief Write a floatting point value to the current position.
-	\param value The floatting point value to write.
-	**/
-	void HdlDynamicTableIterator::writed(const double& value)
-	{
-		table.writed(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn long long HdlDynamicTableIterator::readl(void) const
-	\brief Read the current value as an integer value
-	\return The current value casted as a long long.
-	**/
-	long long HdlDynamicTableIterator::readl(void) const
-	{
-		return table.readl(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writel(const long long& value)
-	\brief Write an integer value to the current position.
-	\param value The integer value to write.
-	**/
-	void HdlDynamicTableIterator::writel(const long long& value)
-	{
-		table.writel(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn int HdlDynamicTableIterator::readi(void) const
-	\brief Read the current value as an integer value
-	\return The current value casted as an int.
-	**/
-	int HdlDynamicTableIterator::readi(void) const
-	{
-		return table.readi(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writei(const int& value)
-	\brief Write an integer value to the current position.
-	\param value The integer value to write.
-	**/
-	void HdlDynamicTableIterator::writei(const int& value)
-	{
-		table.writei(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn unsigned char HdlDynamicTableIterator::readb(void) const
-	\brief Read the current value as an integer value
-	\return The current value casted as an int.
-	**/
-	unsigned char HdlDynamicTableIterator::readb(void) const
-	{
-		return table.readb(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writeb(const unsigned char& value)
-	\brief Write an integer value to the current position.
-	\param value The integer value to write.
-	**/
-	void HdlDynamicTableIterator::writeb(const unsigned char& value)
-	{
-		table.writeb(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn float HdlDynamicTableIterator::readNormalized(void) const
-	\brief Read the current value as a normalized value. 
-	\return he current value casted in a normalized range.
-	**/
-	float HdlDynamicTableIterator::readNormalized(void) const
-	{
-		return table.readNormalized(reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writeNormalized(const float& value)
-	\brief Write a normalized value to the current position.
-	\param value The normalized value to write.
-	**/
-	void HdlDynamicTableIterator::writeNormalized(const float& value)
-	{
-		table.writeNormalized(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::write(const void* value)
-	\brief Write shapless data to the current position (assuming same type as the table).
-	\param value The shapeless value to write. 
-	**/
-	void HdlDynamicTableIterator::write(const void* value)
-	{
-		table.write(value, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::writeBytes(void* value, size_t length)
-	\brief Write a shapeless value array at the given position.
-	\param value Shapeless value array.
-	\param length The amount of data to write (in bytes).
-	**/
-	void HdlDynamicTableIterator::writeBytes(const void* value, size_t length)
-	{
-		table.writeBytes(value, length, reinterpret_cast<void*>(position));
-	}
-
-	/**
-	\fn void HdlDynamicTableIterator::write(const HdlDynamicTableIterator& it)
-	\brief Write the content from another iterator.
-	\param it Other iterator to copy from.
-	**/
-	void HdlDynamicTableIterator::write(const HdlDynamicTableIterator& it)
-	{
-		// Test elligibility to fast copy : 
-		if(it.getTable().getGLType()==getTable().getGLType())
-			write(it.getPtr());
-		else
-			writeNormalized(it.readNormalized());
 	}
 

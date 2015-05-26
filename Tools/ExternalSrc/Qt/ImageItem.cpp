@@ -85,16 +85,7 @@ using namespace QGIC;
 		HdlTextureFormat fakeDstFormat(qimage.width(), qimage.height(), fakeMode, GL_UNSIGNED_BYTE);
 		ImageBuffer 	original(const_cast<void*>(reinterpret_cast<const void*>(qimage.bits())), HdlTextureFormat(qimage.width(), qimage.height(), qtMode, GL_UNSIGNED_BYTE), 4),
 				destination(imageBuffer->getPtr(), fakeDstFormat, 4);
-
-		PixelIterator 	itSrc(original),
-				itDst(destination);
-
-		// Move to the beginning of the last line of the source : 
-		itSrc.imageEnd();
-		itSrc.lineBegin();
-
-		itDst.blit(itSrc, -1, -1, false, true); // reversed rows.
-
+		destination.blit(original, 0, 0, 0, 0, -1, -1, false, true);
 
 		#ifdef __TIME_LOADING__
 			std::cout << "The loading operation took " << timer.elapsed() << " milliseconds" << std::endl;
@@ -109,13 +100,13 @@ using namespace QGIC;
 		#endif
 
 		// Get the mode :
-		const HdlTextureFormatDescriptor& 	descriptor = HdlTextureFormatDescriptorsList::get( imageBuffer.getGLMode() );
-		const int 				depthBytes = HdlTextureFormatDescriptorsList::getTypeDepth( imageBuffer.getGLDepth() );
+		const HdlTextureFormatDescriptor& descriptor = HdlTextureFormatDescriptorsList::get(imageBuffer.getGLMode());
+		const int depthBytes = imageBuffer.getPixelSize();
 
 		if(qimage==NULL)
 		{
 			// Create : 
-			if( descriptor.numChannels()==1 && depthBytes==1 )
+			if(descriptor.numChannels==1 && depthBytes==1)
 			{
 				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_Indexed8);
 			
@@ -127,26 +118,26 @@ using namespace QGIC;
 
 				qimage->setColorTable(colors);
 			}
-			else if( descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && !descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )
+			else if(descriptor.hasChannel(GL_RED) && descriptor.hasChannel(GL_GREEN) && descriptor.hasChannel(GL_BLUE) && !descriptor.hasChannel(GL_ALPHA) && depthBytes==3)/*&& ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1) )*/
 				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_RGB888);
-			else if(descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )
+			else if(descriptor.hasChannel(GL_RED) && descriptor.hasChannel(GL_GREEN) && descriptor.hasChannel(GL_BLUE) && descriptor.hasChannel(GL_ALPHA) && depthBytes==4)/*&& ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1) )*/
 				qimage = new QImage(imageBuffer.getWidth(), imageBuffer.getHeight(), QImage::Format_ARGB32);		
 			else
-				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.mode) + "\".", __FILE__, __LINE__);
 		}
 		else
 		{
 			// Check : 
 			if(qimage->width()!=imageBuffer.getWidth() || qimage->height()!=imageBuffer.getHeight())
 				throw Exception("toQImage - qimage has an incompatible size.", __FILE__, __LINE__);
-			else if( (descriptor.numChannels()==1 && depthBytes==1) && (qimage->format()!=QImage::Format_Indexed8 || qimage->colorTable().isEmpty()) )
+			else if((descriptor.numChannels==1 && depthBytes==1) && (qimage->format()!=QImage::Format_Indexed8 || qimage->colorTable().isEmpty()) )
 				throw Exception("toQImage - qimage has an incompatible format (should be a grayscale image).", __FILE__, __LINE__);
-			else if( (descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && !descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1)) && qimage->format()!=QImage::Format_RGB888 )
+			else if((descriptor.hasChannel(GL_RED) && descriptor.hasChannel(GL_GREEN) && descriptor.hasChannel(GL_BLUE) && !descriptor.hasChannel(GL_ALPHA) && depthBytes==3/*&& ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8) || depthBytes==1)*/) && qimage->format()!=QImage::Format_RGB888 )
 				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
-			else if( (descriptor.hasRedChannel() && descriptor.hasGreenChannel() && descriptor.hasBlueChannel() && descriptor.hasAlphaChannel() && ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1)) && qimage->format()!=QImage::Format_ARGB32 )
+			else if((descriptor.hasChannel(GL_RED) && descriptor.hasChannel(GL_GREEN) && descriptor.hasChannel(GL_BLUE) && descriptor.hasChannel(GL_ALPHA) && depthBytes==4 /*&& ((descriptor.redDepthInBits==8 && descriptor.greenDepthInBits==8 && descriptor.blueDepthInBits==8 && descriptor.alphaDepthInBits==8) || depthBytes==1)*/) && qimage->format()!=QImage::Format_ARGB32 )
 				throw Exception("toQImage - qimage has an incompatible format.", __FILE__, __LINE__);
 			else
-				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.modeID) + "\".", __FILE__, __LINE__);
+				throw Exception("toQImage - Cannot write texture of mode \"" + getGLEnumName(descriptor.mode) + "\".", __FILE__, __LINE__);
 		}
 
 		const int nChannels = qimage->bytesPerLine()/qimage->width();
@@ -160,14 +151,8 @@ using namespace QGIC;
 		else
 			mode = GL_BGRA;
 
-		ImageBuffer 	destination(reinterpret_cast<void*>(qimage->bits()), HdlTextureFormat(qimage->width(), qimage->height(), mode, GL_UNSIGNED_BYTE), 4);
-
-		PixelIterator 	itSrc(imageBuffer),
-				itDst(destination);
-		itSrc.imageEnd();
-		itSrc.lineBegin();
-
-		itDst.blit(itSrc, -1, -1, false, true); // reversed rows.
+		ImageBuffer destination(reinterpret_cast<void*>(qimage->bits()), HdlTextureFormat(qimage->width(), qimage->height(), mode, GL_UNSIGNED_BYTE), 4);
+		destination.blit(imageBuffer, 0, 0, 0, 0, -1, -1, false, true);
 
 		#ifdef __TIME_LOADING__
 			std::cout << "The writing operation took " << timer.elapsed() << " milliseconds" << std::endl;
@@ -1679,15 +1664,15 @@ using namespace QGIC;
 		const HdlTextureFormatDescriptor& descriptor = format.getFormatDescriptor();
 
 		// Mode 
-		if( descriptor.hasRedChannel() )
+		if(descriptor.hasChannel(GL_RED))
 			formatString.append("R");
-		if( descriptor.hasGreenChannel() )
+		if(descriptor.hasChannel(GL_GREEN))
 			formatString.append("G");
-		if( descriptor.hasBlueChannel() )
+		if(descriptor.hasChannel(GL_BLUE))
 			formatString.append("B");
-		if( descriptor.hasAlphaChannel() )
+		if(descriptor.hasChannel(GL_ALPHA))
 			formatString.append("A");
-		if( descriptor.hasLuminanceChannel() )
+		if(descriptor.hasChannel(GL_LUMINANCE))
 			formatString.append("L");
 	
 		// Depth : 
@@ -2050,7 +2035,7 @@ using namespace QGIC;
 		mainViewsTableAction("Views Table", this)
 	{
 		setInnerWidget(&imageItemsCollection);
-		setTitle("Collection");
+		setTitle("Image Collection");
 
 		imageItemsCollection.addActionToMenu(&mainViewsTableAction);
 

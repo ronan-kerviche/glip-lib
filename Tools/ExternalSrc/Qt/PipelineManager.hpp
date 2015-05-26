@@ -170,7 +170,7 @@ namespace QGPM
 			bool isConnected(void) const;
 			void connect(Connection* _connection); // Takes ownership of the connection.
 			Connection* getConnection(void); // Returns the current connection (possibly NULL).
-			void setName(std::string& name);
+			void setName(const std::string& name);
 
 			static InputPortItem* getPtrFromGenericItem(QTreeWidgetItem* item);
 
@@ -201,7 +201,7 @@ namespace QGPM
 			void updateToolTip(void);
 
 		protected : 
-			void setName(std::string& name);
+			void setName(const std::string& name);
 
 			friend class PipelineItem;
 
@@ -247,7 +247,7 @@ namespace QGPM
 			QString					inputFormatString;
 			void*					identifier;
 			LayoutLoader::PipelineScriptElements	elements;
-			PipelineLayout*				pipelineLayout;
+			//PipelineLayout*				pipelineLayout;
 			Pipeline*				pipeline;
 			QTreeWidgetItem				inputsNode,
 								outputsNode;
@@ -270,7 +270,10 @@ namespace QGPM
 			void updateNameString(void);
 			void updateStatusString(void);
 			void preInterpret(void);
+			void addInputPortItem(int id, const std::string& name);
+			void addOutputPortItem(int id, const std::string& name);
 			void refurnishPortItems(void);
+			void refurnishPortItems(const PipelineLayout& layout);
 			bool checkConnections(void);
 			void compile(void);
 			void compute(QVector<const void*> resourceChain = QVector<const void*>());

@@ -21,14 +21,14 @@
  * \date    November 23rd 2013
 **/
 
-	#include <cstring>
-	#include <fstream>
-	#include "Modules/ImageBuffer.hpp"
-	#include "Core/Exception.hpp"
+#include <cstring>
+#include <fstream>
+#include "Modules/ImageBuffer.hpp"
+#include "Core/Exception.hpp"
 
-	using namespace Glip;
-	using namespace Glip::CoreGL;
-	using namespace Glip::Modules;
+using namespace Glip;
+using namespace Glip::CoreGL;
+using namespace Glip::Modules;
 
 	const unsigned int 	ImageBuffer::headerNumBytes 	= (8 + 4*3 + 4*6 + 4*2 + 4);	// See the load/write functions for more precisions (size * num elements).
 	const unsigned int 	ImageBuffer::maxCommentLength	= 1048576;			// 1MB
@@ -46,8 +46,8 @@
 		table(NULL)
 	{
 		setAlignment(_alignment);
-		bool normalized = (descriptor.modeID==GL_FLOAT) || (descriptor.modeID==GL_DOUBLE);
-		table = HdlDynamicTable::build(format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels(), normalized, _alignment);
+		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		table = HdlDynamicTable::build(format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels, normalized, _alignment);
 	}
 
 	/**
@@ -63,8 +63,8 @@
 		table(NULL)
 	{
 		setAlignment(_alignment);
-		bool normalized = (descriptor.modeID==GL_FLOAT) || (descriptor.modeID==GL_DOUBLE);
-		table = HdlDynamicTable::buildProxy(buffer, format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels(), normalized, _alignment);
+		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		table = HdlDynamicTable::buildProxy(buffer, format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels, normalized, _alignment);
 	}
 
 	
@@ -80,8 +80,8 @@
 		table(NULL)
 	{
 		setAlignment(_alignment);
-		bool normalized = (descriptor.modeID==GL_FLOAT) || (descriptor.modeID==GL_DOUBLE);
-		table = HdlDynamicTable::build(texture.getGLDepth(), texture.getWidth(), texture.getHeight(), descriptor.numChannels(), normalized, _alignment);
+		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		table = HdlDynamicTable::build(texture.getGLDepth(), texture.getWidth(), texture.getHeight(), descriptor.numChannels, normalized, _alignment);
 
 		// Copy : 
 		(*this) << texture;
@@ -133,6 +133,16 @@
 	const void* ImageBuffer::getPtr(void) const
 	{
 		return table->getPtr();
+	}
+
+	void* ImageBuffer::getRowPtr(int i)
+	{
+		return table->getRowPtr(i);
+	}
+
+	const void* ImageBuffer::getRowPtr(int i) const
+	{
+		return table->getRowPtr(i);
 	}
 	
 	/**
@@ -322,6 +332,18 @@
 	}
 
 	/*
+	\fn bool ImageBuffer::isInside(const int& x, const int& y) const
+	\brief Check if coordinates are valid.
+	\param x X-axis coordinate (along the width).
+	\param y Y-axis coordinate (along the height).
+	\return True if the coordinates lie inside the current image.
+	*/
+	bool ImageBuffer::isInside(const int& x, const int& y) const
+	{
+		return table->isInside(x, y, 0);
+	}
+
+	/*
 	\fn bool ImageBuffer::isInside(const int& x, const int& y, const GLenum& channel) const
 	\brief Check if coordinates are valid.
 	\param x X-axis coordinate (along the width).
@@ -331,7 +353,7 @@
 	*/
 	bool ImageBuffer::isInside(const int& x, const int& y, const GLenum& channel) const
 	{
-		const int c = descriptor.channelIndex(channel);
+		const int c = descriptor.getChannelIndex(channel);
 
 		if(c<0)
 			return false;
@@ -349,7 +371,7 @@
 	*/
 	int ImageBuffer::getIndex(const int&x, const int& y, const GLenum& channel) const
 	{
-		const int c = descriptor.channelIndex(channel);
+		const int c = descriptor.getChannelIndex(channel);
 		
 		if(c<0)
 			return -1;
@@ -367,7 +389,7 @@
 	**/
 	long long ImageBuffer::get(const int& x, const int& y, const GLenum& channel) const
 	{
-		return table->getl(x, y, descriptor.channelIndex(channel));
+		return table->getl(x, y, descriptor.getChannelIndex(channel));
 	}
 
 	/**
@@ -380,7 +402,7 @@
 	**/
 	void ImageBuffer::set(const long long& value, const int& x, const int& y, const GLenum& channel)
 	{
-		table->setl(value, x, y, descriptor.channelIndex(channel));
+		table->setl(value, x, y, descriptor.getChannelIndex(channel));
 	}
 
 	/**
@@ -393,7 +415,7 @@
 	**/
 	float ImageBuffer::getNormalized(const int& x, const int& y, const GLenum& channel) const
 	{
-		return table->getNormalized(x, y, descriptor.channelIndex(channel));
+		return table->getNormalized(x, y, descriptor.getChannelIndex(channel));
 	}
 
 	/**
@@ -406,7 +428,129 @@
 	**/
 	void ImageBuffer::setNormalized(const float& value, const int& x, const int& y, const GLenum& channel)
 	{
-		table->setNormalized(value, x, y, descriptor.channelIndex(channel));
+		table->setNormalized(value, x, y, descriptor.getChannelIndex(channel));
+	}
+
+	void ImageBuffer::blit(const ImageBuffer& src, const int& xSrc, const int& ySrc, const int& xDst, const int& yDst, int _width, int _height, const bool xFlip, const bool yFlip)
+	{
+		const int width = ((_width>0) ? _width : src.getWidth()),
+			  height = ((_height>0) ? _height : src.getHeight());
+
+		// Test the claim : 
+		if(!src.isInside(xSrc, ySrc) || !src.isInside(xSrc+width-1, ySrc+height-1))
+			throw Exception("ImageBuffer::blit - Invalid source rectangle starting at (" + toString(xSrc) + ";" + toString(ySrc) + ") of size (" + toString(width) + "x" + toString(height) + ") in an image of size (" + toString(src.getWidth()) + "x" + toString(src.getHeight()) + ").", __FILE__, __LINE__, Exception::ModuleException);
+		if(!isInside(xDst, yDst) || !isInside(xDst+width-1, yDst+height-1))
+			throw Exception("ImageBuffer::blit - Invalid destination rectangle starting at (" + toString(xDst) + ";" + toString(yDst) + ") of size (" + toString(width) + "x" + toString(height) + ") in an image of size (" + toString(getWidth()) + "x" + toString(getHeight()) + ").", __FILE__, __LINE__, Exception::ModuleException);
+
+		const bool sameLayout = (src.getGLMode()==getGLMode()),	
+			   sameDepth = (src.getGLDepth()==getGLDepth());
+		const int rowOffset = (yFlip ? (height-1) : 0),
+			  rowDirection = (yFlip ? -1 : 1),
+			  columnOffset = (xFlip ? (width-1) : 0),
+			  columnDirection = (xFlip ? -1 : 1);
+
+		// Shortcut : 
+		if(sameLayout && sameDepth && !xFlip)
+		{
+			const size_t rowSize = table->getRowSize();
+			
+			for(int y=0; y<height; y++)
+				std::memcpy(reinterpret_cast<char*>(table->getRowPtr(yDst + y)), reinterpret_cast<const char*>(src.table->getRowPtr(ySrc + rowOffset + rowDirection*y)), rowSize);
+		}
+		else if(!table->isNormalized() && src.table->isNormalized())
+		{
+			const int srcPixelSize = src.descriptor.getPixelSize(src.getGLDepth()),
+				  dstPixelSize = descriptor.getPixelSize(getGLDepth());
+
+			bool isBlack = false;
+			const int maxShuffleLength = 32;
+			char shuffle[maxShuffleLength];
+			const int length = HdlTextureFormatDescriptor::getBitShuffle(descriptor, getGLDepth(), src.descriptor, src.getGLDepth(), shuffle, maxShuffleLength, &isBlack);
+
+			// Shortcut : 
+			if(isBlack)
+			{
+				for(int y=0; y<height; y++)
+					std::memset(table->getRowPtr(yDst + y), 0, width*dstPixelSize);
+			}
+			else
+			{
+				for(int y=0; y<height; y++)
+				{
+					char* dstRow = reinterpret_cast<char*>(table->getRowPtr(yDst + y));
+					const char* srcRow = reinterpret_cast<const char*>(src.table->getRowPtr(ySrc + rowOffset + rowDirection*y));
+			
+					for(int x=0; x<width; x++)
+					{
+						char* dstPixel = dstRow + x*dstPixelSize;
+						const char* srcPixel = srcRow + (columnOffset + columnDirection*x)*srcPixelSize;
+						HdlTextureFormatDescriptor::applyBitShuffle(dstPixel, srcPixel, shuffle, length);
+					}
+				}
+			}
+		}
+		else
+		{
+			const int srcPixelSize = src.descriptor.getPixelSize(src.getGLDepth()),
+				  dstPixelSize = descriptor.getPixelSize(getGLDepth());
+
+			const HdlTextureFormatDescriptor proxyDst = (table->isNormalized() ? HdlTextureFormatDescriptorsList::get(descriptor.aliasMode) : descriptor),
+							 proxySrc = (src.table->isNormalized() ? HdlTextureFormatDescriptorsList::get(src.descriptor.aliasMode) : src.descriptor);
+			const GLenum proxyDepthDst = (table->isNormalized() ? GL_UNSIGNED_INT : getGLDepth()),
+				     proxyDepthSrc = (src.table->isNormalized() ? GL_UNSIGNED_INT : src.getGLDepth());
+
+			bool isBlack = false;
+			const int maxShuffleLength = 32;
+			char shuffle[maxShuffleLength];
+			const int length = HdlTextureFormatDescriptor::getBitShuffle(proxyDst, proxyDepthDst, proxySrc, proxyDepthSrc, shuffle, maxShuffleLength, &isBlack);
+
+			// Shortcut : 
+			if(isBlack)
+			{
+				for(int y=0; y<height; y++)
+					std::memset(table->getRowPtr(yDst + y), 0, width*dstPixelSize);
+			}
+			else
+			{
+				unsigned int 	bufferIn[HdlTextureFormatDescriptor_MaxNumChannels],
+						bufferOut[HdlTextureFormatDescriptor_MaxNumChannels];
+				char*	intermediateIn = NULL;
+
+				for(int y=0; y<height; y++)
+				{
+					char* dstRow = reinterpret_cast<char*>(table->getRowPtr(yDst + y));
+					const char* srcRow = reinterpret_cast<const char*>(src.table->getRowPtr(ySrc + rowOffset + rowDirection*y));
+			
+					for(int x=0; x<width; x++)
+					{
+						char* dstPixel = dstRow + x*dstPixelSize;
+						const char* srcPixel = srcRow + (columnOffset + columnDirection*x)*srcPixelSize;
+
+						if(src.table->isNormalized())
+						{
+							const float* srcPixelFloat = reinterpret_cast<const float*>(srcPixel);
+
+							for(int k=0; k<src.descriptor.numChannels; k++)
+								bufferIn[k] = static_cast<unsigned int>(srcPixelFloat[k]*static_cast<float>(std::numeric_limits<unsigned int>::max()));
+
+							intermediateIn = reinterpret_cast<char*>(bufferIn);
+						}
+						else
+							intermediateIn = const_cast<char*>(srcPixel);
+
+						if(!table->isNormalized())
+							HdlTextureFormatDescriptor::applyBitShuffle(dstPixel, intermediateIn, shuffle, length);
+						else
+						{
+							HdlTextureFormatDescriptor::applyBitShuffle(reinterpret_cast<char*>(bufferOut), intermediateIn, shuffle, length);
+							
+							for(int k=0; k<src.descriptor.numChannels; k++)
+								reinterpret_cast<float*>(dstPixel)[k] = static_cast<float>(bufferOut[k])/static_cast<float>(std::numeric_limits<unsigned int>::max());
+						}
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -602,440 +746,5 @@
 
 		// Finally : 
 		file.close();
-	}
-
-// PixelIterator : 
-	/**
-	\fn PixelIterator::PixelIterator(ImageBuffer& _image)
-	\brief Create an iterator over the pixels of an image. The ImageBuffer object must exist at all time. The iterator is initialized to the beginning of the image (top-left corner).
-	\param _image The image to run over.
-	**/
-	PixelIterator::PixelIterator(ImageBuffer& _image)
-	 : 	HdlDynamicTableIterator(_image.getTable()),
-		image(_image)
-	{ }
-
-	/**
-	\fn PixelIterator::PixelIterator(const PixelIterator& copy)
-	\brief PixelIterator copy constructor.
-	\param copy Original to copy.
-	**/
-	PixelIterator::PixelIterator(const PixelIterator& copy)
-	 : 	HdlDynamicTableIterator(copy),
-		image(copy.image)
-	{ }
-
-	PixelIterator::~PixelIterator(void)
-	{ }
-
-	/**
-	\fn const ImageBuffer& PixelIterator::getImage(void) const
-	\brief Acces the underlying image.
-	\return Constant reference to the image.
-	**/
-	const ImageBuffer& PixelIterator::getImage(void) const
-	{
-		return image;
-	}
-
-	/**
-	\fn ImageBuffer& PixelIterator::getImage(void)
-	\brief Acces the underlying image.
-	\return Reference to the image.
-	**/
-	ImageBuffer& PixelIterator::getImage(void)
-	{
-		return image;
-	}
-	
-	/**
-	\fn bool PixelIterator::isValid(void) const
-	\brief Check if the iterator is still valid.
-	\return True if the iterator is valid (can be used for I/O operation).
-	**/
-	bool PixelIterator::isValid(void) const
-	{
-		return HdlDynamicTableIterator::isValid();
-	}
-
-	/**
-	\fn size_t PixelIterator::getPixelSize(void) const
-	\brief Get the size of the pixel (all components) in bytes.
-	\return The size of the pixels in bytes.
-	**/
-	size_t PixelIterator::getPixelSize(void) const
-	{
-		return HdlDynamicTableIterator::getTable().getSliceSize();
-	}
-
-	/**
-	\fn int PixelIterator::getX(void) const
-	\brief Get the current X coordinate.
-	\return The current X coordinate.
-	**/
-	int PixelIterator::getX(void) const
-	{
-		return HdlDynamicTableIterator::getColumnIndex();
-	}
-
-	/**
-	\fn int PixelIterator::getY(void) const
-	\brief Get the current Y coordinate.
-	\return The current Y coordinate.
-	**/
-	int PixelIterator::getY(void) const
-	{
-		return HdlDynamicTableIterator::getRowIndex();
-	}
-
-	/**
-	\fn int PixelIterator::getDistanceToBottomBorder(void) const
-	\brief Get the number of pixels between the current position and the bottom border (this pixel is included).
-	\return Height minus current Y coordinate.
-	**/
-	int PixelIterator::getDistanceToBottomBorder(void) const
-	{
-		return HdlDynamicTableIterator::getDistanceToBottomBorder();
-	}
-
-	/**
-	\fn int PixelIterator::getDistanceToRightBorder(void) const
-	\brief Get the number of pixels between the current position and the right border (this pixel is included).
-	\return Width minus current X coordinate.
-	**/
-	int PixelIterator::getDistanceToRightBorder(void) const
-	{
-		return HdlDynamicTableIterator::getDistanceToRightBorder();
-	}
-
-	/**
-	\fn void PixelIterator::nextPixel(void)
-	\brief Move to the next pixel.
-	**/
-	void PixelIterator::nextPixel(void)
-	{
-		HdlDynamicTableIterator::nextSlice();
-	}
-
-	/**
-	\fn void PixelIterator::previousPixel(void)
-	\brief Move to the previous pixel.
-	**/
-	void PixelIterator::previousPixel(void)
-	{
-		HdlDynamicTableIterator::previousSlice();
-	}
-
-	/**
-	\fn void PixelIterator::nextLine(void)
-	\brief Move to the next line.
-	**/
-	void PixelIterator::nextLine(void)
-	{
-		HdlDynamicTableIterator::nextRow();
-	}
-
-	/**
-	\fn void PixelIterator::previousLine(void)
-	\brief Move to the next line.
-	**/
-	void PixelIterator::previousLine(void)
-	{
-		HdlDynamicTableIterator::previousRow();
-	}
-
-	/**
-	\fn void PixelIterator::lineBegin(void)
-	\brief Move to the beginning of the line.
-	**/
-	void PixelIterator::lineBegin(void)
-	{
-		HdlDynamicTableIterator::rowBegin();
-	}
-
-	/**
-	\fn void PixelIterator::lineEnd(void)
-	\brief Move to the end of the line.
-	**/
-	void PixelIterator::lineEnd(void)
-	{
-		HdlDynamicTableIterator::rowEnd();
-		HdlDynamicTableIterator::sliceBegin();
-	}
-
-	/**
-	\fn void PixelIterator::imageBegin(void)
-	\brief Move to the beginning of the image.
-	**/
-	void PixelIterator::imageBegin(void)
-	{
-		HdlDynamicTableIterator::tableBegin();
-	}
-
-	/**
-	\fn void PixelIterator::imageEnd(void)
-	\brief Move to the end of the image.
-	**/
-	void PixelIterator::imageEnd(void)
-	{
-		HdlDynamicTableIterator::tableEnd();
-	}
-
-	/**
-	\fn void PixelIterator::jumpTo(const int& x, const int& y)
-	\brief Jump to another position.
-	\param x X coordinate.
-	\param y Y coordinate.
-	**/
-	void PixelIterator::jumpTo(const int& x, const int& y)
-	{
-		HdlDynamicTableIterator::jumpTo(x, y, 0);
-	}
-
-	/**
-	\fn const void* PixelIterator::getPtr(void) const
-	\brief Get the current position in memory.
-	\return Constant pointer to the current position in memory.
-	**/
-	const void* PixelIterator::getPtr(void) const
-	{
-		return HdlDynamicTableIterator::getPtr();
-	}
-
-	/**
-	\fn void* PixelIterator::getPtr(void)
-	\brief Get the current position in memory.
-	\return Pointer to the current position in memory.
-	**/
-	void* PixelIterator::getPtr(void)
-	{
-		return HdlDynamicTableIterator::getPtr();
-	}
-
-	/**
-	\fn float PixelIterator::readNormalized(const GLenum& channel) const
-	\brief Read the given channel of the current pixel in a normalized range.
-	\param channel The channel targeted
-	\return The value in a normalized range or 0.0 if the channel is not registered.
-	**/
-	float PixelIterator::readNormalized(const GLenum& channel) const
-	{
-		int idx = image.getDescriptor().channelIndex(channel);
-
-		if(idx<0)
-			return 0.0f;
-		else
-			return HdlDynamicTableIterator::getTable().readNormalized(reinterpret_cast<const void*>(reinterpret_cast<const char*>(HdlDynamicTableIterator::getPtr()) + idx * HdlDynamicTableIterator::getTable().getElementSize())); 
-	}
-
-	/**
-	\fn void PixelIterator::writeNormalized(const float& value, const GLenum& channel)
-	\brief Write a normalized value in a the given channel. No action is performed if the channel is not registered.
-	\param value The normalized value to write.
-	\param channel The channel targeted.
-	**/
-	void PixelIterator::writeNormalized(const float& value, const GLenum& channel)
-	{
-		int idx = image.getDescriptor().channelIndex(channel);
-
-		if(idx>=0)
-			HdlDynamicTableIterator::getTable().writeNormalized(value, reinterpret_cast<void*>(reinterpret_cast<char*>(HdlDynamicTableIterator::getPtr()) + idx * HdlDynamicTableIterator::getTable().getElementSize()));
-	}
-
-	/**
-	\fn void PixelIterator::writePixel(PixelIterator& it)
-	\brief Write the value of another pixel iterator to the current position.
-	\param it Another, valid, pixel iterator to copy value from.
-	**/
-	void PixelIterator::writePixel(PixelIterator& it)
-	{
-		float 	buffer[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	
-		// Read normalized and sort : 
-		for(int k=0; k<it.image.getNumChannels(); k++)
-		{
-			int idxDest = image.getDescriptor().channelIndex(it.image.getDescriptor().channelAtIndex(k));
-
-			if(idxDest>=0)
-				buffer[idxDest] = it.HdlDynamicTableIterator::readNormalized();
-
-			it.nextElement();
-		}
-
-		// Write
-		for(int k=0; k<image.getNumChannels(); k++)
-		{
-			HdlDynamicTableIterator::writeNormalized(buffer[k]);
-			nextElement();
-		}
-
-		sliceBegin();
-		it.sliceBegin();
-	}
-
-		bool isPlatformLSB(void)
-		{
-			const unsigned int v = 0xFF000000;
-
-			return (*reinterpret_cast<const char*>(&v)==0);
-		}
-
-		bool isIdentical(const char* indices, const int s, const int s2)
-		{
-			if(s!=s2)
-				return false;
-
-			for(int k=0; k<s; k++)
-			{
-				if(indices[k]!=k)
-					return false;
-			}
-
-			return true;
-		}
-
-		inline void memParse(char* dst, const char* src, const char* indices, const int s)
-		{
-			for(int k=0; k<s; k++)
-			{
-				if(indices[k]>=0)
-					dst[k] = src[static_cast<int>(indices[k])];
-			}
-		}
-
-	/**
-	\fn void PixelIterator::blit(PixelIterator& src, int maxWidth, int maxHeight)
-	\brief Copy an area of src into the current pixel iterator (the current position of the iterator defines the upper-left corner).
-	\param src The source to from.
-	\param maxWidth The maximum width to copy.
-	\param maxHeight The maximum height to copy.
-	**/
-	void PixelIterator::blit(PixelIterator& src, int maxWidth, int maxHeight, const bool reversedColumns, const bool reversedRows)
-	{
-		bool 		destFloattingOrNormalized 	= (image.getTable().isNormalized() || image.getTable().isFloatingPointType()),
-				srcFloattingOrNormalized	= (src.image.getTable().isNormalized() || src.image.getTable().isFloatingPointType());
-
-		const int	w = (maxWidth<0) ? (std::min((reversedColumns ? (src.getX()+1) : src.getDistanceToRightBorder()), getDistanceToRightBorder())) : (std::min((reversedColumns ? (src.getX()+1) : src.getDistanceToRightBorder()), std::min(getDistanceToRightBorder(), maxWidth))),
-				h = (maxHeight<0) ? (std::min((reversedRows ? (src.getY()+1) : src.getDistanceToBottomBorder()),getDistanceToBottomBorder())) : (std::min((reversedRows ? (src.getY()+1) : src.getDistanceToBottomBorder()), std::min(getDistanceToBottomBorder(), maxHeight)));
-
-		const int 	dstOriginX	= getX(),
-				dstOriginY	= getY(),
-				srcOriginX	= src.getX(),
-				srcOriginY	= src.getY();
-
-		if(!destFloattingOrNormalized && !srcFloattingOrNormalized)
-		{
-			// Generate the shifting layout : 
-			const int 	largestLayout 	= 256; // 64bits x 4 channels
-			char		indices[largestLayout];
-
-			std::memset(reinterpret_cast<void*>(indices), -1, largestLayout); // Fill with 0xFF
-
-			const int	sizeSrcComponent	= src.image.getTable().getElementSize(),
-					sizeDstComponent	= image.getTable().getElementSize();
-
-			if(isPlatformLSB())
-			{
-				for(int p=0; p<image.getNumChannels(); p++)
-				{
-					// Find where the current channel is in the source
-					int target = src.image.getDescriptor().channelIndex( image.getDescriptor().channelAtIndex(p) );
-
-					// If the current channel exists in source : 
-					if(target>=0)
-					{ 
-						for(int q=std::min(0, sizeDstComponent-sizeSrcComponent); q<std::min(sizeSrcComponent, sizeDstComponent); q++)
-							indices[p*sizeDstComponent+q] = target * sizeSrcComponent + q + std::min(0, sizeSrcComponent-sizeDstComponent);		
-					}
-				}
-			}
-			else // MSB platform : 	
-			{
-				for(int p=0; p<image.getNumChannels(); p++)
-				{
-					// Find where the current channel is in the source
-					int target = src.image.getDescriptor().channelIndex( image.getDescriptor().channelAtIndex(p) );
-
-					// If the current channel exists in source : 
-					if(target>=0)
-					{ 
-						for(int q=0; q<std::min(sizeSrcComponent, sizeDstComponent); q++)
-							indices[p*sizeDstComponent+q] = target * sizeSrcComponent + q;		
-					}
-				}
-			}
-
-			const bool identicalLayout = isIdentical(indices, getPixelSize(), src.getPixelSize());
-
-			// Copy : 
-			if(identicalLayout && !reversedColumns)
-			{
-				// Boost the output in the case of identical layouts : 
-				for(int y=0; y<h; y++)
-				{
-					std::memcpy(reinterpret_cast<char*>(getPtr()), reinterpret_cast<const char*>(src.getPtr()), w*getPixelSize());
-					
-					// Move back in the window : 
-					if(reversedRows)
-						src.jumpTo(srcOriginX, srcOriginY-y-1);
-					else
-						src.jumpTo(srcOriginX, srcOriginY+y+1);
-					jumpTo(dstOriginX, dstOriginY+y+1);
-				}
-			}
-			else // General case : 
-			{
-				for(int y=0; y<h; y++)
-				{
-					for(int x=0; x<w; x++)
-					{
-						// Shift and adapt : 
-						memParse(reinterpret_cast<char*>(getPtr()), reinterpret_cast<char*>(src.getPtr()), indices, getPixelSize());
-
-						// Move to the next pixel : 
-						if(reversedColumns)
-							src.previousPixel();
-						else
-							src.nextPixel();
-						nextPixel();
-					}
-				
-					// Move back in the window : 
-					if(reversedRows)
-						src.jumpTo(srcOriginX, srcOriginY-y-1);
-					else
-						src.jumpTo(srcOriginX, srcOriginY+y+1);
-					jumpTo(dstOriginX, dstOriginY+y+1);
-				}
-			}
-		}
-		else if(destFloattingOrNormalized!=srcFloattingOrNormalized)
-		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
-			/*const int maxChannels = 4;
-			char indices[maxChannels];
-
-			// Get the layout : 
-			std::memset(reinterpret_cast<void*>(indices), -1, maxChannels);
-			for(int p=0; p<image.getNumChannels(); p++)
-				indices[p] = src.image.getDescriptor().channelIndex( image.getDescriptor().channelAtIndex(p) );
-
-			float buffer[maxChannels];
-
-			for(int y=0; y<h; y++)
-			{
-				for(int x=0; x<w; x++)
-				{
-					for(int k=0; k<getNumChannels(); k++)
-					{
-							
-					}
-				}
-			}*/
-		}
-		else // destFloattingOrNormalized && srcFloattingOrNormalized
-		{
-			throw Exception("PixelIterator::blit - Unable to copy from and/or to normalized data.", __FILE__, __LINE__, Exception::ModuleException);
-		}
 	}
 

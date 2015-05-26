@@ -66,7 +66,8 @@
 					int	getNumChannels  (void) const;
 					int	getNumElements	(void) const;
 					int	getAlignment	(void) const;
-				virtual size_t	getLineSize	(void) const;
+					int	getPixelSize	(void) const;
+				virtual size_t	getRowSize	(void) const;
 				virtual size_t	getSize     	(void) const;
 					int	getChannelDepth (void) const;
 					GLenum	getGLMode   	(void) const;

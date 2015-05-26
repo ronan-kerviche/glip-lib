@@ -104,11 +104,17 @@ using namespace Glip::CoreGL;
 	\fn     int HdlAbstractTextureFormat::getNumChannels(void) const
 	\return The texture's channel count.
 	\fn     int HdlAbstractTextureFormat::getChannelDepth(void) const
-	\return The channel size in BYTE.
+	\return The channel size in bytes.
 	\fn     int HdlAbstractTextureFormat::getNumElements(void) const
 	\return The texture's number of elements (width x height x channels).
+	\fn     int HdlAbstractTextureFormat::getAlignment(void) const
+	\return The alignment parameter in bytes.
+	\fn     int HdlAbstractTextureFormat::getPixelSize(void) const
+	\return The pixel size in bytes.
+	\fn     int HdlAbstractTextureFormat::getRowSize(void) const
+	\return The row size in bytes.
 	\fn     size_t HdlAbstractTextureFormat::getSize(void) const
-	\return The texture's size in BYTE.
+	\return The texture's size in bytes.
 	\fn     GLenum HdlAbstractTextureFormat::getGLMode(void) const
 	\return The texture's mode.
 	\fn     GLenum HdlAbstractTextureFormat::getGLDepth(void) const
@@ -133,12 +139,13 @@ using namespace Glip::CoreGL;
 	int	HdlAbstractTextureFormat::getWidth   		(void) const { return width; }
 	int	HdlAbstractTextureFormat::getHeight   		(void) const { return height; }
 	int	HdlAbstractTextureFormat::getNumPixels		(void) const { return width*height; }
-	int	HdlAbstractTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels(); }
-	int	HdlAbstractTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptorsList::getTypeDepth(depth); }
+	int	HdlAbstractTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels; }
+	int	HdlAbstractTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptor::getTypeDepth(depth); }
 	int	HdlAbstractTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
 	int	HdlAbstractTextureFormat::getAlignment		(void) const { return alignment; }
-	size_t	HdlAbstractTextureFormat::getLineSize		(void) const { return static_cast<size_t>(getWidth()*getNumChannels()*getChannelDepth() + (alignment-1)) & ~static_cast<size_t>(alignment-1); }
-	size_t	HdlAbstractTextureFormat::getSize     		(void) const { return static_cast<size_t>(getHeight()) * getLineSize(); }
+	int	HdlAbstractTextureFormat::getPixelSize		(void) const { return getFormatDescriptor().getPixelSize(getGLDepth());}
+	size_t	HdlAbstractTextureFormat::getRowSize		(void) const { return static_cast<size_t>(getWidth()*getPixelSize() + (alignment-1)) & ~static_cast<size_t>(alignment-1); }
+	size_t	HdlAbstractTextureFormat::getSize     		(void) const { return static_cast<size_t>(getHeight()) * getRowSize(); }
 	GLenum	HdlAbstractTextureFormat::getGLMode   		(void) const { return mode; }
 	GLenum	HdlAbstractTextureFormat::getGLDepth  		(void) const { return depth; }
 	GLenum	HdlAbstractTextureFormat::getMinFilter		(void) const { return minFilter; }
@@ -148,7 +155,7 @@ using namespace Glip::CoreGL;
 	GLenum	HdlAbstractTextureFormat::getSWrapping		(void) const { return wraps; }
 	GLenum	HdlAbstractTextureFormat::getTWrapping		(void) const { return wrapt; }
 	bool	HdlAbstractTextureFormat::isCompressed		(void) const { return getFormatDescriptor().isCompressed; }
-	bool	HdlAbstractTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloating || depth==GL_FLOAT || depth==GL_DOUBLE; }
+	bool	HdlAbstractTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloatingPoint || depth==GL_FLOAT || depth==GL_DOUBLE; }
 
 	/**
 	\fn const HdlTextureFormatDescriptor& HdlAbstractTextureFormat::getFormatDescriptor(void) const
@@ -227,14 +234,9 @@ using namespace Glip::CoreGL;
 	**/
 	HdlAbstractTextureFormat HdlAbstractTextureFormat::getCompressedFormat(void) const
 	{
-		if(isCompressed())
-			return *this;
-		else
-		{
-			HdlAbstractTextureFormat res(*this);
-			res.mode = getFormatDescriptor().getCompressedMode();
-			return res;
-		}
+		HdlAbstractTextureFormat res(*this);
+		res.mode = getFormatDescriptor().compressedMode;
+		return res;
 	}
 
 	/**
@@ -249,7 +251,7 @@ using namespace Glip::CoreGL;
 		else
 		{
 			HdlAbstractTextureFormat res(*this);
-			res.mode = getFormatDescriptor().getUncompressedMode();
+			res.mode = getFormatDescriptor().uncompressedMode;
 			return res;
 		}
 	}
@@ -271,7 +273,7 @@ using namespace Glip::CoreGL;
 				(baseLevel		== f.baseLevel)		&&
 				(maxLevel		== f.maxLevel);
 
-		return test && (f.mode==getFormatDescriptor().getCompressedMode());
+		return test && (f.mode==getFormatDescriptor().compressedMode);
 	}
 
 	/**
@@ -323,11 +325,11 @@ using namespace Glip::CoreGL;
 		{
 			case GL_TEXTURE_WIDTH :			return getWidth();
 			case GL_TEXTURE_HEIGHT : 		return getHeight();
-			case GL_TEXTURE_RED_SIZE :		return getFormatDescriptor().redDepthInBits;
+			/*case GL_TEXTURE_RED_SIZE :		return getFormatDescriptor().redDepthInBits;
 			case GL_TEXTURE_GREEN_SIZE :		return getFormatDescriptor().greenDepthInBits;
 			case GL_TEXTURE_BLUE_SIZE :		return getFormatDescriptor().blueDepthInBits;
 			case GL_TEXTURE_ALPHA_SIZE :		return getFormatDescriptor().alphaDepthInBits;
-			case GL_TEXTURE_LUMINANCE_SIZE :	return getFormatDescriptor().luminanceDepthInBits;
+			case GL_TEXTURE_LUMINANCE_SIZE :	return getFormatDescriptor().luminanceDepthInBits;*/
 			case GL_TEXTURE_MIN_FILTER :		return getMinFilter();
 			case GL_TEXTURE_MAG_FILTER :		return getMagFilter();
 			case GL_TEXTURE_WRAP_S :		return getSWrapping();
@@ -339,10 +341,10 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
 			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("HdlAbstractTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__, Exception::GLException);
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
-			case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
+			/*case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
 			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
 			case GL_TEXTURE_BLUE_TYPE :		TEXTURE_CHANNEL_TYPE( hasBlueChannel(), blueType )
-			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )
+			case GL_TEXTURE_ALPHA_TYPE :		TEXTURE_CHANNEL_TYPE( hasAlphaChannel(),alphaType )*/
 			default : 				throw Exception("HdlAbstractTextureFormat::getSetting : Throw unable to get parameter \"" + getGLEnumNameSafe(param) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 
@@ -361,6 +363,7 @@ using namespace Glip::CoreGL;
 		return static_cast<int>(s);
 	}
 
+// HdlTextureFormat :
 	/**
 	\fn    HdlTextureFormat::HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter, GLenum _magFilter, GLenum _wraps, GLenum _wrapt, int _baseLevel, int _maxLevel)
 	\brief HdlTextureFormat Construtor.
@@ -556,15 +559,22 @@ using namespace Glip::CoreGL;
 		return HdlTextureFormat(vWidth, vHeight, vMode, vDepth, vMinFilter, vMagFilter, vSWrap, vTWrap, vBaseLevel, vMaxLevel);
 	}
 
-// HdlTexture - Functions
+// HdlTexture :
 	/**
 	\fn HdlTexture::HdlTexture(const HdlAbstractTextureFormat& fmt)
 	\brief HdlTexture constructor.
 	\param fmt The format to use.
 	**/
 	HdlTexture::HdlTexture(const HdlAbstractTextureFormat& fmt)
-	 : HdlAbstractTextureFormat(fmt), texID(0), proxy(false)
+	 : 	HdlAbstractTextureFormat(fmt), 
+		texID(0), 
+		proxy(false)
 	{
+		if(!fmt.getFormatDescriptor().isSupported)
+			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(fmt.getGLMode()) + " is not supported.", __FILE__, __LINE__);
+		if(!fmt.getFormatDescriptor().isDepthValid(fmt.getGLDepth()))
+			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(fmt.getGLMode()) + " does not supprot depth : " + getGLEnumNameSafe(fmt.getGLDepth()) + ".", __FILE__, __LINE__);
+
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
 		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
@@ -626,8 +636,15 @@ using namespace Glip::CoreGL;
 	\param proxyTexID The ID of the targeted texture.
 	**/
 	HdlTexture::HdlTexture(GLuint proxyTexID)
-	 : HdlAbstractTextureFormat(HdlTextureFormat::getTextureFormat(proxyTexID)), texID(proxyTexID), proxy(true)
+	 :	HdlAbstractTextureFormat(HdlTextureFormat::getTextureFormat(proxyTexID)),
+		texID(proxyTexID), 
+		proxy(true)
 	{
+		if(!getFormatDescriptor().isSupported)
+			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(getGLMode()) + " is not supported.", __FILE__, __LINE__);
+		if(!getFormatDescriptor().isDepthValid(getGLDepth()))
+			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(getGLMode()) + " does not supprot depth : " + getGLEnumNameSafe(getGLDepth()) + ".", __FILE__, __LINE__);
+
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
 		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)

@@ -44,12 +44,33 @@ using namespace Glip::CoreGL;
 		type(_type)
 	{
 		NEED_EXTENSION(GLEW_VERSION_2_0)
-		NEED_EXTENSION(GLEW_ARB_vertex_shader)
-		NEED_EXTENSION(GLEW_ARB_fragment_shader)
-		NEED_EXTENSION(GLEW_ARB_shader_objects)
-		NEED_EXTENSION(GLEW_ARB_shading_language_100)
-		NEED_EXTENSION(GLEW_ARB_vertex_program)
-		NEED_EXTENSION(GLEW_ARB_fragment_program)
+		//NEED_EXTENSION(GLEW_ARB_shader_objects)
+	
+		switch(type)
+		{
+			case GL_FRAGMENT_SHADER :
+				
+				NEED_EXTENSION(GLEW_ARB_fragment_shader)
+				NEED_EXTENSION(GLEW_ARB_fragment_program)
+				break;
+			case GL_VERTEX_SHADER : 
+				NEED_EXTENSION(GLEW_ARB_vertex_shader)
+				NEED_EXTENSION(GLEW_ARB_vertex_program)				
+				break;
+			case GL_COMPUTE_SHADER : 
+				NEED_EXTENSION(GLEW_ARB_compute_shader)
+				break;
+			case GL_TESS_CONTROL_SHADER :
+			case GL_TESS_EVALUATION_SHADER :
+				NEED_EXTENSION(GLEW_ARB_tessellation_shader)
+				break;
+			case GL_GEOMETRY_SHADER :
+				NEED_EXTENSION(GLEW_ARB_geometry_shader4)
+				break;
+			default : 
+				throw Exception("HdlShader::HdlShader - Unknown shader type : \"" + getGLEnumNameSafe(type) + "\".", __FILE__, __LINE__, Exception::GLException);
+		}
+		
 
 		if(!src.requiresCompatibility())
 			FIX_MISSING_GLEW_CALL(glBindFragDataLocation, glBindFragDataLocationEXT)

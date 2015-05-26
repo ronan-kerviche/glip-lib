@@ -40,17 +40,8 @@
 		Glip::CoreGL::HdlTextureFormat format(rawProcessor.imgdata.sizes.raw_width, rawProcessor.imgdata.sizes.raw_height, GL_LUMINANCE16, GL_UNSIGNED_SHORT);
 		Glip::Modules::ImageBuffer* imageBuffer = new Glip::Modules::ImageBuffer(format);
 
-		//std::memcpy(imageBuffer->getPtr(), rawProcessor.imgdata.rawdata.raw_image, format.getSize());
 		Glip::Modules::ImageBuffer 	original(const_cast<void*>(reinterpret_cast<const void*>(rawProcessor.imgdata.rawdata.raw_image)), format, 4);
-
-		Glip::Modules::PixelIterator 	itSrc(original),
-						itDst(*imageBuffer);
-
-		// Move to the beginning of the last line of the source : 
-		itSrc.imageEnd();
-		itSrc.lineBegin();
-
-		itDst.blit(itSrc, -1, -1, false, true); // reversed rows.		
+		imageBuffer->blit(original, 0, 0, 0, 0, -1, -1, false, true);
 
 		return imageBuffer;
 	}
