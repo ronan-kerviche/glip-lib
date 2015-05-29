@@ -1,7 +1,0 @@
-echo 'KERNEL=="raw1394", GROUP="video", MODE="0664"' | sudo tee /etc/udev/rules.d/50-raw1394.rules && sudo restart udev
-?
-
-sudo chmod 666 /dev/raw1394
-?
-
-coriander

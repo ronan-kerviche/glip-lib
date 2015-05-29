@@ -39,6 +39,9 @@
 			struct GLIP_API HdlTextureFormatDescriptor
 			{
 				#define HdlTextureFormatDescriptor_MaxNumChannels (4)
+				static const int maxNumChannels,
+						 maxPixelSizeInBits,
+						 maxPixelSize;
 
 				/// Name of the mode (GL_RGB, GL_RGBA, etc.).
 				const GLenum	mode,
@@ -87,20 +90,13 @@
 			class GLIP_API HdlTextureFormatDescriptorsList
 			{
 				private :
-					// Data :
-						static const HdlTextureFormatDescriptor textureFormatDescriptors[];
+					static const HdlTextureFormatDescriptor textureFormatDescriptors[];
 
-					// Tools :
-						HdlTextureFormatDescriptorsList(void);
-
+					HdlTextureFormatDescriptorsList(void);
 				public :
-					// Data :
-						static const int MaxPixelSizeInBytes;
-
-					// Tools :
-						static int getNumDescriptors(void);
-						static const HdlTextureFormatDescriptor& get(int id);
-						static const HdlTextureFormatDescriptor& get(const GLenum& modeID);
+					static int getNumDescriptors(void);
+					static const HdlTextureFormatDescriptor& get(int id);
+					static const HdlTextureFormatDescriptor& get(const GLenum& modeID);
 			};	
 		}
 	}

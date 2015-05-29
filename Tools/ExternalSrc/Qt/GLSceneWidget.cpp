@@ -1852,6 +1852,21 @@ using namespace QVGL;
 	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable)),
 		message(NULL)
 	{
+		// Test : 
+		const QString PBMSupportString = 
+						#ifdef __USE_NETPBM__
+							"Yes";
+						#else
+							"No";
+						#endif
+		
+		const QString LibRawSupportString = 
+						#ifdef __USE_LIBRAW__
+							"Yes";
+						#else
+							"No";
+						#endif
+
 		// Create the message : 
 		int pointSize = message.font().pointSize();
 		message.setTextFormat(Qt::RichText);
@@ -1878,8 +1893,8 @@ using namespace QVGL;
 					"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,<br>\n"
 					"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN<br>\n"
 					"THE SOFTWARE.\n</p>"
-					"<center><table><tr><td><b><i>Binary build date</i></b> : </td><td>%5; %6</td></tr><tr><td><b><i>Hardware vendor : </i></b></td><td>%7</td></tr><tr><td><b><i>Renderer : </i></b></td><td>%8</td></tr><tr><td><b><i>OpenGL version : </i></b></td><td>%9</td></tr><tr><td><b><i>GLSL version : </i></b></td><td>%10</td></tr></table></center>"
-					).arg(pointSize).arg(pointSize+5).arg(pointSize+2).arg(pointSize).arg(__DATE__).arg(__TIME__).arg(QString::fromStdString(HandleOpenGL::getVendorName())).arg(QString::fromStdString(HandleOpenGL::getRendererName())).arg(QString::fromStdString(HandleOpenGL::getVersion())).arg(QString::fromStdString(HandleOpenGL::getGLSLVersion())) );
+					"<center><table><tr><td><b><i>Binary build date</i></b> : </td><td>%5; %6</td></tr><tr><td><b><i>Hardware vendor : </i></b></td><td>%7</td></tr><tr><td><b><i>Renderer : </i></b></td><td>%8</td></tr><tr><td><b><i>OpenGL version : </i></b></td><td>%9</td></tr><tr><td><b><i>GLSL version : </i></b></td><td>%10</td></tr><tr><td><b><i>PBM Support</i></b> : </td><td>%11</td></tr><tr><td><b><i>LibRaw Support</i></b> : </td><td>%12</td></tr></table></center>"
+					).arg(pointSize).arg(pointSize+5).arg(pointSize+2).arg(pointSize).arg(__DATE__).arg(__TIME__).arg(QString::fromStdString(HandleOpenGL::getVendorName())).arg(QString::fromStdString(HandleOpenGL::getRendererName())).arg(QString::fromStdString(HandleOpenGL::getVersion())).arg(QString::fromStdString(HandleOpenGL::getGLSLVersion())).arg(PBMSupportString).arg(LibRawSupportString) );
 
 		// Add the inner widget :
 		setInnerWidget(&message);

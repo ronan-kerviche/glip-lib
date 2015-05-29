@@ -474,10 +474,13 @@ using namespace QGIC;
 
 		// Open the file and guess the texture format : 
 		QFileInfo path(_filename);
-			
+		
+		#ifdef __USE_NETPBM__
 		if(QString::compare(path.completeSuffix(), "ppm", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "pgm", Qt::CaseInsensitive)==0)
 			NetPBM::saveNetPBMToFile(*imageBuffer, _filename.toStdString());
-		else if(QString::compare(path.completeSuffix(), "grw", Qt::CaseInsensitive)==0)
+		else 
+		#endif
+		     if(QString::compare(path.completeSuffix(), "grw", Qt::CaseInsensitive)==0)
 			imageBuffer->write(_filename.toStdString(), "Written by GlipStudio.");
 		else
 		{

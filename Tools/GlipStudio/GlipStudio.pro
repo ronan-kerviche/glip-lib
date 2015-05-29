@@ -54,8 +54,11 @@ contains(DEFINES, __USE_NETPBM__){
 }
 
 contains(DEFINES, __USE_LIBRAW__){
-	unix:	LIBS += -lraw
+	unix: LIBS += -lraw
 	HEADERS	+= ../ExternalSrc/LibRaw/LibRawInterface.hpp
 	SOURCES += ../ExternalSrc/LibRaw/LibRawInterface.cpp
 }
 
+DESTDIR=.
+OBJECTS_DIR=./obj
+MOC_DIR=./mocs

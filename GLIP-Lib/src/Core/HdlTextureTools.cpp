@@ -27,6 +27,10 @@
 
 using namespace Glip::CoreGL;
 
+const int HdlTextureFormatDescriptor::maxNumChannels = 4;
+const int HdlTextureFormatDescriptor::maxPixelSizeInBits = 128;
+const int HdlTextureFormatDescriptor::maxPixelSize = 16;
+
 // List of all the Mode accepted :
 const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatDescriptors[] = {
 {GL_RED, GL_RED, GL_RED,GL_COMPRESSED_RED, 1, {GL_RED, GL_NONE, GL_NONE, GL_NONE}, {-1, 0, 0, 0}, {GL_NONE, GL_NONE, GL_NONE, GL_NONE}, false, false, true},
@@ -212,7 +216,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			return -1;
 		else
 		{
-			const int d = getTypeSize(depth);
+			const int d = getTypeSizeInBits(depth);
 			int r = 0;
 			for(int k=0; k<channelIndex; k++)
 				r += (channelsSizeInBits[k]<0) ? d : channelsSizeInBits[k];
@@ -229,7 +233,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	**/
 	int HdlTextureFormatDescriptor::getChannelOffset(int channelIndex, GLenum depth) const
 	{
-		return (getChannelOffsetInBits(channelIndex, depth)+sizeof(char)-1)/sizeof(char);
+		return (getChannelOffsetInBits(channelIndex, depth)+sizeof(char)*8-1)/(sizeof(char)*8);
 	}
 
 	/**
@@ -244,7 +248,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 		if(channelIndex<0 || channelIndex>=numChannels)
 			return 0;
 		else
-			return (channelsSizeInBits[channelIndex]<0) ? getTypeSize(depth) : channelsSizeInBits[channelIndex];
+			return (channelsSizeInBits[channelIndex]<0) ? getTypeSizeInBits(depth) : channelsSizeInBits[channelIndex];
 	}
 	
 	/**
@@ -256,7 +260,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	**/
 	int HdlTextureFormatDescriptor::getChannelSize(int channelIndex, GLenum depth) const
 	{
-		return (getChannelSizeInBits(channelIndex, depth)+sizeof(char)-1)/sizeof(char);
+		return (getChannelSizeInBits(channelIndex, depth)+sizeof(char)*8-1)/(sizeof(char)*8);
 	}
 
 	/**
@@ -284,7 +288,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	**/
 	int HdlTextureFormatDescriptor::getPixelSize(GLenum depth) const
 	{
-		return (getPixelSizeInBits(depth)+sizeof(char)-1)/sizeof(char);
+		return (getPixelSizeInBits(depth)+sizeof(char)*8-1)/(sizeof(char)*8);
 	}
 
 	/**
@@ -349,7 +353,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	**/
 	void HdlTextureFormatDescriptor::getShuffle(const HdlTextureFormatDescriptor& dst, const HdlTextureFormatDescriptor& src, char* shuffleIndex, const int length)
 	{
-		char buffer[HdlTextureFormatDescriptor_MaxNumChannels];
+		char buffer[maxNumChannels];
 		for(int k=0; k<dst.numChannels; k++)
 			buffer[k] = src.getChannelIndex(dst.channels[k]);
 		// Copy to the maximum length : 
@@ -378,7 +382,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 		const unsigned int v = 0xFF000000;
 		const bool isLittleEndian = (*reinterpret_cast<const char*>(&v)==0);
 
-		const int maxLength = 32; // 4 components of 8 bytes
+		const int maxLength = maxPixelSize;
 		char buffer[maxLength];
 
 		int offset = 0;
@@ -393,7 +397,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			{
 				const int srcSize = src.getChannelSize(l, srcDepth),
 					  srcOffset = src.getChannelOffset(l, srcDepth);
-		
+
 				for(int p=0; p<std::min(srcSize, dstSize); p++)
 				{
 					if(isLittleEndian)
@@ -410,19 +414,20 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 		if(isBlack!=NULL)
 		{
 			(*isBlack) = true;
-
 			for(int k=0; k<offset; k++)
 				(*isBlack) = (*isBlack) && (buffer[k]<0);
 		}
 
 		// Copy to the maximum length : 
-		std::memcpy(shuffleBitIndex, buffer, std::min(std::min(offset, maxLength), length));
+		offset = std::min(std::min(offset, maxLength), length);
+		std::memcpy(shuffleBitIndex, buffer, offset);
 
-		// Debug : 
-		//std::cout << "Shuffle pattern : " << getGLEnumNameSafe(src.mode) << ':' << getGLEnumNameSafe(srcDepth) << " to " << getGLEnumNameSafe(dst.mode) << ':' << getGLEnumNameSafe(dstDepth) << " (offset : " << offset << ')' << std::endl;
-		//for(int k=0; k<offset; k++)
-		//	std::cout << static_cast<int>(shuffleBitIndex[k]) << ", ";
-		//std::cout << std::endl;
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "Shuffle pattern : " << getGLEnumNameSafe(src.mode) << ':' << getGLEnumNameSafe(srcDepth) << " to " << getGLEnumNameSafe(dst.mode) << ':' << getGLEnumNameSafe(dstDepth) << " (offset : " << offset << ')' << std::endl;
+			for(int k=0; k<offset; k++)
+				std::cout << static_cast<int>(shuffleBitIndex[k]) << ", ";
+			std::cout << std::endl;
+		#endif
 
 		// The length of the pattern : 
 		return offset;
@@ -448,8 +453,6 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	}
 
 // HdlTextureFormatDescriptorList :
-	const int HdlTextureFormatDescriptorsList::MaxPixelSizeInBytes = 16;
-
 	/**
 	\fn int HdlTextureFormatDescriptorsList::getNumDescriptors(void)
 	\brief Returns the number of known GL modes for texture formats (GL_RGB, GL_RGBA, ...).
