@@ -212,7 +212,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 			return -1;
 		else
 		{
-			const int d = getTypeDepth(depth);
+			const int d = getTypeSize(depth);
 			int r = 0;
 			for(int k=0; k<channelIndex; k++)
 				r += (channelsSizeInBits[k]<0) ? d : channelsSizeInBits[k];
@@ -244,7 +244,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 		if(channelIndex<0 || channelIndex>=numChannels)
 			return 0;
 		else
-			return (channelsSizeInBits[channelIndex]<0) ? getTypeDepth(depth) : channelsSizeInBits[channelIndex];
+			return (channelsSizeInBits[channelIndex]<0) ? getTypeSize(depth) : channelsSizeInBits[channelIndex];
 	}
 	
 	/**
@@ -267,7 +267,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	**/
 	int HdlTextureFormatDescriptor::getPixelSizeInBits(GLenum depth) const
 	{
-		const int d = getTypeDepth(depth);
+		const int d = getTypeSizeInBits(depth);
 		int s = 0;
 		s += (channelsSizeInBits[0]<0) ? d : channelsSizeInBits[0];
 		s += (channelsSizeInBits[1]<0) ? d : channelsSizeInBits[1];
@@ -288,12 +288,37 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 	}
 
 	/**
-	\fn int HdlTextureFormatDescriptor::getTypeDepth(GLenum depth)
-	\brief Return the depth, in bytes, associated with depth.
+	\fn int HdlTextureFormatDescriptor::getTypeSizeInBits(GLenum depth)
+	\brief Return the size of the type associated with depth.
+	\param depth The depth, described as its enumerator value (e.g. GL_BYTE for GLbyte).
+	\return Size of the type, in bits.
+	**/
+	int HdlTextureFormatDescriptor::getTypeSizeInBits(GLenum depth)
+	{
+		switch(depth)
+		{
+			#define TMP_SIZE(X, Type)	case X : return sizeof(Type)*8;
+				TMP_SIZE(GL_BYTE,		GLbyte )
+				TMP_SIZE(GL_UNSIGNED_BYTE,	GLubyte )
+				TMP_SIZE(GL_SHORT,		GLshort )
+				TMP_SIZE(GL_UNSIGNED_SHORT,	GLushort )
+				TMP_SIZE(GL_INT,		GLint )
+				TMP_SIZE(GL_UNSIGNED_INT,	GLuint )
+				TMP_SIZE(GL_FLOAT,		GLfloat )
+				TMP_SIZE(GL_DOUBLE,		GLdouble )
+			#undef TMP_SIZE
+			default :
+				throw Exception("HdlTextureFormatDescriptorsList::getTypeSize - cannot recognize color channel depth " + getGLEnumNameSafe(depth), __FILE__, __LINE__, Exception::GLException);
+		}
+	}
+
+	/**
+	\fn int HdlTextureFormatDescriptor::getTypeSize(GLenum depth)
+	\brief Return the size of the type associated with depth.
 	\param depth The depth, described as its enumerator value (e.g. GL_BYTE for GLbyte).
 	\return Size of the type, in bytes.
 	**/
-	int HdlTextureFormatDescriptor::getTypeDepth(GLenum depth)
+	int HdlTextureFormatDescriptor::getTypeSize(GLenum depth)
 	{
 		switch(depth)
 		{
@@ -308,7 +333,7 @@ const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatD
 				TMP_SIZE(GL_DOUBLE,		GLdouble )
 			#undef TMP_SIZE
 			default :
-				throw Exception("HdlTextureFormatDescriptorsList::getTypeDepth - cannot recognize color channel depth " + getGLEnumNameSafe(depth), __FILE__, __LINE__, Exception::GLException);
+				throw Exception("HdlTextureFormatDescriptorsList::getTypeSize - cannot recognize color channel depth " + getGLEnumNameSafe(depth), __FILE__, __LINE__, Exception::GLException);
 		}
 	}
 

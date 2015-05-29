@@ -2671,7 +2671,7 @@ using namespace QGED;
 		// Resize : 
 		const QFontInfo fontInfo(font());
 		const int em = fontInfo.pixelSize();
-		resize(64*em, 64*em);
+		resize(64*em, 32*em);
 
 		QObject::connect(&codeEditorTabs, SIGNAL(showEditorSettings(void)), this, SLOT(showEditorSettings(void)));
 	}

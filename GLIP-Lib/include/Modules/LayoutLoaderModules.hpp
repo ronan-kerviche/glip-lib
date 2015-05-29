@@ -232,6 +232,10 @@ Example, creating a simple Module :
 				const bool& requiringToShowManualOnError(void) const;
 				const std::string& getManual(void) const;
 
+				// Events : 
+				virtual void beginLoadLayout(void);
+				virtual void endLoadLayout(void);
+
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
 				static bool getBoolean(const std::string& arg, const std::string& sourceName="", int line=1);

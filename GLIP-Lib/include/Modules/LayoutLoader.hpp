@@ -826,10 +826,15 @@ catch(Exception& e)
 				PipelineScriptElements listElements(const std::string& source, std::string sourceName="");
 
 				void addModule(LayoutLoaderModule* module, bool replace=false);
-				std::vector<std::string> listModules(void) const;
+				bool hasModule(const LayoutLoaderModule* module) const;
+				bool hasModule(const std::string& name) const;
+				std::vector<const LayoutLoaderModule*> listModules(void) const;
+				std::vector<LayoutLoaderModule*> listModules(void);
+				std::vector<std::string> listModuleNames(void) const;
 				const LayoutLoaderModule& module(const std::string& name) const;
 				LayoutLoaderModule& module(const std::string& name);
-				void removeModule(const std::string& name);
+				const LayoutLoaderModule* removeModule(const LayoutLoaderModule* module);
+				LayoutLoaderModule* removeModule(const std::string& name);
 
 				static const char* getKeyword(LayoutLoaderKeyword k); 
 		};

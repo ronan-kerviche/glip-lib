@@ -665,7 +665,7 @@ namespace QVGL
 				VectorLastLeftReleaseImage		= VectorLastLeftRelease + ImageBasis,
 				VectorLastLeftReleaseFragment		= VectorLastLeftRelease + FragmentBasis,
 
-				VectorLastLeftCompletedVector		= 4 * NumBasis,
+				VectorLastLeftCompletedVector		= 4 * NumBasis + PixelRelativeBasis,
 				VectorLastLeftCompletedVectorGl		= VectorLastLeftCompletedVector + GlBasis,
 				VectorLastLeftCompletedVectorQuad	= VectorLastLeftCompletedVector + QuadBasis,
 				VectorLastLeftCompletedVectorImage	= VectorLastLeftCompletedVector + ImageBasis,
@@ -695,7 +695,7 @@ namespace QVGL
 				VectorLastRightReleaseImage		= VectorLastRightRelease + ImageBasis,
 				VectorLastRightReleaseFragment		= VectorLastRightRelease + FragmentBasis,
 
-				VectorLastRightCompletedVector		= 9 * NumBasis,
+				VectorLastRightCompletedVector		= 9 * NumBasis + PixelRelativeBasis,
 				VectorLastRightCompletedVectorGl	= VectorLastRightCompletedVector + GlBasis,
 				VectorLastRightCompletedVectorQuad	= VectorLastRightCompletedVector + QuadBasis,
 				VectorLastRightCompletedVectorImage	= VectorLastRightCompletedVector + ImageBasis,

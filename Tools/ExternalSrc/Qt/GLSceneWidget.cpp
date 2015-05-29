@@ -3514,7 +3514,7 @@ using namespace QVGL;
 			if(mouseState.doesVectorRequireUpdate(*it) && ((basisID==MouseState::PixelBasis) || (basisID==MouseState::PixelRelativeBasis))) // use the first one to populate the others : 
 			{
 				const bool isBasisRelative = (basisID==MouseState::PixelRelativeBasis);
-
+				
 				float 	xGl	= 0.0f, 
 					yGl	= 0.0f, 
 					xQuad	= 0.0f, 

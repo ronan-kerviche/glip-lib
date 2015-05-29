@@ -1854,6 +1854,10 @@
 	{
 		clean();
 
+		// Tell the modules : 
+		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+			it->second->beginLoadLayout();
+
 		if(source.empty())
 			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
@@ -1896,6 +1900,10 @@
 			if(it==pipelineList.end())
 				throw Exception("Main pipeline \"" + mainPipelineName + "\" was not found.", sourceName, 1, Exception::ClientScriptException);
 
+			// Tell the modules : 
+			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+				it->second->endLoadLayout();
+
 			return AbstractPipelineLayout(it->second);
 		}
 		catch(Exception& e)
@@ -1919,8 +1927,6 @@
 				throw m;
 			}
 		}
-
-		clean();
 	}
 
 	/**
@@ -2210,6 +2216,8 @@
 	\brief Add a module which can be called from a script to generate dynamic data.
 	\param module The module to add. See LayoutLoaderModule documentation for more information. The memory will be safely releaed by the destructor of LayoutLoader, the user shall not release it.
 	\param replace Set to true if any module having similar name must be replaced. Raise an exception otherwise.
+
+	If the replace flag is set, any existing module with this name will be deleted.
 	**/
 	void LayoutLoader::addModule(LayoutLoaderModule* m, bool replace)
 	{
@@ -2227,11 +2235,69 @@
 	}
 
 	/**
-	\fn std::vector<std::string> LayoutLoader::listModules(void) const
+	\fn bool LayoutLoader::hasModule(const LayoutLoaderModule* module) const
+	\brief Test if a module is present.
+	\param module The module to test.
+	\return True if the module is present.
+	**/
+	bool LayoutLoader::hasModule(const LayoutLoaderModule* module) const
+	{
+		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+		{
+			if(it->second==module)
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	\fn bool LayoutLoader::hasModule(const std::string& name) const
+	\brief Test if a module is present.
+	\param name The name of the module to test.
+	\return True if the module is present.
+	**/
+	bool LayoutLoader::hasModule(const std::string& name) const
+	{
+		return (modules.find(name)!=modules.end());
+	}
+
+	/**
+	\fn std::vector<const LayoutLoaderModule*> LayoutLoader::listModules(void) const
+	\brief List the modules used by this LayoutLoader object.
+	\return A list of constant pointers to the LayoutLoaderModule objects used.
+	**/
+	std::vector<const LayoutLoaderModule*> LayoutLoader::listModules(void) const
+	{
+		std::vector<const LayoutLoaderModule*> modulesList;
+		
+		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+			modulesList.push_back(it->second);
+
+		return modulesList;
+	}
+
+	/**
+	\fn std::vector< LayoutLoaderModule*> LayoutLoader::listModules(void)
+	\brief List the modules used by this LayoutLoader object.
+	\return A list of pointers to the LayoutLoaderModule objects used.
+	**/
+	std::vector<LayoutLoaderModule*> LayoutLoader::listModules(void)
+	{
+		std::vector<LayoutLoaderModule*> modulesList;
+		
+		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+			modulesList.push_back(it->second);
+
+		return modulesList;
+	}
+
+	/**
+	\fn std::vector<std::string> LayoutLoader::listModuleNames(void) const
 	\brief List all modules loaded for this LayoutLoader object.
 	\return A list of the names of the loaded modules (possibly empty if no module was loaded).
 	**/
-	std::vector<std::string> LayoutLoader::listModules(void) const
+	std::vector<std::string> LayoutLoader::listModuleNames(void) const
 	{
 		std::vector<std::string> modulesNamesList;
 
@@ -2274,20 +2340,44 @@
 	}
 
 	/**
-	\fn void LayoutLoader::removeModule(const std::string& name)
+	\fn const LayoutLoaderModule* LayoutLoader::removeModule(const LayoutLoaderModule* module)
+	\brief Remove a loaded module.
+	\param module Pointer to the module to remove.
+	\return The pointer of the removed module or NULL if not found. The user must take care of deallocating it.
+	**/
+	const LayoutLoaderModule* LayoutLoader::removeModule(const LayoutLoaderModule* module)
+	{
+		const LayoutLoaderModule* res = NULL;
+
+		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+		{
+			if(it->second==module)
+			{
+				modules.erase(it);
+				res = module;
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	\fn LayoutLoaderModule*LayoutLoader::removeModule(const std::string& name)
 	\brief Remove a loaded module, or raise an Exception if any error occur.
 	\param name The name of the module to remove.
+	\return The pointer of the removed module. The user must take care of deallocating it.
 	**/
-	void LayoutLoader::removeModule(const std::string& name)
+	LayoutLoaderModule* LayoutLoader::removeModule(const std::string& name)
 	{
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(name);
 
 		if(it==modules.end())
-			throw Exception("LayoutLoader::removeModule - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
+			throw Exception("LayoutLoader::removeModule - No module with name \"" + name + " is used by this LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 		{
-			delete it->second;
+			LayoutLoaderModule* res = it->second;
 			modules.erase(it);
+			return res;
 		}
 	}
 

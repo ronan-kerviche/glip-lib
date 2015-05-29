@@ -128,6 +128,20 @@
 		}
 
 		/**
+		\fn void LayoutLoaderModule::beginLoadLayout(void)
+		\brief Function called at the beginning of a loading session.
+		**/
+		void LayoutLoaderModule::beginLoadLayout(void)
+		{ }
+
+		/**
+		\fn void LayoutLoaderModule::endLoadLayout(void)
+		\brief Function called at the end of a loading session.
+		**/
+		void LayoutLoaderModule::endLoadLayout(void)
+		{ }
+
+		/**
 		\fn void LayoutLoaderModule::addBasicModules(LayoutLoader& loader)
 		\brief Add the basic modules to a LayoutLoader.
 		\param loader A LayoutLoader object.

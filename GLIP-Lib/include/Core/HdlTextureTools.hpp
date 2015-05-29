@@ -72,8 +72,9 @@
 				int getChannelSize(int channelIndex, GLenum depth) const;
 				int getPixelSizeInBits(GLenum depth) const;
 				int getPixelSize(GLenum depth) const;
-						
-				static int getTypeDepth(GLenum depth);
+				
+				static int getTypeSizeInBits(GLenum depth);		
+				static int getTypeSize(GLenum depth);
 				static void getShuffle(const HdlTextureFormatDescriptor& dst, const HdlTextureFormatDescriptor& src, char* shuffleIndex, const int length);
 				static int getBitShuffle(const HdlTextureFormatDescriptor& dst, const GLenum& dstDepth, const HdlTextureFormatDescriptor& src, const GLenum& srcDepth, char* shuffleBitIndex, const int length, bool* isBlack=NULL);
 				static void applyBitShuffle(char* dst, const char* src, const char* shuffleBitIndex, const int length);

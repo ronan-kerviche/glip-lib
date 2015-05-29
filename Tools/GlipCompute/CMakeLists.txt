@@ -31,10 +31,10 @@ if(WIN32) # Windows specifics
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
 
-	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
+	set(CMAKE_CXX_FLAGS "-pedantic -Wall -lgcc -lmingw32 -lglu32 -lopengl32")
 
 else() # Linux specifics
-	#For Cleaning purpose : set(CMAKE_CXX_FLAGS "-pedantic -Wall")
+	set(CMAKE_CXX_FLAGS "-pedantic -Wall")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH .)

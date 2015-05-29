@@ -140,7 +140,7 @@ using namespace Glip::CoreGL;
 	int	HdlAbstractTextureFormat::getHeight   		(void) const { return height; }
 	int	HdlAbstractTextureFormat::getNumPixels		(void) const { return width*height; }
 	int	HdlAbstractTextureFormat::getNumChannels  	(void) const { return getFormatDescriptor().numChannels; }
-	int	HdlAbstractTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptor::getTypeDepth(depth); }
+	int	HdlAbstractTextureFormat::getChannelDepth  	(void) const { return HdlTextureFormatDescriptor::getTypeSize(depth); }
 	int	HdlAbstractTextureFormat::getNumElements	(void) const { return width*height*getNumChannels(); }
 	int	HdlAbstractTextureFormat::getAlignment		(void) const { return alignment; }
 	int	HdlAbstractTextureFormat::getPixelSize		(void) const { return getFormatDescriptor().getPixelSize(getGLDepth());}

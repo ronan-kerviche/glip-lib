@@ -247,7 +247,6 @@ namespace QGPM
 			QString					inputFormatString;
 			void*					identifier;
 			LayoutLoader::PipelineScriptElements	elements;
-			//PipelineLayout*				pipelineLayout;
 			Pipeline*				pipeline;
 			QTreeWidgetItem				inputsNode,
 								outputsNode;
