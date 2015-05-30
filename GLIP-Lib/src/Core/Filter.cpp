@@ -525,9 +525,13 @@
 	{
 		if(renderer.getAttachmentCount()<getNumOutputPort())
 			throw Exception("Filter::process - Renderer doesn't have as many texture targets as Filter " + getFullName() + " has outputs.", __FILE__, __LINE__, Exception::CoreException);
+		
+		// Pre-depth test : 
+			if(isDepthTestingEnabled() && !renderer.hasDepthBuffer())
+				renderer.addDepthBuffer();
 
 		// Prepare the renderer	
-			renderer.beginRendering(getNumOutputPort());
+			renderer.beginRendering(getNumOutputPort(), isDepthTestingEnabled());
 	
 		// Enable states
 			if(isDepthTestingEnabled())

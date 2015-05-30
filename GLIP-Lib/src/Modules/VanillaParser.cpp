@@ -81,8 +81,8 @@
 	std::string Element::getCleanBody(void) const
 	{	
 		// Align the elements with their tabs.
-		const std::string 	spacers = " \t\r\n\f\v",
-					spaces	= " \t";
+		const std::string 	spacers = " \t\r\n\f\v";//,
+					//spaces	= " \t";
 		const char 		newLine	= '\n',
 					//space	= ' ',
 					tab	= '\t';

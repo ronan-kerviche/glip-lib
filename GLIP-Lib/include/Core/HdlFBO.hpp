@@ -34,9 +34,37 @@
 	{
 		namespace CoreGL
 		{
+			// RenderBuffer Handle
+			/**
+			\class HdlRenderBuffer
+			\brief Object handle for OpenGL Render Buffer Objects.
 
-			// Constants
-			#define NO_ATTACHMENT (-1)
+			This class can manage a Render Buffer Object.
+			**/
+			class GLIP_API HdlRenderBuffer
+			{
+				private : 
+					GLuint	rboID;
+					GLenum	internalFormat;
+					int 	width,
+						height;
+
+					// No copy : 
+					HdlRenderBuffer(const HdlRenderBuffer&);
+					const HdlRenderBuffer& operator=(const HdlRenderBuffer&);
+
+				public : 
+					HdlRenderBuffer(const GLenum& _internalFormat, int _width, int _height);
+					virtual ~HdlRenderBuffer(void);
+
+					GLuint getID(void) const;
+					GLenum getInternalFormat(void) const;
+					int getWidth(void) const;
+					int getHeight(void) const;
+					void bind(void);
+	
+					static void unbind(void);
+			};
 
 			// FBO Handle
 			/**
@@ -52,6 +80,8 @@
 					std::vector<HdlTexture*>	targets;
 					GLuint				fboID;
 					bool				firstRendering;
+					HdlRenderBuffer*		depthBuffer;
+					bool				depthBufferAttached;
 
 					// Tools
 					void bindTextureToFBO(int i);
@@ -64,12 +94,16 @@
 				public :
 					// Tools
 					HdlFBO(const HdlAbstractTextureFormat& f, int numTarget = 1);
-					~HdlFBO(void);
-
+					virtual ~HdlFBO(void);
+					
 					int		addTarget(void);
+					int 		getNumTargets(void) const;
 					int		getAttachmentCount(void) const;
+					void		addDepthBuffer(void);
+					bool		hasDepthBuffer(void);
+					void		removeDepthBuffer(void);
 
-					void		beginRendering(int usedTarget=0);
+					void		beginRendering(int usedTarget=0, bool useExistingDepthBuffer=false);
 					void		endRendering(void);
 					void		bind(void);
 					HdlTexture* 	operator[](int i);

@@ -27,6 +27,7 @@
 	#include "Core/Exception.hpp"
 	#include "Modules/LayoutLoader.hpp"
 	#include "Modules/FFT.hpp"
+	#include "Modules/GeometryLoader.hpp"
 
 	// Namespaces :
 	using namespace Glip;
@@ -185,6 +186,7 @@
 			loader.addModule( new ABORT_ERROR );
 			loader.addModule( new GenerateFFT1DPipeline );
 			loader.addModule( new GenerateFFT2DPipeline );
+			loader.addModule( new OBJLoader );
 		}
 
 		/**

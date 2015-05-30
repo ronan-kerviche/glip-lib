@@ -26,17 +26,111 @@
 
 using namespace Glip::CoreGL;
 
-// Functions
+// HdlRenderBuffer
+	/**
+	\fn HdlRenderBuffer::HdlRenderBuffer(const GLenum& _internalFormat, int _width, int _height)
+	\brief Constructor.
+	\param _internalFormat Internal format of this render buffer (GL_RGBA4, GL_RGB565, GL_RGB5_A1, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_STENCIL_INDEX, GL_STENCIL_INDEX8, ...).
+	\param _width Width of the buffer.
+	\param _height Height of the buffer.
+	**/
+	HdlRenderBuffer::HdlRenderBuffer(const GLenum& _internalFormat, int _width, int _height)
+	 : 	rboID(0),
+		internalFormat(_internalFormat),
+		width(_width),
+		height(_height)
+	{
+		glGenRenderbuffers(1, &rboID);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlRenderBuffer::HdlRenderBuffer", "glGenRenderbuffers()")
+		#endif
+
+		bind();
+		glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
+
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlRenderBuffer::HdlRenderBuffer", "glRenderbufferStorage()")
+		#endif
+		unbind();
+	}
+
+	HdlRenderBuffer::~HdlRenderBuffer(void)
+	{
+		glDeleteRenderbuffers(1, &rboID);		
+	}
+
+	/**
+	\fn GLuint HdlRenderBuffer::getID(void) const
+	\brief Get the ID of the render buffer object.
+	\return The GL id of this objet.
+	**/
+	GLuint HdlRenderBuffer::getID(void) const
+	{
+		return rboID;
+	}
+
+	/**
+	\fn GLenum HdlRenderBuffer::getInternalFormat(void) const
+	\brief Get the internal format of this render buffer.
+	\return The internal format of this object (GL_RGBA4, GL_RGB565, GL_RGB5_A1, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT16, GL_STENCIL_INDEX, GL_STENCIL_INDEX8, ...).
+	**/
+	GLenum HdlRenderBuffer::getInternalFormat(void) const
+	{
+		return internalFormat;
+	}
+
+	/**
+	\fn int HdlRenderBuffer::getWidth(void) const
+	\brief Get the width of this render buffer object.
+	\return The width of this object.
+	**/
+	int HdlRenderBuffer::getWidth(void) const
+	{
+		return width;
+	}
+
+	/**
+	\fn int HdlRenderBuffer::getHeight(void) const
+	\brief Get the height of this render buffer object.
+	\return The height of this object.
+	**/
+	int HdlRenderBuffer::getHeight(void) const
+	{
+		return height;
+	}
+
+	/**
+	\fn void HdlRenderBuffer::bind(void)
+	\brief Bind this render buffer object.
+	**/
+	void HdlRenderBuffer::bind(void)
+	{
+		glBindRenderbuffer(GL_RENDERBUFFER, rboID);
+	}
+	
+	/**
+	\fn void HdlRenderBuffer::unbind(void)
+	\brief Unbind any render buffer object.
+	**/
+	void HdlRenderBuffer::unbind(void)
+	{
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	}
+
+// HdlFBO
 	/**
 	\fn    HdlFBO::HdlFBO(const HdlAbstractTextureFormat& f, int numTarget)
 	\brief HdlFBO Construtor.
-
 	\param f Format of the textures attached to the rendering point.
 	\param numTarget Number of targets to be built by the constructor.
 	**/
 	HdlFBO::HdlFBO(const HdlAbstractTextureFormat& f, int numTarget)
 	 : 	HdlAbstractTextureFormat(f),
-		firstRendering(true)
+		fboID(0),
+		firstRendering(true),
+		depthBuffer(NULL),
+		depthBufferAttached(false)
 	{
 		NEED_EXTENSION(GL_ARB_framebuffer_object)
 		FIX_MISSING_GLEW_CALL(glGenFramebuffers, glGenFramebuffersEXT)
@@ -98,6 +192,8 @@ using namespace Glip::CoreGL;
 		// Delete all textures :
 		for(std::vector<HdlTexture*>::iterator it=targets.begin(); it!=targets.end(); it++)
 			delete (*it);
+
+		delete depthBuffer;
 	}
 
 	void HdlFBO::bindTextureToFBO(int i)
@@ -126,7 +222,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    int HdlFBO::addTarget(void)
+	\fn int HdlFBO::addTarget(void)
 	\brief Add a new texture to target list.
 	**/
 	int HdlFBO::addTarget(void)
@@ -144,9 +240,18 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    int HdlFBO::getAttachmentCount(void) const
-	\brief Return the number of attachment points.
+	\fn int HdlFBO::getNumTargets(void) const
+	\brief Get the number of targets.
+	\return The current number of targets.
+	**/
+	int HdlFBO::getNumTargets(void) const
+	{
+		return targets.size();
+	}
 
+	/**
+	\fn int HdlFBO::getAttachmentCount(void) const
+	\brief Return the number of attachment points.
 	\return The number of attached textures.
 	**/
 	int HdlFBO::getAttachmentCount(void) const
@@ -155,11 +260,48 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlFBO::beginRendering(int usedTarget)
-	\param usedTarget The number of targets to be used. It must be greater or equal to 1 and less or equal to getAttachmentCount(). Default is 0 which means all targets.
-	\brief Prepare the FBO for rendering in it
+	\fn void HdlFBO::addDepthBuffer(void)
+	\brief Add a depth buffer to this Framebuffer object.
 	**/
-	void HdlFBO::beginRendering(int usedTarget)
+	void HdlFBO::addDepthBuffer(void)
+	{
+		if(depthBuffer==NULL)
+			depthBuffer = new HdlRenderBuffer(GL_DEPTH_COMPONENT, getWidth(), getHeight());
+	}
+
+	/**
+	\fn bool HdlFBO::hasDepthBuffer(void)
+	\brief Test if a depth buffer is currently attached to this object.
+	\return True if a depth buffer is currently attached.
+	**/
+	bool HdlFBO::hasDepthBuffer(void)
+	{
+		return (depthBuffer!=NULL);
+	}
+
+	/**
+	\fn void HdlFBO::removeDepthBuffer(void)
+	\brief Remove the depth buffer currently attached to this frame buffer.
+	**/
+	void HdlFBO::removeDepthBuffer(void)
+	{
+		if(depthBuffer!=NULL)
+		{
+			bind();
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+			delete depthBuffer;
+			depthBuffer = NULL;
+		}
+	}
+
+	/**
+	\fn void HdlFBO::beginRendering(int usedTarget, bool useExistingDepthBuffer)
+	\param usedTarget The number of targets to be used. It must be greater or equal to 1 and less or equal to getAttachmentCount(). Default is 0 which means all targets.
+	\brief Prepare the FBO for rendering in it.
+	\param usedTarget Number of targets used in this FBO.
+	\param useExistingDepthBuffer If true and if a depth buffer is currently attached, it will be used (see HdlFBO::addDepthBuffer).
+	**/
+	void HdlFBO::beginRendering(int usedTarget, bool useExistingDepthBuffer)
 	{
 		static const GLenum attachmentsList[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT,
 							GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT,
@@ -184,6 +326,13 @@ using namespace Glip::CoreGL;
 
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
 
+		// Attach a depth buffer (uncommon?) : 
+		if(depthBuffer!=NULL && useExistingDepthBuffer)
+		{	
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer->getID());
+			depthBufferAttached = true;
+		}
+
 		glDrawBuffers(usedTarget, attachmentsList);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
@@ -202,11 +351,17 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlFBO::endRendering(void)
+	\fn void HdlFBO::endRendering(void)
 	\brief End the rendering in the FBO, build the mipmaps for the target.
 	**/
 	void HdlFBO::endRendering(void)
 	{
+		if(depthBufferAttached)
+		{
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
+			depthBufferAttached = false;
+		}
+
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); // unbind
 
 		// trigger mipmaps generation explicitly
@@ -234,7 +389,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    HdlTexture* HdlFBO::operator[](int i)
+	\fn HdlTexture* HdlFBO::operator[](int i)
 	\brief Get a target of the FBO
 	\param i Index of the target.
 	\return Pointer to the corresponding target.
@@ -248,7 +403,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlFBO::bind(void)
+	\fn void HdlFBO::bind(void)
 	\brief Bind this FBO.
 	**/
 	void HdlFBO::bind(void)
@@ -257,9 +412,9 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn     size_t HdlFBO::getSize(bool askDriver)
-	\brief  Gets the size of the FBO in bytes.
-	\param  askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
+	\fn size_t HdlFBO::getSize(bool askDriver)
+	\brief Gets the size of the FBO in bytes.
+	\param askDriver If true, it will use HdlTexture::getSizeOnGPU() to determine the real size (might be slower).
 	\return The size in byte of the multiple targets.
 	**/
 	size_t HdlFBO::getSize(bool askDriver)
@@ -276,8 +431,8 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn     int HdlFBO::test(void)
-	\brief  Test the validity of a FBO object
+	\fn int HdlFBO::test(void)
+	\brief Test the validity of a FBO object
 	\return An error code among : GL_FRAMEBUFFER_COMPLETE, GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT, GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT, GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER, GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER, GL_FRAMEBUFFER_UNSUPPORTED, GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE, GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS. See https://www.opengl.org/wiki/GLAPI/glCheckFramebufferStatus for more information.
 	**/
 	GLenum HdlFBO::test(void)
@@ -292,8 +447,8 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn     int HdlFBO::getMaximumColorAttachment(void)
-	\brief  Get the maximum number of attachment points.
+	\fn int HdlFBO::getMaximumColorAttachment(void)
+	\brief Get the maximum number of attachment points.
 	\return The maximum number of attachment points.
 	**/
 	int HdlFBO::getMaximumColorAttachment(void)
@@ -310,7 +465,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    GLenum HdlFBO::getAttachment(int i)
+	\fn GLenum HdlFBO::getAttachment(int i)
 	\brief Convert an attachment ID to the corresponding OpenGL constant.
 	\param i The ID of the attachment point.
 	\return The corresponding OpenGL constant.
@@ -321,7 +476,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    int HdlFBO::getIndexFromAttachment(GLenum attachment)
+	\fn int HdlFBO::getIndexFromAttachment(GLenum attachment)
 	\brief Convert an OpenGL constant to the corresponding attachment ID.
 	\param attachment The OpenGL constant representing the attachment point.
 	\return The corresponding ID.
@@ -332,7 +487,7 @@ using namespace Glip::CoreGL;
 	}
 
 	/**
-	\fn    void HdlFBO::unbind(void)
+	\fn void HdlFBO::unbind(void)
 	\brief Unbind the FBO which is currently bound to the OpenGL context.
 	**/
 	void HdlFBO::unbind(void)

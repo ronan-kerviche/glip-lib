@@ -31,21 +31,23 @@
 
 // GeometryModel
 	/**
-	\fn GeometryModel::GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
+	\fn GeometryModel::GeometryModel(GeometryType _type, int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords)
 	\brief Geometry model constructor.
 	\param _type The type of the geometry (MUST BE GeometryModel::CustomModel for all user defined models).
 	\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
 	\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)
-	\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
+	\param _hasNormals Set to true if the geometry has normals data attached.
+	\param _hasTexCoords Set to true if the geometry has texel coordinates attached.
 	**/
-	GeometryModel::GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord = true)
-	 :	pos(),
-		tex(),
+	GeometryModel::GeometryModel(GeometryType _type, int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords)
+	 :	vertices(),
+		texCoords(),
 		elements(),
 		type(_type), 
-		hasTexCoord(_hasTexCoord),
+		hasNormals(_hasNormals),		
+		hasTexCoords(_hasTexCoords),		
 		dim(_dim), 
-		numVerticesPerEl(getNumVerticesFromPrimitive(_primitiveGL)), 
+		numVerticesPerElement(getNumVerticesFromPrimitive(_primitiveGL)), 
 		primitiveGL(_primitiveGL)
 	{
 		if(dim!=2 && dim!=3)
@@ -58,75 +60,353 @@
 	\param mdl The source model.
 	**/
 	GeometryModel::GeometryModel(const GeometryModel& mdl)
-	 :	pos(mdl.pos),
-		tex(mdl.tex),
+	 :	vertices(mdl.vertices),
+		texCoords(mdl.texCoords),
 		elements(mdl.elements),
 		type(mdl.type),
-		hasTexCoord(mdl.hasTexCoord),
+		hasNormals(mdl.hasNormals),
+		hasTexCoords(mdl.hasTexCoords),
 		dim(mdl.dim),
-		numVerticesPerEl(mdl.numVerticesPerEl),
+		numVerticesPerElement(mdl.numVerticesPerElement),
 		primitiveGL(mdl.primitiveGL)
 	{ }
 
 	GeometryModel::~GeometryModel(void)
 	{
-		pos.clear();
-		tex.clear();
+		vertices.clear();
+		texCoords.clear();
 		elements.clear();
 	}
 
 	/**
-	\fn GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
-	\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\fn void GeometryModel::reserveVertices(size_t nVertices)
+	\brief Prepare the memory to receive a number of vertices.
+	\param nVertices The total number of vertices to contain.
+	**/
+	void GeometryModel::reserveVertices(size_t nVertices)
+	{
+		vertices.reserve(nVertices*dim);
+
+		if(hasNormals)
+			normals.reserve(nVertices*dim);
+
+		if(hasTexCoords)
+			texCoords.reserve(2*nVertices);
+	}
+
+	/**
+	\fn void GeometryModel::increaseVerticesReservation(size_t nNewVertices)
+	\brief Prepare the memory to receive a new number of vertices.
+	\param nNewVertices The number of vertices to be added.
+	**/
+	void GeometryModel::increaseVerticesReservation(size_t nNewVertices)
+	{
+		GeometryModel::reserveVertices(getNumVertices() + nNewVertices);
+	}
+
+	/**
+	\fn void GeometryModel::reserveElements(size_t nElements)
+	\brief Prepare the memory to receive a number of elements.
+	\param nElements The total number of elements to contain.
+	**/
+	void GeometryModel::reserveElements(size_t nElements)
+	{
+		elements.reserve(nElements*numVerticesPerElement);
+	}
+
+	/**
+	\fn void GeometryModel::increaseElementsReservation(size_t nNewElements)
+	\brief Prepare the memory to receive a new number of elements.
+	\param nNewElements The number of elements to be added.
+	**/
+	void GeometryModel::increaseElementsReservation(size_t nNewElements)
+	{
+		reserveElements(getNumElements() + nNewElements);
+	}
+
+	/**
+	\fn void GeometryModel::addVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY, const GLfloat* interleavedUV)
+	\brief Add multiple vertives in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+	\param N The number of vertices to be added.
+	\param interleavedXY The interleaved array of the spatial coordinates.
+	\param interleavedNormalsXY The interleaved array of the  normals data.
+	\param interleavedUV The interleaved array of the texture coordinates.
+
+	The vertices coordinates and normals arrays must contain N*dim elements. The texture coordinates array must contain 2*N elements.
+	**/
+	void GeometryModel::addVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY, const GLfloat* interleavedUV)
+	{
+		if(dim!=2)
+			throw Exception("GeometryModel::addVertices2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+
+		vertices.insert(vertices.end(), interleavedXY, interleavedXY+dim*N);
+		
+		if(hasNormals)
+		{
+			if(interleavedNormalsXY==NULL)
+				throw Exception("GeometryModel::addVertices2D - Missing normals data.", __FILE__, __LINE__, Exception::CoreException);
+
+			normals.insert(normals.end(), interleavedNormalsXY, interleavedNormalsXY+dim*N);
+		}
+
+		if(hasTexCoords)
+		{
+			if(interleavedUV==NULL)
+				throw Exception("GeometryModel::addVertices2D - Missing texture coordinates data.", __FILE__, __LINE__, Exception::CoreException);
+			
+			texCoords.insert(texCoords.end(), interleavedUV, interleavedUV+2*N);
+		}
+	}
+
+	/**
+	\fn void GeometryModel::addVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx, const GLfloat* ny, const GLfloat* u, const GLfloat* v)
+	\brief Add multiple vertices in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+	\param N The number of vertices to be added.
+	\param x The array of spatial X coordinates.
+	\param y The array of spatial Y coordinates.
+	\param nx The array of normal components along X.
+	\param ny The array of normal components along Y.
+	\param u The array of texture U coordinates.
+	\param v The array of texture V coordinates.
+
+	All arrays must contain N indices.
+	**/
+	void GeometryModel::addVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx, const GLfloat* ny, const GLfloat* u, const GLfloat* v)
+	{
+		if(dim!=2)
+			throw Exception("GeometryModel::addVertices2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+
+		vertices.reserve(vertices.size() + dim*N);
+		for(size_t k=0; k<N; k++)
+		{
+			vertices.push_back(x[k]);
+			vertices.push_back(y[k]);
+		}
+
+		if(hasNormals)
+		{
+			if(nx==NULL || ny==NULL)
+				throw Exception("GeometryModel::addVertices2D - Missing normals data.", __FILE__, __LINE__, Exception::CoreException);
+
+			normals.reserve(normals.size() + dim*N);
+			for(size_t k=0; k<N; k++)
+			{
+				normals.push_back(nx[k]);
+				normals.push_back(ny[k]);
+			}
+		}
+	
+		if(hasTexCoords)
+		{
+			if(u==NULL || v==NULL)
+				throw Exception("GeometryModel::addVertices2D - Missing texture coordinates data.", __FILE__, __LINE__, Exception::CoreException);
+
+			texCoords.reserve(texCoords.size() + 2*N);
+			for(size_t k=0; k<N; k++)
+			{
+				texCoords.push_back(u[k]);
+				texCoords.push_back(v[k]);
+			}
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx, const GLfloat& ny, const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
 	\param x The X coordinate.
 	\param y The Y coordinate.
-	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
-	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+	\param nx The X component of the normal.
+	\param ny The Y component of the normal.
+	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
 	\return The index of the newly created vertex.
 	**/
-	GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+	GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx, const GLfloat& ny, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=2)
 			throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
 
-		pos.push_back(x);
-		pos.push_back(y);
+		vertices.push_back(x);
+		vertices.push_back(y);
 
-		if(hasTexCoord)
+		if(hasNormals)
 		{
-			tex.push_back(u);
-			tex.push_back(v);
+			normals.push_back(nx);
+			normals.push_back(ny);
+		}
+
+		if(hasTexCoords)
+		{
+			texCoords.push_back(u);
+			texCoords.push_back(v);
 		}
 
 		return getNumVertices() - 1;
 	}
 
 	/**
-	\fn GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
-	\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+	\fn void GeometryModel::addVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ, const GLfloat* interleavedUV)
+	\brief Add multiple vertices in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+	\param N The number of vertices to be added.
+	\param interleavedXYZ The interleaved array of the spatial coordinates.
+	\param interleavedNormalsXYZ The interleaved array of the  normals data.
+	\param interleavedUV The interleaved array of the texture coordinates.
+	
+	The vertices coordinates and normals arrays must contain N*dim elements. The texture coordinates array must contain 2*N elements.
+	**/
+	void GeometryModel::addVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ, const GLfloat* interleavedUV)
+	{
+		if(dim!=2)
+			throw Exception("GeometryModel::addVertices3D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+
+		vertices.insert(vertices.end(), interleavedXYZ, interleavedXYZ+dim*N);
+		
+		if(hasNormals)
+		{
+			if(interleavedNormalsXYZ==NULL)
+				throw Exception("GeometryModel::addVertices3D - Missing normals data.", __FILE__, __LINE__, Exception::CoreException);
+
+			normals.insert(normals.end(), interleavedNormalsXYZ, interleavedNormalsXYZ+dim*N);
+		}
+
+		if(hasTexCoords)
+		{
+			if(interleavedUV==NULL)
+				throw Exception("GeometryModel::addVertices3D - Missing texture coordinates data.", __FILE__, __LINE__, Exception::CoreException);
+			
+			texCoords.insert(texCoords.end(), interleavedUV, interleavedUV+2*N);
+		}
+	}
+
+	/**
+	\fn void GeometryModel::addVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx, const GLfloat* ny, const GLfloat* nz, const GLfloat* u, const GLfloat* v)
+	\brief Add multiple vertices in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+	\param N The number of vertices to be added.
+	\param x The array of spatial X coordinates.
+	\param y The array of spatial Y coordinates.
+	\param z The array of spatial Z coordinates.
+	\param nx The array of normal components along X.
+	\param ny The array of normal components along Y.
+	\param nz The array of normal components along Z.
+	\param u The array of texture U coordinates.
+	\param v The array of texture V coordinates.
+
+	All arrays must contain N indices.
+	**/
+	void GeometryModel::addVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx, const GLfloat* ny, const GLfloat* nz, const GLfloat* u, const GLfloat* v)
+	{
+		if(dim!=3)
+			throw Exception("GeometryModel::addVertices3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+
+		vertices.reserve(vertices.size() + dim*N);
+		for(size_t k=0; k<N; k++)
+		{
+			vertices.push_back(x[k]);
+			vertices.push_back(y[k]);
+			vertices.push_back(z[k]);
+		}
+
+		if(hasNormals)
+		{
+			if(nx==NULL || ny==NULL || nz==NULL)
+				throw Exception("GeometryModel::addVertices3D - Missing normals data.", __FILE__, __LINE__, Exception::CoreException);
+
+			normals.reserve(normals.size() + dim*N);
+			for(size_t k=0; k<N; k++)
+			{
+				normals.push_back(nx[k]);
+				normals.push_back(ny[k]);
+				normals.push_back(nz[k]);
+			}
+		}
+
+		if(hasTexCoords)
+		{
+			if(u==NULL || v==NULL)
+				throw Exception("GeometryModel::addVertices3D - Missing texture coordinates data.", __FILE__, __LINE__, Exception::CoreException);
+
+			texCoords.reserve(texCoords.size() + 2*N);
+			for(size_t k=0; k<N; k++)
+			{
+				texCoords.push_back(u[k]);
+				texCoords.push_back(v[k]);
+			}
+		}
+	}
+
+	/**
+	\fn GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx, const GLfloat& ny, const GLfloat& nz,const GLfloat& u, const GLfloat& v)
+	\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
 	\param x The X coordinate.
 	\param y The Y coordinate.
 	\param z The Z coordinate.
-	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
-	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+	\param nx The X component of the normal.
+	\param ny The Y component of the normal.
+	\param nz The Z component of the normal.
+	\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
+	\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
 	\return The index of the newly created vertex.
 	**/
-	GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+	GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx, const GLfloat& ny, const GLfloat& nz, const GLfloat& u, const GLfloat& v)
 	{
 		if(dim!=3)
 			throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
 
-		pos.push_back(x);
-		pos.push_back(y);
-		pos.push_back(z);
+		vertices.push_back(x);
+		vertices.push_back(y);
+		vertices.push_back(z);
 
-		if(hasTexCoord)
+		if(hasNormals)
 		{
-			tex.push_back(u);
-			tex.push_back(v);
+			normals.push_back(nx);
+			normals.push_back(ny);
+			normals.push_back(nz);
+		}
+
+		if(hasTexCoords)
+		{
+			texCoords.push_back(u);
+			texCoords.push_back(v);
 		}
 
 		return getNumVertices() - 1;
+	}
+
+	/**
+	\fn void GeometryModel::addElementsInterleaved(const size_t N, GLuint* interleavedIndices)
+	\brief Add primitive elements to the model.
+	\param N Number of primitive elements.
+	\param interleavedIndices Array of vertices indices. Must contain N*numVerticesPerElement indices.
+	**/
+	void GeometryModel::addElementsInterleaved(const size_t N, GLuint* interleavedIndices)
+	{
+		elements.insert(elements.end(), interleavedIndices, interleavedIndices+N*numVerticesPerElement);
+	}
+
+	/**
+	\fn void GeometryModel::addElements(const size_t N, GLuint* a, GLuint* b=NULL, GLuint* c=NULL, GLuint* d=NULL)
+	\brief Add primitive elements to the model.
+	\param N Number of primitive elements.
+	\param a First vertices indices.
+	\param b Second vertices indices.
+	\param c Third vertices indices.
+	\param d Fourth vertices indices.
+
+	All arrays must contain N indices.
+	**/
+	void GeometryModel::addElements(const size_t N, GLuint* a, GLuint* b, GLuint* c, GLuint* d)
+	{
+		if((numVerticesPerElement>=1 && a==NULL) || (numVerticesPerElement>=2 && b==NULL) || (numVerticesPerElement>=3 && c==NULL) || (numVerticesPerElement>=4 && d==NULL) || numVerticesPerElement>4)
+			throw Exception("GeometryModel::addElements - Missing indices.", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.reserve(elements.size() + N*numVerticesPerElement);
+		for(size_t k=0; k<N; k++)
+		{
+							elements.push_back(a[k]);
+			if(numVerticesPerElement>=2)	elements.push_back(b[k]);
+			if(numVerticesPerElement>=3)	elements.push_back(c[k]);
+			if(numVerticesPerElement>=4)	elements.push_back(d[k]);
+		}
 	}
 
 	/**
@@ -139,13 +419,11 @@
 	{
 		const int expectedNumberOfVertices = 1;
 
-		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-		{
-			elements.push_back(a);
-			return getNumElements() - 1;
-		}
+		if(numVerticesPerElement!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.push_back(a);
+		return getNumElements() - 1;
 	}
 
 	/**
@@ -159,14 +437,12 @@
 	{
 		const int expectedNumberOfVertices = 2;
 
-		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-		{
-			elements.push_back(a);
-			elements.push_back(b);
-			return getNumElements() - 1;
-		}
+		if(numVerticesPerElement!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.push_back(a);
+		elements.push_back(b);
+		return getNumElements() - 1;
 	}
 
 	/**
@@ -181,15 +457,13 @@
 	{
 		const int expectedNumberOfVertices = 3;
 
-		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-		{
-			elements.push_back(a);
-			elements.push_back(b);
-			elements.push_back(c);
-			return getNumElements() - 1;
-		}
+		if(numVerticesPerElement!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.push_back(a);
+		elements.push_back(b);
+		elements.push_back(c);
+		return getNumElements() - 1;
 	}
 
 	/**
@@ -205,16 +479,14 @@
 	{
 		const int expectedNumberOfVertices = 4;
 
-		if(numVerticesPerEl!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-		{
-			elements.push_back(a);
-			elements.push_back(b);
-			elements.push_back(c);
-			elements.push_back(d);
-			return getNumElements() - 1;
-		}
+		if(numVerticesPerElement!=expectedNumberOfVertices)
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.push_back(a);
+		elements.push_back(b);
+		elements.push_back(c);
+		elements.push_back(d);
+		return getNumElements() - 1;
 	}
 
 	/**
@@ -225,13 +497,11 @@
 	**/
 	GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
 	{
-		if(numVerticesPerEl!=static_cast<int>(indices.size()))
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-		{
-			elements.insert(elements.end(), indices.begin(), indices.end());
-			return getNumElements() - 1;
-		}
+		if(numVerticesPerElement!=static_cast<int>(indices.size()))
+			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+
+		elements.insert(elements.end(), indices.begin(), indices.end());
+		return getNumElements() - 1;
 	}
 
 	/**
@@ -242,7 +512,7 @@
 	**/
 	GLfloat& GeometryModel::x(GLuint i)
 	{
-		return pos[i*dim+0];
+		return vertices[i*dim+0];
 	}
 
 	/**
@@ -253,7 +523,7 @@
 	**/
 	GLfloat& GeometryModel::y(GLuint i)
 	{
-		return pos[i*dim+1];
+		return vertices[i*dim+1];
 	}
 
 	/**
@@ -267,35 +537,71 @@
 		if(dim<3)
 			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
 
-		return pos[i*dim+2];
+		return vertices[i*dim+2];
+	}
+
+	/**
+	\fn GLfloat& GeometryModel::nx(GLuint i)
+	\brief Access the X coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable.
+	**/
+	GLfloat& GeometryModel::nx(GLuint i)
+	{
+		return normals[i*dim+0];
+	}
+
+	/**
+	\fn GLfloat& GeometryModel::ny(GLuint i)
+	\brief Access the Y coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable.
+	**/
+	GLfloat& GeometryModel::ny(GLuint i)
+	{
+		return normals[i*dim+1];
+	}
+
+	/**
+	\fn GLfloat& GeometryModel::z(GLuint i)
+	\brief Access the Z coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	**/
+	GLfloat& GeometryModel::nz(GLuint i)
+	{
+		if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
+
+		return normals[i*dim+2];
 	}
 
 	/**
 	\fn GLfloat& GeometryModel::u(GLuint i)
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
 	**/
 	GLfloat& GeometryModel::u(GLuint i)
 	{
-		if(!hasTexCoord)
+		if(!hasTexCoords)
 			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
 
-		return tex[i*2+0];
+		return texCoords[i*2+0];
 	}
 
 	/**
 	\fn GLfloat& GeometryModel::v(GLuint i)
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
+	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
 	**/
 	GLfloat& GeometryModel::v(GLuint i)
 	{
-		if(!hasTexCoord)
+		if(!hasTexCoords)
 			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
 
-		return tex[i*2+1];
+		return texCoords[i*2+1];
 	}
 
 	/**
@@ -308,10 +614,10 @@
 	{
 		const int expectedNumberOfVertices = 1;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 0];
+			return elements[i * numVerticesPerElement + 0];
 	}
 
 	/**
@@ -324,10 +630,10 @@
 	{
 		const int expectedNumberOfVertices = 2;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 1];
+			return elements[i * numVerticesPerElement + 1];
 	}
 
 	/**
@@ -340,10 +646,10 @@
 	{
 		const int expectedNumberOfVertices = 3;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 2];
+			return elements[i * numVerticesPerElement + 2];
 	}
 
 	/**
@@ -356,10 +662,10 @@
 	{
 		const int expectedNumberOfVertices = 4;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 3];
+			return elements[i * numVerticesPerElement + 3];
 	}
 	
 	/**
@@ -370,7 +676,7 @@
 	**/
 	const GLfloat& GeometryModel::x(GLuint i) const
 	{
-		return pos[i*dim+0];
+		return vertices[i*dim+0];
 	}
 
 	/**
@@ -381,7 +687,7 @@
 	**/
 	const GLfloat& GeometryModel::y(GLuint i) const
 	{
-		return pos[i*dim+1];
+		return vertices[i*dim+1];
 	}
 
 	/**
@@ -395,35 +701,71 @@
 		if(dim<3)
 			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
 
-		return pos[i*dim+2];
+		return vertices[i*dim+2];
+	}
+
+	/**
+	\fn const GLfloat& GeometryModel::nx(GLuint i)
+	\brief Access the X coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable.
+	**/
+	const GLfloat& GeometryModel::nx(GLuint i) const 
+	{
+		return normals[i*dim+0];
+	}
+
+	/**
+	\fn const GLfloat& GeometryModel::ny(GLuint i) const 
+	\brief Access the Y coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable.
+	**/
+	const GLfloat& GeometryModel::ny(GLuint i) const 
+	{
+		return normals[i*dim+1];
+	}
+
+	/**
+	\fn const GLfloat& GeometryModel::z(GLuint i) const 
+	\brief Access the Z coordinate of the normal at given index.
+	\param i The vertex index.
+	\return Read access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	**/
+	const GLfloat& GeometryModel::nz(GLuint i) const 
+	{
+		if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
+
+		return normals[i*dim+2];
 	}
 
 	/**
 	\fn const GLfloat& GeometryModel::u(GLuint i) const
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
 	**/
 	const GLfloat& GeometryModel::u(GLuint i) const
 	{
-		if(!hasTexCoord)
+		if(!hasTexCoords)
 			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
 
-		return tex[i*2+0];
+		return texCoords[i*2+0];
 	}
 
 	/**
 	\fn GLfloat& GeometryModel::v(GLuint i) const
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoord is set to false.
+	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
 	**/
 	const GLfloat& GeometryModel::v(GLuint i) const
 	{
-		if(!hasTexCoord)
+		if(!hasTexCoords)
 			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
 
-		return tex[i*2+1];
+		return texCoords[i*2+1];
 	}
 
 	/**
@@ -436,10 +778,10 @@
 	{
 		const int expectedNumberOfVertices = 1;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 0];
+			return elements[i * numVerticesPerElement + 0];
 	}
 
 	/**
@@ -452,10 +794,10 @@
 	{
 		const int expectedNumberOfVertices = 2;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 1];
+			return elements[i * numVerticesPerElement + 1];
 	}
 
 	/**
@@ -468,10 +810,10 @@
 	{
 		const int expectedNumberOfVertices = 3;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 2];
+			return elements[i * numVerticesPerElement + 2];
 	}
 
 	/**
@@ -484,10 +826,10 @@
 	{
 		const int expectedNumberOfVertices = 4;
 
-		if(numVerticesPerEl<expectedNumberOfVertices)
-			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerEl) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		if(numVerticesPerElement<expectedNumberOfVertices)
+			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		else
-			return elements[i * numVerticesPerEl + 3];
+			return elements[i * numVerticesPerElement + 3];
 	}
 
 	/**
@@ -497,7 +839,7 @@
 	**/
 	GLuint GeometryModel::getNumVertices(void) const
 	{
-		return pos.size() / dim;
+		return vertices.size() / dim;
 	}
 
 	/**
@@ -507,7 +849,25 @@
 	**/
 	GLuint GeometryModel::getNumElements(void) const
 	{
-		return elements.size() / numVerticesPerEl;
+		return elements.size() / numVerticesPerElement;
+	}
+
+	/**
+	\fn bool GeometryModel::testIndices(void) const
+	\brief Test if all the indices are valid.
+	\return True if all the indices are valid.
+	**/
+	bool GeometryModel::testIndices(void) const
+	{
+		if(vertices.size()!=normals.size())
+			return false;
+
+		for(std::vector<GLuint>::const_iterator it=elements.begin(); it!=elements.end(); it++)
+		{
+			if((*it)>=vertices.size())
+				return false;
+		}
+		return true;	
 	}
 
 	/**
@@ -518,12 +878,13 @@
 	**/
 	bool GeometryModel::operator==(const GeometryModel& mdl) const
 	{
-		return 		(hasTexCoord==mdl.hasTexCoord)
+		return 		(hasTexCoords==mdl.hasTexCoords)
 			&&	(dim==mdl.dim)
-			&&	(numVerticesPerEl==mdl.numVerticesPerEl)
+			&&	(numVerticesPerElement==mdl.numVerticesPerElement)
 			&&	(primitiveGL==mdl.primitiveGL)
-			&& 	(std::equal(pos.begin(), pos.end(), mdl.pos.begin()))
-			&&	(std::equal(tex.begin(), tex.end(), mdl.tex.begin()))
+			&& 	(std::equal(vertices.begin(), vertices.end(), mdl.vertices.begin()))
+			&& 	(std::equal(normals.begin(), normals.end(), mdl.normals.begin()))
+			&&	(std::equal(texCoords.begin(), texCoords.end(), mdl.texCoords.begin()))
 			&&	(std::equal(elements.begin(), elements.end(), mdl.elements.begin()));
 	}
 
@@ -535,30 +896,34 @@
 	**/
 	HdlVBO* GeometryModel::getVBO(GLenum freq) const
 	{
-		if(pos.empty())
+		if(vertices.empty())
 			throw Exception("GeometryModel::getVBO - Empty vertices list.", __FILE__, __LINE__, Exception::CoreException);
 
 		GLuint 		localNumElements = 0,
 				localNumVerticesPerEl = 0,
 				localNumDimTexCoord = 0;
 
-		const GLuint* 	elementsPtr = NULL;
-		const GLfloat*	texPtr = NULL;
+		const GLuint 	*elementsPtr = NULL;
+		const GLfloat	*normalsPtr = NULL,
+				*texPtr = NULL;
 
 		if(!elements.empty())
 		{
 			localNumElements = getNumElements();
-			localNumVerticesPerEl = numVerticesPerEl;
-			elementsPtr = &elements[0];
+			localNumVerticesPerEl = numVerticesPerElement;
+			elementsPtr = &elements.front();
 		}
 
-		if(!tex.empty())
+		if(!normals.empty())
+			normalsPtr = &normals.front();
+
+		if(!texCoords.empty())
 		{
 			localNumDimTexCoord = 2;
-			texPtr = &tex[0];
+			texPtr = &texCoords.front();
 		}
 
-		return new HdlVBO(getNumVertices(), dim, freq, &pos[0], localNumElements, localNumVerticesPerEl, elementsPtr, primitiveGL, localNumDimTexCoord, texPtr);
+		return new HdlVBO(getNumVertices(), dim, freq, &vertices.front(), localNumElements, localNumVerticesPerEl, elementsPtr, primitiveGL, normalsPtr, localNumDimTexCoord, texPtr);
 	}
 	
 	/**
@@ -695,17 +1060,28 @@
 		\brief StandardQuad constructor.
 		**/
 		StandardQuad::StandardQuad(void)
-		 : GeometryModel(GeometryModel::StandardQuad, 2, GL_TRIANGLES, true)
+		 : GeometryModel(GeometryModel::StandardQuad, 2, GL_TRIANGLES, false, true)
 		{
 			// Create the geometry :
-			addVertex2D(-1.0, -1.0, 0.0, 0.0);
-			addVertex2D(-1.0,  1.0, 0.0, 1.0);
-			addVertex2D( 1.0,  1.0, 1.0, 1.0);
-			addVertex2D( 1.0, -1.0, 1.0, 0.0);
+			reserveVertices(3);
+			addVertex2D(-1.0, -1.0, 0.0, 0.0, 0.0, 0.0);
+			addVertex2D(-1.0,  1.0, 0.0, 0.0, 0.0, 1.0);
+			addVertex2D( 1.0,  1.0, 0.0, 0.0, 1.0, 1.0);
+			addVertex2D( 1.0, -1.0, 0.0, 0.0, 1.0, 0.0);
 
+			reserveElements(2);
 			addElement(0, 1, 3);
 			addElement(1, 2, 3);
 		}
+
+		/**
+		\fn StandardQuad::StandardQuad(const StandardQuad& mdl)
+		\brief Copy constructor.
+		\param mdl Original model.
+		**/
+		StandardQuad::StandardQuad(const StandardQuad& mdl)
+		 : GeometryModel(mdl)
+		{ }
 
 	// Reversed quad :
 		/**
@@ -713,35 +1089,49 @@
 		\brief ReversedQuad constructor.
 		**/
 		ReversedQuad::ReversedQuad(void)
-		 : GeometryModel(GeometryModel::ReversedQuad, 2, GL_TRIANGLES, true)
+		 : GeometryModel(GeometryModel::ReversedQuad, 2, GL_TRIANGLES, false, true)
 		{
-			// Create the geometry :			
-			addVertex2D(-1.0,  1.0, 0.0, 0.0);
-			addVertex2D( 1.0,  1.0, 1.0, 0.0);
-			addVertex2D( 1.0, -1.0, 1.0, 1.0);
-			addVertex2D(-1.0, -1.0, 0.0, 1.0);
+			// Create the geometry :
+			reserveVertices(3);			
+			addVertex2D(-1.0,  1.0, 0.0, 0.0, 0.0, 0.0);
+			addVertex2D( 1.0,  1.0, 0.0, 0.0, 1.0, 0.0);
+			addVertex2D( 1.0, -1.0, 0.0, 0.0, 1.0, 1.0);
+			addVertex2D(-1.0, -1.0, 0.0, 0.0, 0.0, 1.0);
 
+			reserveElements(2);
 			addElement(0, 1, 3);
 			addElement(1, 2, 3);
 		}
 	
+		/**
+		\fn ReversedQuad::ReversedQuad(const ReversedQuad& mdl)
+		\brief Copy constructor.
+		\param mdl Original model.
+		**/
+		ReversedQuad::ReversedQuad(const ReversedQuad& mdl)
+		 : GeometryModel(mdl)
+		{ }
 
 	// 2D Grid of points
 		/**
-		\fn PointsGrid2D::PointsGrid2D(int w, int h, bool normalized)
+		\fn PointsGrid2D::PointsGrid2D(int w, int h, bool _normalized)
 		\brief PointsGrid2D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
-		\param normalized If true, the coordinates will be normalized in the range [0, 1].
+		\param _normalized If true, the coordinates will be normalized in the range [0, 1].
 		**/
-		PointsGrid2D::PointsGrid2D(int w, int h, bool normalized)
-		 : GeometryModel(GeometryModel::PointsGrid2D, 2, GL_POINTS, false)
+		PointsGrid2D::PointsGrid2D(int w, int h, bool _normalized)
+		 :	GeometryModel(GeometryModel::PointsGrid2D, 2, GL_POINTS, false, false),
+			width(w),
+			height(h),
+			normalized(_normalized)
 		{
+			reserveVertices(w*h);
 			for(int i=0; i<h; i++)
 			{
 				for(int j=0; j<w; j++)
 				{
-					if(!normalized)
+					if(!_normalized)
 						addVertex2D(j,  i);
 					else
 					{
@@ -754,25 +1144,42 @@
 			}
 		}
 
+		/**
+		\fn PointsGrid2D::PointsGrid2D(const PointsGrid2D& mdl)
+		\brief Copy constructor.
+		\param mdl Original model.
+		**/
+		PointsGrid2D::PointsGrid2D(const PointsGrid2D& mdl)
+		 : 	GeometryModel(mdl),
+			width(mdl.width),
+			height(mdl.height),
+			normalized(mdl.normalized)
+		{ }
+
 	// 3D Grid of points
 		/**
-		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d, bool normalized)
+		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d, bool _normalized)
 		\brief PointsGrid3D constructor.
 		\param w Number of points along the X dimension.
 		\param h Number of points along the Y dimension.
 		\param d Number of points along the Z dimension.
-		\param normalized If true, the coordinates will be normalized in the range [0, 1].
+		\param _normalized If true, the coordinates will be normalized in the range [0, 1].
 		**/
-		PointsGrid3D::PointsGrid3D(int w, int h, int d, bool normalized)
-		 : GeometryModel(GeometryModel::PointsGrid3D, 3, GL_POINTS, false)
+		PointsGrid3D::PointsGrid3D(int w, int h, int d, bool _normalized)
+		 : 	GeometryModel(GeometryModel::PointsGrid3D, 3, GL_POINTS, false, false),
+			width(w),
+			height(h),
+			depth(d),
+			normalized(_normalized)
 		{
+			reserveVertices(w*h*d);
 			for(int k=0; k<d; k++)
 			{
 				for(int i=0; i<h; i++)
 				{
 					for(int j=0; j<w; j++)
 					{
-						if(!normalized)
+						if(!_normalized)
 							addVertex3D(j, i, k);
 						else
 						{
@@ -787,45 +1194,159 @@
 			}
 		}
 
+		/**
+		\fn PointsGrid3D::PointsGrid3D(const PointsGrid3D& mdl)
+		\brief Copy constructor.
+		\param mdl Original model.
+		**/
+		PointsGrid3D::PointsGrid3D(const PointsGrid3D& mdl)
+		 : 	GeometryModel(mdl),
+			width(mdl.width),
+			height(mdl.height),
+			depth(mdl.depth),
+			normalized(mdl.normalized)
+		{ }
+
 	// Custom model : 
 		/**
-		\fn CustomModel::CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord)
+		\fn CustomModel::CustomModel(int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords)
 		\brief CustomModel constructor.
 		\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
 		\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)
-		\param _hasTexCoord Set to true if the geometry has texel coordinates attached.
+		\param _hasNormals Set to true if the geometry has normals data attached.
+		\param _hasTexCoords Set to true if the geometry has texel coordinates attached.
 		**/
-		CustomModel::CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord)
-		 : GeometryModel( GeometryModel::CustomModel, _dim, _primitiveGL, _hasTexCoord)
+		CustomModel::CustomModel(int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords)
+		 : GeometryModel( GeometryModel::CustomModel, _dim, _primitiveGL, _hasNormals, _hasTexCoords)
 		{ }
 
 		/**
-		\fn GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
-		\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
-		\param x The X coordinate.
-		\param y The Y coordinate.
-		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
-		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
-		\return The index of the newly created vertex.
+		\fn void CustomModel::newVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY, const GLfloat* interleavedUV)
+		\brief Add multiple vertives in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+		\param N The number of vertices to be added.
+		\param interleavedXY The interleaved array of the spatial coordinates.
+		\param interleavedNormalsXY The interleaved array of the  normals data.
+		\param interleavedUV The interleaved array of the texture coordinates.
+
+		The vertices coordinates array must contain N*dim elements. The texture coordinates array must contain 2*N elements.
 		**/
-		GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& u, const GLfloat& v)
+		void CustomModel::newVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY, const GLfloat* interleavedUV)
 		{
-			return 	addVertex2D(x, y, u, v);
+			addVertices2DInterleaved(N, interleavedXY, interleavedNormalsXY, interleavedUV);
 		}
 
 		/**
-		\fn GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
-		\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoord is true, then it will also use u and v to create a texel coordinate.
+		\fn void CustomModel::newVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx, const GLfloat* ny, const GLfloat* u, const GLfloat* v)
+		\brief Add multiple vertices in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+		\param N The number of vertices to be added.
+		\param x The array of spatial X coordinates.
+		\param y The array of spatial Y coordinates.
+		\param nx The array of normal components along X.
+		\param ny The array of normal components along Y.
+		\param u The array of texture U coordinates.
+		\param v The array of texture V coordinates.
+
+		All arrays must contain N indices.
+		**/
+		void CustomModel::newVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx, const GLfloat* ny, const GLfloat* u, const GLfloat* v)
+		{
+			addVertices2D(N, x, y, nx, ny, u, v);
+		}
+
+		/**
+		\fn GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx, const GLfloat& ny, const GLfloat& u, const GLfloat& v)
+		\brief Add a vertex in a two dimensions space (GeometryModel::dim must be equal to 2). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+		\param x The X coordinate.
+		\param y The Y coordinate.
+		\param nx The X component of the normal.
+		\param ny The Y component of the normal.
+		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
+		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
+		\return The index of the newly created vertex.
+		**/
+		GLuint CustomModel::newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx, const GLfloat& ny, const GLfloat& u, const GLfloat& v)
+		{
+			return addVertex2D(x, y, nx, ny, u, v);
+		}
+
+		/**
+		\fn void CustomModel::newVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ, const GLfloat* interleavedUV)
+		\brief Add multiple vertices in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+		\param N The number of vertices to be added.
+		\param interleavedXYZ The interleaved array of the spatial coordinates.
+		\param interleavedNormalsXYZ The interleaved array of the  normals data.
+		\param interleavedUV The interleaved array of the texture coordinates.
+
+		The vertices coordinates array must contain N*dim elements. The texture coordinates array must contain 2*N elements.
+		**/
+		void CustomModel::newVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ, const GLfloat* interleavedUV)
+		{
+			addVertices3DInterleaved(N, interleavedXYZ, interleavedNormalsXYZ, interleavedUV);
+		}
+		
+		/**
+		\fn void CustomModel::newVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx, const GLfloat* ny, const GLfloat* nz, const GLfloat* u, const GLfloat* v)
+		\brief Add multiple vertices in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
+		\param N The number of vertices to be added.
+		\param x The array of spatial X coordinates.
+		\param y The array of spatial Y coordinates.
+		\param z The array of spatial Z coordinates.
+		\param nx The array of normal components along X.
+		\param ny The array of normal components along Y.
+		\param nz The array of normal components along Z.
+		\param u The array of texture U coordinates.
+		\param v The array of texture V coordinates.
+
+		All arrays must contain N indices.
+		**/
+		void CustomModel::newVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx, const GLfloat* ny, const GLfloat* nz, const GLfloat* u, const GLfloat* v)
+		{
+			addVertices3D(N, x, y, z, nx, ny, nz, u, v);
+		}
+
+		/**
+		\fn GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx, const GLfloat& ny, const GLfloat& nz, const GLfloat& u, const GLfloat& v)
+		\brief Add a vertex in a three dimensions space (GeometryModel::dim must be equal to 3). If GeometryModel::hasTexCoords is true, then it will also use u and v to create a texel coordinate.
 		\param x The X coordinate.
 		\param y The Y coordinate.
 		\param z The Z coordinate.
-		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
-		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoord is set to false).
+		\param nx The X component of the normal.
+		\param ny The Y component of the normal.
+		\param nz The Z component of the normal.
+		\param u The U coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
+		\param v The V coordinate for the texel (ignored if GeometryModel::hasTexCoords is set to false).
 		\return The index of the newly created vertex.
 		**/
-		GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& u, const GLfloat& v)
+		GLuint CustomModel::newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx, const GLfloat& ny, const GLfloat& nz, const GLfloat& u, const GLfloat& v)
 		{
-			return 	addVertex3D(x, y, z, u, v);
+			return addVertex3D(x, y, z, nx, ny, nz, u, v);
+		}
+
+		/**
+		\fn void CustomModel::newElementsInterleaved(const size_t N, GLuint* interleavedIndices)
+		\brief Add primitive elements to the model.
+		\param N Number of primitive elements.
+		\param interleavedIndices Array of vertices indices. Must contain N*numVerticesPerElement indices.
+		**/
+		void CustomModel::newElementsInterleaved(const size_t N, GLuint* interleavedIndices)
+		{
+			addElementsInterleaved(N, interleavedIndices);
+		}
+
+		/**
+		\fn void CustomModel::newElements(const size_t N, GLuint* a, GLuint* b, GLuint* c, GLuint* d)
+		\brief Add primitive elements to the model.
+		\param N Number of primitive elements.
+		\param a First vertices indices.
+		\param b Second vertices indices.
+		\param c Third vertices indices.
+		\param d Fourth vertices indices.
+
+		All arrays must contain N indices.
+		**/
+		void CustomModel::newElements(const size_t N, GLuint* a, GLuint* b, GLuint* c, GLuint* d)
+		{
+			addElements(N, a, b, c, d);
 		}
 
 		/**

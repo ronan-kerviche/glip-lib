@@ -44,7 +44,7 @@
 					GLuint 		bufferId;
 					GLenum		buildTarget,
 							buildUsage;
-					int 		size;
+					GLsizeiptr 	size;
 					static bool 	binding[4];
 					static bool 	mapping[4];	// VS/CL will complain if these two are not splitted.
 
@@ -56,24 +56,24 @@
 
 				public :
 					// Tools
-					HdlGeBO(int _size, GLenum infoTarget, GLenum infoUsage);
-					HdlGeBO(GLuint id, int _size, GLenum infoTarget, GLenum infoUsage);
+					HdlGeBO(GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage);
+					HdlGeBO(GLuint id, GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage);
 					~HdlGeBO(void);
 
-					int 	getSize(void);
-					GLuint       	getID(void);
-					GLenum       	getTarget(void);
-					GLenum       	getUsage(void);
-					void        	bind(GLenum target = GL_NONE);
-					void*        	map(GLenum access = GL_NONE, GLenum target = GL_NONE);
-					void		write(const void* data);
-					void		subWrite(const void* data, int size, int offset);
+					GLsizeiptr getSize(void);
+					GLuint getID(void);
+					GLenum getTarget(void);
+					GLenum getUsage(void);
+					void bind(GLenum target = GL_NONE);
+					void* map(GLenum access = GL_NONE, GLenum target = GL_NONE);
+					void write(const void* data);
+					void subWrite(const void* data, GLsizeiptr size, GLintptr offset);
 
 					// Static tools
-					static void     unbind(GLenum target);
-					static void     unmap(GLenum target);
-					static bool 	isBound(GLenum target);
-					static bool 	isMapped(GLenum target);
+					static void unbind(GLenum target);
+					static void unmap(GLenum target);
+					static bool isBound(GLenum target);
+					static bool isMapped(GLenum target);
 			};
 
 			/*

@@ -68,16 +68,27 @@
 					};
 
 				private :
-					std::vector<GLfloat> 	pos,
-								tex;
+					std::vector<GLfloat> 	vertices,
+								normals,
+								texCoords;
 					std::vector<GLuint>	elements;
 
 				protected :
 					// Tools :
-					GeometryModel(const GeometryType& _type, const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord);
+					GeometryModel(GeometryType _type, int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords);
 
-					GLuint addVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
-					GLuint addVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+					void reserveVertices(size_t nVertices);
+					void increaseVerticesReservation(size_t nNewVertices);
+					void reserveElements(size_t nVertices);
+					void increaseElementsReservation(size_t nNewVertices);
+					void addVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY=NULL, const GLfloat* interleavedUV=NULL);
+					void addVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx=NULL, const GLfloat* ny=NULL, const GLfloat* u=NULL, const GLfloat* v=NULL);
+					GLuint addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx=0.0f, const GLfloat& ny=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+					void addVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ=NULL, const GLfloat* interleavedUV=NULL);
+					void addVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx=NULL, const GLfloat* ny=NULL, const GLfloat* nz=NULL, const GLfloat* u=NULL, const GLfloat* v=NULL);
+					GLuint addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx=0.0f, const GLfloat& ny=0.0f, const GLfloat& nz=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+					void addElementsInterleaved(const size_t N, GLuint* interleavedIndices);
+					void addElements(const size_t N, GLuint* a, GLuint* b=NULL, GLuint* c=NULL, GLuint* d=NULL);
 					GLuint addElement(GLuint a);
 					GLuint addElement(GLuint a, GLuint b);
 					GLuint addElement(GLuint a, GLuint b, GLuint c);
@@ -86,6 +97,9 @@
 					GLfloat& x(GLuint i);
 					GLfloat& y(GLuint i);
 					GLfloat& z(GLuint i);
+					GLfloat& nx(GLuint i);
+					GLfloat& ny(GLuint i);
+					GLfloat& nz(GLuint i);
 					GLfloat& u(GLuint i);
 					GLfloat& v(GLuint i);
 					GLuint& a(GLuint i);
@@ -97,11 +111,13 @@
 								/// Geometry Type.
 					const GeometryType	type;
 								/// True if it has texture coordinates attached.
-					const bool		hasTexCoord;
+					const bool		hasNormals,
 								/// Dimension of the geometry (either 2 or 3).
+								hasTexCoords;
+								/// True if it has normals data attached.
 					const int		dim,
 								/// Number of vertices per elements of the geometry.
-								numVerticesPerEl;
+								numVerticesPerElement;
 								/// ID of the primitive for GL.
 					const GLenum 		primitiveGL;
 
@@ -114,12 +130,16 @@
 					const GLfloat& x(GLuint i) const;
 					const GLfloat& y(GLuint i) const;
 					const GLfloat& z(GLuint i) const;
+					const GLfloat& nx(GLuint i) const;
+					const GLfloat& ny(GLuint i) const;
+					const GLfloat& nz(GLuint i) const;
 					const GLfloat& u(GLuint i) const;
 					const GLfloat& v(GLuint i) const;
 					const GLuint& a(GLuint i) const;
 					const GLuint& b(GLuint i) const;
 					const GLuint& c(GLuint i) const;
 					const GLuint& d(GLuint i) const;
+					bool testIndices(void) const;
 					bool operator==(const GeometryModel& mdl) const;
 
 					HdlVBO* getVBO(GLenum freq) const;
@@ -164,6 +184,7 @@
 				{
 					public :
 						StandardQuad(void);
+						StandardQuad(const StandardQuad& mdl);
 				};
 
 				/**
@@ -174,6 +195,7 @@
 				{
 					public :
 						ReversedQuad(void);
+						ReversedQuad(const ReversedQuad& mdl);
 				};
 
 				/**
@@ -183,7 +205,12 @@
 				class GLIP_API PointsGrid2D : public GeometryModel
 				{
 					public :
-						PointsGrid2D(int w, int h, bool normalized=false);
+						const int width,
+							  height;
+						const bool normalized;
+
+						PointsGrid2D(int w, int h, bool _normalized=false);
+						PointsGrid2D(const PointsGrid2D& mdl);
 				};
 
 				/**
@@ -193,7 +220,13 @@
 				class GLIP_API PointsGrid3D : public GeometryModel
 				{
 					public :
-						PointsGrid3D(int w, int h, int d, bool normalized=false);
+						const int width,
+							  height,
+							  depth;
+						const bool normalized;
+
+						PointsGrid3D(int w, int h, int d, bool _normalized=false);
+						PointsGrid3D(const PointsGrid3D& mdl);
 				};
 
 				/**
@@ -203,10 +236,16 @@
 				class GLIP_API CustomModel : public GeometryModel
 				{
 					public :
-						CustomModel(const int& _dim, const GLenum& _primitiveGL, const bool& _hasTexCoord);
+						CustomModel(int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords);
 
-						GLuint newVertex2D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
-						GLuint newVertex3D(const GLfloat& x=0.0f, const GLfloat& y=0.0f, const GLfloat& z=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+						void newVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY=NULL, const GLfloat* interleavedUV=NULL);
+						void newVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx=NULL, const GLfloat* ny=NULL, const GLfloat* u=NULL, const GLfloat* v=NULL);
+						GLuint newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx=0.0f, const GLfloat& ny=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+						void newVertices3DInterleaved(const size_t N, const GLfloat* interleavedXYZ, const GLfloat* interleavedNormalsXYZ=NULL, const GLfloat* interleavedUV=NULL);
+						void newVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx=NULL, const GLfloat* ny=NULL, const GLfloat* nz=NULL, const GLfloat* u=NULL, const GLfloat* v=NULL);
+						GLuint newVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx=0.0f, const GLfloat& ny=0.0f, const GLfloat& nz=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);
+						void newElementsInterleaved(const size_t N, GLuint* interleavedIndices);
+						void newElements(const size_t N, GLuint* a, GLuint* b=NULL, GLuint* c=NULL, GLuint* d=NULL);
 						GLuint newElement(GLuint a);
 						GLuint newElement(GLuint a, GLuint b);
 						GLuint newElement(GLuint a, GLuint b, GLuint c);

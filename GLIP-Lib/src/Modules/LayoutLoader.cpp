@@ -970,21 +970,22 @@
 			if(e.body.empty() || e.noBody)
 				throw Exception("The custom model \"" + e.name + "\" does not have a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
+			GeometryPrimitives::CustomModel* g = NULL;
+
 			try
 			{
 				GLenum primitive;
 
 				primitive = getGLEnum(e.arguments[1]);
 
-				bool hasTexCoord = false;
+				bool 	hasNormals = false,
+					hasTexCoords = false;
 
 				if(e.arguments.size()>2)
-				{
-					if(e.arguments[2]=="true" || e.arguments[2]=="True" || e.arguments[2]=="TRUE")
-						hasTexCoord = true;
-				}
-
-				GeometryPrimitives::CustomModel* g = NULL;
+					hasNormals = (e.arguments[2]==keywords[KW_LL_TRUE]);
+					
+				if(e.arguments.size()>3)
+					hasTexCoords = (e.arguments[3]==keywords[KW_LL_TRUE]);
 
 				// Parse the text : 
 				VanillaParser parser(e.body, e.sourceName, e.bodyLine);
@@ -995,12 +996,8 @@
 				classify(parser.elements, associatedKeywords);
 
 				// First pass is only for vertices : 
-				GLfloat 	x = 0.0f, 
-						y = 0.0f, 
-						z = 0.0f, 
-						u = 0.0f, 
-						v = 0.0f;
-				int 		pArg = 0;				
+				int pArg = 0;
+				int numExpectedArguments = 0;			
 				for(unsigned int k=0; k<associatedKeywords.size(); k++)
 				{
 					// Test :
@@ -1011,15 +1008,24 @@
 							preliminaryTests(parser.elements[k], -1, 2, 5, -1, "Vertex (sub-parsing Geometry)");
 
 							int dim = parser.elements[k].arguments.size();
-							dim = (hasTexCoord ? dim-2 : dim);
-							g = new GeometryPrimitives::CustomModel(dim, primitive, hasTexCoord);
+							dim = (hasTexCoords ? dim-2 : dim);
+							dim = (hasNormals ? dim/2 : dim);
+							g = new GeometryPrimitives::CustomModel(dim, primitive, hasNormals, hasTexCoords);
+
+							// Save this number of arguments, always expect the same : 
+							numExpectedArguments = parser.elements[k].arguments.size();
 						}
 						else
-						{
-							const int n = g->hasTexCoord ? (g->dim + 2) : g->dim;
-							preliminaryTests(parser.elements[k], -1, n, n, -1, "Vertex (sub-parsing Geometry)");
-						}
+							preliminaryTests(parser.elements[k], -1, numExpectedArguments, numExpectedArguments, -1, "Vertex (sub-parsing Geometry)");
 	
+						GLfloat x = 0.0f, 
+							y = 0.0f, 
+							z = 0.0f,
+							nx = 0.0f, 
+							ny = 0.0f, 
+							nz = 0.0f, 
+							u = 0.0f, 
+							v = 0.0f;
 						pArg = 0;
 
 						if(!fromString(parser.elements[k].arguments[pArg], x))
@@ -1039,7 +1045,28 @@
 							pArg++;
 						}
 
-						if(g->hasTexCoord)
+						if(g->hasNormals)
+						{
+							if(!fromString(parser.elements[k].arguments[pArg], nx))
+								throw Exception("Cannot read NX for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							
+							pArg++;
+
+							if(!fromString(parser.elements[k].arguments[pArg], ny))
+								throw Exception("Cannot read NY for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							
+							pArg++;
+	
+							if(g->dim>=3)
+							{
+								if(!fromString(parser.elements[k].arguments[pArg], nz))
+									throw Exception("Cannot read NZ for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							
+								pArg++;
+							}
+						}
+
+						if(g->hasTexCoords)
 						{
 							if(!fromString(parser.elements[k].arguments[pArg], u))
 								throw Exception("Cannot read U for vertex. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
@@ -1051,18 +1078,17 @@
 							
 							pArg++;
 						}
-
 						
 						if(g->dim==2)
-							g->newVertex2D(x, y, u, v);
+							g->newVertex2D(x, y, nx, ny, u, v);
 						else if(g->dim==3)
-							g->newVertex3D(x, y, z, u, v);
+							g->newVertex3D(x, y, z, nx, ny, nz, u, v);
 						else
 							throw Exception("Internal error - unsupported number of dimensions.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 					}
 					else if(associatedKeywords[k]!=KW_LL_ELEMENT)
 					{
-							if( associatedKeywords[k]<LL_NumKeywords )
+							if(associatedKeywords[k]<LL_NumKeywords)
 								throw Exception("The keyword " + std::string(keywords[associatedKeywords[k]]) + " is not allowed in a Geometry definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 							else
 								throw Exception("Unknown keyword \"" + parser.elements[k].strKeyword + "\" in a Geometry definition (\"" + e.name + "\").", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
@@ -1073,15 +1099,15 @@
 					throw Exception("The custom model \"" + e.name + "\" does not have any vertex declared.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 				// Second pass for elements : 
-				std::vector<GLuint> indices(g->numVerticesPerEl);
+				std::vector<GLuint> indices(g->numVerticesPerElement);
 				for(unsigned int k=0; k<associatedKeywords.size(); k++)
 				{
 					if(associatedKeywords[k]==KW_LL_ELEMENT)
 					{
-						preliminaryTests(parser.elements[k], -1, g->numVerticesPerEl, g->numVerticesPerEl, -1, "Element (sub-parsing Geometry)");
+						preliminaryTests(parser.elements[k], -1, g->numVerticesPerElement, g->numVerticesPerElement, -1, "Element (sub-parsing Geometry)");
 
 						// Load all the indices : 
-						for(int pArg=0; pArg<g->numVerticesPerEl; pArg++)
+						for(int pArg=0; pArg<g->numVerticesPerElement; pArg++)
 						{
 							if(!fromString(parser.elements[k].arguments[pArg], indices[pArg]))
 								throw Exception("Cannot read vertex index " + toString(pArg) + " for primitive element. Token : \"" + parser.elements[k].arguments[pArg] + "\".", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
@@ -1092,12 +1118,17 @@
 					}
 				}
 
-				geometryList.insert( std::pair<std::string, GeometryModel>( e.name, *g) );
+				// Final test : 
+				if(!g->testIndices())
+					throw Exception("Data parsing failed.", e.sourceName, e.startLine, Exception::ClientScriptException);
+
+				geometryList.insert(std::pair<std::string, GeometryModel>(e.name, *g));
 
 				delete g;
 			}
 			catch(Exception& ex)
 			{
+				delete g;
 				Exception m("Exception caught while building Geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
@@ -2505,30 +2536,37 @@
 			e.arguments.push_back( LayoutLoader::getKeyword( KW_LL_CUSTOM_MODEL ) );
 			e.arguments.push_back( getGLEnumName(mdl.primitiveGL) );
 
-			if( mdl.hasTexCoord )
-				e.arguments.push_back( "true" );
+			e.arguments.push_back( mdl.hasNormals ? LayoutLoader::getKeyword(KW_LL_TRUE) : LayoutLoader::getKeyword(KW_LL_FALSE) );
+			e.arguments.push_back( mdl.hasTexCoords ? LayoutLoader::getKeyword(KW_LL_TRUE) : LayoutLoader::getKeyword(KW_LL_FALSE) );
 
 			// Write model : 
 			VanillaParserSpace::Element v;
-			v.strKeyword	= LayoutLoader::getKeyword( KW_LL_VERTEX );
+			v.strKeyword	= LayoutLoader::getKeyword(KW_LL_VERTEX);
 			v.noName 	= true;
 			v.noBody 	= true;
 			for(unsigned int k=0; k<mdl.getNumVertices(); k++)
 			{
 				v.arguments.clear();
 
-				v.arguments.push_back( toString(mdl.x(k)) );
-				v.arguments.push_back( toString(mdl.y(k)) );
+				v.arguments.push_back(toString(mdl.x(k)));
+				v.arguments.push_back(toString(mdl.y(k)));
 
 				if(mdl.dim>2)
 					v.arguments.push_back( toString(mdl.z(k)) );
 				else if(mdl.dim!=2 && mdl.dim!=3)
 					throw Exception("LayoutWriter::write - Geometry : internal error, unsupported number of dimensions.", __FILE__, __LINE__, Exception::ModuleException);
 
-				if(mdl.hasTexCoord)
+				if(mdl.hasNormals)
 				{
-					v.arguments.push_back( toString(mdl.u(k)) );
-					v.arguments.push_back( toString(mdl.v(k)) );
+					v.arguments.push_back(toString(mdl.nx(k)));
+					v.arguments.push_back(toString(mdl.ny(k)));
+					v.arguments.push_back(toString(mdl.nz(k)));
+				}
+
+				if(mdl.hasTexCoords)
+				{
+					v.arguments.push_back(toString(mdl.u(k)));
+					v.arguments.push_back(toString(mdl.v(k)));
 				}
 
 				// Push : 
@@ -2536,7 +2574,7 @@
 			}
 
 			VanillaParserSpace::Element p;
-			p.strKeyword	= LayoutLoader::getKeyword( KW_LL_ELEMENT );
+			p.strKeyword	= LayoutLoader::getKeyword(KW_LL_ELEMENT);
 			p.noName 	= true;
 			p.noBody 	= true;
 			e.body += "\n";
@@ -2544,10 +2582,10 @@
 			{
 				p.arguments.clear();
 
-				if(mdl.numVerticesPerEl>=1) p.arguments.push_back( toString(mdl.a(k)) );
-				if(mdl.numVerticesPerEl>=2) p.arguments.push_back( toString(mdl.b(k)) );
-				if(mdl.numVerticesPerEl>=3) p.arguments.push_back( toString(mdl.c(k)) );
-				if(mdl.numVerticesPerEl>=4) p.arguments.push_back( toString(mdl.d(k)) );
+				if(mdl.numVerticesPerElement>=1) p.arguments.push_back( toString(mdl.a(k)) );
+				if(mdl.numVerticesPerElement>=2) p.arguments.push_back( toString(mdl.b(k)) );
+				if(mdl.numVerticesPerElement>=3) p.arguments.push_back( toString(mdl.c(k)) );
+				if(mdl.numVerticesPerElement>=4) p.arguments.push_back( toString(mdl.d(k)) );
 
 				// Push : 
 				e.body += p.getCode() + "\n";

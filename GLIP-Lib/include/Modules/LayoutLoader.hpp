@@ -287,7 +287,7 @@ Create a 3D grid of dots.
 
 #### CustomModel
 <blockquote>
-<b>GEOMETRY</b>:<i>name</i>(CUSTOM_MODEL, <i>primitive</i>, <i>hasTexCoords</i>)<br>
+<b>GEOMETRY</b>:<i>name</i>(CUSTOM_MODEL, <i>primitive</i>, <i>hasNormals</i>, <i>hasTexCoords</i>)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
 }<br>
@@ -299,16 +299,17 @@ Create a custom geometry model.
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
 <tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the model.</td></tr>
 <tr class="glipDescrRow"><td><i>primitive</i></td>			<td>Type of the primitive.</td></tr>
+<tr class="glipDescrRow"><td><i>hasNormals</i></td>			<td>If the VERTEX data will contain normals data. Either TRUE or FALSE.</td></tr>
 <tr class="glipDescrRow"><td><i>hasTexCoords</i></td>			<td>If the VERTEX data will contain the texture coordinates. Either TRUE or FALSE.</td></tr>
 <tr class="glipDescrRow"><td><i>body</i></td>				<td>Contains a description of the geometry, using VERTEX and ELEMENT.</td></tr>
 </table>
 
 ##### Vertex
 <blockquote>
-<b>VERTEX</b>(<i>x</i>, <i>y</i>[, <i>u</i>, <i>v</i>])
+<b>VERTEX</b>(<i>x</i>, <i>y</i>[, <i>nx</i>, <i>ny</i>, <i>u</i>, <i>v</i>])
 </blockquote>
 <blockquote>
-<b>VERTEX</b>(<i>x</i>, <i>y</i>, <i>z</i>[, <i>u</i>, <i>v</i>])
+<b>VERTEX</b>(<i>x</i>, <i>y</i>, <i>z</i>[, <i>nx</i>, <i>ny</i>, <i>nz</i>, <i>u</i>, <i>v</i>])
 </blockquote>
 
 Define a vertex. If the geometry was set to receive texture coordinates, the VERTEX data must have the U and V coordinates specified.
@@ -318,8 +319,11 @@ Define a vertex. If the geometry was set to receive texture coordinates, the VER
 <tr class="glipDescrRow"><td><i>x</i></td>				<td>X Coordinate.</td></tr>
 <tr class="glipDescrRow"><td><i>y</i></td>				<td>Y Coordinate.</td></tr>
 <tr class="glipDescrRow"><td><i>z</i></td>				<td>Z Coordinate.</td></tr>
-<tr class="glipDescrRow"><td><i>u</i></td>				<td>U Texture coordinate.</td></tr>
-<tr class="glipDescrRow"><td><i>v</i></td>				<td>V Texture coordinate.</td></tr>
+<tr class="glipDescrRow"><td><i>nx</i></td>				<td>Normal X Component (must be skipped if hasNormals was FALSE).</td></tr>
+<tr class="glipDescrRow"><td><i>ny</i></td>				<td>Normal Y Component (must be skipped if hasNormals was FALSE).</td></tr>
+<tr class="glipDescrRow"><td><i>nz</i></td>				<td>Normal Z Component (must be skipped if hasNormals was FALSE).</td></tr>
+<tr class="glipDescrRow"><td><i>u</i></td>				<td>U Texture coordinate (must be skipped if hasTexCoords was FALSE).</td></tr>
+<tr class="glipDescrRow"><td><i>v</i></td>				<td>V Texture coordinate (must be skipped if hasTexCoords was FALSE).</td></tr>
 </table>
 
 ##### Element

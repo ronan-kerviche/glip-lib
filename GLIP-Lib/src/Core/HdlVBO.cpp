@@ -29,7 +29,7 @@ using namespace Glip::CoreGL;
 
 // Tools
 	/**
-	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, int _dimTexCoords, const GLfloat* _texcoords)
+	\fn HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, const GLfloat* _normals, int _dimTexCoords, const GLfloat* _texcoords)
 	\brief HdlVBO constructor.
 	\param _nVert Number of vertices.
 	\param _dim Dimension of the space containing the vertices (2 or 3).
@@ -39,56 +39,57 @@ using namespace Glip::CoreGL;
 	\param _nIndPerElement Number of index per elements (2, 3, 4...).
 	\param _elements Pointer to elements data.
 	\param _type Type of the elements (GL_POINTS, GL_LINE, GL_LINE_STRIP, GL_LINE_LOOP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_QUADS, GL_QUAD_STRIP, GL_POLYGON).
+	\param _normals Pointer to the normals data (of the same dimension as the vertices).
 	\param _dimTexCoords Dimension per texel (2 or 3).
-	\param _texcoords Pointer to the texel coordiantes data.
+	\param _texcoords Pointer to the texel coordiantes data.	
 	**/
-	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, int _dimTexCoords, const GLfloat* _texcoords)
-	 : nVert(_nVert), nElements(_nElements), dim(_dim), nIndPerElement(_nIndPerElement), dimTexCoords(_dimTexCoords), vertices(NULL), elements(NULL), type(_type)
+	HdlVBO::HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements, int _nIndPerElement, const GLuint* _elements, GLenum _type, const GLfloat* _normals, int _dimTexCoords, const GLfloat* _texcoords)
+	 :	nVert(_nVert),
+		nElements(_nElements),
+		dim(_dim),
+		nIndPerElement(_nIndPerElement),
+		dimTexCoords(_dimTexCoords),
+		normals(_normals!=NULL),
+		vertices(NULL),
+		elements(NULL),
+		offsetVertices(0),
+		offsetNormals(0),
+		offsetTexCoords(0),
+		type(_type)
 	{
-		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glVertexPointer, glVertexPointerEXT)
-		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glTexCoordPointer, glTexCoordPointerEXT)
-		//REAL FUNCTION : FIX_MISSING_GLEW_CALL(glDrawArrays, glDrawArraysEXT)
-
 		if(dimTexCoords!=0 && _texcoords==NULL)
 			throw Exception("HdlVBO::HdlVBO - attempt to create texcoords without any data", __FILE__, __LINE__, Exception::GLException);
 
-		/*std::cout << "Creating VBO : " << std::endl;
-		std::cout << "    Vertices : " << nVert << std::endl;
-		std::cout << "    Dim      : " << dim << std::endl;
-		std::cout << "    Elements : " << nElements << std::endl;
-		std::cout << "    Index    : " << nIndPerElement << std::endl;
-		std::cout << "    Type     : " << glParamName(type) << std::endl;
-		std::cout << "    DimTex   : " << dimTexCoords << std::endl;*/
-
 		// For the vertices and the texcoords :
-		//std::cout << " - Vertices - " << nVert*dim << std::endl;
-		if(_texcoords!=NULL)
+		const GLsizeiptr size = nVert*(dim + (_texcoords!=NULL ? dimTexCoords : 0) + (_normals!=NULL ? dim : 0))*sizeof(GLfloat);
+		vertices = new HdlGeBO(size, GL_ARRAY_BUFFER_ARB, freq);
+
+		GLintptr offset = 0;
+		offsetVertices = offset;
+		vertices->subWrite(_vertices, nVert*dim*sizeof(GLfloat), offset);
+		offset += nVert*dim*sizeof(GLfloat);
+
+		if(_normals!=NULL)
 		{
-			//std::cout << " - Texcoords - " << nVert*dimTexCoords*sizeof(GLfloat) << std::endl;
-			vertices = new HdlGeBO(nVert*(dim+dimTexCoords)*sizeof(GLfloat), GL_ARRAY_BUFFER_ARB, freq);
+			offsetNormals = offset;
+			vertices->subWrite(_normals, nVert*dim*sizeof(GLfloat), offset);
+			offset += nVert*dim*sizeof(GLfloat);
 		}
-		else
-			vertices = new HdlGeBO(nVert*dim*sizeof(GLfloat), GL_ARRAY_BUFFER_ARB, freq);
-
-		vertices->subWrite(_vertices, nVert*dim*sizeof(GLfloat),0);
-		//std::cout << "Vertices : "; glErrors(true, false);
 
 		if(_texcoords!=NULL)
 		{
-			vertices->subWrite(_texcoords, nVert*dimTexCoords*sizeof(GLfloat), nVert*dim*sizeof(GLfloat));
-			//std::cout << "Texcoords : "; glErrors(true, false);
+			offsetTexCoords = offset;
+			vertices->subWrite(_texcoords, nVert*dimTexCoords*sizeof(GLfloat), offset);
+			offset += nVert*dimTexCoords*sizeof(GLfloat);
 		}
 
 		// For the elements :
 		if(_elements!=NULL)
 		{
-			//std::cout << " - Elements - " << nElements*nIndPerElement*sizeof(GLuint) << std::endl;
 			elements = new HdlGeBO(nElements*nIndPerElement*sizeof(GLuint), GL_ELEMENT_ARRAY_BUFFER_ARB, freq);
 			elements->subWrite(_elements, nElements*nIndPerElement*sizeof(GLuint), 0);
-			//std::cout << "Elements : "; glErrors(true, false);
 		}
 
-		//std::cout << "Exit VBO : "; glErrors(true, false);
 		HdlVBO::unbind();
 	}
 
@@ -121,10 +122,14 @@ using namespace Glip::CoreGL;
 	{
 		// First, bind the data
 		vertices->bind(GL_ARRAY_BUFFER_ARB);
-		glVertexPointer(dim, GL_FLOAT, 0, 0);
+		glVertexPointer(dim, GL_FLOAT, 0, reinterpret_cast<void*>(offsetVertices));
+
+		if(normals)
+			glNormalPointer(GL_FLOAT, 0, reinterpret_cast<void*>(offsetNormals));
 
 		if(dimTexCoords>0)
-			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(nVert*dim*sizeof(GLfloat)));
+			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(offsetTexCoords));
+		
 
 		if(elements!=NULL)
 			elements->bind(GL_ELEMENT_ARRAY_BUFFER);;
@@ -133,6 +138,8 @@ using namespace Glip::CoreGL;
 		glEnableClientState(GL_VERTEX_ARRAY);
 		if(dimTexCoords>0)
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if(normals)
+			glEnableClientState(GL_NORMAL_ARRAY);
 
 		if(elements==NULL)
 			glDrawArrays(GL_POINTS, 0, nVert);
@@ -142,6 +149,8 @@ using namespace Glip::CoreGL;
 		glDisableClientState(GL_VERTEX_ARRAY);
 		if(dimTexCoords>0)
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if(normals)
+			glDisableClientState(GL_NORMAL_ARRAY);
 
 		HdlVBO::unbind();
 	}

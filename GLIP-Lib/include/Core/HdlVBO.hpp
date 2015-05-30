@@ -41,14 +41,21 @@
 			class GLIP_API HdlVBO
 			{
 				private :
-					// Data
-					int nVert, nElements, dim, nIndPerElement, dimTexCoords;
-					HdlGeBO *vertices, *elements;
-					GLenum type;
+					int	nVert,
+						nElements,
+						dim,
+						nIndPerElement,
+						dimTexCoords;
+					bool	normals;
+					HdlGeBO *vertices,
+						*elements;
+					GLintptr offsetVertices,
+						offsetNormals,
+						offsetTexCoords;
+					GLenum 	type;
+
 				public :
-					// Tools
-					HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements=0, int _nIndPerElement=0, const GLuint* _elements=NULL, GLenum _type=GL_POINTS, int _dimTexCoords=0, const GLfloat* _texcoords=NULL);
-					// Type among {GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, GL_TRIANGLES, GL_QUAD_STRIP, GL_QUADS, }GL_POLYGON
+					HdlVBO(int _nVert, int _dim, GLenum freq, const GLfloat* _vertices, int _nElements=0, int _nIndPerElement=0, const GLuint* _elements=NULL, GLenum _type=GL_POINTS, const GLfloat* _normals=NULL, int _dimTexCoords=0, const GLfloat* _texcoords=NULL);
 					~HdlVBO(void);
 
 					int    getVerticesCount(void);
@@ -57,14 +64,8 @@
 					GLenum getType(void);
 					void   draw(void);
 
-					// Static Tools
 					static void    unbind(void);
 					static void    unmap(void);
-
-					/* Old tools : 
-					static HdlVBO* generate2DStandardQuad(void);
-					static HdlVBO* generate2DGrid(int w, int h, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat cX=0.0, GLfloat cY=0.0);
-					static HdlVBO* generate3DGrid(int w, int h, int d, GLfloat appW=1.0, GLfloat appH=1.0, GLfloat appD=1.0, GLfloat cX=0.0, GLfloat cY=0.0, GLfloat cZ=0.0);*/
 			};
 		}
 	}

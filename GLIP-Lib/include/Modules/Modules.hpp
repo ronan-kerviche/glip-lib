@@ -28,5 +28,6 @@
 	#include "Modules/UniformsLoader.hpp"
 	#include "Modules/ImageBuffer.hpp"
 	#include "Modules/FFT.hpp"
+	#include "Modules/GeometryLoader.hpp"
 
 #endif
