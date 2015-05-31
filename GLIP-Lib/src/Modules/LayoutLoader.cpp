@@ -1204,7 +1204,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_VERTEX_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_VERTEX_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_VERTEX_SHADER] = &source->second;
 				
@@ -1219,7 +1219,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_FRAGMENT_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_FRAGMENT_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_FRAGMENT_SHADER] = &source->second;
 
@@ -1234,7 +1234,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_COMPUTE_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_COMPUTE_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_COMPUTE_SHADER] = &source->second;
 
@@ -1249,7 +1249,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_TESS_CONTROL_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_TESS_CONTROL_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_TESS_CONTROL_SHADER] = &source->second;
 
@@ -1264,7 +1264,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_TESS_EVALUATION_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_TESS_EVALUATION_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_TESS_EVALUATION_SHADER] = &source->second;
 
@@ -1279,7 +1279,7 @@
 
 						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
-							throw Exception("No ShaderSource with name \"" + e.arguments[0] + "\" was registered for use as GL_GEOMETRY_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_GEOMETRY_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							shaders[GL_GEOMETRY_SHADER] = &source->second;
 
@@ -2191,7 +2191,7 @@
 						result.geometries.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_FILTER_LAYOUT :
-						preliminaryTests(rootParser.elements[k], 1, 2, 4, 0, "FilterLayout");
+						preliminaryTests(rootParser.elements[k], 1, 1, 2, 0, "FilterLayout");
 						result.filtersLayout.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_PIPELINE_MAIN :

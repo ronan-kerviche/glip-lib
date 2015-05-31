@@ -72,9 +72,6 @@
 		const std::string spaces = " \t\r\n\f\v",
 				  digits = "0123456789";
 
-		//std::cout << "Face >" << line << std::endl;
-		//std::cout << "p = " << p << " => " << line[p] << std::endl;
-
 		size_t b = line.find_first_not_of(spaces, p);
 		
 		if(b==std::string::npos)
@@ -129,8 +126,6 @@
 		p = line.find_first_of(spaces, e);
 		if(line.find_first_not_of(spaces, p)==std::string::npos)
 			p = std::string::npos;
-
-		//std::cout << "Returning : " << p << " and " << line.size() << std::endl;
 	}
 
 	void OBJLoader::processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName)
@@ -225,7 +220,27 @@
 				data.hasTexCoords = (data.hasTexCoords || textureIndices[0]!=0 || textureIndices[1]!=0 || textureIndices[2]!=0);
 			}
 			else
-				throw Exception("Unable to process face having more than three vertives.", sourceName, lineNumber, Exception::ClientScriptException);
+			{
+				data.hasNormals = (data.hasNormals || normalIndices[0]!=0 || normalIndices[1]!=0);
+				data.hasTexCoords = (data.hasTexCoords || textureIndices[0]!=0 || textureIndices[1]!=0);
+
+				// Split convex polygons into triangles : 
+				for(unsigned int k=2; k<vertexIndices.size(); k++)
+				{
+					data.av.push_back(vertexIndices[0]);
+					data.an.push_back(normalIndices[0]);
+					data.at.push_back(textureIndices[0]);	
+					data.bv.push_back(vertexIndices[k-1]);
+					data.bn.push_back(normalIndices[k-1]);
+					data.bt.push_back(textureIndices[k-1]);
+					data.cv.push_back(vertexIndices[k]);
+					data.cn.push_back(normalIndices[k]);
+					data.ct.push_back(textureIndices[k]);
+
+					data.hasNormals = (data.hasNormals || normalIndices[k]!=0);
+					data.hasTexCoords = (data.hasTexCoords || textureIndices[k]!=0);
+				}
+			}
 		}
 		else if(strict)
 			throw Exception("Unable to process token \"" + header + "\".", sourceName, lineNumber, Exception::ClientScriptException);
@@ -236,9 +251,9 @@
 		// Test sizes first : 
 		if(data.x.size()!=data.y.size() || data.x.size()!=data.z.size() || ((data.nx.size()!=data.ny.size() || data.nx.size()!=data.nz.size()) && data.hasNormals) || ((data.u.size()!=data.v.size()) && data.hasTexCoords))
 		{
-			#ifdef __VERBOSE__
+			//#ifdef __VERBOSE__
 				std::cout << "OBJLoader::testIndices - Error type A." << std::endl;
-			#endif
+			//#endif
 			return false;
 		}
 		
@@ -246,9 +261,9 @@
 			|| ((data.av.size()!=data.an.size() || data.av.size()!=data.bn.size() || data.av.size()!=data.cn.size()) && data.hasNormals)
 			|| ((data.av.size()!=data.at.size() || data.av.size()!=data.bt.size() || data.av.size()!=data.ct.size()) && data.hasTexCoords))
 		{
-			#ifdef __VERBOSE__
+			//#ifdef __VERBOSE__
 				std::cout << "OBJLoader::testIndices - Error type B." << std::endl;
-			#endif
+			//#endif
 			return false;
 		}
 
@@ -259,7 +274,7 @@
 				|| (data.hasNormals && (data.an[k]<=0 || data.bn[k]<=0 || data.cn[k]<=0 || data.an[k]>data.nx.size() || data.bn[k]>data.nx.size() || data.cn[k]>data.nx.size()))
 				|| (data.hasTexCoords && (data.at[k]<=0 || data.bt[k]<=0 || data.ct[k]<=0 || data.at[k]>data.u.size() || data.bt[k]>data.u.size() || data.ct[k]>data.u.size())) )
 			{
-				#ifdef __VERBOSE__
+				//#ifdef __VERBOSE__
 					std::cout << "OBJLoader::testIndices - Error type C." << std::endl;
 					std::cout << "    Error for Face " << k << "/" << data.av.size() << std::endl;
 					std::cout << "    " << data.av[k] << ' ' << data.bv[k] << ' ' << data.cv[k] << " [" << data.x.size() << ']' << std::endl;
@@ -269,7 +284,7 @@
 					std::cout << "    hasTexCoords : " << data.hasTexCoords << std::endl;
 					if(data.hasTexCoords)
 						std::cout << "    " << data.at[k] << ' ' << data.bt[k] << ' ' << data.ct[k] << " [" << data.u.size() << ']' << std::endl;
-				#endif
+				//#endif
 				return false;
 			}
 		}
@@ -416,6 +431,13 @@
 		APPEND_NEW_GEOMETRY(arguments[1], load(arguments[0], strict))
 	}
 
+	/**
+	\fn CustomModel OBJLoader::load(const std::string& filename, const bool strict)
+	\brief Load geometry from an OBJ.
+	\param filename File to be loaded.
+	\param strict If true, any error, such as unknown section, will raise an exception.
+	\return A constructed geometry model.
+	**/
 	CustomModel OBJLoader::load(const std::string& filename, const bool strict)
 	{
 		std::ifstream file;

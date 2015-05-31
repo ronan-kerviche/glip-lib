@@ -38,6 +38,10 @@ namespace Glip
 
 	namespace Modules
 	{
+		/**
+		\class OBJLoader
+		\brief OBJ File Loader.
+		**/
 		class OBJLoader : public LayoutLoaderModule
 		{
 			private : 

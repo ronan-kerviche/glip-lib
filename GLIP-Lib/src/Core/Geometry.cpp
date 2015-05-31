@@ -859,7 +859,10 @@
 	**/
 	bool GeometryModel::testIndices(void) const
 	{
-		if(vertices.size()!=normals.size())
+		if(hasNormals && vertices.size()!=normals.size())
+			return false;
+
+		if(hasTexCoords && getNumVertices()*2!=texCoords.size())
 			return false;
 
 		for(std::vector<GLuint>::const_iterator it=elements.begin(); it!=elements.end(); it++)
