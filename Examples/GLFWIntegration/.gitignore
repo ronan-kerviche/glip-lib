@@ -1,0 +1,4 @@
+# Ignore list :
+glfwIntegration
+# Except this file :
+!.gitignore

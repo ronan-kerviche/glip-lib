@@ -1,0 +1,6 @@
+# Ignore list :
+fft1D
+fft2D
+log.txt
+# Except this file :
+!.gitignore

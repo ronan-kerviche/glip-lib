@@ -1,0 +1,4 @@
+# Ignore temporary files :
+*~
+# Except this file :
+!.gitignore
