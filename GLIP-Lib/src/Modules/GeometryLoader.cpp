@@ -10,7 +10,7 @@
 /*     File          : GeometryLoader.cpp                                                                        */
 /*     Original Date : May 29th 2015                                                                             */
 /*                                                                                                               */
-/*     Description   : Geometry loaders for OBJ and STL file formats.                                            */
+/*     Description   : Geometry loaders for Wavefront Object (OBJ) and STL file formats.                         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
@@ -73,59 +73,63 @@
 				  digits = "0123456789";
 
 		size_t b = line.find_first_not_of(spaces, p);
-		
 		if(b==std::string::npos)
 			throw Exception("Cannot find index start.", sourceName, lineNumber, Exception::ClientScriptException);
-
 		if(digits.find(line[b])==std::string::npos)
 			throw Exception("Cannot read digit.", sourceName, lineNumber, Exception::ClientScriptException);
 
 		size_t e = line.find_first_not_of(digits, b);
 		e = (e==std::string::npos) ? line.size() : e;
-
-		GLuint vIndex = 0;
-		if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), vIndex))
-			throw Exception("Cannot read number (vertex index).", sourceName, lineNumber, Exception::ClientScriptException);
-		v.push_back(vIndex);
-
-		if(e<line.size() && line[e]=='/')
-			e = std::min(e+1, line.size()-1);
-
-		if(e<line.size() && digits.find(line[e])!=std::string::npos)
-		{
-			b = e;
-			e = line.find_first_not_of(digits, b);
-			e = (e==std::string::npos) ? (line.size()-1) : e;
-
-			GLuint tIndex = 0;
-			if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), tIndex))
-				throw Exception("Cannot read number (texcoord index).", sourceName, lineNumber, Exception::ClientScriptException);
-			t.push_back(tIndex);
-		}
-		else
-			t.push_back(0);
-
-		if(e<line.size() && line[e]=='/')
-			e = std::min(e+1, line.size()-1);
 		
-		if(e<line.size() && digits.find(line[e])!=std::string::npos)
+		GLuint	v1 = 0,
+			v2 = 0,
+			v3 = 0;
+		//bool	hasSecond = false,
+		//	hasThird = false;
+		if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), v1))
+			throw Exception("Cannot read number (first).", sourceName, lineNumber, Exception::ClientScriptException);
+		
+		if(e<line.size() && line[e]=='/')
 		{
-			b = e;
+			//hasSecond = true;
+			b = e + 1;
+
+			if(b>=line.size())
+				throw Exception("Cannot find number start (second).", sourceName, lineNumber, Exception::ClientScriptException);
+
 			e = line.find_first_not_of(digits, b);
-			e = (e==std::string::npos) ? (line.size()-1) : e;
+			e = (e==std::string::npos) ? line.size() : e;
 
-			GLuint nIndex = 0;
-			if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), nIndex))
-				throw Exception("Cannot read number (normal index).", sourceName, lineNumber, Exception::ClientScriptException);
-			n.push_back(nIndex);
+			if(e>b)
+			{
+				if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), v2))
+					throw Exception("Cannot read number (second).", sourceName, lineNumber, Exception::ClientScriptException);
+			}
+
+			if(e<line.size() && line[e]=='/')
+			{
+				//hasThird = true;
+				b = e + 1;
+
+				if(b>=line.size())
+					throw Exception("Cannot find number start (third).", sourceName, lineNumber, Exception::ClientScriptException);
+
+				e = line.find_first_not_of(digits, b);
+				e = (e==std::string::npos) ? line.size() : e;
+
+				if(e>b)
+				{
+					if(!fromString(line.substr(b, std::max(e-b,static_cast<size_t>(1))), v3))
+						throw Exception("Cannot read number (third).", sourceName, lineNumber, Exception::ClientScriptException);
+				}
+			}
 		}
-		else
-			n.push_back(0);
 
-		// Find the next group :
+		v.push_back(v1);
+		t.push_back(v2);
+		n.push_back(v3);
 		p = line.find_first_of(spaces, e);
-		if(line.find_first_not_of(spaces, p)==std::string::npos)
-			p = std::string::npos;
+		p = line.find_first_not_of(spaces, p);
 	}
 
 	void OBJLoader::processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName)
@@ -405,7 +409,7 @@
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( OBJLoader )
 	{
 		UNUSED_PARAMETER(currentPath)
-		UNUSED_PARAMETER(dynamicPaths)
+		//UNUSED_PARAMETER(dynamicPaths)
 		UNUSED_PARAMETER(formatList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(sharedCodeList)
@@ -417,7 +421,7 @@
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(body)
-		UNUSED_PARAMETER(startLine)
+		//UNUSED_PARAMETER(startLine)
 		UNUSED_PARAMETER(bodyLine)
 		UNUSED_PARAMETER(executionCode)
 
@@ -428,7 +432,36 @@
 		if(arguments.size()>=3)
 			strict = LayoutLoaderModule::getBoolean(arguments[2], sourceName, startLine);
 
-		APPEND_NEW_GEOMETRY(arguments[1], load(arguments[0], strict))
+		const std::string& filename = arguments[0];
+		std::vector<std::string> possibleFilenames = findFile(filename, dynamicPaths);
+
+		// Show some error : 
+		if(possibleFilenames.empty())
+		{
+			if(dynamicPaths.empty())
+				throw Exception("Unable to load file \"" + filename + "\" from the current location.", sourceName, startLine, Exception::ClientScriptException);
+			else
+			{			
+				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", sourceName, startLine, Exception::ClientScriptException);
+				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+				{
+					if(it->empty())
+						ex << Exception("-> [./]", sourceName, startLine, Exception::ClientScriptException);
+					else
+						ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
+				}
+				throw ex;
+			}
+		}
+		else if(possibleFilenames.size()>1)
+		{
+			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", sourceName, startLine, Exception::ClientScriptException);
+			for(std::vector<std::string>::const_iterator it=possibleFilenames.begin(); it!=possibleFilenames.end(); it++)
+				ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
+			throw ex;
+		}	
+
+		APPEND_NEW_GEOMETRY(arguments[1], load(possibleFilenames.front(), strict))
 	}
 
 	/**
@@ -441,7 +474,6 @@
 	CustomModel OBJLoader::load(const std::string& filename, const bool strict)
 	{
 		std::ifstream file;
-
 		file.open(filename.c_str());
 
 		if(!file.is_open() || !file.good() || file.fail())

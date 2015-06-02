@@ -220,10 +220,10 @@ Example, creating a simple Module :
 							const std::map<std::string,HdlTextureFormat>&	requiredFormatList,
 							const std::map<std::string,GeometryModel>&	requiredGeometryList,
 							const std::map<std::string,PipelineLayout>&	requiredPipelineList,
-							const std::string& sourceName,
-							const int startLine,
-							const int bodyLine,
-							std::string& executionCode) = 0;
+							const std::string& 				sourceName,
+							const int 					startLine,
+							const int 					bodyLine,
+							std::string& 					executionCode) = 0;
 
 				const std::string& getName(void) const;
 				const int& getMinNumArguments(void) const;
@@ -240,6 +240,7 @@ Example, creating a simple Module :
 				static void addBasicModules(LayoutLoader& loader);
 				static bool getBoolean(const std::string& arg, const std::string& sourceName="", int line=1);
 				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName="", int bodyLine=1);
+				static std::vector<std::string> findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths);
 		};
 
 		// Simple MACROS : 

@@ -203,12 +203,12 @@
 			oneLoaded = true;
 		}
 
-		// From dynamic path :
+		// From dynamic path (which already include static path) :
 		for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 		{
 			if( fileExists( *it + filename, source, oneLoaded ) )
 			{
-				possiblePaths.push_back( *it );
+				possiblePaths.push_back(*it);
 				oneLoaded = true;
 			}
 		}
@@ -1823,7 +1823,6 @@
 	void LayoutLoader::clearPaths(void)
 	{
 		staticPaths.clear();
-		//staticPaths.push_back("./");
 	}
 
 	/**
@@ -1833,7 +1832,7 @@
 	**/
 	void LayoutLoader::addToPaths(std::string p)
 	{
-		if(!p.empty() && p!="./")
+		if(!p.empty() && p!="./" && p!=".")
 		{
 			// Force the folder delimiter : 
 			if(p[p.size()-1]!='/')

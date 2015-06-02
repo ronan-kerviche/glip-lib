@@ -261,6 +261,43 @@
 			}
 		}
 
+		/**
+		\fn std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths)
+		\brief Find in which path a file can be found.
+		\param filename File name to be searched.
+		\param dynamicPaths List of paths in which to search.
+		\return A list of paths in which the file was found (possibly empty).
+		**/
+		std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths)
+		{
+			// Check all path :
+			std::vector<std::string> possiblePaths;
+
+			// Blank :
+			{
+				std::ifstream file;
+				file.open(filename.c_str());
+				if(file.is_open() && file.good() && !file.fail())
+					possiblePaths.push_back("");
+				file.close();
+			}
+
+			// From dynamic path (which already include static path) :
+			for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+			{
+				const std::string currentFilename = (*it) + filename;
+				std::ifstream file;
+				file.open(currentFilename.c_str());
+				if(file.is_open() && file.good() && !file.fail())
+					possiblePaths.push_back(*it);
+				file.close();
+			}
+
+			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
+				(*it) += filename;
+			return possiblePaths;
+		}
+
 	// Simple modules : 
 			LAYOUT_LOADER_MODULE_APPLY( IF_SHAREDCODE_DEFINED, 1, 1, 1, true, 	"Check if the SHAREDCODE was defined.\n"
 												"Arguments : sharedCodeName.")

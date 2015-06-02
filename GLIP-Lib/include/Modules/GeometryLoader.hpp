@@ -10,13 +10,13 @@
 /*     File          : GeometryLoader.hpp                                                                        */
 /*     Original Date : May 29th 2015                                                                             */
 /*                                                                                                               */
-/*     Description   : Geometry loaders for OBJ and STL file formats.                                            */
+/*     Description   : Geometry loaders for Wavefront Object (OBJ) and STL file formats.                         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
 /**
  * \file    GeometryLoader.hpp
- * \brief   Geometry loaders for OBJ and STL file formats.
+ * \brief   Geometry loaders for Wavefront Object (OBJ) and STL file formats.
  * \author  R. KERVICHE
  * \date    May 29th 2015
 **/
@@ -40,7 +40,7 @@ namespace Glip
 	{
 		/**
 		\class OBJLoader
-		\brief OBJ File Loader.
+		\brief Wavefront Object file loader.
 		**/
 		class OBJLoader : public LayoutLoaderModule
 		{
