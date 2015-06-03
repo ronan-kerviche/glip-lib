@@ -70,7 +70,8 @@ namespace Glip
 
 				static GLfloat readNextNumber(const std::string& line, size_t& p, const int lineNumber, const std::string& sourceName);
 				static void readFaceComponent(const std::string& line, size_t& p, std::vector<GLuint>& v, std::vector<GLuint>& n, std::vector<GLuint>& t, const int lineNumber, const std::string& sourceName);
-				static void processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName);
+				static void processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName, std::vector<GLuint>& vertexIndicesBuffer, std::vector<GLuint>& normalIndicesBuffer, std::vector<GLuint>& textureIndicesBuffer);	
+				static void completeModelData(UnshapedData& data);
 				static bool testIndices(const UnshapedData& data);
 				static void reorderData(UnshapedData& data);
 

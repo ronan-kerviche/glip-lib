@@ -132,7 +132,7 @@
 		p = line.find_first_not_of(spaces, p);
 	}
 
-	void OBJLoader::processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName)
+	void OBJLoader::processLine(const std::string& line, UnshapedData& data, const bool strict, const int lineNumber, const std::string& sourceName, std::vector<GLuint>& vertexIndicesBuffer, std::vector<GLuint>& normalIndicesBuffer, std::vector<GLuint>& textureIndicesBuffer)
 	{
 		const std::string 	spaces = " \t\r\n\f\v",
 					delimiters = " \t\r\n\f\v#/";
@@ -173,6 +173,7 @@
 			data.nx.push_back(nx);
 			data.ny.push_back(ny);
 			data.nz.push_back(nz);
+			data.hasNormals = true;
 
 			if(strict && line.find_first_not_of(spaces, p1)!=std::string::npos)
 				throw Exception("Cannot read trailing information for normal.", sourceName, lineNumber, Exception::ClientScriptException);
@@ -183,71 +184,83 @@
 				v = readNextNumber(line, p1, lineNumber, sourceName);
 			data.u.push_back(u);
 			data.v.push_back(v);
+			data.hasTexCoords = true;
 
 			if(strict && line.find_first_not_of(spaces, p1)!=std::string::npos)
 				throw Exception("Cannot read trailing information for texture coordinate.", sourceName, lineNumber, Exception::ClientScriptException);
 		}
 		else if(header=="f")
 		{
-			std::vector<GLuint> 	vertexIndices, 
+			/*std::vector<GLuint> 	vertexIndices, 
 						normalIndices,
 						textureIndices;
 			vertexIndices.reserve(3);
 			normalIndices.reserve(3);
-			textureIndices.reserve(3);
+			textureIndices.reserve(3);*/
 
 			// Ensure 3 reads : 
-			readFaceComponent(line, p1, vertexIndices, normalIndices, textureIndices, lineNumber, sourceName);
-			readFaceComponent(line, p1, vertexIndices, normalIndices, textureIndices, lineNumber, sourceName);
-			readFaceComponent(line, p1, vertexIndices, normalIndices, textureIndices, lineNumber, sourceName);
+			readFaceComponent(line, p1, vertexIndicesBuffer, normalIndicesBuffer, textureIndicesBuffer, lineNumber, sourceName);
+			readFaceComponent(line, p1, vertexIndicesBuffer, normalIndicesBuffer, textureIndicesBuffer, lineNumber, sourceName);
+			readFaceComponent(line, p1, vertexIndicesBuffer, normalIndicesBuffer, textureIndicesBuffer, lineNumber, sourceName);
 
 			// Continue while necessary : 
 			while(p1!=std::string::npos)
-				readFaceComponent(line, p1, vertexIndices, normalIndices, textureIndices, lineNumber, sourceName);
+				readFaceComponent(line, p1, vertexIndicesBuffer, normalIndicesBuffer, textureIndicesBuffer, lineNumber, sourceName);
 			
 			// Generate triangles from it :
-			if(vertexIndices.size()<=2)
+			if(vertexIndicesBuffer.size()<=2)
 				throw Exception("Unable to process face having less than three vertives.", sourceName, lineNumber, Exception::ClientScriptException);
-			else if(vertexIndices.size()==3)
+			else if(vertexIndicesBuffer.size()==3)
 			{
-				data.av.push_back(vertexIndices[0]);
-				data.an.push_back(normalIndices[0]);
-				data.at.push_back(textureIndices[0]);	
-				data.bv.push_back(vertexIndices[1]);
-				data.bn.push_back(normalIndices[1]);
-				data.bt.push_back(textureIndices[1]);
-				data.cv.push_back(vertexIndices[2]);
-				data.cn.push_back(normalIndices[2]);
-				data.ct.push_back(textureIndices[2]);
-
-				data.hasNormals = (data.hasNormals || normalIndices[0]!=0 || normalIndices[1]!=0 || normalIndices[2]!=0);
-				data.hasTexCoords = (data.hasTexCoords || textureIndices[0]!=0 || textureIndices[1]!=0 || textureIndices[2]!=0);
+				data.av.push_back(vertexIndicesBuffer[0]);
+				data.an.push_back(normalIndicesBuffer[0]);
+				data.at.push_back(textureIndicesBuffer[0]);	
+				data.bv.push_back(vertexIndicesBuffer[1]);
+				data.bn.push_back(normalIndicesBuffer[1]);
+				data.bt.push_back(textureIndicesBuffer[1]);
+				data.cv.push_back(vertexIndicesBuffer[2]);
+				data.cn.push_back(normalIndicesBuffer[2]);
+				data.ct.push_back(textureIndicesBuffer[2]);
 			}
 			else
 			{
-				data.hasNormals = (data.hasNormals || normalIndices[0]!=0 || normalIndices[1]!=0);
-				data.hasTexCoords = (data.hasTexCoords || textureIndices[0]!=0 || textureIndices[1]!=0);
-
 				// Split convex polygons into triangles : 
-				for(unsigned int k=2; k<vertexIndices.size(); k++)
+				for(unsigned int k=2; k<vertexIndicesBuffer.size(); k++)
 				{
-					data.av.push_back(vertexIndices[0]);
-					data.an.push_back(normalIndices[0]);
-					data.at.push_back(textureIndices[0]);	
-					data.bv.push_back(vertexIndices[k-1]);
-					data.bn.push_back(normalIndices[k-1]);
-					data.bt.push_back(textureIndices[k-1]);
-					data.cv.push_back(vertexIndices[k]);
-					data.cn.push_back(normalIndices[k]);
-					data.ct.push_back(textureIndices[k]);
-
-					data.hasNormals = (data.hasNormals || normalIndices[k]!=0);
-					data.hasTexCoords = (data.hasTexCoords || textureIndices[k]!=0);
+					data.av.push_back(vertexIndicesBuffer[0]);
+					data.an.push_back(normalIndicesBuffer[0]);
+					data.at.push_back(textureIndicesBuffer[0]);	
+					data.bv.push_back(vertexIndicesBuffer[k-1]);
+					data.bn.push_back(normalIndicesBuffer[k-1]);
+					data.bt.push_back(textureIndicesBuffer[k-1]);
+					data.cv.push_back(vertexIndicesBuffer[k]);
+					data.cn.push_back(normalIndicesBuffer[k]);
+					data.ct.push_back(textureIndicesBuffer[k]);
 				}
 			}
+
+			// And clear the buffers :
+			vertexIndicesBuffer.clear();
+			normalIndicesBuffer.clear();
+			textureIndicesBuffer.clear();
 		}
 		else if(strict)
 			throw Exception("Unable to process token \"" + header + "\".", sourceName, lineNumber, Exception::ClientScriptException);
+	}
+
+	void OBJLoader::completeModelData(UnshapedData& data)
+	{
+		#define COMPLETE_INDICES(AV, AN, AT)	for(unsigned int k=0; k<data.AV.size(); k++) \
+							{ \
+								if(data.hasNormals && data.AN[k]==0) data.AN[k] = data.AV[k]; \
+								if(data.hasNormals && data.AT[k]==0) data.AT[k] = data.AV[k]; \
+							}
+
+		COMPLETE_INDICES(av, an, at)
+		COMPLETE_INDICES(bv, bn, bt)
+		COMPLETE_INDICES(cv, cn, ct)
+
+		#undef COMPLETE_INDICES
 	}
 
 	bool OBJLoader::testIndices(const UnshapedData& data)
@@ -299,10 +312,13 @@
 
 	void OBJLoader::reorderData(UnshapedData& data)
 	{
+		// Augment the unshaped data by generating all the needed triplet of vertices/normals/textures required by the object.
+		// After this step, the 
+
 		if(data.hasTexCoords || data.hasNormals)
 		{
 			// Generate an indices map with unique pairs of vertices/textures : 
-			std::vector< std::pair<GLuint, GLuint> > indicesMap;
+			std::map<GLuint, std::map<GLuint, std::map<GLuint, GLuint> > > indicesMap;
 			std::vector<GLfloat> 	_x,
 						_y,
 						_z,
@@ -328,12 +344,33 @@
 			b.reserve(data.av.size());
 			c.reserve(data.av.size());
 	
-			// Note that the following is not performant as we search linearly through a sparse-matrix of indices (instead of searching in a tree-like structure, for instance).
 			#define PROCESS(AV, AN, AT, AF)	for(size_t k=0; k<data.AV.size(); k++) \
 							{ \
-								const std::pair<GLuint, GLuint> p(data.AV[k], data.AT[k]); \
-								std::vector< std::pair<GLuint, GLuint> >::iterator it = std::find(indicesMap.begin(), indicesMap.end(), p); \
-								if(it==indicesMap.end()) \
+								std::map<GLuint, std::map<GLuint, std::map<GLuint, GLuint> > >::iterator it1; \
+								std::map<GLuint, std::map<GLuint, GLuint> >::iterator it2; \
+								std::map<GLuint, GLuint>::iterator it3; \
+								bool found=false; \
+								it1 = indicesMap.find(data.AV[k]); \
+								if(it1!=indicesMap.end()) \
+								{ \
+									it2 = it1->second.find(data.AN[k]); \
+									if(it2!=it1->second.end()) \
+									{ \
+										it3 = it2->second.find(data.AT[k]); \
+										if(it3!=it2->second.end()) \
+										{ \
+											found = true; \
+											AF.push_back(it3->second); \
+										} \
+										else \
+											it2->second[data.AT[k]] = _x.size(); \
+									} \
+									else \
+										it1->second[data.AN[k]][data.AT[k]] = _x.size(); \
+								} \
+								else \
+									indicesMap[data.AV[k]][data.AN[k]][data.AT[k]] = _x.size(); \
+								if(!found) \
 								{ \
 									AF.push_back(_x.size()); \
 									_x.push_back(data.x[data.AV[k]-1]); \
@@ -350,11 +387,8 @@
 										_u.push_back(data.u[data.AT[k]-1]); \
 										_v.push_back(data.v[data.AT[k]-1]); \
 									} \
-									indicesMap.push_back(p); \
 								} \
-								else \
-									AF.push_back(std::distance(indicesMap.begin(), it)); \
-							} \
+							}
 
 			PROCESS(av, an, at, a)
 			PROCESS(bv, bn, bt, b)
@@ -409,7 +443,6 @@
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( OBJLoader )
 	{
 		UNUSED_PARAMETER(currentPath)
-		//UNUSED_PARAMETER(dynamicPaths)
 		UNUSED_PARAMETER(formatList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(sharedCodeList)
@@ -421,7 +454,6 @@
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(body)
-		//UNUSED_PARAMETER(startLine)
 		UNUSED_PARAMETER(bodyLine)
 		UNUSED_PARAMETER(executionCode)
 
@@ -479,9 +511,35 @@
 		if(!file.is_open() || !file.good() || file.fail())
 			throw Exception("OBJLoader::load - Could not open file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 		
+		const unsigned int initialReserve = 65536; 
 		UnshapedData data;
 		data.hasNormals = false;
 		data.hasTexCoords = false;
+		data.x.reserve(initialReserve);
+		data.y.reserve(initialReserve);
+		data.z.reserve(initialReserve);
+		data.nx.reserve(initialReserve);
+		data.ny.reserve(initialReserve);
+		data.nz.reserve(initialReserve);
+		data.u.reserve(initialReserve);
+		data.v.reserve(initialReserve);
+		data.av.reserve(initialReserve);
+		data.an.reserve(initialReserve);
+		data.at.reserve(initialReserve);
+		data.bv.reserve(initialReserve);
+		data.bn.reserve(initialReserve);
+		data.bt.reserve(initialReserve);
+		data.cv.reserve(initialReserve);
+		data.cn.reserve(initialReserve);
+		data.ct.reserve(initialReserve);
+
+		// Buffer for the faces data (should mostly need only 3 components) :
+		std::vector<GLuint>	vertexIndicesBuffer,
+					normalIndicesBuffer,
+					textureIndicesBuffer;
+		vertexIndicesBuffer.reserve(8);
+		normalIndicesBuffer.reserve(8);
+		textureIndicesBuffer.reserve(8);
 
 		int lineNumber = 1;
 		std::string line;
@@ -489,15 +547,18 @@
 
 		while(std::getline(file,line))
 		{
-			processLine(line, data, strict, lineNumber, filename);
+			processLine(line, data, strict, lineNumber, filename, vertexIndicesBuffer, normalIndicesBuffer, textureIndicesBuffer);
 			lineNumber++;
 		}
 		file.close();
 
+		// Complete : 
+		completeModelData(data);
+
 		// Test : 		
 		if(!testIndices(data))
 			throw Exception("OBJLoader::load - Inconsistency found while parsing the file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
-	
+
 		// Create the model from the parsed data :
 		reorderData(data);
 		CustomModel model(3, GL_TRIANGLES, data.hasNormals, data.hasTexCoords);

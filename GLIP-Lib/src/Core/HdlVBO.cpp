@@ -49,7 +49,7 @@ using namespace Glip::CoreGL;
 		dim(_dim),
 		nIndPerElement(_nIndPerElement),
 		dimTexCoords(_dimTexCoords),
-		normals(_normals!=NULL),
+		hasNormals(_normals!=NULL),
 		vertices(NULL),
 		elements(NULL),
 		offsetVertices(0),
@@ -124,23 +124,19 @@ using namespace Glip::CoreGL;
 		vertices->bind(GL_ARRAY_BUFFER_ARB);
 		glVertexPointer(dim, GL_FLOAT, 0, reinterpret_cast<void*>(offsetVertices));
 
-		if(normals)
+		if(hasNormals)
 			glNormalPointer(GL_FLOAT, 0, reinterpret_cast<void*>(offsetNormals));
-
 		if(dimTexCoords>0)
 			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(offsetTexCoords));
-		
-
 		if(elements!=NULL)
-			elements->bind(GL_ELEMENT_ARRAY_BUFFER);;
+			elements->bind(GL_ELEMENT_ARRAY_BUFFER);
 
 		// Enable :
 		glEnableClientState(GL_VERTEX_ARRAY);
 		if(dimTexCoords>0)
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		if(normals)
+		if(hasNormals)
 			glEnableClientState(GL_NORMAL_ARRAY);
-
 		if(elements==NULL)
 			glDrawArrays(GL_POINTS, 0, nVert);
 		else
@@ -149,7 +145,7 @@ using namespace Glip::CoreGL;
 		glDisableClientState(GL_VERTEX_ARRAY);
 		if(dimTexCoords>0)
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		if(normals)
+		if(hasNormals)
 			glDisableClientState(GL_NORMAL_ARRAY);
 
 		HdlVBO::unbind();

@@ -106,6 +106,7 @@
 					GLuint& b(GLuint i);
 					GLuint& c(GLuint i);
 					GLuint& d(GLuint i);
+					void generateNormals(void);
 
 				public :
 								/// Geometry Type.
@@ -251,6 +252,7 @@
 						GLuint newElement(GLuint a, GLuint b, GLuint c);
 						GLuint newElement(GLuint a, GLuint b, GLuint c, GLuint d);
 						GLuint newElement(const std::vector<GLuint>& indices);
+						void generateNormals(void);
 				};
 			}
 		}

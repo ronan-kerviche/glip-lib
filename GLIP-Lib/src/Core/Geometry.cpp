@@ -21,6 +21,7 @@
  * \date    June 29th 2013
 **/
 
+#include <cmath>
 #include <algorithm>
 #include "Core/Exception.hpp"
 #include "Core/HdlVBO.hpp"
@@ -61,6 +62,7 @@
 	**/
 	GeometryModel::GeometryModel(const GeometryModel& mdl)
 	 :	vertices(mdl.vertices),
+		normals(mdl.normals),
 		texCoords(mdl.texCoords),
 		elements(mdl.elements),
 		type(mdl.type),
@@ -502,6 +504,107 @@
 
 		elements.insert(elements.end(), indices.begin(), indices.end());
 		return getNumElements() - 1;
+	}
+
+	/**
+	\fn void GeometryModel::generateNormals(void)
+	\brief Automatically generate the normals.
+
+	If the primitive is GL_POINTS, this will reset the normals to 0.
+	**/
+	void GeometryModel::generateNormals(void)
+	{
+		const GLuint nElements = getNumElements();
+		normals.clear();
+		normals.assign(vertices.size(), 0.0f);
+
+		// No normals defined for dots : 
+		if(numVerticesPerElement<=1)
+			return ;
+
+		std::vector<unsigned int> counts(getNumVertices(), 0);
+
+		for(GLuint p=0; p<nElements; p++)
+		{
+			const unsigned int offset = p*numVerticesPerElement;
+			const unsigned int nNoLoop = (numVerticesPerElement>=3) ? numVerticesPerElement : 1;
+
+			if(dim==2)
+			{
+				for(unsigned int q=0; q<nNoLoop; q++)
+				{
+					const GLuint 	a = elements[offset+q],
+							b = elements[offset+((q+1)%numVerticesPerElement)];
+
+					if(a<vertices.size() && b<vertices.size())
+					{
+						// Compute the normal : 
+						const float	dx = vertices[b*dim+0] - vertices[a*dim+0],
+								dy = vertices[b*dim+1] - vertices[a*dim+1],
+								l = std::sqrt(dx*dx+dy*dy),
+								nx = -dy/l,
+								ny = dx/l;
+						normals[a*dim+0] += nx;
+						normals[a*dim+1] += ny;
+						counts[a]++;
+						normals[b*dim+0] += nx;
+						normals[b*dim+1] += ny;
+						counts[b]++;	
+					}
+				}
+			}
+			else if(dim==3)
+			{
+				for(unsigned int q=0; q<nNoLoop; q++)
+				{
+					const GLuint 	a = elements[offset+q],
+							b = elements[offset+((q+1)%numVerticesPerElement)],
+							c = elements[offset+((q+2)%numVerticesPerElement)];
+
+					if(a<vertices.size() && b<vertices.size() && c<vertices.size())
+					{
+						// Compute the normal : 
+						const float	dx1 = vertices[b*dim+0] - vertices[a*dim+0],
+								dy1 = vertices[b*dim+1] - vertices[a*dim+1],
+								dz1 = vertices[b*dim+2] - vertices[a*dim+2],
+								dx2 = vertices[c*dim+0] - vertices[b*dim+0],
+								dy2 = vertices[c*dim+1] - vertices[b*dim+1],
+								dz2 = vertices[c*dim+2] - vertices[b*dim+2],
+								l1 = std::sqrt(dx1*dx1+dy1*dy1),
+								l2 = std::sqrt(dx2*dx2+dy2*dy2),
+								nx = (dy1*dz2 - dy2*dz1)/(l1*l2),
+								ny = (dx2*dz1 - dx1*dz2)/(l1*l2),
+								nz = (dx1*dy2 - dx2*dy1)/(l1*l2);
+						normals[a*dim+0] += nx;
+						normals[a*dim+1] += ny;
+						normals[a*dim+2] += nz;
+						counts[a]++;
+						normals[b*dim+0] += nx;
+						normals[b*dim+1] += ny;
+						normals[b*dim+2] += nz;
+						counts[b]++;	
+						normals[c*dim+0] += nx;
+						normals[c*dim+1] += ny;
+						normals[c*dim+2] += nz;
+						counts[c]++;
+					}
+				}
+			}
+			else
+				throw Exception("Cannot compute normal in " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
+		}
+
+		// Final averages : 
+		for(unsigned int k=0; k<counts.size(); k++)
+		{
+			for(int q=0; q<dim; q++)
+			{
+				if(counts[k]==0)
+					normals[k*dim+q] = 0.0f;
+				else
+					normals[k*dim+q] /= static_cast<float>(counts[k]);
+			}
+		}
 	}
 
 	/**
@@ -1411,5 +1514,14 @@
 		GLuint CustomModel::newElement(const std::vector<GLuint>& indices)
 		{
 			return addElement(indices);
+		}
+
+		/**
+		\fn void CustomModel::generateNormals(void)
+		\brief Automatically generate the normals.
+		**/
+		void CustomModel::generateNormals(void)
+		{
+			GeometryModel::generateNormals();
 		}
 

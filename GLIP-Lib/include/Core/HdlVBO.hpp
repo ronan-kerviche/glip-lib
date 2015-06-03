@@ -46,7 +46,7 @@
 						dim,
 						nIndPerElement,
 						dimTexCoords;
-					bool	normals;
+					bool	hasNormals;
 					HdlGeBO *vertices,
 						*elements;
 					GLintptr offsetVertices,

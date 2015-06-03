@@ -964,7 +964,7 @@
 		}
 		else if(e.arguments[0]==keywords[KW_LL_CUSTOM_MODEL])
 		{
-			if(e.arguments.size()!=2 && e.arguments.size()!=3)
+			if(e.arguments.size()!=3 && e.arguments.size()!=4)
 				throw Exception("The model \"" + std::string(keywords[KW_LL_CUSTOM_MODEL]) + "\" requires to have either 2 or 3 arguments (included) in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			if(e.body.empty() || e.noBody)
