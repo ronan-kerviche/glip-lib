@@ -36,7 +36,7 @@
 	\brief Geometry model constructor.
 	\param _type The type of the geometry (MUST BE GeometryModel::CustomModel for all user defined models).
 	\param _dim The minimum number of spatial dimensions needed to describe the geometry (either 2 or 3).
-	\param _primitiveGL The GL ID of the element primitive (eg. GL_POINTS, GL_LINES, GL_TRIANGLES, etc.)
+	\param _primitiveGL The GL ID of the element primitive (among GL_POINTS​, GL_LINES​, GL_LINES_ADJACENCY, GL_LINE_STRIP, GL_LINE_STRIP_ADJACENCY, GL_TRIANGLES, GL_TRIANGLES_ADJACENCY, GL_TRIANGLE_STRIP, GL_TRIANGLE_STRIP_ADJACENCY)
 	\param _hasNormals Set to true if the geometry has normals data attached.
 	\param _hasTexCoords Set to true if the geometry has texel coordinates attached.
 	**/
@@ -48,7 +48,8 @@
 		hasNormals(_hasNormals),		
 		hasTexCoords(_hasTexCoords),		
 		dim(_dim), 
-		numVerticesPerElement(getNumVerticesFromPrimitive(_primitiveGL)), 
+		numVerticesPerElement(getNumVerticesInPrimitive(_primitiveGL)),
+		elementStride(getPrimitiveStride(_primitiveGL)),
 		primitiveGL(_primitiveGL)
 	{
 		if(dim!=2 && dim!=3)
@@ -70,6 +71,7 @@
 		hasTexCoords(mdl.hasTexCoords),
 		dim(mdl.dim),
 		numVerticesPerElement(mdl.numVerticesPerElement),
+		elementStride(mdl.elementStride),
 		primitiveGL(mdl.primitiveGL)
 	{ }
 
@@ -225,8 +227,8 @@
 	**/
 	GLuint GeometryModel::addVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx, const GLfloat& ny, const GLfloat& u, const GLfloat& v)
 	{
-		if(dim!=2)
-			throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+		//if(dim!=2)
+		//	throw Exception("GeometryModel::addVertex2D - Dimensions should be equal to 2 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 		vertices.push_back(x);
 		vertices.push_back(y);
@@ -297,8 +299,8 @@
 	**/
 	void GeometryModel::addVertices3D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* z, const GLfloat* nx, const GLfloat* ny, const GLfloat* nz, const GLfloat* u, const GLfloat* v)
 	{
-		if(dim!=3)
-			throw Exception("GeometryModel::addVertices3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+		//if(dim!=3)
+		//	throw Exception("GeometryModel::addVertices3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 		vertices.reserve(vertices.size() + dim*N);
 		for(size_t k=0; k<N; k++)
@@ -351,8 +353,8 @@
 	**/
 	GLuint GeometryModel::addVertex3D(const GLfloat& x, const GLfloat& y, const GLfloat& z, const GLfloat& nx, const GLfloat& ny, const GLfloat& nz, const GLfloat& u, const GLfloat& v)
 	{
-		if(dim!=3)
-			throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
+		//if(dim!=3)
+		//	throw Exception("GeometryModel::addVertex3D - Dimensions should be equal to 3 (current : " + toString(dim) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 		vertices.push_back(x);
 		vertices.push_back(y);
@@ -398,6 +400,8 @@
 	**/
 	void GeometryModel::addElements(const size_t N, GLuint* a, GLuint* b, GLuint* c, GLuint* d)
 	{
+		if(elementStride!=numVerticesPerElement)
+			throw Exception("GeometryModel::addElements - Cannot insert non-interleaved data in stripped primitive.", __FILE__, __LINE__, Exception::CoreException);
 		if((numVerticesPerElement>=1 && a==NULL) || (numVerticesPerElement>=2 && b==NULL) || (numVerticesPerElement>=3 && c==NULL) || (numVerticesPerElement>=4 && d==NULL) || numVerticesPerElement>4)
 			throw Exception("GeometryModel::addElements - Missing indices.", __FILE__, __LINE__, Exception::CoreException);
 
@@ -419,10 +423,9 @@
 	**/
 	GLuint GeometryModel::addElement(GLuint a)
 	{
-		const int expectedNumberOfVertices = 1;
-
-		if(numVerticesPerElement!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		//const int expectedNumberOfVertices = 1;
+		//if(numVerticesPerElement!=expectedNumberOfVertices)
+		//	throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 
 		elements.push_back(a);
 		return getNumElements() - 1;
@@ -437,10 +440,9 @@
 	**/
 	GLuint GeometryModel::addElement(GLuint a, GLuint b)
 	{
-		const int expectedNumberOfVertices = 2;
-
-		if(numVerticesPerElement!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		//const int expectedNumberOfVertices = 2;
+		//if(numVerticesPerElement!=expectedNumberOfVertices)
+		//	throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 
 		elements.push_back(a);
 		elements.push_back(b);
@@ -457,10 +459,9 @@
 	**/
 	GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c)
 	{
-		const int expectedNumberOfVertices = 3;
-
-		if(numVerticesPerElement!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		//const int expectedNumberOfVertices = 3;
+		//if(numVerticesPerElement!=expectedNumberOfVertices)
+		//	throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 
 		elements.push_back(a);
 		elements.push_back(b);
@@ -479,10 +480,9 @@
 	**/
 	GLuint GeometryModel::addElement(GLuint a, GLuint b, GLuint c, GLuint d)
 	{
-		const int expectedNumberOfVertices = 4;
-
-		if(numVerticesPerElement!=expectedNumberOfVertices)
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
+		//const int expectedNumberOfVertices = 4;
+		//if(numVerticesPerElement!=expectedNumberOfVertices)
+		//	throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 
 		elements.push_back(a);
 		elements.push_back(b);
@@ -493,15 +493,14 @@
 
 	/**
 	\fn GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
-	\brief Add a primitive element to the model.
+	\brief Add (a) primitive element(s) to the model.
 	\param indices A vector containing the indices of all the vertices used.
-	\return The index of the newly created element.
+	\return The index of the (last) created element.
 	**/
 	GLuint GeometryModel::addElement(const std::vector<GLuint>& indices)
 	{
-		if(numVerticesPerElement!=static_cast<int>(indices.size()))
-			throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-
+		//if(numVerticesPerElement!=static_cast<int>(indices.size()))
+		//	throw Exception("GeometryModel::addElement - Wrong number of vertex indices (" + toString(indices.size()) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
 		elements.insert(elements.end(), indices.begin(), indices.end());
 		return getNumElements() - 1;
 	}
@@ -633,13 +632,12 @@
 	\fn GLfloat& GeometryModel::z(GLuint i)
 	\brief Access the Z coordinate of the vertex at given index.
 	\param i The vertex index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	\return Read/write access to corresponding variable.
 	**/
 	GLfloat& GeometryModel::z(GLuint i)
 	{
-		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);*/
 		return vertices[i*dim+2];
 	}
 
@@ -669,13 +667,12 @@
 	\fn GLfloat& GeometryModel::z(GLuint i)
 	\brief Access the Z coordinate of the normal at given index.
 	\param i The vertex index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	\return Read/write access to corresponding variable.
 	**/
 	GLfloat& GeometryModel::nz(GLuint i)
 	{
-		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);*/
 		return normals[i*dim+2];
 	}
 
@@ -683,13 +680,12 @@
 	\fn GLfloat& GeometryModel::u(GLuint i)
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
+	\return Read/write access to corresponding variable.
 	**/
 	GLfloat& GeometryModel::u(GLuint i)
 	{
-		if(!hasTexCoords)
-			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(!hasTexCoords)
+			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);*/
 		return texCoords[i*2+0];
 	}
 
@@ -697,13 +693,12 @@
 	\fn GLfloat& GeometryModel::v(GLuint i)
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read/write access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
+	\return Read/write access to corresponding variable.
 	**/
 	GLfloat& GeometryModel::v(GLuint i)
 	{
-		if(!hasTexCoords)
-			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(!hasTexCoords)
+			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);*/
 		return texCoords[i*2+1];
 	}
 
@@ -715,12 +710,11 @@
 	**/
 	GLuint& GeometryModel::a(GLuint i)
 	{
-		const int expectedNumberOfVertices = 1;
-
+		/*const int expectedNumberOfVertices = 1;
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 0];
+		else*/
+		return elements[i * elementStride + 0];
 	}
 
 	/**
@@ -731,12 +725,11 @@
 	**/
 	GLuint& GeometryModel::b(GLuint i)
 	{
-		const int expectedNumberOfVertices = 2;
-
+		/*const int expectedNumberOfVertices = 2;
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 1];
+		else*/
+		return elements[i * elementStride + 1];
 	}
 
 	/**
@@ -747,12 +740,11 @@
 	**/
 	GLuint& GeometryModel::c(GLuint i)
 	{
-		const int expectedNumberOfVertices = 3;
-
+		/*const int expectedNumberOfVertices = 3;
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 2];
+		else*/
+		return elements[i * elementStride + 2];
 	}
 
 	/**
@@ -763,12 +755,11 @@
 	**/
 	GLuint& GeometryModel::d(GLuint i)
 	{
-		const int expectedNumberOfVertices = 4;
-
+		/*const int expectedNumberOfVertices = 4;
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 3];
+		else*/
+		return elements[i * elementStride + 3];
 	}
 	
 	/**
@@ -797,13 +788,12 @@
 	\fn const GLfloat& GeometryModel::z(GLuint i) const
 	\brief Read the Z coordinate of the vertex at given index.
 	\param i The vertex index.
-	\return Read access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	\return Read access to corresponding variable.
 	**/
 	const GLfloat& GeometryModel::z(GLuint i) const
 	{
-		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);*/
 		return vertices[i*dim+2];
 	}
 
@@ -833,13 +823,12 @@
 	\fn const GLfloat& GeometryModel::z(GLuint i) const 
 	\brief Access the Z coordinate of the normal at given index.
 	\param i The vertex index.
-	\return Read access to corresponding variable. Will raise an exception if GeometryModel::dim is smaller than 3.
+	\return Read access to corresponding variable.
 	**/
 	const GLfloat& GeometryModel::nz(GLuint i) const 
 	{
-		if(dim<3)
-			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(dim<3)
+			throw Exception("GeometryModel::z - This geometry has only " + toString(dim) + " dimensions.", __FILE__, __LINE__, Exception::CoreException);*/
 		return normals[i*dim+2];
 	}
 
@@ -847,13 +836,12 @@
 	\fn const GLfloat& GeometryModel::u(GLuint i) const
 	\brief Access the U coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
+	\return Read-only access to corresponding variable.
 	**/
 	const GLfloat& GeometryModel::u(GLuint i) const
 	{
-		if(!hasTexCoords)
-			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(!hasTexCoords)
+			throw Exception("GeometryModel::u - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);*/
 		return texCoords[i*2+0];
 	}
 
@@ -861,13 +849,12 @@
 	\fn GLfloat& GeometryModel::v(GLuint i) const
 	\brief Access the V coordinate of the texel at given index.
 	\param i The vertex/texel index.
-	\return Read-only access to corresponding variable. Will raise an exception if GeometryModel::hasTexCoords is set to false.
+	\return Read-only access to corresponding variable.
 	**/
 	const GLfloat& GeometryModel::v(GLuint i) const
 	{
-		if(!hasTexCoords)
-			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);
-
+		/*if(!hasTexCoords)
+			throw Exception("GeometryModel::v - Current geometry does not have texture coordinates.", __FILE__, __LINE__, Exception::CoreException);*/
 		return texCoords[i*2+1];
 	}
 
@@ -879,12 +866,12 @@
 	**/
 	const GLuint& GeometryModel::a(GLuint i) const
 	{
-		const int expectedNumberOfVertices = 1;
+		/*const int expectedNumberOfVertices = 1;
 
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 0];
+		else*/
+		return elements[i * elementStride + 0];
 	}
 
 	/**
@@ -895,12 +882,12 @@
 	**/
 	const GLuint& GeometryModel::b(GLuint i) const
 	{
-		const int expectedNumberOfVertices = 2;
+		/*const int expectedNumberOfVertices = 2;
 
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 1];
+		else*/
+		return elements[i * elementStride + 1];
 	}
 
 	/**
@@ -911,12 +898,12 @@
 	**/
 	const GLuint& GeometryModel::c(GLuint i) const
 	{
-		const int expectedNumberOfVertices = 3;
+		/*const int expectedNumberOfVertices = 3;
 
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 2];
+		else*/
+		return elements[i * elementStride + 2];
 	}
 
 	/**
@@ -927,32 +914,33 @@
 	**/
 	const GLuint& GeometryModel::d(GLuint i) const
 	{
-		const int expectedNumberOfVertices = 4;
+		/*const int expectedNumberOfVertices = 4;
 
 		if(numVerticesPerElement<expectedNumberOfVertices)
 			throw Exception("GeometryModel::a - Wrong number of vertex indices (" + toString(expectedNumberOfVertices) + " argument(s) received, " + toString(numVerticesPerElement) + " expected ).", __FILE__, __LINE__, Exception::CoreException);
-		else
-			return elements[i * numVerticesPerElement + 3];
+		else*/
+		return elements[i * elementStride + 3];
 	}
 
 	/**
-	\fn GLuint GeometryModel::getNumVertices(void) const
+	\fn unsigned int GeometryModel::getNumVertices(void) const
 	\brief Get the number of vertices.
 	\return The current number of vertices registered for this model.
 	**/
-	GLuint GeometryModel::getNumVertices(void) const
+	unsigned int GeometryModel::getNumVertices(void) const
 	{
 		return vertices.size() / dim;
 	}
 
 	/**
-	\fn GLuint GeometryModel::getNumElements(void) const
+	\fn unsigned int GeometryModel::getNumElements(void) const
 	\brief Get the number of GL primitives (elements).
 	\return The current number of GL primitives (element).
 	**/
-	GLuint GeometryModel::getNumElements(void) const
+	unsigned int GeometryModel::getNumElements(void) const
 	{
-		return elements.size() / numVerticesPerElement;
+		// Real formula : (Nelements - (numVerticesPerElement-1) + (elementStride-1)) / elementStride
+		return elements.empty() ? 0 : (elements.size() - numVerticesPerElement + elementStride) / elementStride;
 	}
 
 	/**
@@ -1033,32 +1021,61 @@
 	}
 	
 	/**
-	\fn int GeometryModel::getNumVerticesFromPrimitive(const GLenum& _primitiveGL)
+	\fn int GeometryModel::getNumVerticesInPrimitive(const GLenum& _primitiveGL)
 	\brief Get the number of vertices per element for the given primitive.
-	\param _primitiveGL The GL primitive (accepted are :  GL_POINTS​, GL_LINES​, GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLES​, GL_QUADS).
+	\param _primitiveGL The GL primitive (accepted are :  GL_POINTS​, GL_LINES​, GL_LINES_ADJACENCY, GL_LINE_STRIP, GL_LINE_STRIP_ADJACENCY, GL_TRIANGLES, GL_TRIANGLES_ADJACENCY, GL_TRIANGLE_STRIP, GL_TRIANGLE_STRIP_ADJACENCY).
 	\return The number of elements per primitive.
 	**/
-	int GeometryModel::getNumVerticesFromPrimitive(const GLenum& _primitiveGL)
+	int GeometryModel::getNumVerticesInPrimitive(const GLenum& _primitiveGL)
 	{
 		switch(_primitiveGL)
 		{
-			case GL_POINTS :			return 1;
-			case GL_LINES :				return 2;
-			case GL_LINE_LOOP :			return 1;
-			case GL_LINE_STRIP : 			return 1;
-			case GL_TRIANGLES : 			return 3;
-			case GL_QUADS : 			return 4;
-			case GL_TRIANGLE_STRIP : 
-			case GL_TRIANGLE_FAN : 
-			case GL_LINES_ADJACENCY : 
-			case GL_LINE_STRIP_ADJACENCY : 
-			case GL_TRIANGLES_ADJACENCY : 
-			case GL_TRIANGLE_STRIP_ADJACENCY : 
-			case GL_QUAD_STRIP :
+			case GL_POINTS :			return 1;	// Simple points
+			case GL_LINES :				return 2;	// Lines p1-p2 p3-p4 ...
+			case GL_LINES_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES, feed the Geometry shader with adjacent vertices.
+			case GL_LINE_STRIP : 			return 2;	// Lines p1-p2 p2-p3 ... p(N-1)-pN
+			case GL_LINE_STRIP_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES_STRIP, feed the Geometry shader with adjacent vertices.
+			case GL_TRIANGLES : 			return 3;	// Triangles p1-p2-p3 p4-p5-p6 ...
+			case GL_TRIANGLES_ADJACENCY : 		return 3;	// Triangles, similar to GL_TRIANGLES, feed the Geometry shader with adjacent vertices.
+			case GL_TRIANGLE_STRIP : 		return 3;	// Triangles p1-p2-p3 p2-p3-p4 ... p(N-2)-p(N-1)-pN
+			case GL_TRIANGLE_STRIP_ADJACENCY : 	return 3;	// Triangles, similar to GL_TRIANGLES_STRIP, feed the Geometry shader with adjacent vertices.
+			case GL_LINE_LOOP :			/*return 2;*/	// Lines p1-p2 p2-p3 ... pN-p1
+			case GL_TRIANGLE_FAN : 			/*return 3;*/	// Triangles p1-p2-p3 p1-p3-p4 ... p1-p(N-1)-pN
+			case GL_QUADS : 			/*return 4;*/	// Quad p1-p2-p3-p4 p5-p6-p7-p8
+			case GL_QUAD_STRIP :			/*return 4;*/	// Quad
 			case GL_POLYGON :
-				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unsupported primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("GeometryModel::getNumVerticesInPrimitive - Unsupported primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 			default : 
-				throw Exception("GeometryModel::getNumVerticesFromPrimitive - Unknown primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("GeometryModel::getNumVerticesInPrimitive - Unknown primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+		}
+	}
+	
+	/**
+	\fn int GeometryModel::getPrimitiveStride(const GLenum& _primitiveGL)
+	\brief Get the stride between elements of the given primitive.
+	\param _primitiveGL The GL primitive (accepted are : GL_POINTS​, GL_LINES​, GL_LINES_ADJACENCY, GL_LINE_STRIP, GL_LINE_STRIP_ADJACENCY, GL_TRIANGLES, GL_TRIANGLES_ADJACENCY, GL_TRIANGLE_STRIP, GL_TRIANGLE_STRIP_ADJACENCY).
+	**/
+	int GeometryModel::getPrimitiveStride(const GLenum& _primitiveGL)
+	{
+		switch(_primitiveGL)
+		{
+			case GL_POINTS :			return 1;	// Simple points
+			case GL_LINES :				return 2;	// Lines p1-p2 p3-p4 ...
+			case GL_LINES_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES, feed the Geometry shader with adjacent vertices.
+			case GL_LINE_STRIP : 			return 1;	// Lines p1-p2 p2-p3 ... p(N-1)-pN
+			case GL_LINE_STRIP_ADJACENCY : 		return 1;	// Lines, similar to GL_LINES_STRIP, feed the Geometry shader with adjacent vertices.
+			case GL_TRIANGLES : 			return 3;	// Triangles p1-p2-p3 p4-p5-p6 ...
+			case GL_TRIANGLES_ADJACENCY : 		return 3;	// Triangles, similar to GL_TRIANGLES, feed the Geometry shader with adjacent vertices.
+			case GL_TRIANGLE_STRIP : 		return 1;	// Triangles p1-p2-p3 p2-p3-p4 ... p(N-2)-p(N-1)-pN
+			case GL_TRIANGLE_STRIP_ADJACENCY : 	return 1;	// Triangles, similar to GL_TRIANGLES_STRIP, feed the Geometry shader with adjacent vertices.
+			case GL_LINE_LOOP :			/*return 2;*/	// Lines p1-p2 p2-p3 ... pN-p1
+			case GL_TRIANGLE_FAN : 			/*return 3;*/	// Triangles p1-p2-p3 p1-p3-p4 ... p1-p(N-1)-pN
+			case GL_QUADS : 			/*return 4;*/	// Quad p1-p2-p3-p4 p5-p6-p7-p8
+			case GL_QUAD_STRIP :			/*return 4;*/	// Quad
+			case GL_POLYGON :
+				throw Exception("GeometryModel::getPrimitiveStride - Unsupported primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+			default : 
+				throw Exception("GeometryModel::getPrimitiveStride - Unknown primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 		}
 	}
 

@@ -118,15 +118,17 @@
 								/// True if it has normals data attached.
 					const int		dim,
 								/// Number of vertices per elements of the geometry.
-								numVerticesPerElement;
+								numVerticesPerElement,
+								/// Stride between the elements.
+								elementStride;
 								/// ID of the primitive for GL.
 					const GLenum 		primitiveGL;
 
 					GeometryModel(const GeometryModel& mdl);
 					virtual ~GeometryModel(void);
 
-					GLuint getNumVertices(void) const;
-					GLuint getNumElements(void) const;
+					unsigned int getNumVertices(void) const;
+					unsigned int getNumElements(void) const;
 					const GLenum& getGLPrimitive(void) const;
 					const GLfloat& x(GLuint i) const;
 					const GLfloat& y(GLuint i) const;
@@ -145,7 +147,8 @@
 
 					HdlVBO* getVBO(GLenum freq) const;
 
-					static int getNumVerticesFromPrimitive(const GLenum& _primitiveGL);
+					static int getNumVerticesInPrimitive(const GLenum& _primitiveGL);
+					static int getPrimitiveStride(const GLenum& _primitiveGL);
 			};
 
 			/**
