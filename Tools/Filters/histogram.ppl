@@ -9,7 +9,7 @@ CALL:FORMAT_SCALE_SIZE(inputFormat, 0.25, 0.25, reducedFormat)
 CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)
 CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormat, grid)
 
-SHADER_SOURCE:HistogramVertexShader
+SOURCE:HistogramVertexShader
 {
 	#version 130
 	precision highp float; // Comment this line if any problem occurs.
@@ -50,7 +50,7 @@ SHADER_SOURCE:HistogramVertexShader
 }
 
 // The fragment shader :
-SHADER_SOURCE:HistogramFragmentShader
+SOURCE:HistogramFragmentShader
 {
 	#version 130
 

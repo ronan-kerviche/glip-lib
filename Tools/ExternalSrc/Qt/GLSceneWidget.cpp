@@ -3913,7 +3913,8 @@ using namespace QVGL;
 		vImageBasis.setVector(QPointF(xImg, yImg), collection);
 		vFragmentBasis.setVector(QPointF(xFrag, yFrag), collection);
 		
-		if(collection && vPixelBasis.id==MouseState::VectorLastLeftPosition)
+		if(collection && (vPixelBasis.id==MouseState::VectorLastLeftClick || vPixelBasis.id==MouseState::VectorLastLeftPosition || vPixelBasis.id==MouseState::VectorLastLeftRelease ||
+				  vPixelBasis.id==MouseState::VectorLastRightClick || vPixelBasis.id==MouseState::VectorLastRightPosition || vPixelBasis.id==MouseState::VectorLastRightRelease))
 		{
 			QColor color(0,0,0,0);
 

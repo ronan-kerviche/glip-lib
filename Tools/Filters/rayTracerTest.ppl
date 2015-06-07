@@ -5,7 +5,7 @@
 TEXTURE_FORMAT:outputFormat(1920, 1200, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
 CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
 
-SHADER_SOURCE:rayTracerShader
+SOURCE:rayTracerShader
 {
 	#version 130
 

@@ -39,7 +39,7 @@
 	const char* Glip::Modules::LayoutLoader::keywords[LL_NumKeywords] =  {	"TRUE",
 										"FALSE",
 										"TEXTURE_FORMAT",
-										"SHADER_SOURCE",
+										"SOURCE",
 										"FILTER_LAYOUT",
 										"PIPELINE_LAYOUT",
 										"PIPELINE_MAIN",
@@ -58,7 +58,6 @@
 										"REQUIRED_FORMAT",
 										"REQUIRED_GEOMETRY",
 										"REQUIRED_PIPELINE",
-										"SHARED_CODE",
 										"INSERT",
 										"GEOMETRY",
 										"GRID_2D",
@@ -136,7 +135,6 @@
 		geometryList.clear();
 		filterList.clear();
 		pipelineList.clear();
-		sharedCodeList.clear();
 	}
 
 	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
@@ -327,13 +325,13 @@
 				// Continue the tests :
 				preliminaryTests(parser.elements.front(), -1, 1, 1, -1, "Insert");
 				
-				const std::string sharedCodeName = parser.elements.front().arguments[0];
+				const std::string sourceName = parser.elements.front().arguments[0];
 
 				// Get it from the list :
-				std::map<std::string,ShaderSource>::iterator it = sharedCodeList.find(sharedCodeName); 
+				std::map<std::string,ShaderSource>::iterator it = sourceList.find(sourceName); 
 				
-				if(it==sharedCodeList.end())
-					throw Exception("SharedCode object \"" + sharedCodeName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				if(it==sourceList.end())
+					throw Exception("SharedCode object \"" + sourceName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
 			
 				// Else, generate the lists :
 				std::vector<std::string> 		sharedLines;
@@ -380,7 +378,6 @@
 					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current script.", __FILE__, __LINE__, Exception::ClientScriptException); \
 			} \
 
-			TEST_FOR_DOUBLES( sharedCodeList, 	"SharedCode",		ShaderSource)
 			TEST_FOR_DOUBLES( formatList,		"Format", 		HdlTextureFormat)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	ShaderSource)
 			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryModel)
@@ -392,7 +389,6 @@
 		// Append :
 		#define INSERTION( item ) item.insert( subLoader.item.begin(), subLoader.item.end() )
 
-			INSERTION( sharedCodeList );
 			INSERTION( formatList );
 			INSERTION( sourceList );
 			INSERTION( geometryList );
@@ -708,7 +704,6 @@
 					e.body,	
 					currentPath, 
 					dynamicPaths,
-					sharedCodeList,
 					formatList, 
 					sourceList,
 					geometryList,
@@ -773,17 +768,6 @@
 				throw m;
 			}
 		}
-	}
-
-	void LayoutLoader::buildSharedCode(const VanillaParserSpace::Element& e)
-	{
-		// Preliminary tests :
-		preliminaryTests(e, 1, 0, 0, 1, "SharedCode");
-
-		if(sharedCodeList.find(e.name)!=sharedCodeList.end())
-			throw Exception("A SharedCode Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
-
-		sharedCodeList.insert( std::pair<std::string, ShaderSource>(e.name, ShaderSource(e.body, e.sourceName, e.bodyLine)) );
 	}
 
 	void LayoutLoader::buildFormat(const VanillaParserSpace::Element& e)
@@ -855,19 +839,19 @@
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
 	}
 
-	void LayoutLoader::buildShaderSource(const VanillaParserSpace::Element& e)
+	void LayoutLoader::buildSource(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests :
-		preliminaryTests(e, 1, 0, 1, 0, "ShaderSource");
+		preliminaryTests(e, 1, 0, 1, 0, "Source");
 
 		// Complementary tests :
 		if(e.arguments.size()>0 && !e.noBody)
-			throw Exception("ShaderSource \"" + e.name + "\" cannot have both argument(s) and a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
+			throw Exception("Source \"" + e.name + "\" cannot have both argument(s) and a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		if(e.arguments.empty() && e.noBody)
-			throw Exception("ShaderSource \"" + e.name + "\" must have either an argument (filename) or a body (and not both).", e.sourceName, e.startLine, Exception::ClientScriptException);
+			throw Exception("Source \"" + e.name + "\" must have either an argument (filename) or a body (and not both).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(formatList.find(e.name)!=formatList.end())
-			throw Exception("A ShaderSource Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
+			throw Exception("A Source Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Load data :
 		if(e.noBody)
@@ -883,7 +867,6 @@
 				const std::string filename = usedPath + e.arguments[0];
 
 				std::map<int, ShaderSource::LineInfo> extrasInfo;
-				//enhanceShaderSource(content, extrasInfo);
 				ShaderSource s = enhanceShaderSource(content, filename);
 
 				sourceList.insert( std::pair<std::string, ShaderSource>( e.name, s) );
@@ -1672,9 +1655,6 @@
 						break;
 					case KW_LL_UNIQUE :
 						break; // Already processed, nothing to do here.
-					case KW_LL_SHARED_CODE :
-						buildSharedCode(rootParser.elements[k]);
-						break;
 					case KW_LL_REQUIRED_FORMAT :
 						buildRequiredFormat(rootParser.elements[k]);
 						break;
@@ -1690,8 +1670,8 @@
 					case KW_LL_FORMAT_LAYOUT :
 						buildFormat(rootParser.elements[k]);
 						break;
-					case KW_LL_SHADER_SOURCE :
-						buildShaderSource(rootParser.elements[k]);
+					case KW_LL_SOURCE :
+						buildSource(rootParser.elements[k]);
 						break;
 					case KW_LL_GEOMETRY :
 						buildGeometry(rootParser.elements[k]);
@@ -2154,10 +2134,6 @@
 						preliminaryTests(rootParser.elements[k], -1, 1, 1, -1, "Unique");
 						result.unique = rootParser.elements[k].arguments[0];
 						break;
-					case KW_LL_SHARED_CODE :
-						preliminaryTests(rootParser.elements[k], 1, 0, 0, 1, "SharedCode");
-						result.shaderSources.push_back( rootParser.elements[k].name );
-						break;
 					case KW_LL_REQUIRED_FORMAT :
 						preliminaryTests(rootParser.elements[k], 1, 1, 10, -1, "RequiredFormat");
 						result.requiredFormats.push_back( rootParser.elements[k].arguments[0] );
@@ -2181,8 +2157,8 @@
 						preliminaryTests(rootParser.elements[k], 1, 4, 9, -1, "Format"); 
 						result.formats.push_back( rootParser.elements[k].name );
 						break;
-					case KW_LL_SHADER_SOURCE :
-						preliminaryTests(rootParser.elements[k], 1, 0, 1, 0, "ShaderSource");
+					case KW_LL_SOURCE :
+						preliminaryTests(rootParser.elements[k], 1, 0, 1, 0, "Source");
 						result.shaderSources.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_GEOMETRY :
@@ -2470,11 +2446,11 @@
 	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_SHADER_SOURCE );
+		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_SOURCE );
 		e.name		= name;
 		e.body		= source.getSource();
 		e.arguments.clear();

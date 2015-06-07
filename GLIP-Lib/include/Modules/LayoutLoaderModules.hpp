@@ -63,9 +63,8 @@ These modules are :
 <CENTER>
 Module       			| Description
 ------------------------------- | --------------------------
-IF_SHAREDCODE_DEFINED		| Check if the SHAREDCODE was defined. Arguments : sharedCodeName.
 IF_FORMAT_DEFINED		| Check if the FORMAT was defined. Arguments : formatName.
-IF_SHADERSOURCE_DEFINED		| Check if the SHADERSOURCE was defined. Arguments : shaderSourceName.
+IF_SOURCE_DEFINED		| Check if the SOURCE was defined. Arguments : sourceName.
 IF_GEOMETRY_DEFINED		| Check if the GEOMETRY was defined. Arguments : geometryName.
 IF_FILTERLAYOUT_DEFINED		| Check if the FILTERLAYOUT was defined. Arguments : filterLayoutName.
 IF_PIPELINELAYOUT_DEFINED	| Check if the PIPELINELAYOUT was defined. Arguments : pipelineLayoutName.
@@ -95,7 +94,7 @@ IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value 
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
 GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
 CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
-FORMAT_TO_CONSTANT		| Create a shared code object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat, nameSharedCode.
+FORMAT_TO_CONSTANT		| Create a SOURCE object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat[, sourceName].
 SINGLE_FILTER_PIPELINE		| Create a pipeline with a single filter. Arguments : pipelineName, outputTextureFormat. Body : fragment shader source.
 ABORT_ERROR			| Return a user defined error. Argument : error description.
 GENERATE_FFT1D_PIPELINE		| Generate the 1D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, name [, option, ...].
@@ -176,18 +175,16 @@ Example, creating a simple Module :
 				virtual ~LayoutLoaderModule(void);
 
 				/**
-				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, ShaderSource>& sharedCodeList, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
+				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
 				\brief Interface of the module : this function will be called on each corresponding token CALL for the LayoutLoader which has the module. 
 				\param arguments 		The arguments of the called, their number has already been checked.
 				\param body 			The body of the call (might be empty), its presence has already been checked.
 				\param currentPath 		The currentPath in which the LayoutLoader is operating.
 				\param dynamicPaths		The list of paths dynamically built (only for the current load operation).
-				\param sharedCodeList		The list of Shared Code currently loaded.
-								For easy access see #ITERATOR_TO_SHAREDCODE, #CONST_ITERATOR_TO_SHAREDCODE, #SHAREDCODE_MUST_EXIST, #SHAREDCODE_MUST_NOT_EXIST and #APPEND_NEW_SHAREDCODE.
 				\param formatList		The list of formats currently loaded.
 								For easy access see #ITERATOR_TO_FORMAT, #CONST_ITERATOR_TO_FORMAT, #FORMAT_MUST_EXIST, #FORMAT_MUST_NOT_EXIST and #APPEND_NEW_FORMAT.
 				\param sourceList		The list of sources currently loaded.
-								For easy access see #ITERATOR_TO_SHADERSOURCE, #CONST_ITERATOR_TO_SHADERSOURCE, #SHADERSOURCE_MUST_EXIST, #SHADERSOURCE_MUST_NOT_EXIST and #APPEND_NEW_SHADERSOURCE.
+								For easy access see #ITERATOR_TO_SOURCE, #CONST_ITERATOR_TO_SOURCE, #SOURCE_MUST_EXIST, #SOURCE_MUST_NOT_EXIST and #APPEND_NEW_SOURCE.
 				\param geometryList		The list of geometries currently loaded.
 								For easy access see #ITERATOR_TO_GEOMETRY, #CONST_ITERATOR_TO_GEOMETRY, #GEOMETRY_MUST_EXIST, #GEOMETRY_MUST_NOT_EXIST and #APPEND_NEW_GEOMETRY.
 				\param filterList		The list of filters currently loaded.
@@ -211,7 +208,6 @@ Example, creating a simple Module :
 							const std::string&				body, 
 							const std::string&				currentPath,
 							std::vector<std::string>&			dynamicPaths,
-							std::map<std::string, ShaderSource>&		sharedCodeList,
 							std::map<std::string, HdlTextureFormat>& 	formatList,
 							std::map<std::string, ShaderSource>& 		sourceList,
 							std::map<std::string, GeometryModel>&		geometryList,
@@ -256,7 +252,6 @@ Example, creating a simple Module :
 													const std::string&				body, \
 													const std::string&				currentPath, \
 													std::vector<std::string>&			dynamicPaths, \
-													std::map<std::string, ShaderSource>&		sharedCodeList, \
 													std::map<std::string, HdlTextureFormat>& 	formatList, \
 													std::map<std::string, ShaderSource>& 		sourceList, \
 													std::map<std::string, GeometryModel>&		geometryList, \
@@ -278,7 +273,6 @@ Example, creating a simple Module :
 											const std::string&					body, \
 											const std::string&					currentPath, \
 											std::vector<std::string>&				dynamicPaths, \
-											std::map<std::string, ShaderSource>&			sharedCodeList, \
 											std::map<std::string, HdlTextureFormat>& 		formatList, \
 											std::map<std::string, ShaderSource>& 			sourceList, \
 											std::map<std::string, GeometryModel>&			geometryList, \
@@ -299,7 +293,6 @@ Example, creating a simple Module :
 											const std::string&					body, \
 											const std::string&					currentPath, \
 											std::vector<std::string>&				dynamicPaths, \
-											std::map<std::string, ShaderSource>&			sharedCodeList, \
 											std::map<std::string, HdlTextureFormat>& 		formatList, \
 											std::map<std::string, ShaderSource>& 			sourceList, \
 											std::map<std::string, GeometryModel>&			geometryList, \
@@ -321,7 +314,6 @@ Example, creating a simple Module :
 																						const std::string&				body, \
 																						const std::string&				currentPath, \
 																						std::vector<std::string>&			dynamicPaths, \
-																						std::map<std::string, ShaderSource>&		sharedCodeList, \
 																						std::map<std::string, HdlTextureFormat>& 	formatList, \
 																						std::map<std::string, ShaderSource>& 		sourceList, \
 																						std::map<std::string, GeometryModel>&		geometryList, \
@@ -343,19 +335,6 @@ Example, creating a simple Module :
 			#define __ELEMENT_MUST_NOT_BE_IN(iteratorName, varName, elementName)	{ if(iteratorName!=varName.end()) throw Exception("Element \"" + elementName + "\" already exists in \"" + #varName + "\".", sourceName, startLine, Exception::ClientScriptException); }
 			#define __APPEND_NEW_ELEMENT(type, varName, elementName, element)	varName.insert( std::pair<std::string, type>( elementName, element ) );
 
-			/** ITERATOR_TO_SHAREDCODE( iteratorName, elementName )			Get an iterator on the Shared Code named elementName. **/
-			#define ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		__ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
-			/** CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )		Get a constant iterator on the Shared Code named elementName. **/
-			#define CONST_ITERATOR_TO_SHAREDCODE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName)
-			/** VALID_ITERATOR_TO_SHAREDCODE( iteratorName )			Test if the iterator is valid (returns true or false).**/
-			#define VALID_ITERATOR_TO_SHAREDCODE( iteratorName )			( iteratorName != sharedCodeList.end() )
-			/** SHAREDCODE_MUST_EXIST( elementName )				Check that the Shared Code named elementName must exist (raise an exception otherwise). **/
-			#define SHAREDCODE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sharedCodeList, elementName) }
-			/** SHAREDCODE_MUST_NOT_EXIST( elementName )				Check that the Shared Code named elementName must not exist (raise an exception otherwise). **/
-			#define SHAREDCODE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, sharedCodeList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sharedCodeList, elementName) }
-			/** APPEND_NEW_SHAREDCODE(elementName, newElement)			Append the new element to the Shared Code list. **/
-			#define APPEND_NEW_SHAREDCODE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sharedCodeList, elementName, newElement)
-
 			/** ITERATOR_TO_FORMAT( iteratorName, elementName )			Get an iterator on the Format named elementName. **/
 			#define ITERATOR_TO_FORMAT( iteratorName, elementName )			__ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		Get a constant iterator on the Format named elementName. **/
@@ -369,18 +348,18 @@ Example, creating a simple Module :
 			/** APPEND_NEW_FORMAT(elementName, newElement)				Append the new element to the Format list. **/
 			#define APPEND_NEW_FORMAT(elementName, newElement)			__APPEND_NEW_ELEMENT(HdlTextureFormat, formatList, elementName, newElement)
 
-			/** ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )		Get an iterator on the Shader Source named elementName. **/
-			#define ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )		__ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
-			/** CONST_ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )		Get a constant iterator on the Shader Source named elementName. **/
-			#define CONST_ITERATOR_TO_SHADERSOURCE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
-			/** VALID_ITERATOR_TO_SHADERSOURCE( iteratorName )			Test if the iterator is valid (returns true or false).**/
-			#define VALID_ITERATOR_TO_SHADERSOURCE( iteratorName )			( iteratorName != sourceList.end() )
-			/** SHADERSOURCE_MUST_EXIST( elementName )				Check that the Shader Source named elementName must exist (raise an exception otherwise). **/
-			#define SHADERSOURCE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sourceList, elementName) }
-			/** SHADERSOURCE_MUST_NOT_EXIST( elementName )				Check that the Shader Source named elementName must not exist (raise an exception otherwise). **/
-			#define SHADERSOURCE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
-			/** APPEND_NEW_SHADERSOURCE(elementName, newElement)			Append the new element to the Shader Source list. **/
-			#define APPEND_NEW_SHADERSOURCE(elementName, newElement)		__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
+			/** ITERATOR_TO_SOURCE( iteratorName, elementName )			Get an iterator on the Source named elementName. **/
+			#define ITERATOR_TO_SOURCE( iteratorName, elementName )			__ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
+			/** CONST_ITERATOR_TO_SOURCE( iteratorName, elementName )		Get a constant iterator on the Source named elementName. **/
+			#define CONST_ITERATOR_TO_SOURCE( iteratorName, elementName )		__CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_SOURCE( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_SOURCE( iteratorName )			( iteratorName != sourceList.end() )
+			/** SOURCE_MUST_EXIST( elementName )					Check that the Shader Source named elementName must exist (raise an exception otherwise). **/
+			#define SOURCE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sourceList, elementName) }
+			/** SOURCE_MUST_NOT_EXIST( elementName )				Check that the Shader Source named elementName must not exist (raise an exception otherwise). **/
+			#define SOURCE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
+			/** APPEND_NEW_SOURCE(elementName, newElement)				Append the new element to the Shader Source list. **/
+			#define APPEND_NEW_SOURCE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
 			
 			/** ITERATOR_TO_GEOMETRY( iteratorName, elementName )			Get an iterator on the Geometry named elementName. **/
 			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
@@ -452,9 +431,8 @@ Example, creating a simple Module :
 			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " (\"" + arguments[argID] + "\") to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
 
 		// Basic Modules : 
-			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHAREDCODE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_DEFINED )
-			LAYOUT_LOADER_MODULE_DEFINITION( IF_SHADERSOURCE_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_SOURCE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_GEOMETRY_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FILTERLAYOUT_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_PIPELINELAYOUT_DEFINED )

@@ -5,7 +5,7 @@
 UNIQUE(MATHS_FUNCTIONS)
 
 // Maths functions : 
-SHARED_CODE:maths
+SOURCE:maths
 {
 	float gaussian(float l, float r)
 	{
@@ -14,16 +14,52 @@ SHARED_CODE:maths
 
 	vec2 textureCoordinates(in ivec2 pos, in sampler2D s)
 	{
-		ivec2 sz = textureSize(s, 0);
+		return pos/vec2(textureSize(s, 0));
+		/*ivec2 sz = textureSize(s, 0);
 		vec2 res = vec2(0, 0);
 		res.s = float(pos.s) / float(sz.s);
 		res.t = float(pos.t) / float(sz.t);
-		return res;
+		return res;*/
+	}
+
+	float distanceToSegment(in vec2 p, in vec2 a, in vec2 b)
+	{
+		float sql = (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y);
+		if(sql<=0.0) // NULL segment
+			return distance(p, a);
+		float t = dot(p-a, b-a)/sql;
+		if(t<=0.0)
+			return distance(p, a);
+		else if(t>=1.0)
+			return distance(p, b);
+		else 
+			return distance(p, a+t*(b-a));
+	}
+
+	mat3 rotMatX(float a)
+	{
+		return mat3(	1.0, 0.0, 0.0,
+				0.0, cos(a), sin(a),
+				0.0, -sin(a), cos(a));
+	}
+
+	mat3 rotMatY(float a)
+	{
+		return mat3(	cos(a), 0.0, sin(a),
+				0.0, 1.0, 0.0,
+				-sin(a), 0.0, cos(a));
+	}
+
+	mat3 rotMatZ(float a)
+	{
+		return mat3(	cos(a), sin(a), 0.0, 
+				-sin(a), cos(a), 0.0,
+				0.0, 0.0, 1.0);
 	}
 }
 
 // Higher level code : 
-SHARED_CODE:convolutionTool
+SOURCE:convolutionTool
 {
 	// Read a 3x3 matrix from the sample s, centered at position s :
 	void aggregate(in sampler2D s, in vec2 pos, in vec4 selection, out mat3 localRegion)

@@ -2,7 +2,7 @@ REQUIRED_FORMAT:outputFormat(inputFormat0)
 
 INCLUDE(printNumber.ppl)
 
-SHADER_SOURCE:WriteColorShader
+SOURCE:WriteColorShader
 {
 	#version 130
 	

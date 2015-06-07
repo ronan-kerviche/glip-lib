@@ -7,7 +7,7 @@
 INCLUDE(Sobel.ppl)
 
 // gaussian blur :
-SHADER_SOURCE:gaussianBlurShader
+SOURCE:gaussianBlurShader
 {
 	#version 130
 
@@ -72,7 +72,7 @@ SHADER_SOURCE:gaussianBlurShader
 	}
 }
 
-SHADER_SOURCE:sobelShaderAndDirection
+SOURCE:sobelShaderAndDirection
 {
 	#version 130
 
@@ -80,8 +80,8 @@ SHADER_SOURCE:sobelShaderAndDirection
 	out vec4		sobelTexture,
 				colorEdgesNonFiltered;
 
-	INCLUDE_SHARED_SOURCE:convolutionTool
-	INCLUDE_SHARED_SOURCE:Sobel
+	INSERT(convolutionTool)
+	INSERT(sobel)
 
 	void main()
 	{
@@ -121,14 +121,14 @@ SHADER_SOURCE:sobelShaderAndDirection
 	}
 }
 
-SHADER_SOURCE:nonMaximumSuppressionShader
+SOURCE:nonMaximumSuppressionShader
 {
 	#version 130
 
 	uniform sampler2D	sobelTexture;
 	out vec4		maximumFiltered;
 
-	INCLUDE_SHARED_SOURCE:convolutionTool
+	INSERT(convolutionTool)
 
 	void main()
 	{

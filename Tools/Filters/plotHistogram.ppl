@@ -6,7 +6,7 @@ INCLUDE(histogram.ppl)
 
 REQUIRED_FORMAT:outputFormat(inputFormat0)
 
-SHADER_SOURCE:PlotHistogramShader
+SOURCE:PlotHistogramShader
 {
 	#version 130
 	precision highp float; // Comment this line if any problem occurs.

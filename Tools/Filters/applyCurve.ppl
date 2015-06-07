@@ -8,7 +8,7 @@
 
 REQUIRED_FORMAT:outputFormat(inputFormat1)
 
-SHADER_SOURCE:ApplyCurveShader
+SOURCE:ApplyCurveShader
 {
 	#version 130
 

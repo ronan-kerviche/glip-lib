@@ -4,7 +4,7 @@
 
 UNIQUE(PRINT_NUMBER_FUNCTIONS)
 
-SHARED_CODE:printNumber
+SOURCE:printNumber
 {
 	float printNumber(in float number, in vec2 position, in float maxChars, in vec2 charSize)
 	{

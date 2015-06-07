@@ -284,6 +284,8 @@ using namespace Glip::CoreGL;
 	\fn    bool HdlProgram::link(void)
 	\brief Link the program.
 	\return False in case of failure, true otherwise.
+
+	<b>WARNING</b> : This step might remove all the uniform values previously set.
 	**/
 	void HdlProgram::link(void)
 	{
@@ -410,6 +412,8 @@ using namespace Glip::CoreGL;
 	\brief Link the name of a fragment output variable to a fragment unit.
 	\param fragName Name of the fragment output variable.
 	\param frag     Index of the desired fragment unit.
+
+	Note that the program should be linked after this call in order to push the changes.
 	**/
 	void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	{

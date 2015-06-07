@@ -50,7 +50,7 @@ namespace Glip
 			KW_LL_TRUE,
 			KW_LL_FALSE,
 			KW_LL_FORMAT_LAYOUT,
-			KW_LL_SHADER_SOURCE,
+			KW_LL_SOURCE,
 			KW_LL_FILTER_LAYOUT,
 			KW_LL_PIPELINE_LAYOUT,
 			KW_LL_PIPELINE_MAIN,
@@ -69,7 +69,6 @@ namespace Glip
 			KW_LL_REQUIRED_FORMAT,
 			KW_LL_REQUIRED_GEOMETRY,
 			KW_LL_REQUIRED_PIPELINE,
-			KW_LL_SHARED_CODE,
 			KW_LL_INSERT,
 			KW_LL_GEOMETRY,
 			KW_LL_GRID_2D,
@@ -354,53 +353,37 @@ Define a geometry model from a required geometry. This enables the script to rec
 <tr class="glipDescrRow"><td><i>requiredGeometryName</i></td>		<td>Name of the required geometry to use.</td></tr>
 </table>
 
-## Shared Code
-### Shared code
+## Source And Inclusion
+### Source
 <blockquote>
-<b>SHARED_CODE</b>:<i>name</i><br>
-{<br>
-&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
-}
-</blockquote>
-
-Define a portion of code which can be included in different source. Use INSERT to insert in another source.
-
-<table class="glipDescrTable">
-<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
-<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of shared segment.</td></tr>
-<tr class="glipDescrRow"><td><i>body</i></td>				<td>Source to be shared.</td></tr>
-</table>
-
-### Insert
-<blockquote>
-<b>INSERT</b>(<i>sharedCodeName</i>)
-</blockquote>
-
-Insert a shared code inside a source. This keyword must be inside, either another SHARED_CODE or a SHADER_SOURCE. This call must be on a single line, by itself (but possibly including comments).
-
-<table class="glipDescrTable">
-<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
-<tr class="glipDescrRow"><td><i>sharedCodeName</i></td>			<td>Name of the shared code segment to be inserted at the current position.</td></tr>
-</table>
-
-## Shader Source
-<blockquote>
-<b>SHADER_SOURCE</b>:<i>name</i><br>
+<b>SOURCE</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>code</i><br>
 }
 </blockquote>
 <blockquote>
-<b>SHADER_SOURCE</b>:<i>name</i>(<i>filename</i>)
+<b>SOURCE</b>:<i>name</i>(<i>filename</i>)
 </blockquote>
 
-Define a shader source code.
+Define a source code.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
-<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the shader source.</td></tr>
-<tr class="glipDescrRow"><td><i>code</i></td>				<td>Shader source code.</td></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the source.</td></tr>
+<tr class="glipDescrRow"><td><i>code</i></td>				<td>Source code.</td></tr>
 <tr class="glipDescrRow"><td><i>filename</i></td>			<td>Filename of the file to load the source code from. Will be checked against the search paths pool.</td></tr>
+</table>
+
+### Insert
+<blockquote>
+<b>INSERT</b>(<i>sourceName</i>)
+</blockquote>
+
+Insert a source inside this source. This keyword must be inside another SOURCE. This call must be on a single line, by itself (but possibly including comments).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>sourceName</i></td>			<td>Name of the source segment to be inserted at the current position.</td></tr>
 </table>
 
 ## Filter Layout
@@ -629,7 +612,7 @@ The following example is the a simple input to output copy with resize to 640x48
 TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
-SHADER_SOURCE:SimpleCopySource
+SOURCE:SimpleCopySource
 {
 	uniform sampler2D	textureInput;	// input texture.
 	out     vec4 		textureOutput;	// output texture.
@@ -765,7 +748,6 @@ catch(Exception& e)
 				std::vector<std::string>			dynamicPaths;
 				std::vector<LayoutLoaderKeyword>		associatedKeyword;
 				std::vector<std::string>			uniqueList;
-				std::map<std::string, ShaderSource>		sharedCodeList;
 				std::map<std::string, HdlTextureFormat> 	formatList;
 				std::map<std::string, ShaderSource> 		sourceList;
 				std::map<std::string, GeometryModel>		geometryList;
@@ -798,9 +780,8 @@ catch(Exception& e)
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
 				void    moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName);
-				void	buildSharedCode(const VanillaParserSpace::Element& e);
 				void	buildFormat(const VanillaParserSpace::Element& e);
-				void	buildShaderSource(const VanillaParserSpace::Element& e);
+				void	buildSource(const VanillaParserSpace::Element& e);
 				void	buildGeometry(const VanillaParserSpace::Element& e);
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);

@@ -360,8 +360,8 @@
 			{
 				shaderSources[HandleOpenGL::getShaderTypeIndex(it->first)] = new ShaderSource(*it->second);
 			
-				std::vector<std::string> currentVarsIn = it->second->getInputVars(),
-							 currentVarsOut = it->second->getOutputVars();
+				const std::vector<std::string>  currentVarsIn = it->second->getInputVars(),
+							 	currentVarsOut = it->second->getOutputVars();
 				varsIn.insert(currentVarsIn.begin(), currentVarsIn.end());
 				varsOut.insert(currentVarsOut.begin(), currentVarsOut.end());
 			}
@@ -455,11 +455,7 @@
 
 		try
 		{
-			// Set the names of the samplers :
-			for(int i=0; i<getNumInputPort(); i++)
-				prgm->setVar(getInputPortName(i), GL_INT, i);
-
-			// Test : 
+			// Test if this filter is using out vec4's : 
 			bool allRequireCompatibility = true;
 			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
 				allRequireCompatibility = allRequireCompatibility && (shaders[k]==NULL || shaders[k]->requiresCompatibility());
@@ -468,8 +464,15 @@
 			{
 				for(int i=0; i<getNumOutputPort(); i++)
 					prgm->setFragmentLocation(getOutputPortName(i), i);
+
+				// Now link to apply the change of locations (link must be done before setting any uniform values, including input sampler2D) : 
+				prgm->link();
 			}
 
+			// Set the names of the samplers :
+			for(int i=0; i<getNumInputPort(); i++)
+				prgm->setVar(getInputPortName(i), GL_INT, i);
+			
 			prgm->stopProgram();
 		}
 		catch(Exception& e)

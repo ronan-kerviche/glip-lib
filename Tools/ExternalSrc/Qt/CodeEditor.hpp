@@ -391,7 +391,6 @@ namespace QGED
 				tplGeometryGrid2D,
 				tplGeometryGrid3D,
 				tplGeometryCustomModel,
-				tplSharedCode,
 				tplShaderSourceFragGLSL,
 				tplShaderSourceVertGLSL,
 				tplInsert,

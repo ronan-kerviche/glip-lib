@@ -149,9 +149,8 @@
 		**/
 		void LayoutLoaderModule::addBasicModules(LayoutLoader& loader)
 		{
-			loader.addModule( new IF_SHAREDCODE_DEFINED );
 			loader.addModule( new IF_FORMAT_DEFINED );
-			loader.addModule( new IF_SHADERSOURCE_DEFINED );
+			loader.addModule( new IF_SOURCE_DEFINED );
 			loader.addModule( new IF_GEOMETRY_DEFINED );
 			loader.addModule( new IF_FILTERLAYOUT_DEFINED );
 			loader.addModule( new IF_PIPELINELAYOUT_DEFINED );
@@ -300,42 +299,11 @@
 		}
 
 	// Simple modules : 
-			LAYOUT_LOADER_MODULE_APPLY( IF_SHAREDCODE_DEFINED, 1, 1, 1, true, 	"Check if the SHAREDCODE was defined.\n"
-												"Arguments : sharedCodeName.")
-			{
-				UNUSED_PARAMETER(currentPath)
-				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(formatList)
-				UNUSED_PARAMETER(sourceList)
-				UNUSED_PARAMETER(geometryList)
-				UNUSED_PARAMETER(filterList)
-				UNUSED_PARAMETER(pipelineList)
-				UNUSED_PARAMETER(mainPipelineName)
-				UNUSED_PARAMETER(staticPaths)
-				UNUSED_PARAMETER(requiredFormatList)
-				UNUSED_PARAMETER(requiredGeometryList)
-				UNUSED_PARAMETER(requiredPipelineList)
-				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
-
-				std::string 	trueCase, 
-						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
-				
-				CONST_ITERATOR_TO_SHAREDCODE(it, arguments[0])
-
-				if(it!=sharedCodeList.end())
-					executionCode = trueCase;
-				else
-					executionCode = falseCase;
-			}
-
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1, true, 		"Check if the FORMAT was defined.\n"
 												"Arguments : formatName.")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -360,12 +328,11 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_SHADERSOURCE_DEFINED, 1, 1, 1, true, 	"Check if the SHADERSOURCE was defined.\n"
-												"Arguments : shaderSourceName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_SOURCE_DEFINED, 1, 1, 1, true, 		"Check if the SOURCE was defined.\n"
+												"Arguments : sourceName.")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -382,7 +349,7 @@
 						falseCase;
 				getCases(body, trueCase, falseCase, sourceName, bodyLine);
 				
-				CONST_ITERATOR_TO_SHADERSOURCE(it, arguments[0])
+				CONST_ITERATOR_TO_SOURCE(it, arguments[0])
 
 				if(it!=sourceList.end())
 					executionCode = trueCase;
@@ -395,7 +362,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
@@ -425,7 +391,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -455,7 +420,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -485,7 +449,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -515,7 +478,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -545,7 +507,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -576,7 +537,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -618,7 +578,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -674,7 +633,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -705,7 +663,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -736,7 +693,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -768,7 +724,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -800,7 +755,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -832,7 +786,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -876,7 +829,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -920,7 +872,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -964,7 +915,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1008,7 +958,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1052,7 +1001,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1096,7 +1044,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1140,7 +1087,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1185,7 +1131,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1230,7 +1175,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1274,7 +1218,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1305,7 +1248,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1347,7 +1289,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1390,7 +1331,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
@@ -1423,7 +1363,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(pipelineList)
@@ -1458,7 +1397,6 @@
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
@@ -1620,9 +1558,9 @@
 				executionCode = requiredElements + "\n" + result.getCode();
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 2, 2, -1, true,	"Create a SHARED_SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument.\n"
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 1, 2, -1, true,	"Create a SHARED_SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument.\n"
 											"For instance, can be used in a shader with : INSERT(name)\n"
-											"Arguments   : textureFormat, sharedCodeName\n")
+											"Arguments   : textureFormat[, sourceName]\n")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1639,15 +1577,17 @@
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
+				const std::string generatedSourceName = (arguments.size()>=2) ? arguments[1] : arguments[0];
+
 				FORMAT_MUST_EXIST( arguments[0] )
-				SHAREDCODE_MUST_NOT_EXIST( arguments[1] )
+				SOURCE_MUST_NOT_EXIST( generatedSourceName )
 	
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
-				std::string str = "const ivec2 " + arguments[1] + " = ivec2(" + toString(it->second.getWidth()) + ", " + toString(it->second.getHeight()) + ");\n";
+				std::string str = "const ivec2 " + generatedSourceName + " = ivec2(" + toString(it->second.getWidth()) + ", " + toString(it->second.getHeight()) + ");\n";
 				// The newline is mandatory here, to avoid ShaderSource mistaking this for a filename.
 
-				APPEND_NEW_SHAREDCODE(arguments[1], ShaderSource(str, sourceName, startLine));
+				APPEND_NEW_SOURCE(generatedSourceName, ShaderSource(str, sourceName, startLine));
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY(SINGLE_FILTER_PIPELINE, 2, 3, 1, true, 	"Create a pipeline with a single filter.\n"
@@ -1656,7 +1596,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)
 				UNUSED_PARAMETER(filterList)
@@ -1702,7 +1641,6 @@
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
-				UNUSED_PARAMETER(sharedCodeList)
 				UNUSED_PARAMETER(formatList)
 				UNUSED_PARAMETER(sourceList)
 				UNUSED_PARAMETER(geometryList)

@@ -1,7 +1,7 @@
 TEXTURE_FORMAT:outputLogoFormat(1024, 1024, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
 CALL:FORMAT_TO_CONSTANT(outputLogoFormat, outputLogoFormat)
 
-SHARED_CODE:glipLogoShader
+SOURCE:glipLogoShader
 {
 	#ifndef MODIFY_GLIP_LOGO
 	const float 	thickness = 0.150,
@@ -59,7 +59,7 @@ SHARED_CODE:glipLogoShader
 	}
 }
 
-SHADER_SOURCE:glipShader
+SOURCE:glipShader
 {
 	#version 130
 	out vec4 logo;

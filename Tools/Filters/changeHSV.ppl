@@ -6,7 +6,7 @@ REQUIRED_FORMAT:outputFormat0(inputFormat0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
 
 INCLUDE(colors.ppl)
 
-SHADER_SOURCE:ChangeHSVShader
+SOURCE:ChangeHSVShader
 {
 	#version 130
 

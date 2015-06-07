@@ -5,7 +5,7 @@
 TEXTURE_FORMAT:curveFormat(255, 1, GL_RGB, GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:plotFormat(255, 255, GL_RGB, GL_UNSIGNED_BYTE)
 
-SHADER_SOURCE:CurveShader
+SOURCE:CurveShader
 {
 	#version 130
 
@@ -35,7 +35,7 @@ SHADER_SOURCE:CurveShader
 	}
 }
 
-SHADER_SOURCE:PlotCurveShader
+SOURCE:PlotCurveShader
 {
 	#version 130
 	

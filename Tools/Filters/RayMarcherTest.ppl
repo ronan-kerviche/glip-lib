@@ -2,7 +2,7 @@ INCLUDE(RayMarcherUtils.ppl)
 TEXTURE_FORMAT:outputFormat(1920,1200, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST)
 CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
 
-SHADER_SOURCE:rayMarcherTestShader
+SOURCE:rayMarcherTestShader
 {
 	#version 330
 

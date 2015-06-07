@@ -129,7 +129,7 @@ REQUIRED_FORMAT: /* name to use */( /* required format name */ )\n\
 TEXTURE_FORMAT: /* name */ ( /* width */, /* height */, GL_RGB, \n\
 	GL_UNSIGNED_BYTE)\n\
 \n\
-SHADER_SOURCE: /* name */\n\
+SOURCE: /* name */\n\
 {\n\
 	#version 130\n\
 \n\

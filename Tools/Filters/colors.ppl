@@ -4,7 +4,7 @@
 
 UNIQUE(COLORS_FUNCTIONS)
 
-SHARED_CODE:ColorPrimitivesPrototypes
+SOURCE:ColorPrimitivesPrototypes
 {
 	void RGBToHSV(in vec3 rgb, out vec3 hsv);
 	void HSVToRGB(in vec3 hsv, out vec3 rgb);
@@ -40,7 +40,7 @@ SHARED_CODE:ColorPrimitivesPrototypes
         const float VPD65 = 0.46833;
 */
 
-SHARED_CODE:ColorPrimitives
+SOURCE:ColorPrimitives
 {
 	void RGBToHSV(in vec3 rgb, out vec3 hsv)
 	{

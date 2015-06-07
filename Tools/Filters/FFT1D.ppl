@@ -2,6 +2,9 @@ TEXTURE_FORMAT:fmt(512, 1, GL_RGB, GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:plotFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:computationFormat(512, 1, GL_RGBA32F, GL_FLOAT)
 
+CALL:FORMAT_TO_CONSTANT(fmt, fmt)
+CALL:FORMAT_TO_CONSTANT(plotFormat, plotFormat)
+
 CALL:GENERATE_FFT1D_PIPELINE(fmt, FFTPipeline, SHIFTED, NO_INPUT)
 {
 	PRE
@@ -14,6 +17,7 @@ CALL:GENERATE_FFT1D_PIPELINE(fmt, FFTPipeline, SHIFTED, NO_INPUT)
 				c.r = 1.0;
 		
 			c.g = 1.0 - c.r;
+
 			return c;
 		}
 	}
@@ -21,28 +25,7 @@ CALL:GENERATE_FFT1D_PIPELINE(fmt, FFTPipeline, SHIFTED, NO_INPUT)
 
 CALL:GENERATE_FFT1D_PIPELINE(512, IFFTPipeline, INVERSED, SHIFTED)
 
-SHADER_SOURCE:Gen1DFunction
-{
-	#version 130
-	out vec4 outputTexture;
-	uniform vec4 parameters = vec4(0.1, 0.5, 0.0, 0.0);  
-	
-	void main()
-	{
-		outputTexture = vec4(0.0,0.0,0.0,0.0);
-	
-		// Sinusoid :
-		//outputTexture.r = cos(parameters.g*gl_TexCoord[0].s*3.14159265)/2.0+0.5;
-	
-		// Square :
-		if(gl_TexCoord[0].s>=parameters.r && gl_TexCoord[0].s<parameters.g)
-			outputTexture.r = 1.0;
-		
-		outputTexture.g = 1.0 - outputTexture.r;
-	}
-}
-
-SHADER_SOURCE:WindowShader
+SOURCE:WindowShader
 {
 	#version 130
 	uniform sampler2D 	fourierDomain;
@@ -52,21 +35,24 @@ SHADER_SOURCE:WindowShader
 	uniform int		shifted = 1;
 	uniform float 		windowSize = 5.0;
 
+	INSERT(fmt)
+
 	void main()
 	{
 		vec4 f = texture(fourierDomain, vec2(gl_TexCoord[0].s,0.0));
 		modulation = vec4(0.0, 0.0, 0.0, 1.0);
 
+		float x = gl_FragCoord.x/float(fmt.x);
 		if(shifted==0)
-			modulation.r = (exp(-2.0*gl_TexCoord[0].s*gl_TexCoord[0].s/(windowSize*windowSize/10000.0)) + exp(-2.0*(gl_TexCoord[0].s-1.0)*(gl_TexCoord[0].s-1.0)/(windowSize*windowSize/10000.0)))/2.0;
+			modulation.r = (exp(-2.0*x*x/(windowSize*windowSize/10000.0)) + exp(-2.0*(x-1.0)*(x-1.0)/(windowSize*windowSize/10000.0)))/2.0;
 		else
-			modulation.r = exp(-2.0*(gl_TexCoord[0].s-0.5)*(gl_TexCoord[0].s-0.5)/(windowSize*windowSize/10000.0));
+			modulation.r = exp(-2.0*(x-0.5)*(x-0.5)/(windowSize*windowSize/10000.0));
 
 		modulated = f * modulation.r;
 	}
 }
 
-SHADER_SOURCE:plotShader
+SOURCE:plotShader
 {
 	#version 130
 	uniform sampler2D 	functionValues;
@@ -74,37 +60,29 @@ SHADER_SOURCE:plotShader
 	uniform float 		minimum = -1.0,
 				maximum = 4.0;
 
+	INSERT(plotFormat)
+
 	void main()
 	{
-		float y = (1.0-gl_TexCoord[0].t)*(maximum-minimum)+minimum;
-		vec4  f = texture(functionValues, vec2(gl_TexCoord[0].s,0.0));
-
+		float y = gl_FragCoord.y/float(plotFormat.y)*(maximum-minimum)+minimum;
+		vec4  f = texture(functionValues, vec2(gl_FragCoord.x/plotFormat.x,0.0));
 		outputTexture = vec4(y<f.r,y<f.g,y<f.b,1.0);
 	}
 }
 
-FILTER_LAYOUT:Gen1DFunction(fmt, Gen1DFunction)
 FILTER_LAYOUT:WindowFilter(computationFormat, WindowShader)
 FILTER_LAYOUT:plotFilter(plotFormat,plotShader)
 
 PIPELINE_MAIN:FFTComputationPipeline
 {
-	//OUTPUT_PORTS(outputTexture, functionValues, plotFunction, plotFFT, plotIFFT, plotModulation)
 	OUTPUT_PORTS(outputTexture, plotFFT, plotIFFT, plotModulation)
 
-	//FILTER_INSTANCE:Gen1DFunction
 	PIPELINE_INSTANCE:FFTPipeline(FFTPipeline)
 	PIPELINE_INSTANCE:IFFTPipeline(IFFTPipeline)
 	FILTER_INSTANCE:WindowFilter
-	//FILTER_INSTANCE:plotFunction(plotFilter)
 	FILTER_INSTANCE:plotFFT(plotFilter)
 	FILTER_INSTANCE:plotIFFT(plotFilter)
 	FILTER_INSTANCE:plotModulation(plotFilter)
-
-	/*CONNECTION(Gen1DFunction, outputTexture, FFTPipeline, inputTexture)
-	CONNECTION(Gen1DFunction, outputTexture, plotFunction, functionValues)
-	CONNECTION(Gen1DFunction, outputTexture, THIS, functionValues)
-	CONNECTION(plotFunction, outputTexture, THIS, plotFunction)*/
 
 	CONNECTION(FFTPipeline, outputTexture, plotFFT, functionValues)
 	CONNECTION(FFTPipeline, outputTexture, THIS, outputTexture)

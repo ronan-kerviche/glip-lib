@@ -5,7 +5,7 @@
 	See his articles on http://www.iquilezles.org/ and https://www.shadertoy.com/.
 */
 
-SHARED_CODE:RayMarcherUtils
+SOURCE:RayMarcherUtils
 {
 	// Will requires : 
 	vec2 sceneMap(vec3 p);

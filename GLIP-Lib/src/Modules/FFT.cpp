@@ -493,8 +493,8 @@ namespace Glip
 				
 					if(it->arguments.size()==1 && it->noBody)
 					{
-						SHAREDCODE_MUST_EXIST( it->arguments.front() )
-						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						SOURCE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SOURCE( its, it->arguments.front() )
 						pre = its->second;
 					}
 					else if(it->noArgument && !it->body.empty())
@@ -514,8 +514,8 @@ namespace Glip
 				
 					if(it->arguments.size()==1 && it->noBody)
 					{
-						SHAREDCODE_MUST_EXIST( it->arguments.front() )
-						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						SOURCE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SOURCE( its, it->arguments.front() )
 						post = its->second;
 					}
 					else if(it->noArgument && !it->body.empty())
@@ -1058,8 +1058,8 @@ namespace Glip
 				
 					if(it->arguments.size()==1 && it->noBody)
 					{
-						SHAREDCODE_MUST_EXIST( it->arguments.front() )
-						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						SOURCE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SOURCE( its, it->arguments.front() )
 						pre = its->second;
 					}
 					else if(it->noArgument && !it->body.empty())
@@ -1079,8 +1079,8 @@ namespace Glip
 				
 					if(it->arguments.size()==1 && it->noBody)
 					{
-						SHAREDCODE_MUST_EXIST( it->arguments.front() )
-						CONST_ITERATOR_TO_SHAREDCODE( its, it->arguments.front() )
+						SOURCE_MUST_EXIST( it->arguments.front() )
+						CONST_ITERATOR_TO_SOURCE( its, it->arguments.front() )
 						post = its->second;
 					}
 					else if(it->noArgument && !it->body.empty())
