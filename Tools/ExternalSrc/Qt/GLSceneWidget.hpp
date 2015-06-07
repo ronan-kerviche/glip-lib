@@ -14,13 +14,6 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-/**
-	USAGE :
-
-	WARNINGS :
-		- The texture must be loaded and mirrored along the Z direction to appear correctly.
-**/
-
 #ifndef __GLIPLIB_GL_SCENE_WIDGET__
 #define __GLIPLIB_GL_SCENE_WIDGET__
 
@@ -45,7 +38,8 @@
 	#include <QMenu>
 	#include <QMenuBar>
 	#include <QSignalMapper>
-
+	#include <QPushButton>
+	#include <QGroupBox>
 	#include <QLineEdit>
 	#include <QComboBox>
 	#include <QListWidget>
@@ -73,7 +67,7 @@ namespace QVGL
 	class KeyboardState;
 	class GLScene;
 	class GLSceneViewWidget;
-	class MainWidget;
+	class GlipViewWidget;
 
 	const int 	QGraphicsItemVisualPartKey 		= 0,
 			QGraphicsItemSubWidgetPointerKey 	= 1;
@@ -128,7 +122,7 @@ namespace QVGL
 		private :
 			HdlTexture	*texture;
 			QString		name;
-			MainWidget	*qvglParent;
+			GlipViewWidget	*qvglParent;
 			float		angle,			// in Radians.
 					viewCenter[2],
 					homothecyCenter[2],
@@ -139,7 +133,7 @@ namespace QVGL
 			void prepareToDraw(void);
 
 			friend class GLScene;
-			friend class MainWidget;
+			friend class GlipViewWidget;
 
 		public : 
 			QMap<QString, QString> infos;
@@ -297,18 +291,19 @@ namespace QVGL
 		public : 
 			enum Flag
 			{
-				NotResizeable	= 1,
-				NotAnchorable	= 2,
-				NotMaximizable	= 4,
-				NoFlag		= 0
+				NotResizeable		= 1,
+				NotAnchorable		= 2,
+				NotMaximizable		= 4,
+				CloseOnHideRequest	= 8,
+				NoFlag			= 0
 			};
 
 			enum AnchorMode
 			{
-				AnchorFree	= 0,
-				AnchorLeft	= 1,
-				AnchorRight	= 2,
-				AnchorMaximized	= 3
+				AnchorFree		= 0,
+				AnchorLeft		= 1,
+				AnchorRight		= 2,
+				AnchorMaximized		= 3
 			};
 
 		private : 
@@ -318,7 +313,7 @@ namespace QVGL
 			QLabel			titleLabel;
 			QToolButton		hideButton;
 			QWidget			*widget;
-			MainWidget		*qvglParent;
+			GlipViewWidget		*qvglParent;
 			QGraphicsProxyWidget 	*graphicsProxy;
 			const Flag		flags;
 			bool 			motionActive,
@@ -360,8 +355,8 @@ namespace QVGL
 			QPoint mapItemCoordinatesToGlobal(const QPoint& p);
 			QString getTitle(void);
 			void setTitle(QString title);
-			virtual void setQVGLParent(MainWidget* _qvglParent);
-			MainWidget* getQVGLParent(void);
+			virtual void setQVGLParent(GlipViewWidget* _qvglParent);
+			GlipViewWidget* getQVGLParent(void);
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
 			void resetPosition(bool force=true);
@@ -376,8 +371,8 @@ namespace QVGL
 		public slots :
 			// Re-implement some of the QWidget functions : 
 			void show(void);
-			void hide(void);
-			void close(void);
+			void hide(void);	// The SubWidget is hidden from the workbench, but is still present in the lists.
+			void close(void);	// The SubWidget is removed from the workbench and the list.
 
 		signals  :
 			void titleChanged(void);
@@ -421,7 +416,7 @@ namespace QVGL
 								viewsTablesMenu,
 								subWidgetsMenu;
 				QAction				toggleFullscreenAction,
-								openSettingsAction,
+								openSettingsInterfaceAction,
 								openInfosAction,
 								quitAction,
 								*viewsSeparator,
@@ -485,6 +480,7 @@ namespace QVGL
 				void changeViewsTableRequest(ViewsTable* targetViewsTable);
 				void requestAction(ActionID);
 				void requestOpenInfos(void);
+				void requestOpenSettingsInterface(void);
 				void showSubWidgetRequest(SubWidget* targetWidget);
 				void selected(TopBar* ptr);				
 		};
@@ -533,9 +529,6 @@ namespace QVGL
 			private : 
 				QLabel message;
 
-			private slots : 
-				void closedSlot(void);
-
 			public : 
 				InfosDialog(void);
 				virtual ~InfosDialog(void);
@@ -570,59 +563,125 @@ namespace QVGL
 		};
 	#endif
 
-	class ContextWidget : public QGLWidget
+	class GlipViewSettings
 	{
-		private :
-			bool	glipOwnership;
-			float	clearColorRed,
-				clearColorGreen,
-				clearColorBlue;
-
-			void initializeGL(void);
-			void resizeGL(int width, int height);
+		protected : 
+			QVector<bool>			takeBackEnabled;
+			QMap<QKeySequence, ActionID> 	keysActionsAssociations;
 			
 		public : 
-			ContextWidget(QGLContext* ctx, QWidget* parent=NULL);
-			virtual ~ContextWidget(void);
+			QColor				backgroundColor;
+			float				translationStep,
+							rotationStep,
+							zoomFactor;
+
+			GlipViewSettings(void);
+			GlipViewSettings(const GlipViewSettings& c);
+			virtual ~GlipViewSettings(void);
+
+			QKeySequence getKeysAssociatedToAction(const ActionID& a) const;
+			const QMap<QKeySequence, ActionID>& getKeysActionsAssociations(void) const;
+			const QVector<bool>& getTakeBackEnabled(void) const;
+			void setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
+			void resetActionsKeySequences(void);
+			void resetSettings(void);
+			virtual GlipViewSettings& operator=(const GlipViewSettings& c);
 	};
 
-	class KeyboardState : public QObject
-	{
-		Q_OBJECT
+		class KeyGrabber : public QPushButton
+		{
+			Q_OBJECT
 
+			private : 
+				QKeySequence currentKey;
+
+				void keyPressEvent(QKeyEvent * e);
+
+				static QString getKeyName(const QKeySequence& key);
+
+			public : 
+				const ActionID actionID;
+
+				KeyGrabber(const ActionID& _actionID, const QKeySequence& _currentKey, QWidget* parent = NULL);
+				~KeyGrabber(void);
+
+				const QKeySequence& getKey(void) const;
+				void setKey(const QKeySequence& key);
+				void removeKey(void);
+
+			signals : 
+				void modified(void);
+		};
+
+		class GlipViewSettingsInterface : public SubWidget
+		{
+			Q_OBJECT
+
+			private :
+				GlipViewSettings	settings;
+				QWidget			innerWidget;
+				QGroupBox		keysGroupBox,
+							othersGroupBox;
+				QVBoxLayout		layout;
+				QGridLayout		keysLayout;
+				QHBoxLayout		othersLayout;
+				QVector<KeyGrabber*>	keyGrabbers;
+				QLabel			translationStepLabel,
+							rotationStepLabel,
+							zoomFactorLabel,
+							backgroundColorLabel;
+				QDoubleSpinBox		translationStepSpin,
+							rotationStepSpin,
+							zoomFactorSpin;
+				QPushButton		backgroundColorButton;
+				QDialogButtonBox	dialogButtons;
+			
+				void updateBackgroundColorButton(void);
+				void updateInterface(void);
+				void updateData(void); 
+
+			private slots :
+				void checkKeys(const KeyGrabber* ptr);
+				void checkKeys(void);
+				void changeBackgroundColor(void);
+				void processDialogButtonPressed(QAbstractButton* button);
+
+			public : 
+				GlipViewSettingsInterface(const GlipViewSettings& _settings);
+				~GlipViewSettingsInterface(void);
+
+				const GlipViewSettings& getSettings(void) const;
+
+			public slots : 
+				void resetSettings(void);
+
+			signals : 
+				void applySettings(void);
+		};
+
+	class KeyboardState
+	{
 		private : 
 			QMap<QKeySequence, ActionID> 	keysActionsAssociations;
-			bool				takeBackEnabled[NumActions];
-			bool				actionPressed[NumActions];
-	
-		protected :
-			friend class GLScene;
-			friend class MainWidget;
-
-			void keyPressed(QKeyEvent* event);	
-			void keyReleased(QKeyEvent* event);
-			void forceRelease(void);
-
-		public : 
-			KeyboardState(void);
-			virtual ~KeyboardState(void);
+			QVector<bool>			takeBackEnabled;
+			QVector<bool>			actionPressed;
 
 			ActionID getActionAssociatedToKey(const QKeySequence& keySequence) const;
 			ActionID getActionAssociatedToKey(const QKeyEvent* event) const;
 			QKeySequence getKeysAssociatedToAction(const ActionID& a);
-			bool isActionTakeBackEnabled(const ActionID& a) const;
-			void setTakeBack(const ActionID& a, bool enabled);
-			void setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
-			void resetActionsKeySequences(void);
 
-		signals : 
-			void actionReceived(ActionID, bool takenBack=false);
+		public : 
+			KeyboardState(const GlipViewSettings& settings);
+			virtual ~KeyboardState(void);
+
+			void setKeyboardSettings(const GlipViewSettings& settings);
+			void processKeyEvent(QKeyEvent* event, bool pressed);
+			void forceKeyRelease(void);
+			virtual void processAction(ActionID action, bool takenBack=false) = 0;
 	};
 
-	class MouseState : public QObject
+	class MouseState
 	{
-		Q_OBJECT
-
 		public : 
 			enum BasisID
 			{
@@ -712,7 +771,8 @@ namespace QVGL
 				VectorLastWheelDownQuad			= VectorLastWheelDown + QuadBasis,
 				VectorLastWheelDownImage		= VectorLastWheelDown + ImageBasis,
 				VectorLastWheelDownFragment		= VectorLastWheelDown + FragmentBasis,
-		
+
+				MaxNumVectors				= 12 * NumBasis,
 				InvalidVectorID				= 65535
 				// ALSO UPDATE VALIDATE
 			};
@@ -726,6 +786,7 @@ namespace QVGL
 				ColorUnderLastRightPosition	= 6 * NumBasis,
 				ColorUnderLastRightRelease	= 8 * NumBasis,
 
+				MaxNumColors			= 9 * NumBasis,
 				InvalidColorID			= 65535
 				// ALSO UPDATE VALIDATE
 			};	
@@ -737,95 +798,94 @@ namespace QVGL
 				ModeCollection
 			};
 
-		private :
 			struct VectorData
 			{
 				private :
-					VectorData(const VectorData&);
-
-				public :
-					int			modification;
 					QPointF			vector;
 					#ifdef __MAKE_VARIABLES__
 					QGUI::VariableRecord*	record;
 					#endif
+	
+					VectorData(const VectorData&);
 
-					VectorData(const QString& name, QObject* parent=NULL);
+				public :
+					const VectorID id;
+					
+					VectorData(const VectorID _id, const QString& name, QObject* parent=NULL);
 					~VectorData(void);
+					const QPointF& getVector(void) const; 
+					void setVector(const QPointF& v, bool setRecord);
 			};
 
 			struct ColorData
 			{
 				private :
-					ColorData(const ColorData&);
-				public :
-					int 			modification; 	// The integer represent a count to the last modification.
-					QColor			color;		// (0 : requires update, 1 : modified, 2+ : not modified)
+					QColor			color;
 					#ifdef __MAKE_VARIABLES__
 					QGUI::VariableRecord*	record;
 					#endif
 
-					ColorData(const QString& name, QObject* parent=NULL);
+					ColorData(const ColorData&);
+
+				public :
+					const ColorID id;
+
+					ColorData(const ColorID _id, const QString& name, QObject* parent=NULL);
 					~ColorData(void);
+					const QColor& getColor(void) const;
+					void setColor(const QColor& c, bool setRecord);
 			};
 
-			static const QMap<VectorID, QString>	vectorsNameMap;
-			static const QMap<ColorID, QString>	colorsNameMap; 
+		private :
+			
+			//static const QMap<VectorID, QString>	vectorsNameMap;
+			//static const QMap<ColorID, QString>	colorsNameMap; 
 			FunctionMode				functionMode;
-			QMap<VectorID, VectorData*>		vectors;	
-			QMap<ColorID, ColorData*>		colors; 
-			QList<VectorID>				vectorIDs;
-			QList<ColorID>				colorIDs;
-			float					wheelDelta;
+			QVector<VectorData*>			vectors;	// some of the elements will be NULL.
+			QVector<ColorData*>			colors; 	// some of the elements will be NULL.
 	
-			static QMap<VectorID, QString> initVectorsNameMap(void);
-			static QMap<ColorID, QString> initColorsNameMap(void);
-
-		protected :
-			friend class GLScene;
-			friend class MainWidget;
-
-			void incrementEventCounters(void);
-			bool doesVectorRequireUpdate(const VectorID& id) const;
-			bool doesColorRequirepdate(const ColorID& id) const;
-			void setVector(const VectorID& id, const QPointF& v, const bool requireUpdate=false);
-			void setColor(const ColorID& id, const QColor& c);
-			void processEvent(QGraphicsSceneWheelEvent* event);
-			void processEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released);
-			void updateProcessCompleted(void);
+			//static QMap<VectorID, QString> initVectorsNameMap(void);
+			//static QMap<ColorID, QString> initColorsNameMap(void);
 
 		public : 
-			MouseState(void);
+			void processMouseEvent(QGraphicsSceneWheelEvent* event);
+			void processMouseEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released);
+
+		protected :
+			// Signals equivalent : 
+			virtual void updateMouseVectorAndColor(const VectorData& vPixelBasis, VectorData& vGlBasis, VectorData& vQuadBasis, VectorData& vImageBasis, VectorData& vFragmentBasis, const bool isRelative, ColorData* colorData=NULL) = 0;
+			virtual void applyMouseAction(const VectorData& vectorData, const VectorData* shiftVectorData=NULL, const float wheelDelta=0.0f) = 0;
+			virtual void setMouseCursor(Qt::CursorShape cursorShape) = 0;
+
+		public : 
+			MouseState(QObject* parent);
 			virtual ~MouseState(void);
 
-			void clear(void);
-			const QList<VectorID>& getVectorIDs(void) const;
-			const QList<ColorID>& getColorIDs(void) const;
-			bool isVectorModified(const VectorID& id) const;
-			bool isColorModified(const ColorID& id) const;
-			bool readColorRequired(const ColorID& id) const;
-			const QPointF& getVector(const VectorID& id) const;
-			const QColor& getColor(const ColorID& id) const;
-			bool isWheelDeltaModified(void) const;
-			float getWheelDelta(void);
-			const FunctionMode& getFunctionMode(void) const;
-			void setFunctionMode(const FunctionMode& m);
+			const FunctionMode& getMouseFunctionMode(void) const;
+			void setMouseFunctionMode(const FunctionMode& m);
 
-			static VectorID validate(const VectorID& vID);
-			static ColorID validate(const ColorID& cID);
+			static bool isVectorIDValid(const VectorID& vID);
+			static bool isColorIDValid(const ColorID& cID);
 			static QString getVectorIDName(const VectorID& vID);
 			static QString getColorIDName(const ColorID& cID);
-			static VectorID getVectorIDFromName(const QString& name);
-			static ColorID getColorIDFromName(const QString& name);
 			static VectorID getPixelVectorID(const VectorID& vID);
 			static BasisID getVectorBasis(const VectorID& vID);
 			static ColorID getCorrespondingColorID(const VectorID& cID);
 			static bool isBasisRelative(const BasisID& bID);
+	};
 
-		signals : 
-			void requestExternalUpdate(void);
-			void mustSetMouseCursor(Qt::CursorShape cursorShape);
-			void updated(void);
+	class ContextWidget : public QGLWidget
+	{
+		private :
+			bool glipOwnership;
+			
+
+			void initializeGL(void);
+			void resizeGL(int width, int height);
+			
+		public : 
+			ContextWidget(QGLContext* ctx, QWidget* parent=NULL);
+			virtual ~ContextWidget(void);
 	};
 
 	class GLScene : public QGraphicsScene
@@ -834,9 +894,12 @@ namespace QVGL
 
 		private :
 			// Data : 
-			MainWidget		*qvglParent;
+			GlipViewWidget		*qvglParent;
 			GeometryInstance	*quad;
 			HdlProgram		*shaderProgram;
+			float			clearColorRed,
+						clearColorGreen,
+						clearColorBlue;
 
 			// Tools : 
 			void drawView(View* view);
@@ -853,57 +916,23 @@ namespace QVGL
 			void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 
 		public : 
-			GLScene(MainWidget* _Parent);
+			GLScene(GlipViewWidget* _Parent);
 			virtual ~GLScene(void);
-	};
 
-	class GLSceneViewWidget : public QGraphicsView
-	{
-		Q_OBJECT
-
-		private : 
-			// Data :
-			ContextWidget			*contextWidget;
-			GLScene 			*glScene;
-			MainWidget			*qvglParent;
-
-			// Functions :
-			void resizeEvent(QResizeEvent *event);
-			void closeEvent(QCloseEvent *event);
-
-		public : 
-			GLSceneViewWidget(MainWidget* _Parent, TopBar* topBar=NULL, BottomBar* bottomBar=NULL);
-			virtual ~GLSceneViewWidget(void);
-
-			void addSubWidget(SubWidget* subWidget);
-			void addItem(QGraphicsItem* item);
-			void removeItem(QGraphicsItem* item);
-			void forceItemOrdering(void);
-			void putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy);
-			void putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy);
-			SubWidget* getTopSubWidget(bool onlyVisible=false);
-			SubWidget* getBottomSubWidget(bool onlyVisible=false);
-			SubWidget* getSubWidget(int index, bool onlyVisible=false);
-			void makeGLContextAvailable(void);
-			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
-			void getColorAt(int x, int y, QColor& c);
-			void update(void);
-
-			static void sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order=Qt::DescendingOrder);
+			void setSceneSettings(const GlipViewSettings& settings);
 	};
 	
-	class MainWidget : public QWidget
+	class GlipViewWidget : public QGraphicsView, public KeyboardState, public MouseState
 	{
 		Q_OBJECT
 
 		private :
-			QBoxLayout 			container;
-			KeyboardState			keyboardState;
-			MouseState			mouseState;
+			ContextWidget			*contextWidget;
+			GLScene 			*glScene;
 			TopBar				topBar;
 			BottomBar			bottomBar;
-			InfosDialog			*infosDialog;
-			GLSceneViewWidget  		glSceneViewWidget;
+			InfosDialog			*infosDialog; 		// Must be created after the ContextWidget.
+			GlipViewSettingsInterface	settingsInterface;
 			QList<View*>			viewsList;
 			QList<SubWidget*>		subWidgetsList;
 			QList<SubWidget*>		temporaryHiddenSubWidgetsList;
@@ -917,11 +946,22 @@ namespace QVGL
 							opacityActiveBar,
 							opacityIdleBar;
 
-		private slots :
-			void updateMouseStateData(void);
-			void performMouseAction(void);
+			// GraphicsView Tools : 
+			void resizeEvent(QResizeEvent *event);
+			void forceItemOrdering(void);
+			void putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy);
+			void putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy);
+			SubWidget* getTopSubWidget(bool onlyVisible);
+			SubWidget* getBottomSubWidget(bool onlyVisible);
+			SubWidget* getSubWidget(int index, bool onlyVisible);
+			static void sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order=Qt::DescendingOrder);
+
+		protected : 
+			void updateMouseVectorAndColor(const VectorData& vPixelBasis, VectorData& vGlBasis, VectorData& vQuadBasis, VectorData& vImageBasis, VectorData& vFragmentBasis, const bool isRelative, ColorData* colorData=NULL);
+			void applyMouseAction(const VectorData& vectorData, const VectorData* shiftVectorData=NULL, const float wheelDelta=0.0f);
 			void setMouseCursor(Qt::CursorShape cursorShape);
 
+		private slots :
 			// Views : 
 			void viewRequireDisplay(View* view);
 			void viewRequireDisplay(void);
@@ -963,12 +1003,11 @@ namespace QVGL
 
 			// Special : 
 			void processOpenInfosRequest(void);
-			void closeInfos(void);
+			void processOpenSettingsInterfaceRequest(void);
+			void applySettings(void);
 			bool processQuitRequest(void);
 
 		protected :
-			KeyboardState& getKeyboardState(void);
-			MouseState& getMouseState(void);
 			View* getCurrentView(void) const;
 			ViewsTable* getCurrentViewsTable(void);
 			void changeCurrentView(int targetID, bool showNow=true);
@@ -990,18 +1029,15 @@ namespace QVGL
 			void closeEvent(QCloseEvent *event);
 
 			friend class GLScene;
-			friend class GLSceneViewWidget;
 			
 		public :
-			MainWidget(QWidget* parent=NULL);
-			virtual ~MainWidget(void);
+			GlipViewWidget(QWidget* parent=NULL, const QSize& originalSize = QSize(1024, 768));
+			virtual ~GlipViewWidget(void);
 
-			const KeyboardState& getKeyboardState(void) const;
-			const MouseState& getMouseState(void) const;
 			float getSceneRatio(void) const;
-			QRectF sceneRect(void) const;
-			void getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue);
-			void getColorAt(int x, int y, QColor& c);
+			QColor getColorAt(int x, int y);
+
+			static QString getActionName(const ActionID& a);
 
 		public slots : 
 			void addView(QVGL::View* view);

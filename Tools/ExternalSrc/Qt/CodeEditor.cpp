@@ -156,25 +156,25 @@ using namespace QGED;
 	void Highlighter::updateSettings(const CodeEditorSettings& settings)
 	{
 		// Color : 
-		glslKeywordFormat.setForeground(		settings.getGLSLKeywordColor() );
-		glslFunctionFormat.setForeground(		settings.getGLSLFunctionColor() );
-		glslPreprocessorFormat.setForeground(		settings.getGLSLPreprocessorColor() );
-		glipLayoutLoaderKeywordFormat.setForeground(	settings.getGLIPLayoutLoaderKeywordColor() );
-		glipUniformLoaderKeywordFormat.setForeground(	settings.getGLIPUniformLoaderKeywordColor() );
-		singleLineCommentFormat.setForeground(		settings.getCommentsColor() );
-		multiLineCommentFormat.setForeground(		settings.getCommentsColor() );
+		glslKeywordFormat.setForeground(		settings.glslKeywordColor );
+		glslFunctionFormat.setForeground(		settings.glslFunctionColor );
+		glslPreprocessorFormat.setForeground(		settings.glslPreprocessorColor );
+		glipLayoutLoaderKeywordFormat.setForeground(	settings.glipLayoutLoaderKeywordColor );
+		glipUniformLoaderKeywordFormat.setForeground(	settings.glipUniformLoaderKeywordColor );
+		singleLineCommentFormat.setForeground(		settings.commentsColor );
+		multiLineCommentFormat.setForeground(		settings.commentsColor );
 
 		// Font : 
-		glslKeywordFormat.setFont(			settings.getKeywordFont() );
-		glslFunctionFormat.setFont(			settings.getKeywordFont() );
-		glslPreprocessorFormat.setFont(			settings.getKeywordFont() );	
-		glipLayoutLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
-		glipUniformLoaderKeywordFormat.setFont(		settings.getKeywordFont() );
-		singleLineCommentFormat.setFont(		settings.getKeywordFont() );
-		multiLineCommentFormat.setFont(			settings.getKeywordFont() );
+		glslKeywordFormat.setFont(			settings.keywordFont );
+		glslFunctionFormat.setFont(			settings.keywordFont );
+		glslPreprocessorFormat.setFont(			settings.keywordFont );	
+		glipLayoutLoaderKeywordFormat.setFont(		settings.keywordFont );
+		glipUniformLoaderKeywordFormat.setFont(		settings.keywordFont );
+		singleLineCommentFormat.setFont(		settings.keywordFont );
+		multiLineCommentFormat.setFont(			settings.keywordFont );
 
 		// General highlighting (only if highlight was allowed for this editor) :
-		highlightEnabled = settings.isHighlightEnabled();
+		highlightEnabled = settings.enableHighlight;
 
 		// Update : 
 		rehighlight();
@@ -819,37 +819,37 @@ using namespace QGED;
 		document()->blockSignals(true);
 
 		// Set the font : 
-		setFont(settings.getEditorFont());
-		document()->setDefaultFont(settings.getEditorFont());
+		setFont(settings.editorFont);
+		document()->setDefaultFont(settings.editorFont);
 
 		// Set the tabulation length :
-		const int tabStop = settings.getNumberOfSpacesPerTabulation();
-		QFontMetrics metrics(settings.getEditorFont());
+		const int tabStop = settings.tabNumberOfSpaces;
+		QFontMetrics metrics(settings.editorFont);
 		setTabStopWidth(tabStop * metrics.width(' '));
 
 		// Set word wrap : 
-		setWordWrapMode(settings.getWrapMode() );
+		setWordWrapMode(settings.wrapMode );
 
 		// Set line highlight :
-		highlightLine = settings.isLineHighlightEnabled();
+		highlightLine = settings.enableHighlight;
 
 		if(!highlightLine)
 			clearHighlightOfCurrentLine();
 
 		// Set brace matching : 
-		braceMatching = settings.isBraceMatchingEnabled();
+		braceMatching = settings.braceMatching;
 
 		if(!braceMatching)
 			updateToCursorPosition();
 		else
-			braceMatchingColor = settings.getBraceMatchingColor();
+			braceMatchingColor = settings.braceMatchingColor;
 
 		// Propagate : 
 		if(highLighter!=NULL)
 			highLighter->updateSettings(settings);
 
 		// Set search highlight color :
-		searchHighlightColor = settings.getSearchColor();
+		searchHighlightColor = settings.searchColor;
 
 		document()->blockSignals(false);
 		blockSignals(false);
@@ -1325,254 +1325,33 @@ using namespace QGED;
 	}
 
 // CodeEditorSettings :
-	CodeEditorSettings::CodeEditorSettings(void)
-	 : 	
-	#ifndef __USE_QVGL__
-		widgetPtr(this),
-	#else
-		QVGL::SubWidget(static_cast<QVGL::SubWidget::Flag>(QVGL::SubWidget::NotResizeable | QVGL::SubWidget::NotAnchorable | QVGL::SubWidget::NotMaximizable)),
-		widgetPtr(&innerWidget),
-	#endif
-		defaultFontSize( fontInfo().pointSize() ),
-		layout(widgetPtr),
-		glslKeywordColorLabel("GLSL Keywords"),
-		glslFunctionColorLabel("GLSL Functions"),
-		glslPreprocessorColorLabel("GLSL Preprocessor"),
-		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords"),
-		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords"),
-		commentsColorLabel("Comments"),
-		braceMatchingColorLabel("Matching braces"),
-		searchColorLabel("Search"),
-		okButton("OK"),
-		applyButton("Apply"),
-		cancelButton("Cancel"),
-		resetButton("Reset"),
-		highlightKeywordsCheck("Highlight keywords"),
-		highlightCurrentLineCheck("Highlight current line"),
-		braceMatchingCheck("Enable brace matching")	
+	CodeEditorSettings::CodeEditorSettings(const int _defaultFontSize)
+	 : defaultFontSize(_defaultFontSize)
 	{
 		resetSettings();
-		
-		// Create the layout for the GUI : 
-			// Colors : 
-				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
-				layoutColors.addWidget(&glslFunctionColorLabel, 		1, 0);
-				layoutColors.addWidget(&glslPreprocessorColorLabel,		2, 0);
-				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	3, 0);
-				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	4, 0);
-				layoutColors.addWidget(&commentsColorLabel, 			5, 0);
-				layoutColors.addWidget(&braceMatchingColorLabel,		6, 0);
-				layoutColors.addWidget(&searchColorLabel, 			7, 0);
-
-				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
-				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
-				layoutColors.addWidget(&glslPreprocessorColorButton,		2, 1);
-				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	3, 1);
-				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	4, 1);
-				layoutColors.addWidget(&commentsColorButton, 			5, 1);
-				layoutColors.addWidget(&braceMatchingColorButton,		6, 1);
-				layoutColors.addWidget(&searchColorButton,			7, 1);
-
-				groupColors.setTitle("Highlight colors");
-				groupColors.setLayout(&layoutColors);
-
-				// Connect : 
-				connect(&glslKeywordColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&glslFunctionColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&glslPreprocessorColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&braceMatchingColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
-				connect(&searchColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
-
-			// Font : 
-				layoutFonts.addWidget(&editorFontButton);
-				layoutFonts.addWidget(&keywordFontButton);
-
-				groupFonts.setTitle("Fonts");
-				groupFonts.setLayout(&layoutFonts);
-
-				// Connect :
-				connect(&editorFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
-				connect(&keywordFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
-
-			// Misc : 
-				wrapModesBox.addItem( "Word wrap", 	QVariant(QTextOption::WordWrap) );
-				wrapModesBox.addItem( "No wrap", 	QVariant(QTextOption::NoWrap) );
-
-				tabSpacesSpin.setRange(0, 128);
-				tabSpacesSpin.setPrefix("Tabulations length : ");
-
-				layoutMisc.addWidget(&highlightKeywordsCheck);
-				layoutMisc.addWidget(&highlightCurrentLineCheck);
-				layoutMisc.addWidget(&braceMatchingCheck);
-				layoutMisc.addWidget(&wrapModesBox);
-				layoutMisc.addWidget(&tabSpacesSpin);
-				
-				groupMisc.setTitle("Miscellaneous");
-				groupMisc.setLayout(&layoutMisc);
-
-			// General : 
-				layout.addWidget(&groupFonts, 	0, 0, 2, 2);
-				layout.addWidget(&groupMisc, 	2, 0, 4, 2);
-				layout.addWidget(&groupColors, 	0, 2, 5, 2);
-				layout.addWidget(&resetButton, 	7, 0);
-				layout.addWidget(&cancelButton, 7, 1);
-				layout.addWidget(&applyButton, 	7, 2);
-				layout.addWidget(&okButton, 	7, 3);
-
-				connect(&applyButton,				SIGNAL(released()),	this, SLOT(softApply()));
-				connect(&okButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
-				connect(&cancelButton,				SIGNAL(released()),	this, SLOT(quitDialog()));
-				connect(&resetButton,				SIGNAL(released()),	this, SLOT(resetSettings())); 
-
-		// Final update :
-			updateGUI();
-
-		#ifdef __USE_QVGL__
-			setInnerWidget(&innerWidget);
-			setTitle("Code Editor Settings");
-		#endif
 	}
+
+	CodeEditorSettings::CodeEditorSettings(const CodeEditorSettings& c)
+	 : 	defaultFontSize(c.defaultFontSize),
+		glslKeywordColor(c.glslKeywordColor),
+		glslFunctionColor(c.glslFunctionColor),
+		glslPreprocessorColor(c.glslPreprocessorColor),
+		glipLayoutLoaderKeywordColor(c.glipLayoutLoaderKeywordColor),
+		glipUniformLoaderKeywordColor(c.glipUniformLoaderKeywordColor),
+		commentsColor(c.commentsColor),
+		braceMatchingColor(c.braceMatchingColor),
+		searchColor(c.searchColor),
+		editorFont(c.editorFont),
+		keywordFont(c.keywordFont),
+		wrapMode(c.wrapMode),
+		tabNumberOfSpaces(c.tabNumberOfSpaces),
+		enableHighlight(c.enableHighlight),
+		highlightCurrentLine(c.highlightCurrentLine),
+		braceMatching(c.braceMatching)
+	{ }
 
 	CodeEditorSettings::~CodeEditorSettings(void)
 	{ }
-
-	void CodeEditorSettings::updateGUI(void)
-	{
-		// From Values to GUI...
-
-		// Colors : 
-		glslKeywordColorButton.setStyleSheet(			tr("background:%1;").arg(glslKeywordColor.name()) );
-		glslFunctionColorButton.setStyleSheet(			tr("background:%1;").arg(glslFunctionColor.name()) );
-		glslPreprocessorColorButton.setStyleSheet(		tr("background:%1;").arg(glslPreprocessorColor.name()) );
-		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipLayoutLoaderKeywordColor.name()) );
-		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(glipUniformLoaderKeywordColor.name()) );
-		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(commentsColor.name()) );
-		braceMatchingColorButton.setStyleSheet(			tr("background:%1;").arg(braceMatchingColor.name()) );
-		searchColorButton.setStyleSheet(			tr("background:%1;").arg(searchColor.name()) );
-
-		// Fonts : 
-		editorFontButton.setText(tr("Editor : %1 (%2)").arg(editorFont.family()).arg(editorFont.pointSize()));
-		editorFontButton.setFont(editorFont);
-
-		keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(keywordFont.family()).arg(keywordFont.pointSize()));
-		keywordFontButton.setFont(keywordFont);
-
-		// Misc : 
-		highlightKeywordsCheck.setChecked( enableHighlight );
-		highlightCurrentLineCheck.setChecked( highlightCurrentLine );
-		braceMatchingCheck.setChecked( braceMatching );
-		wrapModesBox.setCurrentIndex( wrapModesBox.findData(QVariant(wrapMode)) );
-		tabSpacesSpin.setValue( tabNumberOfSpaces );
-	}
-
-	void CodeEditorSettings::updateValues(void)
-	{
-		// From GUI to Values...
-
-		// Colors :
-		glslKeywordColor		= glslKeywordColorButton.palette().color(QPalette::Window);
-		glslFunctionColor		= glslFunctionColorButton.palette().color(QPalette::Window);
-		glslPreprocessorColor		= glslPreprocessorColorButton.palette().color(QPalette::Window);
-		glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
-		glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
-		commentsColor			= commentsColorButton.palette().color(QPalette::Window);
-		braceMatchingColor		= braceMatchingColorButton.palette().color(QPalette::Window);
-		searchColor			= searchColorButton.palette().color(QPalette::Window);
-
-		// Fonts :
-		editorFont			= editorFontButton.font();
-		keywordFont			= keywordFontButton.font();
-
-		// Misc : 
-		enableHighlight			= highlightKeywordsCheck.isChecked();
-		highlightCurrentLine		= highlightCurrentLineCheck.isChecked();
-		braceMatching			= braceMatchingCheck.isChecked();
-		wrapMode			= static_cast<QTextOption::WrapMode>( wrapModesBox.itemData( wrapModesBox.currentIndex() ).toUInt() );
-		tabNumberOfSpaces 		= tabSpacesSpin.value();
-
-		// Propagate : 
-		emit settingsModified();
-	}
-
-	void CodeEditorSettings::changeColor(void)
-	{
-		// Get the pushbutton : 
-		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
-
-		QString title;
-
-		if(target==&glslKeywordColorButton)
-			title = "GLSL Keywords Color";
-		else if(target==&glslFunctionColorButton)
-			title = "GLSL Functions Color";
-		else if(target==&glslPreprocessorColorButton)
-			title = "GLSL Preprocessor Color";
-		else if(target==&glipLayoutLoaderKeywordColorButton)
-			title = "GLIP Layout Loader Keywords Color";
-		else if(target==&glipUniformLoaderKeywordColorButton)
-			title = "GLIP Uniforms Loader Keyword";
-		else if(target==&commentsColorButton)
-			title = "Comments Color";
-		else if(target==&braceMatchingColorButton)
-			title = "Matching Braces Color";
-		else if(target==&searchColorButton)
-			title = "Search Color";
-		else
-			throw Exception("CodeEditorSettings::changeColor - Unknown color picker (internal error).", __FILE__, __LINE__);
-
-		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), NULL, title);
-
-		// If the user pressed 'Ok' : 
-		if(result.isValid())
-			target->setStyleSheet( tr("background:%1;").arg(result.name()) );
-	}
-
-	void CodeEditorSettings::changeFont(void)
-	{
-		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
-
-		QString title;
-
-		if(target==&editorFontButton)
-			title = "Editor Font";
-		else if(target==&keywordFontButton)
-			title = "Keyword Font";
-		else
-			throw Exception("CodeEditorSettings::changeFont - Unknown color picker (internal error).", __FILE__, __LINE__);
-
-		bool ok = false;
-		QFont result = QFontDialog::getFont(&ok, target->font(), this, title);
-
-		if(ok)
-		{
-			result.setFixedPitch(true);
-
-			if(target==&editorFontButton)
-				editorFontButton.setText(tr("Editor : %1 (%2)").arg(result.family()).arg(result.pointSize()));
-			else if(target==&keywordFontButton)
-				keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(result.family()).arg(result.pointSize()));
-
-			target->setFont(result);
-		}
-	}
-
-	void CodeEditorSettings::softApply(void)
-	{
-		updateValues();
-	}
-
-	void CodeEditorSettings::quitDialog(void)
-	{
-		QPushButton* sender = reinterpret_cast<QPushButton*>(QObject::sender());
-
-		hide();
-
-		if(sender==&okButton)
-			updateValues();
-	}
 
 	void CodeEditorSettings::resetSettings(void)
 	{
@@ -1588,10 +1367,8 @@ using namespace QGED;
 
 		// Fonts : 
 		QFontDatabase db;
-
 		editorFont = db.font("Source Code Pro", "Regular", defaultFontSize);
 		editorFont.setFixedPitch(true);
-
 		keywordFont = db.font("Source Code Pro", "Bold", defaultFontSize);
 		keywordFont.setFixedPitch(true);
 
@@ -1605,25 +1382,7 @@ using namespace QGED;
 		enableHighlight 	= true;
 		highlightCurrentLine	= true;
 		braceMatching		= true;
-
-		updateGUI();
 	}
-
-	const QColor& 			CodeEditorSettings::getGLSLKeywordColor(void) const			{ return glslKeywordColor; }
-	const QColor& 			CodeEditorSettings::getGLSLFunctionColor(void) const			{ return glslFunctionColor; }
-	const QColor&			CodeEditorSettings::getGLSLPreprocessorColor(void) const		{ return glslPreprocessorColor; }
-	const QColor& 			CodeEditorSettings::getGLIPLayoutLoaderKeywordColor(void) const		{ return glipLayoutLoaderKeywordColor; }
-	const QColor& 			CodeEditorSettings::getGLIPUniformLoaderKeywordColor(void) const	{ return glipUniformLoaderKeywordColor; }
-	const QColor& 			CodeEditorSettings::getCommentsColor(void) const			{ return commentsColor; }
-	const QColor& 			CodeEditorSettings::getBraceMatchingColor(void) const			{ return braceMatchingColor; }
-	const QColor& 			CodeEditorSettings::getSearchColor(void) const				{ return searchColor; }
-	const QFont&			CodeEditorSettings::getEditorFont(void) const				{ return editorFont; }
-	const QFont& 			CodeEditorSettings::getKeywordFont(void) const				{ return keywordFont; }
-	const QTextOption::WrapMode& 	CodeEditorSettings::getWrapMode(void) const				{ return wrapMode; }
-	const int& 			CodeEditorSettings::getNumberOfSpacesPerTabulation(void) const		{ return tabNumberOfSpaces; }
-	const bool& 			CodeEditorSettings::isHighlightEnabled(void) const			{ return enableHighlight; }
-	const bool&			CodeEditorSettings::isLineHighlightEnabled(void) const			{ return highlightCurrentLine; }
-	const bool&			CodeEditorSettings::isBraceMatchingEnabled(void) const			{ return braceMatching; }
 
 	std::string CodeEditorSettings::getSettingsString(void) const
 	{
@@ -1687,7 +1446,7 @@ using namespace QGED;
 
 		return str;
 	}
-	
+
 	void CodeEditorSettings::setSettingsFromString(const std::string& str)
 	{
 		Glip::Modules::VanillaParserSpace::VanillaParser parser(str, "SOURCETOBEDEFINED");
@@ -1770,6 +1529,306 @@ using namespace QGED;
 			READ_FONT( editorFont )
 			READ_FONT( keywordFont )
 		}
+	}
+
+// CodeEditorSettingsInterface :
+	CodeEditorSettingsInterface::CodeEditorSettingsInterface(void)
+	 : 	
+	#ifndef __USE_QVGL__
+		widgetPtr(this),
+	#else
+		QVGL::SubWidget(static_cast<QVGL::SubWidget::Flag>(QVGL::SubWidget::NotResizeable | QVGL::SubWidget::NotAnchorable | QVGL::SubWidget::NotMaximizable | QVGL::SubWidget::CloseOnHideRequest)),
+		widgetPtr(&innerWidget),
+	#endif
+		settings( fontInfo().pointSize() ),
+		layout(widgetPtr),
+		groupColors(widgetPtr),
+		groupFonts(widgetPtr),
+		groupMisc(widgetPtr),
+		layoutColors(NULL),
+		layoutFonts(NULL),
+		layoutMisc(NULL),
+		glslKeywordColorLabel("GLSL Keywords", widgetPtr),
+		glslFunctionColorLabel("GLSL Functions", widgetPtr),
+		glslPreprocessorColorLabel("GLSL Preprocessor", widgetPtr),
+		glipLayoutLoaderKeywordColorLabel("GLIP Layout Loader Keywords", widgetPtr),
+		glipUniformLoaderKeywordColorLabel("GLIP Uniforms Loader Keywords", widgetPtr),
+		commentsColorLabel("Comments", widgetPtr),
+		braceMatchingColorLabel("Matching braces", widgetPtr),
+		searchColorLabel("Search", widgetPtr),
+		glslKeywordColorButton(widgetPtr),
+		glslFunctionColorButton(widgetPtr),
+		glslPreprocessorColorButton(widgetPtr),
+		glipLayoutLoaderKeywordColorButton(widgetPtr),
+		glipUniformLoaderKeywordColorButton(widgetPtr),
+		commentsColorButton(widgetPtr),
+		searchColorButton(widgetPtr),
+		braceMatchingColorButton(widgetPtr),
+		editorFontButton(widgetPtr),
+		keywordFontButton(widgetPtr),
+		dialogButtons(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Reset | QDialogButtonBox::Cancel, Qt::Horizontal, &innerWidget),
+		/*okButton("OK", widgetPtr),
+		applyButton("Apply", widgetPtr),
+		cancelButton("Cancel", widgetPtr),
+		resetButton("Reset", widgetPtr),*/
+		highlightKeywordsCheck("Highlight keywords", widgetPtr),
+		highlightCurrentLineCheck("Highlight current line", widgetPtr),
+		braceMatchingCheck("Enable brace matching", widgetPtr),
+		wrapModesBox(widgetPtr),
+		tabSpacesSpin(widgetPtr)
+	{
+		// Create the layout for the GUI : 
+			// Colors : 
+				layoutColors.addWidget(&glslKeywordColorLabel, 			0, 0);
+				layoutColors.addWidget(&glslFunctionColorLabel, 		1, 0);
+				layoutColors.addWidget(&glslPreprocessorColorLabel,		2, 0);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorLabel, 	3, 0);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorLabel, 	4, 0);
+				layoutColors.addWidget(&commentsColorLabel, 			5, 0);
+				layoutColors.addWidget(&braceMatchingColorLabel,		6, 0);
+				layoutColors.addWidget(&searchColorLabel, 			7, 0);
+
+				layoutColors.addWidget(&glslKeywordColorButton, 		0, 1);
+				layoutColors.addWidget(&glslFunctionColorButton,		1, 1);
+				layoutColors.addWidget(&glslPreprocessorColorButton,		2, 1);
+				layoutColors.addWidget(&glipLayoutLoaderKeywordColorButton, 	3, 1);
+				layoutColors.addWidget(&glipUniformLoaderKeywordColorButton, 	4, 1);
+				layoutColors.addWidget(&commentsColorButton, 			5, 1);
+				layoutColors.addWidget(&braceMatchingColorButton,		6, 1);
+				layoutColors.addWidget(&searchColorButton,			7, 1);
+
+				groupColors.setTitle("Highlight colors");
+				groupColors.setLayout(&layoutColors);
+
+				// Connect : 
+				connect(&glslKeywordColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glslFunctionColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glslPreprocessorColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glipLayoutLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&glipUniformLoaderKeywordColorButton,	SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&commentsColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&braceMatchingColorButton,		SIGNAL(released()),	this, SLOT(changeColor()));
+				connect(&searchColorButton,			SIGNAL(released()),	this, SLOT(changeColor()));
+
+			// Font : 
+				layoutFonts.addWidget(&editorFontButton);
+				layoutFonts.addWidget(&keywordFontButton);
+
+				groupFonts.setTitle("Fonts");
+				groupFonts.setLayout(&layoutFonts);
+
+				// Connect :
+				connect(&editorFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
+				connect(&keywordFontButton,			SIGNAL(released()),	this, SLOT(changeFont()));
+
+			// Misc : 
+				wrapModesBox.addItem( "Word wrap", 	QVariant(QTextOption::WordWrap) );
+				wrapModesBox.addItem( "No wrap", 	QVariant(QTextOption::NoWrap) );
+
+				tabSpacesSpin.setRange(0, 128);
+				tabSpacesSpin.setPrefix("Tabulations length : ");
+
+				layoutMisc.addWidget(&highlightKeywordsCheck);
+				layoutMisc.addWidget(&highlightCurrentLineCheck);
+				layoutMisc.addWidget(&braceMatchingCheck);
+				layoutMisc.addWidget(&wrapModesBox);
+				layoutMisc.addWidget(&tabSpacesSpin);
+				
+				groupMisc.setTitle("Miscellaneous");
+				groupMisc.setLayout(&layoutMisc);
+
+				dialogButtons.setCenterButtons(true);
+
+			// General : 
+				layout.addWidget(&groupFonts, 	0, 0, 2, 2);
+				layout.addWidget(&groupMisc, 	2, 0, 4, 2);
+				layout.addWidget(&groupColors, 	0, 2, 5, 2);
+				layout.addWidget(&dialogButtons, 7, 0, 1, 4);
+				
+				connect(&dialogButtons, 	SIGNAL(clicked(QAbstractButton*)),	this, SLOT(processDialogButtonPressed(QAbstractButton*)));
+
+		// Final update :
+			updateInterface();
+
+		#ifdef __USE_QVGL__
+			setInnerWidget(&innerWidget);
+			setTitle("Code Editor Settings");
+		#endif
+	}
+
+	CodeEditorSettingsInterface::~CodeEditorSettingsInterface(void)
+	{ }
+
+	void CodeEditorSettingsInterface::updateInterface(void)
+	{
+		// From Values to GUI...
+
+		// Colors : 
+		glslKeywordColorButton.setStyleSheet(			tr("background:%1;").arg(settings.glslKeywordColor.name()) );
+		glslFunctionColorButton.setStyleSheet(			tr("background:%1;").arg(settings.glslFunctionColor.name()) );
+		glslPreprocessorColorButton.setStyleSheet(		tr("background:%1;").arg(settings.glslPreprocessorColor.name()) );
+		glipLayoutLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(settings.glipLayoutLoaderKeywordColor.name()) );
+		glipUniformLoaderKeywordColorButton.setStyleSheet(	tr("background:%1;").arg(settings.glipUniformLoaderKeywordColor.name()) );
+		commentsColorButton.setStyleSheet(			tr("background:%1;").arg(settings.commentsColor.name()) );
+		braceMatchingColorButton.setStyleSheet(			tr("background:%1;").arg(settings.braceMatchingColor.name()) );
+		searchColorButton.setStyleSheet(			tr("background:%1;").arg(settings.searchColor.name()) );
+
+		// Fonts : 
+		editorFontButton.setText(tr("Editor : %1 (%2)").arg(settings.editorFont.family()).arg(settings.editorFont.pointSize()));
+		editorFontButton.setFont(settings.editorFont);
+
+		keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(settings.keywordFont.family()).arg(settings.keywordFont.pointSize()));
+		keywordFontButton.setFont(settings.keywordFont);
+
+		// Misc : 
+		highlightKeywordsCheck.setChecked( settings.enableHighlight );
+		highlightCurrentLineCheck.setChecked( settings.highlightCurrentLine );
+		braceMatchingCheck.setChecked( settings.braceMatching );
+		wrapModesBox.setCurrentIndex( wrapModesBox.findData(QVariant(settings.wrapMode)) );
+		tabSpacesSpin.setValue( settings.tabNumberOfSpaces );
+	}
+
+	void CodeEditorSettingsInterface::updateValues(void)
+	{
+		// From GUI to Values...
+
+		// Colors :
+		settings.glslKeywordColor		= glslKeywordColorButton.palette().color(QPalette::Window);
+		settings.glslFunctionColor		= glslFunctionColorButton.palette().color(QPalette::Window);
+		settings.glslPreprocessorColor		= glslPreprocessorColorButton.palette().color(QPalette::Window);
+		settings.glipLayoutLoaderKeywordColor	= glipLayoutLoaderKeywordColorButton.palette().color(QPalette::Window);
+		settings.glipUniformLoaderKeywordColor	= glipUniformLoaderKeywordColorButton.palette().color(QPalette::Window);
+		settings.commentsColor			= commentsColorButton.palette().color(QPalette::Window);
+		settings.braceMatchingColor		= braceMatchingColorButton.palette().color(QPalette::Window);
+		settings.searchColor			= searchColorButton.palette().color(QPalette::Window);
+
+		// Fonts :
+		settings.editorFont			= editorFontButton.font();
+		settings.keywordFont			= keywordFontButton.font();
+
+		// Misc : 
+		settings.enableHighlight		= highlightKeywordsCheck.isChecked();
+		settings.highlightCurrentLine		= highlightCurrentLineCheck.isChecked();
+		settings.braceMatching			= braceMatchingCheck.isChecked();
+		settings.wrapMode			= static_cast<QTextOption::WrapMode>( wrapModesBox.itemData( wrapModesBox.currentIndex() ).toUInt() );
+		settings.tabNumberOfSpaces 		= tabSpacesSpin.value();
+
+		// Propagate : 
+		emit settingsModified();
+	}
+
+	void CodeEditorSettingsInterface::changeColor(void)
+	{
+		// Get the pushbutton : 
+		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		QString title;
+
+		if(target==&glslKeywordColorButton)
+			title = "GLSL Keywords Color";
+		else if(target==&glslFunctionColorButton)
+			title = "GLSL Functions Color";
+		else if(target==&glslPreprocessorColorButton)
+			title = "GLSL Preprocessor Color";
+		else if(target==&glipLayoutLoaderKeywordColorButton)
+			title = "GLIP Layout Loader Keywords Color";
+		else if(target==&glipUniformLoaderKeywordColorButton)
+			title = "GLIP Uniforms Loader Keyword";
+		else if(target==&commentsColorButton)
+			title = "Comments Color";
+		else if(target==&braceMatchingColorButton)
+			title = "Matching Braces Color";
+		else if(target==&searchColorButton)
+			title = "Search Color";
+		else
+			throw Exception("CodeEditorSettingsInterface::changeColor - Unknown color picker (internal error).", __FILE__, __LINE__);
+
+		QColor result = QColorDialog::getColor(target->palette().color(QPalette::Window), NULL, title);
+
+		// If the user pressed 'Ok' : 
+		if(result.isValid())
+			target->setStyleSheet( tr("background:%1;").arg(result.name()) );
+	}
+
+	void CodeEditorSettingsInterface::changeFont(void)
+	{
+		QPushButton* target = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		QString title;
+
+		if(target==&editorFontButton)
+			title = "Editor Font";
+		else if(target==&keywordFontButton)
+			title = "Keyword Font";
+		else
+			throw Exception("CodeEditorSettingsInterface::changeFont - Unknown color picker (internal error).", __FILE__, __LINE__);
+
+		bool ok = false;
+		QFont result = QFontDialog::getFont(&ok, target->font(), this, title);
+
+		if(ok)
+		{
+			result.setFixedPitch(true);
+
+			if(target==&editorFontButton)
+				editorFontButton.setText(tr("Editor : %1 (%2)").arg(result.family()).arg(result.pointSize()));
+			else if(target==&keywordFontButton)
+				keywordFontButton.setText(tr("Keywords : %1 (%2)").arg(result.family()).arg(result.pointSize()));
+
+			target->setFont(result);
+		}
+	}
+
+	/*void CodeEditorSettingsInterface::softApply(void)
+	{
+		updateValues();
+	}
+
+	void CodeEditorSettingsInterface::quitDialog(void)
+	{
+		QPushButton* sender = reinterpret_cast<QPushButton*>(QObject::sender());
+
+		hide();
+
+		if(sender==&okButton)
+			updateValues();
+	}*/
+
+	void CodeEditorSettingsInterface::processDialogButtonPressed(QAbstractButton* button)
+	{
+		const QDialogButtonBox::StandardButton standardButton = dialogButtons.standardButton(button);
+
+		switch(standardButton)
+		{
+			case QDialogButtonBox::Ok :
+				updateValues();
+				close();
+				break;
+			case QDialogButtonBox::Apply : 
+				updateValues();
+				break;
+			case QDialogButtonBox::Reset :
+				resetSettings();
+				break;
+			case QDialogButtonBox::Cancel :
+				updateInterface();
+				close();
+				break;
+			default : 
+				// Nothing to do.
+				break;
+		}
+	}
+
+	const CodeEditorSettings& CodeEditorSettingsInterface::getSettings(void) const
+	{
+		return settings;
+	}
+
+	void CodeEditorSettingsInterface::resetSettings(void)
+	{
+		settings.resetSettings();
+		updateInterface();
 	}
 
 // TemplateMenu : 
@@ -2143,7 +2202,7 @@ using namespace QGED;
 		compileAction("Compile", this),
 		templateMenu(this),
 		elementsMenu(this),
-		settings(NULL),
+		//settingsInterface(NULL),
 		searchAndReplaceMenu(this),
 		recentFilesMenu(this)
 	{
@@ -2189,28 +2248,28 @@ using namespace QGED;
 
 		addAction(&closeAction);
 
-		settings = new CodeEditorSettings;
+		//settingsInterface = new CodeEditorSettingsInterface;
 
 		// Signals : 
-		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 		SLOT(changedToTab(int)));
-		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 		SLOT(closeTab(int)));
-		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 		SLOT(addTab(void)));
-		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 		SLOT(open()));
-		QObject::connect(&recentFilesMenu,		SIGNAL(openRequest(const QString&)),				this,		SLOT(open(const QString&)));
-		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 		SLOT(save()));
-		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 		SLOT(saveAs()));
-		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(saveAll()));
-		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 		SLOT(closeTab()));
-		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 		SLOT(closeAll()));
+		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 			SLOT(changedToTab(int)));
+		QObject::connect(&tabBar,			SIGNAL(tabCloseRequested(int)),					this, 			SLOT(closeTab(int)));
+		QObject::connect(&newAction,			SIGNAL(triggered(void)), 					this, 			SLOT(addTab(void)));
+		QObject::connect(&openAction,			SIGNAL(triggered(void)), 					this, 			SLOT(open()));
+		QObject::connect(&recentFilesMenu,		SIGNAL(openRequest(const QString&)),				this,			SLOT(open(const QString&)));
+		QObject::connect(&saveAction,			SIGNAL(triggered(void)), 					this, 			SLOT(save()));
+		QObject::connect(&saveAsAction,			SIGNAL(triggered(void)), 					this, 			SLOT(saveAs()));
+		QObject::connect(&saveAllAction,		SIGNAL(triggered(void)), 					this, 			SLOT(saveAll()));
+		QObject::connect(&closeAction,			SIGNAL(triggered(void)), 					this, 			SLOT(closeTab()));
+		QObject::connect(&closeAllAction,		SIGNAL(triggered(void)), 					this, 			SLOT(closeAll()));
 		#ifndef __USE_QVGL__
-		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					settings, 	SLOT(show()));
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					&settingsInterface, 	SLOT(show()));
 		#else
-		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					this, 		SIGNAL(showEditorSettings()));
+		QObject::connect(&settingsAction,		SIGNAL(triggered(void)), 					this, 			SIGNAL(showEditorSettingsInterface()));
 		#endif
-		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,		SLOT(insert(QString)));
-		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,		SLOT(insert(QString)));
-		QObject::connect(settings,			SIGNAL(settingsModified(void)),					this,		SLOT(updateSettings(void)));
-		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 		SLOT(transferSourceCompilation(void)));
+		QObject::connect(&templateMenu,			SIGNAL(insertTemplate(QString)),				this,			SLOT(insert(QString)));
+		QObject::connect(&elementsMenu,			SIGNAL(insertElement(QString)),					this,			SLOT(insert(QString)));
+		QObject::connect(&settingsInterface,		SIGNAL(settingsModified(void)),					this,			SLOT(updateSettings(void)));
+		QObject::connect(&compileAction,		SIGNAL(triggered(void)), 					this, 			SLOT(transferSourceCompilation(void)));
 
 		// Shortcuts : 
 		newAction.setShortcuts(		QKeySequence::New );
@@ -2253,12 +2312,17 @@ using namespace QGED;
 	{ 
 		while(tabBar.count()>0)
 			closeTab(0, true);
-		delete settings;
+		//delete settingsInterface;
 	}
 	
-	CodeEditorSettings& CodeEditorTabs::getEditorSettings(void)
+	CodeEditorSettingsInterface& CodeEditorTabs::getEditorSettingsInterface(void)
 	{
-		return (*settings);
+		return settingsInterface;
+	}
+	
+	const CodeEditorSettings& CodeEditorTabs::getEditorSettings(void) const
+	{
+		return settingsInterface.getSettings();
 	}
 
 	CodeEditorContainer* CodeEditorTabs::getCurrentEditor(void)
@@ -2299,10 +2363,10 @@ using namespace QGED;
 		{
 			for(int c=0; c<tabBar.count(); c++)
 			{
-				CodeEditorContainer* editor = getEditor(c);
+				CodeEditorContainer* _editor = getEditor(c);
 
-				if(editor!=NULL && editor==editor)
-						return c;
+				if(_editor!=NULL && _editor==editor)
+					return c;
 			}
 		
 			return -1;
@@ -2412,7 +2476,7 @@ using namespace QGED;
 		// Create the widget : 
 		CodeEditorContainer* ptr = new CodeEditorContainer(this);
 		editors[counter] = ptr;
-		ptr->getEditor().updateSettings(*settings);
+		ptr->getEditor().updateSettings(getEditorSettings());
 		ptr->getEditor().addSubMenu(&templateMenu);
 		ptr->getEditor().addSubMenu(&elementsMenu);
 
@@ -2570,7 +2634,7 @@ using namespace QGED;
 	void CodeEditorTabs::updateSettings(void)
 	{
 		for(QMap<int, CodeEditorContainer*>::iterator it=editors.begin(); it!=editors.end(); it++)
-			(*it)->getEditor().updateSettings(*settings);
+			(*it)->getEditor().updateSettings(getEditorSettings());
 	}
 
 	void CodeEditorTabs::transferSourceCompilation(void)
@@ -2673,25 +2737,17 @@ using namespace QGED;
 		const int em = fontInfo.pixelSize();
 		resize(64*em, 32*em);
 
-		QObject::connect(&codeEditorTabs, SIGNAL(showEditorSettings(void)), this, SLOT(showEditorSettings(void)));
+		QObject::connect(&codeEditorTabs, SIGNAL(showEditorSettingsInterface(void)), this, SLOT(showEditorSettingsInterface(void)));
 	}
 	
 	CodeEditorTabsSubWidget::~CodeEditorTabsSubWidget(void)
 	{ }
 
-	void CodeEditorTabsSubWidget::showEditorSettings(void)
+	void CodeEditorTabsSubWidget::showEditorSettingsInterface(void)
 	{
-		QVGL::MainWidget* parent = getQVGLParent();
+		QVGL::GlipViewWidget* parent = getQVGLParent();
 		if(parent!=NULL)
-		{
-			parent->addSubWidget(&codeEditorTabs.getEditorSettings());
-			QObject::connect(&codeEditorTabs.getEditorSettings(), SIGNAL(hideRequest(SubWidget*)), this, SLOT(closeEditorSettings(void)));
-		}
-	}
-
-	void CodeEditorTabsSubWidget::closeEditorSettings(void)
-	{
-		codeEditorTabs.getEditorSettings().close();
+			parent->addSubWidget(&codeEditorTabs.getEditorSettingsInterface());
 	}
 
 	CodeEditorTabs* CodeEditorTabsSubWidget::getCodeEditorPtr(void)

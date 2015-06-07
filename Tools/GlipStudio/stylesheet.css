@@ -7,11 +7,17 @@
 }
 
 /* PUSH BUTTON */
+
 	QPushButton
 	{
-		background: #444444;
-		/*border: 1px solid #AAAAAA;*/
 		color: #CCCCCC;
+		border: 1px solid #666666;
+		border-radius: 10px;
+		padding: 3px;
+		background: qradialgradient(cx: 0.3, cy: -0.4,
+			fx: 0.3, fy: -0.4,
+			radius: 1.35, stop: 0 #555555, stop: 1 #363636);
+		min-width: 64px;
 	}
 
 	QPushButton:hover

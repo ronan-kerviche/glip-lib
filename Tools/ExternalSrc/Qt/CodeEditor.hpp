@@ -276,38 +276,51 @@ namespace QGED
 			void clearCurrentCodeEditor(void);
 	};
 
+	struct CodeEditorSettings
+	{
+		const int		defaultFontSize;
+		QColor 			glslKeywordColor,
+					glslFunctionColor,
+					glslPreprocessorColor,
+					glipLayoutLoaderKeywordColor,
+					glipUniformLoaderKeywordColor,
+					commentsColor,
+					braceMatchingColor,
+					searchColor;
+		QFont			editorFont,
+					keywordFont;
+		QTextOption::WrapMode	wrapMode;
+		int			tabNumberOfSpaces;
+		bool			enableHighlight,
+					highlightCurrentLine,
+					braceMatching;
+
+		CodeEditorSettings(const int _defaultFontSize);
+		CodeEditorSettings(const CodeEditorSettings& c);
+		virtual ~CodeEditorSettings(void);
+
+		void resetSettings(void);
+		std::string getSettingsString(void) const;
+		void setSettingsFromString(const std::string& str);
+	};
+
 	#ifndef __USE_QVGL__
-	class CodeEditorSettings : public QWidget
+	class CodeEditorSettingsInterface : public QWidget
 	#else
-	class CodeEditorSettings : public QVGL::SubWidget
+	class CodeEditorSettingsInterface : public QVGL::SubWidget
 	#endif
 	{
 		Q_OBJECT
 
 		private :
-			// Data : 
+			// Data :
+			CodeEditorSettings	settings;
+
+			// Gui : 
 			#ifdef __USE_QVGL__
 			QWidget			innerWidget;
 			#endif
 			QWidget*		widgetPtr;
-			const int		defaultFontSize;
-			QColor 			glslKeywordColor,
-						glslFunctionColor,
-						glslPreprocessorColor,
-						glipLayoutLoaderKeywordColor,
-						glipUniformLoaderKeywordColor,
-						commentsColor,
-						braceMatchingColor,
-						searchColor;
-			QFont			editorFont,
-						keywordFont;
-			QTextOption::WrapMode	wrapMode;
-			int			tabNumberOfSpaces;
-			bool			enableHighlight,
-						highlightCurrentLine,
-						braceMatching;
-
-			// Gui : 
 			QGridLayout		layout;
 			QGroupBox		groupColors,
 						groupFonts,
@@ -332,48 +345,27 @@ namespace QGED
 						searchColorButton,
 						braceMatchingColorButton,
 						editorFontButton,
-						keywordFontButton,
-						okButton,
-						applyButton,
-						cancelButton,
-						resetButton;
+						keywordFontButton;
+			QDialogButtonBox	dialogButtons;
 			QCheckBox		highlightKeywordsCheck,
 						highlightCurrentLineCheck,
 						braceMatchingCheck;	
 			QComboBox		wrapModesBox;
 			QSpinBox		tabSpacesSpin;
 
-			void updateGUI(void);
+			void updateInterface(void);
 			void updateValues(void);
 
 		private slots :
 			void changeColor(void);
 			void changeFont(void);
-			void softApply(void);
-			void quitDialog(void);
+			void processDialogButtonPressed(QAbstractButton* button);
 
 		public : 
-			CodeEditorSettings(void);
-			virtual ~CodeEditorSettings(void);
+			CodeEditorSettingsInterface(void);
+			virtual ~CodeEditorSettingsInterface(void);
 
-			const QColor& getGLSLKeywordColor(void) const;
-			const QColor& getGLSLFunctionColor(void) const;
-			const QColor& getGLSLPreprocessorColor(void) const;
-			const QColor& getGLIPLayoutLoaderKeywordColor(void) const;
-			const QColor& getGLIPUniformLoaderKeywordColor(void) const;
-			const QColor& getCommentsColor(void) const;
-			const QColor& getBraceMatchingColor(void) const;
-			const QColor& getSearchColor(void) const;
-			const QFont& getEditorFont(void) const;
-			const QFont& getKeywordFont(void) const;
-			const QTextOption::WrapMode& getWrapMode(void) const;
-			const int& getNumberOfSpacesPerTabulation(void) const;
-			const bool& isHighlightEnabled(void) const;
-			const bool& isLineHighlightEnabled(void) const;
-			const bool& isBraceMatchingEnabled(void) const;
-		
-			std::string getSettingsString(void) const;
-			void setSettingsFromString(const std::string& str);
+			const CodeEditorSettings& getSettings(void) const;
 
 		public slots :
 			void resetSettings(void);
@@ -533,7 +525,7 @@ namespace QGED
 							compileAction;
 			TemplateMenu			templateMenu;
 			ElementsMenu			elementsMenu;
-			CodeEditorSettings		*settings;
+			CodeEditorSettingsInterface	settingsInterface;
 			SearchAndReplaceMenu		searchAndReplaceMenu;
 			RecentFilesMenu			recentFilesMenu;
 
@@ -549,7 +541,8 @@ namespace QGED
 		public :
 			CodeEditorTabs(void);
 			virtual ~CodeEditorTabs(void);
-			CodeEditorSettings& getEditorSettings(void);
+			CodeEditorSettingsInterface& getEditorSettingsInterface(void);
+			const CodeEditorSettings& getEditorSettings(void) const;
 
 		private slots :
 			void addTab(const QString& filename, int lineNumber=0);
@@ -574,7 +567,7 @@ namespace QGED
 			void closeAll(void);
 
 		signals :
-			void showEditorSettings(void);
+			void showEditorSettingsInterface(void);
 			void compileSource(std::string source, std::string path, std::string sourceName, void* identifier, const QObject* referrer);
 	};
 
@@ -587,8 +580,7 @@ namespace QGED
 			CodeEditorTabs codeEditorTabs;
 
 		private slots : 
-			void showEditorSettings(void);
-			void closeEditorSettings(void);
+			void showEditorSettingsInterface(void);
 
 		public :
 			CodeEditorTabsSubWidget(void);

@@ -242,6 +242,10 @@
 					public :
 						CustomModel(int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords);
 
+						void reserveVertices(size_t nVertices);
+						void increaseVerticesReservation(size_t nNewVertices);
+						void reserveElements(size_t nVertices);
+						void increaseElementsReservation(size_t nNewVertices);
 						void newVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY=NULL, const GLfloat* interleavedUV=NULL);
 						void newVertices2D(const size_t N, const GLfloat* x, const GLfloat* y, const GLfloat* nx=NULL, const GLfloat* ny=NULL, const GLfloat* u=NULL, const GLfloat* v=NULL);
 						GLuint newVertex2D(const GLfloat& x, const GLfloat& y, const GLfloat& nx=0.0f, const GLfloat& ny=0.0f, const GLfloat& u=0.0f, const GLfloat& v=0.0f);

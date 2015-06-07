@@ -12,7 +12,7 @@
 		Q_OBJECT
 
 		private :
-			QVGL::MainWidget			*window;
+			QVGL::GlipViewWidget			*window;
 			QVGL::VariablesTrackerSubWidget		*variableTracker;
 			QGED::CodeEditorTabsSubWidget		*editor;
 			QGIC::ImageItemsCollectionSubWidget	*collection;

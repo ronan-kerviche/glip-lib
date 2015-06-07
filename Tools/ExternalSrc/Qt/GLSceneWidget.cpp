@@ -15,11 +15,12 @@
 /* ************************************************************************************************************* */
 
 #include "GLSceneWidget.hpp"
+#include <QColorDialog>
 
 using namespace QVGL;
 
 // Tools : 
-	const std::string getVisualPartName(const VisualPart& part)
+	const QString getVisualPartName(const VisualPart& part)
 	{
 		#define PART( id ) case id : return GLIP_STR(id);
 
@@ -874,18 +875,19 @@ using namespace QVGL;
 				resizeVerticalLock	= ((cw.x()>borderResize) && ((width()-cw.x())>borderResize)) || anchorMode==AnchorMaximized; // Only the maximized anchor lock the horizontal resize.
 				resizeActive		= !(resizeHorizontalLock && resizeVerticalLock);	
 			}
+
+			// Accept the event : 
+			event->accept();
+
+			// Send selection signal : 
+			emit selected(this);
 		}
-
-		// Absorb all : 
-		event->accept();
-
-		// Send selection signal : 
-		emit selected(this);
+		// Let QWidget::mousePressEvent decide of acceptance.
 	}
 
 	void SubWidget::mouseMoveEvent(QMouseEvent* event)
 	{
-		QWidget::mousePressEvent(event);
+		QWidget::mouseMoveEvent(event);
 
 		QRectF sceneRect;
 		if(graphicsProxy!=NULL && graphicsProxy->scene()!=NULL)
@@ -981,10 +983,11 @@ using namespace QVGL;
 					resize(sizeAtMousePress.width()+d.x(), sizeAtMousePress.height()+d.y());
 				}
 			}
-		}
 
-		// Absorb all : 
-		event->accept();
+			// And accept the event (overwrite acceptance) : 
+			event->accept();
+		}
+		// Let QWidget::mouseMoveEvent decide of acceptance.
 	}
 
 	void SubWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -995,10 +998,11 @@ using namespace QVGL;
 		{
 			motionActive = false;
 			resizeActive = false;
-		}
 
-		// Absorb all : 
-		event->accept();
+			// And accept the event (overwrite acceptance) : 
+			event->accept();
+		}
+		// Let QWidget::mousePressEvent decide of acceptance
 	}
 
 	void SubWidget::mouseDoubleClickEvent(QMouseEvent* event)
@@ -1019,17 +1023,18 @@ using namespace QVGL;
 				else
 					setAnchor(AnchorFree);
 			}
-		}
 
-		// Absorb all : 
-		event->accept();
+			// And accept the event (overwrite acceptance) : 
+			event->accept();
+		}
+		// Let QWidget::mouseDoubleClickEvent decide of acceptance.
 	}
 
 	void SubWidget::wheelEvent(QWheelEvent* event)
 	{
 		QWidget::wheelEvent(event);
 
-		// Absorb all : 
+		// And absorb all : 
 		event->accept();
 	}
 
@@ -1213,12 +1218,12 @@ using namespace QVGL;
 		emit titleChanged();
 	}
 
-	void SubWidget::setQVGLParent(MainWidget* _qvglParent)
+	void SubWidget::setQVGLParent(GlipViewWidget* _qvglParent)
 	{
 		qvglParent = _qvglParent;
 	}
 
-	MainWidget* SubWidget::getQVGLParent(void)
+	GlipViewWidget* SubWidget::getQVGLParent(void)
 	{
 		return qvglParent;
 	}
@@ -1295,8 +1300,13 @@ using namespace QVGL;
 
 	void SubWidget::hide(void)
 	{
-		QWidget::hide();
-		emit hideRequest(this);
+		if((flags & CloseOnHideRequest) > 0)
+			close();
+		else
+		{
+			QWidget::hide();
+			emit hideRequest(this);
+		}
 	}
 
 	void SubWidget::close(void)
@@ -1411,7 +1421,7 @@ using namespace QVGL;
 		viewsTablesMenu("Tables", this),
 		subWidgetsMenu("Widgets", this),
 		toggleFullscreenAction("Toggle Fullscreen", this),
-		openSettingsAction("Settings", this),
+		openSettingsInterfaceAction("Settings", this),
 		openInfosAction("Infos", this),
 		quitAction("Quit", this),
 		viewsSeparator(NULL),
@@ -1457,6 +1467,7 @@ using namespace QVGL;
 		QObject::connect(&subWidgetsMenu,				SIGNAL(aboutToShow()),		this, SLOT(sendSelectedSignal()));
 		QObject::connect(&signalMapper,					SIGNAL(mapped(int)),		this, SLOT(transferActionSignal(int)));
 		QObject::connect(&openInfosAction,				SIGNAL(triggered()), 		this, SIGNAL(requestOpenInfos()));
+		QObject::connect(&openSettingsInterfaceAction,			SIGNAL(triggered()), 		this, SIGNAL(requestOpenSettingsInterface()));
 
 		// Signals mapping : 
 		QObject::connect(&toggleFullscreenAction,			SIGNAL(triggered()),		&signalMapper, SLOT(map()));
@@ -1479,8 +1490,8 @@ using namespace QVGL;
 
 		// Init menus : 
 		mainMenu.addAction(&toggleFullscreenAction);
-		mainMenu.addAction(&openSettingsAction);
-		mainMenu.addAction(&openInfosAction);
+		mainMenu.addAction(&openSettingsInterfaceAction);
+		mainMenu.addAction(&openInfosAction); 
 		mainMenu.addAction(&quitAction);
 
 		viewsSeparator = viewsMenu.addSeparator();
@@ -1506,7 +1517,8 @@ using namespace QVGL;
 		viewsTablesActions.clear();
 
 		mainMenu.removeAction(&toggleFullscreenAction);
-		mainMenu.removeAction(&openSettingsAction);
+		mainMenu.removeAction(&openSettingsInterfaceAction);
+		mainMenu.removeAction(&openInfosAction);
 		mainMenu.removeAction(&quitAction);
 		viewsMenu.removeAction(&closeCurrentViewAction);
 		viewsMenu.removeAction(&closeAllViewsAction);
@@ -1530,38 +1542,39 @@ using namespace QVGL;
 	{
 		QWidget::mousePressEvent(event);
 
-		// Absorb :
 		if(!event->isAccepted())
+		{			
 			event->accept();
-
-		emit selected(this);
+			emit selected(this);
+		}
+		// Let QWidget::mousePressEvent decide.
 	}
 
 	void TopBar::mouseDoubleClickEvent(QMouseEvent* event)
 	{
 		QWidget::mouseDoubleClickEvent(event);
 
-		// Absorb :
 		if(!event->isAccepted())
 			event->accept();
+		// Let QWidget::mouseDoubleClickEvent decide.
 	}
 
 	void TopBar::mouseMoveEvent(QMouseEvent* event)
 	{
 		QWidget::mouseMoveEvent(event);
 
-		// Absorb :
 		if(!event->isAccepted())
 			event->accept();
+		// Let QWidget::mouseMoveEvent decide.
 	}
 
 	void TopBar::mouseReleaseEvent(QMouseEvent* event)
 	{
 		QWidget::mouseReleaseEvent(event);
 
-		// Absorb :
 		if(!event->isAccepted())
 			event->accept();
+		// Let QWidget::mouseReleaseEvent decide.
 	}
 
 	void TopBar::stretch(const QRectF& rect)
@@ -1649,7 +1662,10 @@ using namespace QVGL;
 			graphicsProxy->setData(QGraphicsItemVisualPartKey, QVariant(TopBarVisualPart));
 
 			if(graphicsProxy->scene()!=NULL)
+			{
+				stretch(graphicsProxy->scene()->sceneRect());
 				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
+			}
 
 			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
 		}
@@ -1825,7 +1841,10 @@ using namespace QVGL;
 			graphicsProxy->setData(QGraphicsItemVisualPartKey, QVariant(BottomBarVisualPart));
 
 			if(graphicsProxy->scene()!=NULL)
+			{
+				stretch(graphicsProxy->scene()->sceneRect());
 				QObject::connect(graphicsProxy->scene(), SIGNAL(sceneRectChanged(const QRectF&)), this, SLOT(stretch(const QRectF&)));
+			}
 
 			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
 		}
@@ -1849,9 +1868,11 @@ using namespace QVGL;
 
 // InfosDialog :
 	InfosDialog::InfosDialog(void)
-	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable)),
-		message(NULL)
+	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable | SubWidget::CloseOnHideRequest))
 	{
+		if(!HandleOpenGL::isInitialized())
+			throw Glip::Exception("InfosDialog::InfosDialog - GlipLib is not initialized.");
+
 		// Test : 
 		const QString PBMSupportString = 
 						#ifdef __USE_NETPBM__
@@ -1899,18 +1920,10 @@ using namespace QVGL;
 		// Add the inner widget :
 		setInnerWidget(&message);
 		setTitle("About");
-
-		// Signals : 
-		QObject::connect(this, SIGNAL(closed()), this, SLOT(closedSlot()));
 	}
 
 	InfosDialog::~InfosDialog(void)
 	{ }
-
-	void InfosDialog::closedSlot(void)
-	{
-		std::cout << "InforsDialog closed!" << std::endl;
-	}
 
 #ifdef __MAKE_VARIABLES__ 
 // VariablesTrackerSubWidget 
@@ -2121,131 +2134,31 @@ using namespace QVGL;
 	}
 #endif
 
-// ContextWidget :
-	ContextWidget::ContextWidget(QGLContext* ctx, QWidget* parent)
-	 : 	QGLWidget(ctx, parent),
-		glipOwnership(false),
-		clearColorRed(0.1f),
-		clearColorGreen(0.1f),
-		clearColorBlue(0.1f)
+// GlipViewSettings :
+	GlipViewSettings::GlipViewSettings(void)
+	 : 	takeBackEnabled(NumActions, false)
 	{
-		try
-		{
-			makeCurrent();
-
-			// Glip-lib specifics : 
-			if(!HandleOpenGL::isInitialized())
-			{
-				glipOwnership = true;
-				HandleOpenGL::init();
-			}
-		}
-		catch(Exception& e)
-		{
-			// Show Error : 
-			std::cerr << "GLSceneWidget::GLSceneWidget - Exception caught : " << std::endl;
-			std::cerr << e.what() << std::endl;
-
-			QMessageBox errorBox(QMessageBox::Critical, "ContextWidget::ContextWidget", "An error occurred during initialization.", QMessageBox::Ok);
-			errorBox.setDetailedText(e.what());
-			errorBox.exec();
-
-			// re-throw :
-			throw e;
-		}
+		resetSettings();
 	}
 
-	ContextWidget::~ContextWidget(void)
-	{
-		if(glipOwnership)
-			HandleOpenGL::deinit();
-	}
-
-	void ContextWidget::initializeGL(void)
-	{
-		makeCurrent();
-		glViewport(0, 0, width(), height());
-		setAutoBufferSwap(false);
-	}
-
-	void ContextWidget::resizeGL(int width, int height)
-	{
-		// TODO : this is never called, to be removed?.
-		glViewport(0, 0, width, height);
-	}
-
-// KeyboardState :
-	KeyboardState::KeyboardState(void)
-	{
-		for(int k=0; k<NumActions; k++)
-		{
-			actionPressed[k] = false;
-			takeBackEnabled[k] = false;
-		}
-
-		resetActionsKeySequences();
-	}
-
-	KeyboardState::~KeyboardState(void)
+	GlipViewSettings::GlipViewSettings(const GlipViewSettings& c)
+	 : 	takeBackEnabled(c.takeBackEnabled),
+		keysActionsAssociations(c.keysActionsAssociations),
+		backgroundColor(c.backgroundColor),
+		translationStep(c.translationStep),
+		rotationStep(c.rotationStep),
+		zoomFactor(c.zoomFactor)
 	{ }
 
-	void KeyboardState::keyPressed(QKeyEvent* event)
+	GlipViewSettings::~GlipViewSettings(void)
+	{ }
+
+	QKeySequence GlipViewSettings::getKeysAssociatedToAction(const ActionID& a) const
 	{
-		ActionID a = getActionAssociatedToKey(event);
-
-		if(a!=NoAction)
-		{
-			event->accept();
-			actionPressed[a] = true;
-
-			emit actionReceived(a);
-		}
-	}
-
-	void KeyboardState::keyReleased(QKeyEvent* event)
-	{
-		ActionID a = getActionAssociatedToKey(event);
-
-		if(a!=NoAction)
-		{
-			event->accept();
-			actionPressed[a] = false;
-
-			if(isActionTakeBackEnabled(a))
-				emit actionReceived(a, true);
-		}
-	}
-
-	void KeyboardState::forceRelease(void)
-	{
-		for(QMap<QKeySequence, ActionID>::iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
-		{
-			if(isActionTakeBackEnabled(it.value()))
-				emit actionReceived(it.value(), true);
-		}
-	}
-
-	ActionID KeyboardState::getActionAssociatedToKey(const QKeySequence& keySequence) const
-	{
-		if(keysActionsAssociations.contains(keySequence))
-			return keysActionsAssociations[keySequence];
-		else
-			return NoAction;
-	}
-
-	ActionID KeyboardState::getActionAssociatedToKey(const QKeyEvent* event) const
-	{
-		const int s = (event->key() | event->modifiers());
-
-		return getActionAssociatedToKey(QKeySequence(s));
-	}
-
-	QKeySequence KeyboardState::getKeysAssociatedToAction(const ActionID& a)
-	{
-		bool addComa = false;
+		/*bool addComa = false;
 		QString keysString;
 
-		for(QMap<QKeySequence, ActionID>::iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
+		for(QMap<QKeySequence, ActionID>::const_iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
 		{
 			if(it.value()==a)
 			{
@@ -2257,26 +2170,27 @@ using namespace QVGL;
 			}
 		}
 	
-		return QKeySequence(keysString);
+		return QKeySequence(keysString);*/
+
+		for(QMap<QKeySequence, ActionID>::const_iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
+		{
+			if(it.value()==a)
+				return it.key();
+		}
+		return QKeySequence();
 	}
 
-	bool KeyboardState::isActionTakeBackEnabled(const ActionID& a) const
+	const QMap<QKeySequence, ActionID>& GlipViewSettings::getKeysActionsAssociations(void) const
 	{
-		if(a>=0 && a<NumActions)
-			return takeBackEnabled[a];
-		else
-			throw Exception("KeyboardState::isActionTakenBack - Invalid ActionID.", __FILE__, __LINE__);
+		return keysActionsAssociations;
 	}
 
-	void KeyboardState::setTakeBack(const ActionID& a, bool enabled)
+	const QVector<bool>& GlipViewSettings::getTakeBackEnabled(void) const
 	{
-		if(a>=0 && a<NumActions)
-			takeBackEnabled[a] = enabled;
-		else
-			throw Exception("KeyboardState::isActionTakenBack - Invalid ActionID.", __FILE__, __LINE__);
+		return takeBackEnabled;
 	}
 
-	void KeyboardState::setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack)
+	void GlipViewSettings::setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack)
 	{
 		// Remove all the previous sequences associated with the action : 
 		QList<QKeySequence> previousKeySequence = keysActionsAssociations.keys(a);
@@ -2297,10 +2211,10 @@ using namespace QVGL;
 		}
 
 		// Take back : 
-		setTakeBack(a, enableTakeBack);
+		takeBackEnabled[a] = enableTakeBack;
 	}
 
-	void KeyboardState::resetActionsKeySequences(void)
+	void GlipViewSettings::resetActionsKeySequences(void)
 	{
 		setActionKeySequence(ActionUp,					Qt::Key_Up);
 		setActionKeySequence(ActionDown,				Qt::Key_Down);
@@ -2325,12 +2239,353 @@ using namespace QVGL;
 		setActionKeySequence(ActionHideAllSubWidgets,			QKeySequence(Qt::Key_F9));
 	}
 
+	void GlipViewSettings::resetSettings(void)
+	{
+		backgroundColor = QColor(25, 25, 25);
+		translationStep	= 0.1f;
+		rotationStep	= 0.17453f;
+		zoomFactor 	= 1.2f;
+
+		keysActionsAssociations.clear();
+		takeBackEnabled.clear();
+		takeBackEnabled.fill(false, NumActions);
+		resetActionsKeySequences();
+	}
+	
+	GlipViewSettings& GlipViewSettings::operator=(const GlipViewSettings& c)
+	{
+		backgroundColor		= c.backgroundColor;
+		takeBackEnabled		= c.takeBackEnabled;
+		keysActionsAssociations	= c.keysActionsAssociations;
+		translationStep		= c.translationStep;
+		rotationStep		= c.rotationStep;
+		zoomFactor		= c.zoomFactor;
+
+		return (*this);
+	}
+
+// KeyGrabber :
+	KeyGrabber::KeyGrabber(const ActionID& _actionID, const QKeySequence& _currentKey, QWidget* parent)
+	 : 	QPushButton(getKeyName(_currentKey), parent),
+		currentKey(_currentKey),
+		actionID(_actionID)
+	{ }
+
+	KeyGrabber::~KeyGrabber(void)
+	{ }
+
+	QString KeyGrabber::getKeyName(const QKeySequence& key)
+	{
+		if(key.isEmpty())
+			return "(undefined)";
+		else
+			return key.toString(QKeySequence::NativeText);
+	}
+
+	void KeyGrabber::keyPressEvent(QKeyEvent* event)
+	{
+		if(event->key()!=Qt::Key_Return && event->key()!=Qt::Key_Escape)
+		{
+			const int s = (event->key() | event->modifiers());
+			currentKey = QKeySequence(s);
+			setText(getKeyName(currentKey));
+			clearFocus();
+
+			emit modified();
+		}
+		else
+			clearFocus();
+	}
+
+	const QKeySequence& KeyGrabber::getKey(void) const
+	{
+		return currentKey;
+	}
+	
+	void KeyGrabber::setKey(const QKeySequence& key)
+	{
+		currentKey = key;
+		setText(getKeyName(currentKey));
+	}
+
+	void KeyGrabber::removeKey(void)
+	{
+		currentKey = QKeySequence();
+		setText(getKeyName(currentKey));
+	}
+
+// GlipViewSettingsInterface :
+	GlipViewSettingsInterface::GlipViewSettingsInterface(const GlipViewSettings& _settings)
+	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable | SubWidget::CloseOnHideRequest)), 
+		settings(_settings),
+		keysGroupBox(&innerWidget),
+		othersGroupBox(&innerWidget),
+		layout(&innerWidget),
+		keysLayout(&keysGroupBox),
+		othersLayout(&othersGroupBox),
+		//decisionLayout(NULL),
+		translationStepLabel("Translation : ", &othersGroupBox),
+		rotationStepLabel("Rotation : ", &othersGroupBox),
+		zoomFactorLabel("Zoom Factor : ", &othersGroupBox),
+		backgroundColorLabel("Background color : ", &othersGroupBox),
+		translationStepSpin(&othersGroupBox),
+		rotationStepSpin(&othersGroupBox),
+		zoomFactorSpin(&othersGroupBox),
+		backgroundColorButton(&innerWidget),
+		dialogButtons(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Reset | QDialogButtonBox::Cancel, Qt::Horizontal, &innerWidget)
+	{
+		// Add the inner widget :
+		setInnerWidget(&innerWidget);
+		setTitle("Settings");
+
+		// Build layout for the actions : 
+		const int numColumns = 4;
+		for(int k=0; k<NumActions; k++)
+		{
+			const int p = k/numColumns,
+				  q = k - p*numColumns;
+			const ActionID actionID = static_cast<ActionID>(k);
+
+			QLabel* label = new QLabel(tr("%1 : ").arg(GlipViewWidget::getActionName(actionID)), &keysGroupBox);
+			label->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+			keysLayout.addWidget(label, p, q*2+0);
+			keyGrabbers.push_back(new KeyGrabber(actionID, settings.getKeysAssociatedToAction(actionID), &keysGroupBox));
+			keysLayout.addWidget(keyGrabbers.back(), p, q*2+1);
+
+			connect(keyGrabbers.back(), SIGNAL(modified()), this, SLOT(checkKeys(void)));
+		}
+		keysLayout.setMargin(2);
+		keysLayout.setSpacing(2);
+		keysGroupBox.setTitle("Controls");
+		layout.addWidget(&keysGroupBox);
+			
+		// Add other settings : 
+		translationStepLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		rotationStepLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		zoomFactorLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		backgroundColorLabel.setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+		translationStepSpin.setValue(settings.translationStep);
+		translationStepSpin.setRange(0.0, 1.0);
+		rotationStepSpin.setValue(settings.rotationStep);
+		rotationStepSpin.setRange(0.0, 1.0);
+		zoomFactorSpin.setValue(settings.zoomFactor);
+		zoomFactorSpin.setRange(1.0, 2.0);
+		updateBackgroundColorButton();
+
+		othersLayout.addWidget(&translationStepLabel);
+		othersLayout.addWidget(&translationStepSpin);
+		othersLayout.addWidget(&rotationStepLabel);
+		othersLayout.addWidget(&rotationStepSpin);
+		othersLayout.addWidget(&zoomFactorLabel);
+		othersLayout.addWidget(&zoomFactorSpin);
+		othersLayout.addWidget(&backgroundColorLabel);
+		othersLayout.addWidget(&backgroundColorButton);
+
+		othersGroupBox.setTitle("Miscellaneous");
+		layout.addWidget(&othersGroupBox);
+
+		// Add commands : 
+		dialogButtons.setCenterButtons(true);
+		layout.addWidget(&dialogButtons);
+
+		layout.setMargin(2);
+		layout.setSpacing(4);
+
+		// Signals and slots :
+		connect(&backgroundColorButton,	SIGNAL(released()), 			this, SLOT(changeBackgroundColor()));
+		connect(&dialogButtons, 	SIGNAL(clicked(QAbstractButton*)),	this, SLOT(processDialogButtonPressed(QAbstractButton*)));
+	}
+
+	GlipViewSettingsInterface::~GlipViewSettingsInterface(void)
+	{
+		for(QVector<KeyGrabber*>::iterator it=keyGrabbers.begin(); it!=keyGrabbers.end(); it++)
+			delete (*it);
+	}
+
+	void GlipViewSettingsInterface::updateBackgroundColorButton(void)
+	{
+		backgroundColorButton.setStyleSheet(tr("background:%1;").arg(settings.backgroundColor.name()));
+	}
+	
+	void GlipViewSettingsInterface::updateInterface(void)
+	{
+		for(QVector<KeyGrabber*>::iterator it=keyGrabbers.begin(); it!=keyGrabbers.end(); it++)
+			(*it)->setKey(settings.getKeysAssociatedToAction((*it)->actionID));
+		translationStepSpin.setValue(settings.translationStep);
+		rotationStepSpin.setValue(settings.rotationStep);
+		zoomFactorSpin.setValue(settings.zoomFactor);
+		updateBackgroundColorButton();
+	}
+
+	void GlipViewSettingsInterface::updateData(void)
+	{
+		const QVector<bool>& originalTakeBack = settings.getTakeBackEnabled();
+		for(QVector<KeyGrabber*>::iterator it=keyGrabbers.begin(); it!=keyGrabbers.end(); it++)
+			settings.setActionKeySequence((*it)->actionID, (*it)->getKey(), originalTakeBack[(*it)->actionID]);
+		settings.translationStep = translationStepSpin.value();
+		settings.rotationStep = rotationStepSpin.value();
+		settings.zoomFactor = zoomFactorSpin.value();
+		settings.backgroundColor = backgroundColorButton.palette().color(QPalette::Window);
+
+		emit applySettings();
+	}
+
+	void GlipViewSettingsInterface::checkKeys(const KeyGrabber* ptr)
+	{
+		for(QVector<KeyGrabber*>::iterator it=keyGrabbers.begin(); it!=keyGrabbers.end(); it++)
+		{
+			if((*it)->actionID!=ptr->actionID && (*it)->getKey()==ptr->getKey())
+				(*it)->removeKey();
+		}
+	}
+
+	void GlipViewSettingsInterface::checkKeys(void)
+	{
+		const KeyGrabber* ptr = reinterpret_cast<KeyGrabber*>(QObject::sender());
+		if(ptr!=NULL)
+			checkKeys(ptr);
+	}
+
+	void GlipViewSettingsInterface::changeBackgroundColor(void)
+	{
+		QColor result = QColorDialog::getColor(settings.backgroundColor, NULL, "Choose background color");
+
+		// If the user pressed 'Ok' : 
+		if(result.isValid())
+		{
+			settings.backgroundColor = result;
+			updateBackgroundColorButton();
+		}
+	}
+
+	void GlipViewSettingsInterface::processDialogButtonPressed(QAbstractButton* button)
+	{
+		const QDialogButtonBox::StandardButton standardButton = dialogButtons.standardButton(button);
+
+		switch(standardButton)
+		{
+			case QDialogButtonBox::Ok :
+				updateData();
+				close();
+				break;
+			case QDialogButtonBox::Apply : 
+				updateData();
+				break;
+			case QDialogButtonBox::Reset :
+				resetSettings();
+				break;
+			case QDialogButtonBox::Cancel :
+				updateInterface();
+				close();
+				break;
+			default : 
+				// Nothing to do.
+				break;
+		}
+	}
+
+	void GlipViewSettingsInterface::resetSettings(void)
+	{
+		settings.resetSettings();
+		updateInterface();
+		emit applySettings();
+	}
+
+	const GlipViewSettings& GlipViewSettingsInterface::getSettings(void) const
+	{
+		return settings;
+	}
+
+// KeyboardState :
+	KeyboardState::KeyboardState(const GlipViewSettings& settings)
+	 : 	takeBackEnabled(NumActions, false),
+		actionPressed(NumActions, false)
+	{
+		setKeyboardSettings(settings);
+
+		for(int k=0; k<NumActions; k++)
+			actionPressed[k] = false;
+	}
+
+	KeyboardState::~KeyboardState(void)
+	{ }
+
+	ActionID KeyboardState::getActionAssociatedToKey(const QKeySequence& keySequence) const
+	{
+		QMap<QKeySequence, ActionID>::const_iterator it = keysActionsAssociations.find(keySequence);
+		if(it!=keysActionsAssociations.end())
+			return (it.value());
+		else
+			return NoAction;
+	}
+
+	ActionID KeyboardState::getActionAssociatedToKey(const QKeyEvent* event) const
+	{
+		const int s = (event->key() | event->modifiers());
+		return getActionAssociatedToKey(QKeySequence(s));
+	}
+
+	QKeySequence KeyboardState::getKeysAssociatedToAction(const ActionID& a)
+	{
+		bool addComa = false;
+		QString keysString;
+
+		for(QMap<QKeySequence, ActionID>::iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
+		{
+			if(it.value()==a)
+			{
+				if(addComa)
+					keysString += ", ";
+
+				keysString += it.key().toString();
+				addComa = true;
+			}
+		}
+	
+		return QKeySequence(keysString);
+	}
+
+	void KeyboardState::setKeyboardSettings(const GlipViewSettings& settings)
+	{
+		keysActionsAssociations = settings.getKeysActionsAssociations();
+		takeBackEnabled		= settings.getTakeBackEnabled();
+	}
+
+	void KeyboardState::processKeyEvent(QKeyEvent* event, bool pressed)
+	{
+		ActionID a = getActionAssociatedToKey(event);
+
+		if(!event->isAccepted() && a!=NoAction)
+		{
+			event->accept();
+
+			actionPressed[a] = pressed;
+
+			if(pressed)
+				processAction(a, false);
+			else if(takeBackEnabled[a])
+				processAction(a, true);
+			
+		}
+	}
+	
+	void KeyboardState::forceKeyRelease(void)
+	{
+		for(QMap<QKeySequence, ActionID>::iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
+		{
+			if(takeBackEnabled[it.value()])
+				processAction(it.value(), true);
+		}
+	}
+
 // MouseState::VectorData
-	MouseState::VectorData::VectorData(const QString& name, QObject* parent)
-	 : 	modification(1)
+	MouseState::VectorData::VectorData(const VectorID _id, const QString& name, QObject* parent)
+	 : 	
 		#ifdef __MAKE_VARIABLES__
-		, record(NULL)
+		record(NULL),
 		#endif
+		id(_id)
 	{
 		#ifdef __MAKE_VARIABLES__
 			record = new QGUI::VariableRecord(name, GL_FLOAT_VEC2, parent);
@@ -2345,12 +2600,31 @@ using namespace QVGL;
 		#endif	
 	}
 
-// MouseState::ColorData
-	MouseState::ColorData::ColorData(const QString& name, QObject* parent)
-	 : 	modification(1)
+	const QPointF& MouseState::VectorData::getVector(void) const
+	{
+		return vector;
+	}
+
+	void MouseState::VectorData::setVector(const QPointF& v, bool setRecord)
+	{
+		vector = v;
 		#ifdef __MAKE_VARIABLES__
-		, record(NULL)
+		if(setRecord && !record->isLocked())
+		{
+			record->data().set(v.x(), 0);
+			record->data().set(v.y(), 1);
+			record->declareUpdate();
+		}
 		#endif
+	}
+
+// MouseState::ColorData
+	MouseState::ColorData::ColorData(const ColorID _id, const QString& name, QObject* parent)
+	 : 	
+		#ifdef __MAKE_VARIABLES__
+		record(NULL),
+		#endif
+		id(_id)
 	{
 		#ifdef __MAKE_VARIABLES__
 			record = new QGUI::VariableRecord(name, GL_FLOAT_VEC3, parent);
@@ -2365,16 +2639,224 @@ using namespace QVGL;
 		#endif	
 	}
 
-// MouseState :
-	const QMap<MouseState::VectorID, QString>	MouseState::vectorsNameMap = initVectorsNameMap();
-	const QMap<MouseState::ColorID, QString>	MouseState::colorsNameMap = initColorsNameMap();
-
-	// Static Function :
-	QMap<MouseState::VectorID, QString> MouseState::initVectorsNameMap(void)
+	const QColor& MouseState::ColorData::getColor(void) const
 	{
-		QMap<VectorID, QString> _vectorsNameMap;
+		return color;
+	}
 
-		#define NAME_MAP( id ) _vectorsNameMap[ id ] = GLIP_STR( id );
+	void MouseState::ColorData::setColor(const QColor& c, bool setRecord)
+	{
+		color = c;
+		#ifdef __MAKE_VARIABLES__
+		if(setRecord && !record->isLocked())
+		{
+			record->data().set(c.red(), 0);
+			record->data().set(c.green(), 1);
+			record->data().set(c.blue(), 2);
+			record->declareUpdate();
+		}
+		#endif
+	}
+
+// MouseState :
+	MouseState::MouseState(QObject* parent)
+	 :	functionMode(ModeCollection)
+	{
+		// Create the maps : 
+		vectors.fill(NULL, MaxNumVectors);
+		for(unsigned int k=0; k<MaxNumVectors; k++)
+		{
+			const VectorID vID = static_cast<VectorID>(k);
+			if(isVectorIDValid(vID))
+				vectors[k] = new VectorData(vID, getVectorIDName(vID), parent);
+		}
+
+		colors.fill(NULL, MaxNumColors);
+		for(unsigned int k=0; k<MaxNumColors; k++)
+		{
+			const ColorID cID = static_cast<ColorID>(k);
+			if(isColorIDValid(cID))
+				colors[k] = new ColorData(cID, getColorIDName(cID), parent);
+		}
+	}
+
+	MouseState::~MouseState(void)
+	{ 
+		for(QVector<VectorData*>::iterator it=vectors.begin(); it!=vectors.end(); it++)
+			delete (*it);
+		vectors.clear();
+
+		for(QVector<ColorData*>::iterator it=colors.begin(); it!=colors.end(); it++)
+			delete (*it);
+		colors.clear();
+	}
+
+	#define UPDATE_VECTOR( vectorName ) updateMouseVectorAndColor(*vectors[vectorName], *vectors[vectorName##Gl], *vectors[vectorName##Quad], *vectors[vectorName##Image], *vectors[vectorName##Fragment], isBasisRelative(getVectorBasis(vectorName)));
+	#define UPDATE_VECTOR_AND_COLOR( vectorName, colorName ) updateMouseVectorAndColor(*vectors[vectorName], *vectors[vectorName##Gl], *vectors[vectorName##Quad], *vectors[vectorName##Image], *vectors[vectorName##Fragment], isBasisRelative(getVectorBasis(vectorName)), colors[colorName]);
+
+	void MouseState::processMouseEvent(QGraphicsSceneWheelEvent* event)
+	{
+		if(event->delta()!=0 && event->orientation()==Qt::Vertical)
+		{
+			const bool collection = (getMouseFunctionMode()==ModeCollection);
+			const float wheelSteps = static_cast<float>(event->delta())/(8.0f*15.0f);
+			//wheelDelta += wheelSteps;
+
+			// wheelSteps 	> 0 : away of the user
+			// 		< 0 : toward the user
+
+			if(wheelSteps>0)
+			{
+				//setVector(VectorLastWheelUp, event->scenePos(), true);
+				vectors[VectorLastWheelUp]->setVector(event->scenePos(), collection);
+				UPDATE_VECTOR(VectorLastWheelUp);
+				
+				applyMouseAction(*vectors[VectorLastWheelUpGl], NULL, wheelSteps);
+			}
+			else
+			{
+				//setVector(VectorLastWheelDown, event->scenePos(), true);
+				vectors[VectorLastWheelDown]->setVector(event->scenePos(), collection);
+				UPDATE_VECTOR(VectorLastWheelDown);
+
+				applyMouseAction(*vectors[VectorLastWheelDownGl], NULL, wheelSteps);
+			}
+
+			event->accept();
+		}
+		else
+			event->ignore();
+	}
+
+	void MouseState::processMouseEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released)
+	{
+		const bool collection = (getMouseFunctionMode()==ModeCollection);
+		// event->button()  : The button which triggered the event (empty during drag).
+		// event->buttons() : The buttons currently pressed (might not contain the previous in the case of a click).
+
+		if(event->button()==Qt::LeftButton || (event->buttons() & Qt::LeftButton)!=0)
+		{	
+			if(clicked)
+			{
+				vectors[VectorLastLeftClick]->setVector(event->scenePos(), collection);
+				vectors[VectorLastLeftPosition]->setVector(event->scenePos(), collection);
+				
+				UPDATE_VECTOR_AND_COLOR(VectorLastLeftClick, ColorUnderLastLeftClick)
+				UPDATE_VECTOR_AND_COLOR(VectorLastLeftPosition, ColorUnderLastLeftPosition)
+
+				if(getMouseFunctionMode()==ModeMotion || getMouseFunctionMode()==ModeRotation)
+					setMouseCursor(Qt::ClosedHandCursor);
+
+				// No action to perform
+			}			
+
+			if(moved)
+			{
+				vectors[VectorLastLeftShift]->setVector(event->scenePos() - vectors[VectorLastLeftPosition]->getVector(), collection);
+				vectors[VectorLastLeftPosition]->setVector(event->scenePos(), collection);				
+	
+				UPDATE_VECTOR_AND_COLOR(VectorLastLeftPosition, ColorUnderLastLeftPosition)
+				UPDATE_VECTOR(VectorLastLeftShift)
+
+				applyMouseAction(*vectors[VectorLastLeftPositionImage], vectors[VectorLastLeftShiftImage]);
+				applyMouseAction(*vectors[VectorLastLeftShiftGl]);
+			}
+
+			if(released)
+			{
+				vectors[VectorLastLeftRelease]->setVector(event->scenePos(), (getMouseFunctionMode()==ModeCollection));
+				vectors[VectorLastLeftCompletedVector]->setVector(event->scenePos() - vectors[VectorLastLeftClick]->getVector(), collection);
+
+				UPDATE_VECTOR_AND_COLOR(VectorLastLeftRelease, ColorUnderLastLeftRelease)
+				UPDATE_VECTOR(VectorLastLeftCompletedVector)
+
+				if(getMouseFunctionMode()==ModeMotion || getMouseFunctionMode()==ModeRotation)
+					setMouseCursor(Qt::OpenHandCursor);
+
+				// No action to perform
+			}
+
+			if(clicked || moved || released)
+				event->accept();
+			else
+				event->ignore();
+		}
+		else if(event->button()==Qt::RightButton || (event->buttons() & Qt::RightButton)!=0)
+		{
+			if(clicked)
+			{
+				vectors[VectorLastRightClick]->setVector(event->scenePos(), collection);
+				vectors[VectorLastRightPosition]->setVector(event->scenePos(), collection);
+
+				UPDATE_VECTOR_AND_COLOR(VectorLastRightClick, ColorUnderLastRightClick)
+				UPDATE_VECTOR_AND_COLOR(VectorLastRightPosition, ColorUnderLastRightPosition)
+
+				// No action to perform
+			}
+
+			if(moved)
+			{
+				vectors[VectorLastRightShift]->setVector(event->scenePos() - vectors[VectorLastRightPosition]->getVector(), collection);
+				vectors[VectorLastRightPosition]->setVector(event->scenePos(), collection);	
+
+				UPDATE_VECTOR_AND_COLOR(VectorLastRightPosition, ColorUnderLastRightPosition)
+				UPDATE_VECTOR(VectorLastRightShift)
+
+				// No action to perform
+			}
+
+			if(released)
+			{
+				vectors[VectorLastRightRelease]->setVector(event->scenePos(), collection);
+				vectors[VectorLastRightCompletedVector]->setVector(event->scenePos() - vectors[VectorLastRightClick]->getVector(), collection);
+
+				UPDATE_VECTOR_AND_COLOR(VectorLastRightRelease, ColorUnderLastRightRelease)
+				UPDATE_VECTOR(VectorLastRightCompletedVector)
+
+				// No action to perform
+			}
+
+			if(clicked || moved || released)
+				event->accept();
+			else
+				event->ignore();
+		}
+
+		// Qt::MidButton ?
+	}
+
+	#undef UPDATE_VECTOR
+	#undef UPDATE_VECTOR_AND_COLOR
+
+	const MouseState::FunctionMode& MouseState::getMouseFunctionMode(void) const
+	{
+		return functionMode;
+	}
+
+	void MouseState::setMouseFunctionMode(const FunctionMode& m)
+	{
+		functionMode = m;
+		
+		// See http://qt-project.org/doc/qt-4.8/qt.html#CursorShape-enum for more cursors shapes : 
+		switch(m)
+		{
+			case ModeMotion :
+			case ModeRotation :
+				setMouseCursor(Qt::OpenHandCursor);
+				break;
+			case ModeCollection :
+				setMouseCursor(Qt::CrossCursor);
+				break;
+			default : 
+				throw Exception("MouseState::setFunctionMode - Unknown function mode.", __FILE__, __LINE__);
+		}
+	}
+
+	bool MouseState::isVectorIDValid(const VectorID& vID)
+	{
+		switch(vID)
+		{
+		#define NAME_MAP( id ) case id : return true;
 
 			NAME_MAP( VectorLastLeftClick )
 			NAME_MAP( VectorLastLeftClickGl )
@@ -2448,17 +2930,16 @@ using namespace QVGL;
 			NAME_MAP( VectorLastWheelDownImage )
 			NAME_MAP( VectorLastWheelDownFragment )
 			
+			default : return false;
 		#undef NAME_MAP
+		}
+	}	
 
-		return _vectorsNameMap;
-	}
-
-	// Static Function :
-	QMap<MouseState::ColorID, QString> MouseState::initColorsNameMap(void)
+	bool MouseState::isColorIDValid(const ColorID& cID)
 	{
-		QMap<ColorID, QString> _colorsNameMap;
-
-		#define NAME_MAP( id ) _colorsNameMap[ id ] = GLIP_STR( id );
+		switch(cID)
+		{
+		#define NAME_MAP( id ) case id : return true;
 
 			NAME_MAP( ColorUnderLastLeftClick )
 			NAME_MAP( ColorUnderLastLeftPosition )
@@ -2467,395 +2948,115 @@ using namespace QVGL;
 			NAME_MAP( ColorUnderLastRightPosition )
 			NAME_MAP( ColorUnderLastRightRelease )
 
+			default : return false;
 		#undef NAME_MAP
-
-		return _colorsNameMap;
-	}
-
-	MouseState::MouseState(void)
-	 :	functionMode(ModeCollection),
-		wheelDelta(0.0f)
-	{
-		// Create the maps : 
-		for(QMap<VectorID, QString>::const_iterator it=vectorsNameMap.begin(); it!=vectorsNameMap.end(); it++)
-			vectors.insert( it.key(), new VectorData(getVectorIDName(it.key()), this));
-
-		for(QMap<ColorID, QString>::const_iterator it=colorsNameMap.begin(); it!=colorsNameMap.end(); it++)
-			colors.insert( it.key(), new ColorData(getColorIDName(it.key()), this));
-
-		vectorIDs 	= vectors.keys();
-		colorIDs 	= colors.keys();
-
-		setFunctionMode(ModeCollection);
-	}
-
-	MouseState::~MouseState(void)
-	{ 
-		for(QMap<VectorID, VectorData*>::iterator it=vectors.begin(); it!=vectors.end(); it++)
-			delete it.value();
-		vectors.clear();
-
-		for(QMap<ColorID, ColorData*>::iterator it=colors.begin(); it!=colors.end(); it++)
-			delete it.value();
-		colors.clear();
-	}	
-
-	void MouseState::incrementEventCounters(void)
-	{
-		// Increment only if the value is not waiting for an update (0) :
-		for(QMap<VectorID, VectorData*>::iterator it=vectors.begin(); it!=vectors.end(); it++)
-			it.value()->modification += (it.value()->modification>=1) ? 1 : 0;
-
-		for(QMap<ColorID, ColorData*>::iterator it=colors.begin(); it!=colors.end(); it++)
-			it.value()->modification += (it.value()->modification>=1) ? 1 : 0;
-	}
-
-	bool MouseState::doesVectorRequireUpdate(const VectorID& id) const
-	{
-		if(id==InvalidVectorID)
-			return false;
-		else
-			return vectors[id]->modification==0;
-	}
-
-	bool MouseState::doesColorRequirepdate(const ColorID& id) const
-	{
-		if(id==InvalidColorID)
-			return false;
-		else
-			return colors[id]->modification==0;
-	}
-
-	void MouseState::setVector(const VectorID& id, const QPointF& v, const bool requireUpdate)
-	{
-		QMap<VectorID, VectorData*>::iterator it = vectors.find(id);
-	
-		if(it!=vectors.end())
-		{
-			it.value()->modification = requireUpdate ? 0 : 1; //(requireUpdate ? RequireUpdate : Modified);
-			it.value()->vector 	 = v;
-			
-			#ifdef __MAKE_VARIABLES__
-			if(!requireUpdate && getFunctionMode()==ModeCollection)
-			{
-				it.value()->record->data().set(v.x(), 0);
-				it.value()->record->data().set(v.y(), 1);
-				it.value()->record->declareUpdate();
-			}
-			#endif
 		}
-		else
-			throw Exception("MouseState::setVector - Unknown VectorID.", __FILE__, __LINE__);
-	}
-
-	void MouseState::setColor(const ColorID& id, const QColor& c)
-	{
-		QMap<ColorID, ColorData*>::iterator it = colors.find(id);
-
-		if(it!=colors.end())
-		{
-			it.value()->modification = 1; // Modified
-			it.value()->color	= c;
-
-			#ifdef __MAKE_VARIABLES__
-			if(getFunctionMode()==ModeCollection)
-			{
-				it.value()->record->data().set(c.red(), 0);
-				it.value()->record->data().set(c.green(), 1);
-				it.value()->record->data().set(c.blue(), 2);
-				it.value()->record->declareUpdate();
-			}
-			#endif
-		}
-		else
-			throw Exception("MouseState::setColor - Unknown ColorID.", __FILE__, __LINE__);
-	}
-
-	void MouseState::processEvent(QGraphicsSceneWheelEvent* event)
-	{
-		if(event->delta()!=0 && event->orientation()==Qt::Vertical)
-		{
-			wheelDelta += static_cast<float>(event->delta())/(8.0f*15.0f);
-
-			// wheelSteps 	> 0 : away of the user
-			// 		< 0 : toward the user
-
-			if(wheelDelta>0)
-				setVector(VectorLastWheelUp, event->scenePos(), true);
-			else
-				setVector(VectorLastWheelDown, event->scenePos(), true);
-
-			event->accept();
-			incrementEventCounters();
-			emit requestExternalUpdate();
-		}
-	}
-
-	void MouseState::processEvent(QGraphicsSceneMouseEvent* event, const bool clicked, const bool moved, const bool released)
-	{
-		// event->button()  : The button which triggered the event (empty during drag).
-		// event->buttons() : The buttons currently pressed (might not contain the previous in the case of a click).
-
-		if(event->button()==Qt::LeftButton || (event->buttons() & Qt::LeftButton)!=0)
-		{	
-			if(clicked)
-			{
-				setVector(VectorLastLeftClick, event->buttonDownScenePos(Qt::LeftButton), true);
-				setVector(VectorLastLeftPosition, event->scenePos(), true);
-				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
-
-				if(getFunctionMode()==ModeMotion || getFunctionMode()==ModeRotation)
-					emit mustSetMouseCursor(Qt::ClosedHandCursor);
-			}			
-
-			if(moved)
-			{
-				setVector(VectorLastLeftPosition, event->scenePos(), true);
-				setVector(VectorLastLeftShift, event->scenePos() - event->lastScenePos(), true);
-			}
-
-			if(released)
-			{
-				setVector(VectorLastLeftRelease, event->scenePos(), true);
-				setVector(VectorLastLeftCompletedVector, event->scenePos() - getVector(VectorLastLeftClick), true);
-				//setVector(VectorLastLeftCompletedVector, event->scenePos() - invisibleGetVector(VectorLastLeftClick), true);
-				//setVector(VectorLastLeftShift, QPointF(0.0, 0.0), true);
-
-				if(getFunctionMode()==ModeMotion || getFunctionMode()==ModeRotation)
-					emit mustSetMouseCursor(Qt::OpenHandCursor);
-			}
-
-			if(clicked || moved || released)
-				event->accept();
-		}
-		
-		if(event->button()==Qt::RightButton || (event->buttons() & Qt::RightButton)!=0)
-		{
-			if(clicked)
-			{
-				setVector(VectorLastRightClick, event->buttonDownScenePos(Qt::RightButton), true);
-				setVector(VectorLastRightPosition, event->scenePos(), true);
-			}			
-
-			if(moved)
-			{
-				setVector(VectorLastRightPosition, event->scenePos(), true);
-				setVector(VectorLastRightShift, event->scenePos() - event->lastScenePos(), true);
-			}
-
-			if(released)
-			{
-				setVector(VectorLastRightRelease, event->scenePos(), true);
-				setVector(VectorLastRightCompletedVector, event->scenePos() - getVector(VectorLastRightClick), true);
-				//setVector(VectorLastRightCompletedVector, event->scenePos() - invisibleGetVector(VectorLastRightClick), true);
-			}
-
-			if(clicked || moved || released)
-				event->accept();
-		}
-
-		// Qt::MidButton ?
-
-		// Require the widget to update all the coordinates and colors.
-		if(event->isAccepted())
-		{
-			incrementEventCounters();
-			emit requestExternalUpdate();
-		}
-	}
-
-	void MouseState::updateProcessCompleted(void)
-	{
-		emit updated();
-	}
-
-	void MouseState::clear(void)
-	{
-		for(QMap<VectorID, VectorData*>::Iterator it=vectors.begin(); it!=vectors.end(); it++)
-		{
-			it.value()->modification 	= 1;
-			it.value()->vector 		= QPointF(0.0, 0.0);
-			#ifdef __MAKE_VARIABLES__
-			it.value()->record->data().set(0.0, 0);
-			it.value()->record->data().set(0.0, 1);
-			#endif
-		}
-
-		for(QMap<ColorID, ColorData*>::Iterator it=colors.begin(); it!=colors.end(); it++)
-		{
-			it.value()->modification 	= 1;
-			it.value()->color		= Qt::black;
-			#ifdef __MAKE_VARIABLES__
-			it.value()->record->data().set(0.0, 0);
-			it.value()->record->data().set(0.0, 1);
-			it.value()->record->data().set(0.0, 2);
-			#endif
-		}
-	}
-
-	const QList<MouseState::VectorID>& MouseState::getVectorIDs(void) const
-	{
-		return vectorIDs;
-	}
-
-	const QList<MouseState::ColorID>& MouseState::getColorIDs(void) const
-	{
-		return colorIDs;
-	}
-
-	bool MouseState::isVectorModified(const VectorID& id) const
-	{
-		QMap<VectorID, VectorData*>::const_iterator it=vectors.find(id);
-
-		if(it!=vectors.end())
-			return (it.value()->modification==1);
-		else
-			return false;
-	}
-
-	bool MouseState::isColorModified(const ColorID& id) const 
-	{
-		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);
-	
-		if(it!=colors.end())
-			return (it.value()->modification==1);
-		else
-			return false;
-	}
-
-	bool MouseState::readColorRequired(const ColorID& id) const
-	{
-		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);
-	
-		if(it!=colors.end())
-		{
-			#ifdef __MAKE_VARIABLES__
-			return !it.value()->record->isLocked();
-			#else
-			return true;
-			#endif
-		}
-		else
-			return false;
-	}
-
-	const QPointF& MouseState::getVector(const VectorID& id) const
-	{
-		QMap<VectorID, VectorData*>::const_iterator it=vectors.find(id);
-
-		if(it!=vectors.end())
-			return it.value()->vector;
-		else
-			throw Exception("MouseState::getVector - Unknown VectorID.", __FILE__, __LINE__);
-	}
-
-	const QColor& MouseState::getColor(const ColorID& id) const
-	{
-		QMap<ColorID, ColorData*>::const_iterator it=colors.find(id);	
-	
-		if(it!=colors.end())
-			return it.value()->color;
-		else
-			throw Exception("MouseState::getColor - Unknown ColorID.", __FILE__, __LINE__);
-	}
-
-	bool MouseState::isWheelDeltaModified(void) const
-	{
-		return (wheelDelta!=0.0f);
-	}	
-	
-	float MouseState::getWheelDelta(void)
-	{
-		float c = wheelDelta;
-		wheelDelta = 0.0f;
-		return c;
-	}
-
-	const MouseState::FunctionMode& MouseState::getFunctionMode(void) const
-	{
-		return functionMode;
-	}
-
-	void MouseState::setFunctionMode(const FunctionMode& m)
-	{
-		functionMode = m;
-
-		// See http://qt-project.org/doc/qt-4.8/qt.html#CursorShape-enum for more cursors shapes : 
-		switch(m)
-		{
-			case ModeMotion :
-			case ModeRotation :
-				emit mustSetMouseCursor(Qt::OpenHandCursor);
-				break;
-			case ModeCollection :
-				emit mustSetMouseCursor(Qt::CrossCursor);
-				break;
-			default : 
-				throw Exception("MouseState::setFunctionMode - Unknown function mode.", __FILE__, __LINE__);
-		}
-	}
-
-	MouseState::VectorID MouseState::validate(const VectorID& vID)
-	{
-		if(vectorsNameMap.contains(vID))
-			return vID;
-		else
-			return InvalidVectorID;
-	}	
-
-	MouseState::ColorID MouseState::validate(const ColorID& cID)
-	{
-		if(colorsNameMap.contains(cID))
-			return cID;
-		else
-			return InvalidColorID;
 	}
 	
 	QString MouseState::getVectorIDName(const VectorID& vID)
 	{
-		QMap<VectorID, QString>::const_iterator it=vectorsNameMap.find(vID);
+		switch(vID)
+		{
+		#define NAME_MAP( id ) case id : return GLIP_STR( id );
 
-		if(it==vectorsNameMap.end())
-			return "InvalidVectorID";
-		else
-			return it.value();
+			NAME_MAP( VectorLastLeftClick )
+			NAME_MAP( VectorLastLeftClickGl )
+			NAME_MAP( VectorLastLeftClickQuad )
+			NAME_MAP( VectorLastLeftClickImage )
+			NAME_MAP( VectorLastLeftClickFragment )
+
+			NAME_MAP( VectorLastLeftPosition )
+			NAME_MAP( VectorLastLeftPositionGl )
+			NAME_MAP( VectorLastLeftPositionQuad )
+			NAME_MAP( VectorLastLeftPositionImage )
+			NAME_MAP( VectorLastLeftPositionFragment )
+
+			NAME_MAP( VectorLastLeftShift )
+			NAME_MAP( VectorLastLeftShiftGl )
+			NAME_MAP( VectorLastLeftShiftQuad )
+			NAME_MAP( VectorLastLeftShiftImage )
+			NAME_MAP( VectorLastLeftShiftFragment )
+
+			NAME_MAP( VectorLastLeftRelease )
+			NAME_MAP( VectorLastLeftReleaseGl )
+			NAME_MAP( VectorLastLeftReleaseQuad )
+			NAME_MAP( VectorLastLeftReleaseImage )
+			NAME_MAP( VectorLastLeftReleaseFragment )
+
+			NAME_MAP( VectorLastLeftCompletedVector )
+			NAME_MAP( VectorLastLeftCompletedVectorGl )
+			NAME_MAP( VectorLastLeftCompletedVectorQuad )
+			NAME_MAP( VectorLastLeftCompletedVectorImage )
+			NAME_MAP( VectorLastLeftCompletedVectorFragment )
+
+			NAME_MAP( VectorLastRightClick )
+			NAME_MAP( VectorLastRightClickGl )
+			NAME_MAP( VectorLastRightClickQuad )
+			NAME_MAP( VectorLastRightClickImage )
+			NAME_MAP( VectorLastRightClickFragment )
+
+			NAME_MAP( VectorLastRightPosition )
+			NAME_MAP( VectorLastRightPositionGl )
+			NAME_MAP( VectorLastRightPositionQuad )
+			NAME_MAP( VectorLastRightPositionImage )
+			NAME_MAP( VectorLastRightPositionFragment )
+
+			NAME_MAP( VectorLastRightShift )
+			NAME_MAP( VectorLastRightShiftGl )
+			NAME_MAP( VectorLastRightShiftQuad )
+			NAME_MAP( VectorLastRightShiftImage )
+			NAME_MAP( VectorLastRightShiftFragment )
+
+			NAME_MAP( VectorLastRightRelease )
+			NAME_MAP( VectorLastRightReleaseGl )
+			NAME_MAP( VectorLastRightReleaseQuad )
+			NAME_MAP( VectorLastRightReleaseImage )
+			NAME_MAP( VectorLastRightReleaseFragment )
+
+			NAME_MAP( VectorLastRightCompletedVector )
+			NAME_MAP( VectorLastRightCompletedVectorGl )
+			NAME_MAP( VectorLastRightCompletedVectorQuad )
+			NAME_MAP( VectorLastRightCompletedVectorImage )
+			NAME_MAP( VectorLastRightCompletedVectorFragment )
+
+			NAME_MAP( VectorLastWheelUp )
+			NAME_MAP( VectorLastWheelUpGl )
+			NAME_MAP( VectorLastWheelUpQuad )
+			NAME_MAP( VectorLastWheelUpImage )
+			NAME_MAP( VectorLastWheelUpFragment )
+
+			NAME_MAP( VectorLastWheelDown )
+			NAME_MAP( VectorLastWheelDownGl )
+			NAME_MAP( VectorLastWheelDownQuad )
+			NAME_MAP( VectorLastWheelDownImage )
+			NAME_MAP( VectorLastWheelDownFragment )
+			
+			default : return QObject::tr("<InvalidVectorID:%1").arg(vID);
+		#undef NAME_MAP
+		}
 	}
 
 	QString MouseState::getColorIDName(const ColorID& cID)
 	{
-		QMap<ColorID, QString>::const_iterator it=colorsNameMap.find(cID);		
+		switch(cID)
+		{
+		#define NAME_MAP( id ) case id : return GLIP_STR( id );
 
-		if(it==colorsNameMap.end())
-			return "InvalidColorID";
-		else
-			return it.value();
+			NAME_MAP( ColorUnderLastLeftClick )
+			NAME_MAP( ColorUnderLastLeftPosition )
+			NAME_MAP( ColorUnderLastLeftRelease )
+			NAME_MAP( ColorUnderLastRightClick )
+			NAME_MAP( ColorUnderLastRightPosition )
+			NAME_MAP( ColorUnderLastRightRelease )
+
+			default : return QObject::tr("<InvalidColorID:%1").arg(cID);
+		#undef NAME_MAP
+		}
 	}
-
-	MouseState::VectorID MouseState::getVectorIDFromName(const QString& name)
-	{
-		for(QMap<VectorID, QString>::const_iterator it=vectorsNameMap.begin(); it!=vectorsNameMap.end(); it++)
-		{
-			if(it.value()==name)
-				return it.key();
-		}
-	
-		return InvalidVectorID;
-	}	
-
-	MouseState::ColorID MouseState::getColorIDFromName(const QString& name)
-	{
-		for(QMap<ColorID, QString>::const_iterator it=colorsNameMap.begin(); it!=colorsNameMap.end(); it++)
-		{
-			if(it.value()==name)
-				return it.key();
-		}
-	
-		return InvalidColorID;
-	}	
 
 	MouseState::VectorID MouseState::getPixelVectorID(const VectorID& vID)
 	{
-		return validate(static_cast<VectorID>(vID - (vID % NumBasis)));
+		return static_cast<VectorID>(vID - (vID % NumBasis));
 	}
 
 	MouseState::BasisID MouseState::getVectorBasis(const VectorID& vID)
@@ -2865,12 +3066,63 @@ using namespace QVGL;
 
 	MouseState::ColorID MouseState::getCorrespondingColorID(const VectorID& vID)
 	{
-		return validate(static_cast<ColorID>(vID - (vID % NumBasis)));
+		return static_cast<ColorID>(vID - (vID % NumBasis));
 	}
 
 	bool MouseState::isBasisRelative(const BasisID& bID)
 	{
 		return (bID==PixelRelativeBasis) || (bID==GlRelativeBasis) || (bID==QuadRelativeBasis) || (bID==ImageRelativeBasis);
+	}
+
+// ContextWidget :
+	ContextWidget::ContextWidget(QGLContext* ctx, QWidget* parent)
+	 : 	QGLWidget(ctx, parent),
+		glipOwnership(false)
+	{
+		try
+		{
+			makeCurrent();
+
+			// Glip-lib specifics : 
+			if(!HandleOpenGL::isInitialized())
+			{
+				glipOwnership = true;
+				HandleOpenGL::init();
+			}
+		}
+		catch(Exception& e)
+		{
+			// Show Error : 
+			std::cerr << "GLSceneWidget::GLSceneWidget - Exception caught : " << std::endl;
+			std::cerr << e.what() << std::endl;
+
+			QMessageBox errorBox(QMessageBox::Critical, "ContextWidget::ContextWidget", "An error occurred during initialization.", QMessageBox::Ok);
+			errorBox.setDetailedText(e.what());
+			errorBox.exec();
+
+			// re-throw :
+			throw e;
+		}
+	}
+
+	ContextWidget::~ContextWidget(void)
+	{
+		if(glipOwnership)
+			HandleOpenGL::deinit();
+	}
+
+	void ContextWidget::initializeGL(void)
+	{
+		makeCurrent();
+		glViewport(0, 0, width(), height());
+		setAutoBufferSwap(false);
+	}
+
+	void ContextWidget::resizeGL(int width, int height)
+	{
+		// TODO : this is never called, to be removed?.
+		glViewport(0, 0, width, height);
+		std::cout << "ContextWidget::resizeGL - Called" << std::endl;
 	}
 
 // Shader code : 
@@ -2935,10 +3187,13 @@ using namespace QVGL;
 							"}																\n";
 
 // GLScene :
-	GLScene::GLScene(MainWidget* _qvglParent)
+	GLScene::GLScene(GlipViewWidget* _qvglParent)
 	 : 	qvglParent(_qvglParent),
 		quad(NULL),
-		shaderProgram(NULL)
+		shaderProgram(NULL),
+		clearColorRed(0.1f),
+		clearColorGreen(0.1f),
+		clearColorBlue(0.1f)
 	{
 		// Activate focus via mouse click :
 		//setFocusPolicy(Qt::ClickFocus);
@@ -2975,6 +3230,7 @@ using namespace QVGL;
 		delete shaderProgram;
 		quad = NULL;
 		shaderProgram = NULL;
+		qvglParent = NULL;
 	}
 
 	void GLScene::drawView(View* view)
@@ -3034,7 +3290,6 @@ using namespace QVGL;
 
 	void GLScene::drawViewsTable(ViewsTable* viewsTable)
 	{
-		//std::cout << "Drawing table : " << std::endl;
 		for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 		{
 			int x, y;
@@ -3055,7 +3310,7 @@ using namespace QVGL;
 
 		HdlTexture::unbind();
 
-		glClearColor(0.1, 0.1, 0.1, 1.0);
+		glClearColor(clearColorRed, clearColorGreen, clearColorBlue, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
 
@@ -3124,79 +3379,96 @@ using namespace QVGL;
 	{
 		QGraphicsScene::keyPressEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getKeyboardState().keyPressed(event);
+		if(!event->isAccepted())
+			qvglParent->processKeyEvent(event, true);
 	}
 
 	void GLScene::keyReleaseEvent(QKeyEvent* event)
 	{
 		QGraphicsScene::keyReleaseEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getKeyboardState().keyReleased(event);
+		if(!event->isAccepted())
+			qvglParent->processKeyEvent(event, false);
 	}
 
 	void GLScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 	{
+		// Reset event status : 
+		event->setAccepted(false);
+
+		// Pass down : 
 		QGraphicsScene::mouseMoveEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getMouseState().processEvent(event, false, true, false);
+		// If not taken : 
+		if(!event->isAccepted())
+			qvglParent->processMouseEvent(event, false, true, false);
 	}
 
 	void GLScene::wheelEvent(QGraphicsSceneWheelEvent* event)
 	{
-		if(!event->isAccepted())
-			QGraphicsScene::wheelEvent(event);
+		// Reset event status : 
+		event->setAccepted(false);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getMouseState().processEvent(event);
+		// Pass down : 
+		QGraphicsScene::wheelEvent(event);
+		
+		// If not taken : 
+		if(!event->isAccepted())
+			qvglParent->processMouseEvent(event);
 	}
 
 	void GLScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
 	{
+		// Reset event status : 
+		event->setAccepted(false);
+
+		// Pass down : 
 		QGraphicsScene::mousePressEvent(event);
 
-		// TMP / Test : 
-		/*if(!event->isAccepted() && qvglParent!=NULL)
-		{
-			float xGl, yGl;
-			qvglParent->toGlCoordinates(event->scenePos().x(), event->scenePos().y(), xGl, yGl, false);
-
-			std::cout << "MousePressed - Gl Coordinates    : " << xGl << ", " << yGl << std::endl;
-
-			float xQuad, yQuad;
-			qvglParent->toQuadCoordinates(xGl, yGl, xQuad, yQuad, false);
-			
-			std::cout << "MousePressed - Quad Coordinates  : " << xQuad << ", " << yQuad << std::endl;
-
-			float xImg, yImg;
-			qvglParent->toImageCoordinates(xQuad, yQuad, xImg, yImg, false);
-			std::cout << "MousePressed - Image Coordinates : " << xImg << ", " << yImg << std::endl;
-
-			unsigned char red, green, blue;
-			qvglParent->getColorAt(event->scenePos().x(), event->scenePos().y(), red, green, blue);
-			std::cout << "MousePressed - Color             : (" << static_cast<int>(red) << "; " << static_cast<int>(green) << ", " << static_cast<int>(blue) << ")" << std::endl;
-		}*/
-
-		// Send the event :
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getMouseState().processEvent(event, true, false, false);
+		// If not taken : 
+		if(!event->isAccepted())
+			qvglParent->processMouseEvent(event, true, false, false);
 	}
 
 	void GLScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 	{
+		// Reset event status : 
+		event->setAccepted(false);
+
+		// Pass down : 
 		QGraphicsScene::mouseReleaseEvent(event);
 
-		if(!event->isAccepted() && qvglParent!=NULL)
-			qvglParent->getMouseState().processEvent(event, false, false, true);
+		// If not taken : 
+		if(!event->isAccepted())
+			qvglParent->processMouseEvent(event, false, false, true);
 	}
 
-// GLSceneViewWidget :
-	GLSceneViewWidget::GLSceneViewWidget(MainWidget* _qvglParent, TopBar* topBar, BottomBar* bottomBar)
-	 : 	contextWidget(NULL),
-		glScene(NULL),
-		qvglParent(_qvglParent)
+	void GLScene::setSceneSettings(const GlipViewSettings& settings)
+	{
+		clearColorRed	= static_cast<float>(settings.backgroundColor.red())/255.0f;
+		clearColorGreen	= static_cast<float>(settings.backgroundColor.green())/255.0f;
+		clearColorBlue	= static_cast<float>(settings.backgroundColor.blue())/255.0f;
+		update();
+	}
+
+// GlipViewWidget :
+	GlipViewWidget::GlipViewWidget(QWidget* parent, const QSize& originalSize)
+	 :	QGraphicsView(parent),
+		//QWidget(parent),
+		KeyboardState(GlipViewSettings()),
+		MouseState(this),
+		//container(QBoxLayout::LeftToRight, this),
+		infosDialog(NULL),
+		settingsInterface(GlipViewSettings()),
+		//settingsInterface(NULL),
+		//glSceneViewWidget(this, &topBar, &bottomBar),		
+		currentViewIndex(-1),
+		currentViewsTableIndex(-1),
+		mainViewsTable(NULL),
+		opacityActiveSubWidget(0.8),
+		opacityIdleSubWidget(0.2),
+		opacityActiveBar(0.8),
+		opacityIdleBar(0.4)
 	{
 		// Create the GL widget : 
 		QGLFormat glFormat(QGL::DepthBuffer | QGL::DoubleBuffer);
@@ -3204,71 +3476,85 @@ using namespace QVGL;
 		setViewport(contextWidget);
 
 		// Create the scene : 
-		glScene = new GLScene(qvglParent);
+		glScene = new GLScene(this);
 		setScene(glScene);
 
 		// Other parameters : 	
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);	// For container catching.
 		setViewportUpdateMode(QGraphicsView::FullViewportUpdate);	// Because GL has to redraw the complete area.
 
+		// Set the size before adding SubWidgets/Bars : 
+		resize(originalSize);
+		scene()->setSceneRect(QRect(QPoint(0, 0), originalSize));
+
 		// Add the bars : 
-		if(topBar!=NULL)
-		{
-			QGraphicsProxyWidget* graphicsProxy = glScene->addWidget(topBar);
-			topBar->setGraphicsProxy(graphicsProxy);
-		}
+		QGraphicsProxyWidget* graphicsProxyTopBar = glScene->addWidget(&topBar);
+		topBar.setGraphicsProxy(graphicsProxyTopBar);
+		QGraphicsProxyWidget* graphicsProxyBottomBar = glScene->addWidget(&bottomBar);
+		bottomBar.setGraphicsProxy(graphicsProxyBottomBar);
+		forceItemOrdering();
 
-		if(bottomBar!=NULL)
-		{
-			QGraphicsProxyWidget* graphicsProxy = glScene->addWidget(bottomBar);
-			bottomBar->setGraphicsProxy(graphicsProxy);
-		}
+		// Reset bars views : 
+		barSelected(&topBar);
+		barSelected(&bottomBar);
 
-		if(topBar!=NULL || bottomBar!=NULL)
-			forceItemOrdering();
+		QObject::connect(this,			SIGNAL(viewAdded(View*)),			&topBar,	SLOT(addView(View*)));
+		QObject::connect(this,			SIGNAL(viewsTableAdded(ViewsTable*)),		&topBar,	SLOT(addViewsTable(ViewsTable*)));
+		QObject::connect(this,			SIGNAL(subWidgetAdded(SubWidget*)),		&topBar,	SLOT(addSubWidget(SubWidget*)));
+		QObject::connect(&topBar,		SIGNAL(selected(TopBar*)),			this, 		SLOT(barSelected(TopBar*)));
+		QObject::connect(&topBar,		SIGNAL(changeViewRequest(View*)),		this, 		SLOT(viewRequireDisplay(View*)));
+		QObject::connect(&topBar,		SIGNAL(changeViewsTableRequest(ViewsTable*)),	this, 		SLOT(viewsTableRequireDisplay(ViewsTable*)));
+		QObject::connect(&topBar,		SIGNAL(requestAction(ActionID)),		this, 		SLOT(processAction(ActionID)));
+		QObject::connect(&topBar,		SIGNAL(requestOpenInfos()),			this,		SLOT(processOpenInfosRequest()));
+		QObject::connect(&topBar,		SIGNAL(requestOpenSettingsInterface()),		this,		SLOT(processOpenSettingsInterfaceRequest()));
+		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, 		SLOT(showSubWidget(SubWidget*)));
+		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, 		SLOT(barSelected(BottomBar*)));
+		QObject::connect(&settingsInterface,	SIGNAL(applySettings()),			this,		SLOT(applySettings()));
+
+		// Create main table view : 
+		mainViewsTable = new ViewsTable("Main Table");
+		addViewsTable(mainViewsTable);
+		changeCurrentViewsTable(0);
+	
+		// Dialogs : 
+		infosDialog = new InfosDialog;
+
+		// Add new views to the main table : 
+		QObject::connect(this,			SIGNAL(viewAdded(View*)),			mainViewsTable,	SLOT(addView(View*)));
+
+		// Push the settings : 
+		glScene->setSceneSettings(settingsInterface.getSettings());
+		setKeyboardSettings(settingsInterface.getSettings());
 	}
 
-	GLSceneViewWidget::~GLSceneViewWidget(void)
-	{ }
+	GlipViewWidget::~GlipViewWidget(void)
+	{
+		disconnect();
 
-	void GLSceneViewWidget::resizeEvent(QResizeEvent *event)
+		delete mainViewsTable;
+
+		for(QList<View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+			(*it)->qvglParent = NULL;
+
+		viewsList.clear();
+		delete infosDialog;
+
+		std::cerr << "Fix delete at " << __FILE__ << " " << __LINE__ << std::endl;
+		//delete glScene;
+		//delete contextWidget;
+	}
+
+	void GlipViewWidget::resizeEvent(QResizeEvent *event)
 	{
 		if(scene()!=NULL)
 		{
 			// Force the size of the scene to be exactly equal to the size of the widget :
 			scene()->setSceneRect(QRect(QPoint(0, 0), event->size()));
-			//emit resized(event->size());
 		}
-
 		QGraphicsView::resizeEvent(event);
    	}
 
-	void GLSceneViewWidget::closeEvent(QCloseEvent *event)
-	{
-		// Arrived here because this widget is full-screen and received a ALT-F4.
-		// But we want to make sure that the rest of the application is ok with that.
-		event->ignore();
-	}
-
-	void GLSceneViewWidget::addSubWidget(SubWidget* subWidget)
-	{
-		QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
-		subWidget->setGraphicsProxy(proxy);
-		forceItemOrdering();
-	}
-
-	void GLSceneViewWidget::addItem(QGraphicsItem* item)
-	{
-		glScene->addItem(item);
-		forceItemOrdering();
-	}
-
-	void GLSceneViewWidget::removeItem(QGraphicsItem* item)
-	{
-		glScene->removeItem(item);
-	}
-
-	void GLSceneViewWidget::forceItemOrdering(void)
+	void GlipViewWidget::forceItemOrdering(void)
 	{
 		// Force all the items to be on bottom, and the widgets to be on top.
 		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
@@ -3297,7 +3583,7 @@ using namespace QVGL;
 		}
 	}
 
-	void GLSceneViewWidget::putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy)
+	void GlipViewWidget::putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy)
 	{
 		// Assumption : all widgets are already on top of all the others graphicsItems.
 
@@ -3319,7 +3605,7 @@ using namespace QVGL;
 		}
 	}
 
-	void GLSceneViewWidget::putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy)
+	void GlipViewWidget::putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy)
 	{
 		// Assumption : all widgets are already on top of all the others graphicsItems.
 
@@ -3348,7 +3634,7 @@ using namespace QVGL;
 			(*itTarget)->setZValue(lastZ);
 	}
 
-	SubWidget* GLSceneViewWidget::getTopSubWidget(bool onlyVisible)
+	SubWidget* GlipViewWidget::getTopSubWidget(bool onlyVisible)
 	{
 		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
 		sortItems(itemsList);
@@ -3362,7 +3648,7 @@ using namespace QVGL;
 		return NULL;
 	}
 
-	SubWidget* GLSceneViewWidget::getBottomSubWidget(bool onlyVisible)
+	SubWidget* GlipViewWidget::getBottomSubWidget(bool onlyVisible)
 	{
 		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
 		sortItems(itemsList);
@@ -3377,7 +3663,7 @@ using namespace QVGL;
 		return ptr;
 	}
 
-	SubWidget* GLSceneViewWidget::getSubWidget(int index, bool onlyVisible)
+	SubWidget* GlipViewWidget::getSubWidget(int index, bool onlyVisible)
 	{
 		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
 		sortItems(itemsList);
@@ -3400,53 +3686,7 @@ using namespace QVGL;
 		return ptr;
 	}
 
-	void GLSceneViewWidget::makeGLContextAvailable(void)
-	{
-		contextWidget->makeCurrent();
-	}
-
-	void GLSceneViewWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
-	{
-		if(glScene!=NULL && x>=0 && x<glScene->width() && y>=0 && y<glScene->height())
-		{
-			unsigned char rgb[3];
-
-			glReadBuffer(GL_BACK);
-
-			// Subtle point here : the frame buffer is verticaly flipped!
-			glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
-
-			// Split : 
-			red 	= rgb[0];
-			green	= rgb[1];
-			blue	= rgb[2];
-		}
-	}
-
-	void GLSceneViewWidget::getColorAt(int x, int y, QColor& c)
-	{
-		if(glScene!=NULL && x>=0 && x<glScene->width() && y>=0 && y<glScene->height())
-		{
-			unsigned char rgb[3];
-
-			glReadBuffer(GL_BACK);
-
-			// Subtle point here : the frame buffer is verticaly flipped!
-			glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_RGB, GL_UNSIGNED_BYTE, rgb);
-
-			// Split : 
-			c.setRed(rgb[0]);
-			c.setGreen(rgb[1]);
-			c.setBlue(rgb[2]);
-		}
-	}
-
-	void GLSceneViewWidget::update(void)
-	{
-		glScene->update();
-	}
-
-	void GLSceneViewWidget::sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order)
+	void GlipViewWidget::sortItems(QList<QGraphicsItem*>& list, const Qt::SortOrder& order)
 	{
 		// Simple bubble sort : 
 		for(QList<QGraphicsItem*>::iterator it1=list.begin(); it1!=list.end(); it1++)
@@ -3455,68 +3695,7 @@ using namespace QVGL;
 					std::swap(*it1, *it2);
 	}
 
-// MainWidget :
-	MainWidget::MainWidget(QWidget* parent)
-	 :	QWidget(parent), 
-		container(QBoxLayout::LeftToRight, this),
-		infosDialog(NULL),
-		glSceneViewWidget(this, &topBar, &bottomBar),		
-		currentViewIndex(-1),
-		currentViewsTableIndex(-1),
-		mainViewsTable(NULL),
-		opacityActiveSubWidget(0.8),
-		opacityIdleSubWidget(0.2),
-		opacityActiveBar(0.8),
-		opacityIdleBar(0.4)
-	{
-		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-		container.addWidget(&glSceneViewWidget);
-		container.setMargin(0);
-		container.setSpacing(0);
-
-		// Reset bars views : 
-		barSelected(&topBar);
-		barSelected(&bottomBar);
-
-		QObject::connect(&mouseState,		SIGNAL(requestExternalUpdate(void)),		this, 		SLOT(updateMouseStateData(void)));
-		QObject::connect(&keyboardState,	SIGNAL(actionReceived(ActionID, bool)),		this, 		SLOT(processAction(ActionID, bool)));
-		QObject::connect(&mouseState,		SIGNAL(updated(void)),				this, 		SLOT(performMouseAction(void)));
-		QObject::connect(&mouseState,		SIGNAL(mustSetMouseCursor(Qt::CursorShape)),	this, 		SLOT(setMouseCursor(Qt::CursorShape)));
-		QObject::connect(this,			SIGNAL(viewAdded(View*)),			&topBar,	SLOT(addView(View*)));
-		QObject::connect(this,			SIGNAL(viewsTableAdded(ViewsTable*)),		&topBar,	SLOT(addViewsTable(ViewsTable*)));
-		QObject::connect(this,			SIGNAL(subWidgetAdded(SubWidget*)),		&topBar,	SLOT(addSubWidget(SubWidget*)));
-		QObject::connect(&topBar,		SIGNAL(selected(TopBar*)),			this, 		SLOT(barSelected(TopBar*)));
-		QObject::connect(&topBar,		SIGNAL(changeViewRequest(View*)),		this, 		SLOT(viewRequireDisplay(View*)));
-		QObject::connect(&topBar,		SIGNAL(changeViewsTableRequest(ViewsTable*)),	this, 		SLOT(viewsTableRequireDisplay(ViewsTable*)));
-		QObject::connect(&topBar,		SIGNAL(requestAction(ActionID)),		this, 		SLOT(processAction(ActionID)));
-		QObject::connect(&topBar,		SIGNAL(requestOpenInfos()),			this,		SLOT(processOpenInfosRequest()));
-		QObject::connect(&topBar,		SIGNAL(showSubWidgetRequest(SubWidget*)),	this, 		SLOT(showSubWidget(SubWidget*)));
-		QObject::connect(&bottomBar,		SIGNAL(selected(BottomBar*)),			this, 		SLOT(barSelected(BottomBar*)));
-
-		// Create main table view : 
-		mainViewsTable = new ViewsTable("Main Table");
-		addViewsTable(mainViewsTable);
-		changeCurrentViewsTable(0);
-
-		// Add new views to the main table : 
-		QObject::connect(this,			SIGNAL(viewAdded(View*)),			mainViewsTable,	SLOT(addView(View*)));
-	}
-
-	MainWidget::~MainWidget(void)
-	{
-		disconnect();
-
-		delete mainViewsTable;
-
-		for(QList<View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
-			(*it)->qvglParent = NULL;
-
-		viewsList.clear();
-		delete infosDialog;
-	}
-
-	void MainWidget::updateMouseStateData(void)
+	/*void GlipViewWidget::updateMouseStateData(void)
 	{
 		const QList<MouseState::VectorID>& vectorIDs = mouseState.getVectorIDs();
 		const View* currentView = getCurrentView();
@@ -3601,9 +3780,9 @@ using namespace QVGL;
 		}
 
 		mouseState.updateProcessCompleted();
-	}
+	}*/
 
-	void MainWidget::performMouseAction(void)
+	/*void GlipViewWidget::performMouseAction(void)
 	{
 		View* 		currentView 		= getCurrentView();
 		ViewsTable* 	currentViewsTable 	= getCurrentViewsTable();
@@ -3691,16 +3870,151 @@ using namespace QVGL;
 			if(mouseState.isWheelDeltaModified())
 				mouseState.getWheelDelta();
 		}
+	}*/
+
+	void GlipViewWidget::updateMouseVectorAndColor(const VectorData& vPixelBasis, VectorData& vGlBasis, VectorData& vQuadBasis, VectorData& vImageBasis, VectorData& vFragmentBasis, const bool isRelative, ColorData* colorData)
+	{
+		const bool collection = (getMouseFunctionMode()==ModeCollection);
+		const View* currentView = getCurrentView();
+		const ViewsTable* currentViewsTable = getCurrentViewsTable();
+
+		float 	xGl	= 0.0f, 
+			yGl	= 0.0f, 
+			xQuad	= 0.0f, 
+			yQuad	= 0.0f,
+			xImg	= 0.0f,
+			yImg	= 0.0f,
+			xFrag	= 0.0f,
+			yFrag	= 0.0f;
+
+		const QPointF& vPixel = vPixelBasis.getVector();
+
+		if(currentView!=NULL && currentViewsTable==NULL)
+		{
+			// Full scene : 
+			toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isRelative);
+			toQuadCoordinates(xGl, yGl, xQuad, yQuad, isRelative);
+			toImageCoordinates(xQuad, yQuad, xImg, yImg, isRelative);
+			toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isRelative); 
+		}
+		else if(currentView!=NULL)
+		{
+			// Restricted to the vignette frame : 
+			QRectF rect = currentViewsTable->getVignetteFrame(currentView);
+
+			toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isRelative, rect);
+			toQuadCoordinates(xGl, yGl, xQuad, yQuad, isRelative, rect, currentView);
+			toImageCoordinates(xQuad, yQuad, xImg, yImg, isRelative, currentView);
+			toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isRelative, currentView); 
+		}
+
+		vGlBasis.setVector(QPointF(xGl, yGl), collection);
+		vQuadBasis.setVector(QPointF(xQuad, yQuad), collection);
+		vImageBasis.setVector(QPointF(xImg, yImg), collection);
+		vFragmentBasis.setVector(QPointF(xFrag, yFrag), collection);
+		
+		if(collection && vPixelBasis.id==MouseState::VectorLastLeftPosition)
+		{
+			QColor color(0,0,0,0);
+
+			if(colorData!=NULL)
+			{
+				color = getColorAt(vPixel.x(), vPixel.y());
+				colorData->setColor(color, collection);
+			}
+			topBar.updatePositionAndColor(vImageBasis.getVector(), color);
+		}
 	}
 
-	void MainWidget::setMouseCursor(Qt::CursorShape cursorShape)
+	void GlipViewWidget::applyMouseAction(const VectorData& vectorData, const VectorData* shiftVectorData, const float wheelDelta)
+	{
+		View* currentView = getCurrentView();
+		const ViewsTable* currentViewsTable = getCurrentViewsTable();
+
+		if(currentView!=NULL && (getMouseFunctionMode()==MouseState::ModeMotion || getMouseFunctionMode()==MouseState::ModeRotation))
+		{
+			// Get adaptation scale (full screen or frame) :
+			float adaptationScale;
+			if(currentViewsTable==NULL)
+				adaptationScale = getAdaptationScaling(currentView->getImageRatio());
+			else
+			{
+				QRectF sceneRect = currentViewsTable->getVignetteFrame(currentView);
+				adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());
+			}
+
+			// Apply : 
+			if(getMouseFunctionMode()==MouseState::ModeMotion && vectorData.id==MouseState::VectorLastLeftShiftGl) // translate
+			{
+				// Translate :
+				QPointF v = vectorData.getVector(); // MouseState::VectorLastLeftShiftGl
+
+				v.rx() /= adaptationScale;
+				v.ry() /= adaptationScale;
+
+				// Scene scaling : see toGlCoordinates
+
+				// Homothecy : 
+				if(currentView->homothecyScale!=0.0f)
+				{
+					v.rx() /= currentView->homothecyScale;
+					v.ry() /= currentView->homothecyScale;
+				}
+
+				currentView->move(v.x(), v.y());
+			}
+			else if(getMouseFunctionMode()==MouseState::ModeRotation && vectorData.id==VectorLastLeftPositionImage && shiftVectorData!=NULL && shiftVectorData->id==MouseState::VectorLastLeftShiftImage)
+			{
+				// Rotate : 
+				float 	xImageCenter = 0.0f, 
+					yImageCenter = 0.0f;
+
+				currentView->getImageCenter(xImageCenter, yImageCenter);
+
+				QPointF a 	= vectorData.getVector(), // MouseState::VectorLastLeftPositionImage
+					s	= shiftVectorData->getVector(); // MouseState::VectorLastLeftShiftImage
+				a.setX(a.x() - xImageCenter);
+				a.setY(a.y() - yImageCenter);
+				float	p	= a.x()*s.x() + a.y()*s.y(),
+					laSq	= a.x()*a.x() + a.y()*a.y();
+				QPointF u	= QPointF(s.x() - p*a.x()/laSq, s.y() - p*a.y()/laSq);
+				float	luSq	= u.x()*u.x()+u.y()*u.y(),
+					sign	= (u.x()*a.y()-a.x()*u.y())<0.0 ? -1.0f : 1.0f,
+					angle	= atan2(sign * std::sqrt(luSq), std::sqrt(laSq));
+
+				currentView->rotate(angle);
+			}
+			else if(vectorData.id==MouseState::VectorLastWheelUpGl || vectorData.id==MouseState::VectorLastWheelDownGl)
+			{
+				// Zoom in/out :
+				QPointF v = vectorData.getVector();
+
+				v.rx() /= adaptationScale;
+				v.ry() /= adaptationScale;
+
+				currentView->zoom(v.x(), v.y(), std::pow(settingsInterface.getSettings().zoomFactor, wheelDelta));
+			}
+			/*else if(vectorData.id==MouseState::VectorLastWheelDownGl)
+			{
+				// Zoom in/out :
+				QPointF v = vectorData.getVector();
+
+				v.rx() /= adaptationScale;
+				v.ry() /= adaptationScale;
+
+				currentView->zoom(v.x(), v.y(), std::pow(settingsInterface.getSettings().zoomFactor, wheelDelta));
+			}*/
+		}
+	}
+
+	void GlipViewWidget::setMouseCursor(Qt::CursorShape cursorShape)
 	{
 		setCursor(cursorShape);
-		glSceneViewWidget.setCursor(cursorShape);
-		glSceneViewWidget.viewport()->setCursor(cursorShape);
+		setCursor(cursorShape);
+		viewport()->setCursor(cursorShape);
 	}
 
-	void MainWidget::viewRequireDisplay(View* view)
+	void GlipViewWidget::viewRequireDisplay(View* view)
 	{
 		int idx = viewsList.indexOf(view);
 
@@ -3708,7 +4022,7 @@ using namespace QVGL;
 			changeCurrentView(idx);
 	}
 
-	void MainWidget::viewRequireDisplay(void)
+	void GlipViewWidget::viewRequireDisplay(void)
 	{
 		// Get the emitter : 
 		View* view = reinterpret_cast<View*>(QObject::sender());
@@ -3716,7 +4030,7 @@ using namespace QVGL;
 		viewRequireDisplay(view);
 	}
 
-	void MainWidget::viewChangeSelection(View* view)
+	void GlipViewWidget::viewChangeSelection(View* view)
 	{
 		int idx = viewsList.indexOf(view);
 
@@ -3724,13 +4038,13 @@ using namespace QVGL;
 			changeCurrentView(idx, false);
 	}
 
-	void MainWidget::viewUpdated(View* view)
+	void GlipViewWidget::viewUpdated(View* view)
 	{
-		if(view==getCurrentView() && view!=NULL)
-			glSceneViewWidget.update();
+		if(view==getCurrentView() && view!=NULL && glScene!=NULL)
+			glScene->update();
 	}
 
-	void MainWidget::viewUpdated(void)
+	void GlipViewWidget::viewUpdated(void)
 	{
 		// Get the emitter : 
 		View* view = reinterpret_cast<View*>(QObject::sender());
@@ -3738,7 +4052,7 @@ using namespace QVGL;
 		viewUpdated(view);
 	}
 
-	void MainWidget::viewClosed(View* view)
+	void GlipViewWidget::viewClosed(View* view)
 	{
 		int idx = viewsList.indexOf(view);
 
@@ -3759,7 +4073,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::viewClosed(void)
+	void GlipViewWidget::viewClosed(void)
 	{
 		// Get the emitter : 
 		View* view = reinterpret_cast<View*>(QObject::sender());
@@ -3767,7 +4081,7 @@ using namespace QVGL;
 		viewClosed(view);
 	}
 
-	void MainWidget::viewDestroyed(void)
+	void GlipViewWidget::viewDestroyed(void)
 	{
 		// Get the emitter : 
 		View* view = reinterpret_cast<View*>(QObject::sender());
@@ -3786,7 +4100,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::closeAllViews(void)
+	void GlipViewWidget::closeAllViews(void)
 	{
 		while(!viewsList.isEmpty())
 		{
@@ -3802,7 +4116,7 @@ using namespace QVGL;
 		hideCurrentView();
 	}
 
-	void MainWidget::viewsTableRequireDisplay(ViewsTable* viewsTable)
+	void GlipViewWidget::viewsTableRequireDisplay(ViewsTable* viewsTable)
 	{
 		int idx = viewsTablesList.indexOf(viewsTable);
 
@@ -3810,7 +4124,7 @@ using namespace QVGL;
 			changeCurrentViewsTable(idx);
 	}
 
-	void MainWidget::viewsTableRequireDisplay(void)
+	void GlipViewWidget::viewsTableRequireDisplay(void)
 	{
 		// Get the emitter : 
 		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
@@ -3818,14 +4132,16 @@ using namespace QVGL;
 		viewsTableRequireDisplay(viewsTable);
 	}
 
-	void MainWidget::viewsTableClosed(ViewsTable* viewsTable)
+	void GlipViewWidget::viewsTableClosed(ViewsTable* viewsTable)
 	{
 		int idx = viewsTablesList.indexOf(viewsTable);
 
 		if(idx>=0 && viewsTable!=mainViewsTable) // Do not remove main table
 		{
 			viewsTablesList.removeAt(idx);
-			glSceneViewWidget.removeItem(viewsTable);
+
+			if(glScene!=NULL)
+				glScene->removeItem(viewsTable);
 			viewsTable->disconnect(this);
 
 			if(currentViewsTableIndex==idx)
@@ -3833,7 +4149,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::viewsTableClosed(void)
+	void GlipViewWidget::viewsTableClosed(void)
 	{
 		// Get the emitter : 
 		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
@@ -3841,7 +4157,7 @@ using namespace QVGL;
 		viewsTableClosed(viewsTable);
 	}
 
-	void MainWidget::viewsTableDestroyed(void)
+	void GlipViewWidget::viewsTableDestroyed(void)
 	{
 		// Get the emitter : 
 		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
@@ -3857,7 +4173,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::closeAllViewsTables(void)
+	void GlipViewWidget::closeAllViewsTables(void)
 	{
 		while(viewsTablesList.size()>1) // Keep the main table
 		{
@@ -3868,7 +4184,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::subWidgetSelected(SubWidget* subWidget)
+	void GlipViewWidget::subWidgetSelected(SubWidget* subWidget)
 	{
 		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
@@ -3888,14 +4204,16 @@ using namespace QVGL;
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
 
 			// Raise the current subWidget : 
-			glSceneViewWidget.putWidgetOnTop(subWidget->getGraphicsProxy());
+			//glSceneViewWidget.putWidgetOnTop(subWidget->getGraphicsProxy());
+			//std::cerr << "Missing glSceneViewWidget.putWidgetOnTop() at " << __FILE__ << ' ' << __LINE__ << std::endl;
+			putWidgetOnTop(subWidget->getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
-			keyboardState.forceRelease();
+			forceKeyRelease();
 		}
 	}
 
-	void MainWidget::subWidgetSelected(void)
+	void GlipViewWidget::subWidgetSelected(void)
 	{
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
@@ -3903,7 +4221,7 @@ using namespace QVGL;
 		subWidgetSelected(subWidget);
 	}
 
-	void MainWidget::showSubWidget(SubWidget* subWidget)
+	void GlipViewWidget::showSubWidget(SubWidget* subWidget)
 	{
 		if(!subWidget->isVisible())
 			subWidget->show();		// implement the Show (1st part)
@@ -3914,7 +4232,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::showSubWidget(void)
+	void GlipViewWidget::showSubWidget(void)
 	{
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
@@ -3922,19 +4240,23 @@ using namespace QVGL;
 		showSubWidget(subWidget);
 	}
 	
-	void MainWidget::hideSubWidget(SubWidget* subWidget)
+	void GlipViewWidget::hideSubWidget(SubWidget* subWidget)
 	{
 		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Lower the current subWidget : 
-			glSceneViewWidget.putWidgetOnBottom(subWidget->getGraphicsProxy());
+			//glSceneViewWidget.putWidgetOnBottom(subWidget->getGraphicsProxy());
+			//std::cerr << "Missing glSceneViewWidget.putWidgetOnBottom() at " << __FILE__ << ' ' << __LINE__ << std::endl;
+			putWidgetOnBottom(subWidget->getGraphicsProxy());
 
 			// Raise the top bar : 
-			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
+			//glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
+			//std::cerr << "Missing glSceneViewWidget.putWidgetOnTop() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
+			putWidgetOnTop(topBar.getGraphicsProxy());
 		}
 	}
 
-	void MainWidget::hideSubWidget(void)
+	void GlipViewWidget::hideSubWidget(void)
 	{
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
@@ -3942,7 +4264,7 @@ using namespace QVGL;
 		hideSubWidget(subWidget);
 	}
 
-	void MainWidget::subWidgetClosed(SubWidget* subWidget)
+	void GlipViewWidget::subWidgetClosed(SubWidget* subWidget)
 	{
 		int idx = subWidgetsList.indexOf(subWidget);
 
@@ -3952,7 +4274,10 @@ using namespace QVGL;
 			subWidgetsList.removeAt(idx);
 
 			// Try removing : 
-			glSceneViewWidget.removeItem(subWidget->getGraphicsProxy());
+			//glSceneViewWidget.removeItem(subWidget->getGraphicsProxy());
+			//std::cerr << "Missing glSceneViewWidget.removeItem() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
+			if(glScene!=NULL)
+				glScene->removeItem(subWidget->getGraphicsProxy());
 			subWidget->getGraphicsProxy()->setWidget(NULL);
 			subWidget->getGraphicsProxy()->deleteLater();
 			subWidget->setGraphicsProxy(NULL);
@@ -3963,7 +4288,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::subWidgetClosed(void)
+	void GlipViewWidget::subWidgetClosed(void)
 	{
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
@@ -3971,7 +4296,7 @@ using namespace QVGL;
 		subWidgetClosed(subWidget);
 	}
 
-	void MainWidget::subWidgetDestroyed(void)
+	void GlipViewWidget::subWidgetDestroyed(void)
 	{
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
@@ -3982,23 +4307,25 @@ using namespace QVGL;
 			subWidgetsList.removeAt(idx);
 	}
 
-	void MainWidget::nextSubWidget(void)
+	void GlipViewWidget::nextSubWidget(void)
 	{
-		SubWidget* secondSubWidget = glSceneViewWidget.getSubWidget(1, true); // only if visible.
+		SubWidget* secondSubWidget = getSubWidget(1, true); //glSceneViewWidget.getSubWidget(1, true); // only if visible.
+		std::cerr << "Missing glSceneViewWidget.getSubWidget() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
 		
 		if(secondSubWidget!=NULL)
 			subWidgetSelected(secondSubWidget);
 	}
 
-	void MainWidget::previousSubWidget(void)
+	void GlipViewWidget::previousSubWidget(void)
 	{
-		SubWidget* bottom = glSceneViewWidget.getBottomSubWidget(true); // only if visible.
+		SubWidget* bottom = getBottomSubWidget(true);//glSceneViewWidget.getBottomSubWidget(true); // only if visible.
+		std::cerr << "Missing glSceneViewWidget.getBottomSubWidget() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
 
 		if(bottom!=NULL)
 			subWidgetSelected(bottom);
 	}
 
-	void MainWidget::temporaryHideAllSubWidgets(bool enabled)
+	void GlipViewWidget::temporaryHideAllSubWidgets(bool enabled)
 	{
 		// Hide :
 		if(enabled && temporaryHiddenSubWidgetsList.empty())
@@ -4026,18 +4353,18 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::toggleTemporaryHideAllSubWidgets(void)
+	void GlipViewWidget::toggleTemporaryHideAllSubWidgets(void)
 	{
 		temporaryHideAllSubWidgets(temporaryHiddenSubWidgetsList.empty());
 	}
 
-	void MainWidget::hideAllSubWidgets(void)
+	void GlipViewWidget::hideAllSubWidgets(void)
 	{
 		for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
 			(*it)->hide();
 	}
 
-	void MainWidget::barSelected(TopBar* bar)
+	void GlipViewWidget::barSelected(TopBar* bar)
 	{
 		if(bar==&topBar)
 		{
@@ -4050,15 +4377,15 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			glSceneViewWidget.putWidgetOnTop(bottomBar.getGraphicsProxy());
-			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());		// Raise TOP on top.
+			putWidgetOnTop(bottomBar.getGraphicsProxy());
+			putWidgetOnTop(topBar.getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
-			keyboardState.forceRelease();
+			forceKeyRelease();
 		}	
 	}
 
-	void MainWidget::barSelected(BottomBar* bar)
+	void GlipViewWidget::barSelected(BottomBar* bar)
 	{
 		if(bar==&bottomBar)
 		{
@@ -4071,33 +4398,34 @@ using namespace QVGL;
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
 			// Raise the bar : 
-			glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
-			glSceneViewWidget.putWidgetOnTop(bottomBar.getGraphicsProxy());		// Raise BOTTOM on top.
+			putWidgetOnTop(bottomBar.getGraphicsProxy());
+			putWidgetOnTop(topBar.getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
-			keyboardState.forceRelease();
+			forceKeyRelease();
 		}
 	}
 
-	void MainWidget::processOpenInfosRequest(void)
+	void GlipViewWidget::processOpenInfosRequest(void)
 	{
-		if(infosDialog==NULL)
+		addSubWidget(infosDialog);
+	}
+
+	void GlipViewWidget::processOpenSettingsInterfaceRequest(void)
+	{
+		addSubWidget(&settingsInterface);
+	}
+
+	void GlipViewWidget::applySettings(void)
+	{
+		if(glScene!=NULL)
 		{
-			infosDialog = new InfosDialog;
-			addSubWidget(infosDialog);
-			QObject::connect(infosDialog, SIGNAL(hideRequest(SubWidget*)), this, SLOT(closeInfos(void)));
+			setKeyboardSettings(settingsInterface.getSettings());
+			glScene->setSceneSettings(settingsInterface.getSettings());
 		}
-		else
-			infosDialog->show();
 	}
 
-	void MainWidget::closeInfos(void)
-	{
-		infosDialog->deleteLater();
-		infosDialog = NULL;
-	}
-
-	bool MainWidget::processQuitRequest(void)
+	bool GlipViewWidget::processQuitRequest(void)
 	{
 		// Send the quit signal to all the SubWidgets :
 		bool test = true;
@@ -4113,27 +4441,27 @@ using namespace QVGL;
 		return test;
 	}
 
-	KeyboardState& MainWidget::getKeyboardState(void)
+	/*KeyboardState& GlipViewWidget::getKeyboardState(void)
 	{
 		return keyboardState;
-	}
+	}*/
 
-	MouseState& MainWidget::getMouseState(void)
+	/*MouseState& GlipViewWidget::getMouseState(void)
 	{
 		return mouseState;
-	}
+	}*/
 
-	const KeyboardState& MainWidget::getKeyboardState(void) const
+	/*const KeyboardState& GlipViewWidget::getKeyboardState(void) const
 	{
 		return keyboardState;
-	}
+	}*/
 
-	const MouseState& MainWidget::getMouseState(void) const
+	/*const MouseState& GlipViewWidget::getMouseState(void) const
 	{
 		return mouseState;
-	}
+	}*/
 
-	View* MainWidget::getCurrentView(void) const
+	View* GlipViewWidget::getCurrentView(void) const
 	{
 		if(currentViewIndex>=0 && currentViewIndex<viewsList.size())
 			return viewsList[currentViewIndex];
@@ -4141,7 +4469,7 @@ using namespace QVGL;
 			return NULL;
 	}	
 
-	ViewsTable* MainWidget::getCurrentViewsTable(void)
+	ViewsTable* GlipViewWidget::getCurrentViewsTable(void)
 	{
 		if(currentViewsTableIndex>=0 && currentViewsTableIndex<viewsTablesList.size())
 			return viewsTablesList[currentViewsTableIndex];
@@ -4149,7 +4477,7 @@ using namespace QVGL;
 			return NULL;
 	}
 
-	void MainWidget::changeCurrentView(int targetID, bool showNow)
+	void GlipViewWidget::changeCurrentView(int targetID, bool showNow)
 	{
 		currentViewIndex = std::min(std::max(targetID, 0), viewsList.size()-1);
 
@@ -4164,20 +4492,22 @@ using namespace QVGL;
 			topBar.setTitle(*currentView);
 
 			// Show : 
-			glSceneViewWidget.update();
+			if(glScene!=NULL)
+				glScene->update();
 		}
 		else if(currentView==NULL)
 			topBar.setTitle("(No View)");
 	}
 
-	void MainWidget::hideCurrentView(void)
+	void GlipViewWidget::hideCurrentView(void)
 	{
 		topBar.setTitle("(No View)");
 		currentViewIndex = -1;
-		glSceneViewWidget.update();		
+		if(glScene!=NULL)
+			glScene->update();
 	}
 
-	void MainWidget::changeCurrentViewsTable(int targetID)
+	void GlipViewWidget::changeCurrentViewsTable(int targetID)
 	{
 		// Hide previous table :
 		hideCurrentViewsTable();
@@ -4193,11 +4523,12 @@ using namespace QVGL;
 
 			// Show : 
 			currentTable->setVisible(true);
-			glSceneViewWidget.update();
+			if(glScene!=NULL)
+				glScene->update();
 		}
 	}
 
-	void MainWidget::hideCurrentViewsTable(void)
+	void GlipViewWidget::hideCurrentViewsTable(void)
 	{
 		ViewsTable* currentTable = getCurrentViewsTable();
 
@@ -4209,18 +4540,18 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const
+	void GlipViewWidget::getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const
 	{
 		xSceneScale = std::min(1.0f, 1.0f/sceneRatio);
 		ySceneScale = std::min(1.0f, sceneRatio); 	// The minus sign set the orientation of the GL axis to be the same as Qt.
 	}
 
-	void MainWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
+	void GlipViewWidget::getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const
 	{
 		getSceneRatioScaling(getSceneRatio(), xSceneScale, ySceneScale);
 	}
 
-	float MainWidget::getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const
+	float GlipViewWidget::getAdaptationScaling(const float& sceneRatio, const float& imageRatio) const
 	{
 		if((sceneRatio<=1.0f && imageRatio>=1.0f) || (sceneRatio>=1.0f && imageRatio<=1.0f))	// Opposite aspect ratios : do not do anything.
 			return 1.0f;
@@ -4240,12 +4571,12 @@ using namespace QVGL;
 		}
 	}
 
-	float MainWidget::getAdaptationScaling(const float& imageRatio) const
+	float GlipViewWidget::getAdaptationScaling(const float& imageRatio) const
 	{
 		return getAdaptationScaling(getSceneRatio(), imageRatio);
 	}
 
-	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const
+	void GlipViewWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative, const QRectF& rect) const
 	{
 		if(!isRelative)
 		{
@@ -4267,12 +4598,12 @@ using namespace QVGL;
 		yGl /= ySceneScale;
 	}
 
-	void MainWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const
+	void GlipViewWidget::toGlCoordinates(int x, int y, float& xGl, float& yGl, bool isRelative) const
 	{
 		toGlCoordinates(x, y, xGl, yGl, isRelative, sceneRect());
 	}
 
-	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, const View* view) const
+	void GlipViewWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const QRectF& rect, const View* view) const
 	{
 		// Input coordinates are assumed relative in the window.
 
@@ -4351,12 +4682,12 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const View* view) const
+	void GlipViewWidget::toQuadCoordinates(const float& xGl, const float& yGl, float& xQuad, float& yQuad, bool isRelative, const View* view) const
 	{
 		toQuadCoordinates(xGl, yGl, xQuad, yQuad, isRelative, sceneRect(), view);
 	}
 
-	void MainWidget::toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, const View* view) const
+	void GlipViewWidget::toImageCoordinates(const float& xQuad, const float& yQuad, float& xImg, float& yImg, bool isRelative, const View* view) const
 	{
 		if(view==NULL)
 			view = getCurrentView();
@@ -4378,7 +4709,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::toFragmentCoordinates(const float& xQuad, const float& yQuad, float& xFrag, float& yFrag, bool isRelative, const View* view) const
+	void GlipViewWidget::toFragmentCoordinates(const float& xQuad, const float& yQuad, float& xFrag, float& yFrag, bool isRelative, const View* view) const
 	{
 		if(view==NULL)
 			view = getCurrentView();
@@ -4400,7 +4731,7 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::closeEvent(QCloseEvent *event)
+	void GlipViewWidget::closeEvent(QCloseEvent *event)
 	{
 		// Test first : 
 		bool result = processQuitRequest();
@@ -4411,28 +4742,70 @@ using namespace QVGL;
 			QWidget::closeEvent(event);
 	}
 
-	float MainWidget::getSceneRatio(void) const
+	float GlipViewWidget::getSceneRatio(void) const
 	{
 		QRectF rect = sceneRect();
 		return rect.width() / rect.height();
 	}
 
-	QRectF MainWidget::sceneRect(void) const
+	QColor GlipViewWidget::getColorAt(int x, int y)
 	{
-		return glSceneViewWidget.sceneRect();
+		QColor c(0, 0, 0, 0);
+
+		if(glScene!=NULL && x>=0 && x<glScene->width() && y>=0 && y<glScene->height())
+		{
+			unsigned char bgra[4];
+
+			glReadBuffer(GL_BACK);
+
+			// Subtle point here : the frame buffer is verticaly flipped!
+			glReadPixels(x, contextWidget->height()-(y+1), 1, 1, GL_BGRA, GL_UNSIGNED_BYTE, bgra);
+
+			// Split : 
+			c.setRed(bgra[2]);
+			c.setGreen(bgra[1]);
+			c.setBlue(bgra[0]);
+			c.setAlpha(bgra[3]);
+		}
+
+		return c;
 	}
 
-	void MainWidget::getColorAt(int x, int y, unsigned char& red, unsigned char& green, unsigned char& blue)
+	QString GlipViewWidget::getActionName(const ActionID& a)
 	{
-		MainWidget::glSceneViewWidget.getColorAt(x, y, red, green, blue);
+		switch(a)
+		{
+			case ActionUp : 				return "Up";
+			case ActionDown : 				return "Down";
+			case ActionLeft : 				return "Left";
+			case ActionRight : 				return "Right";
+			case ActionZoomIn : 				return "Zoom In";
+			case ActionZoomOut : 				return "Zoom Out";
+			case ActionRotationClockWise : 			return "Rotation (clockwise)";
+			case ActionRotationCounterClockWise : 		return "Rotation (counter clockwise)";
+			case ActionToggleFullscreen : 			return "Toggle Fullscreen";
+			case ActionExitFullscreen : 			return "Exit Fullscreen";
+			case ActionResetView : 				return "Reset View";
+			case ActionPreviousView : 			return "Previous View";
+			case ActionNextView : 				return "Next View";
+			case ActionCloseView : 				return "Close View";
+			case ActionCloseAllViews : 			return "Close All Views";
+			case ActionCloseViewsTable : 			return "Close Views Table";
+			case ActionCloseAllViewsTables : 		return "Close All Views Tables";
+			case ActionMotionModifier : 			return "View Motion";
+			case ActionRotationModifier : 			return "View Rotation";
+			case ActionNextSubWidget : 			return "Next SubWidget";
+			case ActionPreviousSubWidget : 			return "Previous SubWidget";
+			case ActionToggleTemporaryHideAllSubWidgets : 	return "Toggle Hide All SubWigets";
+			case ActionHideAllSubWidgets : 			return "Hide All SubWidgets";
+			case ActionQuit : 				return "Quit";
+			case NoAction : 				return "No Action";
+			default : 
+				return QString(tr("<Unknown ActionID : %1>").arg(a));
+		}
 	}
 
-	void MainWidget::getColorAt(int x, int y, QColor& c)
-	{
-		MainWidget::glSceneViewWidget.getColorAt(x, y, c);
-	}
-
-	void MainWidget::addView(View* view)
+	void GlipViewWidget::addView(View* view)
 	{
 		if(!viewsList.contains(view) && view->qvglParent==NULL)
 		{
@@ -4451,14 +4824,20 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::addViewsTable(ViewsTable* viewsTable)
+	void GlipViewWidget::addViewsTable(ViewsTable* viewsTable)
 	{
 		if(!viewsTablesList.contains(viewsTable))
 		{
 			for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 				addView(it.key());
 
-			glSceneViewWidget.addItem(viewsTable);
+			//glSceneViewWidget.addItem(viewsTable);
+			//std::cerr << "Missing glSceneViewWidget.addItem() at " << __FILE__ << ' ' << __LINE__ << std::endl;
+			if(glScene!=NULL)
+			{
+				glScene->addItem(viewsTable);
+				forceItemOrdering();
+			}
 			viewsTablesList.append(viewsTable);
 
 			QObject::connect(viewsTable, SIGNAL(requireDisplay()),		this, SLOT(viewsTableRequireDisplay()));
@@ -4472,12 +4851,15 @@ using namespace QVGL;
 		}
 	}
 
-	void MainWidget::addSubWidget(SubWidget* subWidget)
+	void GlipViewWidget::addSubWidget(SubWidget* subWidget)
 	{
-		if(subWidget!=NULL && !subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
+		if(glScene!=NULL && subWidget!=NULL && !subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
 		{
-			glSceneViewWidget.addSubWidget(subWidget);
-			
+			//glSceneViewWidget.addSubWidget(subWidget);
+			QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
+			subWidget->setGraphicsProxy(proxy);
+			forceItemOrdering();
+	
 			// Connect : 
 			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 	this, SLOT(subWidgetSelected(SubWidget*)));
 			QObject::connect(subWidget, SIGNAL(showRequest(SubWidget*)),	this, SLOT(showSubWidget(SubWidget*)));
@@ -4500,7 +4882,7 @@ using namespace QVGL;
 			subWidgetSelected(subWidget);
 	}
 
-	void MainWidget::processAction(ActionID action, bool takenBack)
+	void GlipViewWidget::processAction(ActionID action, bool takenBack)
 	{
 		View* 		currentView 		= getCurrentView();
 		ViewsTable* 	currentViewsTable	= getCurrentViewsTable();
@@ -4533,7 +4915,7 @@ using namespace QVGL;
 					//xCenter *= adaptationScale;
 					//yCenter *= adaptationScale;
 
-					currentView->zoom(xCenter, yCenter, 1.2f);
+					currentView->zoom(xCenter, yCenter, settingsInterface.getSettings().zoomFactor);
 				}
 				break;
 			case ActionZoomOut :
@@ -4550,30 +4932,24 @@ using namespace QVGL;
 					//xCenter *= adaptationScale;
 					//yCenter *= adaptationScale;
 
-					currentView->zoom(xCenter, yCenter, 1.0f/1.2f);
+					currentView->zoom(xCenter, yCenter, 1.0f/settingsInterface.getSettings().zoomFactor);
 				}
 				break;
 			case ActionRotationClockWise :
-				if(currentView!=NULL) currentView->rotate(-0.17453f);
+				if(currentView!=NULL) currentView->rotate(-settingsInterface.getSettings().rotationStep);//-0.17453f
 				break;
 			case ActionRotationCounterClockWise :
-				if(currentView!=NULL) currentView->rotate(+0.17453f);
+				if(currentView!=NULL) currentView->rotate(+settingsInterface.getSettings().rotationStep);//0.17453f
 				break;
 			case ActionToggleFullscreen :
-				if(!glSceneViewWidget.isFullScreen())
+				if(!isFullScreen())
 				{
-					// Enter fullscreen : 
-					glSceneViewWidget.setParent(NULL);
-					glSceneViewWidget.showFullScreen();
+					showFullScreen();
 					break;
 				}
 				// else : 
 			case ActionExitFullscreen :
-				// Re-attach :
-				glSceneViewWidget.setParent(this);
-				glSceneViewWidget.showNormal();
-				container.removeWidget(&glSceneViewWidget);
-				container.addWidget(&glSceneViewWidget);
+				showNormal();
 				break;
 			case ActionResetView :
 				if(currentView!=NULL) currentView->reset();
@@ -4598,15 +4974,15 @@ using namespace QVGL;
 				break;
 			case ActionMotionModifier :
 				if(!takenBack)
-					mouseState.setFunctionMode(MouseState::ModeMotion);
+					setMouseFunctionMode(MouseState::ModeMotion);
 				else
-					mouseState.setFunctionMode(MouseState::ModeCollection);
+					setMouseFunctionMode(MouseState::ModeCollection);
 				break;
 			case ActionRotationModifier :
 				if(!takenBack)
-					mouseState.setFunctionMode(MouseState::ModeRotation);
+					setMouseFunctionMode(MouseState::ModeRotation);
 				else
-					mouseState.setFunctionMode(MouseState::ModeCollection);
+					setMouseFunctionMode(MouseState::ModeCollection);
 				break;
 			case ActionNextSubWidget :
 				nextSubWidget();
@@ -4626,7 +5002,7 @@ using namespace QVGL;
 			case NoAction :
 				break;
 			default : 
-				throw Exception("MainWidget::processAction - Unknown action (code : " + toString(action) + ").", __FILE__, __LINE__);
+				throw Exception("GlipViewWidget::processAction - Unknown action (code : " + toString(action) + ").", __FILE__, __LINE__);
 		}
 	}
 

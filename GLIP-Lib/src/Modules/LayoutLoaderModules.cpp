@@ -187,6 +187,7 @@
 			loader.addModule( new GenerateFFT1DPipeline );
 			loader.addModule( new GenerateFFT2DPipeline );
 			loader.addModule( new OBJLoader );
+			loader.addModule( new STLLoader );
 		}
 
 		/**

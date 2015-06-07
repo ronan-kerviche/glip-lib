@@ -65,7 +65,7 @@
 		loadStyleSheet();
 		loadFonts();
 
-		window		= new QVGL::MainWidget;
+		window		= new QVGL::GlipViewWidget;
 		variableTracker	= new QVGL::VariablesTrackerSubWidget;
 		editor		= new QGED::CodeEditorTabsSubWidget;
 		collection	= new QGIC::ImageItemsCollectionSubWidget;
@@ -93,7 +93,7 @@
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),				collection->getCollectionPtr(),		SLOT(addImageItem(HdlTexture*, const QString)));
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(editFile(const QString)),							editor->getCodeEditorPtr(),		SLOT(open(const QString&)));
 
-		window->resize(900, 600);
+		//window->resize(1000, 800);
 		window->show();
 	}
 

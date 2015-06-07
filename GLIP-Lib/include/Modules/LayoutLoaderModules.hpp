@@ -100,6 +100,8 @@ SINGLE_FILTER_PIPELINE		| Create a pipeline with a single filter. Arguments : pi
 ABORT_ERROR			| Return a user defined error. Argument : error description.
 GENERATE_FFT1D_PIPELINE		| Generate the 1D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, name [, option, ...].
 GENERATE_FFT2D_PIPELINE		| Generate the 2D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, height, name [, option, ...].
+LOAD_OBJ_GEOMETRY		| Load a geometry from a Wavefront file (OBJ). Arguments : filename, geometryName[, strict].
+LOAD_STL_GEOMETRY		| Load a geometry from a StereoLithography file (STL). Arguments : filename, geometryName.
 </CENTER>
 
 Example in a script file : 

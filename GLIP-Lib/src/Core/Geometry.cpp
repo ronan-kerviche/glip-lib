@@ -1054,6 +1054,7 @@
 	\fn int GeometryModel::getPrimitiveStride(const GLenum& _primitiveGL)
 	\brief Get the stride between elements of the given primitive.
 	\param _primitiveGL The GL primitive (accepted are : GL_POINTS​, GL_LINES​, GL_LINES_ADJACENCY, GL_LINE_STRIP, GL_LINE_STRIP_ADJACENCY, GL_TRIANGLES, GL_TRIANGLES_ADJACENCY, GL_TRIANGLE_STRIP, GL_TRIANGLE_STRIP_ADJACENCY).
+	\return The stride between elements of the given primitive.
 	**/
 	int GeometryModel::getPrimitiveStride(const GLenum& _primitiveGL)
 	{
@@ -1342,6 +1343,46 @@
 		CustomModel::CustomModel(int _dim, GLenum _primitiveGL, bool _hasNormals, bool _hasTexCoords)
 		 : GeometryModel( GeometryModel::CustomModel, _dim, _primitiveGL, _hasNormals, _hasTexCoords)
 		{ }
+
+		/**
+		\fn void GeometryModel::reserveVertices(size_t nVertices)
+		\brief Prepare the memory to receive a number of vertices.
+		\param nVertices The total number of vertices to contain.
+		**/
+		void CustomModel::reserveVertices(size_t nVertices)
+		{
+			GeometryModel::reserveVertices(nVertices);
+		}
+
+		/**
+		\fn void CustomModel::increaseVerticesReservation(size_t nNewVertices)
+		\brief Prepare the memory to receive a new number of vertices.
+		\param nNewVertices The number of vertices to be added.
+		**/
+		void CustomModel::increaseVerticesReservation(size_t nNewVertices)
+		{
+			GeometryModel::increaseVerticesReservation(nNewVertices);
+		}
+
+		/**
+		\fn void CustomModel::reserveElements(size_t nElements)
+		\brief Prepare the memory to receive a number of elements.
+		\param nElements The total number of elements to contain.
+		**/
+		void CustomModel::reserveElements(size_t nElements)
+		{
+			GeometryModel::reserveElements(nElements);
+		}
+
+		/**
+		\fn void CustomModel::increaseElementsReservation(size_t nNewElements)
+		\brief Prepare the memory to receive a new number of elements.
+		\param nNewElements The number of elements to be added.
+		**/
+		void CustomModel::increaseElementsReservation(size_t nNewElements)
+		{
+			GeometryModel::increaseElementsReservation(nNewElements);
+		}
 
 		/**
 		\fn void CustomModel::newVertices2DInterleaved(const size_t N, const GLfloat* interleavedXY, const GLfloat* interleavedNormalsXY, const GLfloat* interleavedUV)

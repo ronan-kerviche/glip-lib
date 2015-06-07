@@ -23,6 +23,7 @@
 
 	// Includes
 	#include <sstream>
+	#include <cstring>
 	#include "Core/Exception.hpp"
 	#include "devDebugTools.hpp"
 	#include "Modules/GeometryLoader.hpp"
@@ -36,7 +37,7 @@
 // OBJLoader :
 	OBJLoader::OBJLoader(void)
 	 :	LayoutLoaderModule(	"LOAD_OBJ_GEOMETRY", 
-					"Load a geometry from an OBJ Wavefront file.\n"
+					"Load a geometry from a Wavefront file (OBJ).\n"
 					"Arguments : filename, geometryName[, strict].",
 					2,
 					3,
@@ -498,7 +499,7 @@
 
 	/**
 	\fn CustomModel OBJLoader::load(const std::string& filename, const bool strict)
-	\brief Load geometry from an OBJ.
+	\brief Load geometry from an Wavefront Object file.
 	\param filename File to be loaded.
 	\param strict If true, any error, such as unknown section, will raise an exception.
 	\return A constructed geometry model.
@@ -575,7 +576,134 @@
 		// Final test :
 		if(!model.testIndices())
 			throw Exception("OBJLoader::load - Data parsing invalid for file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
-
 		return model;
 	}
+
+// STLLoader :
+	STLLoader::STLLoader(void)
+	 :	LayoutLoaderModule(	"LOAD_STL_GEOMETRY", 
+					"Load a geometry from a StereoLithography file (STL).\n"
+					"Arguments : filename, geometryName.",
+					2,
+					2,
+					0)
+	{ }
+
+	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( STLLoader )
+	{
+		UNUSED_PARAMETER(currentPath)
+		UNUSED_PARAMETER(formatList)
+		UNUSED_PARAMETER(sourceList)
+		UNUSED_PARAMETER(sharedCodeList)
+		UNUSED_PARAMETER(filterList)
+		UNUSED_PARAMETER(pipelineList)
+		UNUSED_PARAMETER(mainPipelineName)
+		UNUSED_PARAMETER(staticPaths)
+		UNUSED_PARAMETER(requiredFormatList)
+		UNUSED_PARAMETER(requiredGeometryList)
+		UNUSED_PARAMETER(requiredPipelineList)
+		UNUSED_PARAMETER(body)
+		UNUSED_PARAMETER(bodyLine)
+		UNUSED_PARAMETER(executionCode)
+
+		GEOMETRY_MUST_NOT_EXIST(arguments[1])
+
+		const std::string& filename = arguments[0];
+		std::vector<std::string> possibleFilenames = findFile(filename, dynamicPaths);
+
+		// Show some error : 
+		if(possibleFilenames.empty())
+		{
+			if(dynamicPaths.empty())
+				throw Exception("Unable to load file \"" + filename + "\" from the current location.", sourceName, startLine, Exception::ClientScriptException);
+			else
+			{			
+				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", sourceName, startLine, Exception::ClientScriptException);
+				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+				{
+					if(it->empty())
+						ex << Exception("-> [./]", sourceName, startLine, Exception::ClientScriptException);
+					else
+						ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
+				}
+				throw ex;
+			}
+		}
+		else if(possibleFilenames.size()>1)
+		{
+			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", sourceName, startLine, Exception::ClientScriptException);
+			for(std::vector<std::string>::const_iterator it=possibleFilenames.begin(); it!=possibleFilenames.end(); it++)
+				ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
+			throw ex;
+		}	
+
+		APPEND_NEW_GEOMETRY(arguments[1], load(possibleFilenames.front()))
+	}
+
+	/**
+	\fn CustomModel STLLoader::load(const std::string& filename)
+	\brief Load geometry from a StereoLithography file.
+	\param filename File to be loaded.
+	\return A constructed geometry model.
+	**/
+	CustomModel STLLoader::load(const std::string& filename)
+	{
+		std::ifstream file;
+		file.open(filename.c_str(), std::ifstream::in | std::ifstream::binary);
+
+		if(!file.is_open() || !file.good() || file.fail())
+			throw Exception("STLLoader::load - Could not open file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+
+		const size_t bufferSize = 255;
+		char buffer[bufferSize];
+		const float* ptr = reinterpret_cast<float*>(buffer);
+		std::memset(buffer, 0, bufferSize);
+
+		// Read the header (80 bytes) : 
+		file.read(buffer, 80);
+		if(!file)
+			throw Exception("STLLoader::load - Could not read header of file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+		const std::string headerString(buffer, 5);
+		if(headerString=="solid")
+			throw Exception("STLLoader::load - File \"" + filename + "\" is an ASCII STL.", __FILE__, __LINE__, Exception::ModuleException);
+
+		// Read the number of triangles : 
+		unsigned int numTriangles = 0;
+		file.read(reinterpret_cast<char*>(&numTriangles), sizeof(unsigned int));
+		if(!file)
+			throw Exception("STLLoader::load - Could not read the number of triangles in file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+
+		// Allocation : 
+		CustomModel model(3, GL_TRIANGLES, true, false);
+		model.reserveVertices(3*numTriangles);
+		model.reserveElements(numTriangles);
+
+		// Read : 
+		const size_t elementSize = 12*sizeof(float)+2;
+		for(unsigned int k=0; k<numTriangles; k++)
+		{
+			file.read(buffer, elementSize);
+			if(k<(numTriangles-1) && !file)
+				throw Exception("STLLoader::load - Could not read triangle data " + toString(k) + " of " + toString(numTriangles) + "  in file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+
+			float nx, ny, nz, x, y, z;
+			nx = ptr[0];
+			ny = ptr[1];
+			nz = ptr[2];
+
+			for(int p=0; p<3; p++)
+			{
+				x = ptr[(p+1)*3+0];
+				y = ptr[(p+1)*3+1];
+				z = ptr[(p+1)*3+2];
+				model.newVertex3D(x, y, z, nx, ny, nz);
+			}
+			model.newElement(k*3+0, k*3+1, k*3+2);
+		}
+		// Final test :
+		if(!model.testIndices())
+			throw Exception("STLLoader::load - Data parsing invalid for file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+		return model;
+	}
+
 

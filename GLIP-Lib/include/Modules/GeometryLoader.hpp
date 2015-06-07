@@ -40,7 +40,7 @@ namespace Glip
 	{
 		/**
 		\class OBJLoader
-		\brief Wavefront Object file loader.
+		\brief Wavefront Object file loader (OBJ).
 		**/
 		class OBJLoader : public LayoutLoaderModule
 		{
@@ -83,7 +83,21 @@ namespace Glip
 				static CustomModel load(const std::string& filename, const bool strict=false);
 		};
 
-		//class STLLoader : public LayoutLoaderModule
+		/**
+		\class STLLoader
+		\brief StereoLithography file loader (STL, binary).
+		**/
+		class STLLoader : public LayoutLoaderModule
+		{
+			private : 
+
+			public : 
+				STLLoader(void);
+
+				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
+
+				static CustomModel load(const std::string& filename);
+		};
 	}
 }
 
