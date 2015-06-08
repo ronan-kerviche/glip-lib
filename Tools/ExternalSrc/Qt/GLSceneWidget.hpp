@@ -933,10 +933,10 @@ namespace QVGL
 			BottomBar			bottomBar;
 			InfosDialog			*infosDialog; 		// Must be created after the ContextWidget.
 			GlipViewSettingsInterface	settingsInterface;
-			QList<View*>			viewsList;
-			QList<SubWidget*>		subWidgetsList;
+			QMap<int,View*>			viewsList;
+			QMap<int,SubWidget*>		subWidgetsList;
 			QList<SubWidget*>		temporaryHiddenSubWidgetsList;
-			QList<ViewsTable*>		viewsTablesList;
+			QMap<int,ViewsTable*>		viewsTablesList;
 			int				currentViewIndex,
 							currentViewsTableIndex;
 			ViewsTable*			mainViewsTable;
@@ -1010,9 +1010,9 @@ namespace QVGL
 		protected :
 			View* getCurrentView(void) const;
 			ViewsTable* getCurrentViewsTable(void);
-			void changeCurrentView(int targetID, bool showNow=true);
+			void changeCurrentView(int targetID, const bool showNow=true, const bool goingUp=true);
 			void hideCurrentView(void);
-			void changeCurrentViewsTable(int targetID);
+			void changeCurrentViewsTable(int targetID, const bool goingUp=true);
 			void hideCurrentViewsTable(void);
 			void getSceneRatioScaling(const float& sceneRatio, float& xSceneScale, float& ySceneScale) const;
 			void getSceneRatioScaling(float& xSceneScale, float& ySceneScale) const;				// correcting for the aspect ratio of the scene.

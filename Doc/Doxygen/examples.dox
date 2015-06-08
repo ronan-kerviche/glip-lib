@@ -299,7 +299,7 @@ We can improve the previous pipeline construction by building a script which wil
 	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
 
 	// Load the shader from file game.glsl
-	SHADER_SOURCE:gameOfLifeShader(game.glsl)
+	SOURCE:gameOfLifeShader(game.glsl)
 
 	// Create a filter layout, the output will be a texture of format gridFormat and the fragment shader used will be gameOfLifeShader
 	FILTER_LAYOUT:gameOfLifeFilter(gridFormat, gameOfLifeShader)
@@ -367,7 +367,7 @@ We can improve the previous pipeline construction by building a script which wil
 	\code
 	REQUIRED_FORMAT:gridFormat(inputGridFormat)
 
-	SHADER_SOURCE:RandomSourceShader
+	SOURCE:RandomSourceShader
 	{
 		#version 130
 		// The output texture (note that there is no input) :
@@ -475,7 +475,7 @@ The code of the pipeline is :
 	REQUIRED_FORMAT:fmt(FormatIn_0)
 
 	// The shader for color change : 
-	SHADER_SOURCE:changeColorShader
+	SOURCE:changeColorShader
 	{
 		#version 130
 	
@@ -577,7 +577,7 @@ The code of the pipeline is :
 	}
 
 	// Mix shader : 
-	SHADER_SOURCE:mixTwoImagesShader
+	SOURCE:mixTwoImagesShader
 	{
 		#version 130
 
@@ -652,7 +652,7 @@ The matrices are :
 
 First we write a script file <i>convolutionTools.ppl</i> containing :
 	\code
-	// This code will be used to replace the tag INSERT_SHARED_CODE in all SHADER_SOURCE bodies loaded.
+	// This code will be used to replace the tag INSERT_SHARED_CODE in all SOURCE bodies loaded.
 	SHARED_CODE:convolutionShared
 	{
 		// Read a 3x3 matrix from the sample s, centered at position pos, use selection to mix the channels :
@@ -728,7 +728,7 @@ Then we write a second script <i>sobel.ppl</i> :
 	}
 
 	// The Sobel Shader :
-	SHADER_SOURCE:sobelShader()
+	SOURCE:sobelShader()
 	{
 		#version 130
 
@@ -876,7 +876,7 @@ Now we write the specific reduction function for min, max and sum of the red cha
 	TEXTURE_FORMAT:resultFormat(1,1,GL_RGBA32F,GL_FLOAT,GL_NEAREST,GL_NEAREST)
 
 	// The filter :
-	SHADER_SOURCE:reductionMMSShader
+	SOURCE:reductionMMSShader
 	{
 		#version 130
 
@@ -974,7 +974,7 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)
 	CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormat, grid) // Generate the grid of points.
 
-	SHADER_SOURCE:HistogramVertexShader
+	SOURCE:HistogramVertexShader
 	{
 		#version 130
 		precision highp float;
@@ -1015,7 +1015,7 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	}
 
 	// The fragment shader :
-	SHADER_SOURCE:HistogramFragmentShader
+	SOURCE:HistogramFragmentShader
 	{
 		#version 130
 		precision highp float;
@@ -1088,7 +1088,7 @@ We can write a Pipeline Script <i>histogram.ppl</i> as :
 	REQUIRED_FORMAT:outputFormat(inputTextureFormat)
 
 	// Shader plotting the histograms on top of the image :
-	SHADER_SOURCE:PlotHistogramShader
+	SOURCE:PlotHistogramShader
 	{
 		#version 130
 		precision highp float;
@@ -1179,7 +1179,7 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 	TEXTURE_FORMAT:visualizationFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 	TEXTURE_FORMAT:sideBySideFormat(512, 256, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP, GL_CLAMP)
 
-	SHADER_SOURCE:derivativesShader
+	SOURCE:derivativesShader
 	{
 		#version 130
 
@@ -1213,7 +1213,7 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 		}
 	}
 
-	SHADER_SOURCE:opticalFlowShader
+	SOURCE:opticalFlowShader
 	{
 		#version 130
 
@@ -1266,7 +1266,7 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 		}
 	}
 
-	SHADER_SOURCE:visualizationShader
+	SOURCE:visualizationShader
 	{
 		#version 130
 
@@ -1321,7 +1321,7 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 		}
 	}
 
-	SHADER_SOURCE:sideBySideShader
+	SOURCE:sideBySideShader
 	{
 		#version 130
 
@@ -1383,7 +1383,7 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 	\code
 	REQUIRED_FORMAT:fmt( FormatIn_0 )
 
-	SHADER_SOURCE:bilateralShader
+	SOURCE:bilateralShader
 	{
 		#version 130
 	

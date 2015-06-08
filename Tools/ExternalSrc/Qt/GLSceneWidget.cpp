@@ -3533,8 +3533,10 @@ using namespace QVGL;
 
 		delete mainViewsTable;
 
-		for(QList<View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+		for(QMap<int,View*>::Iterator it=viewsList.begin(); it!=viewsList.end(); it++)
 			(*it)->qvglParent = NULL;
+		for(QMap<int,SubWidget*>::Iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			(*it)->setQVGLParent(NULL);
 
 		viewsList.clear();
 		delete infosDialog;
@@ -3695,183 +3697,6 @@ using namespace QVGL;
 					std::swap(*it1, *it2);
 	}
 
-	/*void GlipViewWidget::updateMouseStateData(void)
-	{
-		const QList<MouseState::VectorID>& vectorIDs = mouseState.getVectorIDs();
-		const View* currentView = getCurrentView();
-		const ViewsTable* currentViewsTable = getCurrentViewsTable();
-
-		for(QList<MouseState::VectorID>::const_iterator it=vectorIDs.begin(); it!=vectorIDs.end(); it++)
-		{
-			const MouseState::BasisID basisID = MouseState::getVectorBasis(*it);
-
-			if(mouseState.doesVectorRequireUpdate(*it) && ((basisID==MouseState::PixelBasis) || (basisID==MouseState::PixelRelativeBasis))) // use the first one to populate the others : 
-			{
-				const bool isBasisRelative = (basisID==MouseState::PixelRelativeBasis);
-				
-				float 	xGl	= 0.0f, 
-					yGl	= 0.0f, 
-					xQuad	= 0.0f, 
-					yQuad	= 0.0f,
-					xImg	= 0.0f,
-					yImg	= 0.0f,
-					xFrag	= 0.0f,
-					yFrag	= 0.0f;
-
-				QPointF vPixel = mouseState.getVector(*it);
-
-				//View* currentView = getCurrentView();
-				//ViewsTable* currentViewsTable = getCurrentViewsTable();
-
-				if(currentView!=NULL && currentViewsTable==NULL)
-				{
-					// Full scene : 
-					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative);
-					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative);
-					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative);
-					toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isBasisRelative); 
-				}
-				else if(currentView!=NULL)
-				{
-					// Restricted to the vignette frame : 
-					QRectF rect = currentViewsTable->getVignetteFrame(currentView);
-
-					toGlCoordinates(vPixel.x(), vPixel.y(), xGl, yGl, isBasisRelative, rect);
-					toQuadCoordinates(xGl, yGl, xQuad, yQuad, isBasisRelative, rect, currentView);
-					toImageCoordinates(xQuad, yQuad, xImg, yImg, isBasisRelative, currentView);
-					toFragmentCoordinates(xQuad, yQuad, xFrag, yFrag, isBasisRelative, currentView); 
-				}
-
-				mouseState.setVector(*it, vPixel); // Clear the require update flag.
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::GlBasis), 		QPointF(xGl, yGl));
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::QuadBasis),		QPointF(xQuad, yQuad));
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::ImageBasis),		QPointF(xImg, yImg));
-				mouseState.setVector(static_cast<MouseState::VectorID>(*it + MouseState::FragmentBasis),	QPointF(xFrag, yFrag));
-
-				// Update the corresponding color : 
-				if(mouseState.getFunctionMode()==MouseState::ModeCollection)
-				{
-					MouseState::ColorID colorID = mouseState.getCorrespondingColorID(*it);
-					QColor color;
-
-					if(colorID!=MouseState::InvalidColorID && mouseState.readColorRequired(colorID))
-					{
-						getColorAt(vPixel.x(), vPixel.y(), color);
-						mouseState.setColor(colorID, color);
-					}
-
-					// Give the information to TopBar in the case of last left position (ONLY) : 
-					if((*it)==MouseState::VectorLastLeftPosition)
-						topBar.updatePositionAndColor(QPointF(xImg, yImg), color);
-				}
-
-				//std::cout << "Updating from " << *it << " to " << static_cast<MouseState::VectorID>(*it + MouseState::GlBasis) << ", " << static_cast<MouseState::VectorID>(*it + MouseState::QuadBasis) << ", " << static_cast<MouseState::VectorID>(*it + MouseState::ImageBasis) << std::endl;
-				//std::cout << "Vector : " << vPixel.x() << ", " << vPixel.y() << std::endl;
-
-				// Need to update associated color : 
-
-				// Set the read buffer : 
-				// makeGLContextAvailable();
-				//glReadBuffer( GL_BACK );
-
-				// Subtle point here : the frame buffer is verticaly flipped!
-				//glReadPixels(x, height()-(y+1), 1, 1, GL_RED, GL_UNSIGNED_BYTE, &id);
-			}
-		}
-
-		mouseState.updateProcessCompleted();
-	}*/
-
-	/*void GlipViewWidget::performMouseAction(void)
-	{
-		View* 		currentView 		= getCurrentView();
-		ViewsTable* 	currentViewsTable 	= getCurrentViewsTable();
-
-		if(currentView!=NULL && (mouseState.getFunctionMode()==MouseState::ModeMotion || mouseState.getFunctionMode()==MouseState::ModeRotation))
-		{
-			// Get adaptation scale (full screen or frame) :
-			float adaptationScale;
-
-			if(currentViewsTable==NULL)
-				adaptationScale = getAdaptationScaling(currentView->getImageRatio());
-			else
-			{
-				QRectF sceneRect = currentViewsTable->getVignetteFrame(currentView);
-				adaptationScale = getAdaptationScaling(sceneRect.width() / sceneRect.height(), currentView->getImageRatio());
-			}
-
-			// Translate : 
-			if(mouseState.getFunctionMode()==MouseState::ModeMotion && mouseState.isVectorModified(MouseState::VectorLastLeftShiftGl))
-			{
-				QPointF v = mouseState.getVector(MouseState::VectorLastLeftShiftGl);
-
-				v.rx() /= adaptationScale;
-				v.ry() /= adaptationScale;
-
-				// Scene scaling : see toGlCoordinates
-
-				// Homothecy : 
-				if(currentView->homothecyScale!=0.0f)
-				{
-					v.rx() /= currentView->homothecyScale;
-					v.ry() /= currentView->homothecyScale;
-				}
-
-				currentView->move(v.x(), v.y());
-			}
-		
-			// Rotate : 
-			if(mouseState.getFunctionMode()==MouseState::ModeRotation && mouseState.isVectorModified(MouseState::VectorLastLeftPositionImage))
-			{
-				float 	xImageCenter = 0.0f, 
-					yImageCenter = 0.0f;
-
-				currentView->getImageCenter(xImageCenter, yImageCenter);
-
-				QPointF a 	= mouseState.getVector(MouseState::VectorLastLeftPositionImage),
-					s	= mouseState.getVector(MouseState::VectorLastLeftShiftImage);
-				a.setX(a.x() - xImageCenter);
-				a.setY(a.y() - yImageCenter);
-				float	p	= a.x()*s.x() + a.y()*s.y(),
-					laSq	= a.x()*a.x() + a.y()*a.y();
-				QPointF u	= QPointF(s.x() - p*a.x()/laSq, s.y() - p*a.y()/laSq);
-				float	luSq	= u.x()*u.x()+u.y()*u.y(),
-					sign	= (u.x()*a.y()-a.x()*u.y())<0.0 ? -1.0f : 1.0f,
-					angle	= atan2(sign * std::sqrt(luSq), std::sqrt(laSq));
-
-				currentView->rotate(angle);
-			}
-
-			// Zoom in/out :
-			if(mouseState.isVectorModified(MouseState::VectorLastWheelUpGl) && mouseState.isWheelDeltaModified())
-			{
-				QPointF v = mouseState.getVector(MouseState::VectorLastWheelUpGl);
-
-				v.rx() /= adaptationScale;
-				v.ry() /= adaptationScale;
-
-				currentView->zoom(v.x(), v.y(), std::pow(1.2f, mouseState.getWheelDelta()));
-			}
-
-			// Zoom in/out :
-			if(mouseState.isVectorModified(MouseState::VectorLastWheelDownGl) && mouseState.isWheelDeltaModified())
-			{
-				QPointF v = mouseState.getVector(MouseState::VectorLastWheelDownGl);
-
-				v.rx() /= adaptationScale;
-				v.ry() /= adaptationScale;
-
-				currentView->zoom(v.x(), v.y(), std::pow(1.2f, mouseState.getWheelDelta()));
-			}
-		}
-		else
-		{
-			// Clear wheel state : 
-			if(mouseState.isWheelDeltaModified())
-				mouseState.getWheelDelta();
-		}
-	}*/
-
 	void GlipViewWidget::updateMouseVectorAndColor(const VectorData& vPixelBasis, VectorData& vGlBasis, VectorData& vQuadBasis, VectorData& vImageBasis, VectorData& vFragmentBasis, const bool isRelative, ColorData* colorData)
 	{
 		const bool collection = (getMouseFunctionMode()==ModeCollection);
@@ -3995,16 +3820,6 @@ using namespace QVGL;
 
 				currentView->zoom(v.x(), v.y(), std::pow(settingsInterface.getSettings().zoomFactor, wheelDelta));
 			}
-			/*else if(vectorData.id==MouseState::VectorLastWheelDownGl)
-			{
-				// Zoom in/out :
-				QPointF v = vectorData.getVector();
-
-				v.rx() /= adaptationScale;
-				v.ry() /= adaptationScale;
-
-				currentView->zoom(v.x(), v.y(), std::pow(settingsInterface.getSettings().zoomFactor, wheelDelta));
-			}*/
 		}
 	}
 
@@ -4017,9 +3832,9 @@ using namespace QVGL;
 
 	void GlipViewWidget::viewRequireDisplay(View* view)
 	{
-		int idx = viewsList.indexOf(view);
+		int idx = viewsList.key(view, -1);
 
-		if(idx>=0 && idx<viewsList.size())
+		if(idx>=0)
 			changeCurrentView(idx);
 	}
 
@@ -4033,9 +3848,9 @@ using namespace QVGL;
 
 	void GlipViewWidget::viewChangeSelection(View* view)
 	{
-		int idx = viewsList.indexOf(view);
+		int idx = viewsList.key(view, -1);
 
-		if(idx>=0 && idx<viewsList.size())
+		if(idx>=0)
 			changeCurrentView(idx, false);
 	}
 
@@ -4055,13 +3870,13 @@ using namespace QVGL;
 
 	void GlipViewWidget::viewClosed(View* view)
 	{
-		int idx = viewsList.indexOf(view);
+		const int idx = viewsList.key(view, -1);
 
 		// If this view is in the list : 
 		if(idx>=0)
 		{
 			// Remove this view from the list :
-			viewsList.removeAt(idx);
+			viewsList.remove(idx);
 
 			// Disconnect : 
 			view->disconnect(this);
@@ -4086,14 +3901,13 @@ using namespace QVGL;
 	{
 		// Get the emitter : 
 		View* view = reinterpret_cast<View*>(QObject::sender());
-
-		int idx = viewsList.indexOf(view);
+		const int idx = viewsList.key(view, -1);
 
 		// If this view is in the list : 
 		if(idx>=0)
 		{
 			// Remove this view from the list :
-			viewsList.removeAt(idx);
+			viewsList.remove(idx);
 
 			// Change current view if needed :
 			if(currentViewIndex==idx && getCurrentViewsTable()==NULL)
@@ -4103,15 +3917,15 @@ using namespace QVGL;
 
 	void GlipViewWidget::closeAllViews(void)
 	{
-		while(!viewsList.isEmpty())
+		for(QMap<int,View*>::iterator it=viewsList.begin(); it!=viewsList.end(); it++)
 		{
-			View* view = viewsList.front();
-			viewsList.removeFirst();
-			
+			View* view = it.value();
+			it.value() = NULL;
 			view->disconnect(this);
 			view->qvglParent = NULL;
 			view->close();
 		}
+		viewsList.clear();
 
 		// Update : 
 		hideCurrentView();
@@ -4119,9 +3933,9 @@ using namespace QVGL;
 
 	void GlipViewWidget::viewsTableRequireDisplay(ViewsTable* viewsTable)
 	{
-		int idx = viewsTablesList.indexOf(viewsTable);
+		const int idx = viewsTablesList.key(viewsTable, -1);
 
-		if(idx>=0 && idx<viewsTablesList.size())
+		if(idx>=0)
 			changeCurrentViewsTable(idx);
 	}
 
@@ -4135,11 +3949,11 @@ using namespace QVGL;
 
 	void GlipViewWidget::viewsTableClosed(ViewsTable* viewsTable)
 	{
-		int idx = viewsTablesList.indexOf(viewsTable);
+		const int idx = viewsTablesList.key(viewsTable, -1);
 
-		if(idx>=0 && viewsTable!=mainViewsTable) // Do not remove main table
+		if(idx>=0) // Do not remove main table
 		{
-			viewsTablesList.removeAt(idx);
+			viewsTablesList.remove(idx);
 
 			if(glScene!=NULL)
 				glScene->removeItem(viewsTable);
@@ -4163,11 +3977,11 @@ using namespace QVGL;
 		// Get the emitter : 
 		ViewsTable* viewsTable = reinterpret_cast<ViewsTable*>(QObject::sender());
 
-		int idx = viewsTablesList.indexOf(viewsTable);
+		const int idx = viewsTablesList.key(viewsTable, -1);
 
 		if(idx>=0)
 		{
-			viewsTablesList.removeAt(idx);
+			viewsTablesList.remove(idx);
 
 			if(currentViewsTableIndex==idx)
 				changeCurrentViewsTable(currentViewsTableIndex);
@@ -4176,26 +3990,47 @@ using namespace QVGL;
 
 	void GlipViewWidget::closeAllViewsTables(void)
 	{
-		while(viewsTablesList.size()>1) // Keep the main table
+		QVector<int> toBeRemoved;
+		toBeRemoved.reserve(viewsTablesList.size());
+
+		for(QMap<int,ViewsTable*>::iterator it=viewsTablesList.begin(); it!=viewsTablesList.end(); it++)
+		{
+			if(it.value()!=mainViewsTable)
+			{
+				if(glScene!=NULL)
+					glScene->removeItem(it.value());
+				it.value()->disconnect(this);
+				it.value()->close();
+				toBeRemoved.push_back(it.key());
+			}
+		}
+
+		for(QVector<int>::iterator it=toBeRemoved.begin(); it!=toBeRemoved.end(); it++)
+			viewsTablesList.remove(*it);
+
+		if(!viewsTablesList.contains(currentViewsTableIndex))
+			changeCurrentViewsTable(currentViewsTableIndex);
+
+		/*while(viewsTablesList.size()>1) // Keep the main table
 		{
 			ViewsTable* viewsTable = viewsTablesList.back();
 
 			if(viewsTable!=mainViewsTable)
 				viewsTable->close();
-		}
+		}*/
 	}
 
 	void GlipViewWidget::subWidgetSelected(SubWidget* subWidget)
 	{
-		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
+		if(subWidgetsList.key(subWidget, -1)>=0 && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Forget any temporary hide : 
 			if(!temporaryHiddenSubWidgetsList.empty())
 				temporaryHideAllSubWidgets(false);
 
 			// Change opacity of all other subWidgets : 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-				(*it)->setWindowOpacity(opacityIdleSubWidget);
+			for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				it.value()->setWindowOpacity(opacityIdleSubWidget);
 
 			// Change the opacity of the bars : 
 			topBar.setWindowOpacity(opacityIdleBar);
@@ -4205,8 +4040,6 @@ using namespace QVGL;
 			subWidget->setWindowOpacity(opacityActiveSubWidget);
 
 			// Raise the current subWidget : 
-			//glSceneViewWidget.putWidgetOnTop(subWidget->getGraphicsProxy());
-			//std::cerr << "Missing glSceneViewWidget.putWidgetOnTop() at " << __FILE__ << ' ' << __LINE__ << std::endl;
 			putWidgetOnTop(subWidget->getGraphicsProxy());
 
 			// Release all buttons from the main interface : 
@@ -4243,16 +4076,12 @@ using namespace QVGL;
 	
 	void GlipViewWidget::hideSubWidget(SubWidget* subWidget)
 	{
-		if(subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
+		if(subWidgetsList.key(subWidget, -1)>=0 && subWidget->getQVGLParent()==this && subWidget->getGraphicsProxy()!=NULL)
 		{
 			// Lower the current subWidget : 
-			//glSceneViewWidget.putWidgetOnBottom(subWidget->getGraphicsProxy());
-			//std::cerr << "Missing glSceneViewWidget.putWidgetOnBottom() at " << __FILE__ << ' ' << __LINE__ << std::endl;
 			putWidgetOnBottom(subWidget->getGraphicsProxy());
 
 			// Raise the top bar : 
-			//glSceneViewWidget.putWidgetOnTop(topBar.getGraphicsProxy());
-			//std::cerr << "Missing glSceneViewWidget.putWidgetOnTop() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
 			putWidgetOnTop(topBar.getGraphicsProxy());
 		}
 	}
@@ -4267,16 +4096,14 @@ using namespace QVGL;
 
 	void GlipViewWidget::subWidgetClosed(SubWidget* subWidget)
 	{
-		int idx = subWidgetsList.indexOf(subWidget);
+		int idx = subWidgetsList.key(subWidget,-1);
 
-		if(idx!=-1)
+		if(idx>=0)
 		{
 			// Remove this view from the list :
-			subWidgetsList.removeAt(idx);
+			subWidgetsList.remove(idx);
 
 			// Try removing : 
-			//glSceneViewWidget.removeItem(subWidget->getGraphicsProxy());
-			//std::cerr << "Missing glSceneViewWidget.removeItem() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
 			if(glScene!=NULL)
 				glScene->removeItem(subWidget->getGraphicsProxy());
 			subWidget->getGraphicsProxy()->setWidget(NULL);
@@ -4302,10 +4129,10 @@ using namespace QVGL;
 		// Get the emitter : 
 		SubWidget* subWidget = reinterpret_cast<SubWidget*>(QObject::sender());
 
-		int idx = subWidgetsList.indexOf(subWidget);
+		int idx = subWidgetsList.key(subWidget,-1);
 
-		if(idx!=-1)
-			subWidgetsList.removeAt(idx);
+		if(idx>=0)
+			subWidgetsList.remove(idx);
 	}
 
 	void GlipViewWidget::nextSubWidget(void)
@@ -4333,12 +4160,12 @@ using namespace QVGL;
 		{
 			temporaryHiddenSubWidgetsList.clear();
 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
 			{
-				if((*it)->getGraphicsProxy()!=NULL && (*it)->getGraphicsProxy()->isVisible())
+				if(it.value()->getGraphicsProxy()!=NULL && it.value()->getGraphicsProxy()->isVisible())
 				{
-					temporaryHiddenSubWidgetsList.push_back(*it);
-					(*it)->getGraphicsProxy()->setVisible(false);
+					temporaryHiddenSubWidgetsList.push_back(it.value());
+					it.value()->getGraphicsProxy()->setVisible(false);
 				}
 			}
 		}
@@ -4361,8 +4188,8 @@ using namespace QVGL;
 
 	void GlipViewWidget::hideAllSubWidgets(void)
 	{
-		for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-			(*it)->hide();
+		for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+			it.value()->hide();
 	}
 
 	void GlipViewWidget::barSelected(TopBar* bar)
@@ -4370,8 +4197,8 @@ using namespace QVGL;
 		if(bar==&topBar)
 		{
 			// Change opacity of all other subWidgets : 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-				(*it)->setWindowOpacity(opacityIdleSubWidget);
+			for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				it.value()->setWindowOpacity(opacityIdleSubWidget);
 
 			// Change the opacity of the bars : 
 			topBar.setWindowOpacity(opacityActiveBar);
@@ -4391,8 +4218,8 @@ using namespace QVGL;
 		if(bar==&bottomBar)
 		{
 			// Change opacity of all other subWidgets : 
-			for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
-				(*it)->setWindowOpacity(opacityIdleSubWidget);
+			for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+				it.value()->setWindowOpacity(opacityIdleSubWidget);
 
 			// Change the opacity of the bars : 
 			topBar.setWindowOpacity(opacityActiveBar);
@@ -4430,8 +4257,8 @@ using namespace QVGL;
 	{
 		// Send the quit signal to all the SubWidgets :
 		bool test = true;
-		for(QList<SubWidget*>::iterator it=subWidgetsList.begin(); (it!=subWidgetsList.end()) && test; it++)
-			test = test && (*it)->readyToQuit();
+		for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); (it!=subWidgetsList.end()) && test; it++)
+			test = test && it.value()->readyToQuit();
 		
 		if(test)
 		{
@@ -4442,45 +4269,46 @@ using namespace QVGL;
 		return test;
 	}
 
-	/*KeyboardState& GlipViewWidget::getKeyboardState(void)
-	{
-		return keyboardState;
-	}*/
-
-	/*MouseState& GlipViewWidget::getMouseState(void)
-	{
-		return mouseState;
-	}*/
-
-	/*const KeyboardState& GlipViewWidget::getKeyboardState(void) const
-	{
-		return keyboardState;
-	}*/
-
-	/*const MouseState& GlipViewWidget::getMouseState(void) const
-	{
-		return mouseState;
-	}*/
-
 	View* GlipViewWidget::getCurrentView(void) const
 	{
-		if(currentViewIndex>=0 && currentViewIndex<viewsList.size())
-			return viewsList[currentViewIndex];
-		else
-			return NULL;
+		QMap<int,View*>::const_iterator it=viewsList.find(currentViewIndex);
+		return (it==viewsList.end()) ? NULL : it.value();
 	}	
 
 	ViewsTable* GlipViewWidget::getCurrentViewsTable(void)
 	{
-		if(currentViewsTableIndex>=0 && currentViewsTableIndex<viewsTablesList.size())
-			return viewsTablesList[currentViewsTableIndex];
-		else
-			return NULL;
+		QMap<int,ViewsTable*>::const_iterator it=viewsTablesList.find(currentViewsTableIndex);
+		return (it==viewsTablesList.end()) ? NULL : it.value();
 	}
 
-	void GlipViewWidget::changeCurrentView(int targetID, bool showNow)
+	void GlipViewWidget::changeCurrentView(int targetID, const bool showNow, const bool goingUp)
 	{
-		currentViewIndex = std::min(std::max(targetID, 0), viewsList.size()-1);
+		if(viewsList.contains(targetID))
+			currentViewIndex = targetID;
+		else
+		{
+			currentViewIndex = -1;
+			int 	closestIndex = -1,
+				bestDistance = std::numeric_limits<int>::max(),
+				bestSatisfyingDistance = std::numeric_limits<int>::max();
+			for(QMap<int,View*>::iterator it=viewsList.begin(); it!=viewsList.end(); it++)
+			{
+				const float d = std::abs(it.key()-targetID);
+				if(d<bestSatisfyingDistance && ((it.key()>=targetID && goingUp) || (it.key()<=targetID && !goingUp)))
+				{
+					currentViewsTableIndex = it.key();
+					bestSatisfyingDistance = d;
+				}
+
+				if(d<bestDistance)
+				{
+					closestIndex = it.key();
+					bestDistance = d;
+				}				
+			}
+			if(currentViewIndex<0)
+				currentViewIndex = closestIndex;
+		}
 
 		View* currentView = getCurrentView();
 
@@ -4508,12 +4336,37 @@ using namespace QVGL;
 			glScene->update();
 	}
 
-	void GlipViewWidget::changeCurrentViewsTable(int targetID)
+	void GlipViewWidget::changeCurrentViewsTable(int targetID, const bool goingUp)
 	{
 		// Hide previous table :
 		hideCurrentViewsTable();
 
-		currentViewsTableIndex = std::min(std::max(targetID, 0), viewsTablesList.size()-1);
+		if(viewsTablesList.contains(targetID))
+			currentViewsTableIndex = targetID;
+		else
+		{
+			currentViewsTableIndex = -1;
+			int 	closestIndex = -1,
+				bestDistance = std::numeric_limits<int>::max(),
+				bestSatisfyingDistance = std::numeric_limits<int>::max();
+			for(QMap<int,ViewsTable*>::iterator it=viewsTablesList.begin(); it!=viewsTablesList.end(); it++)
+			{
+				const float d = std::abs(it.key()-targetID);
+				if(d<bestSatisfyingDistance && ((it.key()>=targetID && goingUp) || (it.key()<=targetID && !goingUp)))
+				{
+					currentViewsTableIndex = it.key();
+					bestDistance = d;
+				}
+		
+				if(d<bestDistance)
+				{
+					closestIndex = it.key();
+					bestDistance = d;
+				}
+			}
+			if(currentViewsTableIndex<0)
+				currentViewsTableIndex = closestIndex;
+		}
 
 		ViewsTable* currentTable = getCurrentViewsTable();
 
@@ -4808,9 +4661,12 @@ using namespace QVGL;
 
 	void GlipViewWidget::addView(View* view)
 	{
-		if(!viewsList.contains(view) && view->qvglParent==NULL)
+		static int c = 0;
+
+		if(viewsList.key(view,-1)<0 && view->qvglParent==NULL)
 		{
-			viewsList.append(view);
+			viewsList[c] = view;
+			c++;
 
 			view->qvglParent = this;
 
@@ -4827,7 +4683,9 @@ using namespace QVGL;
 
 	void GlipViewWidget::addViewsTable(ViewsTable* viewsTable)
 	{
-		if(!viewsTablesList.contains(viewsTable))
+		static int c = 0;
+
+		if(viewsTablesList.key(viewsTable,-1)<0)
 		{
 			for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 				addView(it.key());
@@ -4839,7 +4697,8 @@ using namespace QVGL;
 				glScene->addItem(viewsTable);
 				forceItemOrdering();
 			}
-			viewsTablesList.append(viewsTable);
+			viewsTablesList[c] = viewsTable;
+			c++;
 
 			QObject::connect(viewsTable, SIGNAL(requireDisplay()),		this, SLOT(viewsTableRequireDisplay()));
 			QObject::connect(viewsTable, SIGNAL(showView(View*)), 		this, SLOT(viewRequireDisplay(View*)));
@@ -4854,7 +4713,9 @@ using namespace QVGL;
 
 	void GlipViewWidget::addSubWidget(SubWidget* subWidget)
 	{
-		if(glScene!=NULL && subWidget!=NULL && !subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==NULL)
+		static int c = 0;
+
+		if(glScene!=NULL && subWidget!=NULL && subWidgetsList.key(subWidget,-1)<0 && subWidget->getQVGLParent()==NULL)
 		{
 			//glSceneViewWidget.addSubWidget(subWidget);
 			QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
@@ -4870,7 +4731,8 @@ using namespace QVGL;
 
 			// Save link : 
 			subWidget->setQVGLParent(this);
-			subWidgetsList.append(subWidget);
+			subWidgetsList[c] = subWidget;
+			c++;
 
 			// Move but show only if it is currently visible : 
 			subWidget->move(0, topBar.height());
@@ -4879,7 +4741,7 @@ using namespace QVGL;
 			// Update : 
 			emit subWidgetAdded(subWidget);
 		}
-		else if(subWidget!=NULL && subWidgetsList.contains(subWidget) && subWidget->getQVGLParent()==this)
+		else if(subWidget!=NULL && subWidgetsList.key(subWidget,-1)>=0 && subWidget->getQVGLParent()==this)
 			subWidgetSelected(subWidget);
 	}
 
@@ -4956,7 +4818,7 @@ using namespace QVGL;
 				if(currentView!=NULL) currentView->reset();
 				break;
 			case ActionPreviousView :
-				changeCurrentView(currentViewIndex - 1);
+				changeCurrentView(currentViewIndex - 1, true, false); // Going down
 				break;
 			case ActionNextView :
 				changeCurrentView(currentViewIndex + 1);
