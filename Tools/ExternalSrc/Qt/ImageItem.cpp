@@ -2079,6 +2079,10 @@ using namespace QGIC;
 				if(!imageItem->getFilename().isEmpty())
 					view->infos["Filename"] = imageItem->getFilename();
 
+				QObject::connect(imageItem,	SIGNAL(formatModified()),	view, SIGNAL(internalDataUpdated()));
+				QObject::connect(imageItem,	SIGNAL(nameModified()),		view, SIGNAL(internalDataUpdated()));
+				QObject::connect(imageItem,	SIGNAL(filenameModified()),	view, SIGNAL(internalDataUpdated()));
+				QObject::connect(imageItem,	SIGNAL(savedToDisk()),		view, SIGNAL(internalDataUpdated()));
 				QObject::connect(imageItem,	SIGNAL(unloadedFromDevice()),	this, SLOT(imageItemViewRemoved()));
 				QObject::connect(imageItem,	SIGNAL(removed()),		this, SLOT(imageItemViewRemoved()));
 				QObject::connect(imageItem,	SIGNAL(destroyed()),		this, SLOT(imageItemViewRemoved()));
@@ -2122,6 +2126,7 @@ using namespace QGIC;
 		{
 			// Prevent any of these two objects to popup cleaning request
 			it.key()->disconnect(this);
+			it.value()->setTexture(NULL); // not linked anymore.
 			it.value()->disconnect(this);
 			it.value()->deleteLater();
 			views.erase(it);

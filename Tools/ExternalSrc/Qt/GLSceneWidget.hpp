@@ -173,7 +173,8 @@ namespace QVGL
 			QString getDescriptionToolTip(void);
 
 		signals :
-			void updated(void);
+			void updated(void);		// For fast updates, which requires duisplay update (such as view paramaters, translation, rotation, magnification, etc.)
+			void internalDataUpdated(void);	// For slow update (filtering / format update of the HdlTexture, etc.)
 			void requireDisplay(void);
 			void nameChanged(void);
 			void closed(void);
@@ -184,12 +185,12 @@ namespace QVGL
 			Q_OBJECT
 
 			private : 
-				static QColor		frameColor,
+				static const QColor	frameColor,
 							selectedFrameColor,
 							titleBarColor,
 							titleColor,
 							infosColor;
-				static float		frameThickness,
+				static const float	frameThickness,
 							titleBarOpacity;
 
 				bool			selected;
@@ -205,6 +206,7 @@ namespace QVGL
 
 				void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);
 				void mousePressEvent(QGraphicsSceneMouseEvent* event);
+				void enforceOrdering(void);
 
 			public : 
 				Vignette(View* _view);
@@ -221,6 +223,7 @@ namespace QVGL
 			public slots :
 				void updateTitle(void);
 				void updateInfos(void);
+				
 
 			signals : 
 				void selection(void);
@@ -345,7 +348,7 @@ namespace QVGL
 			void graphicsProxyDestroyed(void);
 
 		public : 
-			SubWidget(const Flag _flags=SubWidget::NoFlag);
+			SubWidget(const Flag _flags=SubWidget::NoFlag, QWidget* parent=NULL);
 			virtual ~SubWidget(void);
 
 			void setInnerWidget(QWidget* _widget);

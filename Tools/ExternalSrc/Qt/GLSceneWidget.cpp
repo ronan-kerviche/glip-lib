@@ -15,6 +15,7 @@
 /* ************************************************************************************************************* */
 
 #include "GLSceneWidget.hpp"
+#include <QApplication>
 #include <QColorDialog>
 
 using namespace QVGL;
@@ -50,6 +51,7 @@ using namespace QVGL;
 		flipUpDown(false),
 		flipLeftRight(false)
 	{
+		QObject::connect(this, SIGNAL(internalDataUpdated()), this, SIGNAL(updated())); // signal equivalence
 		reset();
 	}
 
@@ -62,6 +64,7 @@ using namespace QVGL;
 		flipUpDown(false),
 		flipLeftRight(false)
 	{
+		QObject::connect(this, SIGNAL(internalDataUpdated()), this, SIGNAL(updated())); // signal equivalence
 		reset();
 	}
 
@@ -106,7 +109,7 @@ using namespace QVGL;
 	{
 		texture = _texture;
 	
-		emit updated();
+		emit internalDataUpdated();
 	}
 
 	float View::getAngle(void) const
@@ -320,13 +323,13 @@ using namespace QVGL;
 	}
 
 // Vignette :
-		QColor	Vignette::frameColor		= QColor(128, 	128, 	128),
-			Vignette::selectedFrameColor	= QColor(192, 	192, 	192),
-			Vignette::titleBarColor		= QColor(32, 	 32, 	 32, static_cast<unsigned char>(titleBarOpacity * 255.0f)),
-			Vignette::titleColor		= QColor(224, 	224, 	224),
-			Vignette::infosColor		= QColor(160, 	160,	160);
-		float	Vignette::frameThickness	= 3.0f,
-			Vignette::titleBarOpacity	= 0.75f;
+		const QColor	Vignette::frameColor		= QColor(128, 	128, 	128),
+				Vignette::selectedFrameColor	= QColor(192, 	192, 	192),
+				Vignette::titleBarColor		= QColor(32, 	 32, 	 32, static_cast<unsigned char>(titleBarOpacity * 255.0f)),
+				Vignette::titleColor		= QColor(224, 	224, 	224),
+				Vignette::infosColor		= QColor(160, 	160,	160);
+		const float	Vignette::frameThickness	= 3.0f,
+				Vignette::titleBarOpacity	= 0.75f;
 
 		Vignette::Vignette(View* _view)
 		 : 	QObject(NULL),
@@ -344,10 +347,10 @@ using namespace QVGL;
 			infos.setData(QGraphicsItemVisualPartKey, QVariant(VignetteVisualPart));
 
 			setFiltersChildEvents(true);
-			setAcceptHoverEvents(true);
+			//setAcceptHoverEvents(true); // not needed anymore ?
 
 			addToGroup(&titleBar);
-			addToGroup(&frame);			
+			addToGroup(&frame);
 			addToGroup(&title);
 			addToGroup(&infos);
 
@@ -369,15 +372,17 @@ using namespace QVGL;
 			updateInfos();
 	
 			// Connect : 
-			QObject::connect(view, SIGNAL(nameChanged(void)), 	this, SLOT(updateTitle(void)));
-			QObject::connect(view, SIGNAL(updated(void)), 		this, SLOT(updateInfos(void)));
+			QObject::connect(view, SIGNAL(nameChanged()), 		this, SLOT(updateTitle()));
+			QObject::connect(view, SIGNAL(internalDataUpdated()), 	this, SLOT(updateInfos()));
 		}
 
 		Vignette::~Vignette(void)
 		{
+			view = NULL;
 			removeFromGroup(&frame);
 			removeFromGroup(&titleBar);
 			removeFromGroup(&title);
+			removeFromGroup(&infos);
 		}
 
 		void Vignette::setTitleBarHeight(void)
@@ -418,6 +423,15 @@ using namespace QVGL;
 				event->ignore();
 		}
 
+		void Vignette::enforceOrdering(void)
+		{
+			/*frame.stackBefore(&titleBar);
+			title.stackBefore(&frame);
+			infos.stackBefore(&frame);*/
+
+			// To be removed.
+		}
+
 		View* Vignette::getView(void)
 		{
 			return view;
@@ -446,8 +460,13 @@ using namespace QVGL;
 			titleBar.setRect(titleBarRect);
 
 			// Force the update of title and infos to fit the news sizes :
-			updateTitle();
-			updateInfos();
+			if(view!=NULL)
+			{
+				updateTitle();
+				updateInfos();
+			}
+
+			enforceOrdering();
 		}
 
 		bool Vignette::isSelected(void) const
@@ -474,6 +493,8 @@ using namespace QVGL;
 
 		void Vignette::updateTitle(void)
 		{
+			titleBar.setToolTip(view->getDescriptionToolTip());
+
 			QString titleStr = view->getName();
 
 			// Compute the maximum number of characters to fill 80% max :
@@ -485,10 +506,13 @@ using namespace QVGL;
 
 			title.setText(titleStr);
 			setTitleBarHeight();
+			enforceOrdering();
 		}
 
 		void Vignette::updateInfos(void)
 		{
+			titleBar.setToolTip(view->getDescriptionToolTip());
+
 			QString text;
 			if(view->isValid())
 				text = tr("%1x%2").arg(view->getFormat().getWidth()).arg(view->getFormat().getHeight());
@@ -498,18 +522,17 @@ using namespace QVGL;
 			QFontMetrics metrics(infos.font());
 			infos.setText(text);
 			infos.setPos(getWidth() - metrics.width(text) - 6, 0);
-
 			setTitleBarHeight();
+			enforceOrdering();
 		}
 	
 // ViewsTable :
-	float ViewsTable::rho = 0.04;
+	float ViewsTable::rho = 0.04; // Percentage of spacing
 
 	ViewsTable::ViewsTable(const QString& tableName)
 	 :	QGraphicsItemGroup(NULL),
 		name(tableName),
-		emptyNotification("(Empty)")//,
-		//visible(true)
+		emptyNotification("(Empty)")
 	{
 		// Set user data of parts : 
 		setData(QGraphicsItemVisualPartKey, QVariant(ViewsTableVisualPart));
@@ -789,8 +812,9 @@ using namespace QVGL;
 	}
 
 // SubWidget :
-	SubWidget::SubWidget(const Flag _flags)
-	 : 	layout(this),
+	SubWidget::SubWidget(const Flag _flags, QWidget* parent)
+	 : 	QWidget(parent),
+		layout(this),
 		titleBar(&titleWidget),
 		titleLabel(this),
 		hideButton(this),
@@ -823,6 +847,7 @@ using namespace QVGL;
 		hideButton.setMaximumSize(w, h);
 		hideButton.setArrowType(Qt::UpArrow);
 		hideButton.setToolTip("Hide");
+		hideButton.setObjectName("SubWidgetHideButton"); // Load for this specific name from the stylesheet
 
 		titleBar.addWidget(&titleLabel);
 		titleBar.addWidget(&hideButton);
@@ -1782,9 +1807,9 @@ using namespace QVGL;
 
 			// Signals :
 			widgetsSignalMapper.setMapping(action, reinterpret_cast<QObject*>(subWidget));
-			QObject::connect(action,	SIGNAL(triggered(void)), 	 &widgetsSignalMapper, 	SLOT(map()));
+			QObject::connect(action,	SIGNAL(triggered(void)), 	&widgetsSignalMapper, 	SLOT(map()));
 			QObject::connect(subWidget,	SIGNAL(closed(void)), 		this, 			SLOT(subWidgetClosed(void)));
-			QObject::connect(subWidget,	SIGNAL(destroyed(void)), 	 this, 			SLOT(subWidgetClosed(void)));
+			QObject::connect(subWidget,	SIGNAL(destroyed(void)), 	this, 			SLOT(subWidgetClosed(void)));
 		}
 	}
 
@@ -3295,8 +3320,6 @@ using namespace QVGL;
 			int x, y;
 			viewsTable->getGLPositionOfVignette(*it, x, y);
 			drawView((*it)->getView(), x, y, (*it)->getWidth(), (*it)->getHeight());
-
-			//std::cout << "    At : " << (*it)->x() << 'x' << (*it)->y() << ", size : " << (*it)->getWidth() << 'x' << (*it)->getHeight() << std::endl;
 		}
 
 		// Restore view port : 
@@ -3559,7 +3582,7 @@ using namespace QVGL;
 	void GlipViewWidget::forceItemOrdering(void)
 	{
 		// Force all the items to be on bottom, and the widgets to be on top.
-		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		/*QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
 		sortItems(itemsList);
 
 		// Sort in the list : 
@@ -3582,7 +3605,9 @@ using namespace QVGL;
 		{
 			(*it)->setZValue(itemsList.size()-z);
 			z++;
-		}
+		}*/
+
+		// To be removed?
 	}
 
 	void GlipViewWidget::putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy)
@@ -4690,8 +4715,6 @@ using namespace QVGL;
 			for(QMap<View*, Vignette*>::iterator it=viewsTable->begin(); it!=viewsTable->end(); it++)
 				addView(it.key());
 
-			//glSceneViewWidget.addItem(viewsTable);
-			//std::cerr << "Missing glSceneViewWidget.addItem() at " << __FILE__ << ' ' << __LINE__ << std::endl;
 			if(glScene!=NULL)
 			{
 				glScene->addItem(viewsTable);
@@ -4717,7 +4740,6 @@ using namespace QVGL;
 
 		if(glScene!=NULL && subWidget!=NULL && subWidgetsList.key(subWidget,-1)<0 && subWidget->getQVGLParent()==NULL)
 		{
-			//glSceneViewWidget.addSubWidget(subWidget);
 			QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
 			subWidget->setGraphicsProxy(proxy);
 			forceItemOrdering();
