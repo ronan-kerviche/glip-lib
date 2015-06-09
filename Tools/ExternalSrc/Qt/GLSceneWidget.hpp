@@ -130,6 +130,9 @@ namespace QVGL
 			bool 		flipUpDown,		// upside down.
 					flipLeftRight;		// mirrored.
 
+			View(void);
+			View(const View&);
+			View& operator=(const View&);
 			void prepareToDraw(void);
 
 			friend class GLScene;
@@ -202,6 +205,7 @@ namespace QVGL
 			
 				Vignette(void);
 				Vignette(const Vignette& v);
+				Vignette& operator=(const Vignette&);
 				void setTitleBarHeight(void);
 
 				void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);
@@ -242,6 +246,9 @@ namespace QVGL
 			float 			u, v;
 			QGraphicsSimpleTextItem	emptyNotification;
 
+			ViewsTable(void);
+			ViewsTable(const ViewsTable&);
+			ViewsTable& operator=(const ViewsTable&);
 			void computeTableParameters(const QRectF& sceneViewWidget, int N=-1);
 			void getIndices(const Vignette* vignette, int& i, int& j) const;
 			QPoint getScenePosition(const int& i, const int& j) const;
@@ -330,6 +337,8 @@ namespace QVGL
 						offset;
 			AnchorMode		anchorMode;
 
+			SubWidget(const SubWidget&);
+			SubWidget& operator=(const SubWidget&);
 			void mousePressEvent(QMouseEvent* event);
 			void mouseMoveEvent(QMouseEvent* event);
 			void mouseReleaseEvent(QMouseEvent* event);
@@ -441,6 +450,8 @@ namespace QVGL
 				QMap<ViewsTable*, QAction*>	viewsTablesActions;
 				QMap<SubWidget*, QAction*>	subWidgetsActions;
 
+				TopBar(const TopBar&);
+				TopBar& operator=(const TopBar&);
 				void mousePressEvent(QMouseEvent* event);
 				void mouseDoubleClickEvent(QMouseEvent* event);
 				void mouseMoveEvent(QMouseEvent* event);
@@ -497,6 +508,8 @@ namespace QVGL
 				QHBoxLayout		bar;
 				QToolBar		toolBar;
 				
+				BottomBar(const BottomBar&);
+				BottomBar& operator=(const BottomBar&);
 				void mousePressEvent(QMouseEvent* event);
 
 			private slots : 
@@ -512,18 +525,7 @@ namespace QVGL
 
 			signals : 
 				void selected(BottomBar*);
-		};
-
-		class SettingsDialog : public SubWidget
-		{
-			Q_OBJECT
-
-			private : 
-
-			public : 
-				SettingsDialog(void);
-				virtual ~SettingsDialog(void);
-		};
+		};	
 
 		class InfosDialog : public SubWidget
 		{
@@ -1034,7 +1036,7 @@ namespace QVGL
 			friend class GLScene;
 			
 		public :
-			GlipViewWidget(QWidget* parent=NULL, const QSize& originalSize = QSize(1024, 768));
+			GlipViewWidget(QWidget* parent=NULL, const QSize& originalSize = QSize(800, 600));
 			virtual ~GlipViewWidget(void);
 
 			float getSceneRatio(void) const;

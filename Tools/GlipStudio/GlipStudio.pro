@@ -62,3 +62,5 @@ contains(DEFINES, __USE_LIBRAW__){
 DESTDIR=.
 OBJECTS_DIR=./obj
 MOC_DIR=./mocs
+
+#QMAKE_CXXFLAGS += -g

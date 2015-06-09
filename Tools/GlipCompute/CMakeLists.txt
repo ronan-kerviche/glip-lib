@@ -13,6 +13,10 @@ set(CMAKE_BUILD_TYPE Release)
 # To track the compilation process
 #set(CMAKE_VERBOSE_MAKEFILE on )
 
+# We are silencing the long long warning here.
+# To be improved in a future release.
+set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wextra -Wno-long-long")
+
 if(WIN32) # Windows specifics
 	# MAKE SURE THAT YOUR PATH CONTAINS THE DIRECTORY TO ALL MINGW BINARIES
 
@@ -31,10 +35,10 @@ if(WIN32) # Windows specifics
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
 
-	set(CMAKE_CXX_FLAGS "-pedantic -Wall -lgcc -lmingw32 -lglu32 -lopengl32")
+	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
 
 else() # Linux specifics
-	set(CMAKE_CXX_FLAGS "-pedantic -Wall")
+	set(CMAKE_CXX_FLAGS "")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH .)

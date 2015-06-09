@@ -1880,17 +1880,6 @@ using namespace QVGL;
 		return graphicsProxy;
 	}
 
-// SettingsDialog : 
-	SettingsDialog::SettingsDialog(void)
-	{
-
-	}
-
-	SettingsDialog::~SettingsDialog(void)
-	{
-
-	}
-
 // InfosDialog :
 	InfosDialog::InfosDialog(void)
 	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable | SubWidget::CloseOnHideRequest))
@@ -2364,7 +2353,7 @@ using namespace QVGL;
 		setTitle("Settings");
 
 		// Build layout for the actions : 
-		const int numColumns = 4;
+		const int numColumns = 3;
 		for(int k=0; k<NumActions; k++)
 		{
 			const int p = k/numColumns,
@@ -3562,6 +3551,7 @@ using namespace QVGL;
 			(*it)->setQVGLParent(NULL);
 
 		viewsList.clear();
+		settingsInterface.close();
 		delete infosDialog;
 
 		std::cerr << "Fix delete at " << __FILE__ << " " << __LINE__ << std::endl;

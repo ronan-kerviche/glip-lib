@@ -29,10 +29,10 @@ if(WIN32) # Windows specifics
 	set(CMAKE_STRIP        strip)
 	set(CMAKE_MAKE_PROGRAM ${MINGW_PREFIX}make)
 
-	set(CMAKE_CXX_FLAGS "-Wall -Wextra -lgcc -lmingw32 -lglu32 -lopengl32")
+	set(CMAKE_CXX_FLAGS "-lgcc -lmingw32 -lglu32 -lopengl32")
 
 else() # Linux specifics
-	set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+	#set(CMAKE_CXX_FLAGS "")
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
