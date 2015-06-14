@@ -213,11 +213,11 @@ using namespace QGED;
 
 		highLighter = new Highlighter(document());
 
-		QObject::connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
-		QObject::connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
-		QObject::connect(this,			SIGNAL(cursorPositionChanged()),	this, SLOT(updateToCursorPosition()));
-		QObject::connect(document(),		SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
-		QObject::connect(document(), 		SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
+		QObject::connect(this, 		SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
+		QObject::connect(this,		SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
+		QObject::connect(this,		SIGNAL(cursorPositionChanged()),	this, SLOT(updateToCursorPosition()));
+		QObject::connect(document(),	SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
+		QObject::connect(document(), 	SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
 	}
 
 	CodeEditor::~CodeEditor(void)
@@ -419,9 +419,6 @@ using namespace QGED;
 					}
 
 					cursor.removeSelectedText();
-
-					//cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-					//cursor.insertText( cursor.selectedText().replace("\t","") );
 				}
 				
 				cursor.movePosition(QTextCursor::NextBlock);
@@ -863,8 +860,6 @@ using namespace QGED;
 
 	void CodeEditor::search(QRegExp expression, QTextDocument::FindFlags flags)
 	{
-		//if(highLighter!=NULL)
-		//	highLighter->setSearchHighlight(expression);
 		searchExpression = expression;
 		updateSearchExtraSelection();
 
@@ -1779,21 +1774,6 @@ using namespace QGED;
 		}
 	}
 
-	/*void CodeEditorSettingsInterface::softApply(void)
-	{
-		updateValues();
-	}
-
-	void CodeEditorSettingsInterface::quitDialog(void)
-	{
-		QPushButton* sender = reinterpret_cast<QPushButton*>(QObject::sender());
-
-		hide();
-
-		if(sender==&okButton)
-			updateValues();
-	}*/
-
 	void CodeEditorSettingsInterface::processDialogButtonPressed(QAbstractButton* button)
 	{
 		const QDialogButtonBox::StandardButton standardButton = dialogButtons.standardButton(button);
@@ -1964,7 +1944,7 @@ using namespace QGED;
 
 		_parent->addMenu(this);
 
-		QObject::connect(editor->document(),	SIGNAL(contentsChanged()), 	this, SLOT(conditionalUpdate()));
+		QObject::connect(editor->document(), SIGNAL(contentsChanged()), this, SLOT(conditionalUpdate()));
 
 		timer.start();
 	}
@@ -2050,6 +2030,9 @@ using namespace QGED;
 			for(unsigned int ko=0; ko<elements.mainPipelineOutputs.size(); ko++)
 				o->addAction(elements.mainPipelineOutputs[ko].c_str(), parent, SLOT(insertCalled()))->setToolTip(elements.mainPipelineOutputs[ko].c_str());
 		}
+
+		// Title : 
+		setTitle(editor->getTitle());
 	}
 
 	void EditorDataMenu::conditionalUpdate(void)
@@ -2308,7 +2291,8 @@ using namespace QGED;
 	CodeEditorTabs::~CodeEditorTabs(void)
 	{ 
 		while(tabBar.count()>0)
-			closeTab(0, true);
+			removeTab(0);
+			//closeTab(0, true);
 		//delete settingsInterface;
 	}
 	
@@ -2458,6 +2442,33 @@ using namespace QGED;
 		}
 	}
 
+	void CodeEditorTabs::removeTab(int tabID)
+	{
+		CodeEditorContainer* container = getEditor(tabID);
+
+		if(container!=NULL)
+		{
+			tabBar.removeTab(tabID);
+			stack.removeWidget(container);
+			container->deleteLater();
+			editors.remove(editors.key(container));
+		}
+	}
+
+	void CodeEditorTabs::closeEvent(QCloseEvent* event)
+	{
+		while(tabBar.count()>0)
+		{
+			if(!closeTab(0))
+			{
+				event->ignore();
+				return ;
+			}
+		}
+
+		QWidget::closeEvent(event);
+	}
+
 	void CodeEditorTabs::addTab(const QString& filename, int lineNumber)
 	{
 		static unsigned int counter = 0; 
@@ -2467,7 +2478,7 @@ using namespace QGED;
 		if(currentEditor!=NULL && currentEditor->getEditor().empty() && currentEditor->getEditor().getFilename().isEmpty())
 		{
 			int idx = getTabIndex(currentEditor);
-			closeTab(idx, true);
+			closeTab(idx);
 		}
 
 		// Create the widget : 
@@ -2651,11 +2662,10 @@ using namespace QGED;
 		}
 	}	
 
-	void CodeEditorTabs::closeTab(int tabID, bool imperative)
+	bool CodeEditorTabs::closeTab(int tabID, bool imperative)
 	{
 		CodeEditorContainer* container = getEditor(tabID);
 
-		// If it exists, clear : 
 		if(container!=NULL)
 		{
 			if(container->getEditor().isModified())
@@ -2676,16 +2686,15 @@ using namespace QGED;
 					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(container->getEditor().getFilename()), buttons);
 
 				if(returnedButton==QMessageBox::Save)
-					return save(container);
+					save(container);
 				else if(returnedButton == QMessageBox::Cancel)
-					return ; // exit
+					return false;
 			}
 
-			tabBar.removeTab(tabID);
-			stack.removeWidget(container);
-			container->deleteLater();
-			editors.remove(editors.key(container));
+			removeTab(tabID);
 		}
+
+		return true;
 	}
 
 	void CodeEditorTabs::compilationSuccessNotification(void* identifier)

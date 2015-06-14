@@ -1071,6 +1071,16 @@ using namespace QVGL;
 		resetPosition(false);
 	}
 
+	void SubWidget::closeEvent(QCloseEvent* event)
+	{
+		if(widget!=NULL)
+		{
+			QCoreApplication::sendEvent(widget, event);
+			if(event->isAccepted())
+				QWidget::closeEvent(event);
+		}
+	}
+
 	void SubWidget::addChild(QObject* pObject)
 	{
 		if(pObject && pObject->isWidgetType())
@@ -1310,11 +1320,6 @@ using namespace QVGL;
 
 			move(currentX, currentY);
 		}
-	}
-
-	bool SubWidget::readyToQuit(void)
-	{
-		return true;
 	}
 
 	void SubWidget::show(void)
@@ -3504,7 +3509,7 @@ using namespace QVGL;
 		topBar.setGraphicsProxy(graphicsProxyTopBar);
 		QGraphicsProxyWidget* graphicsProxyBottomBar = glScene->addWidget(&bottomBar);
 		bottomBar.setGraphicsProxy(graphicsProxyBottomBar);
-		forceItemOrdering();
+		//forceItemOrdering();
 
 		// Reset bars views : 
 		barSelected(&topBar);
@@ -3554,9 +3559,8 @@ using namespace QVGL;
 		settingsInterface.close();
 		delete infosDialog;
 
-		std::cerr << "Fix delete at " << __FILE__ << " " << __LINE__ << std::endl;
-		//delete glScene;
-		//delete contextWidget;
+		//delete glScene; // Will be deleted by the view?
+		delete contextWidget;
 	}
 
 	void GlipViewWidget::resizeEvent(QResizeEvent *event)
@@ -3569,10 +3573,10 @@ using namespace QVGL;
 		QGraphicsView::resizeEvent(event);
    	}
 
-	void GlipViewWidget::forceItemOrdering(void)
+	/*void GlipViewWidget::forceItemOrdering(void)
 	{
 		// Force all the items to be on bottom, and the widgets to be on top.
-		/*QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
+		QList<QGraphicsItem*> itemsList = glScene->items(); // Returns a list in random z-stacking order.
 		sortItems(itemsList);
 
 		// Sort in the list : 
@@ -3595,10 +3599,10 @@ using namespace QVGL;
 		{
 			(*it)->setZValue(itemsList.size()-z);
 			z++;
-		}*/
+		}
 
 		// To be removed?
-	}
+	}*/
 
 	void GlipViewWidget::putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy)
 	{
@@ -4268,22 +4272,6 @@ using namespace QVGL;
 		}
 	}
 
-	bool GlipViewWidget::processQuitRequest(void)
-	{
-		// Send the quit signal to all the SubWidgets :
-		bool test = true;
-		for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); (it!=subWidgetsList.end()) && test; it++)
-			test = test && it.value()->readyToQuit();
-		
-		if(test)
-		{
-			// Send signal upward : 
-			emit requestQuit();
-		}
-
-		return test;
-	}
-
 	View* GlipViewWidget::getCurrentView(void) const
 	{
 		QMap<int,View*>::const_iterator it=viewsList.find(currentViewIndex);
@@ -4602,13 +4590,16 @@ using namespace QVGL;
 
 	void GlipViewWidget::closeEvent(QCloseEvent *event)
 	{
-		// Test first : 
-		bool result = processQuitRequest();
-
-		if(!result)
-			event->ignore();
-		else // accept : 
-			QWidget::closeEvent(event);
+		for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
+		{
+			QCoreApplication::sendEvent(it.value(), event);
+		
+			// One subwidget refuses : 
+			if(!event->isAccepted())
+				return ;
+		}
+		
+		QWidget::closeEvent(event);
 	}
 
 	float GlipViewWidget::getSceneRatio(void) const
@@ -4708,7 +4699,7 @@ using namespace QVGL;
 			if(glScene!=NULL)
 			{
 				glScene->addItem(viewsTable);
-				forceItemOrdering();
+				//forceItemOrdering();
 			}
 			viewsTablesList[c] = viewsTable;
 			c++;
@@ -4732,7 +4723,7 @@ using namespace QVGL;
 		{
 			QGraphicsProxyWidget* proxy = glScene->addWidget(subWidget);
 			subWidget->setGraphicsProxy(proxy);
-			forceItemOrdering();
+			//forceItemOrdering();
 	
 			// Connect : 
 			QObject::connect(subWidget, SIGNAL(selected(SubWidget*)), 	this, SLOT(subWidgetSelected(SubWidget*)));
@@ -4872,7 +4863,7 @@ using namespace QVGL;
 				hideAllSubWidgets();
 				break;
 			case ActionQuit :
-				processQuitRequest();
+				close();
 				break;
 			case NoAction :
 				break;

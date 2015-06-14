@@ -614,6 +614,9 @@ TEXTURE_FORMAT:format(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 // The shader source (for more information, check the GLSL language specifications at http://www.opengl.org/documentation/glsl/) :
 SOURCE:SimpleCopySource
 {
+	// Choose the right GLSL version : 
+	#version 130
+
 	uniform sampler2D	textureInput;	// input texture.
 	out     vec4 		textureOutput;	// output texture.
 

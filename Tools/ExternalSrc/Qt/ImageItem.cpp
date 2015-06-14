@@ -1640,6 +1640,20 @@ using namespace QGIC;
 		return result;
 	}
 
+	void ImageItemsCollection::closeEvent(QCloseEvent* event)
+	{
+		QList<ImageItem*> keys = items.keys();
+		for(QList<ImageItem*>::iterator it=keys.begin(); it!=keys.end(); it++)
+		{
+			if(!removeImageItem(*it))
+			{
+				event->ignore();
+				return;
+			}
+		}
+		QWidget::closeEvent(event);
+	}
+
 	#define GET_ITEM_SAFE( itemName ) \
 				if(imageItem==NULL) \
 					imageItem = reinterpret_cast<ImageItem*>(QObject::sender()); \
@@ -1801,25 +1815,28 @@ using namespace QGIC;
 			addImageItem(imageItem);
 	}
 
+	void ImageItemsCollection::save(ImageItem* imageItem)
+	{
+		if(imageItem->getFilename().isEmpty())
+		{
+			QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg(imageItem->getName()), currentPath, "Image File (*.*)");
+
+			if(!filename.isEmpty())
+			{
+				imageItem->setFilename(filename, true);
+				imageItem->save();
+			}
+		}	
+		else
+			imageItem->save();	
+	}
+
 	void ImageItemsCollection::save(void)
 	{
 		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
 
 		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
-		{
-			if((*it)->getFilename().isEmpty())
-			{
-				QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg((*it)->getName()), currentPath, "Image File (*.*)");
-
-				if(!filename.isEmpty())
-				{
-					(*it)->setFilename(filename, true);
-					(*it)->save();
-				}
-			}	
-			else
-				(*it)->save();	
-		}
+			save(*it);
 	}
 
 	void ImageItemsCollection::saveAs(void)
@@ -1836,14 +1853,42 @@ using namespace QGIC;
 				(*it)->save();
 			}
 		}
-	} 
+	}
+
+	bool ImageItemsCollection::removeImageItem(ImageItem* imageItem, bool imperative)
+	{
+		if(!imageItem->isSaved())
+		{
+			QMessageBox::StandardButton 	returnedButton;
+			QMessageBox::StandardButtons	buttons;
+
+			if(imperative)
+				buttons = QMessageBox::Save | QMessageBox::Discard;
+			else
+				buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
+
+			if(imageItem->getFilename().isEmpty())
+				returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New image has been modified.\n Do you want to save it?"), buttons);
+			else
+				returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The image %1 has been modified.\n Do you want to save your changes?").arg(imageItem->getFilename()), buttons);
+
+			if(returnedButton==QMessageBox::Save)
+				save(imageItem);
+			else if(returnedButton == QMessageBox::Cancel)
+				return false;
+		}
+
+		imageItem->remove();
+
+		return true;
+	}
 
 	void ImageItemsCollection::removeImageItem(void)
 	{
 		QList<ImageItem*> selectedImageItems = getSelectedImageItems();
 		
 		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
-			(*it)->remove();
+			removeImageItem(*it);
 	}
 
 	void ImageItemsCollection::removeAllImageItem(void)
@@ -1851,7 +1896,7 @@ using namespace QGIC;
 		QList<ImageItem*> imageItems = items.keys();
 
 		for(QList<ImageItem*>::iterator it=imageItems.begin(); it!=imageItems.end(); it++)
-			(*it)->remove();
+			removeImageItem(*it);
 	}
 
 	void ImageItemsCollection::itemActivated(QTreeWidgetItem* item, int column)

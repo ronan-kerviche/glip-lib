@@ -345,6 +345,7 @@ namespace QVGL
 			void mouseDoubleClickEvent(QMouseEvent* event);
 			void wheelEvent(QWheelEvent* event);
 			void showEvent(QShowEvent* event);
+			void closeEvent(QCloseEvent* event);
 
 			void addChild(QObject* pObject);
 			void removeChild(QObject* pObject);
@@ -372,7 +373,6 @@ namespace QVGL
 			void setAnchor(AnchorMode mode);
 			const AnchorMode& getAnchor(void) const;
 			void resetPosition(bool force=true);
-			virtual bool readyToQuit(void);
 
 			static SubWidget* getPtrFromProxyItem(QGraphicsItem *item);
 			static SubWidget* getPtrFromProxyItem(QGraphicsProxyWidget *proxy);
@@ -953,7 +953,7 @@ namespace QVGL
 
 			// GraphicsView Tools : 
 			void resizeEvent(QResizeEvent *event);
-			void forceItemOrdering(void);
+			//void forceItemOrdering(void);
 			void putWidgetOnTop(QGraphicsProxyWidget* graphicsProxy);
 			void putWidgetOnBottom(QGraphicsProxyWidget* graphicsProxy);
 			SubWidget* getTopSubWidget(bool onlyVisible);
@@ -1010,7 +1010,6 @@ namespace QVGL
 			void processOpenInfosRequest(void);
 			void processOpenSettingsInterfaceRequest(void);
 			void applySettings(void);
-			bool processQuitRequest(void);
 
 		protected :
 			View* getCurrentView(void) const;
@@ -1054,7 +1053,6 @@ namespace QVGL
 			void viewAdded(View*);
 			void viewsTableAdded(ViewsTable*);
 			void subWidgetAdded(SubWidget*);
-			void requestQuit(void);
 	};
 }
 

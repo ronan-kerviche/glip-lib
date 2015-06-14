@@ -83,7 +83,6 @@
 		pipelineManager->hide();
 
 		// Connections : 
-		QObject::connect(window,				SIGNAL(requestQuit()),									this,					SLOT(processQuitRequest()));
 		QObject::connect(collection, 				SIGNAL(addViewRequest(QVGL::View*)), 							window, 				SLOT(addView(QVGL::View*)));
 		QObject::connect(collection,				SIGNAL(addViewsTableRequest(QVGL::ViewsTable*)),					window,					SLOT(addViewsTable(QVGL::ViewsTable*)));
 		QObject::connect(editor->getCodeEditorPtr(), 		SIGNAL(compileSource(std::string, std::string, std::string, void*, const QObject*)), 	pipelineManager->getManagerPtr(), 	SLOT(compileSource(std::string, std::string, std::string, void*, const QObject*)));
@@ -173,11 +172,6 @@
 				std::cout << "      " << style.toStdString() << std::endl;
 		}
 		std::cout << "End font list." << std::endl;*/
-	}
-
-	void GlipStudio::processQuitRequest(void)
-	{
-		QApplication::quit();
 	}
 
 	bool GlipStudio::notify(QObject * receiver, QEvent * event) 

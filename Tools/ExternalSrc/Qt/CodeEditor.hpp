@@ -536,6 +536,8 @@ namespace QGED
 			void setCurrentPath(QString path);
 			void save(CodeEditorContainer* editor);
 			void saveAs(CodeEditorContainer* editor, QString filename="");
+			void removeTab(int tabID);
+			void closeEvent(QCloseEvent* event);
 
 		public :
 			CodeEditorTabs(void);
@@ -549,7 +551,7 @@ namespace QGED
 			void documentModified(bool changed);
 			void insert(QString str);
 			void changedToTab(int tabID);
-			void closeTab(int tabID, bool imperative=false);
+			bool closeTab(int tabID, bool imperative=false);
 			void updateSettings(void);
 			void transferSourceCompilation(void);	
 

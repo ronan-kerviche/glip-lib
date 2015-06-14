@@ -351,6 +351,7 @@ namespace QGIC
 			QTreeWidgetItem* getTreeItem(ImageItem* imageItem);
 			QList<ImageItem*> getSelectedImageItems(void);
 			QList<HdlTextureFormat> getSelectedImageItemFormat(void);
+			void closeEvent(QCloseEvent* event);
 
 		private slots : 
 			// Update information : 
@@ -365,8 +366,10 @@ namespace QGIC
 			void open(void);
 			void copy(void);
 			void paste(void);
+			void save(ImageItem* imageItem);
 			void save(void);
 			void saveAs(void);
+			bool removeImageItem(ImageItem* imageItem, bool imperative=false);
 			void removeImageItem(void);
 			void removeAllImageItem(void);
 
