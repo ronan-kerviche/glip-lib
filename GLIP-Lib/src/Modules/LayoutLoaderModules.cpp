@@ -311,6 +311,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -340,6 +341,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -369,6 +371,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -386,7 +389,7 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the FILTERLAYOUT was defined.\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the FILTER_LAYOUT was defined.\n"
 												"Arguments : filterLayoutName.")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -398,6 +401,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -415,7 +419,7 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the PIPELINELAYOUT was defined.\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the PIPELINE_LAYOUT was defined.\n"
 												"Arguments : pipelineLayoutName.")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -427,6 +431,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -444,7 +449,7 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1, true, 	"Check if the REQUIREDFORMAT was defined.\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1, true, 	"Check if the REQUIRED_FORMAT was defined.\n"
 												"Arguments : requiredFormatName.")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -456,6 +461,7 @@
 				UNUSED_PARAMETER(pipelineList)
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
@@ -473,7 +479,37 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1, true, "Check if the REQUIREDGEOMETRY was defined.\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDSOURCE_DEFINED, 1, 1, 1, true, 	"Check if the REQUIRED_SOURCE was defined.\n"
+												"Arguments : requiredSourceName.")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
+				UNUSED_PARAMETER(executionCode)
+
+				std::string 	trueCase, 
+						falseCase;
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				
+				CONST_ITERATOR_TO_REQUIREDSOURCE(it, arguments[0])
+
+				if(it!=requiredSourceList.end())
+					executionCode = trueCase;
+				else
+					executionCode = falseCase;
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1, true, "Check if the REQUIRED_GEOMETRY was defined.\n"
 												"Arguments : requiredGeometryName.")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -486,6 +522,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
@@ -502,7 +539,7 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1, true, "Check if the REQUIREDPIPELINE was defined.\n"
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1, true, "Check if the REQUIRED_PIPELINE was defined.\n"
 												"Arguments : requiredPipelineName.")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -515,6 +552,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionCode)
@@ -544,6 +582,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -585,6 +624,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -640,6 +680,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -670,6 +711,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -700,6 +742,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -731,6 +774,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -762,6 +806,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -793,6 +838,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -836,6 +882,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -879,6 +926,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -922,6 +970,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -965,6 +1014,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1008,6 +1058,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1051,6 +1102,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1094,6 +1146,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1138,6 +1191,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1182,6 +1236,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1225,6 +1280,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1255,6 +1311,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 
@@ -1296,6 +1353,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 
@@ -1337,6 +1395,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1369,6 +1428,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1405,6 +1465,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1572,6 +1633,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
@@ -1601,38 +1663,108 @@
 				UNUSED_PARAMETER(filterList)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+
+				const std::string	innerFormatSuffix = "_innerFormat",
+							sourceSuffix = "_source",
+							filterSuffix = "_filter",
+							pipelineSuffix = "_pipeline";
 
 				PIPELINE_MUST_NOT_EXIST( arguments[0] )
 				FORMAT_MUST_EXIST( arguments[1] )
 				CONST_ITERATOR_TO_FORMAT( formatIterator, arguments[1] )
 
-				const std::string& pipelineName = arguments[0];
-				const std::string& filterName = pipelineName + "_filter";
+				VanillaParserSpace::Element 	elementRequiredFormat,
+								elementSource,
+								elementFilter,
+								elementInputPorts,
+								elementOutputPorts,
+								elementFilterInstance,
+								elementPipeline;
 
-				ShaderSource fragmentSource(body);
-				FilterLayout filter(filterName, formatIterator->second, fragmentSource);
-				PipelineLayout pipeline(pipelineName);
+				const bool asMainPipeline = (arguments.size()>=3 && getBoolean(arguments[2], sourceName, startLine));
+				const ShaderSource fragmentSource(body);
 
-				// Create the ports : 
-				for(int i=0; i<filter.getNumInputPort(); i++)
-					pipeline.addInput(filter.getInputPortName(i));
-				for(int i=0; i<filter.getNumOutputPort(); i++)
-					pipeline.addOutput(filter.getOutputPortName(i));
+				// Required format : 
+				elementRequiredFormat.sourceName= sourceName;
+				elementRequiredFormat.strKeyword= LayoutLoader::getKeyword(KW_LL_REQUIRED_FORMAT);
+				elementRequiredFormat.name	= arguments[1] + innerFormatSuffix;
+				elementRequiredFormat.noName	= false;
+				elementRequiredFormat.noArgument= false;
+				elementRequiredFormat.noBody	= true;
+				elementRequiredFormat.startLine	= startLine;
+				elementRequiredFormat.bodyLine	= bodyLine;
+				elementRequiredFormat.arguments.push_back(arguments[1]);
+
+				// Source : 
+				elementSource.sourceName	= sourceName;
+				elementSource.strKeyword	= LayoutLoader::getKeyword(KW_LL_SOURCE);
+				elementSource.name		= arguments[0] + sourceSuffix;
+				elementSource.body		= body;
+				elementSource.noName		= false;
+				elementSource.noArgument	= true;
+				elementSource.noBody		= false;
+				elementSource.startLine		= startLine;
+				elementSource.bodyLine		= bodyLine;
+
+				// Filter : 
+				elementFilter.sourceName	= sourceName;
+				elementFilter.strKeyword	= LayoutLoader::getKeyword(KW_LL_FILTER_LAYOUT);
+				elementFilter.name		= arguments[0] + filterSuffix;
+				elementFilter.noName		= false;
+				elementFilter.noArgument	= false;
+				elementFilter.noBody		= true;
+				elementFilter.startLine		= startLine;
+				elementFilter.bodyLine		= bodyLine;
+				elementFilter.arguments.push_back(arguments[1] + innerFormatSuffix);
+				elementFilter.arguments.push_back(arguments[0] + sourceSuffix);
+
+				// Pipeline body ; 
+				elementInputPorts.sourceName	= sourceName;
+				elementInputPorts.strKeyword	= LayoutLoader::getKeyword(KW_LL_INPUT_PORTS);
+				elementInputPorts.noName	= true;
+				elementInputPorts.noArgument	= false;
+				elementInputPorts.noBody	= true;
+				elementInputPorts.startLine	= startLine;
+				elementInputPorts.bodyLine	= bodyLine;
+				elementInputPorts.arguments	= fragmentSource.getInputVars();
+
+				elementOutputPorts.sourceName	= sourceName;
+				elementOutputPorts.strKeyword	= LayoutLoader::getKeyword(KW_LL_OUTPUT_PORTS);
+				elementOutputPorts.noName	= true;
+				elementOutputPorts.noArgument	= false;
+				elementOutputPorts.noBody	= true;
+				elementOutputPorts.startLine	= startLine;
+				elementOutputPorts.bodyLine	= bodyLine;
+				elementOutputPorts.arguments	= fragmentSource.getOutputVars();
 				
-				// Add the filter and connect : 
-				pipeline.add(filter, filterName);
-				pipeline.autoConnect();
-				
-				// Save : 
-				APPEND_NEW_PIPELINE(pipelineName, pipeline)
+				elementFilterInstance.sourceName= sourceName;
+				elementFilterInstance.strKeyword= LayoutLoader::getKeyword(KW_LL_FILTER_INSTANCE);
+				elementFilterInstance.name	= arguments[0] + filterSuffix;
+				elementFilterInstance.noName	= false;
+				elementFilterInstance.noArgument= true;
+				elementFilterInstance.noBody	= true;
+				elementFilterInstance.startLine	= startLine;
+				elementFilterInstance.bodyLine	= bodyLine;
 
-				// Set as the main pipeline : 
-				if(arguments.size()>=3 && getBoolean(arguments[2], sourceName, startLine))
-					mainPipelineName = pipelineName;
+				// Pipeline : 
+				elementPipeline.sourceName	= sourceName;
+				elementPipeline.strKeyword	= asMainPipeline ? LayoutLoader::getKeyword(KW_LL_PIPELINE_MAIN) : LayoutLoader::getKeyword(KW_LL_PIPELINE_LAYOUT);
+				elementPipeline.name		= arguments[0];
+				elementPipeline.body		= (elementInputPorts.arguments.empty() ? "" : (elementInputPorts.getCode() + "\n")) + elementOutputPorts.getCode() + "\n" + elementFilterInstance.getCode();
+				elementPipeline.noName		= false;
+				elementPipeline.noArgument	= true;
+				elementPipeline.noBody		= false;
+				elementPipeline.startLine	= startLine;
+				elementPipeline.bodyLine	= bodyLine;
+	
+				if(asMainPipeline)
+					mainPipelineName = arguments[0];
+
+				executionCode = elementRequiredFormat.getCode() + "\n" + elementSource.getCode() + "\n" + elementFilter.getCode() + "\n" + elementPipeline.getCode();
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"
@@ -1649,6 +1781,7 @@
 				UNUSED_PARAMETER(mainPipelineName)
 				UNUSED_PARAMETER(staticPaths)
 				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)

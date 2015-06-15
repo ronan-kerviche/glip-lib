@@ -67,6 +67,7 @@ namespace Glip
 			KW_LL_BLENDING_ON,
 			KW_LL_BLENDING_OFF,
 			KW_LL_REQUIRED_FORMAT,
+			KW_LL_REQUIRED_SOURCE,
 			KW_LL_REQUIRED_GEOMETRY,
 			KW_LL_REQUIRED_PIPELINE,
 			KW_LL_INSERT,
@@ -163,7 +164,7 @@ Add a specific path to the search pool.
 <b>INCLUDE</b>(<i>filename</i>)
 </blockquote>
 
-Include another file. All the elements declared after parsing this file becomes available. The main pipeline(s) are changed into (a) pipeline layout(s).
+Include another file. All the elements declared after parsing this file becomes available. The main pipeline(s) are changed into (a) pipeline layout(s). The elements declared before this include request are available to the included pipeline script through requirements mechanism (the included have to require these elements to use them). The required elements having the same name as an element will be overwritten for the parsing of this included file.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
@@ -338,6 +339,19 @@ Define an element. An element is the polygon structure or primitive defined for 
 <tr class="glipDescrRow"><td><i>b</i></td>				<td>Second vertex index.</td></tr>
 <tr class="glipDescrRow"><td><i>c</i></td>				<td>Third vertex index.</td></tr>
 <tr class="glipDescrRow"><td><i>d</i></td>				<td>Fourth vertex index.</td></tr>
+</table>
+
+### Required Source
+<blockquote>
+<b>REQUIRED_SOURCE</b>:<i>name</i>(<i>requiredSourceName</i>)
+</blockquote>
+
+Define a source from a required source. This enables the script to receive data from the program, as a dynamic specification.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the source to be created.</td></tr>
+<tr class="glipDescrRow"><td><i>requiredSpourceName</i></td>		<td>Name of the required source to use.</td></tr>
 </table>
 
 ### Required Geometry
@@ -712,7 +726,9 @@ catch(Exception& e)
 											/// File included by the script.		
 											includedFiles,		
 											/// Names of the formats required by the script.
-											requiredFormats,	
+											requiredFormats,
+											/// Names of the sources required by the script.
+											requiredSources,
 											/// Names of the geometries required by the script.
 											requiredGeometries,	
 											/// Names of the pipelines required by the script.
@@ -722,7 +738,7 @@ catch(Exception& e)
 											/// Names of the formats contained in the script.
 											formats,		
 											/// Names of the shader source code contained in the script.
-											shaderSources,		
+											sources,		
 											/// Names of the geometries contained in the script.
 											geometries,		
 											/// Names of the filter layouts contained in the script.
@@ -760,6 +776,7 @@ catch(Exception& e)
 				// Static :
 				std::vector<std::string>			staticPaths;
 				std::map<std::string,HdlTextureFormat>		requiredFormatList;
+				std::map<std::string,ShaderSource> 		requiredSourceList;
 				std::map<std::string,GeometryModel>		requiredGeometryList;
 				std::map<std::string,PipelineLayout>		requiredPipelineList;
 				std::map<std::string,LayoutLoaderModule*>	modules;			// Using pointers to avoid conflict between polymorphism and object slicing.
@@ -780,6 +797,7 @@ catch(Exception& e)
 				void	includeFile(const VanillaParserSpace::Element& e);
 				bool	checkUnique(const VanillaParserSpace::Element& e);
 				void	buildRequiredFormat(const VanillaParserSpace::Element& e);
+				void	buildRequiredSource(const VanillaParserSpace::Element& e);
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
 				void    moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName);
@@ -806,6 +824,7 @@ catch(Exception& e)
 				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="");
 
 				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
+				void addRequiredElement(const std::string& name, const ShaderSource& src);
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
 				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout);
 				int clearRequiredElements(void);
@@ -862,4 +881,5 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 	}
 }
 
-#endif // LAYOUTLOADER_HPP_INCLUDED
+#endif
+

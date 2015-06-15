@@ -195,6 +195,8 @@ Example, creating a simple Module :
 				\param staticPaths		The list of static paths (known for all load operations).
 				\param requiredFormatList	The list of static formats available.
 								For easy access see #CONST_ITERATOR_TO_REQUIREDFORMAT, #REQUIREDFORMAT_MUST_EXIST, #REQUIREDFORMAT_MUST_NOT_EXIST.
+				\param requiredSourceList	The list of static sources available.
+								For easy access see #CONST_ITERATOR_TO_REQUIREDSOURCE, #REQUIREDSOURCE_MUST_EXIST, #REQUIREDSOURCE_MUST_NOT_EXIST.
 				\param requiredGeometryList	The list of static geometries available.
 								For easy access see #CONST_ITERATOR_TO_REQUIREDGEOMETRY, #REQUIREDGEOMETRY_MUST_EXIST, #REQUIREDGEOMETRY_MUST_NOT_EXIST.
 				\param requiredPipelineList	The list of static pipelines available.
@@ -216,6 +218,7 @@ Example, creating a simple Module :
 							std::string&					mainPipelineName, 
 							const std::vector<std::string>&			staticPaths,
 							const std::map<std::string,HdlTextureFormat>&	requiredFormatList,
+							const std::map<std::string,ShaderSource>&	requiredSourceList,
 							const std::map<std::string,GeometryModel>&	requiredGeometryList,
 							const std::map<std::string,PipelineLayout>&	requiredPipelineList,
 							const std::string& 				sourceName,
@@ -260,6 +263,7 @@ Example, creating a simple Module :
 													std::string&					mainPipelineName, \
 													const std::vector<std::string>&			staticPaths, \
 													const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
+													const std::map<std::string,ShaderSource>&	requiredSourceList, \
 													const std::map<std::string,GeometryModel>&	requiredGeometryList, \
 													const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
 													const std::string& 				sourceName, \
@@ -281,6 +285,7 @@ Example, creating a simple Module :
 											std::string&						mainPipelineName, \
 											const std::vector<std::string>&				staticPaths, \
 											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
+											const std::map<std::string,ShaderSource>&		requiredSourceList, \
 											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
 											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
 											const std::string& 					sourceName, \
@@ -301,6 +306,7 @@ Example, creating a simple Module :
 											std::string&						mainPipelineName, \
 											const std::vector<std::string>&				staticPaths, \
 											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
+											const std::map<std::string,ShaderSource>&		requiredSourceList, \
 											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
 											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
 											const std::string& 					sourceName, \
@@ -322,6 +328,7 @@ Example, creating a simple Module :
 																						std::string&					mainPipelineName, \
 																						const std::vector<std::string>&			staticPaths, \
 																						const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
+																						const std::map<std::string,ShaderSource>&	requiredSourceList, \
 																						const std::map<std::string,GeometryModel>&	requiredGeometryList, \
 																						const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
 																						const std::string& sourceName, \
@@ -360,7 +367,7 @@ Example, creating a simple Module :
 			#define SOURCE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
 			/** APPEND_NEW_SOURCE(elementName, newElement)				Append the new element to the Shader Source list. **/
 			#define APPEND_NEW_SOURCE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
-			
+
 			/** ITERATOR_TO_GEOMETRY( iteratorName, elementName )			Get an iterator on the Geometry named elementName. **/
 			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		Get a constant iterator on the Geometry named elementName. **/
@@ -409,23 +416,32 @@ Example, creating a simple Module :
 			/** REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			Check that the Required Format named elementName must not exist (raise an exception otherwise). **/
 			#define REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
 
-			/** CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	Get a constant iterator on the Required Geometry named elementName. **/
+			/** CONST_ITERATOR_TO_REQUIREDSOURCE( iteratorName, elementName )	Get a constant iterator on the Required Format named elementName. **/
+			#define CONST_ITERATOR_TO_REQUIREDSOURCE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_REQUIREDSOURCE( iteratorName )			Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_REQUIREDSOURCE( iteratorName )		( iteratorName != requiredSourceList.end() )
+			/** REQUIREDSOURCE_MUST_EXIST( elementName )				Check that the Required Format named elementName must exist (raise an exception otherwise). **/
+			#define REQUIREDSOURCE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredSourceList, elementName) }
+			/** REQUIREDSOURCE_MUST_NOT_EXIST( elementName )			Check that the Required Format named elementName must not exist (raise an exception otherwise). **/
+			#define REQUIREDSOURCE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredSourceList, elementName) }
+
+			/** CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	Get a constant iterator on the Required Geometry named elementName. **/
 			#define CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	__CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )		( iteratorName != requiredGeometryList.end() )
 			/** REQUIREDGEOMETRY_MUST_EXIST( elementName )				Check that the Required Geometry named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDGEOMETRY_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDGEOMETRY_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredGeometryList, elementName) }
 			/** REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			Check that the Required Geometry named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredGeometryList, elementName) }
 
 			/** CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	Get a constant iterator on the Required Pipeline named elementName. **/
 			#define CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	__CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )		( iteratorName != requiredPipelineList.end() )
 			/** REQUIREDPIPELINE_MUST_EXIST( elementName )				Check that the Required Pipeline named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDPIPELINE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDPIPELINE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requirePipelineList, elementName) }
 			/** REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			Check that the Required Pipeline named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredPipelineList, elementName) }
 			
 			/** CAST_ARGUMENT( argID, type, varName ) 				Cast the argument arguments[argID] to some type (and create the variable varName). Raise an exception if the cast fails. **/
 			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " (\"" + arguments[argID] + "\") to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
@@ -437,6 +453,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FILTERLAYOUT_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_PIPELINELAYOUT_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDFORMAT_DEFINED )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDSOURCE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDGEOMETRY_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDPIPELINE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_SIZE )
@@ -469,3 +486,4 @@ Example, creating a simple Module :
 }
 
 #endif
+

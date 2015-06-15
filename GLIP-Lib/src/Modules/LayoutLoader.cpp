@@ -56,6 +56,7 @@
 										"BLENDING_ON",
 										"BLENDING_OFF",
 										"REQUIRED_FORMAT",
+										"REQUIRED_SOURCE",
 										"REQUIRED_GEOMETRY",
 										"REQUIRED_PIPELINE",
 										"INSERT",
@@ -89,7 +90,8 @@
 		// Copy static data : 
 		staticPaths		= master.staticPaths;
 		uniqueList		= master.uniqueList;
-		requiredFormatList 	= master.requiredFormatList;
+		requiredFormatList 	= master.requiredFormatList;	
+		requiredSourceList	= master.requiredSourceList;
 		requiredGeometryList 	= master.requiredGeometryList;
 		requiredPipelineList 	= master.requiredPipelineList;
 		modules			= master.modules;
@@ -97,8 +99,9 @@
 		// Copy this path to the inner version :
 		dynamicPaths 		= master.dynamicPaths;
 
-		// Copy dynamic data into the static ones too : 
-		requiredFormatList.insert( 	master.formatList.begin(), 	master.formatList.end());
+		// Copy dynamic data into the static ones too (note that elements having the same name as a required element will be overwritten) : 
+		requiredFormatList.insert(	master.formatList.begin(), 	master.formatList.end());
+		requiredSourceList.insert(	master.sourceList.begin(),	master.sourceList.end());
 		requiredGeometryList.insert(	master.geometryList.begin(),	master.geometryList.end());
 		requiredPipelineList.insert(	master.pipelineList.begin(),	master.pipelineList.end());
 	}
@@ -111,6 +114,7 @@
 		// And static :
 		staticPaths.clear();
 		requiredFormatList.clear();
+		requiredSourceList.clear();
 		requiredGeometryList.clear();
 		requiredPipelineList.clear();
 
@@ -331,8 +335,12 @@
 				std::map<std::string,ShaderSource>::iterator it = sourceList.find(sourceName); 
 				
 				if(it==sourceList.end())
-					throw Exception("SharedCode object \"" + sourceName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
-			
+				{
+					it = requiredSourceList.find(sourceName);
+					if(it==requiredSourceList.end())
+						throw Exception("SharedCode object \"" + sourceName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				}			
+
 				// Else, generate the lists :
 				std::vector<std::string> 		sharedLines;
 				std::vector<ShaderSource::LineInfo>	sharedInfos;
@@ -624,6 +632,31 @@
 		formatList.insert( std::pair<std::string, HdlTextureFormat>( e.name, HdlTextureFormat(w, h, mode, depth, minFilter, magFilter, sWrap, tWrap, 0, mipmap) ) );
 	}
 
+	void LayoutLoader::buildRequiredSource(const VanillaParserSpace::Element& e)
+	{
+		// Preliminary tests :
+		preliminaryTests(e, 1, 1, 1, -1, "RequiredSource");
+
+		// Identify the target :
+		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(e.arguments[0]);
+
+		if(it==requiredSourceList.end())
+		{
+			// Try in the current source list also :
+			it = sourceList.find(e.arguments[0]);
+
+			if(it==sourceList.end())
+				throw Exception("The required source \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
+		}
+
+		std::map<std::string,ShaderSource>::iterator it2 = sourceList.find(e.name);
+
+		if(it2!=sourceList.end())
+			throw Exception("A ShaderSource Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
+		else
+			sourceList.insert( std::pair<std::string, ShaderSource>(e.name, it->second) );
+	}
+
 	void LayoutLoader::buildRequiredGeometry(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests :
@@ -677,7 +710,7 @@
 	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName)
 	{
 		// Find the name of the module : 
-		preliminaryTests(e, 1, -1, -1, 0, "RequiredPipeline");
+		preliminaryTests(e, 1, -1, -1, 0, "ModuleCall");
 
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find( e.name );
 
@@ -712,6 +745,7 @@
 					_mainPipelineName, 
 					staticPaths,
 					requiredFormatList,
+					requiredSourceList,
 					requiredGeometryList,
 					requiredPipelineList,
 					e.sourceName,
@@ -731,7 +765,7 @@
 				LayoutLoader subLoader(*this);
 
 				// Copy this path to the inner version :
-				subLoader.dynamicPaths 		= dynamicPaths;
+				subLoader.dynamicPaths = dynamicPaths;
 
 				try
 				{
@@ -1658,6 +1692,9 @@
 					case KW_LL_REQUIRED_FORMAT :
 						buildRequiredFormat(rootParser.elements[k]);
 						break;
+					case KW_LL_REQUIRED_SOURCE :
+						buildRequiredSource(rootParser.elements[k]);
+						break;
 					case KW_LL_REQUIRED_GEOMETRY :
 						buildRequiredGeometry(rootParser.elements[k]);
 						break;
@@ -1976,6 +2013,22 @@
 	}
 
 	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src)
+	\brief Add a ShaderSource to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_SOURCE:someName(name); will use this format.
+	\param name The name of the element.
+	\param src The element to be associated.
+	**/
+	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src)
+	{
+		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
+		
+		if(it!=requiredSourceList.end())
+			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the ShaderSource formats database.", __FILE__, __LINE__, Exception::ModuleException);
+		else
+			requiredSourceList.insert( std::pair<std::string, ShaderSource>(name, src) );
+	}
+
+	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
 	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
 	\param name The name of the element.
@@ -2017,10 +2070,12 @@
 		int numElemErased = 0;
 
 		numElemErased += requiredFormatList.size();
+		numElemErased += requiredSourceList.size();
 		numElemErased += requiredGeometryList.size();
 		numElemErased += requiredPipelineList.size();
 
 		requiredFormatList.clear();
+		requiredSourceList.clear();
 		requiredGeometryList.clear();
 		requiredPipelineList.clear();
 
@@ -2036,13 +2091,15 @@
 	int LayoutLoader::clearRequiredElements(const std::string& name)
 	{
 		std::map<std::string,HdlTextureFormat>::iterator it1;
-		std::map<std::string,GeometryModel>::iterator it2;
-		std::map<std::string,PipelineLayout>::iterator it3;
+		std::map<std::string,ShaderSource>::iterator it2;
+		std::map<std::string,GeometryModel>::iterator it3;
+		std::map<std::string,PipelineLayout>::iterator it4;
 		int numElemErased = 0;
 
 		it1 = requiredFormatList.find(name);
-		it2 = requiredGeometryList.find(name);
-		it3 = requiredPipelineList.find(name);
+		it2 = requiredSourceList.find(name);
+		it3 = requiredGeometryList.find(name);
+		it4 = requiredPipelineList.find(name);
 
 		if(it1!=requiredFormatList.end())
 		{
@@ -2050,15 +2107,21 @@
 			numElemErased++;
 		}
 
-		if(it2!=requiredGeometryList.end())
+		if(it2!=requiredSourceList.end())
 		{
-			requiredGeometryList.erase(it2);
+			requiredSourceList.erase(it2);
 			numElemErased++;
 		}
 
-		if(it3!=requiredPipelineList.end())
+		if(it3!=requiredGeometryList.end())
 		{
-			requiredPipelineList.erase(it3);
+			requiredGeometryList.erase(it3);
+			numElemErased++;
+		}
+
+		if(it4!=requiredPipelineList.end())
+		{
+			requiredPipelineList.erase(it4);
 			numElemErased++;
 		}
 	
@@ -2139,6 +2202,11 @@
 						result.requiredFormats.push_back( rootParser.elements[k].arguments[0] );
 						result.formats.push_back( rootParser.elements[k].name );
 						break;
+					case KW_LL_REQUIRED_SOURCE :
+						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredSource");
+						result.requiredSources.push_back( rootParser.elements[k].arguments[0] );
+						result.sources.push_back( rootParser.elements[k].name );
+						break;
 					case KW_LL_REQUIRED_GEOMETRY :
 						preliminaryTests(rootParser.elements[k], 1, 1, 1, -1, "RequiredGeometry"); 
 						result.requiredGeometries.push_back( rootParser.elements[k].arguments[0] );
@@ -2159,7 +2227,7 @@
 						break;
 					case KW_LL_SOURCE :
 						preliminaryTests(rootParser.elements[k], 1, 0, 1, 0, "Source");
-						result.shaderSources.push_back( rootParser.elements[k].name );
+						result.sources.push_back( rootParser.elements[k].name );
 						break;
 					case KW_LL_GEOMETRY :
 						preliminaryTests(rootParser.elements[k], 1, 1, 4, 0, "Geometry");

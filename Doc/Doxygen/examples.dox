@@ -1471,10 +1471,17 @@ In this example we present a simple approximation to the <a href="http://en.wiki
 			vec2 p = gl_FragCoord.xy / vec2(outputCircleFormat);
 
 			// If the current pixel is closer to the center than the radius :
-			if(distance(p,center)<=radius)
-				outputTexture = color;
-			else
-				outputTexture = background;
+			//if(distance(p,center)<=radius)
+			//	outputTexture = color;
+			//else
+			//	outputTexture = background;
+
+			// One line version : 
+			outputTexture = mix(color, background, step(radius, distance(p,center)));
+
+			// Anti-Aliasing version : 
+			//const float e = 0.005:
+			//outputTexture = mix(color, background, smoothstep(radius-e/2, radius+e/2, distance(p,center)));
 		}
 	}
 

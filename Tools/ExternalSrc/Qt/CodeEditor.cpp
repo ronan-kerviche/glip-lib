@@ -1987,7 +1987,7 @@ using namespace QGED;
 		MAKE_LIST( requiredGeometries,	"Required Geometries" );
 		MAKE_LIST( requiredPipelines,	"Required Pipelines" );
 		MAKE_LIST( formats,		"Formats" );
-		MAKE_LIST( shaderSources,	"Shader Sources" );
+		MAKE_LIST( sources,		"Shader Sources" );
 		MAKE_LIST( geometries,		"Geometries" );
 		MAKE_LIST( filtersLayout,	"Filter Layouts");
 
