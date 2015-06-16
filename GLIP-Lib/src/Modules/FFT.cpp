@@ -55,7 +55,7 @@ namespace Glip
 	
 				TEST("Shifted",			"SHIFTED", 		Shifted);
 				TEST("Inversed",		"INVERSED",		Inversed);
-				TEST("UseZeroPadding",		"USE_ZERO_PADDING",	UseZeroPadding);
+				TEST("ZeroPadding",		"ZERO_PADDING",		ZeroPadding);
 				TEST("CompatibilityMode",	"COMPATIBILITY_MODE",	CompatibilityMode);
 				TEST("NoInput",			"NO_INPUT",		NoInput);
 
@@ -76,15 +76,11 @@ namespace Glip
 	**/
 	GenerateFFT1DPipeline::GenerateFFT1DPipeline(void)
 	 :	LayoutLoaderModule(	"GENERATE_FFT1D_PIPELINE", 
-					"Generate the 1D FFT Pipeline transformation.\n"
-					"Arguments : width, name [, option, ...].\n"
-					"            Width and height can be either numerals or the name of an existing format.\n"
-					"            Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
-					"            Body : PRE block, contains a filtering function to be applied before the FFT.\n"
-					"                       vec4 pre(in vec4 colorFromTexture, in float x)\n"
-					"            POST block, contains a filtering function to be applied after the FFT.\n"
-					"                       vec4 post(in vec4 colorAfterFFT, in float x)\n"
-					"            Both of these block can declare their own uniform variables.",
+					"DESCRIPTION{Generate the 1D FFT Pipeline transformation.}"
+					"ARGUMENT:width{Width, can be either a numeral or the name of an existing format.}"
+					"ARGUMENT:name{Name of the new pipeline.}"
+					"ARGUMENT:[options...]{Options to be used by the FFT process : SHIFTED, INVERSED, ZERO_PADDING, COMPATIBILITY_MODE, NO_INPUT.}"
+					"BODY_DESCRIPTION{PRE{...} block contains a filtering function to be applied before the FFT. It must define a function vec4 pre(in vec4 colorFromTexture, in float x). POST{...} block contains a filtering function to be applied after the FFT. It must implement a function vec4 post(in vec4 colorAfterFFT, in float x). Both of these block can declare their own uniform variables.}",
 					2,
 					7, //2 base + 5 arguments
 					0)
@@ -546,15 +542,12 @@ namespace Glip
 	**/
 	GenerateFFT2DPipeline::GenerateFFT2DPipeline(void)
 	 :	LayoutLoaderModule(	"GENERATE_FFT2D_PIPELINE", 
-					"Generate the 2D FFT Pipeline transformation.\n"
-					"Arguments : width, height, name [, option, ...].\n"
-					"            Width and height can be either numerals or the name of an existing format.\n"
-					"            Options : SHIFTED, INVERSED, COMPATIBILITY_MODE.\n"
-					"            Body : PRE block, contains a filtering function to be applied before the FFT.\n"
-					"                        vec4 pre(in vec4 colorFromTexture, in vec2 x)\n"
-					"                   POST block, contains a filtering function to be applied after the FFT.\n"
-					"                        vec4 post(in vec4 colorAfterFFT, in vec2 x)\n"
-					"            Both of these block can declare their own uniform variables.",
+					"DESCRIPTION{Generate the 2D FFT Pipeline transformation.}"
+					"ARGUMENT:width{Width, can be either a numeral or the name of an existing format.}"
+					"ARGUMENT:width{Height, can be either a numeral or the name of an existing format.}"
+					"ARGUMENT:name{Name of the new pipeline.}"
+					"ARGUMENT:[options...]{Options to be used by the FFT process : SHIFTED, INVERSED, ZERO_PADDING, COMPATIBILITY_MODE, NO_INPUT.}"
+					"BODY_DESCRIPTION{PRE{...} block contains a filtering function to be applied before the FFT. It must define a function vec4 pre(in vec4 colorFromTexture, in vec2 x). POST{...} block contains a filtering function to be applied after the FFT. It must implement a function vec4 post(in vec4 colorAfterFFT, in vec2 x). Both of these block can declare their own uniform variables.}",
 					2,
 					8, //3 base + 5 arguments
 					0)

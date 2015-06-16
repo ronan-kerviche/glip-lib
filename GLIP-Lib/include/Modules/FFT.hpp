@@ -46,7 +46,7 @@ namespace Glip
 				/// Perform the reciprocal transform, iFFT : FFT(X*)* / N.
 				Inversed		= 0x00010,
 				/// Use zero padding for input texture which are smaller than the transform size.
-				UseZeroPadding		= 0x00100,
+				ZeroPadding		= 0x00100,
 				/// The computation will use of old gl_FragColor GLSL built-in variable.
 				CompatibilityMode	= 0x01000,
 				/// Pipelines have no input (the user must provide a PRE-function).

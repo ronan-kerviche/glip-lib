@@ -25,6 +25,7 @@
 #define __OGLINCLUDE_INCLUDE__
 
 	#include <iostream>
+	#include <vector>
 	#include "devDebugTools.hpp"
 	#include "Core/LibTools.hpp"
 
@@ -99,15 +100,17 @@
 					HandleOpenGL(void);
 					~HandleOpenGL(void);
 
-					static void		init(void);
-					static void		deinit(void);
-					static bool		isInitialized(void);
-					static SupportedVendor 	getVendorID(void);
-					static std::string 	getVendorName(void);
-					static std::string 	getRendererName(void);
-					static std::string 	getVersion(void);
-					static std::string 	getGLSLVersion(void);
-					static unsigned int	getShaderTypeIndex(GLenum shaderType);
+					static void init(void);
+					static void deinit(void);
+					static bool isInitialized(void);
+					static SupportedVendor getVendorID(void);
+					static std::string getVendorName(void);
+					static std::string getRendererName(void);
+					static std::string getVersion(void);
+					static void getVersion(int& major, int& minor);
+					static std::string getGLSLVersion(void);
+					static std::vector<std::string> getAvailableGLSLVersions(void);
+					static unsigned int getShaderTypeIndex(GLenum shaderType);
 
 					// Friend functions :
 					GLIP_API friend std::string getGLEnumName(const GLenum& p);

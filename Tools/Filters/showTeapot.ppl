@@ -1,0 +1,62 @@
+/*
+	Example : load and display an OBJ file.
+*/
+
+TEXTURE_FORMAT:outputFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE)
+
+// Location of the teapot :
+ADD_PATH(../Resources/)
+// Load the object :
+CALL:LOAD_OBJ_GEOMETRY(teapot.obj, teapot)
+
+SOURCE:vertexShader
+{
+	#version 130
+	out vec3 outN;	// the normal going to the fragment shader.
+	uniform float	ax = 0.0,	// angle x.
+			ay = 0.0,	// angle y.
+			s = 1.0;	// scale.
+	uniform vec3 offset = vec3(0.0);// offset.
+
+	void main()
+	{
+		// Rotation matrices :
+		mat3 Mx = mat3(	1.0, 0.0, 0.0,
+				0.0, cos(ax), sin(ax),
+				0.0, -sin(ax), cos(ax));
+		mat3 My = mat3(	cos(ay), 0.0, sin(ay),
+				0.0, 1.0, 0.0,
+				-sin(ay), 0.0, cos(ay));
+		// Transformation of the vertices :
+		gl_Position = vec4(Mx*My*s*gl_Vertex.xyz - offset, 1);
+		// Pass the normals :
+		outN = gl_Normal.xyz;
+	}
+}
+SOURCE:fragmentShader
+{
+	#version 130
+
+	in vec3 outN; // the normal incoming from the Vertex Shader
+	out vec4 outputTexture;
+
+	void main()
+	{
+		// Write the normals to the output fragment :
+		outputTexture.rgb = abs(outN.xyz);
+	}
+}
+
+FILTER_LAYOUT:showTeapotFilter(outputFormat)
+{
+	GL_VERTEX_SHADER(vertexShader)
+	GL_FRAGMENT_SHADER(fragmentShader)
+	GL_RENDER(teapot)
+	GL_DEPTH_TEST(GL_LESS)
+}
+
+PIPELINE_MAIN:showTeapotPipeline
+{
+	OUTPUT_PORTS(outputTexture)
+	FILTER_INSTANCE:showTeapotFilter
+}

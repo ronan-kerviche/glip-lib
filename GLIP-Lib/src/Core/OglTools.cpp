@@ -48,9 +48,10 @@ using namespace Glip::CoreGL;
 			if(instance==NULL)
 			{
 				GLenum err = glewInit();
-				if(err != GLEW_OK)
+				if(err!=GLEW_OK)
 				{
-					std::string error = reinterpret_cast<const char*>(glewGetErrorString(err));
+					const char* str = reinterpret_cast<const char*>(glewGetErrorString(err));
+					std::string error((str==NULL) ? "" : str);
 					throw Exception("HandleOpenGL::HandleOpenGL - Failed to init GLEW with the following error : " + error, __FILE__, __LINE__, Exception::GLException);
 				}
 
@@ -138,7 +139,10 @@ using namespace Glip::CoreGL;
 		std::string HandleOpenGL::getVendorName(void)
 		{
 			const GLubyte* str = glGetString(GL_VENDOR);
-			return std::string(reinterpret_cast<const char*>(str));
+			if(str==NULL)
+				return "";
+			else
+				return std::string(reinterpret_cast<const char*>(str));
 		}
 
 		/**
@@ -148,7 +152,10 @@ using namespace Glip::CoreGL;
 		std::string HandleOpenGL::getRendererName(void)
 		{
 			const GLubyte* str = glGetString(GL_RENDERER);
-			return std::string(reinterpret_cast<const char*>(str));
+			if(str==NULL)
+				return "";
+			else
+				return std::string(reinterpret_cast<const char*>(str));
 		}
 
 		/**
@@ -158,22 +165,62 @@ using namespace Glip::CoreGL;
 		std::string HandleOpenGL::getVersion(void)
 		{
 			const GLubyte* str = glGetString(GL_VERSION);
-			return std::string(reinterpret_cast<const char*>(str));
+			if(str==NULL)
+				return "";
+			else
+				return std::string(reinterpret_cast<const char*>(str));
+		}
+
+		/**
+		/fn void HandleOpenGL::getVersion(int& major, int& minor)
+		\brief Get the major and minor version number for OpenGL.
+		\param major The major number of the version.
+		\param minor The minor number of the version.
+		**/
+		void HandleOpenGL::getVersion(int& major, int& minor)
+		{
+			major = 0;
+			minor = 0;
+			glGetIntegerv(GL_MAJOR_VERSION, &major);
+			glGetIntegerv(GL_MINOR_VERSION, &minor);
 		}
 
 		/**
 		\fn std::string HandleOpenGL::getGLSLVersion(void)
-		\return A std::string object containing the GLSL version.
+		\return A std::string object containing the GLSL version or an empty string if the OpenGL version is less than 2.0.
 		**/
 		std::string HandleOpenGL::getGLSLVersion(void)
 		{
-			if(GL_VERSION_2_0)
-			{
-				const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
-				return std::string(reinterpret_cast<const char*>(str));
-			}
+			const GLubyte* str = GL_VERSION_2_0 ? glGetString(GL_SHADING_LANGUAGE_VERSION) : NULL;
+			if(str==NULL)
+				return "";
 			else
-				return std::string("<Error : OpenGL version is less than 2.0>");
+				return std::string(reinterpret_cast<const char*>(str));
+		}
+
+		/**
+		\fn std::vector<std::string> HandleOpenGL::getAvailableGLSLVersions(void)
+		\brief Get the list of available GLSL version.
+		\return A vector of string containing the available GLSL versions.
+		**/
+		std::vector<std::string> HandleOpenGL::getAvailableGLSLVersions(void)
+		{
+			if(!GL_VERSION_4_3)
+				return std::vector<std::string>();
+			else
+			{
+				GLint numStrings = -1;
+				std::vector<std::string> results;
+				glGetIntegerv(GL_NUM_SHADING_LANGUAGE_VERSIONS, &numStrings);
+
+				for(int k=0; k<numStrings; k++)
+				{
+					const char* str = reinterpret_cast<const char*>(glGetStringi(GL_SHADING_LANGUAGE_VERSION, k));
+					if(str!=NULL)
+						results.push_back(std::string(str));				
+				}
+				return results;
+			}
 		}
 
 		/**

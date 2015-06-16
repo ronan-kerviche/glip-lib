@@ -36,12 +36,11 @@
 	
 // OBJLoader :
 	OBJLoader::OBJLoader(void)
-	 :	LayoutLoaderModule(	"LOAD_OBJ_GEOMETRY", 
-					"Load a geometry from a Wavefront file (OBJ).\n"
-					"Arguments : filename, geometryName[, strict].",
-					2,
-					3,
-					0)
+	 :	LayoutLoaderModule("LOAD_OBJ_GEOMETRY", "DESCRIPTION{Load a geometry from a Wavefront file (OBJ).}"
+							"ARGUMENT:filename{Name of the file to load.}"
+							"ARGUMENT:geometryName{Name of the new geometry.}"
+							"ARGUMENT:[strict]{Either TRUE or FALSE. If enabled, the loader will abort upon inding an unknown tag.}",
+							2, 3, -1)
 	{ }
 
 	GLfloat OBJLoader::readNextNumber(const std::string& line, size_t& p, const int lineNumber, const std::string& sourceName)
@@ -581,12 +580,10 @@
 
 // STLLoader :
 	STLLoader::STLLoader(void)
-	 :	LayoutLoaderModule(	"LOAD_STL_GEOMETRY", 
-					"Load a geometry from a StereoLithography file (STL).\n"
-					"Arguments : filename, geometryName.",
-					2,
-					2,
-					0)
+	 :	LayoutLoaderModule("LOAD_STL_GEOMETRY", "DESCRIPTION{Load a geometry from a StereoLithography file (STL).}"
+							"ARGUMENT:filename{Name of the file to load}"
+							"ARGUMENT:geometryName{Name of the new geometry.}",
+							2, 2, -1)
 	{ }
 
 	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( STLLoader )

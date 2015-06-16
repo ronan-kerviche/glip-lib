@@ -75,12 +75,12 @@ namespace Glip
 			KW_LL_GRID_2D,
 			KW_LL_GRID_3D,
 			KW_LL_CUSTOM_MODEL,
-			KW_LL_GEOMETRY_FROM_FILE,
 			KW_LL_STANDARD_QUAD,
 			KW_LL_VERTEX,
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
 			KW_LL_CALL,
+			KW_LL_SAFE_CALL,
 			KW_LL_UNIQUE,
 			LL_NumKeywords,
 			LL_UnknownKeyword
@@ -800,7 +800,7 @@ catch(Exception& e)
 				void	buildRequiredSource(const VanillaParserSpace::Element& e);
 				void	buildRequiredGeometry(const VanillaParserSpace::Element& e);
 				void	buildRequiredPipeline(const VanillaParserSpace::Element& e);
-				void    moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName);
+				void    moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName, const bool safe=false);
 				void	buildFormat(const VanillaParserSpace::Element& e);
 				void	buildSource(const VanillaParserSpace::Element& e);
 				void	buildGeometry(const VanillaParserSpace::Element& e);

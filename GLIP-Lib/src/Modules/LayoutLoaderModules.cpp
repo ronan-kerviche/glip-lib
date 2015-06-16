@@ -38,35 +38,72 @@
 
 	// Modules tools : 
 		/**
-		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError)
+		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
 		\brief LayoutLoaderModule constructor. For simple modules you can just use the macro LAYOUT_LOADER_MODULE_APPLY.
 		\param _name Name of the module.
 		\param _manual Manual of the module.
 		\param _minNumArguments Minimum number of arguments of the module.
 		\param _maxNumArguments Maximum number of arguments of the module (-1 for no limitation).
 		\param _bodyPresence Requirement on the body (-1 for no body, 0 for indifferent, 1 for needed).
-		\param _showManualOnError Requiring the LayoutLoader to show the manual if any errors occur.
 		**/
-		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError)
+		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
 		 : 	name(_name), 
-			manual(_manual), 
 			minNumArguments(_minNumArguments), 
 			maxNumArguments(_maxNumArguments), 
-			bodyPresence(_bodyPresence),
-			showManualOnError(_showManualOnError)
-		{ }
+			bodyPresence(_bodyPresence)
+		{
+			initManual(_manual);
+		}
 
 		LayoutLoaderModule::LayoutLoaderModule(const LayoutLoaderModule& m)
 		 : 	name(m.name), 
-			manual(m.manual), 
+			description(m.description), 
+			bodyDescription(m.bodyDescription),
+			argumentsDescriptions(m.argumentsDescriptions),
 			minNumArguments(m.minNumArguments), 
 			maxNumArguments(m.maxNumArguments), 
-			bodyPresence(m.bodyPresence), 
-			showManualOnError(m.showManualOnError)
+			bodyPresence(m.bodyPresence) 
 		{ }
 
 		LayoutLoaderModule::~LayoutLoaderModule(void)
 		{ }
+
+		void LayoutLoaderModule::initManual(const std::string& manual)
+		{
+			const std::string 	descriptionKeyword = "DESCRIPTION",
+						bodyDescriptionKeyword = "BODY_DESCRIPTION",
+						argumentKeyword = "ARGUMENT";
+			description.clear();
+			bodyDescription.clear();
+			argumentsDescriptions.clear();
+			try
+			{
+				VanillaParserSpace::VanillaParser parser(manual);
+
+				for(std::vector<VanillaParserSpace::Element>::const_iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
+				{
+					if((*it).strKeyword==descriptionKeyword && description.empty())
+						description = (*it).body;
+					else if((*it).strKeyword==bodyDescriptionKeyword && bodyDescription.empty())
+						bodyDescription = (*it).body;
+					else if((*it).strKeyword==argumentKeyword)
+						argumentsDescriptions.push_back( std::pair<std::string,std::string>((*it).name, (*it).body));
+					else
+						throw Exception("Unknown description keyword : " + (*it).strKeyword);
+				}
+			}
+			catch(Exception& e)
+			{
+				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+					std::cerr << "From LayoutLoaderModule::initManual, caught exception while processing manual of module " << name << " : " << std::endl;
+					std::cerr << e.what() << std::endl;
+				#endif 
+
+				description = manual;
+				bodyDescription.clear();
+				argumentsDescriptions.clear();
+			}
+		}
 
 		/**
 		\fn const std::string& LayoutLoaderModule::getName(void) const
@@ -106,25 +143,63 @@
 		const char& LayoutLoaderModule::bodyPresenceTest(void) const
 		{
 			return bodyPresence;
-		}
+		}	
 
 		/**
-		\fn const bool& LayoutLoaderModule::requiringToShowManualOnError(void) const
-		\brief Test if the module requires the LayoutLoader object to show this LayoutLoaderModule manual if any errors occur during LayoutLoaderModule::apply.
-		\return A boolean corresponding to the requirement.
+		\fn const std::string& LayoutLoaderModule::getDescription(void) const
+		\brief Get the description of the module.
+		\return A string containing the description of the module.
 		**/
-		const bool& LayoutLoaderModule::requiringToShowManualOnError(void) const
+		const std::string& LayoutLoaderModule::getDescription(void) const
 		{
-			return showManualOnError;
+			return description;
 		}
 
 		/**
-		\fn const std::string& LayoutLoaderModule::getManual(void) const
+		\fn const std::string& LayoutLoaderModule::getBodyDescription(void) const
+		\brief Get the description of the body of the module.
+		\return A string containing the description of the body of the module. Possibly empty.
+		**/
+		const std::string& LayoutLoaderModule::getBodyDescription(void) const
+		{
+			return bodyDescription;
+		}
+
+		/**
+		\fn const std::vector<std::pair<std::string,std::string> >& LayoutLoaderModule::getArgumentsDescriptions(void) const
+		\brief Get the description of all the arguments of the module.
+		\return A map containing the description (value) of each arguments (key).
+		**/
+		const std::vector<std::pair<std::string,std::string> >& LayoutLoaderModule::getArgumentsDescriptions(void) const
+		{
+			return argumentsDescriptions;
+		}
+
+		/**
+		\fn std::string LayoutLoaderModule::getManual(void) const
 		\brief Get the manual of the module.
 		\return A standard string containing the manual of the module.
 		**/
-		const std::string& LayoutLoaderModule::getManual(void) const
+		std::string LayoutLoaderModule::getManual(void) const
 		{
+			std::string manual;
+			manual += "MODULE : " + name + "\n";
+			if(!description.empty())
+				manual += "    " + description + "\n";
+		
+			if(!argumentsDescriptions.empty())
+				manual += "  Arguments :\n";	
+
+			size_t maxSize = 0;
+			for(std::vector<std::pair<std::string,std::string> >::const_iterator it=argumentsDescriptions.begin(); it!=argumentsDescriptions.end(); it++)
+				maxSize = std::max(maxSize, it->first.size());
+
+			for(std::vector<std::pair<std::string,std::string> >::const_iterator it=argumentsDescriptions.begin(); it!=argumentsDescriptions.end(); it++)
+				manual += "  * " + it->first + std::string(maxSize-it->first.size(),' ') + " : " + it->second + "\n";
+			
+			if(!bodyDescription.empty())
+				manual += "  Body : " + bodyDescription + "\n";
+		
 			return manual;
 		}
 
@@ -174,7 +249,7 @@
 			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
 			loader.addModule( new FORMAT_SMALLER_POWER_OF_TWO );
 			loader.addModule( new FORMAT_LARGER_POWER_OF_TWO );
-			loader.addModule( new FORMAT_SWITCH_DIMENSIONS );
+			loader.addModule( new FORMAT_SWAP_DIMENSIONS );
 			loader.addModule( new IF_FORMAT_SETTING_MATCH );
 			loader.addModule( new IF_FORMAT_SETTING_LARGERTHAN );
 			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
@@ -182,6 +257,7 @@
 			loader.addModule( new CHAIN_PIPELINES );
 			loader.addModule( new FORMAT_TO_CONSTANT );
 			loader.addModule( new SINGLE_FILTER_PIPELINE );
+			loader.addModule( new IF_GLSL_VERSION_MATCH );
 			loader.addModule( new ABORT_ERROR );
 			loader.addModule( new GenerateFFT1DPipeline );
 			loader.addModule( new GenerateFFT2DPipeline );
@@ -299,8 +375,8 @@
 		}
 
 	// Simple modules : 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1, true, 		"Check if the FORMAT was defined.\n"
-												"Arguments : formatName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FORMAT was defined.}"
+										"ARGUMENT:formatName{Name of the format to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -329,8 +405,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_SOURCE_DEFINED, 1, 1, 1, true, 		"Check if the SOURCE was defined.\n"
-												"Arguments : sourceName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_SOURCE_DEFINED, 1, 1, 1, "DESCRIPTION{Check if the SOURCE was defined.}"
+										"ARGUMENT:sourceName{Name of the source to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -359,8 +435,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_GEOMETRY_DEFINED, 1, 1, 1, true, 	"Check if the GEOMETRY was defined.\n"
-												"Arguments : geometryName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_GEOMETRY_DEFINED, 1, 1, 1, 	"DESCRIPTION{Check if the GEOMETRY was defined.}"
+											"ARGUMENT:geometryName{Name of the geometry to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -389,8 +465,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the FILTER_LAYOUT was defined.\n"
-												"Arguments : filterLayoutName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FILTER_LAYOUT was defined.}"
+											"ARGUMENT:filterLayoutName{Name of the filter layout to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -419,8 +495,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1, true, 	"Check if the PIPELINE_LAYOUT was defined.\n"
-												"Arguments : pipelineLayoutName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the PIPELINE_LAYOUT was defined.}"
+											"ARGUMENT:pipelineLayoutName{Name of the pipeline layout to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -449,8 +525,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1, true, 	"Check if the REQUIRED_FORMAT was defined.\n"
-												"Arguments : requiredFormatName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_FORMAT was defined.}"
+											"ARGUMENT:requiredFormatName{Name of the required format to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -479,8 +555,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDSOURCE_DEFINED, 1, 1, 1, true, 	"Check if the REQUIRED_SOURCE was defined.\n"
-												"Arguments : requiredSourceName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDSOURCE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_SOURCE was defined.}"
+											"ARGUMENT:requiredSourceName{Name of the required source to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -509,8 +585,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1, true, "Check if the REQUIRED_GEOMETRY was defined.\n"
-												"Arguments : requiredGeometryName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_GEOMETRY was defined.}"
+												"ARGUMENT:requiredGeometryName{Name of the required geometry to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -539,8 +615,8 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1, true, "Check if the REQUIRED_PIPELINE was defined.\n"
-												"Arguments : requiredPipelineName.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_PIPELINE was defined.}"
+												"ARGUMENT:requiredPipelineName{Name of the required pipeline to test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -569,8 +645,11 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1, true,	"Change the size of a format, save as a new format.\n"
-											"Arguments : nameOriginal, widthNew, heightNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1,	"DESCRIPTION{Change the size of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format}"
+											"ARGUMENT:widthNew{New width.}"
+											"ARGUMENT:heightNew{New height.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -608,11 +687,12 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1, true,	"Scale a format by a scalar (or two), save as a new format.\n"
-											"Will prevent to reach a 0x0 texture by ensuring that the size is\n"
-											"at least 1 pixel in each dimension\n"
-											"Arguments : nameOriginal, scaleFactor, nameNew.\n"
-											"            nameOriginal, scaleFactorX, scaleFactorY, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1,	"DESCRIPTION{Scale a format by a scalar (or two), save as a new format. "
+											"Will prevent to reach a 0x0 texture by ensuring that the size is "
+											"at least 1 pixel in each dimension.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:scaleFactor{Scaling to be applied, can be splitted into X and Y.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 		 	{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -667,8 +747,10 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1, true,	"Change the channels of a format, save as a new format.\n"
-												"Arguments : nameOriginal, channelNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1,	"DESCRIPTION{Change the channels of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:channelNew{New channel mode.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -698,8 +780,10 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1, true,	"Change the depth of a format, save as a new format.\n"
-												"Arguments : nameOriginal, depthNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1,	"DESCRIPTION{Change the depth of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:depthNew{New depth.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -729,8 +813,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1, true,	"Change the filtering of a format, save as a new format.\n"
-												"Arguments : nameOriginal, minNew, magNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1,	"DESCRIPTION{Change the filtering of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:minNew{New minification filter.}"
+											"ARGUMENT:magNew{New magnification filter.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -761,8 +848,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1, true,	"Change the wrapping of a format, save as a new format.\n"
-												"Arguments : nameOriginal, sNew, tNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1,	"DESCRIPTION{Change the wrapping of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:sNew{New S wrapping parameter.}"
+											"ARGUMENT:tNew{New T wrapping parameter.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -793,8 +883,10 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1, true,	"Change the mipmap level of a format, save as a new format.\n"
-												"Arguments : nameOriginal, mNew, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1,	"DESCRIPTION{Change the mipmap level of a format, save as a new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:mNew{New maximum mipmap parameter.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -825,8 +917,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the smallest width, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest width, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -869,8 +964,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1, true,	"Find the format having the largest width, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1,	"DESCRIPTION{Find the format having the largest width, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the first format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -913,8 +1011,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the smallest height, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest height, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -957,8 +1058,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1, true,	"Find the format having the largest height, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1,	"DESCRIPTION{Find the format having the largest height, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1001,8 +1105,12 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the smallest number of pixels, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest number of pixels, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
+
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1045,8 +1153,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1, true,	"Find the format having the largest number of pixels, save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1,	"DESCRIPTION{Find the format having the largest number of pixels, save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1089,8 +1200,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the smallest number of elements (pixels times channels count), save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest number of elements (pixels times channels count), save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1133,8 +1247,11 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1, true,	"Find the format having the largest number of elements (pixels times channels count), save as a new format.\n"
-												"Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1,	"DESCRIPTION{Find the format having the largest number of elements (pixels times channels count), save as a new format.}"
+											"ARGUMENT:nameFormat1{Name of the fist format.}"
+											"ARGUMENT:nameFormat2{Name of the second format.}"
+											"ARGUMENT:[nameFormat3...]{Other formats.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1177,9 +1294,10 @@
 				APPEND_NEW_FORMAT( arguments.back(), newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SMALLER_POWER_OF_TWO, 2, 3, -1, true,"Generate a new format clamped to the closest smaller power of 2.\n"
-												"Arguments : nameFormat, nameNew [, strict].\n"
-												"            strict can be either TRUE or FALSE (dafault).")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SMALLER_POWER_OF_TWO, 2, 3, -1,	"DESCRIPTION{Generate a new format clamped to the closest smaller power of 2.}"
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:nameNew{Name of the new format.}"
+												"ARGUMENT:[strict]{Either TRUE or FALSE (default).}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1222,9 +1340,10 @@
 				APPEND_NEW_FORMAT( arguments[1], newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_LARGER_POWER_OF_TWO, 2, 3, -1, true, "Generate a new format clamped to the closest larger power of 2.\n"
-												"Arguments : nameFormat, nameNew [, strict].\n"
-												"            strict can be either TRUE or FALSE (dafault).")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_LARGER_POWER_OF_TWO, 2, 3, -1,	"DESCRIPTION{Generate a new format clamped to the closest larger power of 2.}"
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:nameNew{Name of the new format.}"
+												"ARGUMENT:[strict]{Either TRUE or FALSE (default).}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1267,8 +1386,9 @@
 				APPEND_NEW_FORMAT( arguments[1], newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SWITCH_DIMENSIONS, 2, 2, -1, true,	"Switch the width and height values, save as a new format.\n"
-												"Arguments : nameFormat, nameNew.")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SWAP_DIMENSIONS, 2, 2, -1,	"DESCRIPTION{Swap the width and height values, save as a new format.}"
+											"ARGUMENT:nameFormat{Name of the original format.}"
+											"ARGUMENT:nameNew{Name of the new format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1298,9 +1418,11 @@
 				APPEND_NEW_FORMAT( arguments[1], newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1, true, 	"Match if a format setting is equal to a value (integer or GL keyword).\n"
-												"Arguments : nameFormat, nameSetting, value.\n"
-												"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1,	"DESCRIPTION{Match if a format setting is equal to a value (unsigned integer or GL keyword).}"
+											"ARGUMENT:nameFormat{Name of the targeted format.}"
+											"ARGUMENT:nameSetting{Name of the setting. See the documentation of HdlAbstractTextureFormat.}"
+											"ARGUMENT:value{The unsigned integer value or GLenum name to test against.}"
+											"BODY_DESCRIPTION{Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -1340,9 +1462,11 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_LARGERTHAN, 3, 3, 1, true, 	"Match if a format setting is larger than a value (integer or GL keyword).\n"
-													"Arguments : nameFormat, nameSetting, value.\n"
-													"            nameSettings : the settings name can be found in the documentation of HdlAbstractTextureFormat::getSetting).")
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_LARGERTHAN, 3, 3, 1,	"DESCRIPTION{Match if a format setting is larger than a value (unsigned integer or GL keyword).}"
+												"ARGUMENT:nameFormat{Name of the targeted format.}"
+												"ARGUMENT:nameSetting{Name of the setting. See the documentation of HdlAbstractTextureFormat.}"
+												"ARGUMENT:value{The unsigned integer value or GLenum name to test against.}"	
+												"BODY_DESCRIPTION{Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -1382,9 +1506,10 @@
 					executionCode = falseCase;
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1, true,	"Create a 2D grid geometry of the same size as the format in argument.\n"
-												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
-												"            normalized : if 'TRUE' (case sensitive) the geometry will be in the range [0, 1].")
+			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1,	"DESCRIPTION{Create a 2D grid geometry of the same size as the format in argument (width and height).}"
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:nameNewGeometry{Name of the new geometry.}"
+												"ARGUMENT:[normalized]{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1415,9 +1540,10 @@
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1, true,	"Create a 3D grid geometry of the same size as the format in argument.\n"
-												"Arguments : nameFormat, nameNewGeometry [, normalized].\n"
-												"            normalized : if 'TRUE' (case sensitive) the geometry will be in the range [0, 1].")
+			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1,	"DESCRIPTION{Create a 3D grid geometry of the same size as the format in argument (width, height and number of channels).}"
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:nameNewGeometry{Name of the new geometry.}"
+												"ARGUMENT:[normalized]{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1448,11 +1574,12 @@
 				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1, true, 	"Create a pipeline by connecting the pipelines passed in arguments, in line.\n"
-											"Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...\n"
-											"            isStrict if 'TRUE' (case sensitive) the pipelines connection are enforced strictly (if outputs of\n"
-											"                     the first pipeline are not equal to the number of input of the second pipeline,\n"
-											"                     then the module will report an error.\n")
+			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1,	"DESCRIPTION{Create a pipeline by connecting the pipelines passed in arguments.}\n"
+										"ARGUMENT:isStrict{Either TRUE or FALSE. If enabled, the pipelines connection are enforced strictly (if outputs of the first pipeline are not equal to the number of input of the second pipeline, then the module will report an error.}"
+										"ARGUMENT:namePipelineLayout1{Name of the first pipeline in the chain.}"
+										"ARGUMENT:namePipelineLayout2{Name of the second pipeline in the chain.}"
+										"ARGUMENT:[namePipelineLayout3...]{Other pipelines.}"
+										"ARGUMENT:nameNewPipelineLayout{Name of the new pipeline.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1471,17 +1598,17 @@
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionCode)
 
-				const unsigned int startPipelines = 2;
+				const unsigned int startPipelines = 1;
 				std::string requiredElements;
 				VanillaParserSpace::Element 	result;
 
-				PIPELINE_MUST_NOT_EXIST( arguments[0] );
+				PIPELINE_MUST_NOT_EXIST( arguments.back() );
 
 				// Get the arguments : 
-				const bool isStrict = getBoolean(arguments[1], sourceName, startLine);
+				const bool isStrict = getBoolean(arguments[0], sourceName, startLine);
 
 				result.strKeyword 	= LayoutLoader::getKeyword(KW_LL_PIPELINE_LAYOUT);
-				result.name		= arguments[0];
+				result.name		= arguments.back();
 				result.noName		= false;
 				result.noArgument	= true;
 				result.noBody		= false;
@@ -1491,7 +1618,7 @@
 				// Get all the pipelines : 
 				std::string lastInstance;
 				std::vector<std::string> outputPortNames;
-				for(unsigned int k=startPipelines; k<arguments.size(); k++)
+				for(unsigned int k=startPipelines; k<(arguments.size()-1); k++)
 				{
 					// Access the pipeline : 
 					PIPELINE_MUST_EXIST( arguments[k] );
@@ -1554,7 +1681,7 @@
 						if(itCurrentPipeline->second.getNumInputPort()>static_cast<int>(outputPortNames.size()))
 							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has only " + toString(outputPortNames.size()) + " output ports.", sourceName, startLine, Exception::ClientScriptException);
 
-						// Check the previous number of output : 
+						// Check the previous number of outputs : 
 						if(isStrict && itCurrentPipeline->second.getNumInputPort()!=static_cast<int>(outputPortNames.size()))
 							throw Exception("The pipeline " + instance.name + " has " + toString(itCurrentPipeline->second.getNumInputPort()) + " input ports while the previous element in the chain (" + lastInstance + ") has " + toString(outputPortNames.size()) + " output ports and the connections are specified as STRICT.", sourceName, startLine, Exception::ClientScriptException);
 
@@ -1575,7 +1702,7 @@
 					}
 
 					// If last : 
-					if(k==arguments.size()-1)
+					if(k==arguments.size()-2)
 					{
 						// Outputs : 
 						VanillaParserSpace::Element outputs;
@@ -1619,9 +1746,9 @@
 				executionCode = requiredElements + "\n" + result.getCode();
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 1, 2, -1, true,	"Create a SHARED_SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument.\n"
-											"For instance, can be used in a shader with : INSERT(name)\n"
-											"Arguments   : textureFormat[, sourceName]\n")
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 1, 2, -1,	"DESCRIPTION{Create a SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument. For instance, can be used in a shader with : INSERT(name).}"
+											"ARGUMENT:formatName{Name of the texture format to be used.}"
+											"ARGUMENT:sourceName{Name of the source to be created. If not set, the name of the source will be the same as the name of the format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1652,9 +1779,10 @@
 				APPEND_NEW_SOURCE(generatedSourceName, ShaderSource(str, sourceName, startLine));
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY(SINGLE_FILTER_PIPELINE, 2, 3, 1, true, 	"Create a pipeline with a single filter.\n"
-												"Arguments : pipelineName, outputTextureFormat\n"
-												"Body      : fragment shader source.")
+			LAYOUT_LOADER_MODULE_APPLY(SINGLE_FILTER_PIPELINE, 2, 3, 1,	"DESCRIPTION{Create a pipeline with a single filter.}"
+											"ARGUMENT:pipelineName{Name of the new pipeline.}"
+											"ARGUMENT:outputTextureFormat{Name of the format to render to.}"
+											"BODY_DESCRIPTION{Source of the fragment shader to be implemented.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -1767,9 +1895,37 @@
 				executionCode = elementRequiredFormat.getCode() + "\n" + elementSource.getCode() + "\n" + elementFilter.getCode() + "\n" + elementPipeline.getCode();
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0, false,	"Return a user defined error.\n"
-											"Argument    : error description.\n"
-											"Body (opt.) : more complete description of the error.")
+			LAYOUT_LOADER_MODULE_APPLY( IF_GLSL_VERSION_MATCH, 1, 1, 1,	"DESCRIPTION{Test the GLSL available available during compilation.}"
+											"ARGUMENT:version{The GLSL version name to be tested : 1.30, 3.30, etc.}"
+											"BODY_DESCRIPTION{Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.}")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
+				UNUSED_PARAMETER(executionCode)
+			
+				std::string	trueCase,
+						falseCase;
+				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				const std::string glslVersion = HandleOpenGL::getGLSLVersion();
+				const bool test = (glslVersion.find(arguments[0])!=std::string::npos);
+				executionCode = test ? trueCase : falseCase;
+			} 
+
+			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0,	"DESCRIPTION{Abort the Layout loading operation with a user defined error.}"
+										"ARGUMENT:error{Error description.}"
+										"BODY_DESCRIPTION{Optional, More complete description of the error.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)

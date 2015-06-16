@@ -64,12 +64,12 @@
 										"GRID_2D",
 										"GRID_3D",
 										"CUSTOM_MODEL",
-										"GEOMETRY_FROM_FILE",
 										"STANDARD_QUAD",
 										"VERTEX",
 										"ELEMENT",
 										"ADD_PATH",
 										"CALL",
+										"SAFE_CALL",
 										"UNIQUE"
 									};
 
@@ -707,7 +707,7 @@
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
 	}
 
-	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName)
+	void LayoutLoader::moduleCall(const VanillaParserSpace::Element& e, std::string& mainPipelineName, const bool safe)
 	{
 		// Find the name of the module : 
 		preliminaryTests(e, 1, -1, -1, 0, "ModuleCall");
@@ -715,17 +715,16 @@
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find( e.name );
 
 		if(it==modules.end())
-			throw Exception("The module \"" + e.name + "\" was not loaded.", e.sourceName, e.startLine, Exception::ClientScriptException);
-
-		bool showManual = false;
-		std::string manual;
+		{
+			if(!safe)
+				throw Exception("The module \"" + e.name + "\" was not loaded.", e.sourceName, e.startLine, Exception::ClientScriptException);
+			else
+				return ;
+		}
 
 		try
 		{
 			LayoutLoaderModule& module = *(it->second);
-
-			showManual 	= module.requiringToShowManualOnError();
-			manual 		= module.getManual();
 
 			// Re - test call : 
 			preliminaryTests(e, 1, module.getMinNumArguments(), module.getMaxNumArguments(), module.bodyPresenceTest(), "Module \"" + module.getName() + "\"");
@@ -788,19 +787,8 @@
 		catch(Exception& ex)
 		{
 			Exception m("From line " + toString(e.startLine) + " : The module \"" + e.name + "\" reported an error : ", e.sourceName, e.startLine, Exception::ClientScriptException);
-
-			if(manual.empty() || !showManual)
-			{
-				m << ex;
-				throw m;
-			}
-			else
-			{
-				m << ex;
-				Exception ma("MODULE \"" + e.name + "\" MANUAL : \n" + manual, __FILE__, __LINE__, Exception::ClientScriptException);
-				m << ma;
-				throw m;
-			}
+			m << ex;
+			throw m;	
 		}
 	}
 
@@ -1704,6 +1692,9 @@
 					case KW_LL_CALL :
 						moduleCall(rootParser.elements[k], mainPipelineName);
 						break;
+					case KW_LL_SAFE_CALL :
+						moduleCall(rootParser.elements[k], mainPipelineName, true);
+						break;
 					case KW_LL_FORMAT_LAYOUT :
 						buildFormat(rootParser.elements[k]);
 						break;
@@ -2218,6 +2209,7 @@
 						// WARNING, THE REQUIRED PIPELINE I/O ARE NOT LISTED BECAUSE WE CAN'T KNOW THEM AHEAD OF TIME.
 						break;
 					case KW_LL_CALL :
+					case KW_LL_SAFE_CALL :
 						preliminaryTests(rootParser.elements[k], 1, -1, -1, 0, "ModuleCall");
 						result.modulesCalls.push_back( rootParser.elements[k].name );
 						break;

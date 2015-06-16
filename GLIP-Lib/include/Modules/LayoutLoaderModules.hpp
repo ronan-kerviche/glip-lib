@@ -25,7 +25,7 @@
 #define __LAYOUT_LOADER_MODULES_INCLUDE__
 
 	#include <vector>
-	#include <map>
+	//#include <map>
 	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"
@@ -88,7 +88,7 @@ FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of element
 FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
 FORMAT_SMALLER_POWER_OF_TWO	| Generate a new format clamped to the closest smaller power of 2. Arguments : nameFormat, nameNew [, strict].
 FORMAT_LARGER_POWER_OF_TWO	| Generate a new format clamped to the closest larger power of 2. Arguments : nameFormat, nameNew [, strict].
-FORMAT_SWITCH_DIMENSIONS	| Switch the width and height values, save as a new format, Arguments : nameFormat, nameNew.
+FORMAT_SWAP_DIMENSIONS		| Swap the width and height values, save as a new format, Arguments : nameFormat, nameNew.
 IF_FORMAT_SETTING_MATCH		| Match if a format setting is equal to a value (integer). Arguments : nameFormat, nameSetting, value.
 IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value (integer or GL keyword). Arguments : nameFormat, nameSetting, value.
 GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
@@ -118,7 +118,7 @@ Example, creating a simple Module :
 	\code 
 		// Declare your module in some header : 
 		LAYOUT_LOADER_MODULE_DEFINITION( MyAdditionModule )
-		// (If your module ought to be more complex, you will have to go through a full description)
+		// (If your module was to be more complex, you will have to go through a full description)
 
 		// In the source file (must have exactly 3 arguments (min = max = 3), no body and show the manual if any errors occur) : 
 		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 3, 3, -1, true, 	"Increase or decrease the size of a format, save as a new format.\n"
@@ -160,15 +160,18 @@ Example, creating a simple Module :
 		class GLIP_API LayoutLoaderModule
 		{
 			private : 
-				const std::string 	name,
-							manual;
-				const int		minNumArguments,
-							maxNumArguments;
-				const char 		bodyPresence;
-				bool			showManualOnError;
+				const std::string 					name;
+				std::string						description,
+											bodyDescription;
+				std::vector<std::pair<std::string,std::string> >	argumentsDescriptions;
+				const int						minNumArguments,
+											maxNumArguments;
+				const char 						bodyPresence;
+
+				void initManual(const std::string& _manual);
 
 			protected :
-				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence, bool _showManualOnError = true);
+				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence);
 
 			public :
 				LayoutLoaderModule(const LayoutLoaderModule& m);
@@ -230,8 +233,10 @@ Example, creating a simple Module :
 				const int& getMinNumArguments(void) const;
 				const int& getMaxNumArguments(void) const;
 				const char& bodyPresenceTest(void) const;
-				const bool& requiringToShowManualOnError(void) const;
-				const std::string& getManual(void) const;
+				const std::string& getDescription(void) const;
+				const std::string& getBodyDescription(void) const;
+				const std::vector<std::pair<std::string,std::string> >& getArgumentsDescriptions(void) const;
+				std::string getManual(void) const;
 
 				// Events : 
 				virtual void beginLoadLayout(void);
@@ -314,8 +319,8 @@ Example, creating a simple Module :
 											const int 						bodyLine, \
 											std::string& 						executionCode)
 
-			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)			Source of a module. **/
-			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, showManualOnError, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
+			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)			Source of a module. **/
+			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
 																		void 	moduleName :: apply(	const std::vector<std::string>& 		arguments,  \
 																						const std::string&				body, \
 																						const std::string&				currentPath, \
@@ -473,7 +478,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_MAXIMUM_ELEMENTS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SMALLER_POWER_OF_TWO )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_LARGER_POWER_OF_TWO )
-			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SWITCH_DIMENSIONS )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SWAP_DIMENSIONS )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_MATCH )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_LARGERTHAN )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
@@ -481,6 +486,7 @@ Example, creating a simple Module :
 			LAYOUT_LOADER_MODULE_DEFINITION( CHAIN_PIPELINES )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_TO_CONSTANT )
 			LAYOUT_LOADER_MODULE_DEFINITION( SINGLE_FILTER_PIPELINE )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_GLSL_VERSION_MATCH )
 			LAYOUT_LOADER_MODULE_DEFINITION( ABORT_ERROR )
 	}
 }
