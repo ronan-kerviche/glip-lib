@@ -168,7 +168,7 @@
 		/**
 		\fn const std::vector<std::pair<std::string,std::string> >& LayoutLoaderModule::getArgumentsDescriptions(void) const
 		\brief Get the description of all the arguments of the module.
-		\return A map containing the description (value) of each arguments (key).
+		\return A vector of pairs containing the description (second) of each arguments (first).
 		**/
 		const std::vector<std::pair<std::string,std::string> >& LayoutLoaderModule::getArgumentsDescriptions(void) const
 		{
@@ -289,7 +289,7 @@
 	
 		In a if-statement you can write : 
 		\code
-		IF(tatement)
+		IF(statement)
 		{
 			TRUE
 			{

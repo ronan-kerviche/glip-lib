@@ -25,7 +25,6 @@
 #define __LAYOUT_LOADER_MODULES_INCLUDE__
 
 	#include <vector>
-	//#include <map>
 	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"

@@ -80,6 +80,8 @@ Other options : \n\
  -t, --template	Show a list of templates script (Pipeline, Uniforms and \n\
 		Command) and stops.\n\
  -v, --version	Show the version and stops.\n\
+ -V, --Version  Start a context, show the informations and stop.\n\
+		You can set the display variable before using this option.\n\
 \n\
 PROCESSING COMMANDS\n\
   Processing commands describe which resource to use in order to repeat\n\
@@ -218,6 +220,41 @@ Link : <http://glip-lib.sourceforge.net/>\
 	}
 
 // Tools : 
+	int printInfos(const std::string& displayName)
+	{
+		try
+		{
+			// Create the GL context : 
+			createWindowlessContext(displayName);
+
+			// Start GL : 
+			Glip::HandleOpenGL::init();
+
+			// Create the loader, load the standard modules : 
+			Glip::Modules::LayoutLoader lloader;
+			Glip::Modules::LayoutLoaderModule::addBasicModules(lloader);
+	
+			// Print :
+			std::cout << versionString << std::endl;
+			std::cout << "Vendor       : " << Glip::HandleOpenGL::getVendorName() << std::endl;
+			std::cout << "Renderer     : " << Glip::HandleOpenGL::getRendererName() << std::endl;
+			std::cout << "Version      : " << Glip::HandleOpenGL::getVersion() << std::endl;
+			std::cout << "GLSL Version : " << Glip::HandleOpenGL::getGLSLVersion() << std::endl;
+			std::cout << std::endl;	
+	
+			std::vector<Glip::Modules::LayoutLoaderModule*> modules = lloader.listModules();
+			std::cout << modules.size() << " loaded modules : " << std::endl;
+			for(std::vector<Glip::Modules::LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+				std::cout << (*it)->getManual() << std::endl;
+		}
+		catch(Glip::Exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+			return -1;
+		}
+		return 1;
+	}
+
 	std::string loadUniforms(const std::string& str)
 	{
 		if(str.find('\n')==std::string::npos)
@@ -493,6 +530,11 @@ Link : <http://glip-lib.sourceforge.net/>\
 			{
 				std::cout << versionString << std::endl;
 				return 1;
+			}
+			else if(arg=="-V" || arg=="--Version")
+			{
+				printInfos(displayName);
+				return 1;	
 			}
 			else if(arg=="-h" || arg=="--help")
 			{
