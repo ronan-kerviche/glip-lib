@@ -27,9 +27,9 @@
 
 using namespace Glip::CoreGL;
 
-const int HdlTextureFormatDescriptor::maxNumChannels = 4;
-const int HdlTextureFormatDescriptor::maxPixelSizeInBits = 128;
-const int HdlTextureFormatDescriptor::maxPixelSize = 16;
+GLIP_API const int HdlTextureFormatDescriptor::maxNumChannels = 4;
+GLIP_API const int HdlTextureFormatDescriptor::maxPixelSizeInBits = 128;
+GLIP_API const int HdlTextureFormatDescriptor::maxPixelSize = 16;
 
 // List of all the Mode accepted :
 const HdlTextureFormatDescriptor HdlTextureFormatDescriptorsList::textureFormatDescriptors[] = {

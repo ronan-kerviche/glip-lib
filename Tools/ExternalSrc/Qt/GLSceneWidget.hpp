@@ -470,7 +470,7 @@ namespace QVGL
 				void graphicsProxyDestroyed(void);
 
 			public :
-				TopBar(void);
+				TopBar(QWidget* parent=NULL);
 				virtual ~TopBar(void);
 
 				void setGraphicsProxy(QGraphicsProxyWidget* _graphicsProxy);

@@ -68,6 +68,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\..\..\GLIP-Lib\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -75,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\..\..\GLIP-Lib\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,10 +89,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;GLIPLIB_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,12 +120,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;GLIPLIB_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -165,6 +171,7 @@
     <ClInclude Include="..\..\..\GLIP-Lib\include\devDebugTools.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\GLIPLib.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\FFT.hpp" />
+    <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\GeometryLoader.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\ImageBuffer.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoader.hpp" />
     <ClInclude Include="..\..\..\GLIP-Lib\include\Modules\LayoutLoaderModules.hpp" />
@@ -190,6 +197,7 @@
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\Pipeline.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Core\ShaderSource.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\FFT.cpp" />
+    <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\GeometryLoader.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\ImageBuffer.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoader.cpp" />
     <ClCompile Include="..\..\..\GLIP-Lib\src\Modules\LayoutLoaderModules.cpp" />

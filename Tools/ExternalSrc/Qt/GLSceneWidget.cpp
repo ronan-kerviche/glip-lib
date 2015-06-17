@@ -1442,8 +1442,9 @@ using namespace QVGL;
 // TopBar
 	TopBar* TopBar::singleton = NULL;
 
-	TopBar::TopBar(void)
-	 : 	graphicsProxy(NULL),
+	TopBar::TopBar(QWidget* parent)
+	 : 	QWidget(parent),
+		graphicsProxy(NULL),
 		bar(this),
 		menuBar(this),
 		mainMenu("Menu", this),
@@ -1455,10 +1456,10 @@ using namespace QVGL;
 		openInfosAction("Infos", this),
 		quitAction("Quit", this),
 		viewsSeparator(NULL),
-		closeCurrentViewAction("Close view", this),	
+		closeCurrentViewAction("Close view", this),
 		closeAllViewsAction("Close all views", this),
 		viewsTablesSeparator(NULL),
-		closeCurrentViewsTableAction("Close table", this), 
+		closeCurrentViewsTableAction("Close table", this),
 		closeAllViewsTableAction("Close all tables", this),
 		subWidgetsSeparator(NULL),
 		toggleTemporaryHideAllSubWidgetsAction("Hide all widgets", this),
@@ -1534,10 +1535,12 @@ using namespace QVGL;
 
 		subWidgetsSeparator = subWidgetsMenu.addSeparator();
 		subWidgetsMenu.addAction(&toggleTemporaryHideAllSubWidgetsAction);
-		subWidgetsMenu.addAction(&hideAllSubWidgetsAction);	
+		subWidgetsMenu.addAction(&hideAllSubWidgetsAction);
 
 		// Reset : 
 		setTitle();
+
+		hide();
 	}
 
 	TopBar::~TopBar(void)
@@ -1698,6 +1701,7 @@ using namespace QVGL;
 			}
 
 			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
+			show();
 		}
 	}
 
@@ -1729,7 +1733,7 @@ using namespace QVGL;
 
 	void TopBar::setTitle(View& view)
 	{
-		// Set title : 
+		// Set title :
 		titleLabel.setText(view.getName());
 		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
@@ -1738,7 +1742,7 @@ using namespace QVGL;
 
 	void TopBar::setTitle(const ViewsTable& table)
 	{
-		// Set title : 
+		// Set title :
 		titleLabel.setText(table.getName());
 		titleLabel.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
@@ -1877,6 +1881,7 @@ using namespace QVGL;
 			}
 
 			QObject::connect(graphicsProxy, SIGNAL(destroyed(void)), this, SLOT(graphicsProxyDestroyed(void)));
+			// show();
 		}
 	}
 
@@ -3333,7 +3338,7 @@ using namespace QVGL;
 
 		// Enable transparency on the background :
 		glEnable(GL_BLEND);
-		// TODO : reset blend function.
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		ViewsTable* viewsTable = qvglParent->getCurrentViewsTable();
 
@@ -3471,14 +3476,12 @@ using namespace QVGL;
 // GlipViewWidget :
 	GlipViewWidget::GlipViewWidget(QWidget* parent, const QSize& originalSize)
 	 :	QGraphicsView(parent),
-		//QWidget(parent),
 		KeyboardState(GlipViewSettings()),
 		MouseState(this),
-		//container(QBoxLayout::LeftToRight, this),
+		contextWidget(NULL),
+		glScene(NULL),
 		infosDialog(NULL),
 		settingsInterface(GlipViewSettings()),
-		//settingsInterface(NULL),
-		//glSceneViewWidget(this, &topBar, &bottomBar),		
 		currentViewIndex(-1),
 		currentViewsTableIndex(-1),
 		mainViewsTable(NULL),
@@ -3500,15 +3503,13 @@ using namespace QVGL;
 		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);	// For container catching.
 		setViewportUpdateMode(QGraphicsView::FullViewportUpdate);	// Because GL has to redraw the complete area.
 
-		// Set the size before adding SubWidgets/Bars : 
+		// Set the size before adding SubWidgets/Bars :
 		resize(originalSize);
 		scene()->setSceneRect(QRect(QPoint(0, 0), originalSize));
 
-		// Add the bars : 
-		QGraphicsProxyWidget* graphicsProxyTopBar = glScene->addWidget(&topBar);
-		topBar.setGraphicsProxy(graphicsProxyTopBar);
-		QGraphicsProxyWidget* graphicsProxyBottomBar = glScene->addWidget(&bottomBar);
-		bottomBar.setGraphicsProxy(graphicsProxyBottomBar);
+		// Add the bars :
+		topBar.setGraphicsProxy(glScene->addWidget(&topBar));
+		bottomBar.setGraphicsProxy(glScene->addWidget(&bottomBar));
 		//forceItemOrdering();
 
 		// Reset bars views : 
@@ -4156,8 +4157,7 @@ using namespace QVGL;
 
 	void GlipViewWidget::nextSubWidget(void)
 	{
-		SubWidget* secondSubWidget = getSubWidget(1, true); //glSceneViewWidget.getSubWidget(1, true); // only if visible.
-		std::cerr << "Missing glSceneViewWidget.getSubWidget() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
+		SubWidget* secondSubWidget = getSubWidget(1, true);
 		
 		if(secondSubWidget!=NULL)
 			subWidgetSelected(secondSubWidget);
@@ -4165,8 +4165,7 @@ using namespace QVGL;
 
 	void GlipViewWidget::previousSubWidget(void)
 	{
-		SubWidget* bottom = getBottomSubWidget(true);//glSceneViewWidget.getBottomSubWidget(true); // only if visible.
-		std::cerr << "Missing glSceneViewWidget.getBottomSubWidget() at " << __FILE__ << ' ' << __LINE__ << std::endl; 
+		SubWidget* bottom = getBottomSubWidget(true);
 
 		if(bottom!=NULL)
 			subWidgetSelected(bottom);
@@ -4215,7 +4214,7 @@ using namespace QVGL;
 	{
 		if(bar==&topBar)
 		{
-			// Change opacity of all other subWidgets : 
+			// Change opacity of all other subWidgets :
 			for(QMap<int,SubWidget*>::iterator it=subWidgetsList.begin(); it!=subWidgetsList.end(); it++)
 				it.value()->setWindowOpacity(opacityIdleSubWidget);
 
@@ -4223,7 +4222,7 @@ using namespace QVGL;
 			topBar.setWindowOpacity(opacityActiveBar);
 			bottomBar.setWindowOpacity(opacityActiveBar);
 
-			// Raise the bar : 
+			// Raise the bar :
 			putWidgetOnTop(bottomBar.getGraphicsProxy());
 			putWidgetOnTop(topBar.getGraphicsProxy());
 
