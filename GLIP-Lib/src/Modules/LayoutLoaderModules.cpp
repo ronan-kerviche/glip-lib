@@ -1531,13 +1531,10 @@
 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
-				bool normalized = false;
-
-				if(arguments.size()>=3)
-					normalized = getBoolean(arguments[2], sourceName, startLine);
+				const bool normalized = (arguments.size()>=3) ? getBoolean(arguments[2], sourceName, startLine) : false;;
 
 				// Build the new geometry : 
-				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
+				APPEND_NEW_GEOMETRY( arguments[1], GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1,	"DESCRIPTION{Create a 3D grid geometry of the same size as the format in argument (width, height and number of channels).}"
@@ -1565,13 +1562,10 @@
 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
-				bool normalized = false;
-
-				if(arguments.size()>=3)
-					normalized = getBoolean(arguments[2], sourceName, startLine);
+				const bool normalized = (arguments.size()>=3) ? getBoolean(arguments[2], sourceName, startLine) : false;
 
 				// Build the new geometry : 
-				APPEND_NEW_GEOMETRY( arguments.back(), GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
+				APPEND_NEW_GEOMETRY( arguments[1], GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1,	"DESCRIPTION{Create a pipeline by connecting the pipelines passed in arguments.}\n"

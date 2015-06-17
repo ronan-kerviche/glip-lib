@@ -39,11 +39,14 @@ SOURCE:fragmentShader
 
 	in vec3 outN; // the normal incoming from the Vertex Shader
 	out vec4 outputTexture;
+	uniform vec3 light = vec3(1.0, 0.0, 1.0);
+	uniform float alpha = 0.1;
 
 	void main()
 	{
 		// Write the normals to the output fragment :
-		outputTexture.rgb = abs(outN.xyz);
+		vec3 c = abs(outN.xzy);
+		outputTexture.rgb = alpha*c + (1.0-alpha)*c*max(dot(outN.xyz,normalize(light)),0.0);
 	}
 }
 

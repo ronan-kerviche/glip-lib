@@ -4,12 +4,11 @@
 
 INCLUDE(histogram.ppl)
 
-REQUIRED_FORMAT:outputFormat(inputFormat0)
+REQUIRED_FORMAT:outputFormatPlotHistogram(inputFormat0)
 
 SOURCE:PlotHistogramShader
 {
 	#version 130
-	precision highp float; // Comment this line if any problem occurs.
 
 	uniform sampler2D histogramBins, inputTexture;
 	out vec4 outputTexture;
@@ -37,7 +36,7 @@ SOURCE:PlotHistogramShader
 	}
 }
 
-FILTER_LAYOUT:PlotHistogramFilter(outputFormat, PlotHistogramShader)
+FILTER_LAYOUT:PlotHistogramFilter(outputFormatPlotHistogram, PlotHistogramShader)
 
 // Create the pipeline :
 PIPELINE_MAIN:PlotHistogramPipeline

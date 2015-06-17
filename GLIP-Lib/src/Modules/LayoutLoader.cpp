@@ -338,7 +338,7 @@
 				{
 					it = requiredSourceList.find(sourceName);
 					if(it==requiredSourceList.end())
-						throw Exception("SharedCode object \"" + sourceName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+						throw Exception("Source object \"" + sourceName + "\" is not referenced.", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
 				}			
 
 				// Else, generate the lists :
@@ -1299,7 +1299,7 @@
 
 						std::map<std::string,GeometryModel>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
 						if(geometry==geometryList.end())
-							throw Exception("No Geometry with name \"" + e.arguments[0] + "\" was registered.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
+							throw Exception("No Geometry with name \"" + parser.elements[k].arguments[0] + "\" was registered.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
 							geometryPtr = &geometry->second;
 		
@@ -1571,7 +1571,7 @@
 
 					case KW_LL_PIPELINE_INSTANCE :
 						{
-							preliminaryTests(parser.elements[k], 1, 1, 1, -1, "PipelineInstance");
+							preliminaryTests(parser.elements[k], 1, 0, 1, -1, "PipelineInstance");
 
 							std::string pipelineName;
 

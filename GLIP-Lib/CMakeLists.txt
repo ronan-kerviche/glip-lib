@@ -9,7 +9,7 @@ set(CMAKE_BUILD_TYPE Release)
 
 # We are silencing the long long warning here.
 # To be improved in a future release.
-set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wextra -Wno-long-long")
+set(CMAKE_CXX_FLAGS "-g -pedantic -Wall -Wextra -Wno-long-long")
 
 if(WIN32) # Windows specifics
 	# MAKE SURE THAT YOUR PATH CONTAINS THE DIRECTORY TO ALL MINGW BINARIES

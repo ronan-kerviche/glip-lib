@@ -1121,11 +1121,7 @@
 				{
 					// If the connection input is not a registered filter, then remove (C++03) : 
 					if(filtersGlobalID.find(it->idIn)==filtersGlobalID.end())
-					{
-						std::vector<Connection>::iterator e = it;
-						it++;
-						localConnections.erase(e);
-					}
+						it = localConnections.erase(it);
 					else
 						it++;
 				}

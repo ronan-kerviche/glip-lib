@@ -2,26 +2,24 @@
 	Histogram Computation
 */
 
-REQUIRED_FORMAT:inputFormat(inputFormat0)
+REQUIRED_FORMAT:inputFormatHistogram(inputFormat0)
 TEXTURE_FORMAT:histogramBinsFormat(256, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_LINEAR)
 
-CALL:FORMAT_SCALE_SIZE(inputFormat, 0.25, 0.25, reducedFormat)
-CALL:FORMAT_TO_CONSTANT(reducedFormat, reducedFormat)
-CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormat, grid)
+CALL:FORMAT_SCALE_SIZE(inputFormatHistogram, 0.25, 0.25, reducedFormatHistogram)
+CALL:FORMAT_TO_CONSTANT(reducedFormatHistogram)
+CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormatHistogram, grid, TRUE)
 
 SOURCE:HistogramVertexShader
 {
 	#version 130
-	precision highp float; // Comment this line if any problem occurs.
+	//precision highp float;
 
 	uniform sampler2D inputTexture;
-
-	INSERT(reducedFormat)
 
 	void main()
 	{
 		// Vertex texture fetching :
-		vec4 col = texelFetch(inputTexture, ivec2(gl_Vertex.xy), 0);
+		vec4 col = texture(inputTexture, gl_Vertex.xy);
 		float sel = 0.0;
 		// Compute the "Payload"
 		if(gl_Vertex.z==0.0) // Red plane
@@ -29,12 +27,12 @@ SOURCE:HistogramVertexShader
 			gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 			sel = col.r;
 		}
-		else if(gl_Vertex.z==1.0) // Green plane
+		else if(gl_Vertex.z==0.5) // Green plane
 		{
 			gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
 			sel = col.g;
 		}
-		else if(gl_Vertex.z==2.0) // Blue plane
+		else if(gl_Vertex.z==1.0) // Blue plane
 		{
 			gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
 			sel = col.b;
@@ -56,12 +54,12 @@ SOURCE:HistogramFragmentShader
 
 	out vec4 histogramBins;
 
-	INSERT(reducedFormat)
+	INSERT(reducedFormatHistogram)
 
 	void main()
 	{
 		// Prepare normalization constant :
-		float nrm = 1.0/float(reducedFormat.s*reducedFormat.t);
+		float nrm = 1.0/float(reducedFormatHistogram.s*reducedFormatHistogram.t);
 		// Write :
 		histogramBins = gl_Color*nrm;
 		histogramBins.a = 1.0;
@@ -74,7 +72,7 @@ FILTER_LAYOUT:HistogramFilter(histogramBinsFormat)
 	GL_FRAGMENT_SHADER(HistogramFragmentShader)
 	GL_VERTEX_SHADER(HistogramVertexShader)
 	GL_RENDER(grid)
-	GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD) 
+	GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD)
 }
 
 PIPELINE_MAIN:HistogramPipeline
