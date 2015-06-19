@@ -1797,5 +1797,37 @@ UNIFORMS
 	\endcode
 	- Test with either <i>glxinfo</i>, <i>glewinfo</i> or <i>glip-compute</i>.
 
+\section On AWS/EC2
+	On a GPU instance, install the required packages :
+	\code
+	# yum update
+	# yum install cmake git glut glut-devel glx* xorg-x11*
+	\endcode
+
+	Install <b>freeimage</b> from source (use the -j option for multi-thread compilation) :
+	\code
+	$ make
+	# make install
+	$ make -f Makefile.fip
+	# make -f Makefile.fip install
+	\endcode
+
+	Compile and install GlipLib, GlipCompute :
+	\code 
+	TODO
+	\endcode
+
+	Start the X server with a display at the address <i>:0</i> :
+	\code
+	# X :0
+	\endcode
+
+	Connect with X forwarding, change the targeted display and test :
+	\code
+	$ ssh -X [...]
+	$ export DISPLAY=:0
+	$ glxinfo
+	$ glip-compute -V
+	\endcode
 **/
 

@@ -455,7 +455,9 @@
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(body)
 		UNUSED_PARAMETER(bodyLine)
-		UNUSED_PARAMETER(executionCode)
+		UNUSED_PARAMETER(executionSource)
+		UNUSED_PARAMETER(executionSourceName)
+		UNUSED_PARAMETER(executionStartLine)
 
 		GEOMETRY_MUST_NOT_EXIST(arguments[1])
 
@@ -601,7 +603,9 @@
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(body)
 		UNUSED_PARAMETER(bodyLine)
-		UNUSED_PARAMETER(executionCode)
+		UNUSED_PARAMETER(executionSource)
+		UNUSED_PARAMETER(executionSourceName)
+		UNUSED_PARAMETER(executionStartLine)
 
 		GEOMETRY_MUST_NOT_EXIST(arguments[1])
 

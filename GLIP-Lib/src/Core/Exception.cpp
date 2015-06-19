@@ -21,6 +21,7 @@
  * \date    August 15th 2011
 **/
 
+#include <algorithm>
 #include "Core/Exception.hpp"
 
 	using namespace Glip;

@@ -450,8 +450,10 @@ namespace Glip
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(startLine)
-		UNUSED_PARAMETER(executionCode)		
-
+		UNUSED_PARAMETER(executionSource)		
+		UNUSED_PARAMETER(executionSourceName)
+		UNUSED_PARAMETER(executionStartLine)
+	
 		PIPELINE_MUST_NOT_EXIST( arguments[1] )
 
 		int width = 0;
@@ -1000,7 +1002,9 @@ namespace Glip
 		UNUSED_PARAMETER(requiredGeometryList)
 		UNUSED_PARAMETER(requiredPipelineList)
 		UNUSED_PARAMETER(startLine)
-		UNUSED_PARAMETER(executionCode)		
+		UNUSED_PARAMETER(executionSource)		
+		UNUSED_PARAMETER(executionSourceName)
+		UNUSED_PARAMETER(executionStartLine)
 
 		PIPELINE_MUST_NOT_EXIST( arguments[2] )
 		//CAST_ARGUMENT(0, int, width)

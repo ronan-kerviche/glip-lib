@@ -177,7 +177,7 @@ Example, creating a simple Module :
 				virtual ~LayoutLoaderModule(void);
 
 				/**
-				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionCode) = 0
+				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionSource, std::string& executionSourceName, int& executionStartLine) = 0
 				\brief Interface of the module : this function will be called on each corresponding token CALL for the LayoutLoader which has the module. 
 				\param arguments 		The arguments of the called, their number has already been checked.
 				\param body 			The body of the call (might be empty), its presence has already been checked.
@@ -206,7 +206,9 @@ Example, creating a simple Module :
 				\param sourceName		Name of the source from which the call was extracted.
 				\param startLine		Line index of the module call.
 				\param bodyLine			Line index of the body for this module call.
-				\param executionCode		The code which has to be run at after the function complete (leave it empty if no code needs to be run, the syntax of the code expected is the same as scripts).
+				\param executionSource		The code which has to be run at after the function complete (leave it empty if no code needs to be run, the syntax of the code expected is the same as scripts).
+				\param executionSourceName	The name of the source for the post-execution.
+				\param executionStartLine	The first line number of the source for the post-execution.
 				**/
 				virtual void apply(	const std::vector<std::string>& 		arguments, 
 							const std::string&				body, 
@@ -226,7 +228,9 @@ Example, creating a simple Module :
 							const std::string& 				sourceName,
 							const int 					startLine,
 							const int 					bodyLine,
-							std::string& 					executionCode) = 0;
+							std::string& 					executionSource,
+							std::string&					executionSourceName,
+							int&						executionStartLine) = 0;
 
 				const std::string& getName(void) const;
 				const int& getMinNumArguments(void) const;
@@ -243,8 +247,9 @@ Example, creating a simple Module :
 
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
+				static std::vector<LayoutLoaderModule*> getBasicModulesList(void);
 				static bool getBoolean(const std::string& arg, const std::string& sourceName="", int line=1);
-				static void getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName="", int bodyLine=1);
+				static void getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName="", int bodyLine=1);
 				static std::vector<std::string> findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths);
 		};
 
@@ -273,7 +278,9 @@ Example, creating a simple Module :
 													const std::string& 				sourceName, \
 													const int 					startLine, \
 													const int 					bodyLine, \
-													std::string& 					executionCode); \
+													std::string& 					executionSource, \
+													std::string&					executionSourceName, \
+													int&						executionStartLine); \
 									};
 			
 			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE Get the signature of the apply function. **/
@@ -295,7 +302,9 @@ Example, creating a simple Module :
 											const std::string& 					sourceName, \
 											const int 						startLine, \
 											const int 						bodyLine, \
-											std::string& 						executionCode);
+											std::string& 						executionSource, \
+											std::string&						executionSourceName, \
+											int&							executionStartLine);
 
 			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE( className ) Get the implementation signature of the apply function. **/
 			#define LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( className )	void className :: apply(const std::vector<std::string>& arguments,  \
@@ -316,7 +325,9 @@ Example, creating a simple Module :
 											const std::string& 					sourceName, \
 											const int 						startLine, \
 											const int 						bodyLine, \
-											std::string& 						executionCode)
+											std::string& 						executionSource, \
+											std::string&						executionSourceName, \
+											int&							executionStartLine)
 
 			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)			Source of a module. **/
 			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
@@ -338,7 +349,9 @@ Example, creating a simple Module :
 																						const std::string& sourceName, \
 																						const int startLine, \
 																						const int bodyLine, \
-																						std::string& executionCode)
+																						std::string& executionSource, \
+																						std::string& executionSourceName, \
+																						int& executionStartLine)
 
 			#define __ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::iterator iteratorName = varName.find( elementName );
 			#define __CONST_ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::const_iterator iteratorName = varName.find( elementName );

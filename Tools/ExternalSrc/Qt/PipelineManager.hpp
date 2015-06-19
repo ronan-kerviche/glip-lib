@@ -26,6 +26,7 @@
 	#include "UniformsLoaderInterface.hpp"
 	#include <QHeaderView>
 	#include <QTimer>
+	#include <QTextEdit>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
@@ -57,7 +58,13 @@ namespace QGPM
 	class PipelineItem;
 	class PipelineManager;
 
-	// Classes : 
+	// Classes :
+	struct ModulesList
+	{
+		virtual void addModules(LayoutLoader& loader) const;
+		virtual std::vector<LayoutLoaderModule*> getModulesList(void) const;
+	};
+ 
 	class Connection : public QObject
 	{
 		Q_OBJECT
@@ -290,7 +297,7 @@ namespace QGPM
 			void updateCoolDown(void);
 
 		public :
-			PipelineItem(void* _identifier, const QObject* _referrer);
+			PipelineItem(void* _identifier, const QObject* _referrer, const ModulesList* modulesList);
 			virtual ~PipelineItem(void);
 
 			QString getName(void) const;
@@ -311,7 +318,7 @@ namespace QGPM
 			void setCoolDown(int seconds);
 			void renewBuffers(void);
 
-			const QString& getUniformsFilename(void) const;
+			QString getUniformsFilename(void) const;
 			void loadUniforms(QString filename="");
 			void saveUniforms(QString filename="");
 
@@ -462,6 +469,26 @@ namespace QGPM
 			void editFile(const QString filename);
 	};
 
+	class ModulesDocumentation : public QWidget
+	{
+		Q_OBJECT
+
+		private :
+			QVBoxLayout					layout;
+			QLineEdit					searchBox;
+			QTextEdit					documentation;
+	
+		private slots :
+			void searchTextEdited(const QString& text);
+			void searchTextEdited(void);
+		
+		public :
+			ModulesDocumentation(ModulesList* modulesList=NULL);
+			virtual ~ModulesDocumentation(void);
+
+			static QString getRichTextDocumentation(const LayoutLoaderModule& module);
+	};
+
 	class PipelineManager : public QWidget
 	{
 		Q_OBJECT
@@ -476,6 +503,7 @@ namespace QGPM
 			QGUI::UniformsLinkMenu			uniformsLinkMenu;
 			OutputsMenu				outputsMenu;
 			QGUI::QTreeWidgetSpecial		treeWidget;
+			ModulesList				*modulesList;
 
 		private slots :
 			void itemSelectionChanged(void);
@@ -486,7 +514,7 @@ namespace QGPM
 			void removePipeline(PipelineItem* pipelineItem);
 
 		public : 
-			PipelineManager(void);
+			PipelineManager(ModulesList* _modulesList=NULL);
 			virtual ~PipelineManager(void);
 
 			static QTreeWidgetItem* getRoot(QTreeWidgetItem* item);
@@ -506,6 +534,18 @@ namespace QGPM
 	};
 
 	#ifdef __USE_QVGL__
+	class ModulesDocumentationSubWidget : public QVGL::SubWidget
+	{
+		Q_OBJECT 
+	
+		private :
+			ModulesDocumentation modulesDocumentation;
+
+		public :
+			ModulesDocumentationSubWidget(ModulesList* modulesList=NULL);
+			virtual ~ModulesDocumentationSubWidget(void);
+	};
+
 	class PipelineManagerSubWidget : public QVGL::SubWidget
 	{
 		Q_OBJECT

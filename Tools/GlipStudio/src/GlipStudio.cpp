@@ -54,6 +54,7 @@
 		variableTracker(NULL), 
 		editor(NULL),
 		collection(NULL),
+		modulesDocumentation(NULL),
 		pipelineManager(NULL)
 	{
 		#if QT_VERSION >= 0x050000
@@ -65,21 +66,24 @@
 		loadStyleSheet();
 		loadFonts();
 
-		window		= new QVGL::GlipViewWidget;
-		variableTracker	= new QVGL::VariablesTrackerSubWidget;
-		editor		= new QGED::CodeEditorTabsSubWidget;
-		collection	= new QGIC::ImageItemsCollectionSubWidget;
-		pipelineManager	= new QGPM::PipelineManagerSubWidget();
+		window			= new QVGL::GlipViewWidget;
+		variableTracker		= new QVGL::VariablesTrackerSubWidget;
+		editor			= new QGED::CodeEditorTabsSubWidget;
+		collection		= new QGIC::ImageItemsCollectionSubWidget;
+		modulesDocumentation	= new QGPM::ModulesDocumentationSubWidget;
+		pipelineManager		= new QGPM::PipelineManagerSubWidget;
 
 		// Add Subwidgets : 
 		window->addSubWidget(editor);
 		window->addSubWidget(variableTracker);
 		window->addSubWidget(collection);
+		window->addSubWidget(modulesDocumentation);
 		window->addSubWidget(pipelineManager);
 
 		editor->hide();
 		variableTracker->hide();
 		collection->hide();
+		modulesDocumentation->hide();
 		pipelineManager->hide();
 
 		// Connections : 

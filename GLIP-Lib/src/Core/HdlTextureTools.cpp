@@ -22,6 +22,7 @@
 **/
 
 #include <cstring>
+#include <algorithm>
 #include "Core/HdlTextureTools.hpp"
 #include "Core/Exception.hpp"
 

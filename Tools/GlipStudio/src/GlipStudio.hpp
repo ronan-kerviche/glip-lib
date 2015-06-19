@@ -16,6 +16,7 @@
 			QVGL::VariablesTrackerSubWidget		*variableTracker;
 			QGED::CodeEditorTabsSubWidget		*editor;
 			QGIC::ImageItemsCollectionSubWidget	*collection;
+			QGPM::ModulesDocumentationSubWidget	*modulesDocumentation;
 			QGPM::PipelineManagerSubWidget		*pipelineManager;
 
 			void loadStyleSheet(void);

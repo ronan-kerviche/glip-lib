@@ -28,6 +28,7 @@
 	#include <iostream>
 	#include <cstring>
 	#include <limits>
+	#include <algorithm>
 	#include "Core/Exception.hpp"
 	#include "Core/LibTools.hpp"
 	#include "Core/OglInclude.hpp"

@@ -266,6 +266,58 @@
 		}
 
 		/**
+		\fn std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
+		\brief Retrieve the list of standard modules.
+		\param loader A vector of pointers to standard modules. The responsability of deleting each object is left to the client.
+		**/
+		std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
+		{
+			std::vector<LayoutLoaderModule*> result;
+
+			result.push_back( new IF_FORMAT_DEFINED );
+			result.push_back( new IF_SOURCE_DEFINED );
+			result.push_back( new IF_GEOMETRY_DEFINED );
+			result.push_back( new IF_FILTERLAYOUT_DEFINED );
+			result.push_back( new IF_PIPELINELAYOUT_DEFINED );
+			result.push_back( new IF_REQUIREDFORMAT_DEFINED );
+			result.push_back( new IF_REQUIREDGEOMETRY_DEFINED );
+			result.push_back( new IF_REQUIREDPIPELINE_DEFINED );
+			result.push_back( new FORMAT_CHANGE_SIZE );
+			result.push_back( new FORMAT_SCALE_SIZE );
+			result.push_back( new FORMAT_CHANGE_CHANNELS );
+			result.push_back( new FORMAT_CHANGE_DEPTH );
+			result.push_back( new FORMAT_CHANGE_FILTERING );
+			result.push_back( new FORMAT_CHANGE_WRAPPING );
+			result.push_back( new FORMAT_CHANGE_MIPMAP );
+			result.push_back( new FORMAT_MINIMUM_WIDTH );
+			result.push_back( new FORMAT_MAXIMUM_WIDTH );
+			result.push_back( new FORMAT_MINIMUM_HEIGHT );
+			result.push_back( new FORMAT_MAXIMUM_HEIGHT );
+			result.push_back( new FORMAT_MINIMUM_PIXELS );
+			result.push_back( new FORMAT_MAXIMUM_PIXELS );
+			result.push_back( new FORMAT_MINIMUM_ELEMENTS );
+			result.push_back( new FORMAT_MAXIMUM_ELEMENTS );
+			result.push_back( new FORMAT_SMALLER_POWER_OF_TWO );
+			result.push_back( new FORMAT_LARGER_POWER_OF_TWO );
+			result.push_back( new FORMAT_SWAP_DIMENSIONS );
+			result.push_back( new IF_FORMAT_SETTING_MATCH );
+			result.push_back( new IF_FORMAT_SETTING_LARGERTHAN );
+			result.push_back( new GENERATE_SAME_SIZE_2D_GRID );
+			result.push_back( new GENERATE_SAME_SIZE_3D_GRID );
+			result.push_back( new CHAIN_PIPELINES );
+			result.push_back( new FORMAT_TO_CONSTANT );
+			result.push_back( new SINGLE_FILTER_PIPELINE );
+			result.push_back( new IF_GLSL_VERSION_MATCH );
+			result.push_back( new ABORT_ERROR );
+			result.push_back( new GenerateFFT1DPipeline );
+			result.push_back( new GenerateFFT2DPipeline );
+			result.push_back( new OBJLoader );
+			result.push_back( new STLLoader );
+
+			return result;
+		}
+
+		/**
 		\fn bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)
 		\brief Convert a keyword to a boolean.
 		\param arg The keyword (expected to be either TRUE or FALSE).
@@ -284,7 +336,7 @@
 		}
 
 		/**
-		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName, int bodyLine)
+		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, int bodyLine)
 		\brief Get true and false cases out of a body.
 	
 		In a if-statement you can write : 
@@ -303,12 +355,14 @@
 		\endcode
 
 		\param body Body to extract the data from.
-		\param trueCase Body of the true statement (not modified is none is found).
-		\param falseCase Body of the false statement (not modified is none is found).
+		\param trueCase Body of the true statement (not modified if not found).
+		\param trueCaseStartLine Line number where the body of the true case is starting (not modified if not found).
+		\param falseCase Body of the false statement (not modified if not found).
+		\param falseCaseStartLine Line number where the body of the false case is starting (not modified if not found).
 		\param sourceName Name of the source.
 		\param bodyLine Line counter start index.
 		**/
-		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, std::string& falseCase, const std::string& sourceName, int bodyLine)
+		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, int bodyLine)
 		{
 			VanillaParser parser(body, sourceName, bodyLine);
 			bool 	trueCaseAlreadySet = false,
@@ -322,6 +376,7 @@
 						throw Exception("True case already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
 					
 					trueCase = it->getCleanBody();
+					trueCaseStartLine = it->bodyLine;
 					trueCaseAlreadySet = true;
 				}
 				else if(it->strKeyword==LayoutLoader::getKeyword(KW_LL_FALSE)  && !it->noBody)
@@ -330,6 +385,7 @@
 						throw Exception("False case already set.", it->sourceName, it->startLine, Exception::ClientScriptException);
 
 					falseCase = it->getCleanBody();
+					falseCaseStartLine = it->bodyLine;
 					falseCaseAlreadySet = true;
 				}				
 				else
@@ -391,18 +447,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;	
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_FORMAT(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=formatList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_SOURCE_DEFINED, 1, 1, 1, "DESCRIPTION{Check if the SOURCE was defined.}"
@@ -421,18 +485,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_SOURCE(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=sourceList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}				
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_GEOMETRY_DEFINED, 1, 1, 1, 	"DESCRIPTION{Check if the GEOMETRY was defined.}"
@@ -451,18 +523,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_GEOMETRY(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=geometryList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}			
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FILTER_LAYOUT was defined.}"
@@ -481,18 +561,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_FILTER(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=filterList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}				
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the PIPELINE_LAYOUT was defined.}"
@@ -511,18 +599,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_PIPELINE(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=pipelineList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}			
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_FORMAT was defined.}"
@@ -541,18 +637,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDFORMAT(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=requiredFormatList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}			
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDSOURCE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_SOURCE was defined.}"
@@ -571,18 +675,26 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDSOURCE(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=requiredSourceList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_GEOMETRY was defined.}"
@@ -601,18 +713,26 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDGEOMETRY(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=requiredGeometryList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}			
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_PIPELINE was defined.}"
@@ -631,18 +751,26 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
 
 				std::string 	trueCase, 
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				
 				CONST_ITERATOR_TO_REQUIREDPIPELINE(it, arguments[0])
 
+				executionSourceName = sourceName;
 				if(it!=requiredPipelineList.end())
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1,	"DESCRIPTION{Change the size of a format, save as a new format.}"
@@ -665,7 +793,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -708,7 +838,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -766,7 +898,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -799,7 +933,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -833,7 +969,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -868,7 +1006,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 	
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -902,7 +1042,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				FORMAT_MUST_NOT_EXIST( arguments.back() );
@@ -937,7 +1079,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					widthBest	= 0;
@@ -984,7 +1128,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					widthBest	= 0;
@@ -1031,7 +1177,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					heightBest	= 0;
@@ -1078,7 +1226,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					heightBest	= 0;
@@ -1126,7 +1276,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -1173,7 +1325,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -1220,7 +1374,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)				
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)				
 
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -1267,7 +1423,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)				
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)				
 
 				int 	kBest 		= 0,
 					sizeBest	= 0;
@@ -1313,7 +1471,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] );
 				FORMAT_MUST_NOT_EXIST( arguments[1] );
@@ -1359,7 +1519,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] );
 				FORMAT_MUST_NOT_EXIST( arguments[1] );
@@ -1404,7 +1566,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] );
 				FORMAT_MUST_NOT_EXIST( arguments[1] );
@@ -1436,9 +1600,8 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
-
+			
 				FORMAT_MUST_EXIST( arguments[0] )
-
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
 
 				// Get the value : 
@@ -1453,13 +1616,22 @@
 				// Get the cases : 
 				std::string 	trueCase, 
 						falseCase;
+				int 	trueCaseStartLine=1,
+					falseCaseStartLine=1;
 
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 
+				executionSourceName = sourceName;
 				if(it->second.getSetting(setting)==value)
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_LARGERTHAN, 3, 3, 1,	"DESCRIPTION{Match if a format setting is larger than a value (unsigned integer or GL keyword).}"
@@ -1497,13 +1669,22 @@
 				// Get the cases : 
 				std::string 	trueCase, 
 						falseCase;
+				int 	trueCaseStartLine=1,
+					falseCaseStartLine=1;
 
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 
+				executionSourceName = sourceName;
 				if(it->second.getSetting(setting)>value)
-					executionCode = trueCase;
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
 				else
-					executionCode = falseCase;
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1,	"DESCRIPTION{Create a 2D grid geometry of the same size as the format in argument (width and height).}"
@@ -1524,7 +1705,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
@@ -1555,7 +1738,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
@@ -1590,7 +1775,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				const unsigned int startPipelines = 1;
 				std::string requiredElements;
@@ -1737,7 +1924,7 @@
 				}
 
 				// Return : 
-				executionCode = requiredElements + "\n" + result.getCode();
+				executionSource = requiredElements + "\n" + result.getCode();
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_TO_CONSTANT, 1, 2, -1,	"DESCRIPTION{Create a SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument. For instance, can be used in a shader with : INSERT(name).}"
@@ -1758,7 +1945,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				const std::string generatedSourceName = (arguments.size()>=2) ? arguments[1] : arguments[0];
 
@@ -1886,7 +2075,9 @@
 				if(asMainPipeline)
 					mainPipelineName = arguments[0];
 
-				executionCode = elementRequiredFormat.getCode() + "\n" + elementSource.getCode() + "\n" + elementFilter.getCode() + "\n" + elementPipeline.getCode();
+				executionSource = elementRequiredFormat.getCode() + "\n" + elementSource.getCode() + "\n" + elementFilter.getCode() + "\n" + elementPipeline.getCode();
+				executionSourceName = getName(); // Insert the name of the module to avoid confusion.
+				executionStartLine = startLine;
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_GLSL_VERSION_MATCH, 1, 1, 1,	"DESCRIPTION{Test the GLSL available available during compilation.}"
@@ -1907,14 +2098,20 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(startLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 			
 				std::string	trueCase,
 						falseCase;
-				getCases(body, trueCase, falseCase, sourceName, bodyLine);
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
 				const std::string glslVersion = HandleOpenGL::getGLSLVersion();
 				const bool test = (glslVersion.find(arguments[0])!=std::string::npos);
-				executionCode = test ? trueCase : falseCase;
+				executionSource = test ? trueCase : falseCase;
+				executionStartLine = test ? trueCaseStartLine : falseCaseStartLine;
+				executionSourceName = sourceName;
 			} 
 
 			LAYOUT_LOADER_MODULE_APPLY( ABORT_ERROR, 1, 1, 0,	"DESCRIPTION{Abort the Layout loading operation with a user defined error.}"
@@ -1935,7 +2132,9 @@
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
 				UNUSED_PARAMETER(bodyLine)
-				UNUSED_PARAMETER(executionCode)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
 
 				Exception m("Error : " + arguments.front(), sourceName, startLine, Exception::ClientScriptException);
 

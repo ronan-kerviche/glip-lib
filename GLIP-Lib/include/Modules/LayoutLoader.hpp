@@ -806,7 +806,7 @@ catch(Exception& e)
 				void	buildGeometry(const VanillaParserSpace::Element& e);
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
-				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName);
+				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, int startLine=1);
 
 				void	listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs);
 
@@ -820,8 +820,8 @@ catch(Exception& e)
 				void addToPaths(const std::vector<std::string>& paths);
 				bool removeFromPaths(const std::string& p);
 
-				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName=""); //can be a file or directly the source
-				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="");
+				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName="", int startLine=1);
+				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="", int startLine=1);
 
 				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
 				void addRequiredElement(const std::string& name, const ShaderSource& src);
@@ -830,7 +830,7 @@ catch(Exception& e)
 				int clearRequiredElements(void);
 				int clearRequiredElements(const std::string& name);
 
-				PipelineScriptElements listElements(const std::string& source, std::string sourceName="");
+				PipelineScriptElements listElements(const std::string& source, std::string sourceName="", int startLine=1);
 
 				void addModule(LayoutLoaderModule* module, bool replace=false);
 				bool hasModule(const LayoutLoaderModule* module) const;

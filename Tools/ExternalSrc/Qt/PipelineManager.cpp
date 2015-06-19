@@ -17,11 +17,23 @@
 #include "PipelineManager.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QCompleter>
 #include "QMenuTools.hpp"
 
 using namespace QGPM;
 
 //#define __VERBOSE_PIPELINE_ITEMS__ 
+
+// ModulesList :
+	void ModulesList::addModules(LayoutLoader& loader) const
+	{
+		LayoutLoaderModule::addBasicModules(loader);
+	}
+
+	std::vector<LayoutLoaderModule*> ModulesList::getModulesList(void) const
+	{
+		return LayoutLoaderModule::getBasicModulesList();
+	}
 
 // Connection : 
 	Connection::Connection(void)
@@ -287,28 +299,32 @@ using namespace QGPM;
 
 	void InputPortItem::connectionFormatModified(void)
 	{
-		setToolTip(1, connection->getToolTipInformation());
+		if(connection!=NULL)
+			setToolTip(1, connection->getToolTipInformation());
 		emit connectionContentFormatModified(portIdx);
 	}
 
 	void InputPortItem::connectionStatusChanged(bool validity)
 	{
-		// Update the name : 
-		setText(1, connection->getName());
-
-		if(validity)
+		if(connection!=NULL)
 		{
-			if(connection->selfTest(parentPipelineItem))
-				setForeground(0, QBrush(Qt::blue));
+			// Update the name : 
+			setText(1, connection->getName());
+
+			if(validity)
+			{
+				if(connection->selfTest(parentPipelineItem))
+					setForeground(0, QBrush(Qt::blue));
+				else
+					setForeground(0, QBrush(Qt::green));
+			}
 			else
-				setForeground(0, QBrush(Qt::green));
+				setForeground(0, QBrush(QColor(255, 128, 0)));
+
+			// Also update the tooltip : 
+			setToolTip(1, connection->getToolTipInformation());
 		}
-		else
-			setForeground(0, QBrush(QColor(255, 128, 0)));
-
-		// Also update the tooltip : 
-		setToolTip(1, connection->getToolTipInformation());
-
+		
 		emit connectionStatusChanged(portIdx, validity);
 	}	
 
@@ -316,11 +332,13 @@ using namespace QGPM;
 	{
 		if(view!=NULL)
 		{
+			QObject::disconnect(view, 0, this, 0);
 			view->deleteLater();
 			view = NULL;
 		}
 		if(connection!=NULL)
 		{
+			QObject::disconnect(connection, 0, this, 0);
 			connection->deleteLater();
 			connection = NULL;
 		}	
@@ -336,6 +354,7 @@ using namespace QGPM;
 	{
 		if(view!=NULL)
 		{
+			QObject::disconnect(view, 0, this, 0);
 			view->deleteLater();
 			view = NULL;
 		}
@@ -630,7 +649,7 @@ using namespace QGPM;
 	}
 
 // PipelineItem :
-	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer)
+	PipelineItem::PipelineItem(void* _identifier, const QObject* _referrer, const ModulesList* modulesList)
 	 : 	QTreeWidgetItem(PipelineHeaderItemType),
 		referrer(_referrer),
 		inputFormatString("inputFormat%d"),
@@ -649,7 +668,7 @@ using namespace QGPM;
 	{
 		setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
 
-		LayoutLoaderModule::addBasicModules(loader);
+		modulesList->addModules(loader);
 
 		inputsNode.setText(0, "Inputs");
 		outputsNode.setText(0, "Outputs");
@@ -820,14 +839,20 @@ using namespace QGPM;
 		while(elements.mainPipelineInputs.size()<inputPortItems.size())
 		{
 			if(inputPortItems.last()!=NULL)
+			{
+				QObject::disconnect(inputPortItems.last(), 0, this, 0);
 				inputPortItems.last()->deleteLater();
+			}
 			inputPortItems.pop_back();
 		}
 
 		while(elements.mainPipelineOutputs.size()<outputPortItems.size())
 		{
 			if(outputPortItems.last()!=NULL)
+			{
+				QObject::disconnect(outputPortItems.last(), 0, this, 0);
 				outputPortItems.last()->deleteLater();
+			}
 			outputPortItems.pop_back();
 		}
 
@@ -969,6 +994,7 @@ using namespace QGPM;
 		if(uniformsNode!=NULL)
 		{
 			uniformsNode->applyTo(*pipeline, true, true); // Silent!
+			QObject::disconnect(uniformsNode, 0, this, 0);
 			uniformsNode->deleteLater();
 			uniformsNode = NULL;
 		}
@@ -1020,10 +1046,10 @@ using namespace QGPM;
 			catchupComputation = true;
 			return ;
 		}
-
+	
 		// Detect a possible loop : 
 		if(resourceChain.contains(this))
-			return ; // abort computation to avoid an infinite loop.
+			return ; // abort computation to avoid an infinite loop.	
 
 		try
 		{
@@ -1343,7 +1369,7 @@ using namespace QGPM;
 		}	
 	}
 
-	const QString& PipelineItem::getUniformsFilename(void) const
+	QString PipelineItem::getUniformsFilename(void) const
 	{
 		if(uniformsNode!=NULL)
 			return uniformsNode->getFilename();
@@ -1957,6 +1983,7 @@ using namespace QGPM;
 			menu.addAction(editUniformsAction);
 			duplicateMenu(&menu, *coolDownMenu);
 			menu.addAction(toggleLockPipelineAction);
+			menu.addAction(renewBuffersAction);
 			menu.addAction(removePipelineAction);
 			menu.addSeparator();
 		}
@@ -2003,16 +2030,107 @@ using namespace QGPM;
 		}
 	}
 
+// ModulesDocumentation :
+	ModulesDocumentation::ModulesDocumentation(ModulesList* _modulesList)
+	 :	layout(this),
+		searchBox(this),
+		documentation(this)
+	{
+		ModulesList* modulesList = (_modulesList==NULL) ? new ModulesList : _modulesList;
+			
+		layout.addWidget(&searchBox);
+		documentation.document()->clear();	
+
+		QString txt;
+		std::vector<LayoutLoaderModule*> modules = modulesList->getModulesList();
+		for(std::vector<LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+		{
+			txt += getRichTextDocumentation(*(*it));
+			delete (*it);
+		}
+		modules.clear();
+
+		if(_modulesList==NULL)
+			delete modulesList;
+
+		layout.addWidget(&documentation);
+		documentation.setReadOnly(true);
+		documentation.setText(txt);
+
+		layout.setSpacing(2);
+		layout.setMargin(0);
+
+		searchBox.setPlaceholderText("Search modules...");
+		QObject::connect(&searchBox, SIGNAL(textEdited(const QString&)), this, SLOT(searchTextEdited(const QString&)));
+		QObject::connect(&searchBox, SIGNAL(returnPressed(void)), this, SLOT(searchTextEdited(void)));
+	}
+
+	ModulesDocumentation::~ModulesDocumentation(void)
+	{ }
+
+	void ModulesDocumentation::searchTextEdited(const QString& text)
+	{
+		if(documentation.document()!=NULL)
+		{
+			documentation.moveCursor(QTextCursor::Start);
+			QTextCursor cursor = documentation.document()->find(text, documentation.textCursor());
+			if(!cursor.isNull())
+			{
+				searchBox.setStyleSheet("border: 1px solid black");
+				documentation.setTextCursor(cursor);
+			}
+			else
+				searchBox.setStyleSheet("border: 1px solid red");
+
+		}	
+	}
+
+	void ModulesDocumentation::searchTextEdited(void)
+	{
+		searchTextEdited(searchBox.text());
+	}
+
+	QString ModulesDocumentation::getRichTextDocumentation(const LayoutLoaderModule& module)
+	{
+		const int marginLeftPx = 16;
+		QString result;
+		result += tr("<h3 style=\"margin-bottom:0px;\">%1</h3>\n").arg(QString::fromStdString(module.getName()));
+		result += tr("<p style=\"margin-left:%1px;margin-top:0px;margin-bottom:0px\">").arg(marginLeftPx) + QString::fromStdString(module.getDescription()) + "</p>\n";
+
+		if(!module.getArgumentsDescriptions().empty())
+		{
+			result += tr("<h4 style=\"margin-left:%1px;margin-top:0px;\">Arguments:</h4>\n").arg(marginLeftPx);
+			result += tr("<table style=\"width:100%;margin-left:%1px\">\n").arg(2*marginLeftPx);
+			for(std::vector<std::pair< std::string, std::string> >::const_iterator it=module.getArgumentsDescriptions().begin(); it!=module.getArgumentsDescriptions().end(); it++)
+				result += tr("    <tr><td><i>%1</i></td><td>:</td><td>%2</td></tr>\n").arg(QString::fromStdString(it->first)).arg(QString::fromStdString(it->second));
+  			result += "</table>\n";
+		}
+
+		if(!module.getBodyDescription().empty())
+		{
+			result += tr("<h4 style=\"margin-left:%1px;margin-top:0px;margin-bottom:0px\">Body:</h4>\n").arg(marginLeftPx);
+			result += tr("<p style=\"margin-left:%1px;margin-top:0px;magin-bottom:0px\">%2</p>\n").arg(2*marginLeftPx).arg(QString::fromStdString(module.getBodyDescription()));
+		}
+
+		//std::cout << result.toStdString() << std::endl;
+
+		return result;
+	}
+
 // PipelineManager :
-	PipelineManager::PipelineManager(void)
+	PipelineManager::PipelineManager(ModulesList* _modulesList)
 	 : 	layout(this),
 		menuBar(this),
 		pipelineMenu(this),
 		connectionsMenu(this),
 		uniformsLinkMenu(UniformsHeaderItemType, this),
 		outputsMenu(this),
-		treeWidget(this)
+		treeWidget(this),
+		modulesList(_modulesList)
 	{
+		if(modulesList==NULL)
+			modulesList = new ModulesList;
+
 		layout.addWidget(&menuBar);
 		layout.addWidget(&treeWidget);
 		layout.setMargin(0);
@@ -2045,6 +2163,7 @@ using namespace QGPM;
 		for(QMap<void*, PipelineItem*>::iterator it=pipelineItems.begin(); it!=pipelineItems.end(); it++)
 			delete it.value();
 		pipelineItems.clear();
+		delete modulesList;
 	}
 
 	void PipelineManager::itemSelectionChanged(void)
@@ -2142,7 +2261,7 @@ using namespace QGPM;
 		else
 		{
 			// Create a new pipeline :
-			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer);
+			PipelineItem* pipelineItem = new PipelineItem(identifier, referrer, modulesList);
 
 			pipelineItems[identifier] = pipelineItem;
 			treeWidget.addTopLevelItem(pipelineItem);
@@ -2173,8 +2292,23 @@ using namespace QGPM;
 			treeWidget.resizeColumnToContents(k);
 	}
 
-// PipelineManagerSubWidget :
 #ifdef __USE_QVGL__
+	// ModulesDocumentationSubWidget :
+	ModulesDocumentationSubWidget::ModulesDocumentationSubWidget(ModulesList* modulesList)
+	 :	modulesDocumentation(modulesList)
+	{
+		setInnerWidget(&modulesDocumentation);
+		setTitle("Modules Documentation");
+	
+		const QFontInfo fontInfo(font());
+		const int em = fontInfo.pixelSize();
+		resize(32*em, 32*em);
+	}
+	
+	ModulesDocumentationSubWidget::~ModulesDocumentationSubWidget(void)
+	{ }
+
+	// PipelineManagerSubWidget :
 	PipelineManagerSubWidget::PipelineManagerSubWidget(void)
 	{
 		setInnerWidget(&manager);

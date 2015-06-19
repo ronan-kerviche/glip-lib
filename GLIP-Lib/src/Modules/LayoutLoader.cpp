@@ -731,7 +731,9 @@
 
 			// Make the call : 
 			std::string 	_mainPipelineName = mainPipelineName,
-					subExecution;
+					subExecution,
+					subExecutionSourceName;
+			int		subExecutionStartLine = 1;
 			module.apply(	e.arguments, 
 					e.body,	
 					currentPath, 
@@ -750,7 +752,9 @@
 					e.sourceName,
 					e.startLine,
 					e.bodyLine,
-					subExecution);
+					subExecution,
+					subExecutionSourceName,
+					subExecutionStartLine);
 
 			// Test if the main pipeline name is now different
 			if(_mainPipelineName!=mainPipelineName && !mainPipelineName.empty())
@@ -770,7 +774,7 @@
 				{
 					// Build all the elements :
 					std::string dummyMainPipelineName;
-					subLoader.process(subExecution, dummyMainPipelineName, module.getName());
+					subLoader.process(subExecution, dummyMainPipelineName, subExecutionSourceName, subExecutionStartLine);
 
 					// Append :
 					append(subLoader);
@@ -1631,12 +1635,12 @@
 		}
 	}
 
-	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName)
+	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, int startLine)
 	{
 		try
 		{
 			// Parse :
-			VanillaParser rootParser(code, sourceName);
+			VanillaParser rootParser(code, sourceName, startLine);
 
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
@@ -1734,7 +1738,7 @@
 		}
 		catch(Exception& ex)
 		{
-			Exception m("Exception caught while processing pipeline script : ", sourceName, 1, Exception::ClientScriptException);
+			Exception m("Exception caught while processing pipeline script : ", sourceName, startLine, Exception::ClientScriptException);
 			m << ex;
 			throw m;
 		}
@@ -1882,13 +1886,14 @@
 	}
 
 	/**
-	\fn AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName)
+	\fn AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
 	\brief Loads a pipeline layout from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
+	\param startLine The number of the first line in the source (only informational).
 	\return The newly loaded layout or raise an exception if any errors occur.
 	**/
-	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName)
+	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
 	{
 		clean();
 
@@ -1930,13 +1935,13 @@
 		try
 		{
 			std::string mainPipelineName;
-			process(content, mainPipelineName, sourceName);
+			process(content, mainPipelineName, sourceName, startLine);
 
 			// Get the mainPipeline :
 			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
 
 			if(it==pipelineList.end())
-				throw Exception("Main pipeline \"" + mainPipelineName + "\" was not found.", sourceName, 1, Exception::ClientScriptException);
+				throw Exception("Main pipeline \"" + mainPipelineName + "\" was not found.", sourceName, startLine, Exception::ClientScriptException);
 
 			// Tell the modules : 
 			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
@@ -1948,19 +1953,19 @@
 		{
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, startLine, Exception::ClientScriptException);
 				m << e;
 				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
 				m << e;
 				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while processing string : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing string : ", sourceName, startLine, Exception::ClientScriptException);
 				m << e;
 				throw m;
 			}
@@ -1968,16 +1973,17 @@
 	}
 
 	/**
-	\fn Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName)
+	\fn Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, int startLine)
 	\brief Loads a pipeline from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param pipelineName The name of the unique instance created (or take the type name if left empty).
 	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
+	\param startLine The number of the first line in the source (only informational).
 	\return A pointer to the unique instance built on the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
 	**/
-	Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName)
+	Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, int startLine)
 	{
-		AbstractPipelineLayout layout = getPipelineLayout(source, sourceName);
+		AbstractPipelineLayout layout = getPipelineLayout(source, sourceName, startLine);
 
 		if(pipelineName.empty())
 			pipelineName = layout.getTypeName();
@@ -2120,13 +2126,14 @@
 	}
 
 	/**
-	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName)
+	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)
 	\brief List the resources contained in a script.
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
+	\param startLine The number of the first line in the source (only informational).
 	\return A LayoutLoader::PipelineScriptElements object containing all informations.
 	**/
-	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName)
+	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)
 	{
 		PipelineScriptElements result;
 
@@ -2166,7 +2173,7 @@
 		try
 		{
 			// Parse :
-			VanillaParser rootParser(content, sourceName);
+			VanillaParser rootParser(content, sourceName, startLine);
 
 			// Class the elements :
 			classify(rootParser.elements, associatedKeyword);
@@ -2254,19 +2261,19 @@
 		{
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while processing string : ", sourceName, 1, Exception::ClientScriptException);
+				Exception m("Exception caught while processing string : ", sourceName, startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}

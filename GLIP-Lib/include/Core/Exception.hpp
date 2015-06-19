@@ -114,7 +114,7 @@
 		bool fromString(const std::string & Str, TYPE& Dest)
 		{
 			std::istringstream iss( Str );
-			return iss >> Dest != 0;
+			return static_cast<bool>(iss >> Dest);
 		}
 
 		/**

@@ -24,6 +24,7 @@
 	// Includes : 
 	#include <limits>
 	#include <cmath>
+	#include <algorithm>
 	#include "Modules/VanillaParser.hpp"
 	#include "Core/Exception.hpp"
 
