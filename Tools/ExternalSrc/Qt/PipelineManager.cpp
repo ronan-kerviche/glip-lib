@@ -1738,7 +1738,7 @@ using namespace QGPM;
 		{
 			QFileInfo info(outputPortItem->getFilename());
 
-			QString filename = QFileDialog::getSaveFileName(NULL, "Save Image", info.path(), "Image File (*.*)");
+			QString filename = QFileDialog::getSaveFileName(QApplication::activeWindow(), "Save Image", info.path(), "Image File (*.*)");
 
 			if(!filename.isEmpty())
 			{
@@ -1907,7 +1907,7 @@ using namespace QGPM;
 		{
 			QFileInfo info(currentPipelineItem->getUniformsFilename());
 
-			QString filename = QFileDialog::getOpenFileName(NULL, "Open Uniforms", info.path(), "Uniforms File (*.uvd *.txt)");
+			QString filename = QFileDialog::getOpenFileName(QApplication::activeWindow(), "Open Uniforms", info.path(), "Uniforms File (*.uvd *.txt)");
 
 			if(!filename.isEmpty())
 				currentPipelineItem->loadUniforms(filename);
@@ -1931,7 +1931,7 @@ using namespace QGPM;
 		{
 			QFileInfo info(currentPipelineItem->getUniformsFilename());
 
-			QString filename = QFileDialog::getSaveFileName(NULL, "Save Uniforms", info.path(), "Uniforms File (*.uvd *.txt)");
+			QString filename = QFileDialog::getSaveFileName(QApplication::activeWindow(), "Save Uniforms", info.path(), "Uniforms File (*.uvd *.txt)");
 
 			if(!filename.isEmpty())
 				currentPipelineItem->saveUniforms(filename);

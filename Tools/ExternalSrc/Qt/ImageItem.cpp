@@ -1771,7 +1771,7 @@ using namespace QGIC;
 
 	void ImageItemsCollection::open(void)
 	{
-		QStringList filenameList = QFileDialog::getOpenFileNames(NULL, "Open Image(s)", currentPath, "Image Files (*.*)");
+		QStringList filenameList = QFileDialog::getOpenFileNames(QApplication::activeWindow(), "Open Image(s)", currentPath, "Image Files (*.*)");
 
 		if(!filenameList.empty())
 		{
@@ -1819,7 +1819,7 @@ using namespace QGIC;
 	{
 		if(imageItem->getFilename().isEmpty())
 		{
-			QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg(imageItem->getName()), currentPath, "Image File (*.*)");
+			QString filename = QFileDialog::getSaveFileName(QApplication::activeWindow(), tr("Save %1").arg(imageItem->getName()), currentPath, "Image File (*.*)");
 
 			if(!filename.isEmpty())
 			{
@@ -1845,7 +1845,7 @@ using namespace QGIC;
 
 		for(QList<ImageItem*>::iterator it=selectedImageItems.begin(); it!=selectedImageItems.end(); it++)
 		{
-			QString filename = QFileDialog::getSaveFileName(NULL, tr("Save %1").arg((*it)->getName()), currentPath, "Image File (*.*)");
+			QString filename = QFileDialog::getSaveFileName(QApplication::activeWindow(), tr("Save %1").arg((*it)->getName()), currentPath, "Image File (*.*)");
 
 			if(!filename.isEmpty())
 			{

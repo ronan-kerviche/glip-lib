@@ -19,6 +19,7 @@
 #include "QMenuTools.hpp"
 #include <QFontDatabase>
 #include <QHeaderView>
+#include <QApplication>
 
 using namespace QGED;
 
@@ -2430,7 +2431,7 @@ using namespace QGED;
 			return ;
 
 		if(filename.isEmpty())
-			filename = QFileDialog::getSaveFileName(NULL, tr("Save Source File as ..."), currentPath, "Source (*.ppl *.shr *.uvd *.txt)");
+			filename = QFileDialog::getSaveFileName(QApplication::activeWindow(), tr("Save Source File as ..."), currentPath, "Source (*.ppl *.shr *.uvd *.txt)");
 
 		if(filename.isEmpty())
 			return ;
@@ -2577,7 +2578,7 @@ using namespace QGED;
 	{
 		if(filenameList.empty())
 		{
-			filenameList = QFileDialog::getOpenFileNames(NULL, "Open Source File(s)", currentPath, "Source Files (*.ppl *.shr *.uvd *.txt)");
+			filenameList = QFileDialog::getOpenFileNames(QApplication::activeWindow(), "Open Source File(s)", currentPath, "Source Files (*.ppl *.shr *.uvd *.txt)");
 			lineNumberList.fill(0, filenameList.size());
 		}
 

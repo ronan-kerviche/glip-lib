@@ -546,7 +546,7 @@ namespace Glip
 	 :	LayoutLoaderModule(	"GENERATE_FFT2D_PIPELINE", 
 					"DESCRIPTION{Generate the 2D FFT Pipeline transformation.}"
 					"ARGUMENT:width{Width, can be either a numeral or the name of an existing format.}"
-					"ARGUMENT:width{Height, can be either a numeral or the name of an existing format.}"
+					"ARGUMENT:height{Height, can be either a numeral or the name of an existing format.}"
 					"ARGUMENT:name{Name of the new pipeline.}"
 					"ARGUMENT:[options...]{Options to be used by the FFT process : SHIFTED, INVERSED, ZERO_PADDING, COMPATIBILITY_MODE, NO_INPUT.}"
 					"BODY_DESCRIPTION{PRE{...} block contains a filtering function to be applied before the FFT. It must define a function vec4 pre(in vec4 colorFromTexture, in vec2 x). POST{...} block contains a filtering function to be applied after the FFT. It must implement a function vec4 post(in vec4 colorAfterFFT, in vec2 x). Both of these block can declare their own uniform variables.}",

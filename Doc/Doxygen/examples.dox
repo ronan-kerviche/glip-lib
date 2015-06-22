@@ -1738,6 +1738,8 @@ Other options :
  -t, --template	Show a list of templates script (Pipeline, Uniforms and 
 		Command) and stops.
  -v, --version	Show the version and stops.
+ -V, --Version  Start a context, show the informations and stop.
+		You can set the display variable before using this option.
 
 PROCESSING COMMANDS
   Processing commands describe which resource to use in order to repeat

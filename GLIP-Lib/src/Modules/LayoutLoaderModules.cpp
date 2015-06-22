@@ -268,7 +268,7 @@
 		/**
 		\fn std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
 		\brief Retrieve the list of standard modules.
-		\param loader A vector of pointers to standard modules. The responsability of deleting each object is left to the client.
+		\return A vector containing pointers to the basic modules. The client code has the responsability of deleting this modules.
 		**/
 		std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
 		{

@@ -842,7 +842,7 @@ delete data;
 				void HdlDynamicTableSpecial<T>::setNormalized(const float& value, const int& j, const int& i, const int& d)
 				{
 					if(!isNormalized())
-						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(HdlDynamicTableSpecial<float>::denormalize(value));
+						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(HdlDynamicTableSpecial<T>::denormalize(value));
 					else
 						(*reinterpret_cast<T*>(data + getOffset(j, i, d))) = static_cast<T>(value);
 				}
