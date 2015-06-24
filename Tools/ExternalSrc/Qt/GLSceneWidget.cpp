@@ -4630,6 +4630,11 @@ using namespace QVGL;
 		return c;
 	}
 
+	ContextWidget& GlipViewWidget::getContextWidget(void)
+	{
+		return (*contextWidget);
+	}
+
 	QString GlipViewWidget::getActionName(const ActionID& a)
 	{
 		switch(a)

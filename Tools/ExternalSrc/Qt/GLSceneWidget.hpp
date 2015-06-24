@@ -1040,6 +1040,7 @@ namespace QVGL
 
 			float getSceneRatio(void) const;
 			QColor getColorAt(int x, int y);
+			ContextWidget& getContextWidget(void);
 
 			static QString getActionName(const ActionID& a);
 
