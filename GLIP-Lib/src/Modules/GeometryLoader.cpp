@@ -440,7 +440,7 @@
 		data.ct.clear();
 	}
 
-	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( OBJLoader )
+	void OBJLoader::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(formatList)
@@ -588,7 +588,7 @@
 							2, 2, -1)
 	{ }
 
-	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( STLLoader )
+	void STLLoader::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(formatList)

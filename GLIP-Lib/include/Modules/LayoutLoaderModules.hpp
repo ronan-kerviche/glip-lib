@@ -254,104 +254,43 @@ Example, creating a simple Module :
 		};
 
 		// Simple MACROS : 
+			/** LAYOUT_LOADER_ARGUMENTS_LIST List of the arguments of LayoutLaoderModule::apply. It does not include the parenthesis and it is safe to use from any namespace. **/
+			#define LAYOUT_LOADER_ARGUMENTS_LIST 	const std::vector<std::string>& 					arguments,  \
+								const std::string&							body, \
+								const std::string&							currentPath, \
+								std::vector<std::string>&						dynamicPaths, \
+								std::map<std::string, Glip::CoreGL::HdlTextureFormat>& 			formatList, \
+								std::map<std::string, Glip::CoreGL::ShaderSource>& 			sourceList, \
+								std::map<std::string, Glip::CorePipeline::GeometryModel>&		geometryList, \
+								std::map<std::string, Glip::CorePipeline::FilterLayout>& 		filterList, \
+								std::map<std::string, Glip::CorePipeline::PipelineLayout>&		pipelineList, \
+								std::string&								mainPipelineName, \
+								const std::vector<std::string>&						staticPaths, \
+								const std::map<std::string, Glip::CoreGL::HdlTextureFormat>&		requiredFormatList, \
+								const std::map<std::string, Glip::CoreGL::ShaderSource>&		requiredSourceList, \
+								const std::map<std::string, Glip::CorePipeline::GeometryModel>&		requiredGeometryList, \
+								const std::map<std::string, Glip::CorePipeline::PipelineLayout>&	requiredPipelineList, \
+								const std::string& 							sourceName, \
+								const int 								startLine, \
+								const int 								bodyLine, \
+								std::string& 								executionSource, \
+								std::string&								executionSourceName, \
+								int&									executionStartLine
+
 			/** LAYOUT_LOADER_MODULE_DEFINITION( name )	Declaration of a module. **/
 			#define LAYOUT_LOADER_MODULE_DEFINITION( name )	class name : public LayoutLoaderModule \
 									{ \
 										public : \
 											name (void); \
 											\
-											void apply(	const std::vector<std::string>& 		arguments,  \
-													const std::string&				body, \
-													const std::string&				currentPath, \
-													std::vector<std::string>&			dynamicPaths, \
-													std::map<std::string, HdlTextureFormat>& 	formatList, \
-													std::map<std::string, ShaderSource>& 		sourceList, \
-													std::map<std::string, GeometryModel>&		geometryList, \
-													std::map<std::string, FilterLayout>& 		filterList, \
-													std::map<std::string, PipelineLayout>&		pipelineList, \
-													std::string&					mainPipelineName, \
-													const std::vector<std::string>&			staticPaths, \
-													const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
-													const std::map<std::string,ShaderSource>&	requiredSourceList, \
-													const std::map<std::string,GeometryModel>&	requiredGeometryList, \
-													const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
-													const std::string& 				sourceName, \
-													const int 					startLine, \
-													const int 					bodyLine, \
-													std::string& 					executionSource, \
-													std::string&					executionSourceName, \
-													int&						executionStartLine); \
+											void apply(LAYOUT_LOADER_ARGUMENTS_LIST); \
 									};
-			
-			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE Get the signature of the apply function. **/
-			#define LAYOUT_LOADER_MODULE_APPLY_SIGNATURE			void apply(const std::vector<std::string>& arguments,  \
-											const std::string&					body, \
-											const std::string&					currentPath, \
-											std::vector<std::string>&				dynamicPaths, \
-											std::map<std::string, HdlTextureFormat>& 		formatList, \
-											std::map<std::string, ShaderSource>& 			sourceList, \
-											std::map<std::string, GeometryModel>&			geometryList, \
-											std::map<std::string, FilterLayout>& 			filterList, \
-											std::map<std::string, PipelineLayout>&			pipelineList, \
-											std::string&						mainPipelineName, \
-											const std::vector<std::string>&				staticPaths, \
-											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
-											const std::map<std::string,ShaderSource>&		requiredSourceList, \
-											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
-											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
-											const std::string& 					sourceName, \
-											const int 						startLine, \
-											const int 						bodyLine, \
-											std::string& 						executionSource, \
-											std::string&						executionSourceName, \
-											int&							executionStartLine);
-
-			/** LAYOUT_LOADER_MODULE_APPLY_SIGNATURE( className ) Get the implementation signature of the apply function. **/
-			#define LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( className )	void className :: apply(const std::vector<std::string>& arguments,  \
-											const std::string&					body, \
-											const std::string&					currentPath, \
-											std::vector<std::string>&				dynamicPaths, \
-											std::map<std::string, HdlTextureFormat>& 		formatList, \
-											std::map<std::string, ShaderSource>& 			sourceList, \
-											std::map<std::string, GeometryModel>&			geometryList, \
-											std::map<std::string, FilterLayout>& 			filterList, \
-											std::map<std::string, PipelineLayout>&			pipelineList, \
-											std::string&						mainPipelineName, \
-											const std::vector<std::string>&				staticPaths, \
-											const std::map<std::string,HdlTextureFormat>&		requiredFormatList, \
-											const std::map<std::string,ShaderSource>&		requiredSourceList, \
-											const std::map<std::string,GeometryModel>&		requiredGeometryList, \
-											const std::map<std::string,PipelineLayout>&		requiredPipelineList, \
-											const std::string& 					sourceName, \
-											const int 						startLine, \
-											const int 						bodyLine, \
-											std::string& 						executionSource, \
-											std::string&						executionSourceName, \
-											int&							executionStartLine)
 
 			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)			Source of a module. **/
-			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)		moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
-																		void 	moduleName :: apply(	const std::vector<std::string>& 		arguments,  \
-																						const std::string&				body, \
-																						const std::string&				currentPath, \
-																						std::vector<std::string>&			dynamicPaths, \
-																						std::map<std::string, HdlTextureFormat>& 	formatList, \
-																						std::map<std::string, ShaderSource>& 		sourceList, \
-																						std::map<std::string, GeometryModel>&		geometryList, \
-																						std::map<std::string, FilterLayout>& 		filterList, \
-																						std::map<std::string, PipelineLayout>&		pipelineList, \
-																						std::string&					mainPipelineName, \
-																						const std::vector<std::string>&			staticPaths, \
-																						const std::map<std::string,HdlTextureFormat>&	requiredFormatList, \
-																						const std::map<std::string,ShaderSource>&	requiredSourceList, \
-																						const std::map<std::string,GeometryModel>&	requiredGeometryList, \
-																						const std::map<std::string,PipelineLayout>&	requiredPipelineList, \
-																						const std::string& sourceName, \
-																						const int startLine, \
-																						const int bodyLine, \
-																						std::string& executionSource, \
-																						std::string& executionSourceName, \
-																						int& executionStartLine)
+			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)	\
+											moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
+											void 	moduleName :: apply(LAYOUT_LOADER_ARGUMENTS_LIST)
+
 
 			#define __ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::iterator iteratorName = varName.find( elementName );
 			#define __CONST_ITERATOR_FIND(type, varName, iteratorName, elementName)	std::map<std::string, type >::const_iterator iteratorName = varName.find( elementName );

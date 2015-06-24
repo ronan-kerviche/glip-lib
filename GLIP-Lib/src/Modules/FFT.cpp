@@ -435,7 +435,7 @@ namespace Glip
 		return pipelineLayout;
 	}
 	
-	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT1DPipeline )
+	void GenerateFFT1DPipeline::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(dynamicPaths)
@@ -987,7 +987,7 @@ namespace Glip
 		return pipelineLayout;
 	}
 	
-	LAYOUT_LOADER_MODULE_APPLY_IMPLEMENTATION( GenerateFFT2DPipeline )
+	void GenerateFFT2DPipeline::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
 		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(dynamicPaths)

@@ -101,7 +101,7 @@ namespace Glip
 			public :
 				GenerateFFT1DPipeline(void);
 
-				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
+				void apply(LAYOUT_LOADER_ARGUMENTS_LIST);
 
 				static const std::string getInputPortName(void);
 				static const std::string getOutputPortName(void);
@@ -152,7 +152,7 @@ namespace Glip
 			public :
 				GenerateFFT2DPipeline(void);
 
-				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
+				void apply(LAYOUT_LOADER_ARGUMENTS_LIST);
 
 				static const std::string getInputPortName(void);
 				static const std::string getOutputPortName(void);

@@ -78,7 +78,7 @@ namespace Glip
 			public : 
 				OBJLoader(void);
 
-				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
+				void apply(LAYOUT_LOADER_ARGUMENTS_LIST);
 
 				static CustomModel load(const std::string& filename, const bool strict=false);
 		};
@@ -94,7 +94,7 @@ namespace Glip
 			public : 
 				STLLoader(void);
 
-				LAYOUT_LOADER_MODULE_APPLY_SIGNATURE
+				void apply(LAYOUT_LOADER_ARGUMENTS_LIST);
 
 				static CustomModel load(const std::string& filename);
 		};
