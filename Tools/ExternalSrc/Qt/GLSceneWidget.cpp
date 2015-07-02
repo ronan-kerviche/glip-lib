@@ -3120,7 +3120,7 @@ using namespace QVGL;
 			std::cerr << "GLSceneWidget::GLSceneWidget - Exception caught : " << std::endl;
 			std::cerr << e.what() << std::endl;
 
-			QMessageBox errorBox(QMessageBox::Critical, "ContextWidget::ContextWidget", "An error occurred during initialization.", QMessageBox::Ok);
+			QMessageBox errorBox(QMessageBox::Critical, "ContextWidget::ContextWidget", "An error occurred during initialization.", QMessageBox::Ok, QApplication::activeWindow());
 			errorBox.setDetailedText(e.what());
 			errorBox.exec();
 

@@ -25,6 +25,9 @@ using namespace QGPM;
 //#define __VERBOSE_PIPELINE_ITEMS__ 
 
 // ModulesList :
+	ModulesList::~ModulesList(void)
+	{ }
+
 	void ModulesList::addModules(LayoutLoader& loader) const
 	{
 		LayoutLoaderModule::addBasicModules(loader);
@@ -1101,7 +1104,7 @@ using namespace QGPM;
 		catch(Exception& e)
 		{
 			// Warning :
-			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while computing the pipeline %1.").arg(getName()), QMessageBox::Ok);
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while computing the pipeline %1.").arg(getName()), QMessageBox::Ok, QApplication::activeWindow());
 			messageBox.setDetailedText(e.what());
 			messageBox.exec();
 		}

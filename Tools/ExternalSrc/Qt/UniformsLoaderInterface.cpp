@@ -18,6 +18,7 @@
 #include "QMenuTools.hpp"
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QApplication>
 
 //#define __VERBOSE_UNIFORMS__ 
 
@@ -582,7 +583,7 @@ using namespace QGUI;
 		catch(Exception& e)
 		{
 			// Warning :
-			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from a pipeline."), QMessageBox::Ok);
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from a pipeline."), QMessageBox::Ok, QApplication::activeWindow());
 			messageBox.setDetailedText(e.what());
 			messageBox.exec();
 		}
@@ -607,7 +608,7 @@ using namespace QGUI;
 			catch(Exception& e)
 			{
 				// Warning :
-				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from file : \"%1\"").arg(filename), QMessageBox::Ok);
+				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught while loading uniforms value from file : \"%1\"").arg(filename), QMessageBox::Ok, QApplication::activeWindow());
 				messageBox.setDetailedText(e.what());
 				messageBox.exec();
 			}

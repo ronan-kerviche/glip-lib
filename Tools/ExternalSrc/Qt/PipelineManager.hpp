@@ -61,6 +61,7 @@ namespace QGPM
 	// Classes :
 	struct ModulesList
 	{
+		virtual ~ModulesList(void);
 		virtual void addModules(LayoutLoader& loader) const;
 		virtual std::vector<LayoutLoaderModule*> getModulesList(void) const;
 	};

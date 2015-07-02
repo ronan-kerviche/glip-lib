@@ -754,7 +754,7 @@ using namespace QGED;
 
 		if(!file.open(QFile::ReadOnly | QFile::Text))
 		{
-			QMessageBox::warning(this, tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
+			QMessageBox::warning(QApplication::activeWindow(), tr("Error : "), tr("Cannot read file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
 			return ;
 		}
 
@@ -783,7 +783,7 @@ using namespace QGED;
 
 		if(!file.open(QFile::WriteOnly | QFile::Text))
 		{
-			QMessageBox::warning(this, tr("Error : "),tr("Cannot write file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
+			QMessageBox::warning(QApplication::activeWindow(), tr("Error : "),tr("Cannot write file %1 :\n%2.").arg(newFilename).arg(file.errorString()));
 			return ;
 		}
 
@@ -2682,9 +2682,9 @@ using namespace QGED;
 					buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
 
 				if(container->getEditor().getFilename().isEmpty())
-					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), buttons);
+					returnedButton = QMessageBox::warning(QApplication::activeWindow(), tr("Warning!"), tr("New file has been modified.\n Do you want to save your changes?"), buttons);
 				else
-					returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(container->getEditor().getFilename()), buttons);
+					returnedButton = QMessageBox::warning(QApplication::activeWindow(), tr("Warning!"), tr("The file %1 has been modified.\n Do you want to save your changes?").arg(container->getEditor().getFilename()), buttons);
 
 				if(returnedButton==QMessageBox::Save)
 					save(container);
@@ -2715,7 +2715,7 @@ using namespace QGED;
 		else
 		{
 			// Warning :
-			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught. However, you might be able to continue execution."), QMessageBox::Ok);
+			QMessageBox messageBox(QMessageBox::Warning, "Error", tr("An exception was caught. However, you might be able to continue execution."), QMessageBox::Ok, QApplication::activeWindow());
 			messageBox.setDetailedText(compilationError.what());
 			messageBox.exec();
 		}

@@ -1786,7 +1786,7 @@ using namespace QGIC;
 				catch(Exception& e)
 				{
 					// Warning :
-					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Failed to open image file at \"%1\".").arg(*it), QMessageBox::Ok);
+					QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Failed to open image file at \"%1\".").arg(*it), QMessageBox::Ok, QApplication::activeWindow());
 					messageBox.setDetailedText(e.what());
 					messageBox.exec();
 				}
@@ -1868,9 +1868,9 @@ using namespace QGIC;
 				buttons = QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel;
 
 			if(imageItem->getFilename().isEmpty())
-				returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("New image has been modified.\n Do you want to save it?"), buttons);
+				returnedButton = QMessageBox::warning(QApplication::activeWindow(), tr("Warning!"), tr("New image has been modified.\n Do you want to save it?"), buttons);
 			else
-				returnedButton = QMessageBox::warning(NULL, tr("Warning!"), tr("The image %1 has been modified.\n Do you want to save your changes?").arg(imageItem->getFilename()), buttons);
+				returnedButton = QMessageBox::warning(QApplication::activeWindow(), tr("Warning!"), tr("The image %1 has been modified.\n Do you want to save your changes?").arg(imageItem->getFilename()), buttons);
 
 			if(returnedButton==QMessageBox::Save)
 				save(imageItem);
@@ -2141,7 +2141,7 @@ using namespace QGIC;
 			}
 			else
 			{
-				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Cannot load the image \"%1\" to device.").arg(imageItem->getName()));
+				QMessageBox messageBox(QMessageBox::Warning, "Error", tr("Cannot load the image \"%1\" to device.").arg(imageItem->getName()), QMessageBox::Ok, QApplication::activeWindow());
 				messageBox.exec();
 			}
 		}
