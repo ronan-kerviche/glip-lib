@@ -72,6 +72,8 @@ Other options : \n\
 		are conserved as long as possible on device, depending on\n\
 		their usage frequency).\n\
 		Default is 128 MB.\n\
+ -s, --preserve	Preserve the pipeline definition after its first creation.\n\
+		New inputs sizes will be ignored as required elements.\n\
  -d, --display	Name of the host, X server and display to target for the\n\
 		context.\n\
 		E.g. : -d host:xServer.screenId\n\
@@ -494,11 +496,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 		return ((fp != NULL) && isatty(fileno(fp)));
 	}
 
-	int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands)
+	int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands)
 	{
 		#define RETURN_ERROR( code, str ) { std::cerr << str << std::endl; return code ; }
 
 		const std::string executable = argv[0];
+		flags = NoFlag;
 
 		// Simple test : 
 		if(argc==1)
@@ -636,6 +639,10 @@ Link : <http://glip-lib.sourceforge.net/>\
 				else
 					RETURN_ERROR(-1, "Missing filename for argument " << arg << ".")
 			}
+			else if(arg=="-s" || arg=="--preserve")
+			{
+				flags = static_cast<GCFlags>(flags | ForcePreservePipeline);
+			}
 			else if(arg=="-d" || arg=="--display")
 			{
 				it++;
@@ -767,7 +774,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 		}
 	}
 
-	int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::string& displayName, std::vector<ProcessCommand>& commands)
+	int compute(const std::string& pipelineFilename, const size_t& memorySize, const GCFlags& flags, const std::string& inputFormatString, const std::string& displayName, std::vector<ProcessCommand>& commands)
 	{
 		int returnCode = 0;
 
@@ -797,6 +804,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 	
 			for(std::vector<ProcessCommand>::iterator itCommand = commands.begin(); itCommand!=commands.end(); itCommand++)
 			{
+				bool requirementsModified = false;
 				std::string commandName;
 	
 				if(!itCommand->name.empty())
@@ -840,18 +848,32 @@ Link : <http://glip-lib.sourceforge.net/>\
 					else
 						throw Glip::Exception("Cannot generate input format name from string format : \"" + inputFormatString + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 
-					lloader.addRequiredElement(std::string(buffer), inputTextures[k]->format());
+					// Test first, only if ForcePreservePipeline flag is not set or the pipeline was not created yet.
+					const std::string name(buffer, maxSize);
+					if((!lloader.hasRequiredFormat(name) || lloader.getRequiredFormat(name)!=inputTextures[k]->format()) && ((flags & ForcePreservePipeline)==0 || pipeline==NULL))
+					{
+						// Add :
+						lloader.addRequiredElement(name, inputTextures[k]->format());
+						requirementsModified = true;
+					}
 				}
 
 				// Uniforms : 
 				if(!itCommand->uniformVariables.empty())
 					uloader.load(itCommand->uniformVariables, Glip::Modules::UniformsLoader::LoadAll, itCommand->uniformsLine);
 
-				// Load : 
-				Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader.getPipelineLayout(pipelineFilename);
+				if((pipeline==NULL || requirementsModified) && ((flags & ForcePreservePipeline)==0 || pipeline==NULL))
+				{
+					// Clean first :
+					delete pipeline;
+					pipeline = NULL;
+
+					// Load : 
+					Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader.getPipelineLayout(pipelineFilename);
 				
-				// Prepare the pipeline : 
-				pipeline = new Glip::CorePipeline::Pipeline(pLayout, "GlipComputePipeline");
+					// Prepare the pipeline : 
+					pipeline = new Glip::CorePipeline::Pipeline(pLayout, "GlipComputePipeline");
+				}
 
 				// Connect the inputs :  
 				for(std::vector<Glip::CoreGL::HdlTexture*>::iterator it=inputTextures.begin(); it!=inputTextures.end(); it++)
@@ -872,11 +894,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 				}
 
 				// Clean : 
-				delete pipeline;
-				pipeline = NULL;
 				inputTextures.clear();
-
-				lloader.clearRequiredElements();
 				uloader.clear();
 			}
 		}
@@ -888,6 +906,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 		delete deviceMemoryManager;
 		delete pipeline;
+		pipeline = NULL;
 
 		return returnCode;
 	}

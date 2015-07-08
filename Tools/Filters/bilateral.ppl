@@ -3,7 +3,8 @@
 	See http://en.wikipedia.org/wiki/Bilateral_filter
 */
 
-REQUIRED_FORMAT:outputFormat0(inputFormat0, *, *, *, *, GL_LINEAR, GL_LINEAR )
+REQUIRED_FORMAT:outputBilateralFormat(inputFormat0, *, *, *, *, GL_LINEAR, GL_LINEAR )
+//CALL:FORMAT_TO_CONSTANT(outputBilateralFormat)
 
 INCLUDE(maths.ppl)
 
@@ -11,6 +12,8 @@ SOURCE:bilateralShader
 {
 	#version 130
 	
+	//INSERT(outputBilateralFormat)
+
 	uniform sampler2D inputBilateral;
 	out vec4 outputBilateral;
 	
@@ -24,12 +27,12 @@ SOURCE:bilateralShader
 	void main()
 	{
 		int nWindow = windowSize / 2;
-		ivec2 sz = textureSize(inputBilateral, 0);
-		float sx = 1.0/(float(sz.s));
-		float sy = 1.0/(float(sz.t));
+		//ivec2 sz = textureSize(inputBilateral, 0);
+		//float sx = 1.0/(float(outputBilateralFormat.s));
+		//float sy = 1.0/(float(outputBilateralFormat.t));
 
 		vec4 	outCol = vec4(0.0, 0.0, 0.0, 0.0),
-			refCol = textureLod(inputBilateral, gl_TexCoord[0].st, 0.0);
+			refCol = texelFetch(inputBilateral, ivec2(gl_FragCoord.xy), 0);
 
 		float nrm = 0.0;
 
@@ -38,7 +41,7 @@ SOURCE:bilateralShader
 		{
 			for(int j=-nWindow; j<=nWindow; j++)
 			{
-				vec4 	col 	= textureLod(inputBilateral, gl_TexCoord[0].st + vec2(j*sx, i*sy), 0.0);
+				vec4 	col 	= texelFetch(inputBilateral, ivec2(gl_FragCoord.xy + vec2(j, i)), 0);//textureLod(inputBilateral, gl_TexCoord[0].st + vec2(j*sx, i*sy), 0.0);
 				float 	a 	= gaussian( distance(col, refCol), rI ),
 					b	= gaussian( length(vec2(j, i)), rL );
 				outCol += col * a * b;
@@ -50,12 +53,12 @@ SOURCE:bilateralShader
 	}
 }
 
-FILTER_LAYOUT:bilateralFilter(outputFormat0,bilateralShader)
+FILTER_LAYOUT:bilateralFilter(outputBilateralFormat,bilateralShader)
 
 PIPELINE_MAIN:bilateralPipeline
 {
 	INPUT_PORTS(inputBilateral)
 	OUTPUT_PORTS(outputBilateral)
 
-	FILTER_INSTANCE:bilateralFilterInstance(bilateralFilter)
+	FILTER_INSTANCE:bilateralFilter
 }

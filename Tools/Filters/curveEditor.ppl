@@ -4,11 +4,14 @@
 
 TEXTURE_FORMAT:curveFormat(255, 1, GL_RGB, GL_UNSIGNED_BYTE)
 TEXTURE_FORMAT:plotFormat(255, 255, GL_RGB, GL_UNSIGNED_BYTE)
+CALL:FORMAT_TO_CONSTANT(curveFormat)
+CALL:FORMAT_TO_CONSTANT(plotFormat)
 
 SOURCE:CurveShader
 {
 	#version 130
 
+	INSERT(curveFormat)
 	uniform sampler2D 	initialCurveDataTextureInput,
 				curveDataTextureInput;
 	out vec4 		curveDataTextureOutput;
@@ -19,8 +22,8 @@ SOURCE:CurveShader
 
 	void main()
 	{
-		vec2 	pos = gl_TexCoord[0].st,
-			mPos=(VectorLastLeftPositionQuad+1.0)/2.0;
+		vec2 	pos = gl_FragCoord.st/vec2(curveFormat),
+			mPos = (VectorLastLeftPositionQuad.st+vec2(1))/2.0;
 		vec4	cIn = textureLod(initialCurveDataTextureInput, pos, 0),
 			col = textureLod(curveDataTextureInput, pos, 0) + cIn/1000.0;
 		vec3	mask = step(1.0, ColorUnderLastRightClick.rgb);
@@ -39,16 +42,15 @@ SOURCE:PlotCurveShader
 {
 	#version 130
 	
+	INSERT(plotFormat)
 	uniform sampler2D curveDataTextureOutput;
 	out vec4 curvePlot;
 
 	void main()
 	{
-		vec2 pos = gl_TexCoord[0].st;
+		vec2 pos = gl_FragCoord.st/vec2(plotFormat);
 		vec4 data = textureLod(curveDataTextureOutput, vec2(pos.s, 0.0), 0);
 		vec4 col = vec4(0.0, 0.0, 0.0, 0.0);
-
-		pos.t = 1.0 - pos.t;
 
 		if(pos.t<data.r)
 			col.r = 1.0;

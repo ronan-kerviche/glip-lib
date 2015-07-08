@@ -16,12 +16,8 @@
 
 	/*
 	TODO 
-		- Versions of OpenGL adapted to driver/hardware for maximum functionalities.
 		- Alpha layer with freeimage library.
 		- Uniforms variables to load from file.
-		- Orientation//=coordinates inside the images (flip the horizontal axis?).
-		- Load external modules.
-		- Write the help.
 	*/
 
 // Includes : 
@@ -33,15 +29,16 @@
 		int returnCode = 0;
 
 		size_t				memorySize;	
+		GCFlags				flags;
 		std::string 			pipelineFilename,
 						inputFormatString,
 						displayName;
 		std::vector<ProcessCommand> 	commands;
 
-		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, inputFormatString, displayName, commands);
+		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, flags, inputFormatString, displayName, commands);
 	
 		if(returnCode==0)
-			returnCode = compute(pipelineFilename, memorySize, inputFormatString, displayName, commands);
+			returnCode = compute(pipelineFilename, memorySize, flags, inputFormatString, displayName, commands);
 
 		return returnCode;
 	}

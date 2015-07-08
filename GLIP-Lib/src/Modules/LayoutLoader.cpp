@@ -1994,67 +1994,211 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt)
-	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace)
+	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. 
+
+	Will raise an exception if an elemient with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
+
 	\param name The name of the element.
 	\param fmt The element to be associated.
+	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt)
+	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace)
 	{
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 
 		if(it!=requiredFormatList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__, Exception::ModuleException);
-		else
-			requiredFormatList.insert( std::pair<std::string, HdlTextureFormat>(name, fmt) );
+		{
+			if(!replace)
+				throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the HdlTexture formats database.", __FILE__, __LINE__, Exception::ModuleException);
+			else
+				requiredFormatList.erase(it);
+		}	
+		// Then :
+		requiredFormatList.insert( std::pair<std::string, HdlTextureFormat>(name, fmt) );
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src)
-	\brief Add a ShaderSource to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_SOURCE:someName(name); will use this format.
+	\fn bool LayoutLoader::hasRequiredFormat(const std::string& name) const
+	\brief Test if a required format was provided.
+	\param name Name of the required format.
+	\return True if the format is known.
+	**/
+	bool LayoutLoader::hasRequiredFormat(const std::string& name) const
+	{
+		return requiredFormatList.find(name)!=requiredFormatList.end();
+	}
+
+	/**
+	\fn const HdlAbstractTextureFormat& LayoutLoader::getRequiredFormat(const std::string& name) const
+	\brief Get the required format.
+	\param name Name of the required format.
+	\return A constant reference to the corresponding format or raise and exception if it does not exist.
+	**/
+	const HdlAbstractTextureFormat& LayoutLoader::getRequiredFormat(const std::string& name) const
+	{
+		std::map<std::string,HdlTextureFormat>::const_iterator it = requiredFormatList.find(name);
+		
+		if(it==requiredFormatList.end())
+			throw Exception("LayoutLoader::getRequiredFormat - Required format \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
+		else
+			return it->second;
+	}
+
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
+	\brief Add a ShaderSource to do the possibly required elements, along with its name. 
+
+	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_SOURCE:someName(name); will use this format.
+
 	\param name The name of the element.
 	\param src The element to be associated.
+	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src)
+	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
 	{
 		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
 		
 		if(it!=requiredSourceList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the ShaderSource formats database.", __FILE__, __LINE__, Exception::ModuleException);
-		else
-			requiredSourceList.insert( std::pair<std::string, ShaderSource>(name, src) );
+		{
+			if(!replace)
+				throw Exception("LayoutLoader::addRequiredElement - An element with the name \"" + name + "\" already exists in the ShaderSource formats database.", __FILE__, __LINE__, Exception::ModuleException);
+			else
+				requiredSourceList.erase(it);
+		}
+		// Then :
+		requiredSourceList.insert( std::pair<std::string, ShaderSource>(name, src) );
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
-	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
+	\fn bool LayoutLoader::hasRequiredSource(const std::string& name) const
+	\brief Test if a required source was provided.
+	\param name Name of the required source.
+	\return True if the source is known.
+	**/
+	bool LayoutLoader::hasRequiredSource(const std::string& name) const
+	{
+		return requiredSourceList.find(name)==requiredSourceList.end();
+	}
+
+	/**
+	\fn const ShaderSource& LayoutLoader::getRequiredSource(const std::string& name) const
+	\brief Get the required source.
+	\param name Name of the required source.
+	\return A constant reference to the corresponding source or raise and exception if it does not exist.
+	**/
+	const ShaderSource& LayoutLoader::getRequiredSource(const std::string& name) const
+	{
+		std::map<std::string,ShaderSource>::const_iterator it = requiredSourceList.find(name);
+
+		if(it==requiredSourceList.end())
+			throw Exception("LayoutLoader::getRequiredSource - Required source \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
+		else
+			return it->second;
+	}
+		
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name.
+
+	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
+
 	\param name The name of the element.
 	\param mdl The element to be associated.
+	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl)
+	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
 	{
 		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
 
 		if(it!=requiredGeometryList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the GeometryModel database.", __FILE__, __LINE__, Exception::ModuleException);
-		else
-			requiredGeometryList.insert( std::pair<std::string, GeometryModel>(name, mdl) );
+		{
+			if(!replace)
+				throw Exception("LayoutLoader::addRequiredElement - An element with the name \"" + name + "\" already exists in the GeometryModel database.", __FILE__, __LINE__, Exception::ModuleException);
+			else
+				requiredGeometryList.erase(it);
+		}
+		// Then :
+		requiredGeometryList.insert( std::pair<std::string, GeometryModel>(name, mdl) );
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout)
-	\brief Add a AbstractPipelineLayout to do the possibly required elements, along with its name. Will raise an exception if an element with the same name already exists. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
+	\fn bool LayoutLoader::hasRequiredGeometry(const std::string& name) const
+	\brief Test if a required geometry was provided.
+	\param name Name of the required geometry.
+	\return True if the geometry is known.
+	**/
+	bool LayoutLoader::hasRequiredGeometry(const std::string& name) const
+	{
+		return requiredGeometryList.find(name)!=requiredGeometryList.end();
+	}
+
+	/**
+	\fn const GeometryModel& LayoutLoader::getRequiredGeometry(const std::string& name) const
+	\brief Get the required geometry.
+	\param name Name of the required geometry.
+	\return A constant reference to the corresponding geometry or raise and exception if it does not exist.
+	**/
+	const GeometryModel& LayoutLoader::getRequiredGeometry(const std::string& name) const
+	{
+		std::map<std::string,GeometryModel>::const_iterator it = requiredGeometryList.find(name);
+
+		if(it==requiredGeometryList.end())
+			throw Exception("Layoutoader::getRequiredGeometry - Required geometry \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
+		else
+			return it->second;
+	}
+
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace)
+	\brief Add a AbstractPipelineLayout to do the possibly required elements, along with its name. 
+
+	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
+
 	\param name The name of the element.
 	\param layout The element to be associated.
+	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout)
+	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace)
 	{
 		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
 
 		if(it!=requiredPipelineList.end())
-			throw Exception("LayoutLoader::addRequiredElement - An element with the name " + name + " already exists in the pipeline layouts database.", __FILE__, __LINE__, Exception::ModuleException);
+		{
+			if(!replace)
+				throw Exception("LayoutLoader::addRequiredElement - An element with the name \"" + name + "\" already exists in the pipeline layouts database.", __FILE__, __LINE__, Exception::ModuleException);
+			else
+				requiredPipelineList.erase(it);
+		}
+		// Then :
+		requiredPipelineList.insert( std::pair<std::string, PipelineLayout>(name, layout) );
+	}
+
+	/**
+	\fn bool LayoutLoader::hasRequiredPipeline(const std::string& name) const
+	\brief Test if a required pipeline was provided.
+	\param name Name of the required pipeline.
+	\return True if the pipeline is known.
+	**/
+	bool LayoutLoader::hasRequiredPipeline(const std::string& name) const
+	{
+		return requiredPipelineList.find(name)!=requiredPipelineList.end();
+	}
+
+	/**
+	\fn const AbstractPipelineLayout& LayoutLoader::getRequiredPipeline(const std::string& name) const
+	\brief Get the required pipeline.
+	\param name Name of the required pipeline.
+	\return A constant reference to the corresponding pipeline or raise and exception if not it is not found.
+	**/
+	const AbstractPipelineLayout& LayoutLoader::getRequiredPipelineLayout(const std::string& name) const
+	{
+		std::map<std::string,PipelineLayout>::const_iterator it = requiredPipelineList.find(name);
+
+		if(it==requiredPipelineList.end())
+			throw Exception("LayoutLoader::getRequiredipelineLayout - Required pipeline \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
-			requiredPipelineList.insert( std::pair<std::string, PipelineLayout>(name, layout) );
+			return it->second;
 	}
 
 	/**

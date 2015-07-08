@@ -823,10 +823,18 @@ catch(Exception& e)
 				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName="", int startLine=1);
 				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="", int startLine=1);
 
-				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt);
-				void addRequiredElement(const std::string& name, const ShaderSource& src);
-				void addRequiredElement(const std::string& name, const GeometryModel& mdl);
-				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout);
+				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace=true);
+				bool hasRequiredFormat(const std::string& name) const;
+				const HdlAbstractTextureFormat& getRequiredFormat(const std::string& name) const;
+				void addRequiredElement(const std::string& name, const ShaderSource& src, bool replace=true);
+				bool hasRequiredSource(const std::string& name) const;
+				const ShaderSource& getRequiredSource(const std::string& name) const;
+				void addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace=true);
+				bool hasRequiredGeometry(const std::string& name) const;
+				const GeometryModel& getRequiredGeometry(const std::string& name) const;
+				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace=true);
+				bool hasRequiredPipeline(const std::string& name) const;
+				const AbstractPipelineLayout& getRequiredPipelineLayout(const std::string& name) const;
 				int clearRequiredElements(void);
 				int clearRequiredElements(const std::string& name);
 

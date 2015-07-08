@@ -21,6 +21,12 @@
 	#include "CreateWindowlessContext.hpp"
 	#include "DeviceMemoryManager.hpp"
 
+	enum GCFlags
+	{
+		NoFlag			= 0,
+		ForcePreservePipeline	= 1,
+	};
+
 	struct ProcessCommand
 	{
 		int							line;
@@ -38,8 +44,8 @@
 		void setSafeParameterSettings(void);
 	};
 
-	extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands);
-	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const std::string& inputFormatString, const std::string& displayName, std::vector<ProcessCommand>& commands);
+extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands);
+	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const GCFlags& flags, const std::string& inputFormatString, const std::string& displayName, std::vector<ProcessCommand>& commands);
 
 #endif
 
