@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 #Project name
-project(GLIP-LIB)
+project(glip)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -74,24 +74,6 @@ add_library(
 		${source_files}
 )
 
-# Install :
-install(
-	TARGETS glip
- 	DESTINATION lib
-)
-install(
-	FILES ${header_files_base}
-	DESTINATION include/glip-lib
-)
-install(
-	FILES ${header_files_core}
-	DESTINATION include/glip-lib/Core
-)
-install(
-	FILES ${header_files_modules}
-	DESTINATION include/glip-lib/Modules
-)
-
 # Packaging :
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GLIP-Lib, An OpenGL Image Processing Library.")
 set(CPACK_PACKAGE_VENDOR "Ronan Kerviche")
@@ -100,12 +82,47 @@ set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "0")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
+set(CPACK_COMPONENTS_IGNORE_GROUPS ON)
 
 # Debian package :
-execute_process(COMMAND dpkg --print-architecture COMMAND tr -d '\n' OUTPUT_VARIABLE DEB_ARCHITECTURE )#Get the architecture.
-set(CPACK_GENERATOR "DEB")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ronan Kerviche")
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${DEB_ARCHITECTURE}") #To be improved.
+find_program(testDPKG dpkg)
+if(testDPKG)
+	execute_process(COMMAND dpkg --print-architecture COMMAND tr -d '\n' OUTPUT_VARIABLE DEB_ARCHITECTURE) #Get the architecture.
+	set(CPACK_DEB_COMPONENT_INSTALL ON) #Generate multiple packages.
+	set(CPACK_GENERATOR "DEB")
+	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ronan Kerviche")
+	set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${DEB_ARCHITECTURE}")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "glip-lib (>=1.0.0)")
+endif()
+
+find_program(testRPM rpm)
+if(testRPM)
+	set(CPACK_RPM_COMPONENT_INSTALL ON) #Generate multiple packages.
+	set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
+	set(CPACK_GENERATOR "RPM")
+endif()
+
+# Install :
+install(
+	TARGETS glip
+	DESTINATION lib
+	COMPONENT lib
+)
+install(
+	FILES ${header_files_base}
+	DESTINATION include/glip-lib
+	COMPONENT lib-dev
+)
+install(
+	FILES ${header_files_core}
+	DESTINATION include/glip-lib/Core
+	COMPONENT lib-dev
+)
+install(
+	FILES ${header_files_modules}
+	DESTINATION include/glip-lib/Modules
+	COMPONENT lib-dev
+)
 
 include(CPack)
 

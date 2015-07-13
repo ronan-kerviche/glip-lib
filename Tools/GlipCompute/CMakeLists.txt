@@ -1,17 +1,12 @@
-# When using QT, make sure it includes the library before OpenGL!
-
 cmake_minimum_required(VERSION 2.8)
 
 # Remove relative path warnings :
 cmake_policy(SET CMP0015 NEW)
 
 #Project name
-project(GLIPCOMPUTE)
+project(glip-compute)
 
 set(CMAKE_BUILD_TYPE Release)
-
-# To track the compilation process
-#set(CMAKE_VERBOSE_MAKEFILE on )
 
 # We are silencing the long long warning here.
 # To be improved in a future release.
@@ -72,4 +67,31 @@ add_executable(
 
 # Link : 
 target_link_libraries(glip-compute X11 GL freeimageplus glip)
+
+# Packaging :
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Glip-Compute, a command-line tool for GLIP-Lib.")
+set(CPACK_PACKAGE_VENDOR "Ronan Kerviche")
+#set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
+
+# Debian package :
+find_program(testDPKG dpkg)
+if(testDPKG)
+	execute_process(COMMAND dpkg --print-architecture COMMAND tr -d '\n' OUTPUT_VARIABLE DEB_ARCHITECTURE)#Get the architecture.
+	set(CPACK_GENERATOR "DEB")
+	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ronan Kerviche")
+	set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${DEB_ARCHITECTURE}")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "glip-lib (>=1.0.0)")
+endif()
+
+# Install :
+install(
+	TARGETS glip-compute
+	DESTINATION bin
+)
+
+include(CPack)
 

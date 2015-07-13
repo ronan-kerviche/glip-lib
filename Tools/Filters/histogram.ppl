@@ -5,9 +5,9 @@
 REQUIRED_FORMAT:inputFormatHistogram(inputFormat0)
 TEXTURE_FORMAT:histogramBinsFormat(256, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_LINEAR)
 
-CALL:FORMAT_SCALE_SIZE(inputFormatHistogram, 0.25, 0.25, reducedFormatHistogram)
+CALL:FORMAT_SCALE_SIZE(reducedFormatHistogram, inputFormatHistogram, 0.25, 0.25)
 CALL:FORMAT_TO_CONSTANT(reducedFormatHistogram)
-CALL:GENERATE_SAME_SIZE_3D_GRID(reducedFormatHistogram, grid, TRUE)
+CALL:GENERATE_SAME_SIZE_3D_GRID(grid, reducedFormatHistogram, TRUE)
 
 SOURCE:HistogramVertexShader
 {

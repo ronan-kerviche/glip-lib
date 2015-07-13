@@ -58,50 +58,6 @@ Several modules are already created but need to be manually added to any LayoutL
 	LayoutLoaderModule::addBasicModules(myLoader);
 	\endcode
 
-These modules are : 
-<CENTER>
-Module       			| Description
-------------------------------- | --------------------------
-IF_FORMAT_DEFINED		| Check if the FORMAT was defined. Arguments : formatName.
-IF_SOURCE_DEFINED		| Check if the SOURCE was defined. Arguments : sourceName.
-IF_GEOMETRY_DEFINED		| Check if the GEOMETRY was defined. Arguments : geometryName.
-IF_FILTERLAYOUT_DEFINED		| Check if the FILTERLAYOUT was defined. Arguments : filterLayoutName.
-IF_PIPELINELAYOUT_DEFINED	| Check if the PIPELINELAYOUT was defined. Arguments : pipelineLayoutName.
-IF_REQUIREDFORMAT_DEFINED	| Check if the REQUIREDFORMAT was defined. Arguments : requiredFormatName.
-IF_REQUIREDGEOMETRY_DEFINED	| Check if the REQUIREDGEOMETRY was defined. Arguments : requiredGeometryName.
-IF_REQUIREDPIPELINE_DEFINED	| Check if the REQUIREDPIPELINE was defined. Arguments : requiredPipelineName.
-FORMAT_CHANGE_SIZE		| Change the size of a format, save as a new format. Arguments : nameOriginal, widthNew, heightNew, nameNew.
-FORMAT_SCALE_SIZE		| Scale a format by a scalar (or two), save as a new format. Arguments : nameOriginal, scaleFactor, nameNew OR nameOriginal, scaleFactorX, scaleFactorY, nameNew.
-FORMAT_CHANGE_CHANNELS		| Change the channels of a format, save as a new format. Arguments : nameOriginal, channelNew, nameNew.
-FORMAT_CHANGE_DEPTH		| Change the depth of a format, save as a new format. Arguments : nameOriginal, depthNew, nameNew.
-FORMAT_CHANGE_FILTERING		| Change the filtering of a format, save as a new format. Arguments : nameOriginal, minNew, magNew, nameNew.
-FORMAT_CHANGE_WRAPPING		| Change the wrapping of a format, save as a new format. Arguments : nameOriginal, sNew, tNew, nameNew.
-FORMAT_CHANGE_MIPMAP		| Change the mipmap level of a format, save as a new format. Arguments : nameOriginal, mNew, nameNew.
-FORMAT_MINIMUM_WIDTH		| Find the format having the smallest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MAXIMUM_WIDTH		| Find the format having the largest width, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MINIMUM_HEIGHT		| Find the format having the smallest height, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MAXIMUM_HEIGHT		| Find the format having the largest height, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MINIMUM_PIXELS		| Find the format having the smallest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MAXIMUM_PIXELS		| Find the format having the largest number of pixels, save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MINIMUM_ELEMENTS		| Find the format having the smallest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_MAXIMUM_ELEMENTS		| Find the format having the largest number of elements (pixels times channels count), save as a new format. Arguments : nameFormat1, nameFormat2, [nameFormat3, ...,] nameNew.
-FORMAT_SMALLER_POWER_OF_TWO	| Generate a new format clamped to the closest smaller power of 2. Arguments : nameFormat, nameNew [, strict].
-FORMAT_LARGER_POWER_OF_TWO	| Generate a new format clamped to the closest larger power of 2. Arguments : nameFormat, nameNew [, strict].
-FORMAT_SWAP_DIMENSIONS		| Swap the width and height values, save as a new format, Arguments : nameFormat, nameNew.
-IF_FORMAT_SETTING_MATCH		| Match if a format setting is equal to a value (integer). Arguments : nameFormat, nameSetting, value.
-IF_FORMAT_SETTING_LARGERTHAN	| Match if a format setting is larger than a value (integer or GL keyword). Arguments : nameFormat, nameSetting, value.
-GENERATE_SAME_SIZE_2D_GRID	| Create a 2D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
-GENERATE_SAME_SIZE_3D_GRID	| Create a 3D grid geometry of the same size as the format in argument. Arguments : nameFormat, nameNewGeometry, [normalized].
-CHAIN_PIPELINES			| Create a pipeline by connecting the pipelines passed in arguments, in line. Arguments : nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2, ...
-FORMAT_TO_CONSTANT		| Create a SOURCE object containt a "ivec2(width, height)" code from the texture format passed in argument. Argument : nameFormat[, sourceName].
-SINGLE_FILTER_PIPELINE		| Create a pipeline with a single filter. Arguments : pipelineName, outputTextureFormat. Body : fragment shader source.
-ABORT_ERROR			| Return a user defined error. Argument : error description.
-GENERATE_FFT1D_PIPELINE		| Generate the 1D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, name [, option, ...].
-GENERATE_FFT2D_PIPELINE		| Generate the 2D FFT Pipeline transformation. Options : SHIFTED, INVERSED, COMPATIBILITY_MODE. Arguments : width, height, name [, option, ...].
-LOAD_OBJ_GEOMETRY		| Load a geometry from a Wavefront file (OBJ). Arguments : filename, geometryName[, strict].
-LOAD_STL_GEOMETRY		| Load a geometry from a StereoLithography file (STL). Arguments : filename, geometryName.
-</CENTER>
-
 Example in a script file : 
 	\code
 	REQUIRED_FORMAT: fmt (inputFormat)
@@ -154,6 +110,618 @@ Example, creating a simple Module :
 	\code 
 		CALL: MyAdditionModule (someFormat, 128, newLargerFormat)
 	\endcode
+
+## Modules List
+### IF_FORMAT_DEFINED
+<blockquote>
+<b>CALL</b>:IF_FORMAT_DEFINED(formatName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the FORMAT was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>formatName</i></td> <td>Name of the format to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_SOURCE_DEFINED
+<blockquote>
+<b>CALL</b>:IF_SOURCE_DEFINED(sourceName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the SOURCE was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>sourceName</i></td> <td>Name of the source to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_GEOMETRY_DEFINED
+<blockquote>
+<b>CALL</b>:IF_GEOMETRY_DEFINED(geometryName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the GEOMETRY was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>geometryName</i></td> <td>Name of the geometry to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_FILTERLAYOUT_DEFINED
+<blockquote>
+<b>CALL</b>:IF_FILTERLAYOUT_DEFINED(filterLayoutName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the FILTER_LAYOUT was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>filterLayoutName</i></td> <td>Name of the filter layout to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_PIPELINELAYOUT_DEFINED
+<blockquote>
+<b>CALL</b>:IF_PIPELINELAYOUT_DEFINED(pipelineLayoutName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the PIPELINE_LAYOUT was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>pipelineLayoutName</i></td> <td>Name of the pipeline layout to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_REQUIREDFORMAT_DEFINED
+<blockquote>
+<b>CALL</b>:IF_REQUIREDFORMAT_DEFINED(requiredFormatName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the REQUIRED_FORMAT was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>requiredFormatName</i></td> <td>Name of the required format to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_REQUIREDGEOMETRY_DEFINED
+<blockquote>
+<b>CALL</b>:IF_REQUIREDGEOMETRY_DEFINED(requiredGeometryName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the REQUIRED_GEOMETRY was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>requiredGeometryName</i></td> <td>Name of the required geometry to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### IF_REQUIREDPIPELINE_DEFINED
+<blockquote>
+<b>CALL</b>:IF_REQUIREDPIPELINE_DEFINED(requiredPipelineName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the REQUIRED_PIPELINE was defined.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>requiredPipelineName</i></td> <td>Name of the required pipeline to test.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
+### FORMAT_CHANGE_SIZE
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_SIZE(nameNew, nameOriginal, widthNew, heightNew)<br>
+</blockquote>
+
+Change the size of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format</td></tr>
+<tr class="glipDescrRow"><td><i>widthNew</i></td> <td>New width.</td></tr>
+<tr class="glipDescrRow"><td><i>heightNew</i></td> <td>New height.</td></tr>
+</table>
+
+### FORMAT_SCALE_SIZE
+<blockquote>
+<b>CALL</b>:FORMAT_SCALE_SIZE(nameNew, nameOriginal, scaleFactor)<br>
+</blockquote>
+
+Scale a format by a scalar (or two), save as a new format. Will prevent to reach a 0x0 texture by ensuring that the size is at least 1 pixel in each dimension.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>scaleFactor</i></td> <td>Scaling to be applied, can be splitted into X and Y.</td></tr>
+</table>
+
+### FORMAT_CHANGE_CHANNELS
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_CHANNELS(nameNew, nameOriginal, channelNew)<br>
+</blockquote>
+
+Change the channels of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>channelNew</i></td> <td>New channel mode.</td></tr>
+</table>
+
+### FORMAT_CHANGE_DEPTH
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_DEPTH(nameNew, nameOriginal, depthNew)<br>
+</blockquote>
+
+Change the depth of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>depthNew</i></td> <td>New depth.</td></tr>
+</table>
+
+### FORMAT_CHANGE_FILTERING
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_FILTERING(nameNew, nameOriginal, minNew, magNew)<br>
+</blockquote>
+
+Change the filtering of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>minNew</i></td> <td>New minification filter.</td></tr>
+<tr class="glipDescrRow"><td><i>magNew</i></td> <td>New magnification filter.</td></tr>
+</table>
+
+### FORMAT_CHANGE_WRAPPING
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_WRAPPING(nameNew, nameOriginal, sNew, tNew)<br>
+</blockquote>
+
+Change the wrapping of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>sNew</i></td> <td>New S wrapping parameter.</td></tr>
+<tr class="glipDescrRow"><td><i>tNew</i></td> <td>New T wrapping parameter.</td></tr>
+</table>
+
+### FORMAT_CHANGE_MIPMAP
+<blockquote>
+<b>CALL</b>:FORMAT_CHANGE_MIPMAP(nameNew, nameOriginal, mNew)<br>
+</blockquote>
+
+Change the mipmap level of a format, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>mNew</i></td> <td>New maximum mipmap parameter.</td></tr>
+</table>
+
+### FORMAT_MINIMUM_WIDTH
+<blockquote>
+<b>CALL</b>:FORMAT_MINIMUM_WIDTH(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the smallest width, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MAXIMUM_WIDTH
+<blockquote>
+<b>CALL</b>:FORMAT_MAXIMUM_WIDTH(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the largest width, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the first format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MINIMUM_HEIGHT
+<blockquote>
+<b>CALL</b>:FORMAT_MINIMUM_HEIGHT(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the smallest height, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MAXIMUM_HEIGHT
+<blockquote>
+<b>CALL</b>:FORMAT_MAXIMUM_HEIGHT(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the largest height, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MINIMUM_PIXELS
+<blockquote>
+<b>CALL</b>:FORMAT_MINIMUM_PIXELS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the smallest number of pixels, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MAXIMUM_PIXELS
+<blockquote>
+<b>CALL</b>:FORMAT_MAXIMUM_PIXELS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the largest number of pixels, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MINIMUM_ELEMENTS
+<blockquote>
+<b>CALL</b>:FORMAT_MINIMUM_ELEMENTS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the smallest number of elements (pixels times channels count), save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_MAXIMUM_ELEMENTS
+<blockquote>
+<b>CALL</b>:FORMAT_MAXIMUM_ELEMENTS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
+</blockquote>
+
+Find the format having the largest number of elements (pixels times channels count), save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat1</i></td> <td>Name of the fist format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
+</table>
+
+### FORMAT_SMALLER_POWER_OF_TWO
+<blockquote>
+<b>CALL</b>:FORMAT_SMALLER_POWER_OF_TWO(nameNew, nameFormat [, strict])<br>
+</blockquote>
+
+Generate a new format clamped to the closest smaller power of 2.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE (default).</td></tr>
+</table>
+
+### FORMAT_LARGER_POWER_OF_TWO
+<blockquote>
+<b>CALL</b>:FORMAT_LARGER_POWER_OF_TWO(nameNew, nameFormat [, strict])<br>
+</blockquote>
+
+Generate a new format clamped to the closest larger power of 2.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE (default).</td></tr>
+</table>
+
+### FORMAT_SWAP_DIMENSIONS
+<blockquote>
+<b>CALL</b>:FORMAT_SWAP_DIMENSIONS(nameNew, nameFormat)<br>
+</blockquote>
+
+Swap the width and height values, save as a new format.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
+</table>
+
+### IF_FORMAT_SETTING_MATCH
+<blockquote>
+<b>CALL</b>:IF_FORMAT_SETTING_MATCH(nameFormat, nameSetting, value)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Match if a format setting is equal to a value (unsigned integer or GL keyword).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the targeted format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameSetting</i></td> <td>Name of the setting. See the documentation of HdlAbstractTextureFormat.</td></tr>
+<tr class="glipDescrRow"><td><i>value</i></td> <td>The unsigned integer value or GLenum name to test against.</td></tr>
+</table>
+
+<b>Body</b> : Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.
+
+### IF_FORMAT_SETTING_LARGERTHAN
+<blockquote>
+<b>CALL</b>:IF_FORMAT_SETTING_LARGERTHAN(nameFormat, nameSetting, value)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Match if a format setting is larger than a value (unsigned integer or GL keyword).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the targeted format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameSetting</i></td> <td>Name of the setting. See the documentation of HdlAbstractTextureFormat.</td></tr>
+<tr class="glipDescrRow"><td><i>value</i></td> <td>The unsigned integer value or GLenum name to test against.</td></tr>
+</table>
+
+<b>Body</b> : Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.
+
+### GENERATE_SAME_SIZE_2D_GRID
+<blockquote>
+<b>CALL</b>:GENERATE_SAME_SIZE_2D_GRID(nameNewGeometry, nameFormat [, normalized])<br>
+</blockquote>
+
+Create a 2D grid geometry of the same size as the format in argument (width and height).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNewGeometry</i></td> <td>Name of the new geometry.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>normalized</i></td> <td>Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].</td></tr>
+</table>
+
+### GENERATE_SAME_SIZE_3D_GRID
+<blockquote>
+<b>CALL</b>:GENERATE_SAME_SIZE_3D_GRID(nameNewGeometry, nameFormat [, normalized])<br>
+</blockquote>
+
+Create a 3D grid geometry of the same size as the format in argument (width, height and number of channels).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNewGeometry</i></td> <td>Name of the new geometry.</td></tr>
+<tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>normalized</i></td> <td>Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].</td></tr>
+</table>
+
+### CHAIN_PIPELINES
+<blockquote>
+<b>CALL</b>:CHAIN_PIPELINES(nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2 [, namePipelineLayout3...])<br>
+</blockquote>
+
+Create a pipeline by connecting the pipelines passed in arguments.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNewPipelineLayout</i></td> <td>Name of the new pipeline.</td></tr>
+<tr class="glipDescrRow"><td><i>isStrict</i></td> <td>Either TRUE or FALSE. If enabled, the pipelines connection are enforced strictly (if outputs of the first pipeline are not equal to the number of input of the second pipeline, then the module will report an error.</td></tr>
+<tr class="glipDescrRow"><td><i>namePipelineLayout1</i></td> <td>Name of the first pipeline in the chain.</td></tr>
+<tr class="glipDescrRow"><td><i>namePipelineLayout2</i></td> <td>Name of the second pipeline in the chain.</td></tr>
+<tr class="glipDescrRow"><td><i>namePipelineLayout3...</i></td> <td>Other pipelines.</td></tr>
+</table>
+
+### FORMAT_TO_CONSTANT
+<blockquote>
+<b>CALL</b>:FORMAT_TO_CONSTANT(formatName [, sourceName])<br>
+</blockquote>
+
+Create a SOURCE containing a const ivec2 declaration describing the size of the texture passed in argument. For instance, can be used in a shader with : INSERT(name).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>formatName</i></td> <td>Name of the texture format to be used.</td></tr>
+<tr class="glipDescrRow"><td><i>sourceName</i></td> <td>Name of the source to be created. If not set, the name of the source will be the same as the name of the format.</td></tr>
+</table>
+
+### SINGLE_FILTER_PIPELINE
+<blockquote>
+<b>CALL</b>:SINGLE_FILTER_PIPELINE(pipelineName, outputTextureFormat)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Create a pipeline with a single filter.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>pipelineName</i></td> <td>Name of the new pipeline.</td></tr>
+<tr class="glipDescrRow"><td><i>outputTextureFormat</i></td> <td>Name of the format to render to.</td></tr>
+</table>
+
+<b>Body</b> : Source of the fragment shader to be implemented.
+
+### IF_GLSL_VERSION_MATCH
+<blockquote>
+<b>CALL</b>:IF_GLSL_VERSION_MATCH(version)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Test the GLSL available available during compilation.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>version</i></td> <td>The GLSL version name to be tested : 1.30, 3.30, etc.</td></tr>
+</table>
+
+<b>Body</b> : Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.
+
+### ABORT_ERROR
+<blockquote>
+<b>CALL</b>:ABORT_ERROR(error)<br>
+[{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}]<br>
+</blockquote>
+
+Abort the Layout loading operation with a user defined error.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>error</i></td> <td>Error description.</td></tr>
+</table>
+
+<b>Body</b> : Optional, More complete description of the error.
+
+### GENERATE_FFT1D_PIPELINE
+<blockquote>
+<b>CALL</b>:GENERATE_FFT1D_PIPELINE(width, name [, options...])<br>
+[{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}]<br>
+</blockquote>
+
+Generate the 1D FFT Pipeline transformation.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>width</i></td> <td>Width, can be either a numeral or the name of an existing format.</td></tr>
+<tr class="glipDescrRow"><td><i>name</i></td> <td>Name of the new pipeline.</td></tr>
+<tr class="glipDescrRow"><td><i>options...</i></td> <td>Options to be used by the FFT process : SHIFTED, INVERSED, ZERO_PADDING, COMPATIBILITY_MODE, NO_INPUT.</td></tr>
+</table>
+
+<b>Body</b> : PRE{...} block contains a filtering function to be applied before the FFT. It must define a function vec4 pre(in vec4 colorFromTexture, in float x). POST{...} block contains a filtering function to be applied after the FFT. It must implement a function vec4 post(in vec4 colorAfterFFT, in float x). Both of these block can declare their own uniform variables.
+
+### GENERATE_FFT2D_PIPELINE
+<blockquote>
+<b>CALL</b>:GENERATE_FFT2D_PIPELINE(width, height [, name, options...])<br>
+[{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}]<br>
+</blockquote>
+
+Generate the 2D FFT Pipeline transformation.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>width</i></td> <td>Width, can be either a numeral or the name of an existing format.</td></tr>
+<tr class="glipDescrRow"><td><i>height</i></td> <td>Height, can be either a numeral or the name of an existing format.</td></tr>
+<tr class="glipDescrRow"><td><i>name</i></td> <td>Name of the new pipeline.</td></tr>
+<tr class="glipDescrRow"><td><i>options...</i></td> <td>Options to be used by the FFT process : SHIFTED, INVERSED, ZERO_PADDING, COMPATIBILITY_MODE, NO_INPUT.</td></tr>
+</table>
+
+<b>Body</b> : PRE{...} block contains a filtering function to be applied before the FFT. It must define a function vec4 pre(in vec4 colorFromTexture, in vec2 x). POST{...} block contains a filtering function to be applied after the FFT. It must implement a function vec4 post(in vec4 colorAfterFFT, in vec2 x). Both of these block can declare their own uniform variables.
+
+### LOAD_OBJ_GEOMETRY
+<blockquote>
+<b>CALL</b>:LOAD_OBJ_GEOMETRY(filename, geometryName [, strict])<br>
+</blockquote>
+
+Load a geometry from a Wavefront file (OBJ).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>filename</i></td> <td>Name of the file to load.</td></tr>
+<tr class="glipDescrRow"><td><i>geometryName</i></td> <td>Name of the new geometry.</td></tr>
+<tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE. If enabled, the loader will abort upon inding an unknown tag.</td></tr>
+</table>
+
+### LOAD_STL_GEOMETRY
+<blockquote>
+<b>CALL</b>:LOAD_STL_GEOMETRY(filename, geometryName)<br>
+</blockquote>
+
+Load a geometry from a StereoLithography file (STL).
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>filename</i></td> <td>Name of the file to load</td></tr>
+<tr class="glipDescrRow"><td><i>geometryName</i></td> <td>Name of the new geometry.</td></tr>
+</table>
 	
 **/
 		class GLIP_API LayoutLoaderModule

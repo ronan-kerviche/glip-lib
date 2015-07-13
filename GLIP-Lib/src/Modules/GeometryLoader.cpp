@@ -39,7 +39,7 @@
 	 :	LayoutLoaderModule("LOAD_OBJ_GEOMETRY", "DESCRIPTION{Load a geometry from a Wavefront file (OBJ).}"
 							"ARGUMENT:filename{Name of the file to load.}"
 							"ARGUMENT:geometryName{Name of the new geometry.}"
-							"ARGUMENT:[strict]{Either TRUE or FALSE. If enabled, the loader will abort upon inding an unknown tag.}",
+							"ARGUMENT:strict{Either TRUE or FALSE. If enabled, the loader will abort upon inding an unknown tag.}",
 							2, 3, -1)
 	{ }
 

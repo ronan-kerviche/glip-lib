@@ -432,7 +432,8 @@
 
 	// Simple modules : 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FORMAT was defined.}"
-										"ARGUMENT:formatName{Name of the format to test.}")
+										"ARGUMENT:formatName{Name of the format to test.}"
+										"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -470,7 +471,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_SOURCE_DEFINED, 1, 1, 1, "DESCRIPTION{Check if the SOURCE was defined.}"
-										"ARGUMENT:sourceName{Name of the source to test.}")
+										"ARGUMENT:sourceName{Name of the source to test.}"
+										"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -508,7 +510,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_GEOMETRY_DEFINED, 1, 1, 1, 	"DESCRIPTION{Check if the GEOMETRY was defined.}"
-											"ARGUMENT:geometryName{Name of the geometry to test.}")
+											"ARGUMENT:geometryName{Name of the geometry to test.}"
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -546,7 +549,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FILTERLAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FILTER_LAYOUT was defined.}"
-											"ARGUMENT:filterLayoutName{Name of the filter layout to test.}")
+											"ARGUMENT:filterLayoutName{Name of the filter layout to test.}"	
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -584,7 +588,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_PIPELINELAYOUT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the PIPELINE_LAYOUT was defined.}"
-											"ARGUMENT:pipelineLayoutName{Name of the pipeline layout to test.}")
+											"ARGUMENT:pipelineLayoutName{Name of the pipeline layout to test.}"
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -622,7 +627,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDFORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_FORMAT was defined.}"
-											"ARGUMENT:requiredFormatName{Name of the required format to test.}")
+											"ARGUMENT:requiredFormatName{Name of the required format to test.}"	
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -660,7 +666,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDSOURCE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_SOURCE was defined.}"
-											"ARGUMENT:requiredSourceName{Name of the required source to test.}")
+											"ARGUMENT:requiredSourceName{Name of the required source to test.}"	
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -698,7 +705,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDGEOMETRY_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_GEOMETRY was defined.}"
-												"ARGUMENT:requiredGeometryName{Name of the required geometry to test.}")
+												"ARGUMENT:requiredGeometryName{Name of the required geometry to test.}"
+												"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -736,7 +744,8 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_REQUIREDPIPELINE_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the REQUIRED_PIPELINE was defined.}"
-												"ARGUMENT:requiredPipelineName{Name of the required pipeline to test.}")
+												"ARGUMENT:requiredPipelineName{Name of the required pipeline to test.}"
+												"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
 				UNUSED_PARAMETER(dynamicPaths)
@@ -774,10 +783,10 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_SIZE, 4, 4, -1,	"DESCRIPTION{Change the size of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format}"
 											"ARGUMENT:widthNew{New width.}"
-											"ARGUMENT:heightNew{New height.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:heightNew{New height.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -797,16 +806,16 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
 
-				CAST_ARGUMENT( 1, double, w)
-				CAST_ARGUMENT( 2, double, h)
+				CAST_ARGUMENT( 2, double, w)
+				CAST_ARGUMENT( 3, double, h)
 
 				newFmt.setWidth(w);
 				newFmt.setHeight(h);
@@ -814,15 +823,15 @@
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
 					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1,	"DESCRIPTION{Scale a format by a scalar (or two), save as a new format. "
 											"Will prevent to reach a 0x0 texture by ensuring that the size is "
 											"at least 1 pixel in each dimension.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
-											"ARGUMENT:scaleFactor{Scaling to be applied, can be splitted into X and Y.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:scaleFactor{Scaling to be applied, can be splitted into X and Y.}")
 		 	{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -842,17 +851,17 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
 
-				if(arguments.size()==3)
+				if(arguments.size()==4)
 				{
-					CAST_ARGUMENT( 1, double, s) 	
+					CAST_ARGUMENT( 2, double, s) 	
 					if(s<=0.0)
 						throw Exception("The scale cannot be negative or equal to zero (s = " + toString(s) + ").", sourceName, startLine, Exception::ClientScriptException);
 		
@@ -861,8 +870,8 @@
 				}
 				else
 				{
-					CAST_ARGUMENT( 1, double, sx)
-					CAST_ARGUMENT( 2, double, sy)
+					CAST_ARGUMENT( 2, double, sx)
+					CAST_ARGUMENT( 3, double, sy)
 					if(sx<=0.0)
 						throw Exception("The scale cannot be negative or equal to zero (sx = " + toString(sx) + ").", sourceName, startLine, Exception::ClientScriptException);
 					if(sy<=0.0)
@@ -876,13 +885,13 @@
 				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
 					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_CHANNELS, 3, 3, -1,	"DESCRIPTION{Change the channels of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
-											"ARGUMENT:channelNew{New channel mode.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:channelNew{New channel mode.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -902,22 +911,22 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setGLMode( getGLEnum(arguments[1]) );
+				newFmt.setGLMode( getGLEnum(arguments[2]) );
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_DEPTH, 3, 3, -1,	"DESCRIPTION{Change the depth of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
-											"ARGUMENT:depthNew{New depth.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:depthNew{New depth.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -937,23 +946,23 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setGLDepth( getGLEnum(arguments[1]) );
+				newFmt.setGLDepth( getGLEnum(arguments[2]) );
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_FILTERING, 4, 4, -1,	"DESCRIPTION{Change the filtering of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
 											"ARGUMENT:minNew{New minification filter.}"
-											"ARGUMENT:magNew{New magnification filter.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:magNew{New magnification filter.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -973,24 +982,24 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setMinFilter( getGLEnum(arguments[1]) );
-				newFmt.setMagFilter( getGLEnum(arguments[2]) );
+				newFmt.setMinFilter( getGLEnum(arguments[2]) );
+				newFmt.setMagFilter( getGLEnum(arguments[3]) );
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_WRAPPING, 4, 4, -1,	"DESCRIPTION{Change the wrapping of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
 											"ARGUMENT:sNew{New S wrapping parameter.}"
-											"ARGUMENT:tNew{New T wrapping parameter.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:tNew{New T wrapping parameter.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1010,23 +1019,23 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 	
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				newFmt.setSWrapping( getGLEnum(arguments[1]) );
-				newFmt.setTWrapping( getGLEnum(arguments[2]) );
+				newFmt.setSWrapping( getGLEnum(arguments[2]) );
+				newFmt.setTWrapping( getGLEnum(arguments[3]) );
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_CHANGE_MIPMAP, 4, 4, -1,	"DESCRIPTION{Change the mipmap level of a format, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
-											"ARGUMENT:mNew{New maximum mipmap parameter.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:mNew{New maximum mipmap parameter.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1046,24 +1055,24 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
-				CAST_ARGUMENT( 1, int, m)
+				CAST_ARGUMENT( 2, int, m)
 				newFmt.setMaxLevel(m);
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_WIDTH, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest width, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"	
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1083,10 +1092,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					widthBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1099,20 +1108,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_WIDTH, 3, -1, -1,	"DESCRIPTION{Find the format having the largest width, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the first format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1132,10 +1141,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					widthBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1148,20 +1157,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_HEIGHT, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest height, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1181,10 +1190,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					heightBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1197,20 +1206,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_HEIGHT, 3, -1, -1,	"DESCRIPTION{Find the format having the largest height, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1230,10 +1239,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					heightBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1246,20 +1255,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_PIXELS, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest number of pixels, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 
 			{
 				UNUSED_PARAMETER(body)
@@ -1280,10 +1289,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					sizeBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1296,20 +1305,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_PIXELS, 3, -1, -1,	"DESCRIPTION{Find the format having the largest number of pixels, save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1329,10 +1338,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					sizeBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1345,20 +1354,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MINIMUM_ELEMENTS, 3, -1, -1,	"DESCRIPTION{Find the format having the smallest number of elements (pixels times channels count), save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1378,10 +1387,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)				
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					sizeBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1394,20 +1403,20 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_MAXIMUM_ELEMENTS, 3, -1, -1,	"DESCRIPTION{Find the format having the largest number of elements (pixels times channels count), save as a new format.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameFormat1{Name of the fist format.}"
 											"ARGUMENT:nameFormat2{Name of the second format.}"
-											"ARGUMENT:[nameFormat3...]{Other formats.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameFormat3...{Other formats.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1427,10 +1436,10 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)				
 
-				int 	kBest 		= 0,
+				int 	kBest 		= 1,
 					sizeBest	= 0;
 
-				for(unsigned int k=0; k<arguments.size()-1; k++)
+				for(unsigned int k=1; k<arguments.size(); k++)
 				{
 					FORMAT_MUST_EXIST( arguments[k] );
 
@@ -1443,19 +1452,19 @@
 					}
 				}
 
-				FORMAT_MUST_NOT_EXIST( arguments.back() );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				// New format : 
 				CONST_ITERATOR_TO_FORMAT( it, arguments[kBest] )
 				HdlTextureFormat newFmt = it->second;
 
-				APPEND_NEW_FORMAT( arguments.back(), newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SMALLER_POWER_OF_TWO, 2, 3, -1,	"DESCRIPTION{Generate a new format clamped to the closest smaller power of 2.}"
-												"ARGUMENT:nameFormat{Name of the original format.}"
 												"ARGUMENT:nameNew{Name of the new format.}"
-												"ARGUMENT:[strict]{Either TRUE or FALSE (default).}")
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:strict{Either TRUE or FALSE (default).}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1475,14 +1484,14 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] );
-				FORMAT_MUST_NOT_EXIST( arguments[1] );
+				FORMAT_MUST_EXIST( arguments[1] );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				bool strict = false;
 				if(arguments.size()==3)
 					strict = getBoolean(arguments[2]);
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 				
 				HdlTextureFormat newFmt = it->second;
 	
@@ -1497,13 +1506,13 @@
 					newFmt.setWidth( std::floor(std::log(newFmt.getHeight()-1.0)/std::log(2.0)) );
 				}
 
-				APPEND_NEW_FORMAT( arguments[1], newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_LARGER_POWER_OF_TWO, 2, 3, -1,	"DESCRIPTION{Generate a new format clamped to the closest larger power of 2.}"
-												"ARGUMENT:nameFormat{Name of the original format.}"
 												"ARGUMENT:nameNew{Name of the new format.}"
-												"ARGUMENT:[strict]{Either TRUE or FALSE (default).}")
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:strict{Either TRUE or FALSE (default).}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1523,14 +1532,14 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] );
-				FORMAT_MUST_NOT_EXIST( arguments[1] );
+				FORMAT_MUST_EXIST( arguments[1] );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 
 				bool strict = false;
 				if(arguments.size()==3)
 					strict = getBoolean(arguments[2]);
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 				
 				HdlTextureFormat newFmt = it->second;
 	
@@ -1545,12 +1554,12 @@
 					newFmt.setWidth( std::ceil(std::log(newFmt.getHeight()+1.0)/std::log(2.0)) );
 				}
 
-				APPEND_NEW_FORMAT( arguments[1], newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SWAP_DIMENSIONS, 2, 2, -1,	"DESCRIPTION{Swap the width and height values, save as a new format.}"
-											"ARGUMENT:nameFormat{Name of the original format.}"
-											"ARGUMENT:nameNew{Name of the new format.}")
+											"ARGUMENT:nameNew{Name of the new format.}"
+											"ARGUMENT:nameFormat{Name of the original format.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1570,16 +1579,16 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] );
-				FORMAT_MUST_NOT_EXIST( arguments[1] );
+				FORMAT_MUST_EXIST( arguments[1] );
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
 			
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				HdlTextureFormat newFmt = it->second;
 				newFmt.setWidth( it->second.getHeight() );
 				newFmt.setHeight( it->second.getWidth() );
 
-				APPEND_NEW_FORMAT( arguments[1], newFmt )
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_SETTING_MATCH, 3, 3, 1,	"DESCRIPTION{Match if a format setting is equal to a value (unsigned integer or GL keyword).}"
@@ -1688,9 +1697,9 @@
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1,	"DESCRIPTION{Create a 2D grid geometry of the same size as the format in argument (width and height).}"
-												"ARGUMENT:nameFormat{Name of the original format.}"
 												"ARGUMENT:nameNewGeometry{Name of the new geometry.}"
-												"ARGUMENT:[normalized]{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:normalized{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1709,21 +1718,21 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
+				FORMAT_MUST_EXIST( arguments[1] )
+				GEOMETRY_MUST_NOT_EXIST( arguments[0] )
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				const bool normalized = (arguments.size()>=3) ? getBoolean(arguments[2], sourceName, startLine) : false;;
 
 				// Build the new geometry : 
-				APPEND_NEW_GEOMETRY( arguments[1], GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
+				APPEND_NEW_GEOMETRY( arguments[0], GeometryPrimitives::PointsGrid2D(it->second.getWidth(), it->second.getHeight(), normalized) )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_3D_GRID, 2, 3, -1,	"DESCRIPTION{Create a 3D grid geometry of the same size as the format in argument (width, height and number of channels).}"
-												"ARGUMENT:nameFormat{Name of the original format.}"
 												"ARGUMENT:nameNewGeometry{Name of the new geometry.}"
-												"ARGUMENT:[normalized]{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
+												"ARGUMENT:nameFormat{Name of the original format.}"
+												"ARGUMENT:normalized{Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1742,23 +1751,23 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				FORMAT_MUST_EXIST( arguments[0] )
-				GEOMETRY_MUST_NOT_EXIST( arguments[1] )
+				FORMAT_MUST_EXIST( arguments[1] )
+				GEOMETRY_MUST_NOT_EXIST( arguments[0] )
 
-				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
 
 				const bool normalized = (arguments.size()>=3) ? getBoolean(arguments[2], sourceName, startLine) : false;
 
 				// Build the new geometry : 
-				APPEND_NEW_GEOMETRY( arguments[1], GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
+				APPEND_NEW_GEOMETRY( arguments[0], GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized) )
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1,	"DESCRIPTION{Create a pipeline by connecting the pipelines passed in arguments.}\n"
+										"ARGUMENT:nameNewPipelineLayout{Name of the new pipeline.}"
 										"ARGUMENT:isStrict{Either TRUE or FALSE. If enabled, the pipelines connection are enforced strictly (if outputs of the first pipeline are not equal to the number of input of the second pipeline, then the module will report an error.}"
 										"ARGUMENT:namePipelineLayout1{Name of the first pipeline in the chain.}"
 										"ARGUMENT:namePipelineLayout2{Name of the second pipeline in the chain.}"
-										"ARGUMENT:[namePipelineLayout3...]{Other pipelines.}"
-										"ARGUMENT:nameNewPipelineLayout{Name of the new pipeline.}")
+										"ARGUMENT:namePipelineLayout3...{Other pipelines.}")
 			{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -1779,17 +1788,17 @@
 				UNUSED_PARAMETER(executionSourceName)
 				UNUSED_PARAMETER(executionStartLine)
 
-				const unsigned int startPipelines = 1;
+				const unsigned int startPipelines = 2;
 				std::string requiredElements;
 				VanillaParserSpace::Element 	result;
 
-				PIPELINE_MUST_NOT_EXIST( arguments.back() );
+				PIPELINE_MUST_NOT_EXIST( arguments[0] );
 
 				// Get the arguments : 
-				const bool isStrict = getBoolean(arguments[0], sourceName, startLine);
+				const bool isStrict = getBoolean(arguments[1], sourceName, startLine);
 
 				result.strKeyword 	= LayoutLoader::getKeyword(KW_LL_PIPELINE_LAYOUT);
-				result.name		= arguments.back();
+				result.name		= arguments[0];
 				result.noName		= false;
 				result.noArgument	= true;
 				result.noBody		= false;
@@ -1799,7 +1808,7 @@
 				// Get all the pipelines : 
 				std::string lastInstance;
 				std::vector<std::string> outputPortNames;
-				for(unsigned int k=startPipelines; k<(arguments.size()-1); k++)
+				for(unsigned int k=startPipelines; k<arguments.size(); k++)
 				{
 					// Access the pipeline : 
 					PIPELINE_MUST_EXIST( arguments[k] );

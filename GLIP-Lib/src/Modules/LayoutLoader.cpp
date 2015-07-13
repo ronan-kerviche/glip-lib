@@ -2186,7 +2186,7 @@
 	}
 
 	/**
-	\fn const AbstractPipelineLayout& LayoutLoader::getRequiredPipeline(const std::string& name) const
+	\fn const AbstractPipelineLayout& LayoutLoader::getRequiredPipelineLayout(const std::string& name) const
 	\brief Get the required pipeline.
 	\param name Name of the required pipeline.
 	\return A constant reference to the corresponding pipeline or raise and exception if not it is not found.

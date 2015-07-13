@@ -15,13 +15,15 @@ win32:Release:	LIBS +=	../../Project_VS/GLIP-Lib/x64/Release/GLIP-Lib.lib
 unix:DEFINES +=	"__USE_QVGL__" \		# Define GUI elements
 		"__MAKE_VARIABLES__" \		# Allow modules to distribut some of their variables
 		"__USE_NETPBM__" \		# Load PPM / PGM files
-		"__USE_LIBRAW__"		# Load Raw files (such as CR2 and NEF with the help of LibRaw
+		"__USE_LIBRAW__"		# Load Raw files (such as CR2 and NEF with the help of LibRaw)
 
-win32:Debug:DEFINES +=	"__USE_QVGL__" \
+win32:Debug:DEFINES +=	"WIN32_LEAN_AND_MEAN" \ # Avoid symbol redefinition if using libraw
+			"__USE_QVGL__" \
 			"__MAKE_VARIABLES__" \
 			"__USE_NETPBM__"
 
-win32:Release:DEFINES +="__USE_QVGL__" \
+win32:Release:DEFINES +="WIN32_LEAN_AND_MEAN" \ # Avoid symbol redefinition if using libraw
+			"__USE_QVGL__" \
 			"__MAKE_VARIABLES__" \
 			"__USE_NETPBM__"
 

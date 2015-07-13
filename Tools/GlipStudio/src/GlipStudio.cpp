@@ -111,7 +111,7 @@
 
 	void GlipStudio::loadStyleSheet(void)
 	{
-		const QString 	stylesheetFilename = "stylesheet.css";
+		const QString 	stylesheetFilename = QCoreApplication::applicationDirPath() + "/stylesheet.css";
 		QFile 		stylesheetFile(stylesheetFilename);
 			
 		if(!stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -138,44 +138,15 @@
 
 	void GlipStudio::loadFonts(void)
 	{
-		// Load fonts : 
-		int fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Regular.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-	
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Black.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl; 
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Bold.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Light.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-ExtraLight.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Medium.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-
-		fid = QFontDatabase::addApplicationFont("Fonts/SourceCodePro-Semibold.ttf");
-		//if( fid < 0)
-		//	std::cerr << "Could not locate the font!" << std::endl;
-
-		/*std::cout << "Font list : " << std::endl;
-		QFontDatabase db;
-		foreach(const QString& family, QFontDatabase::applicationFontFamilies(fid))
+		QDir fontsDir(QCoreApplication::applicationDirPath() + "/Fonts/");
+		QStringList fontFilenames = fontsDir.entryList(QStringList("*.ttf"), QDir::Files);
+		for(QList<QString>::const_iterator it=fontFilenames.begin(); it!=fontFilenames.end(); it++)
 		{
-			std::cout << "    " << family.toStdString() << std::endl;
-			foreach(const QString& style, db.styles(family))
-				std::cout << "      " << style.toStdString() << std::endl;
+			QString filename = fontsDir.path() + "/" + *it;
+			int fid = QFontDatabase::addApplicationFont(filename);
+			if(fid<0)
+				qWarning() << "Could not load font " << filename << "\n";
 		}
-		std::cout << "End font list." << std::endl;*/
 	}
 
 	bool GlipStudio::notify(QObject * receiver, QEvent * event) 

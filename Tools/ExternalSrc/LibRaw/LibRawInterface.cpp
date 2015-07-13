@@ -16,6 +16,7 @@
 
 // Includes :
 	#include "LibRawInterface.hpp"
+	#include <libraw/libraw.h>
 
 // Tools :
 	Glip::Modules::ImageBuffer* libRawLoadImage(const std::string& filename)
