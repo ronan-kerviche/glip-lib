@@ -3,7 +3,7 @@
 /*     GLIP-LIB                                                                                                  */
 /*     OpenGL Image Processing LIBrary                                                                           */
 /*                                                                                                               */
-/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     Author        : R. Kerviche                                                                               */
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */

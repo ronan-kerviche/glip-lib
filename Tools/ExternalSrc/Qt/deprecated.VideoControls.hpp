@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : VideoControls.hpp                                                                         */
 /*     Original Date : December 31th 2012                                                                        */

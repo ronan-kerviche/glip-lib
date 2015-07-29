@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : GLSceneWidget.cpp                                                                         */
 /*     Original Date : May 26th 2014                                                                             */
@@ -1919,7 +1919,7 @@ using namespace QVGL;
 		message.setOpenExternalLinks(true);
 		message.setText( tr(	"<center><p style=\"font-size:%2pt; font-style:bold\">GlipStudio</p></center>"
 					"<center><p style=\"font-size:%1pt; font-style:bold\">GlipStudio is the IDE for GlipLib (OpenGL Image Processing Library).<br>\n"
-					"Find more information, documentation and examples at : <a href='http://glip-lib.sourceforge.net/'>http://glip-lib.sourceforge.net/</a>.</p></center>"
+					"Find more information, documentation and examples at : <a href='http://glip-lib.net/'>http://glip-lib.net/</a>.</p></center>"
 					"<center><p style=\"font-size:%3pt; font-style:italic\">Copyright &copy; 2010-2015, Ronan Kerviche, MIT License</p></center>"
 					"<p style=\"margin-left:1em; margin-right:1em; font-size:%4pt; color:#AAAAAA;\"> Permission is hereby granted, free of charge, to any person obtaining a copy<br>\n"
 					"of this software and associated documentation files (the \"Software\"), to deal<br>\n"

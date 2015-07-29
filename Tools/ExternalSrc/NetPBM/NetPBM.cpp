@@ -1,3 +1,19 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE 			                                                         */
+/*     LICENSE       : MIT License                                                                               */
+/*     Website       : glip-lib.net                                                                              */
+/*                                                                                                               */
+/*     File          : NetPBM.cpp                                                                                */
+/*     Original Date : July 6th 2014                                                                             */
+/*                                                                                                               */
+/*     Description   : NetPBM interface for GLIPLIB.                                                             */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
 #include "NetPBM.hpp"
 #include <cstring>
 #include <cmath>

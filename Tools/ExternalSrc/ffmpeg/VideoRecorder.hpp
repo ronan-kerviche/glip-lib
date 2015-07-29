@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : VideoRecorder.hpp                                                                         */
 /*     Original Date : December 28th 2012                                                                        */

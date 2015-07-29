@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : WindowRendering.cpp                                                                       */
 /*     Original Date : September 1st 2011                                                                        */

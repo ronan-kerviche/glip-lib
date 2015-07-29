@@ -3,9 +3,9 @@
 /*     LIBRAW INTERFACE                                                                                          */
 /*     Interface to the LibRaw library for the OpenGL Image Processing LIBrary                                   */
 /*                                                                                                               */
-/*     Author        : R. KERVICHE (ronan.kerviche@free.fr)                                                      */
+/*     Author        : R. Kerviche                                                                               */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : LibRawInterface.cpp                                                                       */
 /*     Original Date : August 18th 2014                                                                          */

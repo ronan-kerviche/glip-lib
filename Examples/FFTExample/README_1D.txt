@@ -6,9 +6,7 @@ Middle part	: Fourier domain.
 Bottom port	: Input.
 
 License 	: MIT
-Project page	: http://sourceforge.net/projects/glip-lib/
-Help page 	: http://glip-lib.sourceforge.net/
+Help page 	: http://glip-lib.net/
 
 Contributors : 
 Ronan Kerviche (ronan dot kerviche at free dot fr)
-Corentin Derbois

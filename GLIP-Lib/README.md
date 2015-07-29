@@ -39,7 +39,7 @@ Compiling
 --------------
 Using cmake, cmake-gui or equivalent generate the Makefile or SLN file for building the project :
 
-$ cmake .
+$ cmake . -DCMAKE_BUILD_TYPE=release
 
 Then compile with Make or via Visual Studio depending on the platform :
 

@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : GLSLKeywords.hpp                                                                          */
 /*     Original Date : July 6th 2014                                                                             */

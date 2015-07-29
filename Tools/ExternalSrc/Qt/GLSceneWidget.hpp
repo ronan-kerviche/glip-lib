@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : MIT License                                                                               */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : GLSceneWidget.hpp                                                                         */
 /*     Original Date : May 26th 2014                                                                             */
@@ -44,6 +44,7 @@
 	#include <QComboBox>
 	#include <QListWidget>
 	#include <QDialogButtonBox>
+	#include <QDoubleSpinBox>
 
 	// Enable some interactivity with Uniforms Variables modules (might be declared somewhere else) :
 	//#define __MAKE_VARIABLES__

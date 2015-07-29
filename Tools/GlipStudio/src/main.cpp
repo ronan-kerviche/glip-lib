@@ -1,3 +1,20 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-STUDIO                                                                                               */
+/*     IDE for the OpenGL Image Processing LIBrary                                                               */
+/*                                                                                                               */
+/*     Author        : R. Kerviche                                                                               */
+/*     LICENSE       : MIT License                                                                               */
+/*     Website       : glip-lib.net                                                                              */
+/*                                                                                                               */
+/*     File          : main.cpp                                                                                  */
+/*     Original Date : August 1th 2012                                                                           */
+/*                                                                                                               */
+/*     Description   : Main.                                                                                     */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
+
 #include "./GlipStudio.hpp"
 
 int main(int argc, char** argv)

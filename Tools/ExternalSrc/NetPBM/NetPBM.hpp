@@ -1,9 +1,19 @@
-/*
-	Small NetPBM RAWBITS Reader/Writer
-	GLIPLIB Project.
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-LIB                                                                                                  */
+/*     OpenGL Image Processing LIBrary                                                                           */
+/*                                                                                                               */
+/*     Author        : R. KERVICHE 			                                                         */
+/*     LICENSE       : MIT License                                                                               */
+/*     Website       : glip-lib.net                                                                              */
+/*                                                                                                               */
+/*     File          : NetPBM.hpp                                                                                */
+/*     Original Date : July 6th 2014                                                                             */
+/*                                                                                                               */
+/*     Description   : NetPBM interface for GLIPLIB.                                                             */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
 
-	This code is also changing the endianness of 16 bits RAW files.
-*/
 
 	#include <iostream>
 	#include <fstream>

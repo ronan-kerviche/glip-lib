@@ -5,7 +5,7 @@
 /*                                                                                                               */
 /*     Author        : R. KERVICHE 			                                                         */
 /*     LICENSE       : GPLv3                                                                                     */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : http://glip-lib.net/                                                                      */
 /*                                                                                                               */
 /*     File          : mainGLFW.cpp                                                                              */
 /*     Original Date : September 1st 2011                                                                        */

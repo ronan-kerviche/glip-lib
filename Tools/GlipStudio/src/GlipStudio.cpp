@@ -1,3 +1,19 @@
+/* ************************************************************************************************************* */
+/*                                                                                                               */
+/*     GLIP-STUDIO                                                                                               */
+/*     IDE for the OpenGL Image Processing LIBrary                                                               */
+/*                                                                                                               */
+/*     Author        : R. Kerviche                                                                               */
+/*     LICENSE       : MIT License                                                                               */
+/*     Website       : glip-lib.net                                                                              */
+/*                                                                                                               */
+/*     File          : GlipStudio.cpp                                                                            */
+/*     Original Date : August 1th 2012                                                                           */
+/*                                                                                                               */
+/*     Description   : Core objects.                                                                             */
+/*                                                                                                               */
+/* ************************************************************************************************************* */
+
 #include "GlipStudio.hpp"
 #include <QDateTime>
 #include <QDebug>

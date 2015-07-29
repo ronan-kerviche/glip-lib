@@ -4,9 +4,7 @@ You can redistribute it freely. Source code can be browsed and copied from the p
 CLICK ON THE IMAGE TO SHOW RESULT OF CONVOLUTION.
 
 License 	: MIT
-Project page	: http://sourceforge.net/projects/glip-lib/
-Help page 	: http://glip-lib.sourceforge.net/
+Help page 	: http://glip-lib.net/
 
 Contributors : 
 Ronan Kerviche (ronan dot kerviche at free dot fr)
-Corentin Derbois
