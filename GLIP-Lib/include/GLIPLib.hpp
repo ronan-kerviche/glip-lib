@@ -8,7 +8,7 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     DATE          : August   23rd 2011                                                                        */
 /*     Original Date : August    7th 2010                                                                        */
-/*     Website       : http://sourceforge.net/projects/glip-lib/                                                 */
+/*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
 /*     File          : GLIPLib.hpp                                                                               */
 /*     Original Date : August 7th 2010                                                                           */

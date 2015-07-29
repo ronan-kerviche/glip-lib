@@ -26,8 +26,6 @@
 
 	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 	typedef Bool (*glXMakeContextCurrentARBProc)(Display*, GLXDrawable, GLXDrawable, GLXContext);
-	static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
-	static glXMakeContextCurrentARBProc   glXMakeContextCurrentARB   = NULL;
 
 	extern void createWindowlessContext(std::string displayName="");
 #endif 

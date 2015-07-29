@@ -18,8 +18,11 @@
 
 void createWindowlessContext(std::string displayName)
 {
-	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
-	glXMakeContextCurrentARB   = (glXMakeContextCurrentARBProc)   glXGetProcAddressARB( (const GLubyte *) "glXMakeContextCurrent"      );
+	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc) glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
+	glXMakeContextCurrentARBProc glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc) glXGetProcAddressARB((const GLubyte *) "glXMakeContextCurrent");
+
+	// Suppress "-Wunused-variable" for function pointer.
+	(void) glXMakeContextCurrentARB;
 
 	const char *displayNameCStr = (displayName.empty() ? NULL : displayName.c_str());
 	Display* display = XOpenDisplay( displayNameCStr );
@@ -55,10 +58,10 @@ void createWindowlessContext(std::string displayName)
 	GLXPbuffer pbuffer = glXCreatePbuffer( display, fbConfigs[0], pbufferAttribs );
 
 	// clean up:
-	XFree( fbConfigs );
-	XSync( display, False );
+	XFree(fbConfigs);
+	XSync(display, False);
 
-	if( !glXMakeContextCurrent(display, pbuffer, pbuffer, openGLContext) )
+	if(!glXMakeContextCurrent(display, pbuffer, pbuffer, openGLContext))
 		throw Glip::Exception("createWindowlessContext - Could not setup GL context.", __FILE__, __LINE__, Glip::Exception::GLException);
 }
 

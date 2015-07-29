@@ -24,7 +24,7 @@
 	enum GCFlags
 	{
 		NoFlag			= 0,
-		ForcePreservePipeline	= 1,
+		ForcePreservePipeline	= 1
 	};
 
 	struct ProcessCommand

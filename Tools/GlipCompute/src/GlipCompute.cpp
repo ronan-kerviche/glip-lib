@@ -119,8 +119,12 @@ UNIFORMS\n\
 	// Uniforms description goes here.\n\
 }\n\
 \n\
+EXAMPLE\n\
+  For a pipeline with one input and at least one ouput :\n\
+     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.\n\
+\n\
 glip-compute is part of the GLIP-Lib project.\n\
-Link : <http://glip-lib.sourceforge.net/>\
+Link : <http://glip-lib.net/>\
 ";
 
 	const std::string templateString = 
@@ -198,7 +202,7 @@ PROCESS : /* name, optional */\n\
 \n\
 --------------------------------------------------------------------------------\n\
 glip-compute is part of the GLIP-Lib project.\n\
-Link : <http://glip-lib.sourceforge.net/>\
+Link : <http://glip-lib.net/>\
 ";
 	ProcessCommand::ProcessCommand(void)
 	 : 	line(1),
@@ -725,12 +729,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 						throw Glip::Exception("The pipeline " + elements.mainPipeline + " has no input ports named (or indexed as) \"" + it->first + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 				}
 
-				if(id<0 || id>=elements.mainPipelineInputs.size())
+				if(id<0 || id>=static_cast<int>(elements.mainPipelineInputs.size()))
 					throw Glip::Exception("Input port of index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineInputs.size()) + " input port(s), indexing start at 0).", __FILE__, __LINE__, Glip::Exception::ClientException);
 			}
 			
 			// Set : 
-			if(id>=0 && id<inputsSorted.size())
+			if(id>=0 && id<static_cast<int>(inputsSorted.size()))
 				inputsSorted[id] = it->second;
 			idInput++;
 		}
@@ -763,12 +767,12 @@ Link : <http://glip-lib.sourceforge.net/>\
 						throw Glip::Exception("The pipeline " + elements.mainPipeline + " has no output ports named (or indexed as) \"" + it->first + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 				}
 
-				if(id<0 || id>=elements.mainPipelineOutputs.size())
+				if(id<0 || id>=static_cast<int>(elements.mainPipelineOutputs.size()))
 					throw Glip::Exception("Output port of index " + Glip::toString(id) + " is out of range (pipeline " + elements.mainPipeline + " has " + Glip::toString(elements.mainPipelineOutputs.size()) + " output port(s), indexing start at 0).", __FILE__, __LINE__, Glip::Exception::ClientException);
 			}
 			
 			// Set : 
-			if(id>=0 && id<outputsSorted.size())
+			if(id>=0 && id<static_cast<int>(outputsSorted.size()))
 				outputsSorted[id] = it->second;
 			idOutput++;
 		}
@@ -823,7 +827,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 				sortPorts(elements, *itCommand, inputsSorted, outputsSorted);
 
 				// Load the input images in the correct order :
-				for(int k=0; k<inputsSorted.size(); k++)
+				for(int k=0; k<static_cast<int>(inputsSorted.size()); k++)
 				{
 					Glip::CoreGL::HdlTexture* texture = deviceMemoryManager->get(inputsSorted[k]); 
 					inputTextures.push_back(texture);
@@ -835,7 +839,7 @@ Link : <http://glip-lib.sourceforge.net/>\
 
 				// Set the variables :
 				const int maxSize = 1024;
-				for(int k=0; k<elements.mainPipelineInputs.size(); k++)
+				for(int k=0; k<static_cast<int>(elements.mainPipelineInputs.size()); k++)
 				{
 					// Generate the name : 
 					char buffer[maxSize];

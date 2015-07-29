@@ -13,13 +13,7 @@
 /*     Description   : Main function.                                                                            */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
-
-	/*
-	TODO 
-		- Alpha layer with freeimage library.
-		- Uniforms variables to load from file.
-	*/
-
+	
 // Includes : 
 	#include "GlipCompute.hpp"
 
