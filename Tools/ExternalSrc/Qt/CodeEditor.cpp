@@ -1320,7 +1320,7 @@ using namespace QGED;
 		clearHighlightAction.setEnabled(false);
 	}
 
-// CodeEditorSettings :
+// CodeEditorSettings :	
 	CodeEditorSettings::CodeEditorSettings(const int _defaultFontSize)
 	 : defaultFontSize(_defaultFontSize)
 	{
@@ -1380,7 +1380,7 @@ using namespace QGED;
 		braceMatching		= true;
 	}
 
-	std::string CodeEditorSettings::getSettingsString(void) const
+	/*std::string CodeEditorSettings::getSettingsString(void) const
 	{
 		std::string str;
 
@@ -1441,9 +1441,9 @@ using namespace QGED;
 		#undef SAVE_FONT
 
 		return str;
-	}
+	}*/
 
-	void CodeEditorSettings::setSettingsFromString(const std::string& str)
+	/*void CodeEditorSettings::setSettingsFromString(const std::string& str)
 	{
 		Glip::Modules::VanillaParserSpace::VanillaParser parser(str, "SOURCETOBEDEFINED");
 
@@ -1525,6 +1525,63 @@ using namespace QGED;
 			READ_FONT( editorFont )
 			READ_FONT( keywordFont )
 		}
+	}*/
+
+	void CodeEditorSettings::load(void)
+	{
+		#ifdef __USE_QSETTINGS__
+		if(settingsManager.contains("CodeEditorSettings/glslKeywordColor"))
+			glslKeywordColor = settingsManager.value("CodeEditorSettings/glslKeywordColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/glslFunctionColor"))
+			glslFunctionColor = settingsManager.value("CodeEditorSettings/glslFunctionColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/glslPreprocessorColor"))
+			glslPreprocessorColor = settingsManager.value("CodeEditorSettings/glslPreprocessorColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/glipLayoutLoaderKeywordColor"))
+			glipLayoutLoaderKeywordColor = settingsManager.value("CodeEditorSettings/glipLayoutLoaderKeywordColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/glipUniformLoaderKeywordColor"))
+			glipUniformLoaderKeywordColor = settingsManager.value("CodeEditorSettings/glipUniformLoaderKeywordColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/commentsColor"))
+			commentsColor = settingsManager.value("CodeEditorSettings/commentsColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/braceMatchingColor"))
+			braceMatchingColor = settingsManager.value("CodeEditorSettings/braceMatchingColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/searchColor"))
+			searchColor = settingsManager.value("CodeEditorSettings/searchColor").value<QColor>();
+		if(settingsManager.contains("CodeEditorSettings/editorFont"))
+			editorFont = settingsManager.value("CodeEditorSettings/editorFont").value<QFont>();
+		if(settingsManager.contains("CodeEditorSettings/keywordFont"))
+			keywordFont = settingsManager.value("CodeEditorSettings/keywordFont").value<QFont>();
+		if(settingsManager.contains("CodeEditorSettings/wrapMode"))
+			wrapMode = static_cast<QTextOption::WrapMode>(settingsManager.value("CodeEditorSettings/wrapMode").toInt());
+		if(settingsManager.contains("CodeEditorSettings/tabNumberOfSpaces"))
+			tabNumberOfSpaces = settingsManager.value("CodeEditorSettings/tabNumberOfSpaces").toInt();
+		if(settingsManager.contains("CodeEditorSettings/enableHighlight"))
+			enableHighlight = settingsManager.value("CodeEditorSettings/enableHighlight").toBool();
+		if(settingsManager.contains("CodeEditorSettings/highlightCurrentLine"))
+			highlightCurrentLine = settingsManager.value("CodeEditorSettings/highlightCurrentLine").toBool();
+		if(settingsManager.contains("CodeEditorSettings/braceMatching"))
+			braceMatching = settingsManager.value("CodeEditorSettings/braceMatching").toBool();
+		#endif
+	}
+
+	void CodeEditorSettings::save(void)
+	{
+		#ifdef __USE_QSETTINGS__
+		settingsManager.setValue("CodeEditorSettings/glslKeywordColor", glslKeywordColor);
+		settingsManager.setValue("CodeEditorSettings/glslFunctionColor", glslFunctionColor);
+		settingsManager.setValue("CodeEditorSettings/glslPreprocessorColor", glslPreprocessorColor);
+		settingsManager.setValue("CodeEditorSettings/glipLayoutLoaderKeywordColor", glipLayoutLoaderKeywordColor);
+		settingsManager.setValue("CodeEditorSettings/glipUniformLoaderKeywordColor", glipUniformLoaderKeywordColor);
+		settingsManager.setValue("CodeEditorSettings/commentsColor", commentsColor);
+		settingsManager.setValue("CodeEditorSettings/braceMatchingColor", braceMatchingColor);
+		settingsManager.setValue("CodeEditorSettings/searchColor", searchColor);
+		settingsManager.setValue("CodeEditorSettings/editorFont", editorFont);
+		settingsManager.setValue("CodeEditorSettings/keywordFont", keywordFont);
+		settingsManager.setValue("CodeEditorSettings/wrapMode", wrapMode);
+		settingsManager.setValue("CodeEditorSettings/tabNumberOfSpaces", tabNumberOfSpaces);
+		settingsManager.setValue("CodeEditorSettings/enableHighlight", enableHighlight);
+		settingsManager.setValue("CodeEditorSettings/highlightCurrentLine", highlightCurrentLine);
+		settingsManager.setValue("CodeEditorSettings/braceMatching", braceMatching);
+		#endif
 	}
 
 // CodeEditorSettingsInterface :
@@ -1642,6 +1699,9 @@ using namespace QGED;
 				layout.addWidget(&dialogButtons, 7, 0, 1, 4);
 				
 				connect(&dialogButtons, 	SIGNAL(clicked(QAbstractButton*)),	this, SLOT(processDialogButtonPressed(QAbstractButton*)));
+	
+		// Load :
+		settings.load();
 
 		// Final update :
 			updateInterface();
@@ -1653,7 +1713,9 @@ using namespace QGED;
 	}
 
 	CodeEditorSettingsInterface::~CodeEditorSettingsInterface(void)
-	{ }
+	{
+		settings.save();
+	}
 
 	void CodeEditorSettingsInterface::updateInterface(void)
 	{
@@ -2090,18 +2152,26 @@ using namespace QGED;
 	}
 
 // RecentFileMenu ;
-	RecentFilesMenu::RecentFilesMenu(QWidget* parent)
-	 : 	QMenu("Recent files", parent),
+	RecentFilesMenu::RecentFilesMenu(const QString& _name, QWidget* parent)
+	 : 	name(_name),
+		QMenu("Recent files", parent),
 		clearAction("Clear", this)
 	{
 		QObject::connect(&signalMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(openRequest(const QString&)));
 		QObject::connect(&clearAction,	SIGNAL(triggered()),		this, SLOT(clear()));
 
+		// Load :
+		if(settingsManager.contains(QString("RecentFilesMenu:%1/list").arg(name)))
+			recentFiles = settingsManager.value(QString("RecentFilesMenu:%1/list").arg(name)).toStringList();	
+
 		buildMenu();
 	}
 
 	RecentFilesMenu::~RecentFilesMenu(void)
-	{ }
+	{
+		// Save :
+		settingsManager.setValue(QString("RecentFilesMenu:%1/list").arg(name), QStringList(recentFiles));
+	}
 
 	void RecentFilesMenu::buildMenu(void)
 	{
@@ -2183,9 +2253,8 @@ using namespace QGED;
 		compileAction("Compile", this),
 		templateMenu(this),
 		elementsMenu(this),
-		//settingsInterface(NULL),
 		searchAndReplaceMenu(this),
-		recentFilesMenu(this)
+		recentFilesMenu("CodeEditor", this)
 	{
 		// Build Menu : 
 		mainMenu.addAction(&openAction);
@@ -2228,8 +2297,6 @@ using namespace QGED;
 		layout.setSpacing(0);
 
 		addAction(&closeAction);
-
-		//settingsInterface = new CodeEditorSettingsInterface;
 
 		// Signals : 
 		QObject::connect(&tabBar, 			SIGNAL(currentChanged(int)), 					this, 			SLOT(changedToTab(int)));

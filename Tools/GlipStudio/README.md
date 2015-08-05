@@ -37,9 +37,32 @@ Platforms : *NIX, Windows 7+
 
 More on http://glip-lib.net
 
+Build options
+--------------
+In the file `GlipStudio.pro`, the variable `GLIP_OPTIONS` contain the options of the module options. You can remove any flag to disable and bypass requirements.
+
+| Option name          | Description |
+| -------------------- | ----- |
+| "__USE_QVGL__"       | Mandatory |
+| "__MAKE_VARIABLES__" | Mandatory |
+| "__USE_NETPBM__"     | Enable NetPBM image formats support (PGM, PPM) |
+| "__USE_LIBRAW__"     | Enable RAW file format suport (as .CR2, .NEF, etc.) via LibRAW. |
+
+On Windows platforms, you will have to set the location of the LibRAW library to compile with its support (see the `contains(DEFINES, __USE_LIBRAW__)` block) or disable it otherwise.
+
 Compiling
 --------------
-Using Qt toolchain :
+Using Qt toolchain on *NIX :
 
-$ qmake && make
+> qmake CONFIG+="release"
+
+Compile :
+
+> make
+
+Install :
+
+> make install
+
+On Windows, use Qt Creator and target Qt <= 5.3, with OpenGL support.
 

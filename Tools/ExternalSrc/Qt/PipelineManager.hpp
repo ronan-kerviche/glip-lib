@@ -323,6 +323,7 @@ namespace QGPM
 			void loadUniforms(QString filename="");
 			void saveUniforms(QString filename="");
 
+			static bool filterRequiredElements(const std::string& name);
 			static PipelineItem* getPtrFromGenericItem(QTreeWidgetItem* item);
 
 		signals : 	

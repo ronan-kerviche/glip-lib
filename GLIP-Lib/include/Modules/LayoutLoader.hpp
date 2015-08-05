@@ -755,7 +755,7 @@ catch(Exception& e)
 					std::vector<std::string> 			mainPipelineInputs,	
 											/// List of the output ports for the main pipeline contained in the script.
 											mainPipelineOutputs;	
-				};
+				};	
 
 			private :
 				static const char* keywords[LL_NumKeywords];
@@ -826,17 +826,25 @@ catch(Exception& e)
 				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace=true);
 				bool hasRequiredFormat(const std::string& name) const;
 				const HdlAbstractTextureFormat& getRequiredFormat(const std::string& name) const;
+				int clearRequiredFormat(const std::string& name="");
+				int clearRequiredFormat(bool (*filter)(const std::string&));
 				void addRequiredElement(const std::string& name, const ShaderSource& src, bool replace=true);
 				bool hasRequiredSource(const std::string& name) const;
 				const ShaderSource& getRequiredSource(const std::string& name) const;
+				int clearRequiredSource(const std::string& name="");
+				int clearRequiredSource(bool (*filter)(const std::string&));
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace=true);
 				bool hasRequiredGeometry(const std::string& name) const;
 				const GeometryModel& getRequiredGeometry(const std::string& name) const;
+				int clearRequiredGeometry(const std::string& name="");
+				int clearRequiredGeometry(bool (*filter)(const std::string&));
 				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace=true);
 				bool hasRequiredPipeline(const std::string& name) const;
 				const AbstractPipelineLayout& getRequiredPipelineLayout(const std::string& name) const;
-				int clearRequiredElements(void);
-				int clearRequiredElements(const std::string& name);
+				int clearRequiredPipelineLayout(const std::string& name="");
+				int clearRequiredPipelineLayout(bool (*filter)(const std::string&));
+				int clearRequiredElements(const std::string& name="");
+				int clearRequiredElements(bool (*filter)(const std::string&));
 
 				PipelineScriptElements listElements(const std::string& source, std::string sourceName="", int startLine=1);
 

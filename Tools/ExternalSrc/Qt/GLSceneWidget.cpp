@@ -2179,23 +2179,6 @@ using namespace QVGL;
 
 	QKeySequence GlipViewSettings::getKeysAssociatedToAction(const ActionID& a) const
 	{
-		/*bool addComa = false;
-		QString keysString;
-
-		for(QMap<QKeySequence, ActionID>::const_iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
-		{
-			if(it.value()==a)
-			{
-				if(addComa)
-					keysString += ", ";
-
-				keysString += it.key().toString();
-				addComa = true;
-			}
-		}
-	
-		return QKeySequence(keysString);*/
-
 		for(QMap<QKeySequence, ActionID>::const_iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
 		{
 			if(it.value()==a)
@@ -2288,6 +2271,48 @@ using namespace QVGL;
 		return (*this);
 	}
 
+	void GlipViewSettings::load(void)
+	{
+		#ifdef __USE_QSETTINGS__
+		if(settingsManager.contains("GlipViewSettings/backgroundColor"))
+			backgroundColor = settingsManager.value("GlipViewSettings/backgroundColor").value<QColor>();
+
+		if(settingsManager.contains("GlipViewSettings/translationStep"))
+			translationStep = settingsManager.value("GlipViewSettings/translationStep").toFloat();
+
+		if(settingsManager.contains("GlipViewSettings/rotationStep"))
+			rotationStep = settingsManager.value("GlipViewSettings/rotationStep").toFloat();
+
+		if(settingsManager.contains("GlipViewSettings/zoomFactor"))
+			zoomFactor = settingsManager.value("GlipViewSettings/zoomFactor").toFloat();
+		
+		for(int k=0; k<NumActions; k++)
+		{
+			const ActionID action = static_cast<ActionID>(k);
+			if(settingsManager.contains(QString("GlipViewSettings/%1KeySequence").arg(GlipViewWidget::getActionName(action))))
+			{
+				QKeySequence key = settingsManager.value(QString("GlipViewSettings/%1KeySequence").arg(GlipViewWidget::getActionName(action))).value<QKeySequence>();
+				keysActionsAssociations[key] = action;
+			}
+		}
+		#endif
+	}
+
+	void GlipViewSettings::save(void)
+	{
+		#ifdef __USE_QSETTINGS__
+		settingsManager.setValue("GlipViewSettings/backgroundColor", backgroundColor);
+		settingsManager.setValue("GlipViewSettings/translationStep", translationStep);
+		settingsManager.setValue("GlipViewSettings/rotationStep", rotationStep);
+		settingsManager.setValue("GlipViewSettings/zoomFactor", zoomFactor);
+		for(QMap<QKeySequence, ActionID>::const_iterator it=keysActionsAssociations.begin(); it!=keysActionsAssociations.end(); it++)
+		{
+			settingsManager.setValue(QString("GlipViewSettings/%1KeySequence").arg(GlipViewWidget::getActionName(it.value())), it.key());
+			//settingsManager.setValue(QString("GlipViewSettings/%1TakeBack").arg(GlipViewWidget::getActionName(it.value())), takeBackEnabled[it.value()]);
+		}
+		#endif
+	}
+
 // KeyGrabber :
 	KeyGrabber::KeyGrabber(const ActionID& _actionID, const QKeySequence& _currentKey, QWidget* parent)
 	 : 	QPushButton(getKeyName(_currentKey), parent),
@@ -2339,9 +2364,8 @@ using namespace QVGL;
 	}
 
 // GlipViewSettingsInterface :
-	GlipViewSettingsInterface::GlipViewSettingsInterface(const GlipViewSettings& _settings)
+	GlipViewSettingsInterface::GlipViewSettingsInterface(void)
 	 :	SubWidget(static_cast<SubWidget::Flag>(SubWidget::NotResizeable | SubWidget::NotAnchorable | SubWidget::NotMaximizable | SubWidget::CloseOnHideRequest)), 
-		settings(_settings),
 		keysGroupBox(&innerWidget),
 		othersGroupBox(&innerWidget),
 		layout(&innerWidget),
@@ -2358,6 +2382,9 @@ using namespace QVGL;
 		backgroundColorButton(&innerWidget),
 		dialogButtons(QDialogButtonBox::Ok | QDialogButtonBox::Apply | QDialogButtonBox::Reset | QDialogButtonBox::Cancel, Qt::Horizontal, &innerWidget)
 	{
+		// Load (if using QSettings, this will load user settings) :
+		settings.load();
+
 		// Add the inner widget :
 		setInnerWidget(&innerWidget);
 		setTitle("Settings");
@@ -2423,6 +2450,9 @@ using namespace QVGL;
 
 	GlipViewSettingsInterface::~GlipViewSettingsInterface(void)
 	{
+		// If using QSettings, this will save the settings :
+		settings.save();
+
 		for(QVector<KeyGrabber*>::iterator it=keyGrabbers.begin(); it!=keyGrabbers.end(); it++)
 			delete (*it);
 	}
@@ -3481,7 +3511,7 @@ using namespace QVGL;
 		contextWidget(NULL),
 		glScene(NULL),
 		infosDialog(NULL),
-		settingsInterface(GlipViewSettings()),
+		settingsInterface(),
 		currentViewIndex(-1),
 		currentViewsTableIndex(-1),
 		mainViewsTable(NULL),

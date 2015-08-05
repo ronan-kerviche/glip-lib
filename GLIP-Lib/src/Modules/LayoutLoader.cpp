@@ -2046,6 +2046,48 @@
 	}
 
 	/**
+	\fn int LayoutLoader::clearRequiredFormat(const std::string& name)
+	\brief Remove required formats of given name.
+	\param name Name of the required format.
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredFormat(const std::string& name)
+	{
+		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
+		if(it!=requiredFormatList.end())
+		{
+			requiredFormatList.erase(it);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredFormat(bool (*filter)(const std::string&))
+	\brief Remove required formats with user-defined criterion.
+	\param filter The filtering function (returning true to remove an element).
+	\return The number of elements removed.
+	**/	
+	int LayoutLoader::clearRequiredFormat(bool (*filter)(const std::string&))
+	{
+		int count = 0;
+		for(std::map<std::string,HdlTextureFormat>::iterator it=requiredFormatList.begin(); it!=requiredFormatList.end(); )
+		{
+			if(filter(it->first))
+			{	
+				std::map<std::string,HdlTextureFormat>::iterator delIt = it;
+				it++;
+				requiredFormatList.erase(delIt);
+				count++;
+			}
+			else
+				it++;
+		}
+		return count;
+	}
+	
+	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
 	\brief Add a ShaderSource to do the possibly required elements, along with its name. 
 
@@ -2096,7 +2138,49 @@
 		else
 			return it->second;
 	}
-		
+	
+	/**
+	\fn int LayoutLoader::clearRequiredSource(const std::string& name)
+	\brief Remove required source of given name.
+	\param name Name of the required source.
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredSource(const std::string& name)
+	{
+		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
+		if(it!=requiredSourceList.end())
+		{
+			requiredSourceList.erase(it);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredSource(bool (*filter)(const std::string&))
+	\brief Remove required sources with user-defined criterion.
+	\param filter The filtering function (returning true to remove an element).
+	\return The number of elements removed.
+	**/	
+	int LayoutLoader::clearRequiredSource(bool (*filter)(const std::string&))
+	{
+		int count = 0;
+		for(std::map<std::string,ShaderSource>::iterator it=requiredSourceList.begin(); it!=requiredSourceList.end(); )
+		{
+			if(filter(it->first))
+			{
+				std::map<std::string,ShaderSource>::iterator delIt = it;
+				it++;
+				requiredSourceList.erase(delIt);
+				count++;
+			}
+			else
+				it++;
+		}
+		return count;
+	}
+	
 	/**
 	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
 	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name.
@@ -2147,6 +2231,48 @@
 			throw Exception("Layoutoader::getRequiredGeometry - Required geometry \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
 			return it->second;
+	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredGeometry(const std::string& name)
+	\brief Remove required geometry of given name.
+	\param name Name of the required format.
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredGeometry(const std::string& name)
+	{
+		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
+		if(it!=requiredGeometryList.end())
+		{
+			requiredGeometryList.erase(it);
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredGeometry(bool (*filter)(const std::string&))
+	\brief Remove required geometry with user-defined criterion.
+	\param filter The filtering function (returning true to remove an element).
+	\return The number of elements removed.
+	**/	
+	int LayoutLoader::clearRequiredGeometry(bool (*filter)(const std::string&))
+	{
+		int count = 0;
+		for(std::map<std::string,GeometryModel>::iterator it=requiredGeometryList.begin(); it!=requiredGeometryList.end(); )
+		{
+			if(filter(it->first))
+			{
+				std::map<std::string,GeometryModel>::iterator delIt = it;
+				it++;
+				requiredGeometryList.erase(delIt);
+				count++;
+			}
+			else
+				it++;
+		}
+		return count;
 	}
 
 	/**
@@ -2202,72 +2328,78 @@
 	}
 
 	/**
-	\fn int LayoutLoader::clearRequiredElements(void)
-	\brief Remove all the elements.
+	\fn int LayoutLoader::clearRequiredPipelineLayout(const std::string& name)
+	\brief Remove required pipeline layout of given name.
+	\param name Name of the required format.
 	\return The number of elements removed.
 	**/
-	int LayoutLoader::clearRequiredElements(void)
+	int LayoutLoader::clearRequiredPipelineLayout(const std::string& name)
 	{
-		int numElemErased = 0;
+		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
+		if(it!=requiredPipelineList.end())
+		{
+			requiredPipelineList.erase(it);
+			return 1;
+		}
+		else
+			return 0;
+	}
 
-		numElemErased += requiredFormatList.size();
-		numElemErased += requiredSourceList.size();
-		numElemErased += requiredGeometryList.size();
-		numElemErased += requiredPipelineList.size();
-
-		requiredFormatList.clear();
-		requiredSourceList.clear();
-		requiredGeometryList.clear();
-		requiredPipelineList.clear();
-
-		return numElemErased;
+	/**
+	\fn int LayoutLoader::clearRequiredPipelineLayout(bool (*filter)(const std::string&))
+	\brief Remove required pipeline layout with user-defined criterion.
+	\param filter The filtering function (returning true to remove an element).
+	\return The number of elements removed.
+	**/	
+	int LayoutLoader::clearRequiredPipelineLayout(bool (*filter)(const std::string&))
+	{
+		int count = 0;
+		for(std::map<std::string,PipelineLayout>::iterator it=requiredPipelineList.begin(); it!=requiredPipelineList.end(); )
+		{
+			if(filter(it->first))
+			{
+				std::map<std::string,PipelineLayout>::iterator delIt = it;
+				it++;
+				requiredPipelineList.erase(delIt);
+				count++;
+			}
+			else
+				it++;
+		}
+		return count;
 	}
 
 	/**
 	\fn int LayoutLoader::clearRequiredElements(const std::string& name)
 	\brief Remove the elements having the given name.
-	\param name The name of the targeted element.
+	\param name The name of the targeted element. If empty, will remove all elements.
 	\return The number of elements removed.
 	**/
 	int LayoutLoader::clearRequiredElements(const std::string& name)
-	{
-		std::map<std::string,HdlTextureFormat>::iterator it1;
-		std::map<std::string,ShaderSource>::iterator it2;
-		std::map<std::string,GeometryModel>::iterator it3;
-		std::map<std::string,PipelineLayout>::iterator it4;
+	{	
 		int numElemErased = 0;
-
-		it1 = requiredFormatList.find(name);
-		it2 = requiredSourceList.find(name);
-		it3 = requiredGeometryList.find(name);
-		it4 = requiredPipelineList.find(name);
-
-		if(it1!=requiredFormatList.end())
-		{
-			requiredFormatList.erase(it1);
-			numElemErased++;
-		}
-
-		if(it2!=requiredSourceList.end())
-		{
-			requiredSourceList.erase(it2);
-			numElemErased++;
-		}
-
-		if(it3!=requiredGeometryList.end())
-		{
-			requiredGeometryList.erase(it3);
-			numElemErased++;
-		}
-
-		if(it4!=requiredPipelineList.end())
-		{
-			requiredPipelineList.erase(it4);
-			numElemErased++;
-		}
-	
+		numElemErased += clearRequiredFormat(name);
+		numElemErased += clearRequiredSource(name);
+		numElemErased += clearRequiredGeometry(name);
+		numElemErased += clearRequiredPipelineLayout(name);
 		return numElemErased;
 	}
+
+	/**
+	\fn int LayoutLoader::clearRequiredElements(bool (*filter)(const std::string&))
+	\brief Remove elements according to a user-defined criterion.
+	\param filter Filtering functions (returns true to remove an element).
+	\return The number of elements removed.
+	**/
+	int LayoutLoader::clearRequiredElements(bool (*filter)(const std::string&))
+	{
+		int numElemErased = 0;
+		numElemErased += clearRequiredFormat(filter);
+		numElemErased += clearRequiredSource(filter);
+		numElemErased += clearRequiredGeometry(filter);
+		numElemErased += clearRequiredPipelineLayout(filter);
+		return numElemErased;
+	} 
 
 	/**
 	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)

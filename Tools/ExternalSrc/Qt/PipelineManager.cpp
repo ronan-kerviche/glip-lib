@@ -17,11 +17,12 @@
 #include "PipelineManager.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
-#include <QCompleter>
+#include <QDesktopWidget>
 #include "QMenuTools.hpp"
 
 using namespace QGPM;
 
+// For debug :
 //#define __VERBOSE_PIPELINE_ITEMS__ 
 
 // ModulesList :
@@ -671,7 +672,21 @@ using namespace QGPM;
 	{
 		setData(0, Qt::UserRole, QVariant::fromValue(reinterpret_cast<void*>(this)));
 
+		// Add the modules to the loader :
 		modulesList->addModules(loader);
+
+		// Add the screen variables to the loader :
+		QDesktopWidget* desktopWidget = QApplication::desktop();
+		if(desktopWidget!=NULL)
+		{
+			for(int k=0; k<desktopWidget->screenCount(); k++)
+			{
+				const std::string name = "_screen" + Glip::toString(k);
+				const QRect rect = desktopWidget->screenGeometry(k);
+				Glip::CoreGL::HdlTextureFormat fmt(rect.width(), rect.height(), GL_RGB, GL_UNSIGNED_BYTE);
+				loader.addRequiredElement(name, fmt);
+			}
+		}
 
 		inputsNode.setText(0, "Inputs");
 		outputsNode.setText(0, "Outputs");
@@ -681,7 +696,7 @@ using namespace QGPM;
 
 		setExpanded(true);
 
-		QObject::connect(this, 		SIGNAL(showIdentifierWidget(void*)),				referrer, 	SLOT(showIdentifierWidget(void*)));
+		//QObject::connect(this, 	SIGNAL(showIdentifierWidget(void*)),				referrer, 	SLOT(showIdentifierWidget(void*))); // Could be used to popup the right editor but not set up at the moment.
 		QObject::connect(this, 		SIGNAL(compilationSuccessNotification(void*)),			referrer, 	SLOT(compilationSuccessNotification(void*)));
 		QObject::connect(this, 		SIGNAL(compilationFailureNotification(void*, Exception)),	referrer, 	SLOT(compilationFailureNotification(void*, Exception)));
 		QObject::connect(&coolDownTimer,SIGNAL(timeout(void)),						this,		SLOT(updateCoolDown(void)));
@@ -947,13 +962,16 @@ using namespace QGPM;
 		try
 		{
 			// Set the inputs format : 
-			loader.clearRequiredElements();
+			loader.clearRequiredElements(PipelineItem::filterRequiredElements);
 
 			for(int k=0; k<elements.mainPipelineInputs.size(); k++)
 			{
 				std::string name = getInputFormatName(k);
 
 				const bool baseTest = (k<inputPortItems.size() && inputPortItems[k]!=NULL && inputPortItems[k]->getConnection()!=NULL);
+
+				if(!filterRequiredElements(name))
+					throw Exception("PipelineItem::compile - Cannot add requirement with protected name : " + name , __FILE__, __LINE__);
 
 				// Test the connection (take it as valid if it is invalid but part of this pipeline, a self connection) : 
 				if(baseTest && inputPortItems[k]->getConnection()->isValid())
@@ -1390,6 +1408,12 @@ using namespace QGPM;
 	{
 		if(uniformsNode!=NULL)
 			uniformsNode->save(filename);
+	}
+
+	bool PipelineItem::filterRequiredElements(const std::string& name)
+	{
+		// Names starting with '_' cannot be deleted.
+		return !(name.size()>1 && name[0]=='_');
 	}
 
 	PipelineItem* PipelineItem::getPtrFromGenericItem(QTreeWidgetItem* item)

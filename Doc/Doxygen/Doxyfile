@@ -808,7 +808,9 @@ RECURSIVE              = YES
 EXCLUDE                = ../../GLIP-Lib/include/Core/glew.h \
                          ../../GLIP-Lib/include/Core/glxew.h \
                          ../../GLIP-Lib/include/Core/wglew.h \
-                         ../../GLIP-Lib/src/Core/glew.c
+                         ../../GLIP-Lib/src/Core/glew.c \
+                         ../../GLIP-Lib/CMakeFiles \
+                         ../../GLIP-Lib/_CPack_Packages
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

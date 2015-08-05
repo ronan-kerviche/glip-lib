@@ -39,13 +39,17 @@ Compiling
 --------------
 Using cmake, cmake-gui or equivalent generate the Makefile or SLN file for building the project :
 
-$ cmake . -DCMAKE_BUILD_TYPE=release
+> cmake . -DCMAKE_BUILD_TYPE=release
 
 Then compile with Make or via Visual Studio depending on the platform :
 
-$ make
+> make
 
-To generate packages (on *NIX), use :
+And install :
 
-$ make package
+> make install
+
+To generate packages (on *NIX, DEB and RPM), use :
+
+> make package
 

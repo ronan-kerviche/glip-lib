@@ -51,13 +51,16 @@
 			default :
 				txt = QString("[%1] UNKNOWN :\n%2").arg(dateTime.toString()).arg(msg);
 		}
-
 		std::cout << txt.toStdString() << std::endl;
 
-		QFile outFile("errorLog.txt");
-		outFile.open(QIODevice::WriteOnly | QIODevice::Append);
-		QTextStream stream(&outFile);
-		stream << txt << "\n";
+		// If running in debug, save the message to a file :
+		#ifdef QT_DEBUG
+			QFile outFile("errorLog.txt");
+			outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+			QTextStream stream(&outFile);
+			stream << txt << "\n";
+			outFile.close();
+		#endif
 
 		if(type==QtFatalMsg)
 			abort();
@@ -78,6 +81,10 @@
 		#else
 			qInstallMsgHandler(customMessageHandler);
 		#endif
+
+		QCoreApplication::setOrganizationName("GLIPLib");
+		QCoreApplication::setOrganizationDomain("glip-lib.net");
+		QCoreApplication::setApplicationName("GlipStudio");
 
 		loadStyleSheet();
 		loadFonts();
@@ -112,7 +119,6 @@
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(addImageItemRequest(HdlTexture*, const QString)),				collection->getCollectionPtr(),		SLOT(addImageItem(HdlTexture*, const QString)));
 		QObject::connect(pipelineManager->getManagerPtr(), 	SIGNAL(editFile(const QString)),							editor->getCodeEditorPtr(),		SLOT(open(const QString&)));
 
-		//window->resize(1000, 800);
 		window->show();
 	}
 
@@ -134,7 +140,6 @@
 		{
 			QString path = QDir::currentPath();
 
-			std::cout << "Preparing exception : " << stylesheetFile.fileName().toStdString() << " and " << path.toStdString() << std::endl;
 			Exception e("GlipStudio::GlipStudio - The style sheet \"" + stylesheetFile.fileName().toStdString()  + "\" could not be loaded (from " + path.toStdString() + ").", __FILE__, __LINE__); 
 
 			qCritical() << e.what();

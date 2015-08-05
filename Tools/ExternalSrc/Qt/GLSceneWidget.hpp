@@ -45,6 +45,9 @@
 	#include <QListWidget>
 	#include <QDialogButtonBox>
 	#include <QDoubleSpinBox>
+	#ifdef __USE_QSETTINGS__
+		#include <QSettings>
+	#endif
 
 	// Enable some interactivity with Uniforms Variables modules (might be declared somewhere else) :
 	//#define __MAKE_VARIABLES__
@@ -571,7 +574,10 @@ namespace QVGL
 
 	class GlipViewSettings
 	{
-		protected : 
+		protected :
+			#ifdef __USE_QSETTINGS__ 
+			QSettings			settingsManager;
+			#endif
 			QVector<bool>			takeBackEnabled;
 			QMap<QKeySequence, ActionID> 	keysActionsAssociations;
 			
@@ -591,7 +597,9 @@ namespace QVGL
 			void setActionKeySequence(const ActionID& a, const QKeySequence& keySequence, bool enableTakeBack=false);
 			void resetActionsKeySequences(void);
 			void resetSettings(void);
-			virtual GlipViewSettings& operator=(const GlipViewSettings& c);
+			GlipViewSettings& operator=(const GlipViewSettings& c);
+			void load(void);
+			void save(void);
 	};
 
 		class KeyGrabber : public QPushButton
@@ -653,7 +661,7 @@ namespace QVGL
 				void processDialogButtonPressed(QAbstractButton* button);
 
 			public : 
-				GlipViewSettingsInterface(const GlipViewSettings& _settings);
+				GlipViewSettingsInterface(void);
 				~GlipViewSettingsInterface(void);
 
 				const GlipViewSettings& getSettings(void) const;

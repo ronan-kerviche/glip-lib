@@ -61,7 +61,10 @@
 	#include <QLineEdit>
 	#include <QWidgetAction>
 	#include <QTime>
-
+	#ifdef __USE_QSETTINGS__
+		#include <QSettings>
+	#endif
+	
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
 	#endif 
@@ -276,32 +279,40 @@ namespace QGED
 			void clearCurrentCodeEditor(void);
 	};
 
-	struct CodeEditorSettings
+	class CodeEditorSettings
 	{
-		const int		defaultFontSize;
-		QColor 			glslKeywordColor,
-					glslFunctionColor,
-					glslPreprocessorColor,
-					glipLayoutLoaderKeywordColor,
-					glipUniformLoaderKeywordColor,
-					commentsColor,
-					braceMatchingColor,
-					searchColor;
-		QFont			editorFont,
-					keywordFont;
-		QTextOption::WrapMode	wrapMode;
-		int			tabNumberOfSpaces;
-		bool			enableHighlight,
-					highlightCurrentLine,
-					braceMatching;
+		private :
+			#ifdef __USE_QSETTINGS__
+			QSettings 		settingsManager;
+			#endif
 
-		CodeEditorSettings(const int _defaultFontSize);
-		CodeEditorSettings(const CodeEditorSettings& c);
-		virtual ~CodeEditorSettings(void);
+		public :
+			const int		defaultFontSize;
+			QColor 			glslKeywordColor,
+						glslFunctionColor,
+						glslPreprocessorColor,
+						glipLayoutLoaderKeywordColor,
+						glipUniformLoaderKeywordColor,
+						commentsColor,
+						braceMatchingColor,
+						searchColor;
+			QFont			editorFont,
+						keywordFont;
+			QTextOption::WrapMode	wrapMode;
+			int			tabNumberOfSpaces;
+			bool			enableHighlight,
+						highlightCurrentLine,
+						braceMatching;
 
-		void resetSettings(void);
-		std::string getSettingsString(void) const;
-		void setSettingsFromString(const std::string& str);
+			CodeEditorSettings(const int _defaultFontSize);
+			CodeEditorSettings(const CodeEditorSettings& c);
+			virtual ~CodeEditorSettings(void);
+
+			void resetSettings(void);
+			//std::string getSettingsString(void) const;
+			//void setSettingsFromString(const std::string& str);
+			void load(void);
+			void save(void);
 	};
 
 	#ifndef __USE_QVGL__
@@ -478,14 +489,18 @@ namespace QGED
 		Q_OBJECT
 
 		private :
-			QList<QString>	recentFiles;
-			QSignalMapper	signalMapper;
-			QAction		clearAction;
+			#ifdef __USE_QSETTINGS__
+			QSettings		settingsManager;
+			#endif
+			const QString		name;
+			QList<QString>		recentFiles;
+			QSignalMapper		signalMapper;
+			QAction			clearAction;
 
 			void buildMenu(void);
 
 		public :
-			RecentFilesMenu(QWidget* parent=NULL);
+			RecentFilesMenu(const QString& _name, QWidget* parent=NULL);
 			virtual ~RecentFilesMenu(void);
 
 			const QList<QString>& getList(void) const;

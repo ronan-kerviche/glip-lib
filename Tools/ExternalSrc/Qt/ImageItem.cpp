@@ -19,6 +19,7 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QToolTip>
+#include <QMessageBox>
 #include "QMenuTools.hpp"
 
 #ifdef __USE_NETPBM__
@@ -549,7 +550,7 @@ using namespace QGIC;
 			return tr("%1 MB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/MB)) );
 		else if(size>=KB)
 			return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/KB)) );
-		else 
+		//else 
 			return tr("%1 B").arg( size );
 	}
 
