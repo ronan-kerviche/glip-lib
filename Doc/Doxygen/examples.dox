@@ -1686,7 +1686,7 @@ Use GLIP-Lib from the command line to process or generate images.
 glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, 3, ...} FILENAME]
 	     [-o {1, 2, 3, ...} FILENAME] [-r FILENAME]
 
-Mandatory argument :
+Mandatory arguments :
 -p, --pipeline	Pipeline filename. See the online documentation for more
 		information about pipeline scripts.
 		E.g. : -p pipeline.ppl
@@ -1730,6 +1730,8 @@ Other options :
 		are conserved as long as possible on device, depending on
 		their usage frequency).
 		Default is 128 MB.
+ -s, --preserve	Preserve the pipeline definition after its first creation.
+		New inputs sizes will be ignored as required elements.
  -d, --display	Name of the host, X server and display to target for the
 		context.
 		E.g. : -d host:xServer.screenId
@@ -1774,6 +1776,10 @@ UNIFORMS
 {
 	// Uniforms description goes here.
 }
+
+EXAMPLE
+  For a pipeline with one input and at least one ouput :
+     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.
 \endverbatim
 
 \section sec_XRemoteOpenGL X And Remote OpenGL
@@ -1816,7 +1822,8 @@ UNIFORMS
 
 	Compile and install GlipLib, GlipCompute :
 	\code 
-	TODO
+	$ cmake . -DCMAKE_BUILD_TYPE=release && make
+	# make install
 	\endcode
 
 	Start the X server with a display at the address <i>:0</i> :

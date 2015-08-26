@@ -39,10 +39,10 @@ SOURCE:WindowShader
 
 	void main()
 	{
-		vec4 f = texture(fourierDomain, vec2(gl_TexCoord[0].s,0.0));
+		float x = gl_FragCoord.x/float(fmt.x);
+		vec4 f = texture(fourierDomain, vec2(x,0.0));
 		modulation = vec4(0.0, 0.0, 0.0, 1.0);
 
-		float x = gl_FragCoord.x/float(fmt.x);
 		if(shifted==0)
 			modulation.r = (exp(-2.0*x*x/(windowSize*windowSize/10000.0)) + exp(-2.0*(x-1.0)*(x-1.0)/(windowSize*windowSize/10000.0)))/2.0;
 		else

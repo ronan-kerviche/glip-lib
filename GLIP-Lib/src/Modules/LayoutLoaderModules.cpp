@@ -223,57 +223,22 @@
 		\param loader A LayoutLoader object.
 		**/
 		void LayoutLoaderModule::addBasicModules(LayoutLoader& loader)
-		{
-			loader.addModule( new IF_FORMAT_DEFINED );
-			loader.addModule( new IF_SOURCE_DEFINED );
-			loader.addModule( new IF_GEOMETRY_DEFINED );
-			loader.addModule( new IF_FILTERLAYOUT_DEFINED );
-			loader.addModule( new IF_PIPELINELAYOUT_DEFINED );
-			loader.addModule( new IF_REQUIREDFORMAT_DEFINED );
-			loader.addModule( new IF_REQUIREDGEOMETRY_DEFINED );
-			loader.addModule( new IF_REQUIREDPIPELINE_DEFINED );
-			loader.addModule( new FORMAT_CHANGE_SIZE );
-			loader.addModule( new FORMAT_SCALE_SIZE );
-			loader.addModule( new FORMAT_CHANGE_CHANNELS );
-			loader.addModule( new FORMAT_CHANGE_DEPTH );
-			loader.addModule( new FORMAT_CHANGE_FILTERING );
-			loader.addModule( new FORMAT_CHANGE_WRAPPING );
-			loader.addModule( new FORMAT_CHANGE_MIPMAP );
-			loader.addModule( new FORMAT_MINIMUM_WIDTH );
-			loader.addModule( new FORMAT_MAXIMUM_WIDTH );
-			loader.addModule( new FORMAT_MINIMUM_HEIGHT );
-			loader.addModule( new FORMAT_MAXIMUM_HEIGHT );
-			loader.addModule( new FORMAT_MINIMUM_PIXELS );
-			loader.addModule( new FORMAT_MAXIMUM_PIXELS );
-			loader.addModule( new FORMAT_MINIMUM_ELEMENTS );
-			loader.addModule( new FORMAT_MAXIMUM_ELEMENTS );
-			loader.addModule( new FORMAT_SMALLER_POWER_OF_TWO );
-			loader.addModule( new FORMAT_LARGER_POWER_OF_TWO );
-			loader.addModule( new FORMAT_SWAP_DIMENSIONS );
-			loader.addModule( new IF_FORMAT_SETTING_MATCH );
-			loader.addModule( new IF_FORMAT_SETTING_LARGERTHAN );
-			loader.addModule( new GENERATE_SAME_SIZE_2D_GRID );
-			loader.addModule( new GENERATE_SAME_SIZE_3D_GRID );
-			loader.addModule( new CHAIN_PIPELINES );
-			loader.addModule( new FORMAT_TO_CONSTANT );
-			loader.addModule( new SINGLE_FILTER_PIPELINE );
-			loader.addModule( new IF_GLSL_VERSION_MATCH );
-			loader.addModule( new ABORT_ERROR );
-			loader.addModule( new GenerateFFT1DPipeline );
-			loader.addModule( new GenerateFFT2DPipeline );
-			loader.addModule( new OBJLoader );
-			loader.addModule( new STLLoader );
+		{		
+			std::vector<LayoutLoaderModule*> modules = LayoutLoaderModule::getBasicModulesList();
+			for(std::vector<LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+				loader.addModule(*it);
 		}
 
 		/**
 		\fn std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
 		\brief Retrieve the list of standard modules.
-		\return A vector containing pointers to the basic modules. The client code has the responsability of deleting this modules.
+		\return A vector containing pointers to the basic modules. The client code has the responsability of deleting these modules.
 		**/
 		std::vector<LayoutLoaderModule*> LayoutLoaderModule::getBasicModulesList(void)
 		{
 			std::vector<LayoutLoaderModule*> result;
 
+			result.push_back( new IF_MODULE_AVAILABLE );
 			result.push_back( new IF_FORMAT_DEFINED );
 			result.push_back( new IF_SOURCE_DEFINED );
 			result.push_back( new IF_GEOMETRY_DEFINED );
@@ -431,6 +396,46 @@
 		}
 
 	// Simple modules : 
+			LAYOUT_LOADER_MODULE_APPLY( IF_MODULE_AVAILABLE, 1, 1, 1,	"DESCRIPTION{Check if the MODULE is available and can be used.}"
+											"ARGUMENT:moduleName{Name of the module to be used.}"
+											"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
+			{
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(startLine)
+
+				std::string 	trueCase, 
+						falseCase;
+				int	trueCaseStartLine=1,
+					falseCaseStartLine=1;	
+				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
+				
+				CONST_ITERATOR_TO_MODULE(it, arguments[0])
+
+				executionSourceName = sourceName;
+				if(it!=moduleList.end())
+				{
+					executionSource = trueCase;
+					executionStartLine = trueCaseStartLine;
+				}
+				else
+				{
+					executionSource = falseCase;
+					executionStartLine = falseCaseStartLine;
+				}
+			}
+ 
 			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FORMAT was defined.}"
 										"ARGUMENT:formatName{Name of the format to test.}"
 										"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
@@ -447,6 +452,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -486,6 +492,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -525,6 +532,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -564,6 +572,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -603,6 +612,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -642,6 +652,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -681,6 +692,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -720,6 +732,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -759,6 +772,7 @@
 				UNUSED_PARAMETER(requiredFormatList)
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 
 				std::string 	trueCase, 
@@ -801,6 +815,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -846,6 +861,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -906,6 +922,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -941,6 +958,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -977,6 +995,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1014,6 +1033,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1050,6 +1070,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1087,6 +1108,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1136,6 +1158,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1185,6 +1208,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1234,6 +1258,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1284,6 +1309,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1333,6 +1359,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1382,6 +1409,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1431,6 +1459,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1479,6 +1508,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1527,6 +1557,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1574,6 +1605,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1609,6 +1641,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 			
 				FORMAT_MUST_EXIST( arguments[0] )
 				CONST_ITERATOR_TO_FORMAT( it, arguments[0] )
@@ -1661,6 +1694,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 
 				FORMAT_MUST_EXIST( arguments[0] )
 
@@ -1713,6 +1747,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1746,6 +1781,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1783,6 +1819,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1953,6 +1990,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -1986,6 +2024,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 
 				const std::string	innerFormatSuffix = "_innerFormat",
@@ -2106,6 +2145,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(startLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)
@@ -2140,6 +2180,7 @@
 				UNUSED_PARAMETER(requiredSourceList)
 				UNUSED_PARAMETER(requiredGeometryList)
 				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
 				UNUSED_PARAMETER(bodyLine)
 				UNUSED_PARAMETER(executionSource)
 				UNUSED_PARAMETER(executionSourceName)

@@ -565,7 +565,7 @@ using namespace Glip::Modules;
 		// Try to open for read : 
 		std::fstream file;
 
-		file.open( filename.c_str(), std::fstream::in | std::fstream::binary );
+		file.open(filename.c_str(), std::fstream::in | std::fstream::binary);
 
 		if(!file.is_open())
 		{
@@ -703,46 +703,45 @@ using namespace Glip::Modules;
 		file.write(headerSignature.c_str(), headerSignature.size());
 
 		// Data :
-		int	width		= getWidth(),
-			height		= getHeight(),
-			alignment	= getAlignment();
-		GLenum	mode		= getGLMode(),
-			depth		= getGLDepth(),
-			minFilter	= getMinFilter(),
-			magFilter	= getMagFilter(),
-			sWrapping 	= getSWrapping(),
-			tWrapping	= getTWrapping();
-		int	minMipmap	= getBaseLevel(),
-			maxMipmap	= getMaxLevel();
+		const int	width		= getWidth(),
+				height		= getHeight(),
+				alignment	= getAlignment();
+		const GLenum	mode		= getGLMode(),
+				depth		= getGLDepth(),
+				minFilter	= getMinFilter(),
+				magFilter	= getMagFilter(),
+				sWrapping 	= getSWrapping(),
+				tWrapping	= getTWrapping();
+		const int	minMipmap	= getBaseLevel(),
+				maxMipmap	= getMaxLevel();
 
-		file.write(	reinterpret_cast<char*>(&width), 	sizeof(width) );
-		file.write(	reinterpret_cast<char*>(&height), 	sizeof(height) );
-		file.write(	reinterpret_cast<char*>(&alignment), 	sizeof(alignment) );
-		file.write(	reinterpret_cast<char*>(&mode), 	sizeof(mode) );
-		file.write(	reinterpret_cast<char*>(&depth), 	sizeof(depth) );
-		file.write(	reinterpret_cast<char*>(&minFilter), 	sizeof(minFilter) );
-		file.write(	reinterpret_cast<char*>(&magFilter), 	sizeof(magFilter) );
-		file.write(	reinterpret_cast<char*>(&sWrapping), 	sizeof(sWrapping) );
-		file.write(	reinterpret_cast<char*>(&tWrapping), 	sizeof(tWrapping) );
-		file.write(	reinterpret_cast<char*>(&minMipmap), 	sizeof(minMipmap) );
-		file.write(	reinterpret_cast<char*>(&maxMipmap), 	sizeof(maxMipmap) );
+		file.write(reinterpret_cast<const char*>(&width), 	sizeof(width) );
+		file.write(reinterpret_cast<const char*>(&height), 	sizeof(height) );
+		file.write(reinterpret_cast<const char*>(&alignment),	sizeof(alignment) );
+		file.write(reinterpret_cast<const char*>(&mode), 	sizeof(mode) );
+		file.write(reinterpret_cast<const char*>(&depth),	sizeof(depth) );
+		file.write(reinterpret_cast<const char*>(&minFilter),	sizeof(minFilter) );
+		file.write(reinterpret_cast<const char*>(&magFilter),	sizeof(magFilter) );
+		file.write(reinterpret_cast<const char*>(&sWrapping),	sizeof(sWrapping) );
+		file.write(reinterpret_cast<const char*>(&tWrapping),	sizeof(tWrapping) );
+		file.write(reinterpret_cast<const char*>(&minMipmap),	sizeof(minMipmap) );
+		file.write(reinterpret_cast<const char*>(&maxMipmap),	sizeof(maxMipmap) );
 
 		// Write comment : 
 		if(comment.empty())
 		{
-			unsigned int l = 0;
-			file.write(	reinterpret_cast<char*>(&l),	sizeof(l));
+			const unsigned int l = 0;
+			file.write(reinterpret_cast<const char*>(&l),	sizeof(l));
 		}
 		else
 		{
-			unsigned int l = comment.size();
-			file.write(	reinterpret_cast<char*>(&l),	sizeof(l));
-
-			file.write(	comment.c_str(), l);
+			const unsigned int l = comment.size();
+			file.write(reinterpret_cast<const char*>(&l),	sizeof(l));
+			file.write(comment.c_str(), l);
 		}
 
 		// Write data :
-		file.write( reinterpret_cast<const char*>(getPtr()), getSize());
+		file.write(reinterpret_cast<const char*>(getPtr()), getSize());
 
 		// Finally : 
 		file.close();

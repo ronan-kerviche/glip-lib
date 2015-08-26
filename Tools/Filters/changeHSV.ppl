@@ -2,7 +2,8 @@
 	Transfer the image in HSV to apply some corrections, and transfer back to RGB.
 */
 
-REQUIRED_FORMAT:outputFormat0(inputFormat0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+REQUIRED_FORMAT:outputFormat(inputFormat0, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+CALL:FORMAT_TO_CONSTANT(outputFormat)
 
 INCLUDE(colors.ppl)
 
@@ -14,14 +15,15 @@ SOURCE:ChangeHSVShader
 	out     vec4 		textureChangedHSV;
 	
 	INSERT(ColorPrimitives)
+	INSERT(outputFormat)
 
 	uniform float vScal = 1.0, sScal = 1.0, hRot;
 
 	void main()
 	{
 		// Get the input data :
-		vec4 col  = textureLod(textureInput, gl_TexCoord[0].st, 0.0);
-
+		vec2 pos = gl_FragCoord.xy/vec2(outputFormat);
+		vec4 col = textureLod(textureInput, pos, 0.0);
 		vec3 	rgb = col.rgb,
 			hsv;
 
@@ -43,13 +45,12 @@ SOURCE:ChangeHSVShader
 }
 
 // Declare the filter layout :
-FILTER_LAYOUT:ChangeHSVFilter(outputFormat0,ChangeHSVShader)
+FILTER_LAYOUT:ChangeHSVFilter(outputFormat, ChangeHSVShader)
 
 PIPELINE_MAIN:ChangeHSVPipeline
 {
 	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(textureInput)
 	OUTPUT_PORTS(textureChangedHSV)
-
-	FILTER_INSTANCE:ChangeHSVFilter(ChangeHSVFilter)
+	FILTER_INSTANCE:ChangeHSVFilter
 }

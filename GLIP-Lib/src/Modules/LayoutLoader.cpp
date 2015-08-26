@@ -749,6 +749,7 @@
 					requiredSourceList,
 					requiredGeometryList,
 					requiredPipelineList,
+					modules,
 					e.sourceName,
 					e.startLine,
 					e.bodyLine,

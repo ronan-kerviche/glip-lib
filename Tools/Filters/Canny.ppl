@@ -25,45 +25,46 @@ SOURCE:gaussianBlurShader
 		ivec2 sz = textureSize(inputTexture, 0);
 		float sx = 1.0/(float(sz.s));
 		float sy = 1.0/(float(sz.t));
+		vec2 pos = gl_FragCoord.xy/vec2(sz);
 
 		vec4 col;
 		float v;
 
-		col = textureLod(inputTexture, gl_TexCoord[0].st, 0.0);
+		col = textureLod(inputTexture, pos, 0.0);
 		v = 15*(col.r+col.g+col.b);
 
-		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, -2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, -2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, 2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, 2*sy), 0.0);
+		col  = textureLod(inputTexture, pos + vec2(-2*sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(2*sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-2*sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(2*sx, 2*sy), 0.0);
 		v += 2*(col.r+col.g+col.b);
 
-		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, -sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, -sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, sy), 0.0);
+		col  = textureLod(inputTexture, pos + vec2(-sx, -sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(sx, -sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-sx, sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(sx, sy), 0.0);
 		v += 9*(col.r+col.g+col.b);
 
-		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, -2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, 0), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, 2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, 0), 0.0);
+		col  = textureLod(inputTexture, pos + vec2(0, -2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(2*sx, 0), 0.0);
+		col += textureLod(inputTexture, pos + vec2(0, 2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-2*sx, 0), 0.0);
 		v += 5*(col.r+col.g+col.b);
 
-		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, -sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, 0), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(0, sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, 0), 0.0);
+		col  = textureLod(inputTexture, pos + vec2(0, -sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(sx, 0), 0.0);
+		col += textureLod(inputTexture, pos + vec2(0, sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-sx, 0), 0.0);
 		v += 12*(col.r+col.g+col.b);
 
-		col  = textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, -2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, -2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-sx, 2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(sx, 2*sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, -sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, -sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(-2*sx, sy), 0.0);
-		col += textureLod(inputTexture, gl_TexCoord[0].st + vec2(2*sx, sy), 0.0);
+		col  = textureLod(inputTexture, pos + vec2(-sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(sx, -2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(sx, 2*sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-2*sx, -sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(2*sx, -sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(-2*sx, sy), 0.0);
+		col += textureLod(inputTexture, pos + vec2(2*sx, sy), 0.0);
 		v += 4*(col.r+col.g+col.b);
 
 		v = v/(153*3);
@@ -86,8 +87,9 @@ SOURCE:sobelShaderAndDirection
 	void main()
 	{
 		mat3 localRegion;
+		vec2 pos = gl_FragCoord.xy/vec2(textureSize(blurredTexture, 0));
 
-		aggregate(blurredTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+		aggregate(blurredTexture, pos, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
 
 		computeSobel(localRegion, sobelTexture);
 
@@ -132,11 +134,12 @@ SOURCE:nonMaximumSuppressionShader
 
 	void main()
 	{
-		vec4 col = textureLod(sobelTexture, gl_TexCoord[0].st, 0.0);
+		vec2 pos = gl_FragCoord.xy/vec2(textureSize(sobelTexture, 0));
+		vec4 col = textureLod(sobelTexture, pos, 0.0);
 
 		mat3 localRegion;
 
-		aggregate(sobelTexture, gl_TexCoord[0].st, vec4(0.0,0.0,1.0,0.0), localRegion);
+		aggregate(sobelTexture, pos, vec4(0.0,0.0,1.0,0.0), localRegion);
 
 		if(col.p>0.1)
 		{

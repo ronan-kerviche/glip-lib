@@ -1,4 +1,5 @@
 REQUIRED_FORMAT:outputFormat(inputFormat0)
+CALL:FORMAT_TO_CONSTANT(outputFormat)
 
 INCLUDE(maths.ppl)
 
@@ -13,11 +14,12 @@ SOURCE:inversionBrushShader
 	uniform vec2 	VectorLastLeftPositionFragment = vec2(0, 0);	
 	uniform float	radius = 0.01;
 	
+	INSERT(outputFormat)
 	INSERT(maths)
 
 	void main()
 	{
-		vec2 	pos 	= gl_TexCoord[0].st;
+		vec2 	pos 	= gl_FragCoord.xy/vec2(outputFormat);
 		vec4 	color 	= textureLod(inputTexture, pos, 0),
 			mask	= textureLod(inputMask, pos, 0);
 		vec2	mTex	= textureCoordinates(ivec2(VectorLastLeftPositionFragment), inputTexture);

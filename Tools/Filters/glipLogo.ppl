@@ -10,9 +10,9 @@ SOURCE:glipLogoShader
 			xInnerLow = 0.3,
 			xInnerHigh = 0.73,
 			xOutterHigh = 0.8,
-			yLineTop = 0.2,
+			yLineTop = 0.8,
 			yLineMiddle = 0.5,
-			yLineBottom = 0.8;
+			yLineBottom = 0.2;
 	#endif
 	
 	// Distance to a segment : 
@@ -71,19 +71,19 @@ SOURCE:glipShader
 
 	INSERT(outputLogoFormat)
 	
-	// Uncomment the next line to modify the parameters of the drawing : 
+	// Uncomment the next line to dynamically modify the parameters of the drawing : 
 	//#define MODIFY_GLIP_LOGO
 
 	#ifdef MODIFY_GLIP_LOGO
-	uniform float 	thickness = 0.150,
+	uniform float	thickness = 0.150,
 			aaThicknes = 0.002,
 			xOutterLow = 0.2,
 			xInnerLow = 0.3,
 			xInnerHigh = 0.73,
 			xOutterHigh = 0.8,
-			yLineTop = 0.2,
+			yLineTop = 0.8,
 			yLineMiddle = 0.5,
-			yLineBottom = 0.8;
+			yLineBottom = 0.2;
 	#endif
 
 	INSERT(glipLogoShader)

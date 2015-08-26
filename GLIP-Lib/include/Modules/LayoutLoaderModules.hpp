@@ -112,6 +112,23 @@ Example, creating a simple Module :
 	\endcode
 
 ## Modules List
+### IF_MODULE_AVAILABLE
+<blockquote>
+<b>CALL</b>:IF_MODULE_AVAILABLE(moduleName)<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
+}<br>
+</blockquote>
+
+Check if the MODULE is available and can be used.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>moduleName</i></td> <td>Name of the module to be used.</td></tr>
+</table>
+
+<b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
+
 ### IF_FORMAT_DEFINED
 <blockquote>
 <b>CALL</b>:IF_FORMAT_DEFINED(formatName)<br>
@@ -745,7 +762,7 @@ Load a geometry from a StereoLithography file (STL).
 				virtual ~LayoutLoaderModule(void);
 
 				/**
-				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionSource, std::string& executionSourceName, int& executionStartLine) = 0
+				\fn virtual void LayoutLoaderModule::apply(const std::vector<std::string>& arguments, const std::string& body, const std::string& currentPath, std::vector<std::string>& dynamicPaths, std::map<std::string, HdlTextureFormat>& formatList, std::map<std::string, ShaderSource>& sourceList, std::map<std::string, GeometryModel>& geometryList, std::map<std::string, FilterLayout>& filterList, std::map<std::string, PipelineLayout>& pipelineList, std::string& mainPipelineName, const std::vector<std::string>& staticPaths, const std::map<std::string,HdlTextureFormat>& requiredFormatList, const std::map<std::string,GeometryModel>& requiredGeometryList, const std::map<std::string,PipelineLayout>& requiredPipelineList, const std::map<std::string, LayoutLoaderModule*>& moduleList, const std::string& sourceName, const int startLine, const int bodyLine, std::string& executionSource, std::string& executionSourceName, int& executionStartLine) = 0
 				\brief Interface of the module : this function will be called on each corresponding token CALL for the LayoutLoader which has the module. 
 				\param arguments 		The arguments of the called, their number has already been checked.
 				\param body 			The body of the call (might be empty), its presence has already been checked.
@@ -771,6 +788,8 @@ Load a geometry from a StereoLithography file (STL).
 								For easy access see #CONST_ITERATOR_TO_REQUIREDGEOMETRY, #REQUIREDGEOMETRY_MUST_EXIST, #REQUIREDGEOMETRY_MUST_NOT_EXIST.
 				\param requiredPipelineList	The list of static pipelines available.
 								For easy access see #CONST_ITERATOR_TO_REQUIREDPIPELINE, #REQUIREDPIPELINE_MUST_EXIST, #REQUIREDPIPELINE_MUST_NOT_EXIST.
+				\param moduleList		The list of modules available.
+								For easy access see #CONST_ITERATOR_TO_MODULE, #MODULE_MUST_EXIST, #MODULE_MUST_NOT_EXIST.
 				\param sourceName		Name of the source from which the call was extracted.
 				\param startLine		Line index of the module call.
 				\param bodyLine			Line index of the body for this module call.
@@ -778,27 +797,28 @@ Load a geometry from a StereoLithography file (STL).
 				\param executionSourceName	The name of the source for the post-execution.
 				\param executionStartLine	The first line number of the source for the post-execution.
 				**/
-				virtual void apply(	const std::vector<std::string>& 		arguments, 
-							const std::string&				body, 
-							const std::string&				currentPath,
-							std::vector<std::string>&			dynamicPaths,
-							std::map<std::string, HdlTextureFormat>& 	formatList,
-							std::map<std::string, ShaderSource>& 		sourceList,
-							std::map<std::string, GeometryModel>&		geometryList,
-							std::map<std::string, FilterLayout>& 		filterList,
-							std::map<std::string, PipelineLayout>&		pipelineList,
-							std::string&					mainPipelineName, 
-							const std::vector<std::string>&			staticPaths,
-							const std::map<std::string,HdlTextureFormat>&	requiredFormatList,
-							const std::map<std::string,ShaderSource>&	requiredSourceList,
-							const std::map<std::string,GeometryModel>&	requiredGeometryList,
-							const std::map<std::string,PipelineLayout>&	requiredPipelineList,
-							const std::string& 				sourceName,
-							const int 					startLine,
-							const int 					bodyLine,
-							std::string& 					executionSource,
-							std::string&					executionSourceName,
-							int&						executionStartLine) = 0;
+				virtual void apply(	const std::vector<std::string>& 			arguments, 
+							const std::string&					body, 
+							const std::string&					currentPath,
+							std::vector<std::string>&				dynamicPaths,
+							std::map<std::string, HdlTextureFormat>& 		formatList,
+							std::map<std::string, ShaderSource>& 			sourceList,
+							std::map<std::string, GeometryModel>&			geometryList,
+							std::map<std::string, FilterLayout>& 			filterList,
+							std::map<std::string, PipelineLayout>&			pipelineList,
+							std::string&						mainPipelineName, 
+							const std::vector<std::string>&				staticPaths,
+							const std::map<std::string, HdlTextureFormat>&		requiredFormatList,
+							const std::map<std::string, ShaderSource>&		requiredSourceList,
+							const std::map<std::string, GeometryModel>&		requiredGeometryList,
+							const std::map<std::string, PipelineLayout>&		requiredPipelineList,
+							const std::map<std::string, LayoutLoaderModule*>&	moduleList,
+							const std::string& 					sourceName,
+							const int 						startLine,
+							const int 						bodyLine,
+							std::string& 						executionSource,
+							std::string&						executionSourceName,
+							int&							executionStartLine) = 0;
 
 				const std::string& getName(void) const;
 				const int& getMinNumArguments(void) const;
@@ -838,6 +858,7 @@ Load a geometry from a StereoLithography file (STL).
 								const std::map<std::string, Glip::CoreGL::ShaderSource>&		requiredSourceList, \
 								const std::map<std::string, Glip::CorePipeline::GeometryModel>&		requiredGeometryList, \
 								const std::map<std::string, Glip::CorePipeline::PipelineLayout>&	requiredPipelineList, \
+								const std::map<std::string, Glip::Modules::LayoutLoaderModule*>&	moduleList, \
 								const std::string& 							sourceName, \
 								const int 								startLine, \
 								const int 								bodyLine, \
@@ -846,7 +867,7 @@ Load a geometry from a StereoLithography file (STL).
 								int&									executionStartLine
 
 			/** LAYOUT_LOADER_MODULE_DEFINITION( name )	Declaration of a module. **/
-			#define LAYOUT_LOADER_MODULE_DEFINITION( name )	class name : public LayoutLoaderModule \
+			#define LAYOUT_LOADER_MODULE_DEFINITION( name )	class name : public Glip::Modules::LayoutLoaderModule \
 									{ \
 										public : \
 											name (void); \
@@ -856,7 +877,7 @@ Load a geometry from a StereoLithography file (STL).
 
 			/** LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)			Source of a module. **/
 			#define LAYOUT_LOADER_MODULE_APPLY( moduleName, minArgs, maxArgs, bodyPresence, moduleManual)	\
-											moduleName :: moduleName (void) : LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
+											moduleName :: moduleName (void) : Glip::Modules::LayoutLoaderModule( #moduleName, moduleManual, minArgs, maxArgs, bodyPresence) { } \
 											void 	moduleName :: apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 
 
@@ -867,110 +888,121 @@ Load a geometry from a StereoLithography file (STL).
 			#define __APPEND_NEW_ELEMENT(type, varName, elementName, element)	varName.insert( std::pair<std::string, type>( elementName, element ) );
 
 			/** ITERATOR_TO_FORMAT( iteratorName, elementName )			Get an iterator on the Format named elementName. **/
-			#define ITERATOR_TO_FORMAT( iteratorName, elementName )			__ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
+			#define ITERATOR_TO_FORMAT( iteratorName, elementName )			__ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, formatList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		Get a constant iterator on the Format named elementName. **/
-			#define CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		__CONST_ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_FORMAT( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, formatList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_FORMAT( iteratorName )				Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_FORMAT( iteratorName )			( iteratorName != formatList.end() )
 			/** FORMAT_MUST_EXIST( elementName )					Check that the Format named elementName must exist (raise an exception otherwise). **/
-			#define FORMAT_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, formatList, elementName) }
+			#define FORMAT_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, formatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, formatList, elementName) }
 			/** FORMAT_MUST_NOT_EXIST( elementName )				Check that the Format named elementName must not exist (raise an exception otherwise). **/
-			#define FORMAT_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(HdlTextureFormat, formatList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, formatList, elementName) }
+			#define FORMAT_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, formatList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, formatList, elementName) }
 			/** APPEND_NEW_FORMAT(elementName, newElement)				Append the new element to the Format list. **/
-			#define APPEND_NEW_FORMAT(elementName, newElement)			__APPEND_NEW_ELEMENT(HdlTextureFormat, formatList, elementName, newElement)
+			#define APPEND_NEW_FORMAT(elementName, newElement)			__APPEND_NEW_ELEMENT(Glip::CoreGL::HdlTextureFormat, formatList, elementName, newElement)
 
 			/** ITERATOR_TO_SOURCE( iteratorName, elementName )			Get an iterator on the Source named elementName. **/
-			#define ITERATOR_TO_SOURCE( iteratorName, elementName )			__ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
+			#define ITERATOR_TO_SOURCE( iteratorName, elementName )			__ITERATOR_FIND(Glip::CoreGL::ShaderSource, sourceList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_SOURCE( iteratorName, elementName )		Get a constant iterator on the Source named elementName. **/
-			#define CONST_ITERATOR_TO_SOURCE( iteratorName, elementName )		__CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_SOURCE( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, sourceList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_SOURCE( iteratorName )				Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_SOURCE( iteratorName )			( iteratorName != sourceList.end() )
 			/** SOURCE_MUST_EXIST( elementName )					Check that the Shader Source named elementName must exist (raise an exception otherwise). **/
-			#define SOURCE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sourceList, elementName) }
+			#define SOURCE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, sourceList, elementName) }
 			/** SOURCE_MUST_NOT_EXIST( elementName )				Check that the Shader Source named elementName must not exist (raise an exception otherwise). **/
-			#define SOURCE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
+			#define SOURCE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, sourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, sourceList, elementName) }
 			/** APPEND_NEW_SOURCE(elementName, newElement)				Append the new element to the Shader Source list. **/
-			#define APPEND_NEW_SOURCE(elementName, newElement)			__APPEND_NEW_ELEMENT(ShaderSource, sourceList, elementName, newElement)
+			#define APPEND_NEW_SOURCE(elementName, newElement)			__APPEND_NEW_ELEMENT(Glip::CoreGL::ShaderSource, sourceList, elementName, newElement)
 
 			/** ITERATOR_TO_GEOMETRY( iteratorName, elementName )			Get an iterator on the Geometry named elementName. **/
-			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
+			#define ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__ITERATOR_FIND(Glip::CorePipeline::GeometryModel, geometryList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		Get a constant iterator on the Geometry named elementName. **/
-			#define CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__CONST_ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_GEOMETRY( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::CorePipeline::GeometryModel, geometryList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_GEOMETRY( iteratorName )				Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_GEOMETRY( iteratorName )			( iteratorName != geometryList.end() )
 			/** GEOMETRY_MUST_EXIST( elementName )					Check that the Geometry named elementName must exist (raise an exception otherwise). **/
-			#define GEOMETRY_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, geometryList, elementName) }
+			#define GEOMETRY_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipelin::GeometryModel, geometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, geometryList, elementName) }
 			/** GEOMETRY_MUST_NOT_EXIST( elementName )				Check that the Geometry named elementName must not exist (raise an exception otherwise). **/
-			#define GEOMETRY_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(GeometryModel, geometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, geometryList, elementName) }
+			#define GEOMETRY_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipeline::GeometryModel, geometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, geometryList, elementName) }
 			/** APPEND_NEW_GEOMETRY(elementName, newElement)			Append the new element to the Geometry list. **/
-			#define APPEND_NEW_GEOMETRY(elementName, newElement)			__APPEND_NEW_ELEMENT(GeometryModel, geometryList, elementName, newElement)
+			#define APPEND_NEW_GEOMETRY(elementName, newElement)			__APPEND_NEW_ELEMENT(Glip::CorePipeline::GeometryModel, geometryList, elementName, newElement)
 
 			/** ITERATOR_TO_FILTER( iteratorName, elementName )			Get an iterator on the Filter named elementName. **/
-			#define ITERATOR_TO_FILTER( iteratorName, elementName )			__ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName)
+			#define ITERATOR_TO_FILTER( iteratorName, elementName )			__ITERATOR_FIND(Glip::CorePipeline::FilterLayout, filterList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_FILTER( iteratorName, elementName )		Get a constant iterator on the Filter named elementName. **/
-			#define CONST_ITERATOR_TO_FILTER( iteratorName, elementName )		__CONST_ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_FILTER( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::CorePipeline::FilterLayout, filterList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_FILTER( iteratorName )				Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_FILTER( iteratorName )			( iteratorName != filterList.end() )
 			/** FILTER_MUST_EXIST( elementName )					Check that the Filter named elementName must exist (raise an exception otherwise). **/
-			#define FILTER_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, filterList, elementName) }
+			#define FILTER_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipeline::FilterLayout, filterList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, filterList, elementName) }
 			/** FILTER_MUST_NOT_EXIST( elementName )				Check that the Filter named elementName must not exist (raise an exception otherwise). **/
-			#define FILTER_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(FilterLayout, filterList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, filterList, elementName) }
+			#define FILTER_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipeline::FilterLayout, filterList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, filterList, elementName) }
 			/** APPEND_NEW_FILTER(elementName, newElement)				Append the new element to the Filter list. **/
-			#define APPEND_NEW_FILTER(elementName, newElement)			__APPEND_NEW_ELEMENT(FilterLayout, filterList, elementName, newElement)
+			#define APPEND_NEW_FILTER(elementName, newElement)			__APPEND_NEW_ELEMENT(Glip::CorePipeline::FilterLayout, filterList, elementName, newElement)
 
 			/** ITERATOR_TO_PIPELINE( iteratorName, elementName )			Get an iterator on the Pipeline named elementName. **/
-			#define ITERATOR_TO_PIPELINE( iteratorName, elementName )		__ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName)
+			#define ITERATOR_TO_PIPELINE( iteratorName, elementName )		__ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, pipelineList, iteratorName, elementName)
 			/** CONST_ITERATOR_TO_PIPELINE( iteratorName, elementName )		Get a constant iterator on the Pipeline named elementName. **/
-			#define CONST_ITERATOR_TO_PIPELINE( iteratorName, elementName )		__CONST_ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_PIPELINE( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, pipelineList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_PIPELINE( iteratorName )				Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_PIPELINE( iteratorName )			( iteratorName != pipelineList.end() )
 			/** PIPELINE_MUST_EXIST( elementName )					Check that the Pipeline named elementName must exist (raise an exception otherwise). **/
-			#define PIPELINE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, pipelineList, elementName) }
+			#define PIPELINE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, pipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, pipelineList, elementName) }
 			/** PIPELINE_MUST_NOT_EXIST( elementName )				Check that the Pipeline named elementName must not exist (raise an exception otherwise). **/
-			#define PIPELINE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(PipelineLayout, pipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, pipelineList, elementName) }
+			#define PIPELINE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, pipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, pipelineList, elementName) }
 			/** APPEND_NEW_PIPELINE(elementName, newElement)			Append the new element to the Pipeline list. **/
-			#define APPEND_NEW_PIPELINE(elementName, newElement)			__APPEND_NEW_ELEMENT(PipelineLayout, pipelineList, elementName, newElement)
+			#define APPEND_NEW_PIPELINE(elementName, newElement)			__APPEND_NEW_ELEMENT(Glip::CorePipeline::PipelineLayout, pipelineList, elementName, newElement)
 			
 			/** CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	Get a constant iterator on the Required Format named elementName. **/
-			#define CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	__CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_REQUIREDFORMAT( iteratorName, elementName )	__CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, requiredFormatList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDFORMAT( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDFORMAT( iteratorName )		( iteratorName != requiredFormatList.end() )
 			/** REQUIREDFORMAT_MUST_EXIST( elementName )				Check that the Required Format named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDFORMAT_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDFORMAT_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredFormatList, elementName) }
 			/** REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			Check that the Required Format named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
+			#define REQUIREDFORMAT_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CoreGL::HdlTextureFormat, requiredFormatList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredFormatList, elementName) }
 
 			/** CONST_ITERATOR_TO_REQUIREDSOURCE( iteratorName, elementName )	Get a constant iterator on the Required Format named elementName. **/
-			#define CONST_ITERATOR_TO_REQUIREDSOURCE( iteratorName, elementName )	__CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_REQUIREDSOURCE( iteratorName, elementName )	__CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, requiredSourceList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDSOURCE( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDSOURCE( iteratorName )		( iteratorName != requiredSourceList.end() )
 			/** REQUIREDSOURCE_MUST_EXIST( elementName )				Check that the Required Format named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDSOURCE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredSourceList, elementName) }
+			#define REQUIREDSOURCE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredSourceList, elementName) }
 			/** REQUIREDSOURCE_MUST_NOT_EXIST( elementName )			Check that the Required Format named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDSOURCE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredSourceList, elementName) }
+			#define REQUIREDSOURCE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CoreGL::ShaderSource, requiredSourceList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredSourceList, elementName) }
 
 			/** CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	Get a constant iterator on the Required Geometry named elementName. **/
-			#define CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	__CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName, elementName )	__CONST_ITERATOR_FIND(Glip::CorePipeline::GeometryModel, requiredGeometryList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDGEOMETRY( iteratorName )		( iteratorName != requiredGeometryList.end() )
 			/** REQUIREDGEOMETRY_MUST_EXIST( elementName )				Check that the Required Geometry named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDGEOMETRY_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredGeometryList, elementName) }
+			#define REQUIREDGEOMETRY_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CorePipeline::GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requiredGeometryList, elementName) }
 			/** REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			Check that the Required Geometry named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredGeometryList, elementName) }
+			#define REQUIREDGEOMETRY_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CorePipeline::GeometryModel, requiredGeometryList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredGeometryList, elementName) }
 
 			/** CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	Get a constant iterator on the Required Pipeline named elementName. **/
-			#define CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	__CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName)
+			#define CONST_ITERATOR_TO_REQUIREDPIPELINE( iteratorName, elementName )	__CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, requiredPipelineList, iteratorName, elementName)
 			/** VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )			Test if the iterator is valid (returns true or false).**/
 			#define VALID_ITERATOR_TO_REQUIREDPIPELINE( iteratorName )		( iteratorName != requiredPipelineList.end() )
 			/** REQUIREDPIPELINE_MUST_EXIST( elementName )				Check that the Required Pipeline named elementName must exist (raise an exception otherwise). **/
-			#define REQUIREDPIPELINE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requirePipelineList, elementName) }
+			#define REQUIREDPIPELINE_MUST_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, requirePipelineList, elementName) }
 			/** REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			Check that the Required Pipeline named elementName must not exist (raise an exception otherwise). **/
-			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredPipelineList, elementName) }
-			
+			#define REQUIREDPIPELINE_MUST_NOT_EXIST( elementName )			{ __CONST_ITERATOR_FIND(Glip::CorePipeline::PipelineLayout, requiredPipelineList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, requiredPipelineList, elementName) }
+		
+			/** CONST_ITERATOR_TO_MODULE( iteratorName, elementName )		Get a constant iterator on the LayoutLoaderModule named elementName. **/
+			#define CONST_ITERATOR_TO_MODULE( iteratorName, elementName )		__CONST_ITERATOR_FIND(Glip::Modules::LayoutLoaderModule*, moduleList, iteratorName, elementName)
+			/** VALID_ITERATOR_TO_MODULE( iteratorName )				Test if the iterator is valid (returns true or false).**/
+			#define VALID_ITERATOR_TO_MODULE( iteratorName )			( iteratorName != moduleList.end() )
+			/** MODULE_MUST_EXIST( elementName )					Check that the LayoutLoaderModule named elementName must exist (raise an exception otherwise). **/
+			#define MODULE_MUST_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::Modules::LayoutLoaderModule*, moduleList, iteratorName, elementName) __ELEMENT_MUST_BE_IN(iteratorName, moduleList, elementName) }
+			/** MODULE_MUST_NOT_EXIST( elementName )				Check that the LayoutLoaderModule named elementName must not exist (raise an exception otherwise). **/
+			#define MODULE_MUST_NOT_EXIST( elementName )				{ __CONST_ITERATOR_FIND(Glip::Modules::LayoutLoaderModule*, moduleList, iteratorName, elementName) __ELEMENT_MUST_NOT_BE_IN(iteratorName, moduleList, elementName) }
+
+	
 			/** CAST_ARGUMENT( argID, type, varName ) 				Cast the argument arguments[argID] to some type (and create the variable varName). Raise an exception if the cast fails. **/
 			#define CAST_ARGUMENT( argID, type, varName ) 				type varName; if(!fromString(arguments[ argID ], varName)) throw Exception("Unable to cast argument " + toString( argID ) + " (\"" + arguments[argID] + "\") to " + #type + ".", sourceName, startLine, Exception::ClientScriptException);
 
 		// Basic Modules : 
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_MODULE_AVAILABLE )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_SOURCE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_GEOMETRY_DEFINED )

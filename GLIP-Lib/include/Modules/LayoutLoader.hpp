@@ -775,11 +775,11 @@ catch(Exception& e)
 
 				// Static :
 				std::vector<std::string>			staticPaths;
-				std::map<std::string,HdlTextureFormat>		requiredFormatList;
-				std::map<std::string,ShaderSource> 		requiredSourceList;
-				std::map<std::string,GeometryModel>		requiredGeometryList;
-				std::map<std::string,PipelineLayout>		requiredPipelineList;
-				std::map<std::string,LayoutLoaderModule*>	modules;			// Using pointers to avoid conflict between polymorphism and object slicing.
+				std::map<std::string, HdlTextureFormat>		requiredFormatList;
+				std::map<std::string, ShaderSource> 		requiredSourceList;
+				std::map<std::string, GeometryModel>		requiredGeometryList;
+				std::map<std::string, PipelineLayout>		requiredPipelineList;
+				std::map<std::string, LayoutLoaderModule*>	modules;		// Using pointers to avoid conflict between polymorphism and object slicing.
 
 				// Tools :
 				LayoutLoader(const LayoutLoader& master);

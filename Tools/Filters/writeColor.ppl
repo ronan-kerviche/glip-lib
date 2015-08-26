@@ -19,7 +19,7 @@ SOURCE:WriteColorShader
 	{
 		vec2 lineHeight = vec2(0, charSize.y*1.2);
 		ivec2 sz = textureSize(inputTexture, 0);
-		vec4 	a = textureLod(inputTexture, gl_TexCoord[0].st, 0),
+		vec4 	a = textureLod(inputTexture, gl_FragCoord.xy/vec2(sz), 0),
 			b = textureLod(inputTexture, VectorLastLeftPositionFragment/vec2(sz), 0);
 			
 		float 	c = lineHeight.y * 5.0;
@@ -51,6 +51,5 @@ PIPELINE_MAIN:WriteColorPipeline
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(outputTexture)
-
-	FILTER_INSTANCE:WriteColorFilter(WriteColorFilter)
+	FILTER_INSTANCE:WriteColorFilter
 }

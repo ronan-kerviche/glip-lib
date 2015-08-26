@@ -1,5 +1,5 @@
 REQUIRED_FORMAT:outputFormat(inputFormat0)
-CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormat)
+CALL:FORMAT_TO_CONSTANT(outputFormat)
 
 INCLUDE(maths.ppl)
 

@@ -28,7 +28,7 @@ Use GLIP-Lib from the command line to process or generate images.\n\
 glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, 3, ...} FILENAME]\n\
 	     [-o {1, 2, 3, ...} FILENAME] [-r FILENAME]\n\
 \n\
-Mandatory argument :\n\
+Mandatory arguments :\n\
 -p, --pipeline	Pipeline filename. See the online documentation for more\n\
 		information about pipeline scripts.\n\
 		E.g. : -p pipeline.ppl\n\

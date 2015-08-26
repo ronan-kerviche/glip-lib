@@ -9,16 +9,14 @@ REQUIRED_FORMAT:outputFormatPlotHistogram(inputFormat0)
 SOURCE:PlotHistogramShader
 {
 	#version 130
-
 	uniform sampler2D histogramBins, inputTexture;
 	out vec4 outputTexture;
-
 	uniform float scale = 1.0;
 	uniform int noBackground = 0;
 
 	void main()
 	{
-		vec2 pos = gl_TexCoord[0].st;
+		vec2 pos = gl_FragCoord.xy/vec2(textureSize(inputTexture, 0));
 		vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
 		vec4 col = textureLod(inputTexture, pos, 0);
 

@@ -8,6 +8,7 @@ INCLUDE(maths.ppl)
 
 // Format :
 REQUIRED_FORMAT:sobelOutputFormat(inputFormat0)
+CALL:FORMAT_TO_CONSTANT(sobelOutputFormat)
 
 SOURCE:sobel
 {
@@ -46,12 +47,13 @@ SOURCE:sobelShaderVisualization()
 	// Use the convolution tool :
 	INSERT(convolutionTool)
 	INSERT(sobel)
+	INSERT(sobelOutputFormat)
 
 	void main()
 	{
 		mat3 localRegion;
-
-		aggregate(inputTexture, gl_TexCoord[0].st, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
+		vec2 pos = gl_FragCoord.xy/vec2(sobelOutputFormat);
+		aggregate(inputTexture, pos, vec4(1.0,1.0,1.0,0.0)/3.0, localRegion);
 
 		computeSobel(localRegion, sobelTexture);
 

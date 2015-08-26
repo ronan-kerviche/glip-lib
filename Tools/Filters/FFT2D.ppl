@@ -1,4 +1,5 @@
 TEXTURE_FORMAT:computationFormat(512, 512, GL_RGBA32F, GL_FLOAT)
+CALL:FORMAT_TO_CONSTANT(computationFormat)
 
 CALL:GENERATE_FFT2D_PIPELINE(computationFormat, computationFormat, FFTPipeline, SHIFTED)
 {
@@ -33,13 +34,15 @@ SOURCE:WindowShader
 	out vec4		modulation,
 				modulated;
 	uniform float 		windowSize = 10.0;
+	INSERT(computationFormat)
 
 	void main()
 	{
-		vec4 f = texture(fourierDomain, gl_TexCoord[0].st);
+		vec2 pos = gl_FragCoord.xy/vec2(computationFormat);
+		vec4 f = texture(fourierDomain, pos);
 		modulation = vec4(0.0, 0.0, 0.0, 1.0);
 
-		modulation.r = exp(-2.0*((gl_TexCoord[0].s-0.5)*(gl_TexCoord[0].s-0.5) + (gl_TexCoord[0].t-0.5)*(gl_TexCoord[0].t-0.5))/(windowSize*windowSize/10000.0));
+		modulation.r = exp(-2.0*((pos.s-0.5)*(pos.s-0.5) + (pos.t-0.5)*(pos.t-0.5))/(windowSize*windowSize/10000.0));
 
 		modulated = f * modulation.r;
 	}

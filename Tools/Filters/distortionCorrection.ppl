@@ -2,22 +2,24 @@
 	Simple filter for optical distortion correction.
 */
 
-REQUIRED_FORMAT:outputFormat0(inputFormat0)
+REQUIRED_FORMAT:outputFormat(inputFormat0)
+CALL:FORMAT_TO_CONSTANT(outputFormat)
 
 SOURCE:distortionCorrectionShader
 {
 	#version 130
 
+	INSERT(outputFormat)
+
 	uniform sampler2D	textureInput;
 	out     vec4 		textureOutput;
-
 	uniform vec2 		distortionOpticalCenter = vec2(0.5, 0.5);
 	uniform float 		distortionCoefficient = 0.0;
 
 	void main()
 	{
 		// Find the right position to read from :
-		vec2 pos = gl_TexCoord[0].st - distortionOpticalCenter;
+		vec2 pos = gl_FragCoord.xy/vec2(outputFormat) - distortionOpticalCenter;
 
 		pos = pos - distortionCoefficient * pow( length(pos), 3.0f ) * normalize( pos ); 
 
@@ -32,13 +34,12 @@ SOURCE:distortionCorrectionShader
 }
 
 // Declare the filter layout :
-FILTER_LAYOUT:distortionCorrectionFilter(outputFormat0, distortionCorrectionShader)
+FILTER_LAYOUT:distortionCorrectionFilter(outputFormat, distortionCorrectionShader)
 
 PIPELINE_MAIN:pipelineDistortionCorrection
 {
 	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(textureInput)
 	OUTPUT_PORTS(textureOutput)
-
-	FILTER_INSTANCE:distortionCorrectionFilter(distortionCorrectionFilter)
+	FILTER_INSTANCE:distortionCorrectionFilter
 }

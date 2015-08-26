@@ -7,17 +7,18 @@
 */
 
 REQUIRED_FORMAT:outputFormat(inputFormat1)
+CALL:FORMAT_TO_CONSTANT(outputFormat)
 
 SOURCE:ApplyCurveShader
 {
 	#version 130
-
 	uniform sampler2D curveDataTexture, inputTexture;
 	out vec4 outputTexture;
+	INSERT(outputFormat)
 
 	void main()
 	{
-		vec2 pos 	= gl_TexCoord[0].st;
+		vec2 pos 	= gl_FragCoord.xy/vec2(outputFormat);
 		vec4 col 	= textureLod(inputTexture, pos, 0);
 		vec4 curveRed 	= textureLod(curveDataTexture, vec2(col.r, 0.0), 0),
 		     curveGreen	= textureLod(curveDataTexture, vec2(col.g, 0.0), 0),
