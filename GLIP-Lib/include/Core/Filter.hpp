@@ -64,8 +64,7 @@
 					GeometryModel	*geometryModel;
 					bool		clearing,
 							blending,
-							depthTesting,
-							//isStandardVertex, 
+							depthTesting, 
 							isStandardGeometry;
 					GLenum		sFactor,
 							dFactor,

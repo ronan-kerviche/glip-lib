@@ -35,6 +35,16 @@
 		glViewport(0,0,width,height);
 	}
 
+// Tool :
+	void randomFill(HdlTexture& texture)
+	{
+		unsigned char* tmp = new unsigned char[texture.getSize()];
+		for(int j=0; j<texture.getSize(); j++)
+			tmp[j] = (rand()>0.8*RAND_MAX) ? 255 : 0;
+		texture.write(tmp);
+		delete[] tmp;
+	}
+
 // Main
 	int main(int argc, char** argv)
 	{
@@ -60,97 +70,85 @@
 			// Set resizing callback :
 			glfwSetWindowSizeCallback( WindowResize );
 
-			int i=0;
-
 			// Initialize GLIP-LIB :
 			HandleOpenGL::init();
 
 			// Create a Quad inside a VBO for display :
 			GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
 
-			// Create a format for the filters :
-			HdlTextureFormat fmt(width,height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-			fmt.setSWrapping(GL_REPEAT);
-			fmt.setTWrapping(GL_REPEAT);
+			// Create a format for the filters (with circular world repeat) :
+			HdlTextureFormat format(width,height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT);
 
 			// Load a shader source code from a file :
-			ShaderSource src("./Filters/game.glsl");
+			ShaderSource source("./Filters/game.glsl");
 
 			// Create a filter layout using the format and the shader source :
-			FilterLayout fl("GameOfLife_Layout", fmt, src);
+			FilterLayout filterLayout("GameOfLife_FLayout", format, source);
 			// The filter layout will automatically create the corresponding input and output ports by analyzing the uniform samplers (input) and out vectors (output) of the shader source.
 
-			// Create a pipeline :
-			PipelineLayout pl("Main_GameOfLife");
+			// Create a pipeline and add input and output ports :
+			PipelineLayout pipelineLayout("GameOfLife_PLayout");
+			pipelineLayout.addInput("Input");
+			pipelineLayout.addOutput("Output");
 
-			// Add one input and one output :
-			pl.addInput("Input");
-			pl.addOutput("Output");
-
-			// Add an instance of the filter fl :
-			pl.add(fl, "GameOfLife");
-
-			// Connect the elements :
-			pl.connectToInput("Input", "GameOfLife", "inputTexture");
-			pl.connectToOutput("GameOfLife", "outputTexture", "Output");
-			// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
+			// Add an instance of the filter and connect :
+			pipelineLayout.add(filterLayout, "GameOfLife");
+			pipelineLayout.connectToInput("Input", "GameOfLife", "inputTexture");
+			pipelineLayout.connectToOutput("GameOfLife", "outputTexture", "Output");
+			// The connection between two filters is : .connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
 
 			// Create one pipeline (which will also create one cell) then add a second cell : 
-			Pipeline* p = new Pipeline(pl, "GameOfLifePipeline");
-			int	cellAId = p->getCurrentCellID(),
-				cellBId = p->createBuffersCell();
+			Pipeline pipeline(pipelineLayout, "GameOfLifePipeline");
+			const int cellAId = pipeline.getCurrentCellID(),
+				  cellBId = pipeline.createBuffersCell();
 
 			// Init the first texture to random :
-			HdlTexture start(fmt);
-			unsigned char* tmp = new unsigned char[start.getSize()];
-
-			for(int j=0; j<start.getSize(); j++)
-			{
-				if(rand()>0.8*RAND_MAX)
-					tmp[j] = 255;
-				else
-					tmp[j] = 0;
-			}
-			start.write(tmp);
-
-			delete[] tmp;
+			HdlTexture start(format);
+			randomFill(start);	
 
 			// First run :
-			(*p) << start << Pipeline::Process;
+			pipeline << start << Pipeline::Process;
 
 			// Main loop :
-			while( running )
+			int counter = 0;
+			while(running)
 			{
 				glClear( GL_COLOR_BUFFER_BIT );
 				glLoadIdentity();
 
-				if(i%2==0)
+				if(counter%2==0)
 				{
 					// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
-					p->changeTargetBuffersCell(cellBId);
-					(*p) << p->out(0, cellAId) << Pipeline::Process;
-					p->out(0, cellBId).bind();
+					pipeline.changeTargetBuffersCell(cellBId);
+					pipeline << pipeline.out(0, cellAId) << Pipeline::Process;
+					// Prepare to use on the output :
+					pipeline.out(0, cellBId).bind();
 				}
 				else
 				{
-					p->changeTargetBuffersCell(cellAId);
-					(*p) << p->out(0, cellBId) << Pipeline::Process;
-					p->out(0, cellAId).bind();
+					pipeline.changeTargetBuffersCell(cellAId);
+					pipeline << pipeline.out(0, cellBId) << Pipeline::Process;
+					pipeline.out(0, cellAId).bind();
 				}
 
-				i++;
+				counter++;
 
 				// Swap front and back rendering buffers :
 				quad.draw();
 				glfwSwapBuffers();
+
+				// Reset every cycle :
+				if(counter%90==0)
+				{
+					randomFill(start);
+					pipeline << start << Pipeline::Process;
+				}
 
 				// Check if ESC key was pressed or window was closed :
 				running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 
 				glfwSleep(0.03);
 			}
-
-			delete p;
 
 			HandleOpenGL::deinit();
 

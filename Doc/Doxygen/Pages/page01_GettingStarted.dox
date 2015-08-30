@@ -1,0 +1,192 @@
+/**
+\page page01_GettingStarted Getting Started
+
+\section section_ProcessingIntro Processing With GLIP-Lib
+
+GLIP-Lib is built around OpenGL shaders and the Shading Language (GLSL). A shader is a small program which is used to process large and uniform data sets. Typically in 3D engines (inside video games, modelers, CAD or medical imagery softwares), shaders are used to manipulate vertices, geometry elements and pixels. The name comes from one of their primary usage : shading elements in a scene. The vocabulary used in all of this documentation will be voluntarily close to OpenGL's own terminology as it is the founding component.
+
+The library processes images through <b>filter</b>. Each filter can have one shader per data type : the <i>vertex shader</i> will be applied to tranform the vertices (support of the in put images); the <i>fragment shader</i> will be called for writing pixels (or <i>fragments</i>) to the output image (or <i>framebuffer</i>).
+
+\htmlonly
+<div style="text-align:center;"><object data="exampleTexture1.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+Each and every output pixel covered by the geometry will result in a call to a fragment shader (if one is bound to the current filter). The call to the a shader can perform complex operations on the input data but it cannot :
+- Decide where it will write the data.
+- Read data from the destination buffer (output image, framebuffer, array of vertices, etc.).
+- Communicate in any way with other call to the same, or any other, shader.
+- Be executed with other call in a particular order.
+
+These restrictions are the key to parallel and fast operations on GPUs. This being said, a shader can :
+- Read from multiple input images (<i>textures</i>)
+- Read from multiple locations inside these inputs.
+- Write in multiple output images (also <i>textures</i>), although, only at the current location in each of them.
+- Decide to not write at all (<i>discard</i>) in any output.
+
+We can choose the geometry to fit the output image and illustrate the previous capabilities with the following figure :
+
+\htmlonly
+<div style="text-align:center;"><object data="./graphics/exampleTexture3.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+We can have a look at a very simple shader example, to generate a colored disc over some background :
+\code
+	// GLSL require to be at least on version 130 to use some feature :
+	#version 130
+	// Where we will be writing (the output fragment) :
+	out vec4 outputFragment;
+
+	// Uncomment this to see the result without simple anti-aliasing:
+	//#define NO_ANTI_ALIASING
+
+	// Some variables for our disc :
+	const vec2	center = vec2(128.0, 128.0);		// Center
+	const float	radius = 64.0,				// Radius
+			aaThickness = 1.0;			// Anti-aliasing thickness
+	const vec3	backgroundColor = vec3(0.2),		// Background color, equivalent to vec3(0.2, 0.2, 0.2).
+			foregroundColor = vec3(0.0, 1.0, 0.0);	// Foreground color : bright green.
+
+	// The function which will be called for evey single fragment to be written :
+	void main(void)
+	{
+		// We first compute the distance of the current output fragment to the center of the disc.
+		// Note that gl_FragCoord.xy is set at the execution of the shader and contain the local
+		// coordinates of the fragment.
+		float 	r = distance(gl_FragCoord.xy, center);
+
+		// Compile-time choice :
+		#ifdef NO_ANTI_ALIASING
+			// Will return 0 for all the fragments inside the disc, 1 outside :
+			float s = step(radius, r);
+		#else
+			// Same as the previous line, except with a smooth transition in the boundary region :
+			float s = smoothstep(radius-aaThickness, radius+aaThickness, r);
+		#endif
+		// Mixup the foreground and background colors with the complement of the coefficient computed :
+		outputFragment.rgb = mix(backgroundColor, foregroundColor, 1.0-s);
+	}
+\endcode
+
+The images generated (256x256 pixels, RGB 8bits; <i>left</i> : without anti-aliasing, <i>right</i> : with anti-aliasing) :
+
+\htmlonly
+<div style="text-align:center;"><img src="disc.png" alt="green disc" style="margin-right:2em;"> <img src="discAA.png" alt="green disc (AA)"></div>
+\endhtmlonly
+
+For more information on the GLSL language, please visit <a href="https://www.opengl.org/documentation/glsl/">https://www.opengl.org/documentation/glsl/</a> and <a href="https://www.opengl.org/sdk/docs/man4/index.php">https://www.opengl.org/sdk/docs/man4/index.php</a>.
+
+We could also read from an image and modify the pixels before writting them to the output image :
+\code
+	#version 130
+	uniform sampler2D inputImage;	// Where we are going to read.
+	out vec4 outputFragment;	// Where we are going to write.
+
+	void main(void)
+	{
+		// Read a texture-element (texel) from inputImage at the current position :
+		vec4 texel = texelFetch(inputImage, ivec2(gl_FragCoord.xy), 0);
+		// Invert the color and write to the output :
+		outputFragment = 1.0 - texel;
+	}
+\endcode
+
+The images generated taking the previous as inputs (<i>left</i> : without anti-aliasing, <i>right</i> : with anti-aliasing) :
+
+\htmlonly
+<div style="text-align:center;"><img src="discNegative.png" alt="green disc negative" style="margin-right:2em;"> <img src="discNegativeAA.png" alt="green disc negative (AA)"></div>
+\endhtmlonly
+
+GLIP-Lib does also allow for the constructions of pipelines. There are made of a group of filters (possibly sub-pipelines) sharing connections, a set of input ports and a set of output ports. We can represent examples of these constructs as follow :
+
+\htmlonly
+<div style="text-align:center;"><object style="margin-right:4em;" data="examplePipeline1.svg" type="image/svg+xml"></object> <object data="examplePipeline2.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+\section section_PipelineScripts Pipeline Scripts In GLIP-Lib
+
+GLIP-Lib relies on GLSL for the shader sources and provides a container syntax to quickly prototype filters and pipelines. These scripts allow the user to create complete processing structures readable by the library. Re-using the previous disc example, we write the corresponding pipeline script :
+
+\code
+	// Format of the image we want to generate :
+	// 256x256 pixels, RGB channels, 8 bits per channel.
+	TEXTURE_FORMAT:format(256, 256, GL_RGB, GL_UNSIGNED_BYTE)
+
+	// The previous source : 
+	SOURCE:circleShader
+	{
+		#version 130
+		out vec4 outputFragment;
+
+		//#define NO_ANTI_ALIASING
+
+		const vec2	center = vec2(128.0, 128.0);
+		const float	radius = 64.0,
+				aaThickness = 1.0;
+		const vec3	backgroundColor = vec3(0.2),
+				foregroundColor = vec3(0.0, 1.0, 0.0);
+
+		void main(void)
+		{
+			float 	r = distance(gl_FragCoord.xy, center);
+			#ifdef NO_ANTI_ALIASING
+				float s = step(radius, r);
+			#else
+				float s = smoothstep(radius-aaThickness, radius+aaThickness, r);
+			#endif
+			outputFragment.rgb = mix(backgroundColor, foregroundColor, 1.0-s);
+		}
+	}
+
+	// Define a filter layout : the filter will write to an image of given format
+	// with the circle shader previously defined.
+	FILTER_LAYOUT:circleFilter(format, circleShader)
+
+	// Every pipeline script must define a main pipeline to be created :
+	PIPELINE_MAIN:circlePipeline
+	{
+		// List of the output ports :
+		OUTPUT_PORTS(outputFragment)
+
+		// Add the filter :
+		FILTER_INSTANCE:circleFilter
+		
+		// Connections will be performed automatically as the name of the output port of this pipeline
+		// is the same as the name of the "out vec4" variable in the filter. 
+	}
+\endcode
+
+Similarly, for the negative filter :
+
+\code
+	// We want the application to give us the format of the input image.
+	// We will re-use this format as the output format.
+	REQUIRED_FORMAT:outputFormat(inputFormat)
+
+	SOURCE:negativeShader
+	{
+		#version 130
+		uniform sampler2D inputImage;
+		out vec4 outputFragment;
+
+		void main(void)
+		{
+			vec4 texel = texelFetch(inputImage, ivec2(gl_FragCoord.xy), 0);
+			outputFragment = 1.0 - texel;
+		}
+	}
+
+	FILTER_LAYOUT:negativeFilter(outputFormat, negativeShader)
+
+	PIPELINE_MAIN:negativePipeline
+	{
+		// List of the input ports :
+		INPUT_PORTS(inputImage)
+		OUTPUT_PORTS(outputImage)
+		FILTER_INSTANCE:negativeFilter
+		// As previously, connections will be performed automatically.
+	}
+\endcode
+
+You can find a detailed documentation on this language in the following pages : Glip::Modules::LayoutLoader, Glip::Modules::LayoutLoaderModule. Further examples are also built with these scripts.
+
+**/

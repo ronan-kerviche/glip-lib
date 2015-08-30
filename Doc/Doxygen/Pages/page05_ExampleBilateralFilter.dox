@@ -1,0 +1,63 @@
+/**
+\page page05_ExampleBilateralFilter Example : Simple Small Kernel Bilateral Filter
+	
+This example shows the implementation of a simple <a href="http://en.wikipedia.org/wiki/Bilateral_filter">bilateral filter</a> (for small kernel size).
+\code
+	REQUIRED_FORMAT:outputFormat(inputFormat)
+	CALL:FORMAT_TO_CONSTANT(outputFormat)
+
+	SOURCE:bilateralShader
+	{
+		#version 130
+		uniform sampler2D inputTexture;
+		out vec4 outputBilateral;
+	
+		#pragma INSERT(outputFormat)
+
+		uniform float 	rI = 0.270,	// The intensity radius (in pixels).
+				rL = 1.71;	// The geometric radius (in pixels).
+		uniform int	windowSize = 5;	// The window size (in pixels).
+	
+		float gaussian(float l, float r)
+		{
+			return exp(-l*l/(2.0f*r*r));
+		}
+
+		void main()
+		{
+			vec4 outCol = vec4(0.0, 0.0, 0.0, 0.0),
+			     refCol = texelFetch(inputTexture, ivec2(gl_FragCoord.xy), 0);
+			float nrm = 0.0;
+
+			// Compute the kernel :
+			int nWindow = windowSize/2; 
+			for(int i=-nWindow; i<=nWindow; i++)
+			{
+				for(int j=-nWindow; j<=nWindow; j++)
+				{
+					vec4 	col = texelFetch(inputTexture, ivec2(gl_FragCoord.xy+vec2(j,i)), 0);
+					float 	a   = gaussian( distance(col, refCol), rI ),
+						b   = gaussian( length(vec2(j, i)), rL );
+					outCol += col * a * b;
+					nrm += a * b;
+				}
+			}
+			outputBilateral = outCol / nrm;
+		}
+	}
+
+	FILTER_LAYOUT:bilateralFilter(outputFormat, bilateralShader)
+
+	PIPELINE_MAIN:bilateralPipeline
+	{
+		INPUT_PORTS(inputBilateral)
+		OUTPUT_PORTS(outputBilateral)
+		FILTER_INSTANCE:bilateralFilter
+	}
+\endcode
+
+Example (<i>left</i>, raw image; <i>right</i>, after simple bilateral filtering) :
+\htmlonly
+	<div style="text-align:center;"><img src="horseHeadBeforeBilateral.png" alt="horseHeadBeforeBilateral" style="margin-right:2em;"> <img src="horseHeadAfterBilateral.png" alt="horseHeadAfterBilateral"></div>
+\endhtmlonly
+**/

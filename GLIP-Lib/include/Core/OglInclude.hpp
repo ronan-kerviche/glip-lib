@@ -35,13 +35,21 @@
 		#include <windows.h>
 		#define GLEW_STATIC
 		#include "glew.h"
-		#include <GL/gl.h>
+		#ifdef __GLIP_USE_GLES__
+			#include <GLES/gl.h>
+		#else
+			#include <GL/gl.h>
+		#endif
 	#endif
 
 	#if defined(linux) || defined(__linux) || defined(__linux__)
 		#define GLEW_STATIC
 		#include "glew.h"
-		#include <GL/gl.h>
+		#ifdef __GLIP_USE_GLES__
+			#include <GLES/gl.h>
+		#else
+			#include <GL/gl.h>
+		#endif
 	#endif
 
 	namespace Glip
@@ -59,6 +67,8 @@
 												throw Exception("OpenGL Functions " #call " and " #replacement " aren't available according to GLEW (updating the driver might help).", __FILE__, __LINE__,Exception::GLException); \
 											call = replacement; \
 										}
+
+			#define GLIP_NUM_SHADER_TYPES (6)
 
 			// Object
 			/**
@@ -81,8 +91,10 @@
 						vd_UNKNOWN
 					};
 
-					// Number of different shader types : 
-					static const unsigned int numShaderTypes = 6; // See GL_SHADER_TYPE and GL_*_SHADER
+					/// Number of different shader types.
+					static const unsigned int numShaderTypes = GLIP_NUM_SHADER_TYPES; // See GL_SHADER_TYPE and GL_*_SHADER
+					/// List (tight) of various shader types.
+					static const GLenum shaderTypes[GLIP_NUM_SHADER_TYPES];
 
 				private :
 					// OpenGL keyword :

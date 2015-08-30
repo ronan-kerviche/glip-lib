@@ -33,8 +33,9 @@ using namespace Glip::CoreGL;
 
 // Structure
 	// Data
-		HandleOpenGL* 			HandleOpenGL::instance 	= NULL;
-		HandleOpenGL::SupportedVendor 	HandleOpenGL::vendor 	= vd_UNKNOWN;
+		const GLenum			HandleOpenGL::shaderTypes[GLIP_NUM_SHADER_TYPES] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+		HandleOpenGL* 			HandleOpenGL::instance = NULL;
+		HandleOpenGL::SupportedVendor 	HandleOpenGL::vendor = vd_UNKNOWN;
 
 	// Functions
 		/**
@@ -231,7 +232,7 @@ using namespace Glip::CoreGL;
 		**/
 		unsigned int HandleOpenGL::getShaderTypeIndex(GLenum shaderType)
 		{
-			switch(shaderType)
+			/*switch(shaderType)
 			{
 				case GL_VERTEX_SHADER :			return 0;
 				case GL_FRAGMENT_SHADER : 		return 1;
@@ -241,7 +242,12 @@ using namespace Glip::CoreGL;
 				case GL_GEOMETRY_SHADER : 		return 5;
 				default : 
 					throw Exception("HdlProgram::getShaderIndex - Unknown shader type : " + getGLEnumNameSafe(shaderType) + ".", __FILE__, __LINE__, Exception::GLException);
-			}
+			}*/
+
+			for(unsigned int k=0; k<numShaderTypes; k++)
+				if(shaderTypes[k]==shaderType)
+					return k;
+			throw Exception("HdlProgram::getShaderIndex - Unknown shader type : " + getGLEnumNameSafe(shaderType) + ".", __FILE__, __LINE__, Exception::GLException);
 		}
 
 // Errors Monitoring

@@ -1,0 +1,13 @@
+# Ignore list :
+CMakeCache.txt
+CMakeFiles/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+_CPack_Packages/
+cmake_install.cmake
+glip-compute
+glip-compute-1.0.0-Linux.deb
+install_manifest.txt
+# Except this file :
+!.gitignore

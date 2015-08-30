@@ -17,30 +17,30 @@ SOURCE:ChangeHSVShader
 	INSERT(ColorPrimitives)
 	INSERT(outputFormat)
 
-	uniform float vScal = 1.0, sScal = 1.0, hRot;
+	uniform float	vScaling = 1.0,	// V scaling
+			sScaling = 1.0, 
+			hRotate = 0.0;
 
 	void main()
 	{
 		// Get the input data :
 		vec2 pos = gl_FragCoord.xy/vec2(outputFormat);
-		vec4 col = textureLod(textureInput, pos, 0.0);
-		vec3 	rgb = col.rgb,
-			hsv;
-
+		vec3 rgb = textureLod(textureInput, pos, 0.0).rgb,
+		     hsv;
+		
 		// To HSV
 		RGBToHSV(rgb, hsv);
 
 		// Modifications : 
-		hsv.z = hsv.z * vScal;
-		hsv.y = hsv.y * sScal;
-		hsv.x = mod(hsv.x + hRot * 360.0, 360);
+		hsv.z = hsv.z * vScaling;
+		hsv.y = hsv.y * sScaling;
+		hsv.x = mod(hsv.x + hRotate * 360.0, 360);
 
 		// Back to RGB
 		HSVToRGB(hsv, rgb);
 
 		// Write the output data :
 		textureChangedHSV.rgb = rgb;
-		textureChangedHSV.a = col.a;
 	}
 }
 
@@ -49,7 +49,6 @@ FILTER_LAYOUT:ChangeHSVFilter(outputFormat, ChangeHSVShader)
 
 PIPELINE_MAIN:ChangeHSVPipeline
 {
-	// Declare some input and output ports for this pipeline :
 	INPUT_PORTS(textureInput)
 	OUTPUT_PORTS(textureChangedHSV)
 	FILTER_INSTANCE:ChangeHSVFilter

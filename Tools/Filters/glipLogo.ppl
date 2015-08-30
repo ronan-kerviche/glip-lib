@@ -5,7 +5,7 @@ SOURCE:glipLogoShader
 {
 	#ifndef MODIFY_GLIP_LOGO
 	const float 	thickness = 0.150,
-			aaThicknes = 0.001,
+			aaThickness = 0.001,
 			xOutterLow = 0.2,
 			xInnerLow = 0.3,
 			xInnerHigh = 0.73,
@@ -34,7 +34,7 @@ SOURCE:glipLogoShader
 		float d = min(dSegment(p, vec2(xOutterLow, yLineMiddle), vec2(xInnerLow, yLineMiddle)),
 			  min(dSegment(p, vec2(xInnerLow, yLineMiddle), vec2(xInnerHigh, yLineTop)),
 			      dSegment(p, vec2(xInnerHigh, yLineTop), vec2(xOutterHigh, yLineTop)) ));
-		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		return smoothstep(aaThickness, -aaThickness, d-thickness);
 	}
 	
 	// Distance to green path (3 segments) :
@@ -43,7 +43,7 @@ SOURCE:glipLogoShader
 		float d = min(dSegment(p, vec2(xOutterLow, yLineTop), vec2(xInnerLow, yLineTop)),
 			  min(dSegment(p, vec2(xInnerLow, yLineTop), vec2(xInnerHigh, yLineBottom)),
 			      dSegment(p, vec2(xInnerHigh, yLineBottom), vec2(xOutterHigh, yLineBottom)) ));
-		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		return smoothstep(aaThickness, -aaThickness, d-thickness);
 	}
 
 	// Distance to blue path (3 segments) :
@@ -52,7 +52,7 @@ SOURCE:glipLogoShader
 		float d = min(dSegment(p, vec2(xOutterLow, yLineBottom), vec2(xInnerLow, yLineBottom)),
 			  min(dSegment(p, vec2(xInnerLow, yLineBottom), vec2(xInnerHigh, yLineMiddle)),
 			      dSegment(p, vec2(xInnerHigh, yLineMiddle), vec2(xOutterHigh, yLineMiddle)) ));
-		return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		return smoothstep(aaThickness, -aaThickness, d-thickness);
 	}
 
 	// Get the logo, combining all the paths : 
@@ -69,14 +69,14 @@ SOURCE:glipShader
 	#version 130
 	out vec4 logo;
 
-	INSERT(outputLogoFormat)
+	#pragma INSERT(outputLogoFormat)
 	
 	// Uncomment the next line to dynamically modify the parameters of the drawing : 
 	//#define MODIFY_GLIP_LOGO
 
 	#ifdef MODIFY_GLIP_LOGO
 	uniform float	thickness = 0.150,
-			aaThicknes = 0.002,
+			aaThickness = 0.001,
 			xOutterLow = 0.2,
 			xInnerLow = 0.3,
 			xInnerHigh = 0.73,
@@ -86,7 +86,7 @@ SOURCE:glipShader
 			yLineBottom = 0.2;
 	#endif
 
-	INSERT(glipLogoShader)
+	#pragma INSERT(glipLogoShader)
 
 	void main(void)
 	{

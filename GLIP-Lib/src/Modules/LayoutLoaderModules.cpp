@@ -41,10 +41,19 @@
 		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
 		\brief LayoutLoaderModule constructor. For simple modules you can just use the macro LAYOUT_LOADER_MODULE_APPLY.
 		\param _name Name of the module.
-		\param _manual Manual of the module.
+		\param _manual Manual of the module, see extended description for formanting.
 		\param _minNumArguments Minimum number of arguments of the module.
 		\param _maxNumArguments Maximum number of arguments of the module (-1 for no limitation).
 		\param _bodyPresence Requirement on the body (-1 for no body, 0 for indifferent, 1 for needed).
+
+		The Manual string can either be a simple string containin the description or a string containing the following elements (all optional) :
+		\code
+			const std::string manual = 	"DESCRIPTION{Description of the module.}"
+							"ARGUMENT:argument0Name{Argument 0 description.}"
+							"ARGUMENT:argument1Name{Argument 1 description.}"
+							"BODY_DESCRIPTION{Body description}";
+		\endcode
+		With this specific formating the documentation will be automatically generated in various formats (HTML, Command Line Help, etc.) with a coherent layout.
 		**/
 		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
 		 : 	name(_name), 
@@ -248,7 +257,10 @@
 			result.push_back( new IF_REQUIREDGEOMETRY_DEFINED );
 			result.push_back( new IF_REQUIREDPIPELINE_DEFINED );
 			result.push_back( new FORMAT_CHANGE_SIZE );
+			result.push_back( new FORMAT_INCREASE_SIZE );
+			result.push_back( new FORMAT_DECREASE_SIZE );
 			result.push_back( new FORMAT_SCALE_SIZE );
+			result.push_back( new FORMAT_INVSCALE_SIZE );
 			result.push_back( new FORMAT_CHANGE_CHANNELS );
 			result.push_back( new FORMAT_CHANGE_DEPTH );
 			result.push_back( new FORMAT_CHANGE_FILTERING );
@@ -841,12 +853,12 @@
 				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1,	"DESCRIPTION{Scale a format by a scalar (or two), save as a new format. "
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_INCREASE_SIZE, 3, 4, -1,	"DESCRIPTION{Increase a format size by a scalar (or two), save as a new format. "
 											"Will prevent to reach a 0x0 texture by ensuring that the size is "
 											"at least 1 pixel in each dimension.}"
 											"ARGUMENT:nameNew{Name of the new format.}"
 											"ARGUMENT:nameOriginal{Name of the original format.}"
-											"ARGUMENT:scaleFactor{Scaling to be applied, can be splitted into X and Y.}")
+											"ARGUMENT:increaseDelta{Increase to be applied, can be splitted into X and Y. It can also be the name of an existing format.}")
 		 	{
 				UNUSED_PARAMETER(body)
 				UNUSED_PARAMETER(currentPath)
@@ -875,7 +887,137 @@
 				// Build the new format : 
 				HdlTextureFormat newFmt = it->second;
 
-				if(arguments.size()==4)
+				CONST_ITERATOR_TO_FORMAT( itScale, arguments[2] )
+			
+				if(itScale!=formatList.end())
+				{
+					if(arguments.size()==4)
+						throw Exception("Fourth argument not tolerated when the third is a format name.", sourceName, startLine, Exception::ClientScriptException);
+					
+					newFmt.setWidth( std::max(newFmt.getWidth() + itScale->second.getWidth(), 1) );
+					newFmt.setHeight( std::max(newFmt.getHeight() + itScale->second.getHeight(), 1) );
+				}
+				else if(arguments.size()==3)
+				{
+					CAST_ARGUMENT( 2, double, s) 	
+					newFmt.setWidth( std::max(newFmt.getWidth() + s, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() + s, 1.0) );
+				}
+				else
+				{
+					CAST_ARGUMENT( 2, double, sx)
+					CAST_ARGUMENT( 3, double, sy)
+					newFmt.setWidth( std::max(newFmt.getWidth() + sx, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() + sy, 1.0) );
+				}
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_DECREASE_SIZE, 3, 4, -1,	"DESCRIPTION{Decrease a format size by a scalar (or two), save as a new format. "
+											"Will prevent to reach a 0x0 texture by ensuring that the size is "
+											"at least 1 pixel in each dimension.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:increaseDelta{Decrease delta to be applied, can be splitted into X and Y. It can also be the name of an existing format.}")
+		 	{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
+
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
+
+				// Build the new format : 
+				HdlTextureFormat newFmt = it->second;
+
+				CONST_ITERATOR_TO_FORMAT( itScale, arguments[2] )
+			
+				if(itScale!=formatList.end())
+				{
+					if(arguments.size()==4)
+						throw Exception("Fourth argument not tolerated when the third is a format name.", sourceName, startLine, Exception::ClientScriptException);
+					
+					newFmt.setWidth( std::max(newFmt.getWidth() * itScale->second.getWidth(), 1) );
+					newFmt.setHeight( std::max(newFmt.getHeight() * itScale->second.getHeight(), 1) );
+				}
+				else if(arguments.size()==3)
+				{
+					CAST_ARGUMENT( 2, double, s) 		
+					newFmt.setWidth( std::max(newFmt.getWidth() - s, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() - s, 1.0) );
+				}
+				else
+				{
+					CAST_ARGUMENT( 2, double, sx)
+					CAST_ARGUMENT( 3, double, sy)	
+					newFmt.setWidth( std::max(newFmt.getWidth() - sx, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() - sy, 1.0) );
+				}
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_SCALE_SIZE, 3, 4, -1,	"DESCRIPTION{Scale a format by a scalar (or two), save as a new format. "
+											"Will prevent to reach a 0x0 texture by ensuring that the size is "
+											"at least 1 pixel in each dimension.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:scaleFactor{Scaling to be applied, can be splitted into X and Y. It can also be the name of an existing format.}")
+		 	{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
+
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
+
+				// Build the new format : 
+				HdlTextureFormat newFmt = it->second;
+
+				CONST_ITERATOR_TO_FORMAT( itScale, arguments[2] )
+			
+				if(itScale!=formatList.end())
+				{
+					if(arguments.size()==4)
+						throw Exception("Fourth argument not tolerated when the third is a format name.", sourceName, startLine, Exception::ClientScriptException);
+					
+					newFmt.setWidth( std::max(newFmt.getWidth() * itScale->second.getWidth(), 1) );
+					newFmt.setHeight( std::max(newFmt.getHeight() * itScale->second.getHeight(), 1) );
+				}
+				else if(arguments.size()==3)
 				{
 					CAST_ARGUMENT( 2, double, s) 	
 					if(s<=0.0)
@@ -897,9 +1039,74 @@
 					newFmt.setHeight( std::max(newFmt.getHeight() * sy, 1.0) );
 				}
 
-				// Test : 
-				if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-					throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
+				APPEND_NEW_FORMAT( arguments[0], newFmt )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( FORMAT_INVSCALE_SIZE, 3, 4, -1,	"DESCRIPTION{Scale a format by the inverse of a scalar (or two), save as a new format. "
+											"Will prevent to reach a 0x0 texture by ensuring that the size is "
+											"at least 1 pixel in each dimension. The results is rounded to the floor.}"
+											"ARGUMENT:nameNew{Name of the new format.}"
+											"ARGUMENT:nameOriginal{Name of the original format.}"
+											"ARGUMENT:scaleFactor{Inverse scaling to be applied, can be splitted into X and Y. It can also be the name of an existing format.}")
+		 	{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
+
+				FORMAT_MUST_EXIST( arguments[1] )
+				FORMAT_MUST_NOT_EXIST( arguments[0] );
+
+				CONST_ITERATOR_TO_FORMAT( it, arguments[1] )
+
+				// Build the new format : 
+				HdlTextureFormat newFmt = it->second;
+
+				CONST_ITERATOR_TO_FORMAT( itScale, arguments[2] )
+			
+				if(itScale!=formatList.end())
+				{
+					if(arguments.size()==4)
+						throw Exception("Fourth argument not tolerated when the third is a format name.", sourceName, startLine, Exception::ClientScriptException);
+					
+					newFmt.setWidth( std::max(newFmt.getWidth() / itScale->second.getWidth(), 1) );
+					newFmt.setHeight( std::max(newFmt.getHeight() / itScale->second.getHeight(), 1) );
+				}
+				else if(arguments.size()==3)
+				{
+					CAST_ARGUMENT( 2, double, s) 	
+					if(s<=0.0)
+						throw Exception("The scale cannot be negative or equal to zero (s = " + toString(s) + ").", sourceName, startLine, Exception::ClientScriptException);
+		
+					newFmt.setWidth( std::max(newFmt.getWidth() / s, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() / s, 1.0) );
+				}
+				else
+				{
+					CAST_ARGUMENT( 2, double, sx)
+					CAST_ARGUMENT( 3, double, sy)
+					if(sx<=0.0)
+						throw Exception("The scale cannot be negative or equal to zero (sx = " + toString(sx) + ").", sourceName, startLine, Exception::ClientScriptException);
+					if(sy<=0.0)
+						throw Exception("The scale cannot be negative or equal to zero (sy = " + toString(sy) + ").", sourceName, startLine, Exception::ClientScriptException);
+		
+					newFmt.setWidth( std::max(newFmt.getWidth() / sx, 1.0) );
+					newFmt.setHeight( std::max(newFmt.getHeight() / sy, 1.0) );
+				}
 
 				APPEND_NEW_FORMAT( arguments[0], newFmt )
 			}
@@ -2126,7 +2333,7 @@
 				executionSource = elementRequiredFormat.getCode() + "\n" + elementSource.getCode() + "\n" + elementFilter.getCode() + "\n" + elementPipeline.getCode();
 				executionSourceName = getName(); // Insert the name of the module to avoid confusion.
 				executionStartLine = startLine;
-			}
+			}	
 
 			LAYOUT_LOADER_MODULE_APPLY( IF_GLSL_VERSION_MATCH, 1, 1, 1,	"DESCRIPTION{Test the GLSL available available during compilation.}"
 											"ARGUMENT:version{The GLSL version name to be tested : 1.30, 3.30, etc.}"

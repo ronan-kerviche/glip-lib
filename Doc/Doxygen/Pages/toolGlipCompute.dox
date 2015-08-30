@@ -1,0 +1,165 @@
+/**
+	\page page_UseGlipCompute Tool : GlipCompute
+
+\section sec_IntroGlipCompute Presentation
+	<b>glip-compute</b> is a command line tool built for GNU/Linux. It requires the host machine to run a X server and allow you to generate graphics, process images and save results to image files without invoking a GUI.
+
+\section sec_CommandsGlipCompute Commands
+\verbatim
+Use GLIP-Lib from the command line to process or generate images.
+glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, 3, ...} FILENAME]
+	     [-o {1, 2, 3, ...} FILENAME] [-r FILENAME]
+
+Mandatory arguments :
+-p, --pipeline	Pipeline filename. See the online documentation for more
+		information about pipeline scripts.
+		E.g. : -p pipeline.ppl
+
+Optional, passing the inputs/outputs as aguments (single processing
+command) :
+ -i, --input	Input to the pipeline, can be indexed by a number or by the
+		name of the input port (they do not need to be in the
+		correct order), followed by a filename. All the input
+		ports must receive an input image.
+		E.g. : -i 0 inputImage.ext
+		       -i inputPortName inputImage.ext
+ -o, --output	Output to the pipeline, can be indexed by a number or by the
+		name of the input port (they do not need to be in the
+		correct order), followed by a filename. Only the ouput
+		ports listed will be saved, others will be discarded
+		E.g. : -o 0 outputImage.ext
+		       -o outputPortName outputImage.ext
+ -u, --uniforms	Load a set of uniform variables script. See the online 
+		documentation about these.
+		E.g. : -u uniformsFile.uvd
+
+Optional, passing the processing commands as a file (can be used to
+generate multiple processing commands using the same pipeline) :
+ -r, --process	Load a set of processing commands from a file. See
+		the section "Processing Commands" for more information
+		E.g. : -r commandsFile.txt
+
+Optional, passing the processing commands from stdin.
+
+Other options : 
+ -f, --format	Set how the input format requirements are passed to the
+		pipeline. You can use C notation with either %d
+		indicating the use of the numerical indexing, or %s
+		indicating the use of the port name instead.
+		E.g. : -f inputFormat%d
+		       -f someName_%s
+ -m, --memory	Set the amount of memory (given in MB) available to 
+		be reusable on the device. This helps reduce significantly
+		the overhead induced by loading the image files (textures
+		are conserved as long as possible on device, depending on
+		their usage frequency).
+		Default is 128 MB.
+ -s, --preserve	Preserve the pipeline definition after its first creation.
+		New inputs sizes will be ignored as required elements.
+ -d, --display	Name of the host, X server and display to target for the
+		context.
+		E.g. : -d host:xServer.screenId
+		       -d localhost:0.0
+ -h, --help	Show this help and stops.
+ -t, --template	Show a list of templates script (Pipeline, Uniforms and 
+		Command) and stops.
+ -v, --version	Show the version and stops.
+ -V, --Version  Start a context, show the informations and stop.
+		You can set the display variable before using this option.
+
+PROCESSING COMMANDS
+  Processing commands describe which resource to use in order to repeat
+the operation with little overhead. These commands are given in a format
+close to the format of the Pipeline or Uniforms script. They should be :
+
+PROCESS
+{
+	INPUT( inFilename0.ext, inFilename1.ext, ...)
+	OUTPUT( outFilename0.ext, outFilename1.ext, ...)
+}
+
+  This description must match the number of input of the pipeline, and be
+given in the correct order. As for the outputs, it is possible to discard
+one by using the keyword VOID instead of a filename. Filtering can be
+specified per input with the following set of commands :
+
+GL_TEXTURE_MIN_FILTER( filterForInput0, filterForInput1, ...)
+GL_TEXTURE_MAG_FILTER( filterForInput0, filterForInput1, ...)
+GL_TEXTURE_WRAP_S( filterForInput0, filterForInput1, ...)
+GL_TEXTURE_WRAP_T( filterForInput0, filterForInput1, ...)
+
+It is also possible to supply specific Uniforms variables on a per command
+basis via two methods. The first, from a file, by adding the following
+line in the body of the command :
+
+UNIFORMS( filename.uvd )
+
+  The second adding the code directly via the body :
+
+UNIFORMS
+{
+	// Uniforms description goes here.
+}
+
+EXAMPLE
+  For a pipeline with one input and at least one ouput :
+     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.
+\endverbatim
+
+\section sec_XRemoteOpenGL X And Remote OpenGL
+	This section describes how to access remote computation capability of a server. It requires the server to be running a X Server with at least one display open. You will not be able to see any graphics via this method alone (graphics will be generated on the display (might be virtual) associated to the distant machine). But this might be sufficient and useful for <i>glip-compute</i>. It also requires you to have a session opened on the distant machine.
+
+	Steps :
+	- On the remote machine, save the following values (once, when you have physical access) :
+	\code
+	echo -e "LOCAL DISPLAY    : $DISPLAY\nLOCAL XAUTHORITY : $XAUTHORITY"	
+	\endcode
+	- Log to the machine via SSH and enable X forwarding :
+	\code
+	ssh -X username@remote
+	\endcode
+	- Have a look at the values of DISPLAY (should be something like :10.0) and XAUTHORITY (might be empty) :
+	\code
+	echo -e "REMOTE DISPLAY    : $DISPLAY\nREMOTE XAUTHORITY : $XAUTHORITY"
+	\endcode
+	- Change the values of $DISPLAY and $XAUTHORITY :
+	\code
+	export DISPLAY=<LOCAL DISPLAY VALUE>
+	export XAUTHORITY=<LOCAL XAUTHORITY VALUE>
+	\endcode
+	- Test with either <i>glxinfo</i>, <i>glewinfo</i> or <i>glip-compute</i>.
+
+\section On AWS/EC2
+	On a GPU instance, install the required packages :
+	\code
+	# yum update
+	# yum install cmake git glut glut-devel glx* xorg-x11*
+	\endcode
+
+	Install <b>freeimage</b> from source (use the -j option for multi-thread compilation) :
+	\code
+	$ make
+	# make install
+	$ make -f Makefile.fip
+	# make -f Makefile.fip install
+	\endcode
+
+	Compile and install GlipLib, GlipCompute :
+	\code 
+	$ cmake . -DCMAKE_BUILD_TYPE=release && make
+	# make install
+	\endcode
+
+	Start the X server with a display at the address <i>:0</i> :
+	\code
+	# X :0
+	\endcode
+
+	Connect with X forwarding, change the targeted display and test :
+	\code
+	$ ssh -X [...]
+	$ export DISPLAY=:0
+	$ glxinfo
+	$ glip-compute -V
+	\endcode
+**/

@@ -1,0 +1,40 @@
+/**
+\mainpage OpenGL Image Processing Library (GLIP-Lib)
+
+\section section_introduction Introduction
+	GLIP-Lib is an OpenGL image processing library written in C++. It features all the necessary tools to quickly build texture filters and pipelines and operate them on the GPU.
+	- Process large images.
+	- Container language for OpenGL and GLSL : develop complex pipelines without recompiling the application.
+	- Interact with filters and modify their parameters while they are running.
+	- Multiple-Platform : built and tested on Windows and Linux.
+	- Only depends on OpenGL API and C++ STL.
+	- Interoperable with Cuda, OpenCL. Can be used as a live programmable data visualizer.
+
+	The GLIP-Lib project also provides two tools to develop, test and use pipelines :
+	- GlipStudio : a graphical development environment for Windows and Linux (\ref page_UseGlipStudio).
+	- GlipCompute : a command-line utility for Linux (\ref page_UseGlipCompute).
+	
+\section section_downloads Downloads
+	Clone me from  <a href="https://github.com/ronan-kerviche/glip-lib">GitHub</a> :
+\code	
+	git clone https://github.com/ronan-kerviche/glip-lib.git
+\endcode
+
+\section section_manual Manual And Examples
+	See the <a href="./pages.html">related pages</a> for an introduction to GLIP-Lib and some examples.
+
+\section section_contactUs Contact Us
+	\ref page_ContactForm
+
+\section section_license License
+	(ALL) <b>MIT License</b>
+
+	Copyright (C) 2010-2015, Ronan Kerviche
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+**/

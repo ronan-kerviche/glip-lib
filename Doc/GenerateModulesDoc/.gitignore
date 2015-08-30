@@ -1,0 +1,4 @@
+# Ignore list :
+gen
+# Except this file :
+!.gitignore

@@ -1,6 +1,6 @@
 TEXTURE_FORMAT:format(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_LINEAR,GL_LINEAR)
 
-SHADER_SOURCE:mix()
+SOURCE:mix()
 {
 	#version 130
 	precision mediump float;

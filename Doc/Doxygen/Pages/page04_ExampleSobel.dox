@@ -1,0 +1,87 @@
+/**
+	\page page04_ExampleSobel Example : Sobel Filter (Edge Detection)
+
+The Sobel filter is computing the local derivates of the intensity map. In this example we show to include source from other files. The following figure shows how the convolution tool works : it reads a local window of 3x3 pixels over the current location, multiplying (element-wise) the value by two 3x3 matrices : 
+
+\htmlonly
+<div style="text-align:center;"><object data="exampleTexture3x3.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+The matrices are : 
+
+	\f$ M_x = \left( \begin{array}{ccc} -1 & 0 & 1 \\ -2 & 0 & 2 \\ -1 & 0 & 1 \end{array} \right) \quad \quad \mbox{and} \quad \quad M_y = \left( \begin{array}{ccc} -1 & -2 & -1 \\ 0 & 0 & 0 \\ 1 & 2 & 1 \end{array} \right) \f$
+
+First, the convolution tool <i>convolution.ppl</i> :
+\code
+	SOURCE:convolutionSource
+	{
+		mat3 readPatch(in sampler2D s, in ivec2 pos, in vec4 projection)
+		{
+			mat3 patch = mat3(0);
+			for(int i=0; i<3; i++)
+				for(int j=0; j<3; j++)
+					patch[i][j] = dot(projection, texelFetch(s, pos+ivec2(j-1, i-1), 0));
+			return patch;
+		}
+
+		float convolve(in mat3 patch, in mat3 coefficients) 
+		{
+			float result = 0.0;
+			for(int i=0; i<3; i++)
+				for(int j=0; j<3; j++)
+					result += coefficients[i][j] * patch[i][j];
+			return result;
+		}
+	}
+
+	// (No PIPELINE_MAIN needed in this file has it should not be loaded directly.)
+\endcode
+
+Then the Sobel filter <i>sobel.ppl</i> :
+\code
+	REQUIRED_FORMAT:outputFormat(inputFormat)
+
+	// Include previous file :
+	INCLUDE(convolution.ppl)
+
+	SOURCE:sobelShader
+	{
+		#version 130
+		uniform sampler2D inputTexture;
+		out vec4 edgeMap;
+
+		// The kernels for the Sobel filter :
+		const mat3 kernelX = mat3(	-1.0, 0.0, 1.0,
+						-2.0, 0.0, 2.0,
+						-1.0, 0.0, 1.0);
+
+		const mat3 kernelY = mat3(	-1.0, -2.0, -1.0,
+						 0.0,  0.0,  0.0,
+						 1.0,  2.0,  1.0);
+
+		#pragma INSERT(convolutionSource)
+
+		void main(void)
+		{
+			// Load the local patch :
+			mat3 patch = readPatch(inputTexture, ivec2(gl_FragCoord.xy), vec4(1.0,1.0,1.0,0.0)/3.0);
+			float   gx = convolve(patch, kernelX),
+				gy = convolve(patch, kernelY);
+			edgeMap.rgb = vec3(gx, gy, abs(gx)+abs(gy));
+		}	
+	}
+
+	// Filter :
+	FILTER_LAYOUT:sobelFilter(outputFormat, sobelShader)
+
+	PIPELINE_MAIN:sobelPipeline
+	{
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(edgeMap)
+		FILTER_INSTANCE:sobelFilter
+	}
+\endcode
+
+Output example, only L1 magnitude :
+	<img src="sobelIntensity.png" />
+**/

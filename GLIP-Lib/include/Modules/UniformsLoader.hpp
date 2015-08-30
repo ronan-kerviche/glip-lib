@@ -106,28 +106,28 @@ PIPELINE:myPipeline
 
 Processing example : 
 \code
-	UniformsLoader uLoader;
+	Glip::Modules::UniformsLoader uniformsLoader;
 
 	// Load values from a current Pipeline, replace existing values :
-	uLoader.load(mainPipeline, true);
+	uniformsLoader.load(mainPipeline);
 
 	// Get the corresponding code :
-	std::string uCode = uLoader.getCode( mainPipeline.getTypeName() );
+	std::string uCode = uniformsLoader.getCode( mainPipeline.getTypeName() );
 
 	// Get the code of all the data saved : 
-	std::string uAllCode = uLoader.getCode();
+	std::string uAllCode = uniformsLoader.getCode();
 
 	// Save to file : 
-	uLoader.writeToFile("./currentData.uvd");
+	uniformsLoader.writeToFile("./currentData.uvd");
 
 	// Clear all : 
-	uLoader.clear();
+	uniformsLoader.clear();
 
 	// Reload (no replacement, if an element already exists it will raise an exception) : 
-	uLoader.load("./currentData.uvd");
+	uniformsLoader.load("./currentData.uvd");
 
 	// Apply : 
-	int c = uLoader.applyTo(mainPipeline);
+	int c = uniformsLoader.applyTo(mainPipeline);
 
 	std::cout << c << " variables were loaded." << std::endl;
 \endcode

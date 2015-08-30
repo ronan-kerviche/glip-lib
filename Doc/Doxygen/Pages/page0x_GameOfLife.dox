@@ -1,0 +1,359 @@
+/**
+\page page0x_GameOfLife The Game Of Life
+
+\section sec_startGOL First example of computation with GLIP-LIB : John Conway's Game of Life
+
+This page will present you basic use of the library. We will build a simple cellular automaton based on <a href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">John Conway's Game of Life</a>. The main idea is that this engine will perform operations from a grid at a time <i>t</i> to a grid at a time <i>t+1</i>. The grid (in 2D) contains cells which can be either <i>alive</i> or <i>dead</i>. Consider a 3x3 patch within this grid, if the center cell is dead at time <i>t</i> and surrounded by exactly three neighbours alive, then it will be alive at time <i>t+1</i> or will remain dead otherwise. If the center cell is alive at time <i>t</i> and surrounded by either two or three neighbours alive, then it will stay alive at time <i>t+1</i>, or it will die otherwise.
+
+The filter will read a local 3x3 window over the current location :
+\htmlonly
+<center><object data="./graphics/exampleTexture3x3.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+We will create two pipelines in order to ping-pong the outputs : 
+\htmlonly
+<center><object data="./graphics/exampleGameOfLifePipeline.svg" type="image/svg+xml"></object></center>
+\endhtmlonly 
+
+We will skip the code for building the window context since it depends on the library you will be using (GLUT, GLFW, Qt, etc.). However, you can find a full example with GLFW on the main project page.
+
+First, we build the shader code for computing the grid evolution. The file <i>game.glsl</i> contains the code for a simple fragment shader (per pixel operation). You can browse documentation on GLSL (<b>OpenGL Shading Language</b>) at this page : http://www.opengl.org/sdk/docs/manglsl/.
+	\code
+	/*
+		Game of Life - John Conway - Rule B3S23
+	*/
+
+	#version 130
+
+	uniform sampler2D 	inputTexture;	// input sampler
+	out     vec4 		outputTexture;	// output fragment
+
+	void main()
+	{
+		// Reqd and count the nature of the surrounding cells : 
+		int alive = 0;
+		for(int i=-1; i<=1; i++)
+		{
+			for(int j=-1; j<=1; j++)
+			{
+				vec4 c = texelFetch(inputTexture, ivec2(gl_FragCoord.xy) + ivec2(j, i), 0);
+				alive += int(c.r>=1.0);
+			}
+		}
+
+		// Older cell are shifted in the next channel :
+		vec4 c = texelFetch(inputTexture, ivec2(gl_FragCoord.xy), 0);
+		outputTexture.gba = vec3(c.rg, 1.0);
+
+		// New state :
+		if(c.r>=1.0) // The center cell was previously alive
+		{
+			if((alive==2) || (alive==3)) 
+				outputTexture.r = 1.0; // It stays alive
+			else
+				outputTexture.r = 0.0; // It dies
+		}
+		else
+		{
+			if(alive==3)
+				outputTexture.r = 1.0; // Birth
+			else
+				outputTexture.r = 0.0; // Stays dead
+		}
+	}
+	\endcode
+
+	Then in your C++ code : the first thing you must start with is the initialization Glew library and other OpenGL related tools :
+	\code
+	try // always protect your code with try / catch blocks, GLIP-Lib functions will emit Glip::Exception objects.
+	{
+		HandleOpenGL::init();
+		// Or create an object :
+		// HandleOpenGL glipObject;
+	\endcode
+
+	Then you can start to build a pipeline layout and some pipeline instances. In this case the pipeline is rather simple, it will be made of a single filter with one input (the grid at time <i>t</i>) and one output (the grid at time <i>t+1</i>) :
+	\code
+	// Still in the try... catch block : 
+		// Create a format for the filters, this will be the size of the grid :
+		HdlTextureFormat fmt(640, 480, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+
+		// Load a shader source code from a file :
+		ShaderSource src("./game.glsl");
+
+		// Create a filter layout using the format and the shader source :
+		FilterLayout fl("GameOfLifeFilterLayout", fmt, src);
+		// The filter layout will automatically create the corresponding input and output ports by analyzing the uniform samplers (input) and out vectors (output) of the shader source.
+
+		// Create a pipeline :
+		PipelineLayout pl("GameOfLifePipelineLayout");
+
+		// Add one input and one output :
+		pl.addInput("inputTexture");
+		pl.addOutput("outputTexture");
+
+		// Add an instance of the filter fl :
+		pl.add(fl, "GameOfLifeFilter");
+		// Here you can add mutliple filters in one pipeline.
+
+		// For this example, we use the same name for ports of the pipeline. We can use an automatic method to make the connections :
+		pl.autoConnect();
+
+		// This is equivalent to connecting the elements with :
+		//pl.connectToInput("inputTexture", "GameOfLifeFilter", "inputTexture");
+		//pl.connectToOutput("GameOfLifeFilter", "outputTexture", "outputTexture");
+		// The connection between two filters is : pl.connect("NameFilter1","NameOutput","NameFilter2","NameInput"); for a connection going from NameFilter1::NameOutput to NameFilter2::NameInput.
+
+		// Create one pipeline (which will also create one cell) then add a second cell (ping-pong) : 
+		Pipeline* p = new Pipeline(pl, "GameOfLifePipeline");
+		int	cellAId = p->getCurrentCellID(),
+			cellBId = p->createBuffersCell();
+	\endcode
+
+	Finally you can use this pipeline to process maps of states : 
+	\code
+		// We create a first texture and a buffer :
+		HdlTexture* temp = new HdlTexture(p1->out(0).format());
+		unsigned char* buffer = new unsigned char[temp.getSize()];
+
+		// Fill with some random patterns :
+		for(int j=0; j<temp->getSize(); j++)
+		{
+			if(rand()>0.8*RAND_MAX)
+				buffer[j] = 255;
+			else
+				buffer[j] = 0;
+		}
+
+		// We write this initialization to the texture :
+		temp->write(buffer);
+
+		// We prepare the pipeline with this first image :
+		// Pipeline << Argument 1 << Argument 2 << ... << Pipeline::Process;
+		(*p) << (*temp) << Pipeline::Process;
+
+		// Cleaning :
+		delete[] buffer;
+		delete temp;
+
+		// Create a Quad inside a VBO for display :
+		GeometryInstance quad(GeometryPrimitives::StandardQuad(), GL_STATIC_DRAW_ARB);
+
+		// Now we will apply and display the computation pipeline :
+		unsigned int i=0;
+
+		while(running)
+		{
+			// Process and display :
+			if(i%2==0)
+			{
+				// We write in the second cell : 
+				p->changeTargetBuffersCell(cellBId);
+				// Using the content of the first cell : 
+				(*p) << p->out(0, cellAId) << Pipeline::Process;
+				p->out(0, cellBId).bind();
+
+			}
+			else
+			{
+				// We write in the first cell : 
+				p->changeTargetBuffersCell(cellAId);
+				// Using the content of the second cell : 
+				(*p) << p->out(0, cellBId) << Pipeline::Process;
+				p->out(0, cellAId).bind();
+			}
+
+			// Draw it on a quad :
+			quad.draw();
+
+			// Swap buffer to screen :
+			glSwapBuffers(); //or equivalent method
+
+			i++;
+		}
+
+		// Clean :
+		delete p;
+
+		HandleOpenGL::deinit();
+	}
+	catch(Exception& e)
+	{
+		// Show exception :
+		std::cerr << "An exception was caught : " << std::endl;
+		std::cerr << e.what() << std::endl;
+	}
+	\endcode
+
+	This will produce something close to the following animation on screen :
+	<img src="./images/animation.gif" />
+
+\section sec_pipelineScripts Pipeline Scripts
+
+We can improve the previous pipeline construction by building a script which will contain the full description with the advantage of not requiring compilation of the C++ program when modified (the compilation of the GLSL code is made by the display driver). The Glip::Modules::LayoutLoader module enables you to use dynamic pipeline saved in a file or a standard string. It will create either a Glip::CorePipeline::PipelineLayout or a Glip::CorePipeline::Pipeline that you can use directly or combined with other pipeline structures. Here is an example of script for histogram computation and display. Check Glip::Modules::LayoutLoader documentation page for further information. We can write a file <i>gameOfLiFe.ppl</i> with the following script :
+	\code
+	// Description of the grid format, with the name gridFormat :
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
+
+	// Load the shader from file game.glsl
+	SOURCE:gameOfLifeShader(game.glsl)
+
+	// Create a filter layout, the output will be a texture of format gridFormat and the fragment shader used will be gameOfLifeShader
+	FILTER_LAYOUT:gameOfLifeFilter(gridFormat, gameOfLifeShader)
+
+	// The pipeline layout to be loaded from this file (the main pipeline) will be :
+	PIPELINE_MAIN:gameOfLifePipeline
+	{
+		// Declare the input and output port :
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(outputTexture)
+
+		// Declare one filter instance :
+		FILTER_INSTANCE:gameOfLifeInstance(gameOfLifeFilter)
+
+		// As the input and output ports have the same name as the ports of the filter (defined by the variables inside the shader source code) there is no need to make any connection declaration.
+		// This is equivalent to :
+		//CONNECTION(THIS, inputTexture, gameOfLifeInstance, inputTexture)
+		//CONNECTION(gameOfLifeInstance, outputTexture, THIS, outputTexture)
+	}
+	\endcode
+
+	Now we replace the pipeline declaration in the C++ code by :
+	\code
+	// Create a loader :
+	LayoutLoader loader;
+
+	// Load the pipeline layout from file :
+	Pipeline* p = loader.getPipeline("gameOfLiFe.ppl");
+	\endcode
+
+\section sec_pipelineScriptsArguments Pipeline Scripts Arguments
+	In the previous example, the script is forcing the size of the grid but you might want to decide of this size within the C++ program. In that case, you need to do a few modification both in the scripts and in the C++ code. First in the file <i>gameOfLiFe.ppl</i>, we replace the lines :
+	\code
+	// Description of the grid format, with the name gridFormat :
+	TEXTURE_FORMAT:gridFormat(640,480,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST)
+	\endcode
+
+	By :
+	\code
+	// Receive the grid format from the loader :
+	REQUIRED_FORMAT:gridFormat(inputGridFormat)
+	\endcode
+
+	And in the C++ code, we must provide this format to the loader object :
+	\code
+	// The grid format :
+	HdlTextureFormat ourGridFormat(512,512,GL_RGB,GL_UNSIGNED_BYTE,GL_NEAREST,GL_NEAREST);
+
+	// Create a loader :
+	LayoutLoader loader;
+
+	// Add the required format BEFORE loading the file. The name must correspond to the one expected in the file :
+	loader.addRequiredElement("inputGridFormat", ourGridFormat);
+
+	// Load the pipeline layout from file :
+	PipelineLayout* pl = loader.getPipeline("gameOfLiFe.ppl");
+	\endcode
+
+	All the previously described code remain identical.
+
+\section sec_shaderInteractivity Shader Interactivity :
+	You will see that after a few thousands iterations the grid has stabilized and the is little motion of patterns in it. To remove this effect, you might want to reset the flow by starting from a new random grid. In this part, we will remove the random generation in RAM to have a random starting point computed on GPU. We will generate a texture through a Glip::Modules::ProceduralInput module.
+
+	First we need a pipeline which will be generating a random state for each cell. In the file <i>randomSource.ppl</i> we write :
+	\code
+	REQUIRED_FORMAT:gridFormat(inputGridFormat)
+
+	SOURCE:RandomSourceShader
+	{
+		#version 130
+		// The output texture (note that there is no input) :
+		out vec4 randomTexture;
+
+		// The seed which will be modify upon each call from the C++ code :
+		// (unifom means that you can set the value from outside the shader)
+		uniform int seed;
+
+		// The random generator :
+		float rand(vec2 co)
+		{
+			return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+		}
+		void main()
+		{
+			float a = rand(gl_TexCoord[0].st * seed); // the current pixel position times the seed.
+			randomTexture = vec4(float(a<0.8),0.0,0.0,1.0);
+		}
+	}
+
+	FILTER_LAYOUT:RandomSourceFilter(gridFormat, RandomSourceShader)
+	PIPELINE_MAIN:gameOfLifePipeline
+	{
+		OUTPUT_PORTS(randomTexture)
+		// Declare one filter instance :
+		FILTER_INSTANCE:randomFilter
+	}
+	\endcode
+
+	In the C++ code, we build an object :
+	\code
+	Pipeline* randomSource = loader.getPipeline("randomSource.ppl");
+	\endcode
+
+	Then we set a reset every 100 frames in the loop and modify the seed :
+	\code
+	// We don't do random initialization anymore...
+
+	// Get a direct access to the filter : 
+	Filter& randomSourceFilter = (*p)[p->getElementID("RandomSourceFilter")]; 
+	unsigned int i=0;
+
+	while(running)
+	{
+		// Reset :
+		if(i%100==0)
+		{
+			// We modify the variable "seed", in the shader with the current count :
+			randomSourceFilter.prgm().modifyVar("seed", GL_INT, i/100*13);
+
+			// Generate the new random grid :
+			(*randomSource) << Pipeline::Process;	
+
+			// Apply as input on pipeline 2 (because in this loop, we will use pipeline 1) :
+			(*p) << randomSource->out(0) << Pipeline::Process;
+		}
+
+		// Process and display :
+		if(i%2==0)
+		{
+			// We write in the second cell : 
+			p->changeTargetBuffersCell(cellBId);
+			// Using the content of the first cell : 
+			(*p) << p->out(0, cellAId) << Pipeline::Process;
+			p->out(0, cellBId).bind();
+
+		}
+		else
+		{
+			// We write in the first cell : 
+			p->changeTargetBuffersCell(cellAId);
+			// Using the content of the second cell : 
+			(*p) << p->out(0, cellBId) << Pipeline::Process;
+			p->out(0, cellAId).bind();
+		}
+
+		// Draw it on a quad :
+		quad.draw();
+
+		// Swap buffer to screen :
+		glSwapBuffers(); //or equivalent method
+
+		// Unbind :
+		HdlTexture::unbind();
+
+		i++;
+	}
+	\endcode
+
+	Now the output will be reset properly every 100 frames.
+

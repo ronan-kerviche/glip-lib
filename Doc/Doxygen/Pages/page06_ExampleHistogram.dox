@@ -1,0 +1,154 @@
+/**
+\page page06_HistogramExample Example : Histogram
+
+\section section_HistogramPipeline Histogram Pipeline
+
+Histogram algorithms are notably difficult to implement on parallel architecture as they require the ability to stack results. In Cuda or OpenCL this can be achieved via atomic operations. In this example, we will use a method known as Vertex Texture Fetching. We will use for the geometry, a 3D grid of dot, one for each channel, in each pixel. From the vertex shader, we will be able to read the corresponding texel component and modify the position of the current point accordingly. Finally, results will be stacked in a texture will alpha-blending enable. The following figure illustrates this operation :
+
+\htmlonly
+<div style="text-align:center;"><object data="exampleTextureVTF.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+We first write the core pipeline, <i>histogram.ppl</i> :
+\code
+	REQUIRED_FORMAT:inputFormatHistogram(inputFormat)
+	// The format to contain the final histogram :
+	TEXTURE_FORMAT:histogramBinsFormat(256, 1, GL_RGBA32F, GL_FLOAT, GL_NEAREST, GL_LINEAR)
+
+	// Avoid processing 30M points (typical 10Mpix image), subsample by 4x :
+	CALL:FORMAT_SCALE_SIZE(reducedFormatHistogram, inputFormatHistogram, 0.25, 0.25)
+	CALL:FORMAT_TO_CONSTANT(reducedFormatHistogram)
+	// Generate a grid to the reducedFormat size (width x height x channels) :
+	CALL:GENERATE_SAME_SIZE_3D_GRID(grid, reducedFormatHistogram, TRUE)
+
+	// First the vertex shader, to direct the points to the right bins :
+	SOURCE:HistogramVertexShader
+	{
+		#version 130
+		uniform sampler2D inputTexture;
+
+		void main()
+		{
+			// Vertex texture fetching, get the color of the input texture at the local position :
+			vec4 col = texture(inputTexture, gl_Vertex.xy);
+			float sel = 0.0;
+			// Compute the "Payload"
+			if(gl_Vertex.z==0.0) // Red plane
+			{
+				gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
+				sel = col.r;
+			}
+			else if(gl_Vertex.z==0.5) // Green plane
+			{
+				gl_FrontColor = vec4(0.0,1.0,0.0,1.0);
+				sel = col.g;
+			}
+			else if(gl_Vertex.z==1.0) // Blue plane
+			{
+				gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+				sel = col.b;
+			}
+			else // Discard
+			{
+				gl_FrontColor = vec4(0.0,0.0,0.0,1.0);
+				sel = -1.0;
+			}
+			gl_Position = vec4((sel-0.5)*2.0, 0.0, 0.0, 1.0); // set new point position to the color intensity in [-1.0,1.0] interval.
+		}
+	}
+
+	// The fragment shader, to accumulate the counts in histogram :
+	SOURCE:HistogramFragmentShader
+	{
+		#version 130
+		out vec4 histogramBins;
+
+		#pragma INSERT(reducedFormatHistogram)
+
+		void main()
+		{
+			// Prepare normalization constant :
+			float nrm = 1.0/float(reducedFormatHistogram.s*reducedFormatHistogram.t);
+			// Write :
+			histogramBins = gl_Color*nrm;
+			histogramBins.a = 1.0;
+		}
+	}
+
+	// The histogram filter, with specific shaders, geometry and blending :
+	FILTER_LAYOUT:HistogramFilter(histogramBinsFormat)
+	{
+		// Set both the vertex and fragment shaders :
+		GL_FRAGMENT_SHADER(HistogramFragmentShader)
+		GL_VERTEX_SHADER(HistogramVertexShader)
+		// Use the defined grid geometry :
+		GL_RENDER(grid)	
+		// Set the blending so that we sum the counts :
+		GL_BLEND(GL_ONE, GL_ONE, GL_FUNC_ADD)
+	}
+
+	PIPELINE_MAIN:HistogramPipeline
+	{
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(histogramBins)
+		FILTER_INSTANCE:HistogramFilter
+	}
+\endcode
+
+This code will output the normalized histogram as a 1D texture of 256 elements. We would like to plot the curve on top of the image. We write <i>plotHistogram.ppl</i> :
+\code
+	// Include the previous code :
+	INCLUDE(histogram.ppl)
+
+	REQUIRED_FORMAT:outputFormatPlotHistogram(inputFormat0)
+
+	SOURCE:PlotHistogramShader
+	{
+		#version 130
+		uniform sampler2D histogramBins,
+				  inputTexture;
+		out vec4 outputTexture;
+		uniform float scale = 1.0;	// To scale the curve height.
+		uniform int noBackground = 0;	// To let the curves have a transparent background.
+
+		void main()
+		{
+			vec2 pos = gl_FragCoord.xy/vec2(textureSize(inputTexture, 0));
+			vec4 hist = textureLod(histogramBins, vec2(pos.s, 0.0), 0);
+			vec4 col = textureLod(inputTexture, pos, 0);
+
+			// Test if the current point is lower than any of the R, G or B curve :
+			bool 	rTest = (pos.t<hist.r*scale),
+				gTest = (pos.t<hist.g*scale),
+				bTest = (pos.t<hist.b*scale);
+
+			if(noBackground>0 && (rTest || gTest || bTest))
+				col = vec4(0.0, 0.0, 0.0, 1.0);
+
+			// Plot :
+			outputTexture.r = rTest ? 1.0 : col.r;
+			outputTexture.g = gTest ? 1.0 : col.g;
+			outputTexture.b = bTest ? 1.0 : col.b;
+			outputTexture.a = 1.0;
+		}
+	}
+
+	FILTER_LAYOUT:PlotHistogramFilter(outputFormatPlotHistogram, PlotHistogramShader)
+
+	PIPELINE_MAIN:PlotHistogramPipeline
+	{
+		INPUT_PORTS(inputTexture)
+		OUTPUT_PORTS(histogramBins, outputTexture) 
+		FILTER_INSTANCE:HistogramFilter
+		FILTER_INSTANCE:PlotHistogramFilter
+	}
+\endcode
+
+Sample output :
+\htmlonly
+	<div style="text-align:center;"><img src="exampleHistogram.png" alt="exampleHistogram"></div>
+\endhtmlonly
+
+\section section_DynamicCurvesAdjustment Dynamic Curves Adjustment
+
+**/

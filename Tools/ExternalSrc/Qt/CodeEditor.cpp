@@ -20,6 +20,8 @@
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QApplication>
+#include <QTextDocumentFragment>
+#include <QRegExp>
 
 using namespace QGED;
 
@@ -344,89 +346,56 @@ using namespace QGED;
 
 	void CodeEditor::keyPressEvent(QKeyEvent* e)
 	{
-		// Ensure multi-line tabulations : 
-		if(e->key()==Qt::Key_Tab || e->key()==Qt::Key_Backtab)
+		// Test for (possibly multi-line) tabulations :
+		const bool tab = (e->key()==Qt::Key_Tab),
+			   btab = (e->key()==Qt::Key_Backtab);
+		if(tab || btab)
 		{
-			// Grab all the current selection : 
-			QString selectedText = textCursor().selectedText();
-
-			// Replace unicode : 
-			selectedText.replace(QString::fromWCharArray(L"\u2029"), "\n");
-
-			// If the selection contains only a single line :
-			if(!selectedText.contains('\n'))
-			{
-				QPlainTextEdit::keyPressEvent(e);
-				return ;
-			}
-
-			// Get the selection :
 			QTextCursor cursor = textCursor();
-
-			int	startSel = cursor.selectionStart(), 
-				endSel = cursor.selectionEnd();
-
-			// If no selection, process the tab / backtab as usual : 
-			if(endSel-startSel<=0 && e->key()==Qt::Key_Tab)
+			if(cursor.hasSelection() || btab)
 			{
-				QPlainTextEdit::keyPressEvent(e);
-				return ;
-			}
-			else if(endSel-startSel<=0 && e->key()==Qt::Key_Backtab)
-			{
-				cursor.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor);
-				cursor.insertText( cursor.selectedText().replace("\t","") );
-				return ;
-			}	
+				int start = std::min(cursor.anchor(), cursor.position()),
+				    end = std::max(cursor.anchor(), cursor.position());
 
-			cursor.setPosition(endSel, QTextCursor::KeepAnchor);
-			QTextBlock endBlock = cursor.block();
+				if(btab)
+				{
+					// Recapture and include from the beginning of the first line :
+					cursor.setPosition(start);
+					cursor.movePosition(QTextCursor::StartOfLine);
+					start = cursor.position();
+					cursor.setPosition(end, QTextCursor::KeepAnchor);
+				}
 
-			cursor.setPosition(startSel, QTextCursor::KeepAnchor);
-			QTextBlock block = cursor.block();
-
-			cursor.beginEditBlock();
-			for(; block.isValid() && !(endBlock < block); block = block.next())
-			{
-				if(!block.isValid())
-					continue;
-
-				cursor.movePosition(QTextCursor::StartOfLine);
-				cursor.clearSelection();
-
+				QString text = cursor.selection().toPlainText(); // According to the doc, this avoid getting UTF end block characters.
 				if(e->key()==Qt::Key_Tab)
-					cursor.insertText("\t");
+				{
+					// The beginning of the selection gets a tab, and all subsequent newlines :
+					text.prepend("\t");
+					text.replace("\n", "\n\t");
+				}
 				else
 				{
-					// Select the equivalent of one tab.
+					// Get the tab size :
 					QFontMetrics metrics(document()->defaultFont());
 					const int tabSpacesEquivalent = tabStopWidth()/metrics.width(' ');
-					int numSpaces = 0;
-					
-					// Scan the beginning of the line, to remove UP TO one tabulation :
-					QChar c = document()->characterAt(cursor.position());
-					while(c.isSpace() && numSpaces<tabSpacesEquivalent)
-					{
-						if(c=='\t' || c=='\n')
-						{
-							cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-							break;
-						}
-						else
-							numSpaces++;
-
-						cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
-						c = document()->characterAt(cursor.position());
-					}
-
-					cursor.removeSelectedText();
+					// Replace all the cases of existing tabulations (or as numerous spaces) :
+					text.replace(QRegExp(tr("^\\t|^\\ {1,%1}").arg(tabSpacesEquivalent)), "");
+					text.replace(QRegExp(tr("\\n\\t|\\n\\ {1,%1}").arg(tabSpacesEquivalent)), "\n");
 				}
 				
-				cursor.movePosition(QTextCursor::NextBlock);
+				cursor.beginEditBlock();
+				cursor.insertText(text);
+				cursor.endEditBlock();
+
+				// Reselect :
+				cursor.setPosition(start);
+				cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, text.size());
+				setTextCursor(cursor);
 			}
-			cursor.endEditBlock();
+			else
+				QPlainTextEdit::keyPressEvent(e);
 		}
-		else // Otherwise, propagate : 
+		else
 			QPlainTextEdit::keyPressEvent(e);
 	}	
 

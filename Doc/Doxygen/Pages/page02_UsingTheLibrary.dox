@@ -1,0 +1,135 @@
+/**
+\page page02_UsingTheLibrary Using The Library
+
+\section section_CreatingAPipeline Creating A Pipeline
+
+In this section, we present how to create a static pipeline with the library :
+\code
+	// Protect the library call with a try{ }catch block :
+	try
+	{
+		// OpenGL handshake (the OpenGL Context must be setup before this point) :
+		Glip::HandleOpenGL::init();
+		
+		// We start by creating some structures, first a format for the texture we will write :
+		Glip::CoreGL::HdlTextureFormat format(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+		
+		// Then, load some shader source from a string :
+		Glip::CoreGL::ShaderSource source(sourceString);
+
+		// Create the filter :
+		Glip::CorePipeline::FilterLayout filterLayout("ThisFilterLayoutName", format, source);
+
+		// Create the pipeline, create one input port, one output port and add the filter :
+		Glip::CorePipeline::PipelineLayout pipelineLayout("ThisPipelineLayoutName");	
+		pipelineLayout.addInput("inputTexture");
+		pipelineLayout.addOutput("outputTexture");
+		pipelineLayout.add(filterLayout, "ThisFilterName");
+
+		// If you know that the name of the input and output ports in the filter (found from the source)
+		// match the input and output ports name given to the pipeline, you can then use the automatic
+		// connection method :
+		// pipelineLayout.autoConnect();
+
+		// Otherwise, give explicitly the connections :
+		pipelineLayout.connectToInput("inputTexture", "ThisFilterName", "inputName");
+		pipelineLayout.connectToOutput("ThisFilterName", "outputName", "outputTexture");
+
+		// Finally, create a pipeline from this layout :
+		Glip::CorePipelinePipeline pipeline(pl, "ThisPipelineName");
+
+		// Process (with some Glip::CoreGL::HdlTexture you have created) :
+		pipeline << yourTexture << Pipeline::Process;
+
+		// And display (with your own function) :
+		yourDisplay(pipeline->out(0));
+	}
+	catch(Glip::Exception& e)
+	{
+		// An error occurred, print information :
+		std::cerr << e.what() << std::endl;
+	}
+\endcode
+
+\section section_LoadingAPipelineScript Loading A Pipeline Script
+
+The previous section was limiting the pipeline to be with a static architecture. As you read in the introduction, it is also possible to load complete structures from strings or files via Glip::Modules::LayoutLoader :
+\code
+	try
+	{
+		HandleOpenGL::init();
+
+		// Create the loader : 
+		Glip::Modules::LayoutLoader layoutLoader;
+
+		// (Optional) allow the pipeline scripts to call standard modules :
+		Glip::Modules::LayoutLoaderModule::addBasicModules(layoutLoader);
+		
+		// (Optional) give information to the loader, to be used inside pipeline scripts :
+		Glip::CoreGL::HdlTextureFormat format(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+		layoutLoader.addRequiredElement("dynamicFormat", format);
+
+		// Load a file :
+		Pipeline* pipeline = layoutLoader.getPipeline("path/to/pipelineScript.ppl", "ThisPipelineName");
+
+		// Use as usual.
+	}
+	catch(Glip::Exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+\endcode
+
+\section section_ChangeUniformParameters Change Uniform Parameters
+
+After the pipeline being created, it is possible to change filter parameters declared as <b>uniform</b> in the GLSL sources.
+\code
+	Glip::CorePipeline::Filter& filter = pipeline[pipeline.getElementID("ThisFilterName")];
+	filter.program().setVar("integer", GL_INT, 123);
+\endcode
+
+It is also possible to work with dynamic typing :
+\code
+	const std::string varname = filter.getUniformsNames().front();
+	const GLenum typeEnum = filter.getUniformsTypes().front();
+
+	Glip::CoreGL::HdlDynamicData* var = Glip::CoreGL::HdlDynamicData::build(typeEnum);
+	var.setf(123.0f, 0, 0);
+
+	filter.program().setVar(varname, *var);
+	delete var;
+\endcode
+
+\section section_SaveAndLoadSettings Save and Load Settings
+
+We can also save and load complete sets of settings (uniform variables) from or to a pipeline with Glip::Modules::UniformsLoader :
+\code
+	Glip::Modules::UniformsLoader uniformsLoader;
+
+	// Get from an existing pipeline :
+	uniformsLoader.load(pipeline);
+
+	// Save to a file :
+	uniformsLoader.writeToFile("settings.uvd");
+
+	// Clear and load another file :
+	uniformsLoader.clear(pipeline.getTypeName());
+	uniformsLoader.load("otherSettings.uvd");
+
+	// Apply :
+	uniformsLoader.applyTo(pipeline);
+\endcode
+
+The settings are kept in a plain text format ressembling the following :
+\code
+	PIPELINE:PipelineLayoutName
+	{
+		FILTER:FilterLayoutName
+		{
+			GL_FLOAT:someVariable(1.0)
+			GL_VEC3:anotherVariable(1.4, 1.5, 1.6)
+		}
+	}
+\endcode
+
+**/

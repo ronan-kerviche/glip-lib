@@ -76,8 +76,10 @@ Example, creating a simple Module :
 		// (If your module was to be more complex, you will have to go through a full description)
 
 		// In the source file (must have exactly 3 arguments (min = max = 3), no body and show the manual if any errors occur) : 
-		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 3, 3, -1, true, 	"Increase or decrease the size of a format, save as a new format.\n"
-										"Arguments : nameOriginal, delta, nameNew.")
+		LAYOUT_LOADER_MODULE_APPLY( MyAdditionModule, 3, 3, -1, true, 	"DESCRIPTION{Increase or decrease the size of a format, save as a new format.}"
+										 ARGUMENT:nameOriginal{Name of the original format.}"
+										 ARGUMENT:delta{Integer, change in width/height.}"
+										 ARGUMENT:nameNew{Name of the new format.}")
 		{
 			// Check that the target element exists : 
 			FORMAT_MUST_EXIST( arguments[0] )
@@ -91,7 +93,7 @@ Example, creating a simple Module :
 			HdlTextureFormat newFmt = it->second;
 
 			// Read the delta argument : 
-			CAST_ARGUMENT( 1, double, delta)
+			CAST_ARGUMENT(1, int, delta)
 
 			// Change the size : 
 			newFmt.setWidth( newFmt.getWidth() + delta );
@@ -106,9 +108,9 @@ Example, creating a simple Module :
 		}
 	\endcode
 
-	Use in a script : 
+	Use it in a script : 
 	\code 
-		CALL: MyAdditionModule (someFormat, 128, newLargerFormat)
+		CALL: MyAdditionModule(someFormat, 128, newLargerFormat)
 	\endcode
 
 ## Modules List
@@ -1013,7 +1015,10 @@ Load a geometry from a StereoLithography file (STL).
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDGEOMETRY_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_REQUIREDPIPELINE_DEFINED )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_SIZE )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_INCREASE_SIZE )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_DECREASE_SIZE )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SCALE_SIZE )
+			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_INVSCALE_SIZE )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_CHANNELS )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_DEPTH )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_CHANGE_FILTERING )

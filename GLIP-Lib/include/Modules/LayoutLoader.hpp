@@ -49,7 +49,7 @@ namespace Glip
 		{
 			KW_LL_TRUE,
 			KW_LL_FALSE,
-			KW_LL_FORMAT_LAYOUT,
+			KW_LL_FORMAT,
 			KW_LL_SOURCE,
 			KW_LL_FILTER_LAYOUT,
 			KW_LL_PIPELINE_LAYOUT,
@@ -61,11 +61,6 @@ namespace Glip
 			KW_LL_INPUT_PORTS,
 			KW_LL_OUTPUT_PORTS,
 			KW_LL_THIS_PIPELINE,
-			KW_LL_DEFAULT_VERTEX_SHADER,
-			KW_LL_CLEARING_ON,
-			KW_LL_CLEARING_OFF,
-			KW_LL_BLENDING_ON,
-			KW_LL_BLENDING_OFF,
 			KW_LL_REQUIRED_FORMAT,
 			KW_LL_REQUIRED_SOURCE,
 			KW_LL_REQUIRED_GEOMETRY,
@@ -878,10 +873,12 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 **/
 		class GLIP_API LayoutWriter
 		{
-			private :
-				VanillaParserSpace::Element write(const HdlAbstractTextureFormat& hLayout, const std::string& name);
-				VanillaParserSpace::Element write(const ShaderSource& source, const std::string& name);
-				VanillaParserSpace::Element write(const GeometryModel& mdl, const std::string& name);
+			public :
+				static VanillaParserSpace::Element write(const HdlAbstractTextureFormat& format, const std::string& name);
+				static VanillaParserSpace::Element write(const ShaderSource& source, const std::string& name);
+				static VanillaParserSpace::Element write(const GeometryModel& mdl, const std::string& name);
+			
+			private:
 				VanillaParserSpace::Element write(const AbstractFilterLayout& fLayout);
 				VanillaParserSpace::Element write(const AbstractPipelineLayout& pLayout, bool isMain=false);
 
@@ -891,7 +888,7 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 				LayoutWriter(void);
 				virtual ~LayoutWriter(void);
 
-				std::string operator()(const AbstractPipelineLayout& pipelineLayout);
+				std::string getCode(const AbstractPipelineLayout& pipelineLayout);
 				void writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename);
 		};
 	}

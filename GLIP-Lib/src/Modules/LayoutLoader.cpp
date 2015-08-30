@@ -50,11 +50,6 @@
 										"INPUT_PORTS",
 										"OUTPUT_PORTS",
 										"THIS",
-										"DEFAULT_VERTEX_SHADER",
-										"CLEARING_ON",
-										"CLEARING_OFF",
-										"BLENDING_ON",
-										"BLENDING_OFF",
 										"REQUIRED_FORMAT",
 										"REQUIRED_SOURCE",
 										"REQUIRED_GEOMETRY",
@@ -294,7 +289,8 @@
 
 	ShaderSource LayoutLoader::enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine)
 	{
-		const std::string keyword = keywords[KW_LL_INSERT];
+		const std::string keyword = keywords[KW_LL_INSERT],
+				  glslPragma = "#pragma";
 	
 		std::vector<std::string> lines;
 		std::vector<ShaderSource::LineInfo> infos;
@@ -321,15 +317,17 @@
 					k++;
 					continue;
 				}
-				else if(parser.elements.size()>1)
-					throw Exception("Multiple elements found during parsing, instead of one " + std::string(keywords[KW_LL_INSERT]) + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
-				else if(parser.elements.front().strKeyword!=keywords[KW_LL_INSERT])
-					throw Exception("Bad keyword found : \"" + parser.elements.front().strKeyword + "\" instead of " + std::string(keywords[KW_LL_INSERT]) + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				else if(parser.elements.size()>2)
+					throw Exception("Multiple elements found during parsing, instead of one " + keyword + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				else if(parser.elements.size()==2 && (parser.elements.front().strKeyword!=glslPragma || parser.elements.back().strKeyword!=keyword))
+					throw Exception("Bad keyword found : \"" + parser.elements.front().strKeyword + " " + parser.elements.back().strKeyword + "\" instead of \"" + glslPragma + " " + keyword + "\".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
+				else if(parser.elements.size()==1 && parser.elements.front().strKeyword!=keyword)
+					throw Exception("Bad keyword found : \"" + parser.elements.front().strKeyword + "\" instead of " + keyword + ".", currentInfo.sourceName, currentInfo.lineNumber, Exception::ClientScriptException);
 				
 				// Continue the tests :
-				preliminaryTests(parser.elements.front(), -1, 1, 1, -1, "Insert");
+				preliminaryTests(parser.elements.back(), -1, 1, 1, -1, "Insert");
 				
-				const std::string sourceName = parser.elements.front().arguments[0];
+				const std::string sourceName = parser.elements.back().arguments[0];
 
 				// Get it from the list :
 				std::map<std::string,ShaderSource>::iterator it = sourceList.find(sourceName); 
@@ -1700,7 +1698,7 @@
 					case KW_LL_SAFE_CALL :
 						moduleCall(rootParser.elements[k], mainPipelineName, true);
 						break;
-					case KW_LL_FORMAT_LAYOUT :
+					case KW_LL_FORMAT :
 						buildFormat(rootParser.elements[k]);
 						break;
 					case KW_LL_SOURCE :
@@ -2497,7 +2495,7 @@
 						preliminaryTests(rootParser.elements[k], 1, -1, -1, 0, "ModuleCall");
 						result.modulesCalls.push_back( rootParser.elements[k].name );
 						break;
-					case KW_LL_FORMAT_LAYOUT :
+					case KW_LL_FORMAT :
 						preliminaryTests(rootParser.elements[k], 1, 4, 9, -1, "Format"); 
 						result.formats.push_back( rootParser.elements[k].name );
 						break;
@@ -2760,33 +2758,49 @@
 		code.clear();
 	}
 
-	VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& hLayout, const std::string& name)
+	/** 
+	\fn VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& format, const std::string& name)
+	\brief Generate the code element for a particular format.
+	\param format Format object.
+	\param name Name of the object.
+	\return A coded element containing all format data.
+	**/
+	VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& format, const std::string& name)
 	{
 		if(name.empty())
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
-		if(hLayout.getBaseLevel()!=0)
-			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT )) + " : base level cannot be different than 0 (current : " + toString(hLayout.getBaseLevel()) + ") .", __FILE__, __LINE__, Exception::ModuleException);
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
+		if(format.getBaseLevel()!=0)
+			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT )) + " : base level cannot be different than 0 (current : " + toString(format.getBaseLevel()) + ") .", __FILE__, __LINE__, Exception::ModuleException);
 
 		VanillaParserSpace::Element e;
 
-		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_FORMAT_LAYOUT );
-		e.name		= name;
+		e.strKeyword = LayoutLoader::getKeyword( KW_LL_FORMAT );
+		e.name = name;
+		e.noName = false;
 		e.body.clear();
-		e.noBody 	= true;
+		e.noBody = true;
 
-		e.arguments.push_back( toString( hLayout.getWidth() ) );
-		e.arguments.push_back( toString( hLayout.getHeight() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getGLMode() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getGLDepth() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getMinFilter() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getMagFilter() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getSWrapping() ) );
-		e.arguments.push_back( getGLEnumName( hLayout.getTWrapping() ) );
-		e.arguments.push_back( toString( hLayout.getMaxLevel() ) );
+		e.noArgument = false;
+		e.arguments.push_back( toString( format.getWidth() ) );
+		e.arguments.push_back( toString( format.getHeight() ) );
+		e.arguments.push_back( getGLEnumName( format.getGLMode() ) );
+		e.arguments.push_back( getGLEnumName( format.getGLDepth() ) );
+		e.arguments.push_back( getGLEnumName( format.getMinFilter() ) );
+		e.arguments.push_back( getGLEnumName( format.getMagFilter() ) );
+		e.arguments.push_back( getGLEnumName( format.getSWrapping() ) );
+		e.arguments.push_back( getGLEnumName( format.getTWrapping() ) );
+		e.arguments.push_back( toString( format.getMaxLevel() ) );
 
 		return e;
 	}
  
+	/**
+	\fn VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
+	\brief Generate the code element for a particular source.
+	\param source Source object.
+	\param name Name of the source.
+	\return A coded element containing all source data.
+	**/
 	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	{
 		if(name.empty())
@@ -2803,6 +2817,13 @@
 		return e;
 	}
 
+	/**
+	\fn VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
+	\brief Generate the code element for a particular geometry.
+	\param mdl Geometry model object.
+	\param name Name of teh geometry.
+	\return A coded element containing all geometry data.
+	**/
 	VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
 	{
 		if(name.empty())
@@ -2916,64 +2937,91 @@
 
 	VanillaParserSpace::Element LayoutWriter::write(const AbstractFilterLayout& fLayout)
 	{
-		//if(name.empty())
-		//	throw Exception("LayoutWriter - Writing " + std::string(keywordsLayoutLoader[ KW_LL_FILTER_LAYOUT ]) + " : name cannot be empty.", __FILE__, __LINE__);
-
-		const std::string 	fmtName 	= "Format_" + fLayout.getTypeName(),
-					fragName	= "Fragment_" + fLayout.getTypeName(),
-					vertName	= "Vertex_" + fLayout.getTypeName(),
-					mdlName		= "Model_" + fLayout.getTypeName();
+		const std::string 	formatName = fLayout.getFullName() + "_format",
+					modelName  = fLayout.getFullName() + "_model";
 
 		VanillaParserSpace::Element e;
-
 		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_FILTER_LAYOUT );
 		e.name		= fLayout.getTypeName();
-		e.body.clear();
-		e.noBody	= true;
-		e.arguments.clear();
-		e.arguments.push_back( fmtName );
-		e.arguments.push_back( fragName );
+		e.noName	= false;
+		e.noBody	= false;
+		e.noArgument	= false;
+		e.arguments.push_back(formatName);
 
-		VanillaParserSpace::Element e1 = LayoutWriter::write(fLayout, fmtName);
+		// Write the format :
+		VanillaParserSpace::Element e1 = LayoutWriter::write(fLayout, formatName);
 		code += e1.getCode() + "\n\n";
 		
-		if(fLayout.getShaderSource(GL_FRAGMENT_SHADER)!=NULL)
+		// Write all required shaders :
+		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
 		{
-			VanillaParserSpace::Element e2 = LayoutWriter::write(*fLayout.getShaderSource(GL_FRAGMENT_SHADER), fragName);
-			code += e2.getCode() + "\n\n";
+			const GLenum shaderType = HandleOpenGL::shaderTypes[k];
+			const std::string shaderTypeName = getGLEnumName(shaderType);
+			const ShaderSource* ptr = fLayout.getShaderSource(shaderType);
+			if(ptr!=NULL)
+			{
+				const std::string name = fLayout.getFullName() + "_" + shaderTypeName;
+				// Create the source code for the shader :
+				VanillaParserSpace::Element es = LayoutWriter::write(*ptr, name);
+				code += es.getCode();
+				// Attach :
+				VanillaParserSpace::Element el;
+				el.strKeyword = shaderTypeName;
+				el.noName = true;
+				el.noBody = true;
+				el.noArgument = false;
+				el.arguments.push_back(name);
+				e.body += "\t" + el.getCode() + "\n";
+			}
 		}
-		else
-			throw Exception("LayoutWriter::write - The filter layout " + fLayout.getFullName() + " has no fragment shader.", __FILE__, __LINE__, Exception::ModuleException); 		
-
-		if(fLayout.getShaderSource(GL_VERTEX_SHADER)!=NULL)
-		{
-			VanillaParserSpace::Element e3 = LayoutWriter::write(*fLayout.getShaderSource(GL_VERTEX_SHADER), vertName);
-			code += e3.getCode() + "\n\n";
-
-			e.arguments.push_back( vertName );
-		}
-		else
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_DEFAULT_VERTEX_SHADER) );
-
-		if(fLayout.isClearingEnabled())
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_CLEARING_ON) );
-		else
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_CLEARING_OFF) );
-
-		if(fLayout.isBlendingEnabled())
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_BLENDING_ON) );
-		else
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_BLENDING_OFF) );
 
 		if(!fLayout.isStandardGeometryModel())
 		{
-			VanillaParserSpace::Element e4 = LayoutWriter::write(fLayout.getGeometryModel(), mdlName);
-			code += e4.getCode() + "\n\n";
-
-			e.arguments.push_back( mdlName );
+			VanillaParserSpace::Element es = LayoutWriter::write(fLayout.getGeometryModel(), modelName);
+			code += es.getCode();
+			VanillaParserSpace::Element el;
+			el.strKeyword = getGLEnumName(GL_RENDER);
+			el.noName = true;
+			el.noBody = true;
+			el.noArgument = false;
+			el.arguments.push_back(modelName);
+			e.body += "\t" + el.getCode() + "\n";
 		}
-		else
-			e.arguments.push_back( LayoutLoader::getKeyword(KW_LL_STANDARD_QUAD) );
+
+		// Always copy the clear settings :
+		{
+			VanillaParserSpace::Element el;
+			el.strKeyword = getGLEnumName(GL_CLEAR);
+			el.noName = true;
+			el.noBody = true;
+			el.noArgument = false;
+			el.arguments.push_back(fLayout.isClearingEnabled() ? LayoutLoader::getKeyword(KW_LL_TRUE) : LayoutLoader::getKeyword(KW_LL_FALSE) );
+			e.body += "\t" + el.getCode() + "\n";
+		}
+
+		if(fLayout.isBlendingEnabled())		
+		{
+			VanillaParserSpace::Element el;
+			el.strKeyword = getGLEnumName(GL_BLEND);
+			el.noName = true;
+			el.noBody = true;
+			el.noArgument = false;
+			el.arguments.push_back(getGLEnumName(fLayout.getSFactor()));
+			el.arguments.push_back(getGLEnumName(fLayout.getDFactor()));
+			el.arguments.push_back(getGLEnumName(fLayout.getBlendingEquation()));
+			e.body += "\t" + el.getCode() + "\n";
+		}
+
+		if(fLayout.isDepthTestingEnabled())
+		{
+			VanillaParserSpace::Element el;
+			el.strKeyword = getGLEnumName(GL_DEPTH_TEST);
+			el.noName = true;
+			el.noBody = true;
+			el.noArgument = false;
+			el.arguments.push_back(getGLEnumName(fLayout.getDepthTestingFunction()));
+			e.body += "\t" + el.getCode() + "\n";
+		}
 
 		return e;
 	}
@@ -3019,7 +3067,6 @@
 			outPorts.arguments.push_back( pLayout.getOutputPortName(k) );
 		
 		e.body += outPorts.getCode() + "\n";
-
 		e.body += "\n";
 
 		// Declare all sub-elements :
@@ -3098,19 +3145,16 @@
 	}
 
 	/**
-	\fn std::string LayoutWriter::operator()(const AbstractPipelineLayout& pipelineLayout)
+	\fn std::string LayoutWriter::getCode(const AbstractPipelineLayout& pipelineLayout)
 	\brief Build the human-readable code for the given AbstractPipelineLayout object.
 	\param pipelineLayout The pipeline layout to convert.
 	\return A standard string containing the full pipeline layout description. 
 	**/
-	std::string LayoutWriter::operator()(const AbstractPipelineLayout& pipelineLayout)
+	std::string LayoutWriter::getCode(const AbstractPipelineLayout& pipelineLayout)
 	{
 		code.clear();
-
 		VanillaParserSpace::Element e = write(pipelineLayout, true);
-
 		code += e.getCode() + "\n";
-
 		return code;
 	}
 
@@ -3123,12 +3167,10 @@
 	void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
 	{
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
-		
 		if(!file.is_open())
 			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getTypeName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 
-		file << (*this)(pipelineLayout);
-
+		file << getCode(pipelineLayout);
 		file.close();
 	}
 

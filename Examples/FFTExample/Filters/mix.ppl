@@ -1,6 +1,6 @@
 REQUIRED_FORMAT:outputFormat(format)
 
-SHADER_SOURCE:mixShader
+SOURCE:mixShader
 {
 	#version 130
 	precision mediump float;

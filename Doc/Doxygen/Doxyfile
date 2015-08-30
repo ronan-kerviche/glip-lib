@@ -764,8 +764,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ../../GLIP-Lib \
-                         mainPage.dox \
-                         examples.dox
+                         Pages
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1131,7 +1130,30 @@ HTML_EXTRA_STYLESHEET  = glipExtra.css
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = 
+HTML_EXTRA_FILES       = Graphics/sobelIntensity.png \
+                         Graphics/histogram.png \
+                         Graphics/discNegativeAA.png \
+                         Graphics/discAA.png \
+                         Graphics/discNegative.png \
+                         Graphics/exampleHistogram.png \
+                         Graphics/animation.gif \
+                         Graphics/disc.png \
+                         Graphics/exampleReduction.svg \
+                         Graphics/exampleTexture3x3.svg \
+                         Graphics/exampleTextureVTF.svg \
+                         Graphics/exampleTexture3.svg \
+                         Graphics/exampleGameOfLifePipeline.svg \
+                         Graphics/examplePipeline2.svg \
+                         Graphics/exampleGOLPipelines.svg \
+                         Graphics/gliplibLogo64.png \
+                         Graphics/exampleTexture2.svg \
+                         Graphics/exampleOpticalFlow.svg \
+                         Graphics/examplePipeline1.svg \
+                         Graphics/gliplibLogo.svg \
+                         Graphics/exampleTexture1.svg \
+                         Graphics/colorChange_small.png \
+                         Graphics/horseHeadAfterBilateral.png \
+                         Graphics/horseHeadBeforeBilateral.png
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the stylesheet and background images according to
@@ -1594,7 +1616,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES doxygen will generate LaTeX output.
 # The default value is: YES.
 
-GENERATE_LATEX         = YES
+GENERATE_LATEX         = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of

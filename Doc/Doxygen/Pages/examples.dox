@@ -1,0 +1,155 @@
+/**
+	\page page_ProceduralImageGeneration Example : Image Procedural Generation
+
+	\code
+	TEXTURE_FORMAT:outputCircleFormat(1024, 1024, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+	CALL:FORMAT_TO_CONSTANT(outputCircleFormat)
+	
+	SOURCE:circleShader
+	{
+		#version 130
+	
+		out vec4 	outputTexture;
+		uniform vec4	background = vec4(0.1, 0.1, 0.1, 1),
+				color = vec4(1, 0, 1, 1);
+		uniform vec2 	center = vec2(0.5, 0.5);
+		uniform float 	radius = 0.1;
+
+		INSERT(outputCircleFormat)
+
+		void main()
+		{
+			vec2 p = gl_FragCoord.xy / vec2(outputCircleFormat);
+
+			// If the current pixel is closer to the center than the radius :
+			//if(distance(p,center)<=radius)
+			//	outputTexture = color;
+			//else
+			//	outputTexture = background;
+
+			// One line version : 
+			outputTexture = mix(color, background, step(radius, distance(p,center)));
+
+			// Anti-Aliasing version : 
+			//const float e = 0.005:
+			//outputTexture = mix(color, background, smoothstep(radius-e/2, radius+e/2, distance(p,center)));
+		}
+	}
+
+	FILTER_LAYOUT:circleFilter(outputCircleFormat, circleShader)
+
+	PIPELINE_MAIN:circlePipeline
+	{
+		OUTPUT_PORTS(outputTexture)
+		FILTER_INSTANCE:circleFilter
+	}
+	\endcode
+
+	\code
+	TEXTURE_FORMAT:outputLogoFormat(1024, 1024, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+	CALL:FORMAT_TO_CONSTANT(outputLogoFormat)
+
+	SOURCE:glipLogoShader
+	{
+		#ifndef MODIFY_GLIP_LOGO
+		const float 	thickness = 0.150,
+				aaThicknes = 0.001,
+				xOutterLow = 0.2,
+				xInnerLow = 0.3,
+				xInnerHigh = 0.73,
+				xOutterHigh = 0.8,
+				yLineTop = 0.2,
+				yLineMiddle = 0.5,
+				yLineBottom = 0.8;
+		#endif
+	
+		// Distance to a segment : 
+		float dSegment(vec2 p, vec2 a, vec2 b)
+		{
+			float l = (a.x-b.x)*(a.x-b.x) + (a.y-b.y)*(a.y-b.y);
+			float t = dot(p - a, b - a) / l;
+			if (t < 0.0)
+				return distance(p, a);
+			else if (t > 1.0)
+				return distance(p, b);
+			else
+				return distance(p, a + t * (b - a));
+		}
+
+		// Distance to red path (3 segments) :
+		float dRed(vec2 p)
+		{
+			float d = min(dSegment(p, vec2(xOutterLow, yLineMiddle), vec2(xInnerLow, yLineMiddle)),
+				  min(dSegment(p, vec2(xInnerLow, yLineMiddle), vec2(xInnerHigh, yLineTop)),
+				      dSegment(p, vec2(xInnerHigh, yLineTop), vec2(xOutterHigh, yLineTop)) ));
+			return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		}
+	
+		// Distance to green path (3 segments) :
+		float dGreen(vec2 p)
+		{
+			float d = min(dSegment(p, vec2(xOutterLow, yLineTop), vec2(xInnerLow, yLineTop)),
+				  min(dSegment(p, vec2(xInnerLow, yLineTop), vec2(xInnerHigh, yLineBottom)),
+				      dSegment(p, vec2(xInnerHigh, yLineBottom), vec2(xOutterHigh, yLineBottom)) ));
+			return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		}
+
+		// Distance to blue path (3 segments) :
+		float dBlue(vec2 p)
+		{
+			float d = min(dSegment(p, vec2(xOutterLow, yLineBottom), vec2(xInnerLow, yLineBottom)),
+				  min(dSegment(p, vec2(xInnerLow, yLineBottom), vec2(xInnerHigh, yLineMiddle)),
+				      dSegment(p, vec2(xInnerHigh, yLineMiddle), vec2(xOutterHigh, yLineMiddle)) ));
+			return smoothstep(aaThicknes, -aaThicknes, d-thickness);
+		}
+
+		// Get the logo, combining all the paths : 
+		vec4 getLogo(vec2 p)
+		{
+			vec4 l = vec4(dRed(p), dGreen(p), dBlue(p), 0.0);
+			l = vec4(l.r*(1.0-l.g)*(1.0-l.b), l.g*(1.0-l.b), l.b, max(l.r, max(l.g, l.b)));
+			return l;
+		}
+	}
+
+	SOURCE:glipShader
+	{
+		#version 130
+		out vec4 logo;
+
+		INSERT(outputLogoFormat)
+	
+		// Uncomment the next line to modify the parameters of the drawing : 
+		//#define MODIFY_GLIP_LOGO
+
+		#ifdef MODIFY_GLIP_LOGO
+		uniform float 	thickness = 0.150,
+				aaThicknes = 0.002,
+				xOutterLow = 0.2,
+				xInnerLow = 0.3,
+				xInnerHigh = 0.73,
+				xOutterHigh = 0.8,
+				yLineTop = 0.2,
+				yLineMiddle = 0.5,
+				yLineBottom = 0.8;
+		#endif
+
+		INSERT(glipLogoShader)
+
+		void main(void)
+		{
+			// Draw at normalized position p : 
+			vec2 p = gl_FragCoord.xy/outputLogoFormat;
+			logo = getLogo(p);
+		}
+	}
+
+	FILTER_LAYOUT:glipFilter(outputLogoFormat, glipShader)
+
+	PIPELINE_MAIN:glipPipeline
+	{
+		OUTPUT_PORTS(logo)
+		FILTER_INSTANCE:glipFilter
+	}
+	\endcode
+**/

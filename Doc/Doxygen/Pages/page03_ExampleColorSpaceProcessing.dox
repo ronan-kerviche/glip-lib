@@ -1,0 +1,81 @@
+/**
+	\page page03_ExampleColorSpaceProcessing Example : Color Space Processing
+
+In this example, we will write a script to process an image in the HSV space, and transform it back to RGB. We will be using the color primitives script and the inclusion mechanism.
+
+\code
+	// The output format will be identical as the input format :
+	REQUIRED_FORMAT:outputFormat(inputFormat)
+	CALL:FORMAT_TO_CONSTANT(outputFormat)
+
+	// Load the color primitives (this file is distributed with the project) :
+	INCLUDE(colors.ppl)
+
+	// Change the colors in the HSV space :
+	SOURCE:ChangeHSVShader
+	{
+		#version 130
+		uniform sampler2D textureInput;
+		out vec4 textureChangedHSV;
+		
+		// Get the color primitives from the loaded file :
+		INSERT(ColorPrimitives)
+		INSERT(outputFormat)
+
+		// The parameters to be changed dynamically :
+		uniform float	vScaling = 1.0,
+				sScaling = 1.0, 
+				hRotate = 0.0;
+
+		void main()
+		{
+			// Get the input data :
+			vec2 pos = gl_FragCoord.xy/vec2(outputFormat);
+			vec3 rgb = textureLod(textureInput, pos, 0.0).rgb,
+			     hsv;
+			
+			// To HSV
+			RGBToHSV(rgb, hsv);
+
+			// Modifications : 
+			hsv.z = hsv.z * vScaling;
+			hsv.y = hsv.y * sScaling;
+			hsv.x = mod(hsv.x + hRotate * 360.0, 360);
+
+			// Back to RGB
+			HSVToRGB(hsv, rgb);
+
+			// Write the output data :
+			textureChangedHSV.rgb = rgb;
+		}
+	}
+
+	FILTER_LAYOUT:ChangeHSVFilter(outputFormat, ChangeHSVShader)
+
+	PIPELINE_MAIN:ChangeHSVPipeline
+	{
+		INPUT_PORTS(textureInput)
+		OUTPUT_PORTS(textureChangedHSV)
+		FILTER_INSTANCE:ChangeHSVFilter
+	}
+\endcode
+
+We can also predefined values to the the uniform variables (see Glip::Modules::UniformsVarsLoader) : 
+\code
+	PIPELINE:changeHSVPipeline
+	{
+		FILTER:changeHSVFilter
+		{
+			GL_FLOAT:vScaling(1.1)
+			GL_FLOAT:sScaling(1.2)
+			GL_FLOAT:hRotate(0.01)
+		}
+	}
+\endcode
+
+Splitted output example (original is on top-left corner) :
+\htmlonly
+<div style="text-align:center;"><img src="colorChange_small.png" alt="HSVComparison"></div>
+\endhtmlonly
+
+**/

@@ -79,5 +79,5 @@ PIPELINE_MAIN:HistogramPipeline
 {
 	INPUT_PORTS(inputTexture)
 	OUTPUT_PORTS(histogramBins)
-	FILTER_INSTANCE:HistogramFilter(HistogramFilter)
+	FILTER_INSTANCE:HistogramFilter
 }

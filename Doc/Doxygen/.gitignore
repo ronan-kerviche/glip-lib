@@ -1,0 +1,5 @@
+# Ignore list :
+latex/
+doxygen_sqlite3.db
+# Except this file :
+!.gitignore
