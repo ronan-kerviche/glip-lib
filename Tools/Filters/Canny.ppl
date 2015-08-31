@@ -14,7 +14,7 @@ SOURCE:gaussianBlurShader
 	uniform sampler2D 	inputTexture;
 	out 	vec4		blurredTexture;
 
-	INSERT(convolutionTool)
+	#pragma INSERT(convolutionTool)
 
 	/*const mat3 blurKernel	= mat3(	0.0740, 0.2054, 0.0740
 					0.2054, 0.5699, 0.2054
@@ -81,8 +81,8 @@ SOURCE:sobelShaderAndDirection
 	out vec4		sobelTexture,
 				colorEdgesNonFiltered;
 
-	INSERT(convolutionTool)
-	INSERT(sobel)
+	#pragma INSERT(convolutionTool)
+	#pragma INSERT(sobel)
 
 	void main()
 	{
@@ -130,7 +130,7 @@ SOURCE:nonMaximumSuppressionShader
 	uniform sampler2D	sobelTexture;
 	out vec4		maximumFiltered;
 
-	INSERT(convolutionTool)
+	#pragma INSERT(convolutionTool)
 
 	void main()
 	{

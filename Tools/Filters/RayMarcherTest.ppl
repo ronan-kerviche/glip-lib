@@ -9,8 +9,8 @@ SOURCE:rayMarcherTestShader
 	#define RM_USE_ABSORPTION
 	#define RM_USE_SCATTERING
 
-	INSERT(outputFormatSize)
-	INSERT(RayMarcherUtils)
+	#pragma INSERT(outputFormatSize)
+	#pragma INSERT(RayMarcherUtils)
 
 	// Scene settings :
 	uniform vec3 	eyePos = vec3(3.7, 2.8, 8.4),

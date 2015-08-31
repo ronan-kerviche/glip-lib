@@ -16,8 +16,8 @@ SOURCE:gaussianLightBrushShader
 	uniform float	radius = 0.01;
 	uniform int	clear = 0;
 	
-	INSERT(outputFormat)
-	INSERT(maths)
+	#pragma INSERT(outputFormat)
+	#pragma INSERT(maths)
 
 	void main()
 	{

@@ -449,7 +449,7 @@
 		if(id!=THIS_PIPELINE)
 		{
 			AbstractComponentLayout& src = componentLayout(id);
-			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getTypeName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + toString(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
+			throw Exception("Element \"" + getElementName(id) + "\" (typename : \"" + src.getLayoutName() + "\") has no source on input port \"" + src.getInputPortName(p) + "\" (id : " + toString(p) + ") in pipeline " + getFullName() + ".", __FILE__, __LINE__, Exception::CoreException);
 		}
 		else
 			throw Exception("This Pipeline " + getFullName() + " has no source on output port \"" + getOutputPortName(p) + "\" (id : " + toString(p) + ").", __FILE__, __LINE__, Exception::CoreException);
@@ -496,7 +496,7 @@
 			if(!test)
 			{
 				res += '\n';
-				res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getTypeName() + "\") has no output port connected.";
+				res += "Element \"" + getElementName(i) + "\" (type : \"" + tmp.getLayoutName() + "\") has no output port connected.";
 			}	
 		}
 
@@ -1763,6 +1763,8 @@
 	\fn int Pipeline::createBuffersCell(void)
 	\brief Create a new buffers cell for this pipeline.
 	\return The ID of the new cell (larger or equal to 1).
+
+	The function will not change the current cell used by the pipeline.
 	**/
 	int Pipeline::createBuffersCell(void)
 	{

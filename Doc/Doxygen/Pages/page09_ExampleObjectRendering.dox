@@ -1,0 +1,80 @@
+/**
+\page page09_ExampleObjectRendering Example : Object Rendering
+
+Pipeline scripts can also be used to render simple 3D scenes by using the (optional) OBJ and STL loading modules. The following scripts load and reanders the Teapot object :
+
+\code
+	TEXTURE_FORMAT:outputFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE)
+
+	// Location of the teapot :
+	ADD_PATH(Resources/)
+	// Load the object :
+	CALL:LOAD_OBJ_GEOMETRY(teapot.obj, teapot)
+
+	SOURCE:vertexShader
+	{
+		#version 130
+		out vec3 outN;	// the normal going to the fragment shader.
+		uniform float	ax = 0.0, // angle x.
+				ay = 0.0, // angle y.
+				s = 1.0;  // scale.
+		uniform vec3 offset = vec3(0.0);// offset.
+
+		void main()
+		{
+			// Rotation matrices :
+			mat3 Mx = mat3(	1.0, 0.0, 0.0,
+					0.0, cos(ax), sin(ax),
+					0.0, -sin(ax), cos(ax));
+			mat3 My = mat3(	cos(ay), 0.0, sin(ay),
+					0.0, 1.0, 0.0,
+					-sin(ay), 0.0, cos(ay));
+			// Transformation of the vertices :
+			gl_Position = vec4(Mx*My*s*gl_Vertex.xyz - offset, 1);
+			// Pass the normals :
+			outN = gl_Normal.xyz;
+		}
+	}
+
+	SOURCE:fragmentShader
+	{
+		#version 130
+
+		in vec3 outN; // the normal incoming from the Vertex Shader
+		out vec4 outputTexture;
+		uniform vec3 light = vec3(1.0, 0.0, 1.0);
+		uniform float alpha = 0.1;
+
+		void main()
+		{
+			// Write the normals to the output fragment :
+			vec3 c = abs(outN.xzy);
+			// With some illumination :
+			outputTexture.rgb = alpha*c + (1.0-alpha)*c*max(dot(outN.xyz,normalize(light)),0.0);
+		}
+	}
+
+	FILTER_LAYOUT:showTeapotFilter(outputFormat)
+	{
+		GL_VERTEX_SHADER(vertexShader)
+		GL_FRAGMENT_SHADER(fragmentShader)
+		// Use the teapot geometry :
+		GL_RENDER(teapot)
+		// Enable depth test :
+		GL_DEPTH_TEST(GL_LESS)
+	}
+
+	PIPELINE_MAIN:showTeapotPipeline
+	{
+		// Only generate an image :
+		OUTPUT_PORTS(outputTexture)
+		FILTER_INSTANCE:showTeapotFilter
+	}
+\endcode
+
+Sample output :
+\htmlonly
+	<div style="text-align:center;"><img src="teapot.png" alt="teapot"></div>
+\endhtmlonly
+
+**/

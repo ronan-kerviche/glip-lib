@@ -40,7 +40,7 @@ SOURCE:GaussianBlurShader
 	uniform float		sigma 		= 1.0;
 	uniform int		halfWindowSize	= 1;
 	
-	INSERT(GaussianBlurCode)
+	#pragma INSERT(GaussianBlurCode)
 
 	void main()
 	{

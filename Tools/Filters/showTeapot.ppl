@@ -33,6 +33,7 @@ SOURCE:vertexShader
 		outN = gl_Normal.xyz;
 	}
 }
+
 SOURCE:fragmentShader
 {
 	#version 130

@@ -1,4 +1,5 @@
 # Ignore list :
+html/
 latex/
 doxygen_sqlite3.db
 # Except this file :

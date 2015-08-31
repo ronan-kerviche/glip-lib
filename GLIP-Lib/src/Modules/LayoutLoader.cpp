@@ -1985,7 +1985,7 @@
 		AbstractPipelineLayout layout = getPipelineLayout(source, sourceName, startLine);
 
 		if(pipelineName.empty())
-			pipelineName = layout.getTypeName();
+			pipelineName = layout.getLayoutName();
 
 		Pipeline* pipeline = new Pipeline(layout, pipelineName);
 
@@ -2942,7 +2942,7 @@
 
 		VanillaParserSpace::Element e;
 		e.strKeyword	= LayoutLoader::getKeyword( KW_LL_FILTER_LAYOUT );
-		e.name		= fLayout.getTypeName();
+		e.name		= fLayout.getLayoutName();
 		e.noName	= false;
 		e.noBody	= false;
 		e.noArgument	= false;
@@ -3038,7 +3038,7 @@
 		VanillaParserSpace::Element e;
 
 		e.strKeyword	= keyword;
-		e.name		= pLayout.getTypeName();
+		e.name		= pLayout.getLayoutName();
 		e.arguments.clear();
 		e.noArgument	= true;
 		e.body.clear();
@@ -3168,7 +3168,7 @@
 	{
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 		if(!file.is_open())
-			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getTypeName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
+			throw Exception("LayoutWriter::writeToFile - Unable to write pipeline layout \"" + pipelineLayout.getLayoutName() + "\" to file \"" + filename + "\".", __FILE__, __LINE__, Exception::ModuleException);
 
 		file << getCode(pipelineLayout);
 		file.close();

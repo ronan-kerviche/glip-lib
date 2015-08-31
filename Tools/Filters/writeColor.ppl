@@ -6,7 +6,7 @@ SOURCE:WriteColorShader
 {
 	#version 130
 	
-	INSERT(printNumber)
+	#pragma INSERT(printNumber)
 
 	uniform	sampler2D inputTexture;
 	out vec4 	outputTexture;

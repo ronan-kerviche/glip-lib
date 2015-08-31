@@ -58,6 +58,7 @@ Then the Sobel filter <i>sobel.ppl</i> :
 		const mat3 kernelY = mat3(	-1.0, -2.0, -1.0,
 						 0.0,  0.0,  0.0,
 						 1.0,  2.0,  1.0);
+		const float normalization = 4.0;
 
 		#pragma INSERT(convolutionSource)
 
@@ -65,9 +66,10 @@ Then the Sobel filter <i>sobel.ppl</i> :
 		{
 			// Load the local patch :
 			mat3 patch = readPatch(inputTexture, ivec2(gl_FragCoord.xy), vec4(1.0,1.0,1.0,0.0)/3.0);
-			float   gx = convolve(patch, kernelX),
-				gy = convolve(patch, kernelY);
-			edgeMap.rgb = vec3(gx, gy, abs(gx)+abs(gy));
+			float   gx = convolve(patch, kernelX)/normalization,
+				gy = convolve(patch, kernelY)/normalization;
+			// The gradients are in the range [-1; 1], they need to be transformed to fit in the output range [0; 1] :
+			edgeMap.rgb = vec3((gx+1.0)/2.0, (gy+1.0)/2.0, (abs(gx)+abs(gy))/2.0);
 		}	
 	}
 
@@ -82,6 +84,8 @@ Then the Sobel filter <i>sobel.ppl</i> :
 	}
 \endcode
 
-Output example, only L1 magnitude :
-	<img src="sobelIntensity.png" />
+Output example (<i>left</i>, original; <i>right</i>, coded gradient) :
+\htmlonly
+	<div style="text-align:center;"><img src="squirrel.png" alt="squirrel" style="margin-right:2em;"><img src="squirrelSobel.png" alt="squirrelSobel"></div>
+\endhtmlonly
 **/

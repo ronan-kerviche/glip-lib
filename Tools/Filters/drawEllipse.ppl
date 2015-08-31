@@ -16,7 +16,7 @@ SOURCE:drawEllipseShader
 	uniform float	thickness	= 0.02f;
 	uniform vec3	color 		= vec3(1.0f, 0.0f, 0.0f);
 	
-	INSERT(outputFormat)
+	#pragma INSERT(outputFormat)
 
 	void main()
 	{

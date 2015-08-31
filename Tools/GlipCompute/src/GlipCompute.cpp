@@ -121,7 +121,7 @@ UNIFORMS\n\
 \n\
 EXAMPLE\n\
   For a pipeline with one input and at least one ouput :\n\
-     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.\n\
+     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.png\n\
 \n\
 glip-compute is part of the GLIP-Lib project.\n\
 Link : <http://glip-lib.net/>\

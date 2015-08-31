@@ -1,0 +1,106 @@
+/**
+\page page07_ExampleReduction Example : Reduction
+
+For reductions (finding the mean, min or max of some image, for instance), we use a <i>divide and conquer</i> approach : every filter step reduces to a slightly smaller size, by only processing a small block. We repeat this operation to gradually reduce until only one element is left. For example, with 8x8 blocks :
+
+\htmlonly
+	<div style="text-align:center;"><object data="exampleReduction.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+We write the following pipeline script :
+\code
+	TEXTURE_FORMAT:inputFormat(512, 512, GL_RGB, GL_UNSIGNED_BYTE)
+	TEXTURE_FORMAT:block(8, 8, GL_RGB, GL_UNSIGNED_BYTE)
+	CALL:FORMAT_TO_CONSTANT(block)
+	CALL:FORMAT_INVSCALE_SIZE(format1, inputFormat, block)
+	CALL:FORMAT_INVSCALE_SIZE(format2, format1, block)
+	CALL:FORMAT_INVSCALE_SIZE(format3, format2, block)
+
+	// Generic reduction shader :
+	SOURCE:reductionShader
+	{
+		uniform sampler2D inP;
+		out vec4 outP;
+		#ifdef FIRST_STEP
+			// We will project the RGB triplet of the texture to get only one value :
+			uniform vec4 selection = vec4(1.0, 1.0, 1.0, 0.0)/3.0;
+		#endif
+
+		#pragma INSERT(block)
+		void main(void)
+		{
+			ivec2 p = ivec2(gl_FragCoord.xy)*block;
+			#ifdef FIRST_STEP
+			// Read texels directly :
+			float	v = dot(selection, texelFetch(inP, p, 0)),
+				vMin = v,
+				vMax = 0.0,
+				vMean = 0.0;
+			for(int i=0; i<block.y; i++)
+				for(int j=0; j<block.x; j++)
+				{       
+					v = dot(selection, texelFetch(inP, p+ivec2(j,i), 0));
+					vMin = min(vMin, v);
+					vMax = max(vMax, v);
+					vMean += v;
+				}
+			#else
+			// Read compact values :
+			vec4 	v = texelFetch(inP, p, 0);
+			float	vMin = v.r,
+				vMax = v.g,
+				vMean = 0.0;
+			for(int i=0; i<block.y; i++)
+				for(int j=0; j<block.x; j++)
+				{       
+					v = texelFetch(inP, p+ivec2(j,i), 0);
+					vMin = min(vMin, v.r);
+					vMax = max(vMax, v.g);
+					vMean += v.b;
+				}
+			#endif
+			vMean /= float(block.x*block.y);
+			outP.rgb = vec3(vMin, vMax, vMean);
+		}
+	}
+
+	// (Here, note that OpenGL forces the version to be declared in the first line of the shader).
+	// Specific, first read shader branch :
+	SOURCE:firstReductionShader
+	{
+		#version 130
+		#define FIRST_STEP
+		#pragma INSERT(reductionShader)
+	}
+
+	// Generic, all other read shaders :
+	SOURCE:otherReductionShader
+	{
+		#version 130
+		#pragma INSERT(reductionShader)
+	}
+
+	// Create all the filters :
+	FILTER_LAYOUT:rF1(format1, firstReductionShader)
+	FILTER_LAYOUT:rF2(format2, otherReductionShader)
+	FILTER_LAYOUT:rF3(format3, otherReductionShader)
+
+	PIPELINE_MAIN:reducePipeline
+	{
+		INPUT_PORTS(inP)
+		OUTPUT_PORTS(outP)
+		
+		// Filters :
+		FILTER_INSTANCE:rF1
+		FILTER_INSTANCE:rF2
+		FILTER_INSTANCE:rF3
+
+		// Connections :
+		CONNECTION(THIS, inP, rF1, inP)
+		CONNECTION(rF1, outP, rF2, inP)
+		CONNECTION(rF2, outP, rF3, inP)
+		CONNECTION(rF3, outP, THIS, outP)
+	}	
+\endcode
+
+**/

@@ -14,8 +14,8 @@ SOURCE:ChangeHSVShader
 	uniform sampler2D	textureInput;
 	out     vec4 		textureChangedHSV;
 	
-	INSERT(ColorPrimitives)
-	INSERT(outputFormat)
+	#pragma INSERT(ColorPrimitives)
+	#pragma INSERT(outputFormat)
 
 	uniform float	vScaling = 1.0,	// V scaling
 			sScaling = 1.0, 

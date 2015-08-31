@@ -11,7 +11,7 @@ SOURCE:CurveShader
 {
 	#version 130
 
-	INSERT(curveFormat)
+	#pragma INSERT(curveFormat)
 	uniform sampler2D 	initialCurveDataTextureInput,
 				curveDataTextureInput;
 	out vec4 		curveDataTextureOutput;
@@ -42,7 +42,7 @@ SOURCE:PlotCurveShader
 {
 	#version 130
 	
-	INSERT(plotFormat)
+	#pragma INSERT(plotFormat)
 	uniform sampler2D curveDataTextureOutput;
 	out vec4 curvePlot;
 

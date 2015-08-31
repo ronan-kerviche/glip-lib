@@ -54,7 +54,7 @@ SOURCE:HistogramFragmentShader
 
 	out vec4 histogramBins;
 
-	INSERT(reducedFormatHistogram)
+	#pragma INSERT(reducedFormatHistogram)
 
 	void main()
 	{

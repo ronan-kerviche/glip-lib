@@ -33,21 +33,21 @@
 	/**
 	\fn AbstractComponentLayout::AbstractComponentLayout(const std::string& type)
 	\brief AbstractComponentLayout constructor.
-	\param type The typename of the object.
+	\param type The layout name of the object.
 	**/
-	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName)
-	 : 	typeName(_typeName)
+	AbstractComponentLayout::AbstractComponentLayout(const std::string& _layoutName)
+	 : 	layoutName(_layoutName)
 	{ }
 
 	/**
-	\fn AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
+	\fn AbstractComponentLayout::AbstractComponentLayout(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
 	\brief AbstractComponentLayout constructor.
-	\param _typeName The typename of the object.
+	\param _layoutName The layout name of the object.
 	\param _inputPorts The list of the names of the input ports.
 	\param _outputPorts The list of the names of the input ports.
 	**/
-	AbstractComponentLayout::AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
-	 : 	typeName(_typeName), 
+	AbstractComponentLayout::AbstractComponentLayout(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts)
+	 : 	layoutName(_layoutName), 
 		inputPorts(_inputPorts),
 		outputPorts(_outputPorts)
 	{ }
@@ -58,7 +58,7 @@
 	\param c Copy.
 	**/
 	AbstractComponentLayout::AbstractComponentLayout(const AbstractComponentLayout& c)
-	 : 	typeName(c.typeName),
+	 : 	layoutName(c.layoutName),
 		inputPorts(c.inputPorts),
 		outputPorts(c.outputPorts)
 	{
@@ -73,21 +73,21 @@
 	/**
 	\fn std::string AbstractComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
-	\return The full name of this component (possible name and typename).
+	\return The full name of this component (possible name and layout name).
 	**/
 	std::string AbstractComponentLayout::getFullName(void) const
 	{
-		return "<ComponentLayout> (type : \"" + getTypeName() + "\")";
+		return "<ComponentLayout>(Layout:\"" + getLayoutName() + "\")";
 	}
 
 	/**
-	\fn const std::string& AbstractComponentLayout::getTypeName(void) const
-	\brief Returns the typename of this component.
-	\return The typename of this component.
+	\fn const std::string& AbstractComponentLayout::getLayoutName(void) const
+	\brief Returns the layout name of this component.
+	\return The layout name of this component.
 	**/
-	const std::string& AbstractComponentLayout::getTypeName(void) const
+	const std::string& AbstractComponentLayout::getLayoutName(void) const
 	{
-		return typeName;
+		return layoutName;
 	}
 
 	/**
@@ -248,12 +248,12 @@
 
 // ComponentLayout
 	/**
-	\fn ComponentLayout::ComponentLayout(const std::string& _typeName)
+	\fn ComponentLayout::ComponentLayout(const std::string& _layoutName)
 	\brief ComponentLayout constructor.
-	\param _typeName Typename of the component.
+	\param _layoutName Layout name of the component.
 	**/
-	ComponentLayout::ComponentLayout(const std::string& _typeName)
-	 : 	AbstractComponentLayout(_typeName)
+	ComponentLayout::ComponentLayout(const std::string& _layoutName)
+	 : 	AbstractComponentLayout(_layoutName)
 	{ }
 
 	/**
@@ -332,15 +332,15 @@
 
 // Component :
 	/**
-	\fn Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
+	\fn Component::Component(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
 	\brief Component constructor.
-	\param _typeName The typename of the object.
+	\param _layoutName The layout name of the object.
 	\param _inputPorts The list of the names of the input ports.
 	\param _outputPorts The list of the names of the input ports.
 	\param _instanceName The name of the component.
 	**/
-	Component::Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
-	 : 	AbstractComponentLayout(_typeName, _inputPorts, _outputPorts), 
+	Component::Component(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName)
+	 : 	AbstractComponentLayout(_layoutName, _inputPorts, _outputPorts), 
 		instanceName(_instanceName)
 	{ }
 
@@ -361,11 +361,11 @@
 	/**
 	\fn std::string AbstractComponentLayout::getFullName(void) const
 	\brief Returns the full name of this component (might be overloaded).
-	\return The full name of this component (name and typename).
+	\return The full name of this component (name and layout name).
 	**/
 	std::string Component::getFullName(void) const
 	{
-		return "\"" + getName() + "\" (type : \"" + getTypeName() + "\")";
+		return "\"" + getName() + "\"(Layout:\"" + getLayoutName() + "\")";
 	}
 
 	/**

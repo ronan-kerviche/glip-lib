@@ -14,7 +14,7 @@ SOURCE:ApplyCurveShader
 	#version 130
 	uniform sampler2D curveDataTexture, inputTexture;
 	out vec4 outputTexture;
-	INSERT(outputFormat)
+	#pragma INSERT(outputFormat)
 
 	void main()
 	{

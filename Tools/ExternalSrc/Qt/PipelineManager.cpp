@@ -1214,7 +1214,7 @@ using namespace QGPM;
 		if(!elements.mainPipeline.empty())
 			return QString::fromStdString(elements.mainPipeline);
 		else if(pipeline!=NULL)
-			return QString::fromStdString(pipeline->getTypeName());
+			return QString::fromStdString(pipeline->getLayoutName());
 		else
 			return QString("(Untitled Pipeline)");
 	}

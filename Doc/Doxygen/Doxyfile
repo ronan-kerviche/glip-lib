@@ -1136,7 +1136,6 @@ HTML_EXTRA_FILES       = Graphics/sobelIntensity.png \
                          Graphics/discAA.png \
                          Graphics/discNegative.png \
                          Graphics/exampleHistogram.png \
-                         Graphics/animation.gif \
                          Graphics/disc.png \
                          Graphics/exampleReduction.svg \
                          Graphics/exampleTexture3x3.svg \
@@ -1153,7 +1152,13 @@ HTML_EXTRA_FILES       = Graphics/sobelIntensity.png \
                          Graphics/exampleTexture1.svg \
                          Graphics/colorChange_small.png \
                          Graphics/horseHeadAfterBilateral.png \
-                         Graphics/horseHeadBeforeBilateral.png
+                         Graphics/horseHeadBeforeBilateral.png \
+                         Graphics/teapot.png \
+                         Graphics/logo.png \
+                         Graphics/gameOfLifeAnimation.gif \
+                         Graphics/squirrel.png \
+                         Graphics/squirrelSobel.png \
+                         Pages/emailForm.php
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the stylesheet and background images according to

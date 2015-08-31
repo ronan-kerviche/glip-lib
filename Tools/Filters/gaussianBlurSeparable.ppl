@@ -37,7 +37,7 @@ SOURCE:SeparableGaussianBlurShaderX
 	uniform float		sigma 		= 1.0;
 	uniform int		halfWindowSize	= 1;
 	
-	INSERT(SeparableGaussianBlurCode)
+	#pragma INSERT(SeparableGaussianBlurCode)
 
 	void main()
 	{
@@ -54,7 +54,7 @@ SOURCE:SeparableGaussianBlurShaderXY
 	uniform float		sigma 		= 1.0;
 	uniform int		halfWindowSize	= 1;
 	
-	INSERT(SeparableGaussianBlurCode)
+	#pragma INSERT(SeparableGaussianBlurCode)
 
 	void main()
 	{

@@ -35,7 +35,7 @@ SOURCE:WindowShader
 	uniform int		shifted = 1;
 	uniform float 		windowSize = 5.0;
 
-	INSERT(fmt)
+	#pragma INSERT(fmt)
 
 	void main()
 	{
@@ -60,7 +60,7 @@ SOURCE:plotShader
 	uniform float 		minimum = -1.0,
 				maximum = 4.0;
 
-	INSERT(plotFormat)
+	#pragma INSERT(plotFormat)
 
 	void main()
 	{

@@ -1070,11 +1070,13 @@
 	\brief Load the set of uniforms variables from a pipeline.
 	\param pipeline The pipeline to extract the data from.
 	\param loadingFilter Select a specific method of loading.
+
+	All the pipelines are stored according to their layout name. Only one pipeline per layout name is supported.
 	**/
 	void UniformsLoader::load(Pipeline& pipeline, LoadingFilter loadingFilter)
 	{
-		Node tmp(pipeline.getTypeName(), pipeline, pipeline);
-		std::map<std::string, UniformsLoader::Node>::iterator it=nodes.find(pipeline.getTypeName());
+		Node tmp(pipeline.getLayoutName(), pipeline, pipeline);
+		std::map<std::string, UniformsLoader::Node>::iterator it=nodes.find(pipeline.getLayoutName());
 
 		if(it==nodes.end())
 		{
@@ -1172,8 +1174,8 @@
 
 	/**
 	\fn std::vector<std::string> UniformsLoader::getPipelinesTypeNames(void) const
-	\brief Get the typenames of all the pipelines which have data loaded.
-	\return A vector of strings, each one is a known pipeline typename (see AbstractComponentLayout::getTypeName()).
+	\brief Get the layout names of all the pipelines which have data loaded.
+	\return A vector of strings, each one is a known pipeline layout name (see AbstractComponentLayout::getLayoutName()).
 	**/
 	std::vector<std::string> UniformsLoader::getPipelinesTypeNames(void) const
 	{
@@ -1188,8 +1190,8 @@
 	/**
 	\fn const UniformsLoader::Node& UniformsLoader::getRootNode(const std::string& name) const
 	\brief Access the container node of a pipeline type.
-	\param name The type name of the targeted pipeline.
-	\return A (constant) reference to the UniformsLoader::Node object of the correct typename. Raise an exception if any error occur.
+	\param name The layout name of the targeted pipeline.
+	\return A (constant) reference to the UniformsLoader::Node object of the correct layout name. Raise an exception if any error occur.
 	**/
 	const UniformsLoader::Node& UniformsLoader::getRootNode(const std::string& name) const
 	{
@@ -1204,8 +1206,8 @@
 	/**
 	\fn UniformsLoader::Node& UniformsLoader::getRootNode(const std::string& name)
 	\brief Access the container node of a pipeline type.
-	\param name The type name of the targeted pipeline.
-	\return A (constant) reference to the UniformsLoader::Node object of the correct typename. Raise an exception if any error occur.
+	\param name The layout name of the targeted pipeline.
+	\return A (constant) reference to the UniformsLoader::Node object of the correct layout name. Raise an exception if any error occur.
 	**/
 	UniformsLoader::Node& UniformsLoader::getRootNode(const std::string& name)
 	{
@@ -1268,12 +1270,12 @@
 	**/
 	int UniformsLoader::applyTo(Pipeline& pipeline, bool forceWrite, bool silent) const
 	{
-		std::map<std::string, Node>::const_iterator it=nodes.find(pipeline.getTypeName());
+		std::map<std::string, Node>::const_iterator it=nodes.find(pipeline.getLayoutName());
 
 		if(it==nodes.end())
 		{
 			if(!silent)
-				throw Exception("UniformsLoader::clear - No pipeline with type name \"" + pipeline.getTypeName() + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
+				throw Exception("UniformsLoader::clear - No pipeline with layout name \"" + pipeline.getLayoutName() + "\" was found.", __FILE__, __LINE__, Exception::ModuleException);
 			else
 				return 0;
 		}

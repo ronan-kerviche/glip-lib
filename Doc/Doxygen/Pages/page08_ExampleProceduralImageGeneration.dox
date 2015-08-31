@@ -1,52 +1,11 @@
 /**
-	\page page_ProceduralImageGeneration Example : Image Procedural Generation
+\page page08_ExampleProceduralImageGeneration Example : Image Procedural Generation
 
-	\code
-	TEXTURE_FORMAT:outputCircleFormat(1024, 1024, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
-	CALL:FORMAT_TO_CONSTANT(outputCircleFormat)
-	
-	SOURCE:circleShader
-	{
-		#version 130
-	
-		out vec4 	outputTexture;
-		uniform vec4	background = vec4(0.1, 0.1, 0.1, 1),
-				color = vec4(1, 0, 1, 1);
-		uniform vec2 	center = vec2(0.5, 0.5);
-		uniform float 	radius = 0.1;
+This is a simple example on how to do comutational drawing with GLIP-Lib. We will be plotting a logo over a tranparent background.
 
-		INSERT(outputCircleFormat)
-
-		void main()
-		{
-			vec2 p = gl_FragCoord.xy / vec2(outputCircleFormat);
-
-			// If the current pixel is closer to the center than the radius :
-			//if(distance(p,center)<=radius)
-			//	outputTexture = color;
-			//else
-			//	outputTexture = background;
-
-			// One line version : 
-			outputTexture = mix(color, background, step(radius, distance(p,center)));
-
-			// Anti-Aliasing version : 
-			//const float e = 0.005:
-			//outputTexture = mix(color, background, smoothstep(radius-e/2, radius+e/2, distance(p,center)));
-		}
-	}
-
-	FILTER_LAYOUT:circleFilter(outputCircleFormat, circleShader)
-
-	PIPELINE_MAIN:circlePipeline
-	{
-		OUTPUT_PORTS(outputTexture)
-		FILTER_INSTANCE:circleFilter
-	}
-	\endcode
-
-	\code
-	TEXTURE_FORMAT:outputLogoFormat(1024, 1024, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
+\code
+	// Note that all the computation will be made to a normalized size. You can thereby increase or decrease this format size at will.
+	TEXTURE_FORMAT:outputLogoFormat(512, 512, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR)
 	CALL:FORMAT_TO_CONSTANT(outputLogoFormat)
 
 	SOURCE:glipLogoShader
@@ -117,7 +76,7 @@
 		#version 130
 		out vec4 logo;
 
-		INSERT(outputLogoFormat)
+		#pragma INSERT(outputLogoFormat)
 	
 		// Uncomment the next line to modify the parameters of the drawing : 
 		//#define MODIFY_GLIP_LOGO
@@ -134,7 +93,7 @@
 				yLineBottom = 0.8;
 		#endif
 
-		INSERT(glipLogoShader)
+		#pragma INSERT(glipLogoShader)
 
 		void main(void)
 		{
@@ -151,5 +110,11 @@
 		OUTPUT_PORTS(logo)
 		FILTER_INSTANCE:glipFilter
 	}
-	\endcode
+\endcode
+
+The output is :
+\htmlonly
+	<div style="text-align:center;"><img src="logo.png" at="logo"></div>
+\endhtmlonly
+
 **/

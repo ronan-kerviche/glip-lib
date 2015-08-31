@@ -2211,8 +2211,8 @@ using namespace QGED;
 		menuBarRight(this),
 		mainMenu("Menu", this),
 		tabBar(this),
-		newAction("+", this),
-		openAction("Open", this),	
+		newAction("New", this),
+		openAction("Open", this),
 		saveAction("Save", this),
 		saveAsAction("Save as", this),
 		saveAllAction("Save all", this),
@@ -2226,6 +2226,7 @@ using namespace QGED;
 		recentFilesMenu("CodeEditor", this)
 	{
 		// Build Menu : 
+		mainMenu.addAction(&newAction);
 		mainMenu.addAction(&openAction);
 		mainMenu.addMenu(&recentFilesMenu);
 		mainMenu.addAction(&saveAction);
@@ -2249,7 +2250,6 @@ using namespace QGED;
 		menuBarLeft.addAction(&compileAction);
 		menuBarLeft.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 		
-		menuBarRight.addAction(&newAction);
 		menuBarRight.addAction(searchAndReplaceMenu.getAction());
 		menuBarRight.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
@@ -2293,13 +2293,12 @@ using namespace QGED;
 		openAction.setShortcuts(	QKeySequence::Open );
 		saveAction.setShortcuts(	QKeySequence::Save );
 		saveAsAction.setShortcuts(	QKeySequence::SaveAs );
-		//saveAllAction.setShortcuts	TODO
+		saveAllAction.setShortcut(	QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S) );
 		closeAction.setShortcuts(	QKeySequence::Close );
-		//closeAllAction.setShortcuts	TODO
+		closeAllAction.setShortcut(	QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_W) );
 
 		QList<QKeySequence> compileActionShortCuts;
 		compileActionShortCuts.push_back(Qt::CTRL + Qt::Key_R);
-		//compileActionShortCuts.push_back(QKeySequence::Refresh);
 		compileAction.setShortcuts(compileActionShortCuts);
 
 		newAction.setShortcutContext(Qt::WidgetWithChildrenShortcut);

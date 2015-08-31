@@ -131,6 +131,8 @@ Processing example :
 
 	std::cout << c << " variables were loaded." << std::endl;
 \endcode
+
+Note that each UniformsLoader will index the pipelines by their layout name (see AbstractComponentLayout::getLayoutName()). Each can only have one set of pipeline uniform variables per layout name.
 **/
 		class GLIP_API UniformsLoader
 		{

@@ -52,7 +52,7 @@
 			{
 				private :
 					// Data
-					std::string typeName;
+					std::string layoutName;
 					std::vector<std::string> inputPorts;
 					std::vector<std::string> outputPorts;
 
@@ -60,8 +60,8 @@
 
 				protected :
 					// Tools
-					AbstractComponentLayout(const std::string& _typeName);
-					AbstractComponentLayout(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts);
+					AbstractComponentLayout(const std::string& _layoutName);
+					AbstractComponentLayout(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts);
 
 				public :
 					// Tools
@@ -70,16 +70,16 @@
 
 					void checkInputPort(int i) const;
 					void checkOutputPort(int i) const;
-					virtual std::string	getFullName(void) const;
-					const std::string&	getTypeName(void) const;
-					int                	getNumInputPort(void) const;
-					const std::string& 	getInputPortName(int i) const;
-					int                	getInputPortID(const std::string& name) const;
-					bool			doesInputPortExist(const std::string& name) const;
-					int                	getNumOutputPort(void) const;
-					const std::string& 	getOutputPortName(int i) const;
-					int                	getOutputPortID(const std::string& name) const;
-					bool 			doesOutputPortExist(const std::string& name) const;
+					virtual std::string getFullName(void) const;
+					const std::string& getLayoutName(void) const;
+					int getNumInputPort(void) const;
+					const std::string& getInputPortName(int i) const;
+					int getInputPortID(const std::string& name) const;
+					bool doesInputPortExist(const std::string& name) const;
+					int getNumOutputPort(void) const;
+					const std::string& getOutputPortName(int i) const;
+					int getOutputPortID(const std::string& name) const;
+					bool doesOutputPortExist(const std::string& name) const;
 			};
 
 			/**
@@ -95,7 +95,7 @@
 
 				public :
 					// Tools
-					ComponentLayout(const std::string& _typeName);
+					ComponentLayout(const std::string& _layoutName);
 					ComponentLayout(const AbstractComponentLayout&);
 					virtual ~ComponentLayout(void);
 
@@ -114,7 +114,7 @@
 
 				protected :
 					// Tools
-					Component(const std::string& _typeName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName);
+					Component(const std::string& _layoutName, const std::vector<std::string>& _inputPorts, const std::vector<std::string>& _outputPorts, const std::string& _instanceName);
 					Component(const AbstractComponentLayout&, const std::string& _instanceName);
 
 				public :

@@ -132,4 +132,34 @@ The settings are kept in a plain text format ressembling the following :
 	}
 \endcode
 
+\section section_BufferCells Buffer Cells
+
+Pipelines typically build a unique set, or <i>cell</i>, of buffers to process data. In some cases, you might need to have other cells to operate on. For intance, if the pipeline shall read from one of its own output, it is not safe to use a single cell as it would then be possible to read and write to the same texture (an undefined behavior). We can write the following code for the library to handle these cases :
+
+\code
+	// Get the ID of the cell created by default : 
+	const int cellA = pipeline.getCurrentCellID();
+
+	// Create another cell : 
+	const int cellB = pipeline.createBuffersCell();
+
+	// Init :
+	pipeline << input1 << input2 << ... << Pipeline::Process;
+
+	// Loop with alternate processing : 
+	for(int k=0; k<numLoops; k++)
+	{
+		if(k%2==0)
+		{
+			pipeline.changeTargetBuffersCell(cellB);      // cellA was written in the init, now use cellB.
+			pipeline << pipeline.out(0, cellA) << pipeline.out(1, cellA) << ... << Pipeline::Process;
+		}               
+		else
+		{
+			pipeline.changeTargetBuffersCell(cellA);      // The opposite.
+			pipeline << pipeline.out(0, cellB) << pipeline.out(1, cellB) << ... << Pipeline::Process;
+		}
+	}
+\endcode
+
 **/

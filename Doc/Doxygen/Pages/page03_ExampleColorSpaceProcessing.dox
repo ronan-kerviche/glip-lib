@@ -19,8 +19,8 @@ In this example, we will write a script to process an image in the HSV space, an
 		out vec4 textureChangedHSV;
 		
 		// Get the color primitives from the loaded file :
-		INSERT(ColorPrimitives)
-		INSERT(outputFormat)
+		#pragma INSERT(ColorPrimitives)
+		#pragma INSERT(outputFormat)
 
 		// The parameters to be changed dynamically :
 		uniform float	vScaling = 1.0,

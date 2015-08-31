@@ -9,7 +9,7 @@ SOURCE:distortionCorrectionShader
 {
 	#version 130
 
-	INSERT(outputFormat)
+	#pragma INSERT(outputFormat)
 
 	uniform sampler2D	textureInput;
 	out     vec4 		textureOutput;

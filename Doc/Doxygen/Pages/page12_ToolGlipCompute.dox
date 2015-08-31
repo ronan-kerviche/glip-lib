@@ -1,10 +1,11 @@
 /**
-	\page page_UseGlipCompute Tool : GlipCompute
+\page page12_ToolGlipCompute Tool : GlipCompute
 
-\section sec_IntroGlipCompute Presentation
-	<b>glip-compute</b> is a command line tool built for GNU/Linux. It requires the host machine to run a X server and allow you to generate graphics, process images and save results to image files without invoking a GUI.
+\section section_IntroGlipCompute Presentation
 
-\section sec_CommandsGlipCompute Commands
+<b>glip-compute</b> is a command line tool built for GNU/Linux. It requires the host machine to run a X server and allow you to generate graphics, process images and save results to image files without invoking a GUI.
+
+\section section_CommandsGlipCompute Commands
 \verbatim
 Use GLIP-Lib from the command line to process or generate images.
 glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, 3, ...} FILENAME]
@@ -103,10 +104,63 @@ UNIFORMS
 
 EXAMPLE
   For a pipeline with one input and at least one ouput :
-     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.
+     glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.png
 \endverbatim
 
-\section sec_XRemoteOpenGL X And Remote OpenGL
+\section section_ExampleCommands Example Commands
+
+To process an image :
+\code
+	glip-compute -p script.ppl -i 0 input.png -o 0 output.jpg
+\endcode
+
+To process multiple images :
+\code
+	glip-compute -p script.ppl -i 0 input0.bmp -i 1 input1.jpg -i 2 input2.png -o 0 output0.bmp -1 output1.bmp
+\endcode
+
+Example of processing commands, <i>commands.txt</i> :
+\code
+	// First processing step :
+	PROCESS
+	{
+		INPUT(input0.bmp)
+		OUTPUT(output0.bmp)
+		UNIFORMS
+		{
+			PIPELINE:pipeline
+			{
+				SCRIPT:filter
+				{
+					GL_VEC2:someVariable(0.0, 1.0)
+				}
+			}
+		}
+	}
+	// Second processing step :
+	PROCESS
+	{
+		INPUT(input1.bmp)
+		OUTPUT(output1.bmp)
+		UNIFORMS
+		{
+			PIPELINE:pipeline
+			{
+				SCRIPT:filter
+				{
+					GL_VEC2:someVariable(1.0, 2.0)
+				}
+			}
+		}
+	}
+\endcode
+
+Use with :
+\code
+	glip-compute -p script.ppl -r commands.txt
+\endcode
+
+\section section_XRemoteOpenGL X And Remote OpenGL
 	This section describes how to access remote computation capability of a server. It requires the server to be running a X Server with at least one display open. You will not be able to see any graphics via this method alone (graphics will be generated on the display (might be virtual) associated to the distant machine). But this might be sufficient and useful for <i>glip-compute</i>. It also requires you to have a session opened on the distant machine.
 
 	Steps :

@@ -1,0 +1,87 @@
+/**
+\page page11_ExampleGameOfLife Example : The Game Of Life
+
+In this example, we will build a simple cellular automaton based on <a href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">John Conway's Game of Life</a>. The main idea is that this engine will perform operations from a grid at a time <i>t</i> to a grid at a time <i>t+1</i>. The grid (in 2D) contains cells which can be either <i>alive</i> or <i>dead</i>. Consider a 3x3 patch within this grid, if the center cell is dead at time <i>t</i> and surrounded by exactly three neighbours alive, then it will be alive at time <i>t+1</i> or will remain dead otherwise. If the center cell is alive at time <i>t</i> and surrounded by either two or three neighbours alive, then it will stay alive at time <i>t+1</i>, or it will die otherwise.
+
+The filter will read a local 3x3 window over the current location :
+\htmlonly
+	<div style="text-align:center;"><object data="exampleTexture3x3.svg" type="image/svg+xml"></object></div>
+\endhtmlonly
+
+We write the following script, <i>life.ppl</i> :
+\code
+	// Grid size (get from the program, force RGB 8 bits per channel) :
+	REQUIRED_FORMAT:grid(gridFormat, *, *, GL_RGB, GL_UNSIGNED_BYTE)
+
+	SOURCE:lifeShader
+	{
+		#version 130
+		uniform sampler2D before;
+		out vec4 after;
+	
+		void main(void)
+		{
+			vec3 currentStatus = texelFetch(before, ivec2(gl_FragCoord.xy), 0).rgb;
+			int aliveCount = 0;
+			for(int i=-1; i<=1; i++)
+				for(int j=-1; j<=1; j++)
+					aliveCount += int(texelFetch(before, ivec2(gl_FragCoord.xy) + ivec2(j, i), 0).r);
+			// Set next stage :
+			after.r = (currentStatus.r>0.0) ? float(aliveCount>=2 && aliveCount<=3) : float(aliveCount==2);
+			// Translate previous generations :
+			after.gb = currentStatus.rg;
+		}
+	}
+
+	FILTER_LAYOUT:lifeFilter(grid, lifeShader)
+	
+	PIPELINE_MAIN:lifePipeline
+	{
+		INPUT_PORTS(before)
+		OUTPUT_PORTS(after)
+		FILTER_INSTANCE:lifeFilter
+	}
+\endcode
+
+As a starting state, we want to generate a random binary texture with some probability of being alive <i>alpha</i> :
+\code
+	// Grid size :
+	TEXTURE_FORMAT:grid(512, 512, GL_RGB, GL_UNSIGNED_BYTE)
+	CALL:FORMAT_TO_CONSTANT(grid)
+
+	SOURCE:randomShader
+	{
+		#version 130
+		out vec4 randomTexture;
+		uniform float   alpha = 0.2,  // probability of being alive.
+				offset = 0.0; // a seed of the generator.
+
+		#pragma INSERT(grid)
+
+		float rand(vec2 uv)
+		{
+			// Returns a pseudo-random number in the [0; 1] range :
+			float dt = dot(uv, vec2(42.7926, 71.1500));
+			return fract(sin(dt) * 43585.535);
+		}
+
+		void main(void)
+		{
+			randomTexture.r = float(rand(gl_FragCoord.xy/vec2(grid)+vec2(offset))<alpha);
+			randomTexture.gb = vec2(0);
+		}
+	}
+	FILTER_LAYOUT:randomFilter(grid, randomShader)
+	PIPELINE_MAIN:randomPipeline
+	{
+		OUTPUT_PORTS(randomTexture)
+		FILTER_INSTANCE:randomFilter
+	}
+\endcode
+
+We can now connect the two, then loop over the <i>lifePipeline</i> (with buffer cells, as described in \ref page02_UsingTheLibrary). It will produce something similar to the following animation :
+\htmlonly
+	<div style="text-align:center;"><img src="gameOfLifeAnimation.gif" alt="gameOfLifeAnimation"></div>
+\endhtmlonly
+
+**/

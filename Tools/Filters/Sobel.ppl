@@ -45,9 +45,9 @@ SOURCE:sobelShaderVisualization()
 				visualization;
 
 	// Use the convolution tool :
-	INSERT(convolutionTool)
-	INSERT(sobel)
-	INSERT(sobelOutputFormat)
+	#pragma INSERT(convolutionTool)
+	#pragma INSERT(sobel)
+	#pragma INSERT(sobelOutputFormat)
 
 	void main()
 	{

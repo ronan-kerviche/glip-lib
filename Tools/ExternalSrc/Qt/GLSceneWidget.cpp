@@ -2371,7 +2371,6 @@ using namespace QVGL;
 		layout(&innerWidget),
 		keysLayout(&keysGroupBox),
 		othersLayout(&othersGroupBox),
-		//decisionLayout(NULL),
 		translationStepLabel("Translation : ", &othersGroupBox),
 		rotationStepLabel("Rotation : ", &othersGroupBox),
 		zoomFactorLabel("Zoom Factor : ", &othersGroupBox),

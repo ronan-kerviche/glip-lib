@@ -34,7 +34,7 @@ SOURCE:WindowShader
 	out vec4		modulation,
 				modulated;
 	uniform float 		windowSize = 10.0;
-	INSERT(computationFormat)
+	#pragma INSERT(computationFormat)
 
 	void main()
 	{

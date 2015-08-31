@@ -14,8 +14,8 @@ SOURCE:gaussianLightBrushShader
 	uniform vec2 	VectorLastLeftPositionFragment = vec2(0.0, 0.0);	
 	uniform float	radius = 0.01;
 	
-	INSERT(outputFormat)
-	INSERT(maths)
+	#pragma INSERT(outputFormat)
+	#pragma INSERT(maths)
 
 	void main()
 	{
