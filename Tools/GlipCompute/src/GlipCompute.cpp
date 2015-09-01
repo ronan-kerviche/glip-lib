@@ -118,6 +118,19 @@ UNIFORMS\n\
 {\n\
 	// Uniforms description goes here.\n\
 }\n\
+The user can also define a default set of uniform variables to be used when\n\
+no UNIFORMS was defined in the PROCESS command. These must be registered\n\
+outside outside PROCESS commands, and will affect any PROCESS command.\n\
+following them :\n\
+\n\
+DEFAULT_UNIFORMS( filename.uvd )\n\
+\n\
+Or :\n\
+\n\
+DEFAULT_UNIFORMS\n\
+{\n\
+	// Uniforms description goes here.\n\
+}\n\
 \n\
 EXAMPLE\n\
   For a pipeline with one input and at least one ouput :\n\
@@ -200,10 +213,32 @@ PROCESS : /* name, optional */\n\
 	UNIFORMS( /* filename */ )\n\
 }\n\
 \n\
+DEFAULT_UNIFORMS\n\
+{\n\
+	// Default uniforms here will be applied to following PROCESS commands.\n\
+}\n\
+\n\
+DEFAULT_UNIFORMS( /* filename */ )\n\
+\n\
 --------------------------------------------------------------------------------\n\
 glip-compute is part of the GLIP-Lib project.\n\
 Link : <http://glip-lib.net/>\
 ";
+	enum ProcessKeyword
+	{
+		PROCESS,
+		INPUT,
+		OUTPUT,
+		UNIFORMS,
+		DEFAULT_UNIFORMS
+	};
+
+	const std::string processKeywords[] = {	"PROCESS",
+						"INPUT",
+						"OUTPUT",
+						"UNIFORMS",
+						"DEFAULT_UNIFORMS" };
+
 	ProcessCommand::ProcessCommand(void)
 	 : 	line(1),
 		uniformsLine(1)
@@ -315,7 +350,7 @@ Link : <http://glip-lib.net/>\
 
 		for(std::vector<Glip::Modules::VanillaParserSpace::Element>::iterator it=parser.elements.begin(); it!=parser.elements.end(); it++)
 		{
-			if(it->strKeyword=="PROCESS")
+			if(it->strKeyword==processKeywords[PROCESS])
 			{
 				// Test : 
 				if(!it->noArgument)
@@ -334,12 +369,12 @@ Link : <http://glip-lib.net/>\
 
 				for(std::vector<Glip::Modules::VanillaParserSpace::Element>::iterator itSub=subParser.elements.begin(); itSub!=subParser.elements.end(); itSub++)
 				{
-					if(itSub->strKeyword=="INPUT" || itSub->strKeyword=="OUTPUT")
+					if(itSub->strKeyword==processKeywords[INPUT] || itSub->strKeyword==processKeywords[OUTPUT])
 					{
 						// Test : 
-						if(itSub->strKeyword=="INPUT" && !command.inputFilenames.empty())
+						if(itSub->strKeyword==processKeywords[INPUT] && !command.inputFilenames.empty())
 							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
-						if(itSub->strKeyword=="OUTPUT" && !command.outputFilenames.empty())
+						if(itSub->strKeyword==processKeywords[OUTPUT] && !command.outputFilenames.empty())
 							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
 						if(!itSub->noName)
 							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" cannot have a name (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
@@ -352,10 +387,10 @@ Link : <http://glip-lib.net/>\
 						std::vector< std::pair<std::string, std::string> > filenamesList;
 						
 						for(std::vector<std::string>::iterator itArg=itSub->arguments.begin(); itArg!=itSub->arguments.end(); itArg++)
-							filenamesList.push_back( std::pair<std::string, std::string>( "", *itArg) );			
+							filenamesList.push_back( std::pair<std::string, std::string>( "", *itArg) );
 
 						// Set : 
-						if(itSub->strKeyword=="INPUT")
+						if(itSub->strKeyword==processKeywords[INPUT])
 							command.inputFilenames = filenamesList;
 						else
 							command.outputFilenames = filenamesList;
@@ -405,7 +440,7 @@ Link : <http://glip-lib.net/>\
 								target->push_back(glArg);			
 						}
 					}
-					else if(itSub->strKeyword=="UNIFORMS")
+					else if(itSub->strKeyword==processKeywords[UNIFORMS])
 					{
 						if(!command.uniformVariables.empty())
 							throw Glip::Exception("readProcessCommandFile - Command \"" + itSub->strKeyword + "\" already set (line " + Glip::toString(itSub->startLine) + conditionalFilename + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
@@ -446,8 +481,8 @@ Link : <http://glip-lib.net/>\
 				}
 
 				// Test command nature : 
-				if(command.inputFilenames.empty())
-					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses inputs list (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
+				//if(command.inputFilenames.empty())
+				//	throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses inputs list (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
 				if(command.outputFilenames.empty())
 					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" misses outputs list (line " + Glip::toString(it->startLine) + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
 				if(command.uniformVariables.empty())
@@ -455,7 +490,7 @@ Link : <http://glip-lib.net/>\
 
 				commands.push_back(command);
 			}
-			else if(it->strKeyword=="DEFAULT_UNIFORMS")
+			else if(it->strKeyword==processKeywords[DEFAULT_UNIFORMS])
 			{
 				if(!it->noName)
 					throw Glip::Exception("readProcessCommandFile - Command \"" + it->strKeyword + "\" cannot have a name (line " + Glip::toString(it->startLine) + conditionalFilename + ").", __FILE__, __LINE__, Glip::Exception::ClientScriptException);
@@ -844,16 +879,19 @@ Link : <http://glip-lib.net/>\
 					// Generate the name : 
 					char buffer[maxSize];
 					std::memset(buffer, 0, maxSize);
+					int actualLength = 0;
 
 					if(inputFormatString.find("%s")!=std::string::npos)
-						snprintf( buffer, maxSize, inputFormatString.c_str(), elements.mainPipelineInputs[k].c_str());
+						actualLength = snprintf( buffer, maxSize, inputFormatString.c_str(), elements.mainPipelineInputs[k].c_str());
 					else if(inputFormatString.find("%d")!=std::string::npos)
-						snprintf( buffer, maxSize, inputFormatString.c_str(), k);
+						actualLength = snprintf( buffer, maxSize, inputFormatString.c_str(), k);
 					else
 						throw Glip::Exception("Cannot generate input format name from string format : \"" + inputFormatString + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
+					if(actualLength>=maxSize)
+						 throw Glip::Exception("Cannot generate input format name from string format : \"" + inputFormatString + "\", string is too long.", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 					// Test first, only if ForcePreservePipeline flag is not set or the pipeline was not created yet.
-					const std::string name(buffer, maxSize);
+					const std::string name(buffer, actualLength);
 					if((!lloader.hasRequiredFormat(name) || lloader.getRequiredFormat(name)!=inputTextures[k]->format()) && ((flags & ForcePreservePipeline)==0 || pipeline==NULL))
 					{
 						// Add :
@@ -872,9 +910,9 @@ Link : <http://glip-lib.net/>\
 					delete pipeline;
 					pipeline = NULL;
 
-					// Load : 
+					// Load :
 					Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader.getPipelineLayout(pipelineFilename);
-				
+
 					// Prepare the pipeline : 
 					pipeline = new Glip::CorePipeline::Pipeline(pLayout, "GlipComputePipeline");
 				}
