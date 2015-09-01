@@ -231,7 +231,7 @@
 		}
 		else if(possiblePaths.size()>1)
 		{
-			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", "", 1, Exception::ClientScriptException);
+			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different content : ", "", 1, Exception::ClientScriptException);
 
 			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
 				ex << Exception("-> " + *it, "", 1, Exception::ClientScriptException);
