@@ -56,6 +56,23 @@ set(CPACK_PACKAGE_VERSION_MINOR "0")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
 
+# Source package :
+set(CPACK_SOURCE_IGNORE_FILES 	"/\\\\.gitignore"
+				"/CMakeCache\\\\.txt"
+				"/install_manifest\\\\.txt"
+				"cmake_install\\\\.cmake"
+				"CPackConfig\\\\.cmake"
+				"CPackSourceConfig\\\\.cmake"
+				"/glip-compute-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.gz"
+				"/glip-compute-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.Z"
+				"/glip-compute-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.bz2"
+				"/glip-compute-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux\\\\.deb"
+				"/glip-compute-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux\\\\.rpm"
+				"/glip-compute"
+				"/Makefile"
+				"/CMakeFiles/"
+				"/_CPack_Packages/")
+
 # Debian package :
 find_program(testDPKG dpkg)
 if(testDPKG)

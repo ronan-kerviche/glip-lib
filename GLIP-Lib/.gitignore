@@ -8,6 +8,9 @@ _CPack_Packages/
 cmake_install.cmake
 glip-1.0.0-Linux-lib-dev.deb
 glip-1.0.0-Linux-lib.deb
+glip-1.0.0-Source.tar.gz
+glip-1.0.0-Source.tar.Z
+glip-1.0.0-Source.tar.bz2
 install_manifest_lib-dev.txt
 install_manifest_lib.txt
 lib/

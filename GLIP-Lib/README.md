@@ -49,6 +49,10 @@ And install :
 
 > make install
 
+To generate the source package, use :
+
+> make package_source
+
 To generate packages (on *NIX, DEB and RPM), use :
 
 > make package

@@ -35,6 +35,10 @@ Command line tool for image processing on GPU with GLIP-Lib. Requires cmake for 
 
 More on http://glip-lib.net/page__use_glip_compute.html
 
+Requirements
+--------------
+Requires the FreeImage library and its C++ binding : freeimageplus.
+
 Compiling
 --------------
 Using cmake, cmake-gui or equivalent generate the Makefile or SLN file for building the project :
@@ -48,6 +52,10 @@ Then compile with Make or via Visual Studio depending on the platform :
 And install :
 
 > make install
+
+To generate the source package, use :
+
+> make package_source
 
 To generate packages (on *NIX, DEB and RPM), use :
 

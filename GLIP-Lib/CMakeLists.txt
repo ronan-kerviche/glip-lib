@@ -64,7 +64,27 @@ set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
 set(CPACK_COMPONENTS_IGNORE_GROUPS ON)
 
-# Debian package :
+# Source package :
+set(CPACK_SOURCE_IGNORE_FILES 	"/\\\\.gitignore"
+				"/CMakeCache\\\\.txt"
+				"/install_manifest_lib\\\\.txt"
+				"/install_manifest_lib-dev\\\\.txt"
+				"cmake_install\\\\.cmake"
+				"CPackConfig\\\\.cmake"
+				"CPackSourceConfig\\\\.cmake"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.gz"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.Z"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Source\\\\.tar\\\\.bz2"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux-lib\\\\.deb"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux-lib-dev\\\\.deb"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux-lib\\\\.rpm"
+				"/glip-${CPACK_PACKAGE_VERSION_MAJOR}\\\\.${CPACK_PACKAGE_VERSION_MINOR}\\\\.${CPACK_PACKAGE_VERSION_PATCH}-Linux-lib-dev\\\\.rpm"
+				"/lib/"
+				"/Makefile"
+				"/CMakeFiles/"
+				"/_CPack_Packages/")
+
+# DEB package :
 find_program(testDPKG dpkg)
 if(testDPKG)
 	execute_process(COMMAND dpkg --print-architecture COMMAND tr -d '\n' OUTPUT_VARIABLE DEB_ARCHITECTURE) #Get the architecture.
@@ -75,6 +95,7 @@ if(testDPKG)
 	set(CPACK_DEBIAN_PACKAGE_DEPENDS "glip-lib (>=1.0.0)")
 endif()
 
+# RPM package :
 find_program(testRPM rpm)
 if(testRPM)
 	set(CPACK_RPM_COMPONENT_INSTALL ON) #Generate multiple packages.

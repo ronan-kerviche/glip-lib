@@ -7,6 +7,9 @@ Makefile
 _CPack_Packages/
 cmake_install.cmake
 glip-compute
+glip-compute-1.0.0-Source.tar.Z
+glip-compute-1.0.0-Source.tar.bz2
+glip-compute-1.0.0-Source.tar.gz
 glip-compute-1.0.0-Linux.deb
 install_manifest.txt
 # Except this file :
