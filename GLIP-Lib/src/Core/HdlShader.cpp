@@ -43,13 +43,14 @@ using namespace Glip::CoreGL;
 	 : 	ShaderSource(src),
 		type(_type)
 	{
+		#ifdef GLIP_USE_GL
+		// Manage extensions :
 		NEED_EXTENSION(GLEW_VERSION_2_0)
 		//NEED_EXTENSION(GLEW_ARB_shader_objects)
 	
 		switch(type)
 		{
-			case GL_FRAGMENT_SHADER :
-				
+			case GL_FRAGMENT_SHADER :	
 				NEED_EXTENSION(GLEW_ARB_fragment_shader)
 				NEED_EXTENSION(GLEW_ARB_fragment_program)
 				break;
@@ -71,7 +72,6 @@ using namespace Glip::CoreGL;
 				throw Exception("HdlShader::HdlShader - Unknown shader type : \"" + getGLEnumNameSafe(type) + "\".", __FILE__, __LINE__, Exception::GLException);
 		}
 		
-
 		if(!src.requiresCompatibility())
 			FIX_MISSING_GLEW_CALL(glBindFragDataLocation, glBindFragDataLocationEXT)
 
@@ -86,8 +86,13 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glUniform2f,  glUniform2fARB)
 		FIX_MISSING_GLEW_CALL(glUniform3f,  glUniform3fARB)
 		FIX_MISSING_GLEW_CALL(glUniform4f,  glUniform4fARB)
+		#endif
 
-		const GLenum listCorrectEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+		#ifdef GLIP_USE_GL
+			const GLenum listCorrectEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+		#else
+			const GLenum listCorrectEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER};
+		#endif
 		if(!belongsToGLEnums(type, listCorrectEnum))
 			throw Exception("HdlShader::HdlShader - Invalid enum : " + getGLEnumNameSafe(type) + ".", __FILE__, __LINE__, Exception::GLException);
 
@@ -342,7 +347,11 @@ using namespace Glip::CoreGL;
 			activeTypes.clear();
 
 			// Update available uniforms of the following types :
-			const GLenum interestTypes[] = {GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4, GL_DOUBLE, GL_DOUBLE_VEC2, GL_DOUBLE_VEC3, GL_DOUBLE_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4, GL_UNSIGNED_INT_VEC2, GL_UNSIGNED_INT_VEC3, GL_UNSIGNED_INT_VEC4, GL_BOOL, GL_BOOL_VEC2, GL_BOOL_VEC3, GL_BOOL_VEC4, GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, GL_DOUBLE_MAT2, GL_DOUBLE_MAT3, GL_DOUBLE_MAT4, GL_UNSIGNED_INT};
+			#ifdef GLIP_USE_GL
+			const GLenum interestTypes[] = {GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4, GL_DOUBLE, GL_DOUBLE_VEC2, GL_DOUBLE_VEC3, GL_DOUBLE_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4, GL_UNSIGNED_INT_VEC2, GL_UNSIGNED_INT_VEC3, GL_UNSIGNED_INT_VEC4, GL_BOOL, GL_BOOL_VEC2, GL_BOOL_VEC3, GL_BOOL_VEC4, GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, /*GL_DOUBLE_MAT2, GL_DOUBLE_MAT3, GL_DOUBLE_MAT4,*/ GL_UNSIGNED_INT};
+			#else
+			const GLenum interestTypes[] = {GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4, GL_UNSIGNED_INT_VEC2, GL_UNSIGNED_INT_VEC3, GL_UNSIGNED_INT_VEC4, GL_BOOL, GL_BOOL_VEC2, GL_BOOL_VEC3, GL_BOOL_VEC4, GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, GL_UNSIGNED_INT};
+			#endif
 			const int numAllowedTypes = sizeof(interestTypes) / sizeof(GLenum);
 
 			// Get number of uniforms :
@@ -417,14 +426,16 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlProgram::setFragmentLocation(const std::string& fragName, int frag)
 	{
-		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
-		#endif
-		glBindFragDataLocation(program, frag, fragName.c_str());
+		#ifdef GLIP_USE_GL
+			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+				std::cout << "HdlProgram::setFragmentLocation - FragName : " << fragName << std::endl;
+			#endif
+			glBindFragDataLocation(program, frag, fragName.c_str());
 
-		const GLenum err = glGetError();
-		if(err!=GL_NO_ERROR)
-			throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+			const GLenum err = glGetError();
+			if(err!=GL_NO_ERROR)
+				throw Exception("HdlProgram::setFragmentLocation - Error while setting fragment location \"" + fragName + "\" : " + getGLEnumNameSafe(err) + " - " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
+		#endif
 	}
 
 	/**
@@ -584,10 +595,12 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_VEC2 : 		glUniform2fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
 			case GL_FLOAT_VEC3 : 		glUniform3fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
 			case GL_FLOAT_VEC4 : 		glUniform4fv(loc, 1, reinterpret_cast<const GLfloat*>(data.getPtr()));			break;
+			#ifdef GLIP_USE_GL
 			case GL_DOUBLE :		throw Exception("HdlProgram::setVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::setVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::setVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::setVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			#endif
 			case GL_INT :			glUniform1iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
 			case GL_INT_VEC2 :		glUniform2iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
 			case GL_INT_VEC3 :		glUniform3iv(loc, 1, reinterpret_cast<const GLint*>(data.getPtr()));			break;
@@ -696,10 +709,12 @@ using namespace Glip::CoreGL;
 			case GL_FLOAT_VEC2 : 		
 			case GL_FLOAT_VEC3 : 		
 			case GL_FLOAT_VEC4 : 		glGetUniformfv(program, loc, reinterpret_cast<GLfloat*>(data.getPtr()));	break;
+			#ifdef GLIP_USE_GL
 			case GL_DOUBLE :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC2 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC3 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
 			case GL_DOUBLE_VEC4 :		throw Exception("HdlProgram::getVar - Double type not supported when modifying uniform variable \"" + varName + "\".", __FILE__, __LINE__, Exception::GLException);
+			#endif
 			case GL_INT :			
 			case GL_INT_VEC2 :		
 			case GL_INT_VEC3 :		
@@ -745,15 +760,19 @@ using namespace Glip::CoreGL;
 	**/
 	int HdlProgram::maxVaryingVar(void)
 	{
-		GLint param;
+		#ifdef GLIP_USE_GL
+			GLint param;
 
-		glGetIntegerv(GL_MAX_VARYING_FLOATS, &param);
+			glGetIntegerv(GL_MAX_VARYING_FLOATS, &param);
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::maxVaryingVar", "glGetIntegerv()")
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlProgram::maxVaryingVar", "glGetIntegerv()")
+			#endif
+
+			return param;
+		#else
+			return 0;
 		#endif
-
-		return param;
 	}
 
 	/**

@@ -1498,7 +1498,11 @@
 		if(currentCell==NULL)
 			throw Exception("Pipeline::process - No BufferCell was assigned.", __FILE__, __LINE__, Exception::CoreException);
 
+		#ifdef GLIP_USE_GL
 		if(!GLEW_VERSION_3_3 && perfsMonitoring)
+		#else
+		if(perfsMonitoring)
+		#endif
 		{
 			totalTiming = clock();
 			timing = clock();
@@ -1539,9 +1543,11 @@
 
 			if(perfsMonitoring)
 			{
+				#ifdef GLIP_USE_GL
 				if(GLEW_VERSION_3_3)
 					glBeginQuery(GL_TIME_ELAPSED, queryObject);
 				else
+				#endif
 					timing = clock();
 
 				//glFlush();
@@ -1569,6 +1575,7 @@
 			{
 				//glFlush();
 
+				#ifdef GLIP_USE_GL
 				if(GLEW_VERSION_3_3)
 				{
 					GLuint64 querytime;
@@ -1577,6 +1584,7 @@
 					perfs[k] = static_cast<double>(querytime)/1e6;
 				}
 				else
+				#endif
 				{
 					timing = clock() - timing;
 					perfs[k] = static_cast<double>(timing)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
@@ -1590,6 +1598,7 @@
 
 		if(perfsMonitoring)
 		{
+			#ifdef GLIP_USE_GL
 			if(GLEW_VERSION_3_3)
 			{
 				totalPerf = 0;
@@ -1597,6 +1606,7 @@
 					totalPerf += perfs[i];
 			}
 			else
+			#endif
 			{
 				totalTiming = clock() - totalTiming;
 				totalPerf   = static_cast<double>(totalTiming)/static_cast<double>(CLOCKS_PER_SEC)*1000.0f;
@@ -1887,11 +1897,13 @@
 			perfs.assign(filtersList.size(),0.0f);
 			totalPerf = 0.0f;
 
+			#ifdef GLIP_USE_GL
 			if(GLEW_VERSION_3_3)
 			{
 				if(queryObject==0)
 					glGenQueries(1, &queryObject);
 			}
+			#endif
 		}
 	}
 

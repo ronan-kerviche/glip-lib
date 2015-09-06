@@ -253,10 +253,12 @@ using namespace Glip::CoreGL;
 		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
 		else if(str	== "vec3")			typeCode = GL_FLOAT_VEC3;
 		else if(str	== "vec4")			typeCode = GL_FLOAT_VEC4;
+		#ifdef GLIP_USE_GL
 		else if(str	== "double")			typeCode = GL_DOUBLE;
 		else if(str	== "dvec2")			typeCode = GL_DOUBLE_VEC2;
 		else if(str	== "dvec3")			typeCode = GL_DOUBLE_VEC3;
 		else if(str	== "dvec4")			typeCode = GL_DOUBLE_VEC4;
+		#endif
 		else if(str	== "int")			typeCode = GL_INT;
 		else if(str	== "ivec2")			typeCode = GL_INT_VEC2;
 		else if(str	== "ivec3")			typeCode = GL_INT_VEC3;
@@ -271,9 +273,11 @@ using namespace Glip::CoreGL;
 		else if(str	== "mat2" || str=="mat2x2")	typeCode = GL_FLOAT_MAT2;
 		else if(str	== "mat3" || str=="mat3x3")	typeCode = GL_FLOAT_MAT3;
 		else if(str	== "mat4" || str=="mat4x4")	typeCode = GL_FLOAT_MAT4;
+		#ifdef GLIP_USE_GL
 		/*else if(str	== "mat2")			typeCode = GL_DOUBLE_MAT2;
 		else if(str	== "mat3")			typeCode = GL_DOUBLE_MAT3;
 		else if(str	== "mat4")			typeCode = GL_DOUBLE_MAT4;*/
+		#endif
 		else if(str	== "sampler2D")			typeCode = GL_SAMPLER_2D;
 		else if(str	== "usampler2D")		typeCode = GL_SAMPLER_2D;
 		else if(str	== "isampler2D")		typeCode = GL_SAMPLER_2D;
@@ -299,10 +303,12 @@ using namespace Glip::CoreGL;
 		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
 		else if(str	== "vec3")			typeCode = GL_FLOAT_VEC3;
 		else if(str	== "vec4")			typeCode = GL_FLOAT_VEC4;
+		#ifdef GLIP_USE_GL
 		else if(str	== "double")			typeCode = GL_DOUBLE;
 		else if(str	== "dvec2")			typeCode = GL_DOUBLE_VEC2;
 		else if(str	== "dvec3")			typeCode = GL_DOUBLE_VEC3;
 		else if(str	== "dvec4")			typeCode = GL_DOUBLE_VEC4;
+		#endif
 		else if(str	== "int")			typeCode = GL_INT;
 		else if(str	== "ivec2")			typeCode = GL_INT_VEC2;
 		else if(str	== "ivec3")			typeCode = GL_INT_VEC3;

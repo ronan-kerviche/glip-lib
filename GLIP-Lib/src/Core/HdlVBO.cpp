@@ -33,7 +33,7 @@ using namespace Glip::CoreGL;
 	\brief HdlVBO constructor.
 	\param _nVert Number of vertices.
 	\param _dim Dimension of the space containing the vertices (2 or 3).
-	\param freq Frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
+	\param freq Frequency (GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, GL_DYNAMIC_COPY, GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY).
 	\param _vertices Pointer to vertices data.
 	\param _nElements Number of elements.
 	\param _nIndPerElement Number of index per elements (2, 3, 4...).
@@ -62,7 +62,7 @@ using namespace Glip::CoreGL;
 
 		// For the vertices and the texcoords :
 		const GLsizeiptr size = nVert*(dim + (_texcoords!=NULL ? dimTexCoords : 0) + (_normals!=NULL ? dim : 0))*sizeof(GLfloat);
-		vertices = new HdlGeBO(size, GL_ARRAY_BUFFER_ARB, freq);
+		vertices = new HdlGeBO(size, GL_ARRAY_BUFFER, freq);
 
 		GLintptr offset = 0;
 		offsetVertices = offset;
@@ -86,7 +86,7 @@ using namespace Glip::CoreGL;
 		// For the elements :
 		if(_elements!=NULL)
 		{
-			elements = new HdlGeBO(nElements*nIndPerElement*sizeof(GLuint), GL_ELEMENT_ARRAY_BUFFER_ARB, freq);
+			elements = new HdlGeBO(nElements*nIndPerElement*sizeof(GLuint), GL_ELEMENT_ARRAY_BUFFER, freq);
 			elements->subWrite(_elements, nElements*nIndPerElement*sizeof(GLuint), 0);
 		}
 
@@ -120,55 +120,59 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlVBO::draw(void)
 	{
-		// First, bind the data
-		vertices->bind(GL_ARRAY_BUFFER_ARB);
-		glVertexPointer(dim, GL_FLOAT, 0, reinterpret_cast<void*>(offsetVertices));
+		#ifdef GLIP_USE_GL
+			// First, bind the data
+			vertices->bind(GL_ARRAY_BUFFER);
+			glVertexPointer(dim, GL_FLOAT, 0, reinterpret_cast<void*>(offsetVertices));
 
-		if(hasNormals)
-			glNormalPointer(GL_FLOAT, 0, reinterpret_cast<void*>(offsetNormals));
-		if(dimTexCoords>0)
-			glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(offsetTexCoords));
-		if(elements!=NULL)
-			elements->bind(GL_ELEMENT_ARRAY_BUFFER);
+			if(hasNormals)
+				glNormalPointer(GL_FLOAT, 0, reinterpret_cast<void*>(offsetNormals));
+			if(dimTexCoords>0)
+				glTexCoordPointer(dimTexCoords, GL_FLOAT, 0, reinterpret_cast<void*>(offsetTexCoords));
+			if(elements!=NULL)
+				elements->bind(GL_ELEMENT_ARRAY_BUFFER);
 
-		// Enable :
-		glEnableClientState(GL_VERTEX_ARRAY);
-		if(dimTexCoords>0)
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		if(hasNormals)
-			glEnableClientState(GL_NORMAL_ARRAY);
-		if(elements==NULL)
-			glDrawArrays(GL_POINTS, 0, nVert);
-		else
-			glDrawElements(type, nElements*nIndPerElement, GL_UNSIGNED_INT, 0);
+			// Enable :
+			glEnableClientState(GL_VERTEX_ARRAY);
+			if(dimTexCoords>0)
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			if(hasNormals)
+				glEnableClientState(GL_NORMAL_ARRAY);
+			if(elements==NULL)
+				glDrawArrays(GL_POINTS, 0, nVert);
+			else
+				glDrawElements(type, nElements*nIndPerElement, GL_UNSIGNED_INT, 0);
 
-		glDisableClientState(GL_VERTEX_ARRAY);
-		if(dimTexCoords>0)
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		if(hasNormals)
-			glDisableClientState(GL_NORMAL_ARRAY);
+			glDisableClientState(GL_VERTEX_ARRAY);
+			if(dimTexCoords>0)
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			if(hasNormals)
+				glDisableClientState(GL_NORMAL_ARRAY);
 
-		HdlVBO::unbind();
+			HdlVBO::unbind();
+		#else
+			std::cerr << "[GLIP-Lib] Missing VBO support in OpenGL ES." << std::endl;	
+		#endif
 	}
 
 // Static tools :
 	/**
 	\fn void HdlVBO::unbind(void)
-	\brief Unbind all VBO targets (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB);
+	\brief Unbind all VBO targets (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER);
 	**/
 	void HdlVBO::unbind(void)
 	{
-		HdlGeBO::unbind(GL_ARRAY_BUFFER_ARB);
-		HdlGeBO::unbind(GL_ELEMENT_ARRAY_BUFFER_ARB);
+		HdlGeBO::unbind(GL_ARRAY_BUFFER);
+		HdlGeBO::unbind(GL_ELEMENT_ARRAY_BUFFER);
 	}
 
 	/**
 	\fn void HdlVBO::unmap(void)
-	\brief Unmap all VBO targets (GL_ARRAY_BUFFER_ARB, GL_ELEMENT_ARRAY_BUFFER_ARB);
+	\brief Unmap all VBO targets (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER);
 	**/
 	void HdlVBO::unmap(void)
 	{
-		HdlGeBO::unmap(GL_ARRAY_BUFFER_ARB);
-		HdlGeBO::unmap(GL_ELEMENT_ARRAY_BUFFER_ARB);
+		HdlGeBO::unmap(GL_ARRAY_BUFFER);
+		HdlGeBO::unmap(GL_ELEMENT_ARRAY_BUFFER);
 	}
 

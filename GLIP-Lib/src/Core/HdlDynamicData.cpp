@@ -33,7 +33,11 @@
 		columns(_columns),
 		type(_type),
 		supportingType(getRelatedGLSupportingType(_type)),	
-		floatingPointType(supportingType==GL_FLOAT || supportingType==GL_DOUBLE),
+		floatingPointType(supportingType==GL_FLOAT 
+			#ifdef GLIP_USE_GL
+				|| supportingType==GL_DOUBLE
+			#endif
+			),
 		integerType(supportingType==GL_BYTE || supportingType==GL_UNSIGNED_BYTE || supportingType==GL_SHORT || supportingType==GL_UNSIGNED_SHORT || supportingType==GL_INT || supportingType==GL_UNSIGNED_INT),
 		booleanType(supportingType==GL_BOOL),
 		unsignedType(supportingType==GL_UNSIGNED_BYTE || supportingType==GL_UNSIGNED_SHORT || supportingType==GL_UNSIGNED_INT)
@@ -59,11 +63,13 @@
 			case GL_FLOAT_VEC3 :
 			case GL_FLOAT_VEC4 :
 							return GL_FLOAT;
+			#ifdef GLIP_USE_GL
 			case GL_DOUBLE :
 			case GL_DOUBLE_VEC2 :
 			case GL_DOUBLE_VEC3 :
 			case GL_DOUBLE_VEC4 :
 							return GL_DOUBLE;
+			#endif
 			case GL_INT :
 			case GL_INT_VEC2 :
 			case GL_INT_VEC3 :
@@ -240,10 +246,12 @@
 		else	GENERATE_ELM( GL_FLOAT_VEC2, 		float,		2,	1 )
 		else	GENERATE_ELM( GL_FLOAT_VEC3, 		float, 		3,	1 )
 		else	GENERATE_ELM( GL_FLOAT_VEC4,		float, 		4,	1 )
+		#ifdef GLIP_USE_GL
 		else	GENERATE_ELM( GL_DOUBLE,		double,		1,	1 )
 		else	GENERATE_ELM( GL_DOUBLE_VEC2,		double,		2,	1 )
 		else	GENERATE_ELM( GL_DOUBLE_VEC3,		double,		3,	1 )
 		else	GENERATE_ELM( GL_DOUBLE_VEC4,		double,		4,	1 )
+		#endif
 		else	GENERATE_ELM( GL_INT,			int,		1,	1 )
 		else	GENERATE_ELM( GL_INT_VEC2,		int,		2,	1 )
 		else	GENERATE_ELM( GL_INT_VEC3,		int,		3,	1 )
@@ -293,10 +301,12 @@
 		else	COPY_ELM( GL_FLOAT_VEC2, 		float,		2,	1 )
 		else	COPY_ELM( GL_FLOAT_VEC3, 		float, 		3,	1 )
 		else	COPY_ELM( GL_FLOAT_VEC4,		float, 		4,	1 )
+		#ifdef GLIP_USE_GL	
 		else	COPY_ELM( GL_DOUBLE,			double,		1,	1 )
 		else	COPY_ELM( GL_DOUBLE_VEC2,		double,		2,	1 )
 		else	COPY_ELM( GL_DOUBLE_VEC3,		double,		3,	1 )
 		else	COPY_ELM( GL_DOUBLE_VEC4,		double,		4,	1 )
+		#endif
 		else	COPY_ELM( GL_INT,			int,		1,	1 )
 		else	COPY_ELM( GL_INT_VEC2,			int,		2,	1 )
 		else	COPY_ELM( GL_INT_VEC3,			int,		3,	1 )
@@ -366,7 +376,11 @@
 	**/
 	bool HdlDynamicTable::isFloatingPointType(void) const
 	{
-		return (type==GL_FLOAT) || (type==GL_DOUBLE);
+		#ifdef GLIP_USE_GL
+			return (type==GL_FLOAT) || (type==GL_DOUBLE);
+		#else
+			return (type==GL_FLOAT);
+		#endif
 	}
 
 	/**
@@ -586,7 +600,11 @@
 	{
 		HdlDynamicTable* res = NULL;
 
-		_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
+		#ifdef GLIP_USE_GL
+			_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
+		#else
+			_normalized = _normalized && (type==GL_FLOAT);
+		#endif
 
 		#define GENERATE_ELM(glType, CType) \
 			if(type== glType ) \
@@ -608,10 +626,12 @@
 		else	ERROR_ELM( 	GL_FLOAT_VEC2)
 		else	ERROR_ELM( 	GL_FLOAT_VEC3)
 		else	ERROR_ELM( 	GL_FLOAT_VEC4)
+		#ifdef GLIP_USE_GL
 		else	GENERATE_ELM( 	GL_DOUBLE,		double)
 		else	ERROR_ELM( 	GL_DOUBLE_VEC2)
 		else	ERROR_ELM(	GL_DOUBLE_VEC3)
 		else	ERROR_ELM( 	GL_DOUBLE_VEC4)
+		#endif
 		else	GENERATE_ELM( 	GL_INT,			int)
 		else	ERROR_ELM( 	GL_INT_VEC2)
 		else	ERROR_ELM( 	GL_INT_VEC3)
@@ -652,7 +672,11 @@
 	{
 		HdlDynamicTable* res = NULL;
 
-		_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
+		#ifdef GLIP_USE_GL
+			_normalized = _normalized && ((type==GL_FLOAT) || (type==GL_DOUBLE));
+		#else
+			_normalized = _normalized && (type==GL_FLOAT);
+		#endif
 
 		#define GENERATE_ELM(glType, CType) \
 			if(type== glType ) \
@@ -674,10 +698,12 @@
 		else	ERROR_ELM( 	GL_FLOAT_VEC2)
 		else	ERROR_ELM( 	GL_FLOAT_VEC3)
 		else	ERROR_ELM( 	GL_FLOAT_VEC4)
+		#ifdef GLIP_USE_GL
 		else	GENERATE_ELM( 	GL_DOUBLE,		double)
 		else	ERROR_ELM( 	GL_DOUBLE_VEC2)
 		else	ERROR_ELM(	GL_DOUBLE_VEC3)
 		else	ERROR_ELM( 	GL_DOUBLE_VEC4)
+		#endif
 		else	GENERATE_ELM( 	GL_INT,			int)
 		else	ERROR_ELM( 	GL_INT_VEC2)
 		else	ERROR_ELM( 	GL_INT_VEC3)
@@ -725,7 +751,9 @@
 		else	COPY_ELM( GL_SHORT,			short)
 		else	COPY_ELM( GL_UNSIGNED_SHORT,		unsigned short)
 		else	COPY_ELM( GL_FLOAT, 			float)
+		#ifdef GLIP_USE_GL
 		else	COPY_ELM( GL_DOUBLE,			double)
+		#endif
 		else	COPY_ELM( GL_INT,			int)
 		else	COPY_ELM( GL_UNSIGNED_INT,		unsigned int)
 		else	COPY_ELM( GL_BOOL,			int)

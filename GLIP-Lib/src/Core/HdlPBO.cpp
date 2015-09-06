@@ -34,7 +34,7 @@ using namespace Glip::CoreGL;
 	\param _h The height of the buffer.
 	\param _c The number of channels.
 	\param _cs The size of each channel (in bytes).
-	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\param aim The target (GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	\param size The size of the buffer, computed by default with previous parameters.
 	**/
@@ -46,7 +46,7 @@ using namespace Glip::CoreGL;
 	\fn HdlPBO::HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq)
 	\brief HdlPBO constructor.
 	\param fmt The format to copy, this must an uncompressed format.
-	\param aim The target (GL_PIXEL_UNPACK_BUFFER_ARB, GL_PIXEL_PACK_BUFFER_ARB).
+	\param aim The target (GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
 	\param freq The frequency (GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB, GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB, GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB).
 	**/
 	HdlPBO::HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq)
@@ -92,7 +92,7 @@ using namespace Glip::CoreGL;
 		if(h<=0) 		h = texture.getHeight();
 
 		texture.bind();
-		bind(GL_PIXEL_UNPACK_BUFFER_ARB);
+		bind(GL_PIXEL_UNPACK_BUFFER);
 
 		glTexSubImage2D(GL_TEXTURE_2D, 0, oX, oY, w, h, mode, depth, 0);
 
@@ -109,7 +109,7 @@ using namespace Glip::CoreGL;
 		#endif
 
 		// Unbind from target :
-		unbind(GL_PIXEL_UNPACK_BUFFER_ARB);
+		unbind(GL_PIXEL_UNPACK_BUFFER);
 	}
 
 	/**
@@ -118,7 +118,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlPBO::bindAsPack(void)
 	{
-		bind(GL_PIXEL_PACK_BUFFER_ARB);
+		bind(GL_PIXEL_PACK_BUFFER);
 	}
 
 	/**
@@ -127,7 +127,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlPBO::bindAsUnpack(void)
 	{
-		bind(GL_PIXEL_UNPACK_BUFFER_ARB);
+		bind(GL_PIXEL_UNPACK_BUFFER);
 	}
 
 //Other tools
@@ -140,8 +140,8 @@ using namespace Glip::CoreGL;
 	{
 		if(target==0)
 		{
-			HdlGeBO::unbind(GL_PIXEL_UNPACK_BUFFER_ARB);
-			HdlGeBO::unbind(GL_PIXEL_PACK_BUFFER_ARB  );
+			HdlGeBO::unbind(GL_PIXEL_UNPACK_BUFFER);
+			HdlGeBO::unbind(GL_PIXEL_PACK_BUFFER);
 		}
 		else
 			HdlGeBO::unbind(target);
@@ -156,8 +156,8 @@ using namespace Glip::CoreGL;
 	{
 		if(target==0)
 		{
-			HdlGeBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
-			HdlGeBO::unmap(GL_PIXEL_PACK_BUFFER_ARB  );
+			HdlGeBO::unmap(GL_PIXEL_UNPACK_BUFFER);
+			HdlGeBO::unmap(GL_PIXEL_PACK_BUFFER);
 		}
 		else
 			HdlGeBO::unmap(target);

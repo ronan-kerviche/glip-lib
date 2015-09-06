@@ -425,7 +425,11 @@
 			// Build the shaders and the program : 
 			prgm 	= new HdlProgram;
 
-			const GLenum listShaderTypeEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+			#ifdef GLIP_USE_GL
+				const GLenum listShaderTypeEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER};
+			#else
+				const GLenum listShaderTypeEnum[] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER};
+			#endif
 			for(unsigned int k=0; k<(sizeof(listShaderTypeEnum)/sizeof(GLenum)); k++)
 			{
 				const ShaderSource* ptr = getShaderSource(listShaderTypeEnum[k]);
@@ -492,7 +496,7 @@
 		}
 
 		// Build the geometry :
-		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW_ARB );
+		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW );
 
 		// Finally : 
 		broken = false;
@@ -565,7 +569,9 @@
 				arguments[i]->bind(i);
 
 		// Prepare geometry
+		#ifdef GLIP_USE_GL
 			glLoadIdentity();
+		#endif
 
 		// Load the shader
 			prgm->use();

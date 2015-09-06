@@ -155,7 +155,14 @@ using namespace Glip::CoreGL;
 	GLenum	HdlAbstractTextureFormat::getSWrapping		(void) const { return wraps; }
 	GLenum	HdlAbstractTextureFormat::getTWrapping		(void) const { return wrapt; }
 	bool	HdlAbstractTextureFormat::isCompressed		(void) const { return getFormatDescriptor().isCompressed; }
-	bool	HdlAbstractTextureFormat::isFloatingPoint	(void) const { return getFormatDescriptor().isFloatingPoint || depth==GL_FLOAT || depth==GL_DOUBLE; }
+	bool	HdlAbstractTextureFormat::isFloatingPoint	(void) const
+	{
+		#ifdef GLIP_USE_GL
+			return getFormatDescriptor().isFloatingPoint || depth==GL_FLOAT || depth==GL_DOUBLE;
+		#else
+			return getFormatDescriptor().isFloatingPoint || depth==GL_FLOAT;
+		#endif
+	}
 
 	/**
 	\fn const HdlTextureFormatDescriptor& HdlAbstractTextureFormat::getFormatDescriptor(void) const
@@ -336,10 +343,14 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_WRAP_T :		return getTWrapping();
 			case GL_TEXTURE_BASE_LEVEL :		return getBaseLevel();
 			case GL_TEXTURE_MAX_LEVEL :		return getMaxLevel();
+			#ifdef GLIP_USE_GL
 			case GL_GENERATE_MIPMAP :		return getMaxLevel()>0;
+			#endif
 			case GL_TEXTURE_INTERNAL_FORMAT :	return getGLMode();		
 			case GL_TEXTURE_COMPRESSED :		return isCompressed() ? 1 : 0;
+			#ifdef GLIP_USE_GL
 			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :	throw Exception("HdlAbstractTextureFormat::getSetting : Unable to forecast the size of a compressed texture.", __FILE__, __LINE__, Exception::GLException);
+			#endif
 			case GL_TEXTURE_DEPTH :			return getGLDepth();
 			/*case GL_TEXTURE_RED_TYPE :		TEXTURE_CHANNEL_TYPE( hasRedChannel(), 	redType )
 			case GL_TEXTURE_GREEN_TYPE :		TEXTURE_CHANNEL_TYPE( hasGreenChannel(),greenType )
@@ -500,11 +511,15 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_RED_SIZE :		
 			case GL_TEXTURE_GREEN_SIZE :		
 			case GL_TEXTURE_BLUE_SIZE :		
-			case GL_TEXTURE_ALPHA_SIZE :		
+			case GL_TEXTURE_ALPHA_SIZE :
+			#ifdef GLIP_USE_GL
 			case GL_TEXTURE_LUMINANCE_SIZE :	
-			case GL_GENERATE_MIPMAP :		
-			case GL_TEXTURE_COMPRESSED :		
-			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :		
+			case GL_GENERATE_MIPMAP :
+			#endif		
+			case GL_TEXTURE_COMPRESSED :
+			#ifdef GLIP_USE_GL
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :
+			#endif
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
@@ -521,7 +536,7 @@ using namespace Glip::CoreGL;
 	**/
 	HdlTextureFormat HdlTextureFormat::getTextureFormat(GLuint texID)
 	{
-		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+		#ifdef GLIP_USE_GL
 			// Get the infos :
 			GLint	vWidth		= 0, 
 				vHeight		= 0, 
@@ -563,6 +578,7 @@ using namespace Glip::CoreGL;
 			// Generate :
 			return HdlTextureFormat(vWidth, vHeight, vMode, vDepth, vMinFilter, vMagFilter, vSWrap, vTWrap, vBaseLevel, vMaxLevel);
 		#else
+			UNUSED_PARAMETER(texID)
 			throw Exception("HdlTextureFormat::getTextureFormat - GLES does not allow to retrieve texture formats.", __FILE__, __LINE__, Exception::GLException);
 		#endif
 	}
@@ -584,6 +600,7 @@ using namespace Glip::CoreGL;
 			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(fmt.getGLMode()) + " does not supprot depth : " + getGLEnumNameSafe(fmt.getGLDepth()) + ".", __FILE__, __LINE__);
 
 		// Testing hardware :
+		#ifdef GLIP_USE_GL
 		NEED_EXTENSION(GLEW_ARB_multitexture)
 		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
 		NEED_EXTENSION(GLEW_ARB_texture_non_power_of_two)
@@ -594,6 +611,7 @@ using namespace Glip::CoreGL;
 
 		if(isCompressed())
 			NEED_EXTENSION(GLEW_ARB_texture_compression);
+		#endif
 
 		// Test :
 		if(getBaseLevel()>getMaxLevel())
@@ -626,7 +644,13 @@ using namespace Glip::CoreGL;
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  getMaxLevel()  );
 
 		if( getMaxLevel()>0 )
-			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		{
+			#ifdef GLIP_USE_GL
+				glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+			#else
+				throw Exception("HdlTexture::HdlTexture - Cannot generate mipmaps automatically on OpenGL ES.", __FILE__, __LINE__, Exception::GLException);
+			#endif
+		}
 
 		GLenum err = glGetError();
 		if(err!=GL_NO_ERROR)
@@ -653,6 +677,7 @@ using namespace Glip::CoreGL;
 		if(!getFormatDescriptor().isDepthValid(getGLDepth()))
 			throw Exception("HdlTexture::HdlTexture - Format " + getGLEnumNameSafe(getGLMode()) + " does not supprot depth : " + getGLEnumNameSafe(getGLDepth()) + ".", __FILE__, __LINE__);
 
+		#ifdef GLIP_USE_GL
 		// Testing hardware :
 		NEED_EXTENSION(GLEW_ARB_multitexture)
 		NEED_EXTENSION(GLEW_ARB_texture_border_clamp)
@@ -664,6 +689,7 @@ using namespace Glip::CoreGL;
 
 		if(isCompressed())
 			NEED_EXTENSION(GLEW_ARB_texture_compression);
+		#endif
 
 		// Test :
 		if(getBaseLevel()>getMaxLevel())
@@ -672,7 +698,13 @@ using namespace Glip::CoreGL;
 		bind();
 
 		if( getMaxLevel()>0 )
-			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);		
+		{
+			#ifdef GLIP_USE_GL
+				glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+			#else
+				throw Exception("HdlTexture::HdlTexture - Cannot generate mipmaps automatically on OpenGL ES.", __FILE__, __LINE__, Exception::GLException);
+			#endif
+		}
 
 		HdlTexture::unbind();
 	}
@@ -725,7 +757,7 @@ using namespace Glip::CoreGL;
 	**/
 	int HdlTexture::getSizeOnGPU(int m)
 	{	
-		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+		#ifdef GLIP_USE_GL
 			GLint s;
 
 			bind();
@@ -751,6 +783,7 @@ using namespace Glip::CoreGL;
 
 			return static_cast<int>(s);
 		#else
+			UNUSED_PARAMETER(m)
 			return getSize();
 		#endif
 	}
@@ -762,11 +795,17 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlTexture::bind(GLenum unit)
 	{
+		#ifdef GLIP_USE_GL
 		glActiveTextureARB(unit);
+		#else
+		UNUSED_PARAMETER(unit)
+		#endif
 		glBindTexture(GL_TEXTURE_2D, texID);
 
+		#ifdef GLIP_USE_GL
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
 		glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT,  GL_REPLACE);
+		#endif
 	}
 
 	/**
@@ -776,7 +815,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlTexture::bind(int unit)
 	{
-		bind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
+		bind(GL_TEXTURE0+static_cast<GLenum>(unit));
 	}
 
 	/**
@@ -826,14 +865,18 @@ using namespace Glip::CoreGL;
 			case GL_TEXTURE_MAX_LEVEL :
 			case GL_TEXTURE_INTERNAL_FORMAT :
 			case GL_TEXTURE_DEPTH :
-			case GL_TEXTURE_RED_SIZE :		
-			case GL_TEXTURE_GREEN_SIZE :		
-			case GL_TEXTURE_BLUE_SIZE :		
-			case GL_TEXTURE_ALPHA_SIZE :		
-			case GL_TEXTURE_LUMINANCE_SIZE :	
-			case GL_GENERATE_MIPMAP :		
-			case GL_TEXTURE_COMPRESSED :		
-			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :		
+			case GL_TEXTURE_RED_SIZE :
+			case GL_TEXTURE_GREEN_SIZE :
+			case GL_TEXTURE_BLUE_SIZE :
+			case GL_TEXTURE_ALPHA_SIZE :
+			#ifdef GLIP_USE_GL	
+			case GL_TEXTURE_LUMINANCE_SIZE :
+			case GL_GENERATE_MIPMAP :
+			#endif
+			case GL_TEXTURE_COMPRESSED :
+			#ifdef GLIP_USE_GL
+			case GL_TEXTURE_COMPRESSED_IMAGE_SIZE :
+			#endif
 			case GL_TEXTURE_RED_TYPE :		
 			case GL_TEXTURE_GREEN_TYPE :		
 			case GL_TEXTURE_BLUE_TYPE :		
@@ -969,7 +1012,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	{
-		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+		#ifdef GLIP_USE_GL
 			if(pixelFormat==GL_ZERO)
 				pixelFormat = mode;
 
@@ -992,6 +1035,11 @@ using namespace Glip::CoreGL;
 			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 				OPENGL_ERROR_TRACKER("HdlTexture::write", "glGetTexImage()")
 			#endif
+		#else
+			UNUSED_PARAMETER(data)
+			UNUSED_PARAMETER(pixelFormat)
+			UNUSED_PARAMETER(pixelDepth)
+			UNUSED_PARAMETER(_alignment)
 		#endif
 	}
 
@@ -1006,7 +1054,7 @@ using namespace Glip::CoreGL;
 	**/
 	GLenum HdlTexture::getInternalMode(void)
 	{
-		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+		#ifdef GLIP_USE_GL
 			bind();
 
 			GLint param;
@@ -1020,7 +1068,7 @@ using namespace Glip::CoreGL;
 
 	bool HdlTexture::checkForConsistency(bool verbose)
 	{
-		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+		#ifdef GLIP_USE_GL
 			GLint	glId;
 			GLint 	vMagFilter, vMinFilter, vBaseLevel, vMaxLevel, vSWrap, vTWrap, vMipmapGen, vWidth, vHeight, vMode, vBorder, vCompressed;
 			bool 	tMagFilter, tMinFilter, tBaseLevel, tMaxLevel, tSWrap, tTWrap, tMipmapGen, tWidth, tHeight, tMode, tBorder, tCompressed;
@@ -1110,6 +1158,7 @@ using namespace Glip::CoreGL;
 
 			return tMagFilter && tMinFilter && tBaseLevel && tMaxLevel && tSWrap && tTWrap && tMipmapGen && tWidth && tHeight && tMode && tBorder && tCompressed;
 		#else
+			UNUSED_PARAMETER(verbose)
 			// GLES does not allow for probing texture parameters. We will just assume that everything is correct here :
 			return true;
 		#endif
@@ -1133,7 +1182,11 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlTexture::unbind(GLenum unit)
 	{
+		#ifdef GLIP_USE_GL
 		glActiveTextureARB(unit);
+		#else
+		UNUSED_PARAMETER(unit)
+		#endif
 		glBindTexture(GL_TEXTURE_2D, 0); //unBind
 	}
 
@@ -1144,7 +1197,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlTexture::unbind(int unit)
 	{
-		unbind(GL_TEXTURE0_ARB+static_cast<GLenum>(unit));
+		unbind(GL_TEXTURE0+static_cast<GLenum>(unit));
 	}
 
 	/**

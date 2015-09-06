@@ -46,7 +46,11 @@ using namespace Glip::Modules;
 		table(NULL)
 	{
 		setAlignment(_alignment);
+		#ifdef GLIP_USE_GL
 		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		#else
+		bool normalized = (descriptor.mode==GL_FLOAT);
+		#endif
 		table = HdlDynamicTable::build(format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels, normalized, _alignment);
 	}
 
@@ -63,7 +67,11 @@ using namespace Glip::Modules;
 		table(NULL)
 	{
 		setAlignment(_alignment);
+		#ifdef GLIP_USE_GL
 		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		#else
+		bool normalized = (descriptor.mode==GL_FLOAT);
+		#endif
 		table = HdlDynamicTable::buildProxy(buffer, format.getGLDepth(), format.getWidth(), format.getHeight(), descriptor.numChannels, normalized, _alignment);
 	}
 
@@ -80,7 +88,11 @@ using namespace Glip::Modules;
 		table(NULL)
 	{
 		setAlignment(_alignment);
+		#ifdef GLIP_USE_GL
 		bool normalized = (descriptor.mode==GL_FLOAT) || (descriptor.mode==GL_DOUBLE);
+		#else
+		bool normalized = (descriptor.mode==GL_FLOAT);
+		#endif
 		table = HdlDynamicTable::build(texture.getGLDepth(), texture.getWidth(), texture.getHeight(), descriptor.numChannels, normalized, _alignment);
 
 		// Copy : 
@@ -218,6 +230,7 @@ using namespace Glip::Modules;
 				return (*this);
 			}
 		#else
+			UNUSED_PARAMETER(texture)
 			throw Exception("ImageBuffer::operator<< - Not currently supported under GLES.", __FILE__, __LINE__, Exception::GLException);
 		#endif
 	}

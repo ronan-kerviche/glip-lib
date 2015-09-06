@@ -132,6 +132,7 @@ using namespace Glip::CoreGL;
 		depthBuffer(NULL),
 		depthBufferAttached(false)
 	{
+		#ifdef GLIP_USE_GL
 		NEED_EXTENSION(GL_ARB_framebuffer_object)
 		FIX_MISSING_GLEW_CALL(glGenFramebuffers, glGenFramebuffersEXT)
 		FIX_MISSING_GLEW_CALL(glBindFramebuffer, glBindFramebufferEXT)
@@ -139,6 +140,7 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glFramebufferTexture2D, glFramebufferTexture2DEXT)
 		FIX_MISSING_GLEW_CALL(glDrawBuffers, glDrawBuffersARB)
 		FIX_MISSING_GLEW_CALL(glGenerateMipmap, glGenerateMipmapEXT)
+		#endif
 
 		if(isCompressed())
 			throw Exception("HdlFBO::HdlFBO - Cannot render to compressed texture of format : " + getGLEnumNameSafe(getGLMode()) + ".", __FILE__, __LINE__, Exception::GLException);
@@ -168,7 +170,7 @@ using namespace Glip::CoreGL;
 			addTarget();
 
 		// check FBO status
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); //unbind
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); //unbind
 	}
 
 	HdlFBO::~HdlFBO(void)
@@ -201,9 +203,9 @@ using namespace Glip::CoreGL;
 		// Entering safe zone :
 		glGetError();
 
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, getAttachment(i), GL_TEXTURE_2D, targets[i]->getID(), 0);
 
 		GLenum err = glGetError();
 		if(err!=GL_NO_ERROR)
@@ -212,9 +214,9 @@ using namespace Glip::CoreGL;
 
 	void HdlFBO::unbindTextureFromFBO(int i)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, getAttachment(i), GL_TEXTURE_2D, 0, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, getAttachment(i), GL_TEXTURE_2D, 0, 0);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlFBO::unbindTextureFromFBO", "glFramebufferTexture2D()")
@@ -303,9 +305,9 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::beginRendering(int usedTarget, bool useExistingDepthBuffer)
 	{
-		static const GLenum attachmentsList[] = {GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT,
-							GL_COLOR_ATTACHMENT5_EXT, GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT, GL_COLOR_ATTACHMENT8_EXT, GL_COLOR_ATTACHMENT9_EXT,
-							GL_COLOR_ATTACHMENT10_EXT, GL_COLOR_ATTACHMENT11_EXT, GL_COLOR_ATTACHMENT12_EXT, GL_COLOR_ATTACHMENT13_EXT,GL_COLOR_ATTACHMENT14_EXT, GL_COLOR_ATTACHMENT15_EXT};
+		static const GLenum attachmentsList[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4,
+							GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7, GL_COLOR_ATTACHMENT8, GL_COLOR_ATTACHMENT9,
+							GL_COLOR_ATTACHMENT10, GL_COLOR_ATTACHMENT11, GL_COLOR_ATTACHMENT12, GL_COLOR_ATTACHMENT13,GL_COLOR_ATTACHMENT14, GL_COLOR_ATTACHMENT15};
 
 
 		if(usedTarget==0)
@@ -324,7 +326,7 @@ using namespace Glip::CoreGL;
 			firstRendering = false;
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 
 		// Attach a depth buffer (uncommon?) : 
 		if(depthBuffer!=NULL && useExistingDepthBuffer)
@@ -362,7 +364,7 @@ using namespace Glip::CoreGL;
 			depthBufferAttached = false;
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); // unbind
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // unbind
 
 		// trigger mipmaps generation explicitly
 		for(std::vector<HdlTexture*>::iterator it=targets.begin(); it!=targets.end(); it++)
@@ -408,7 +410,7 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::bind(void)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, fboID);
+		glBindFramebuffer(GL_FRAMEBUFFER, fboID);
 	}
 
 	/**
@@ -455,7 +457,7 @@ using namespace Glip::CoreGL;
 	{
 		GLint maxAttachments;
 
-		glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments );
+		glGetIntegerv( GL_MAX_COLOR_ATTACHMENTS, &maxAttachments );
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlFBO::getMaximumColorAttachment", "glGetIntegerv()")
@@ -472,7 +474,7 @@ using namespace Glip::CoreGL;
 	**/
 	GLenum HdlFBO::getAttachment(int i)
 	{
-		return GL_COLOR_ATTACHMENT0_EXT + i;
+		return GL_COLOR_ATTACHMENT0 + i;
 	}
 
 	/**
@@ -483,7 +485,7 @@ using namespace Glip::CoreGL;
 	**/
 	int HdlFBO::getIndexFromAttachment(GLenum attachment)
 	{
-		return attachment - GL_COLOR_ATTACHMENT0_EXT;
+		return attachment - GL_COLOR_ATTACHMENT0;
 	}
 
 	/**
@@ -492,6 +494,6 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlFBO::unbind(void)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0); //unbind
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); //unbind
 	}
 

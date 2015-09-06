@@ -51,7 +51,7 @@
 					int	baseLevel, maxLevel;                			// MipMap information.	
 
 					// Protected constructors : 
-					HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					HdlAbstractTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP_TO_EDGE, GLenum _wrapt = GL_CLAMP_TO_EDGE, int _baseLevel = 0, int _maxLevel = 0);
 					HdlAbstractTextureFormat(const HdlAbstractTextureFormat& copy);
 
 					// Protected function : 
@@ -107,7 +107,7 @@
 			{
 				public :
 					// reproduce constructor :
-					HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP, GLenum _wrapt = GL_CLAMP, int _baseLevel = 0, int _maxLevel = 0);
+					HdlTextureFormat(int _width, int _height, GLenum _mode, GLenum _depth, GLenum _minFilter = GL_NEAREST, GLenum _magFilter = GL_NEAREST, GLenum _wraps = GL_CLAMP_TO_EDGE, GLenum _wrapt = GL_CLAMP_TO_EDGE, int _baseLevel = 0, int _maxLevel = 0);
 					HdlTextureFormat(const HdlAbstractTextureFormat& fmt);
 
 					// Writing Functions
@@ -154,7 +154,7 @@
 					GLuint	getID(void) const;
 					bool	isProxy(void) const;
 					int	getSizeOnGPU(int m=0);
-					void	bind(GLenum unit=GL_TEXTURE0_ARB);
+					void	bind(GLenum unit=GL_TEXTURE0); // previously GL_TEXTURE0_ARB, for GLES compatibility.
 					void	bind(int unit);
 					void	write(GLvoid *texData, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=-1);
 					void	writeCompressed(GLvoid *texData, int size, GLenum pixelFormat = GL_ZERO, GLenum pixelDepth = GL_ZERO, int alignment=-1);
@@ -171,7 +171,7 @@
 					const HdlAbstractTextureFormat& format(void) const;
 
 					// Static Textures tools
-					static void unbind(GLenum unit=GL_TEXTURE0_ARB);
+					static void unbind(GLenum unit=GL_TEXTURE0); // previously GL_TEXTURE0_ARB, for GLES compatibility.
 					static void unbind(int unit);
 					static int  getMaxImageUnits(void);
 			};

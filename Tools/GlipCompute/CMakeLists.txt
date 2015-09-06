@@ -35,23 +35,27 @@ add_executable(
 		${source_files}
 )
 
-if(GLIP_USE_GLES)
-	message(STATUS "Building against GLES")
-	find_package(OpenGLES REQUIRED)
-	#message(STATUS "GLES libraries : ${OPENGLES_LIBRARIES}") # These libraries are not correcly passed to the Makefile (see make VERBOSE=1).
-	target_link_libraries(glip-compute X11 ${OPENGLES_LIBRARIES} freeimageplus glip)
-elseif(GLIP_USE_GLES2)
-	message(STATUS "Building against GLES2")
-	find_package(OpenGLES2 REQUIRED)
-	target_link_libraries(glip-compute X11 ${OPENGLES2_LIBRARIES} freeimageplus glip)
-elseif(GLIP_USE_GLES3)
+#if(GLIP_USE_GLES)
+#	message(STATUS "Building against GLES")
+#	find_package(OpenGLES REQUIRED)
+#	target_link_libraries(glip-compute X11 ${OPENGLES_LIBRARIES} freeimageplus glip)
+#	add_definitions(-DGLIP_USE_GLES)
+#elseif(GLIP_USE_GLES2)
+#	message(STATUS "Building against GLES2")
+#	find_package(OpenGLES2 REQUIRED)
+#	target_link_libraries(glip-compute X11 ${OPENGLES2_LIBRARIES} freeimageplus glip)
+#	add_definitions(-DGLIP_USE_GLES2)
+#else
+if(GLIP_USE_GLES3)
 	message(STATUS "Building against GLES3")
 	find_package(OpenGLES3 REQUIRED)
 	target_link_libraries(glip-compute X11 ${OPENGLES3_LIBRARIES} freeimageplus glip)
+	add_definitions(-DGLIP_USE_GLES3)
 else()
 	message(STATUS "Building against GL")
 	find_package(OpenGL REQUIRED)
 	target_link_libraries(glip-compute X11 ${OPENGL_LIBRARIES} freeimageplus glip)
+	add_definitions(-DGLIP_USE_GL)
 endif()
 
 # Link : 

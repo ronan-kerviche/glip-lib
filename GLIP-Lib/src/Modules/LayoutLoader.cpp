@@ -826,12 +826,12 @@
 		if(e.arguments.size()>6)
 			sWrap = getGLEnum(e.arguments[6]);
 		else
-			sWrap = GL_CLAMP;
+			sWrap = GL_CLAMP_TO_EDGE;
 
 		if(e.arguments.size()>7)
 			tWrap = getGLEnum(e.arguments[7]);
 		else
-			tWrap = GL_CLAMP;
+			tWrap = GL_CLAMP_TO_EDGE;
 
 		if(e.arguments.size()>8)
 		{
@@ -1191,9 +1191,11 @@
 				setParametersTest[GL_VERTEX_SHADER]		= false;
 				setParametersTest[GL_FRAGMENT_SHADER]		= (shaders.find(GL_FRAGMENT_SHADER)!=shaders.end()); // The fragment shader is not already set.
 				setParametersTest[GL_COMPUTE_SHADER]		= false;
+				#ifdef GLIP_USE_GL
 				setParametersTest[GL_TESS_CONTROL_SHADER]	= false;
 				setParametersTest[GL_TESS_EVALUATION_SHADER]	= false;
 				setParametersTest[GL_GEOMETRY_SHADER]		= false;
+				#endif
 				setParametersTest[GL_CLEAR]			= false;
 				setParametersTest[GL_BLEND]			= false;
 				setParametersTest[GL_DEPTH_TEST]		= false;
@@ -1248,6 +1250,7 @@
 
 						setParametersTest[GL_COMPUTE_SHADER] = true;
 					}
+					#ifdef GLIP_USE_GL
 					else if(glId==GL_TESS_CONTROL_SHADER)
 					{
 						if(setParametersTest[GL_TESS_CONTROL_SHADER])
@@ -1293,6 +1296,7 @@
 
 						setParametersTest[GL_GEOMETRY_SHADER] = true;
 					}
+					#endif
 					else if(glId==GL_RENDER)
 					{
 						if(setParametersTest[GL_RENDER])

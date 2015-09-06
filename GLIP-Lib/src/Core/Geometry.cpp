@@ -1032,20 +1032,30 @@
 		{
 			case GL_POINTS :			return 1;	// Simple points
 			case GL_LINES :				return 2;	// Lines p1-p2 p3-p4 ...
+			#ifdef GLIP_USE_GL 
 			case GL_LINES_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_LINE_STRIP : 			return 2;	// Lines p1-p2 p2-p3 ... p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_LINE_STRIP_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES_STRIP, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_TRIANGLES : 			return 3;	// Triangles p1-p2-p3 p4-p5-p6 ...
+			#ifdef GLIP_USE_GL
 			case GL_TRIANGLES_ADJACENCY : 		return 3;	// Triangles, similar to GL_TRIANGLES, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_TRIANGLE_STRIP : 		return 3;	// Triangles p1-p2-p3 p2-p3-p4 ... p(N-2)-p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_TRIANGLE_STRIP_ADJACENCY : 	return 3;	// Triangles, similar to GL_TRIANGLES_STRIP, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_LINE_LOOP :			/*return 2;*/	// Lines p1-p2 p2-p3 ... pN-p1
 			case GL_TRIANGLE_FAN : 			/*return 3;*/	// Triangles p1-p2-p3 p1-p3-p4 ... p1-p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_QUADS : 			/*return 4;*/	// Quad p1-p2-p3-p4 p5-p6-p7-p8
 			case GL_QUAD_STRIP :			/*return 4;*/	// Quad
 			case GL_POLYGON :
 				throw Exception("GeometryModel::getNumVerticesInPrimitive - Unsupported primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
-			default : 
+			#endif
+			default :
 				throw Exception("GeometryModel::getNumVerticesInPrimitive - Unknown primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 		}
 	}
@@ -1062,19 +1072,29 @@
 		{
 			case GL_POINTS :			return 1;	// Simple points
 			case GL_LINES :				return 2;	// Lines p1-p2 p3-p4 ...
+			#ifdef GLIP_USE_GL
 			case GL_LINES_ADJACENCY : 		return 2;	// Lines, similar to GL_LINES, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_LINE_STRIP : 			return 1;	// Lines p1-p2 p2-p3 ... p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_LINE_STRIP_ADJACENCY : 		return 1;	// Lines, similar to GL_LINES_STRIP, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_TRIANGLES : 			return 3;	// Triangles p1-p2-p3 p4-p5-p6 ...
+			#ifdef GLIP_USE_GL
 			case GL_TRIANGLES_ADJACENCY : 		return 3;	// Triangles, similar to GL_TRIANGLES, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_TRIANGLE_STRIP : 		return 1;	// Triangles p1-p2-p3 p2-p3-p4 ... p(N-2)-p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_TRIANGLE_STRIP_ADJACENCY : 	return 1;	// Triangles, similar to GL_TRIANGLES_STRIP, feed the Geometry shader with adjacent vertices.
+			#endif
 			case GL_LINE_LOOP :			/*return 2;*/	// Lines p1-p2 p2-p3 ... pN-p1
 			case GL_TRIANGLE_FAN : 			/*return 3;*/	// Triangles p1-p2-p3 p1-p3-p4 ... p1-p(N-1)-pN
+			#ifdef GLIP_USE_GL
 			case GL_QUADS : 			/*return 4;*/	// Quad p1-p2-p3-p4 p5-p6-p7-p8
 			case GL_QUAD_STRIP :			/*return 4;*/	// Quad
 			case GL_POLYGON :
 				throw Exception("GeometryModel::getPrimitiveStride - Unsupported primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
+			#endif
 			default : 
 				throw Exception("GeometryModel::getPrimitiveStride - Unknown primitive type : \"" + getGLEnumNameSafe(_primitiveGL) + "\".", __FILE__, __LINE__, Exception::CoreException);
 		}
