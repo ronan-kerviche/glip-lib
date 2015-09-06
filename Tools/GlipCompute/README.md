@@ -61,3 +61,13 @@ To generate packages (on *NIX, DEB and RPM), use :
 
 > make package
 
+Compiling against GLES : first remove the existing cache :
+
+> rm CMakeCache.txt && make clean
+
+Regenerate the Makefile, before recompiling, as usual :
+
+> cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_GLES=1
+
+Possible flags are : GLIP_USE_GLES, GLIP_USE_GLES2 and GLIP_USE_GLES3.
+

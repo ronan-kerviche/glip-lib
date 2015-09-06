@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};../../CMakeTools/")
 
 # Remove relative path warnings :
 cmake_policy(SET CMP0015 NEW)
 
 #Project name
 project(glip-compute)
-
 set(EXECUTABLE_OUTPUT_PATH .)
 
 # Requirements: 
@@ -35,8 +35,28 @@ add_executable(
 		${source_files}
 )
 
+if(GLIP_USE_GLES)
+	message(STATUS "Building against GLES")
+	find_package(OpenGLES REQUIRED)
+	#message(STATUS "GLES libraries : ${OPENGLES_LIBRARIES}") # These libraries are not correcly passed to the Makefile (see make VERBOSE=1).
+	target_link_libraries(glip-compute X11 ${OPENGLES_LIBRARIES} freeimageplus glip)
+elseif(GLIP_USE_GLES2)
+	message(STATUS "Building against GLES2")
+	find_package(OpenGLES2 REQUIRED)
+	target_link_libraries(glip-compute X11 ${OPENGLES2_LIBRARIES} freeimageplus glip)
+elseif(GLIP_USE_GLES3)
+	message(STATUS "Building against GLES3")
+	find_package(OpenGLES3 REQUIRED)
+	target_link_libraries(glip-compute X11 ${OPENGLES3_LIBRARIES} freeimageplus glip)
+else()
+	message(STATUS "Building against GL")
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(glip-compute X11 ${OPENGL_LIBRARIES} freeimageplus glip)
+endif()
+
 # Link : 
-target_link_libraries(glip-compute X11 GL freeimageplus glip)
+#target_link_libraries(glip-compute X11 GL freeimageplus glip)
+#target_link_libraries(glip-compute X11 GLESv1_CM freeimageplus glip)
 
 if(WIN32) # Windows specifics
 	# None	

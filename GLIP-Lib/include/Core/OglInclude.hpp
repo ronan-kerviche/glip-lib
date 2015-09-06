@@ -32,24 +32,23 @@
 	#ifdef _WIN32
 		#define WINDOWS_LEAN_AND_MEAN
 		#define NOMINMAX		
-		#include <windows.h>
-		#define GLEW_STATIC
-		#include "glew.h"
-		#ifdef __GLIP_USE_GLES__
-			#include <GLES/gl.h>
-		#else
-			#include <GL/gl.h>
-		#endif
+		#include <windows.h>	
 	#endif
 
 	#if defined(linux) || defined(__linux) || defined(__linux__)
-		#define GLEW_STATIC
-		#include "glew.h"
-		#ifdef __GLIP_USE_GLES__
-			#include <GLES/gl.h>
-		#else
-			#include <GL/gl.h>
-		#endif
+		// No specifics...
+	#endif
+
+	#define GLEW_STATIC
+	#include "glew.h"
+	#if defined(GLIP_USE_GLES)
+		#include <GLES/gl.h>
+	#elif defined(GLIP_USE_GLES2)
+		#include <GLES2/gl2.h>
+	#elif defined(GLIP_USE_GLES3)
+		#include <GLES3/gl3.h>
+	#else
+		#include <GL/gl.h>
 	#endif
 
 	namespace Glip

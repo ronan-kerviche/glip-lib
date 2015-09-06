@@ -339,12 +339,12 @@ using namespace Glip::CoreGL;
 			OPENGL_ERROR_TRACKER("HdlFBO::beginRendering", "glDrawBuffers()")
 		#endif
 
-		// Save viewport configuration
-		glPushAttrib(GL_VIEWPORT_BIT);
+		// Save viewport configuration (removed for GLES compatibility, impact?) :
+		//glPushAttrib(GL_VIEWPORT_BIT);
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlFBO::beginRendering", "glPushAttrib()")
-		#endif
+		//#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+		//	OPENGL_ERROR_TRACKER("HdlFBO::beginRendering", "glPushAttrib()")
+		//#endif
 
 		// Create a new viewport configuration
 		glViewport(0,0,getWidth(),getHeight());
@@ -380,12 +380,12 @@ using namespace Glip::CoreGL;
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		// restore viewport setting
-		glPopAttrib();
+		// restore viewport setting (removed for GLES compatibility, impact?) :
+		//glPopAttrib();
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlFBO::endRendering", "glPopAttrib()")
-		#endif
+		//#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+		//	OPENGL_ERROR_TRACKER("HdlFBO::endRendering", "glPopAttrib()")
+		//#endif
 	}
 
 	/**

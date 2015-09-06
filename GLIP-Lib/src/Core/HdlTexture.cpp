@@ -515,48 +515,56 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn HdlTextureFormat HdlTextureFormat::getTextureFormat(GLuint texID)
-	\brief Obtain the format from another texture.
+	\brief Obtain the format from another texture (not available when built against any version of GLES).
 	\param texID The ID of the texture targeted (must compatible with GL_TEXTURE_2D).
-	\return A HdlTextureFormat describing the internal format of the texture.	
+	\return A HdlTextureFormat describing the internal format of the texture.
 	**/
 	HdlTextureFormat HdlTextureFormat::getTextureFormat(GLuint texID)
 	{
-		// Get the infos :
-		GLint	vWidth		= 0, 
-			vHeight		= 0, 
-			vMode		= GL_NONE,
-			vDepth		= GL_NONE, 
-			vBorder		= 0,
-			vMagFilter	= GL_NONE, 
-			vMinFilter	= GL_NONE, 
-			vBaseLevel	= 0, 
-			vMaxLevel	= 0, 
-			vSWrap		= GL_NONE, 
-			vTWrap		= GL_NONE;
-			 
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			// Get the infos :
+			GLint	vWidth		= 0, 
+				vHeight		= 0, 
+				vMode		= GL_NONE,
+				vDepth		= GL_NONE, 
+				vBorder		= 0,
+				vMagFilter	= GL_NONE, 
+				vMinFilter	= GL_NONE, 
+				vBaseLevel	= 0, 
+				vMaxLevel	= 0, 
+				vSWrap		= GL_NONE, 
+				vTWrap		= GL_NONE;
+				 
+			glBindTexture(GL_TEXTURE_2D, texID);
+			
+			// Test :
+			const GLenum err = glGetError();
+			if(err!=GL_NO_ERROR)
+				throw Exception("HdlTextureFormat::getTextureFormat - Cannot bind texture " + toString(texID) + " : " + getGLErrorDescription(err) + ".", __FILE__, __LINE__, Exception::GLException);
 
-		glBindTexture(GL_TEXTURE_2D, texID);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH,		&vDepth);
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);
 
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH,		&vDepth);
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);
+			if(vBorder!=0)
+				throw Exception("HdlTextureFormat::getTextureFormat - Texture has a non-null border.", __FILE__, __LINE__, Exception::GLException);
 
-		if(vBorder!=0)
-			throw Exception("HdlTextureFormat::getTextureFormat - Texture has a non-null border.", __FILE__, __LINE__, Exception::GLException);
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);
 
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);
+			HdlTexture::unbind();
 
-		HdlTexture::unbind();
-
-		// Generate :
-		return HdlTextureFormat(vWidth, vHeight, vMode, vDepth, vMinFilter, vMagFilter, vSWrap, vTWrap, vBaseLevel, vMaxLevel);
+			// Generate :
+			return HdlTextureFormat(vWidth, vHeight, vMode, vDepth, vMinFilter, vMagFilter, vSWrap, vTWrap, vBaseLevel, vMaxLevel);
+		#else
+			throw Exception("HdlTextureFormat::getTextureFormat - GLES does not allow to retrieve texture formats.", __FILE__, __LINE__, Exception::GLException);
+		#endif
 	}
 
 // HdlTexture :
@@ -707,36 +715,44 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn void HdlTexture::getSizeOnGPU(int m)
-	\brief Returns the size of the texture in bytes for mipmap m, this function returns the same value as HdlAbstractTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
+	\brief Returns the size of the texture in bytes for mipmap m.
 	\param m The target mipmap level.
 	\return Returns the size of the texture in bytes.
+	
+	This function returns the same value as HdlAbstractTextureFormat::getSize() for standard textures but gives the true size on the GPU for compressed textures. As this function requires a GL API call plus binding, this may be slow.
+	Warning :
+	- When the library is built against GLES, this function will return the same as HdlAbstractTextureFormat::getSize().
 	**/
 	int HdlTexture::getSizeOnGPU(int m)
-	{
-		GLint s;
+	{	
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			GLint s;
 
-		bind();
+			bind();
 
-		if(isCompressed())
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &s);
-		else
-		{
-			GLint rs, gs, bs, as, ls, is, ds, _w, _h, bytesPerPixel;
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_WIDTH,		&_w );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_HEIGHT,		&_h );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_RED_SIZE,		&rs );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_GREEN_SIZE,	&gs );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_BLUE_SIZE,	&bs );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_ALPHA_SIZE,	&as );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_LUMINANCE_SIZE,	&ls );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_INTENSITY_SIZE,	&is );
-			glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_DEPTH_SIZE,	&ds );
+			if(isCompressed())
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &s);
+			else
+			{
+				GLint rs, gs, bs, as, ls, is, ds, _w, _h, bytesPerPixel;
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_WIDTH,		&_w );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_HEIGHT,		&_h );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_RED_SIZE,		&rs );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_GREEN_SIZE,	&gs );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_BLUE_SIZE,	&bs );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_ALPHA_SIZE,	&as );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_LUMINANCE_SIZE,	&ls );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_INTENSITY_SIZE,	&is );
+				glGetTexLevelParameteriv(GL_TEXTURE_2D, m, GL_TEXTURE_DEPTH_SIZE,	&ds );
 
-			bytesPerPixel = (rs+gs+bs+as+ls+is+ds)/8;
-			s = _w*_h*bytesPerPixel;
-		}
+				bytesPerPixel = (rs+gs+bs+as+ls+is+ds)/8;
+				s = _w*_h*bytesPerPixel;
+			}
 
-		return static_cast<int>(s);
+			return static_cast<int>(s);
+		#else
+			return getSize();
+		#endif
 	}
 
 	/**
@@ -941,143 +957,162 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
-	\brief Read data from a classical texture using classical glGetTexImage method. WARNING : this function does not perform error checking.
+	\brief Read data from a classical texture using classical glGetTexImage method. 
 	\param data The pointer to the data.
 	\param pixelFormat The pixel format of the input data (considered the same as the texture layout if not provided).
 	\param pixelDepth The depth of the input data (considered the same as the texture layout if not provided).
 	\param _alignment Byte alignment of the input data.
+
+	Warnings :
+	- This function does not perform error checking.
+	- No data will be written if the library is built against any version of GLES.
 	**/
 	void HdlTexture::read(GLvoid *data, GLenum pixelFormat, GLenum pixelDepth, int _alignment)
 	{
-		if(pixelFormat==GL_ZERO)
-			pixelFormat = mode;
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			if(pixelFormat==GL_ZERO)
+				pixelFormat = mode;
 
-		if(pixelDepth==GL_ZERO)
-			pixelDepth = depth;
+			if(pixelDepth==GL_ZERO)
+				pixelDepth = depth;
 
-		if(_alignment<0)
-			_alignment = getAlignment();
+			if(_alignment<0)
+				_alignment = getAlignment();
 
-		pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
+			pixelFormat = HdlTextureFormatDescriptorsList::get(pixelFormat).aliasMode;
 
-		// Bind it :
-		glBindTexture(GL_TEXTURE_2D, texID);
+			// Bind it :
+			glBindTexture(GL_TEXTURE_2D, texID);
 
-		glPixelStorei(GL_PACK_ALIGNMENT, _alignment);
+			glPixelStorei(GL_PACK_ALIGNMENT, _alignment);
 
-		// Read :
-		glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat, pixelDepth, data);
+			// Read :
+			glGetTexImage(GL_TEXTURE_2D, 0, pixelFormat, pixelDepth, data);
 
-		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlTexture::write", "glGetTexImage()")
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlTexture::write", "glGetTexImage()")
+			#endif
 		#endif
 	}
 
 	/**
 	\fn GLenum HdlTexture::getInternalMode(void)
-	\brief Get the internal format of the texture. For an uncompressed texture the result is the same as getGLMode() but for a compressed texture it returns the real compression mode used.
+	\brief Get the internal format of the texture. 
 	\return The internal format of the texture.
+	
+	Warnings
+	- For an uncompressed texture the result is the same as getGLMode() but for a compressed texture it returns the real compression mode used.
+	- This function will return the same as getGLMode() if the library is built against any version of GLES.
 	**/
 	GLenum HdlTexture::getInternalMode(void)
 	{
-		bind();
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			bind();
 
-		GLint param;
-		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &param);
+			GLint param;
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &param);
 
-		return param;
+			return param;
+		#else
+			return getGLMode();
+		#endif
 	}
 
 	bool HdlTexture::checkForConsistency(bool verbose)
 	{
-		GLint	glId;
-		GLint 	vMagFilter, vMinFilter, vBaseLevel, vMaxLevel, vSWrap, vTWrap, vMipmapGen, vWidth, vHeight, vMode, vBorder, vCompressed;
-		bool 	tMagFilter, tMinFilter, tBaseLevel, tMaxLevel, tSWrap, tTWrap, tMipmapGen, tWidth, tHeight, tMode, tBorder, tCompressed;
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			GLint	glId;
+			GLint 	vMagFilter, vMinFilter, vBaseLevel, vMaxLevel, vSWrap, vTWrap, vMipmapGen, vWidth, vHeight, vMode, vBorder, vCompressed;
+			bool 	tMagFilter, tMinFilter, tBaseLevel, tMaxLevel, tSWrap, tTWrap, tMipmapGen, tWidth, tHeight, tMode, tBorder, tCompressed;
 
-		bind();
+			bind();
 
-		glGetIntegerv(GL_TEXTURE_BINDING_2D, &glId);
+			glGetIntegerv(GL_TEXTURE_BINDING_2D, &glId);
 
-		glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	tMagFilter	= vMagFilter==static_cast<GLint>(getMagFilter());
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	tMinFilter	= vMinFilter==static_cast<GLint>(getMinFilter());
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);	tBaseLevel	= vBaseLevel==getBaseLevel();
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);	tMaxLevel	= vMaxLevel==getMaxLevel();
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);	tSWrap		= vSWrap==static_cast<GLint>(getSWrapping());
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);	tTWrap		= vTWrap==static_cast<GLint>(getTWrapping());
-                glGetTexParameteriv(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, 			&vMipmapGen);	tMipmapGen	= (vMipmapGen>0 && getBaseLevel()>0) || (vMipmapGen==0 && getBaseLevel()==0);
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 		&vMagFilter);	tMagFilter	= vMagFilter==static_cast<GLint>(getMagFilter());
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 		&vMinFilter);	tMinFilter	= vMinFilter==static_cast<GLint>(getMinFilter());
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 		&vBaseLevel);	tBaseLevel	= vBaseLevel==getBaseLevel();
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 		&vMaxLevel);	tMaxLevel	= vMaxLevel==getMaxLevel();
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, 			&vSWrap);	tSWrap		= vSWrap==static_cast<GLint>(getSWrapping());
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, 			&vTWrap);	tTWrap		= vTWrap==static_cast<GLint>(getTWrapping());
+			glGetTexParameteriv(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, 			&vMipmapGen);	tMipmapGen	= (vMipmapGen>0 && getBaseLevel()>0) || (vMipmapGen==0 && getBaseLevel()==0);
 
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);	tWidth		= vWidth==getWidth();
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);	tHeight		= vHeight==getHeight();
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);	tMode		= vMode==static_cast<GLint>(getGLMode());
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);	tBorder		= vBorder==0;
-                glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, 	&vCompressed);	tCompressed	= (vCompressed>0 && isCompressed()) || (vCompressed==0 && !isCompressed());
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, 		&vWidth);	tWidth		= vWidth==getWidth();
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, 		&vHeight);	tHeight		= vHeight==getHeight();
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, 	&vMode);	tMode		= vMode==static_cast<GLint>(getGLMode());
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BORDER, 		&vBorder);	tBorder		= vBorder==0;
+			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_COMPRESSED, 	&vCompressed);	tCompressed	= (vCompressed>0 && isCompressed()) || (vCompressed==0 && !isCompressed());
 
-                if(verbose)
-		{
-			std::cout << __HERE__ << "HdlTexture::checkForConsistency - Checking texture : " << getID() << " == " << glId << std::endl;
+			if(verbose)
+			{
+				std::cout << __HERE__ << "HdlTexture::checkForConsistency - Checking texture : " << getID() << " == " << glId << std::endl;
 
-			std::cout << "    - Width       : ";
-			if(tWidth)		std::cout << "OK (" << getWidth() << ')';
-			else			std::cout << "FAILED (API : " << getWidth() << "; GL : " << vWidth << ')';
-			std::cout << std::endl;
+				std::cout << "    - Width       : ";
+				if(tWidth)		std::cout << "OK (" << getWidth() << ')';
+				else			std::cout << "FAILED (API : " << getWidth() << "; GL : " << vWidth << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - Height      : ";
-			if(tHeight)		std::cout << "OK (" << getHeight() << ')';
-			else			std::cout << "FAILED (API : " << getHeight() << "; GL : " << vHeight << ')';
-			std::cout << std::endl;
+				std::cout << "    - Height      : ";
+				if(tHeight)		std::cout << "OK (" << getHeight() << ')';
+				else			std::cout << "FAILED (API : " << getHeight() << "; GL : " << vHeight << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - Mode        : ";
-			if(tMode)		std::cout << "OK (" << getGLEnumNameSafe(getGLMode()) << ')';
-			else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getGLMode()) << "; GL : " << getGLEnumNameSafe(vMode) << ')';
-			std::cout << std::endl;
+				std::cout << "    - Mode        : ";
+				if(tMode)		std::cout << "OK (" << getGLEnumNameSafe(getGLMode()) << ')';
+				else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getGLMode()) << "; GL : " << getGLEnumNameSafe(vMode) << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - Compression : ";
-			if(tCompressed)		std::cout << "OK (" << isCompressed() << ')';
-			else			std::cout << "FAILED (API : " << isCompressed() << "; GL : " << vCompressed << ')';
-			std::cout << std::endl;
+				std::cout << "    - Compression : ";
+				if(tCompressed)		std::cout << "OK (" << isCompressed() << ')';
+				else			std::cout << "FAILED (API : " << isCompressed() << "; GL : " << vCompressed << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - MagFilter   : ";
-			if(tMagFilter)		std::cout << "OK (" << getGLEnumNameSafe(getMagFilter()) << ')';
-			else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getMagFilter()) << "; GL : " << getGLEnumNameSafe(vMagFilter) << ')';
-			std::cout << std::endl;
+				std::cout << "    - MagFilter   : ";
+				if(tMagFilter)		std::cout << "OK (" << getGLEnumNameSafe(getMagFilter()) << ')';
+				else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getMagFilter()) << "; GL : " << getGLEnumNameSafe(vMagFilter) << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - MinFilter   : ";
-			if(tMinFilter)		std::cout << "OK (" << getGLEnumNameSafe(getMinFilter()) << ')';
-			else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getMinFilter()) << "; GL : " << getGLEnumNameSafe(vMinFilter) << ')';
-			std::cout << std::endl;
+				std::cout << "    - MinFilter   : ";
+				if(tMinFilter)		std::cout << "OK (" << getGLEnumNameSafe(getMinFilter()) << ')';
+				else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getMinFilter()) << "; GL : " << getGLEnumNameSafe(vMinFilter) << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - BaseLevel   : ";
-			if(tBaseLevel)		std::cout << "OK (" << getBaseLevel() << ')';
-			else			std::cout << "FAILED (API : " << getBaseLevel() << "; GL : " << vBaseLevel << ')';
-			std::cout << std::endl;
+				std::cout << "    - BaseLevel   : ";
+				if(tBaseLevel)		std::cout << "OK (" << getBaseLevel() << ')';
+				else			std::cout << "FAILED (API : " << getBaseLevel() << "; GL : " << vBaseLevel << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - MaxLevel    : ";
-			if(tMaxLevel)		std::cout << "OK (" << getMaxLevel() << ')';
-			else			std::cout << "FAILED (API : " << getMaxLevel() << "; GL : " << vMaxLevel << ')';
-			std::cout << std::endl;
+				std::cout << "    - MaxLevel    : ";
+				if(tMaxLevel)		std::cout << "OK (" << getMaxLevel() << ')';
+				else			std::cout << "FAILED (API : " << getMaxLevel() << "; GL : " << vMaxLevel << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - SWrap       : ";
-			if(tSWrap)		std::cout << "OK (" << getGLEnumNameSafe(getSWrapping()) << ')';
-			else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getSWrapping()) << "; GL : " << getGLEnumNameSafe(vSWrap) << ')';
-			std::cout << std::endl;
+				std::cout << "    - SWrap       : ";
+				if(tSWrap)		std::cout << "OK (" << getGLEnumNameSafe(getSWrapping()) << ')';
+				else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getSWrapping()) << "; GL : " << getGLEnumNameSafe(vSWrap) << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - TWrap       : ";
-			if(tTWrap)		std::cout << "OK (" << getGLEnumNameSafe(getTWrapping()) << ')';
-			else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getTWrapping()) << "; GL : " << getGLEnumNameSafe(vTWrap) << ')';
-			std::cout << std::endl;
+				std::cout << "    - TWrap       : ";
+				if(tTWrap)		std::cout << "OK (" << getGLEnumNameSafe(getTWrapping()) << ')';
+				else			std::cout << "FAILED (API : " << getGLEnumNameSafe(getTWrapping()) << "; GL : " << getGLEnumNameSafe(vTWrap) << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - MipMapGen   : ";
-			if(tMipmapGen)		std::cout << "OK (" << (getBaseLevel()>0) << ')';
-			else			std::cout << "FAILED (API : " << (getBaseLevel()>0) << "; GL : " << vMipmapGen << ')';
-			std::cout << std::endl;
+				std::cout << "    - MipMapGen   : ";
+				if(tMipmapGen)		std::cout << "OK (" << (getBaseLevel()>0) << ')';
+				else			std::cout << "FAILED (API : " << (getBaseLevel()>0) << "; GL : " << vMipmapGen << ')';
+				std::cout << std::endl;
 
-			std::cout << "    - Borders     : ";
-			if(tBorder)		std::cout << "OK (0)";
-			else			std::cout << "FAILED (API : 0; GL : " << vBorder << ')';
-			std::cout << std::endl;
-		}
+				std::cout << "    - Borders     : ";
+				if(tBorder)		std::cout << "OK (0)";
+				else			std::cout << "FAILED (API : 0; GL : " << vBorder << ')';
+				std::cout << std::endl;
+			}
 
-		return tMagFilter && tMinFilter && tBaseLevel && tMaxLevel && tSWrap && tTWrap && tMipmapGen && tWidth && tHeight && tMode && tBorder && tCompressed;
+			return tMagFilter && tMinFilter && tBaseLevel && tMaxLevel && tSWrap && tTWrap && tMipmapGen && tWidth && tHeight && tMode && tBorder && tCompressed;
+		#else
+			// GLES does not allow for probing texture parameters. We will just assume that everything is correct here :
+			return true;
+		#endif
 	}
 
 	/**

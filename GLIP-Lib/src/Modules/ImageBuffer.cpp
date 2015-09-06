@@ -192,31 +192,34 @@ using namespace Glip::Modules;
 	**/
 	const ImageBuffer& ImageBuffer::operator<<(HdlTexture& texture)
 	{
-		if(!isCompatibleWith(texture))
-			throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__, Exception::ModuleException);
-		else
-		{
-			// Bind ; 
-			texture.bind();
+		#if !defined(GLIP_USE_GLES) && !defined(GLIP_USE_GLES2) && !defined(GLIP_USE_GLES3)
+			if(!isCompatibleWith(texture))
+				throw Exception("ImageBuffer::operator<< - Texture and ImageBuffer objects are incompatible.", __FILE__, __LINE__, Exception::ModuleException);
+			else
+			{
+				// Bind : 
+				texture.bind();
+				glPixelStorei(GL_PACK_ALIGNMENT, getAlignment());
 
-			glPixelStorei(GL_PACK_ALIGNMENT, getAlignment());
+				// Read :
+				glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), table->getPtr());
+				
+				GLenum err = glGetError();
+				if(err!=GL_NO_ERROR)
+					throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + getGLEnumNameSafe(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
 
-			// Read :
-			glGetTexImage(GL_TEXTURE_2D, 0, descriptor.aliasMode, getGLDepth(), table->getPtr());
-			
-			GLenum err = glGetError();
-			if(err!=GL_NO_ERROR)
-				throw Exception("ImageBuffer::operator<< - Unable to copy data from texture (glGetTexImage). (OpenGL error : " + getGLEnumNameSafe(err) + ").", __FILE__, __LINE__, Exception::ModuleException);
+				HdlTexture::unbind();
 
-			HdlTexture::unbind();
+				setMinFilter(texture.getMinFilter());
+				setMagFilter(texture.getMagFilter());
+				setSWrapping(texture.getSWrapping());
+				setTWrapping(texture.getTWrapping());
 
-			setMinFilter(texture.getMinFilter());
-			setMagFilter(texture.getMagFilter());
-			setSWrapping(texture.getSWrapping());
-			setTWrapping(texture.getTWrapping());
-
-			return (*this);
-		}
+				return (*this);
+			}
+		#else
+			throw Exception("ImageBuffer::operator<< - Not currently supported under GLES.", __FILE__, __LINE__, Exception::GLException);
+		#endif
 	}
 
 	/**

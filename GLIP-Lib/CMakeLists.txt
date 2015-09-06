@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};../CMakeTools/")
 
 #Project name :
 project(glip)
@@ -40,8 +41,23 @@ add_library(
 		${source_files}
 )
 
-find_package(OpenGL REQUIRED)
-target_link_libraries(glip ${OPENGL_LIBRARIES})
+if(GLIP_USE_GLES)
+	message(STATUS "Building against GLES")
+	find_package(OpenGLES REQUIRED)
+	target_link_libraries(glip ${OPENGLES_LIBRARIES})
+elseif(GLIP_USE_GLES2)
+	message(STATUS "Building against GLES2")
+	find_package(OpenGLES2 REQUIRED)
+	target_link_libraries(glip ${OPENGLES2_LIBRARIES})
+elseif(GLIP_USE_GLES3)
+	message(STATUS "Building against GLES3")
+	find_package(OpenGLES3 REQUIRED)
+	target_link_libraries(glip ${OPENGLES3_LIBRARIES})
+else()
+	message(STATUS "Building against GL")
+	find_package(OpenGL REQUIRED)
+	target_link_libraries(glip ${OPENGL_LIBRARIES})
+endif()
 
 # Options :
 if(WIN32) # Windows specifics :
