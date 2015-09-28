@@ -355,7 +355,7 @@ using namespace QVGL;
 			addToGroup(&infos);
 
 			// Title positions : 
-			title.setPos(6, 0);
+			title.setPos(8, 0);
 
 			// Set colors : 
 			setSelection(false);

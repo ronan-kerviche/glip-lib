@@ -247,7 +247,7 @@ using namespace Glip::CoreGL;
 	GLenum ShaderSource::parseUniformTypeCode(const std::string& str, const std::string& cpl)
 	{
 		// Compare typename to known types :
-		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
+		// (see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for more)
 		GLenum typeCode;
 		if(	str	== "float")			typeCode = GL_FLOAT;
 		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
@@ -297,7 +297,7 @@ using namespace Glip::CoreGL;
 	GLenum ShaderSource::parseOutTypeCode(const std::string& str, const std::string& cpl)
 	{
 		// Compare typename to known types :
-		// (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for more)
+		// (see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for more)
 		GLenum typeCode;
 		if(	str	== "float")			typeCode = GL_FLOAT;
 		else if(str	== "vec2")			typeCode = GL_FLOAT_VEC2;
@@ -691,7 +691,7 @@ using namespace Glip::CoreGL;
 
 	/**
 	\fn const std::vector<GLenum>& ShaderSource::getUniformTypes(void) const
-	\brief Return a vector containing the type of the uniform variables which are not 2D samplers (see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for a table of possible values).
+	\brief Return a vector containing the type of the uniform variables which are not 2D samplers (see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for a table of possible values).
 	\return A vector of GLenum.
 	**/
 	const std::vector<GLenum>& ShaderSource::getUniformTypes(void) const

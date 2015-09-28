@@ -409,7 +409,7 @@ using namespace Glip::CoreGL;
 
 	Some variable reported by the Driver might not be accessible. You can use HdlProgram::isUniformVariableValid to detect such variables.
 
-	\return Access to a GLenum based vector, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\return Access to a GLenum based vector, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	**/
 	const std::vector<GLenum>& HdlProgram::getUniformsTypes(void) const
 	{
@@ -442,7 +442,7 @@ using namespace Glip::CoreGL;
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum type, int v0, int v1=0, int v2=0, int v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param type    Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v0      Corresponding value to assign.
 	\param v1      Corresponding value to assign.
 	\param v2      Corresponding value to assign.
@@ -452,7 +452,7 @@ using namespace Glip::CoreGL;
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum type, unsigned int v0, unsigned int v1=0, unsigned int v2=0, unsigned int v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param type    Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v0      Corresponding value to assign.
 	\param v1      Corresponding value to assign.
 	\param v2      Corresponding value to assign.
@@ -462,7 +462,7 @@ using namespace Glip::CoreGL;
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum type, float v0, float v1=0, float v2=0, float v3=0)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param type    Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param type    Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v0      Corresponding value to assign.
 	\param v1      Corresponding value to assign.
 	\param v2      Corresponding value to assign.
@@ -473,21 +473,21 @@ using namespace Glip::CoreGL;
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum t, int* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 	/**
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum t, unsigned int* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 	/**
 	\fn    void HdlProgram::setVar(const std::string& varName, GLenum t, float* v)
 	\brief Change a uniform variable in a shader. Raise an exception if any error occur.
 	\param varName Name of the fragment output variable.
-	\param t       Kind of variable in, see http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml for possible types.
+	\param t       Kind of variable in, see https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml for possible types.
 	\param v       Pointer to the values to assign.
 	**/
 
@@ -742,7 +742,7 @@ using namespace Glip::CoreGL;
 	\fn    bool HdlProgram::isUniformVariableValid(const std::string& varName)
 	\brief Check if a variable is valid from its name.
 	\param varName The name of the uniform variable to read from.
-	\return True if the name is valid (see glGetUniformLocation at http://www.opengl.org/sdk/docs/man/xhtml/glGetUniformLocation.xml) or false otherwise.
+	\return True if the name is valid (see glGetUniformLocation at https://www.opengl.org/sdk/docs/man/html/glGetActiveUniform.xhtml) or false otherwise.
 	**/
 	bool HdlProgram::isUniformVariableValid(const std::string& varName)
 	{
