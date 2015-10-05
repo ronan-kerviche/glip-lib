@@ -14,12 +14,14 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
+#include <cmath>
 #include "ImageItem.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QDateTime>
 #include <QToolTip>
 #include <QMessageBox>
+#include <QCloseEvent>
 #include "QMenuTools.hpp"
 
 #ifdef __USE_NETPBM__

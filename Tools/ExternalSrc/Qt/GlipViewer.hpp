@@ -7,17 +7,14 @@
 	#include <QGLWidget>
 	#include <QGraphicsScene>
 	#include <QGraphicsView>
-
 	#include <QGraphicsItemGroup>
-	//#include <QGraphicsWidget>
 	#include <QGraphicsProxyWidget>
-	//#include <QGraphicsGridLayout>
-
 	#include <QGridLayout>
-	//#include <QHBoxLayout>
 	#include <QLabel>
 	#include <QGraphicsSceneMouseEvent>
-	#include <QPushButton>
+	#include <QToolButton>
+	#include <QPointer>
+	#include <QLineEdit>
 
 namespace QGlip
 {
@@ -54,6 +51,28 @@ namespace QGlip
 			QWidget* takeWidget(const Position& p);
 			void setWidget(const Position& p, QWidget* ptr); // Not taking ownership.
 			static int getHeight(void);
+	};
+
+	class NavigationWidget : public QWidget
+	{
+		Q_OBJECT
+
+		private :
+			QHBoxLayout 	layout;
+			QToolButton	previousButton,
+					parentButton,
+					nextButton,
+					closeButton;	
+	
+		public :
+			NavigationWidget(const bool& hasParent=true, const bool& canBeClosed=true, QWidget* parent=NULL);
+			virtual ~NavigationWidget(void);
+
+		signals :
+			void gotoPreviousObject(void);
+			void gotoNextObject(void);
+			void gotoParentObject(void);
+			void closed(void);
 	};
 
 	class ViewTransform : public QObject
@@ -132,6 +151,7 @@ namespace QGlip
 			void gotoPreviousObject(void);
 			void gotoNextObject(void);
 			void gotoParentObject(void);
+			void createSelectionGallery(void);
 			void addSubObject(AbstractGLDrawableObject*);
 	};
 	
@@ -140,14 +160,9 @@ namespace QGlip
 		Q_OBJECT
 
 		private :
-			TextureResource	*textureResource;
-			QLabel		title;
-			QWidget		controlsWidget;
-			QHBoxLayout	controlsLayout;
-			QPushButton	previousButton,
-					parentButton,
-					nextButton,
-					closeButton;	
+			TextureResource		*textureResource;
+			QLabel			title;
+			NavigationWidget	navigationWidget;
 
 		private slots :
 			void updateTitle(void);
@@ -162,7 +177,7 @@ namespace QGlip
 		public :
 			ViewTransform transform;
 
-			View(TextureResource* ptr=NULL, QObject* parent=NULL);
+			View(TextureResource* ptr, QObject* parent=NULL);
 			virtual ~View(void);
 			const QSize getTextureSize(void) const;
 			TextureResource* getTextureResource(void) const;
@@ -224,11 +239,14 @@ namespace QGlip
 
 		private :
 			QList<QPair<View*, Vignette*> >	views;	// Preserve input order
+			const bool			canBeClosed;
 			int				numColumns,
 							numRows;
 			QSize				vignetteSize;
 			float				horizontalSpacing,
 							verticalSpacing;
+			QLineEdit			title;
+			NavigationWidget		navigationWidget;
 			QVector<Vignette*>		selection;
 			QVector<View*>			selectionViews;
 
@@ -253,9 +271,13 @@ namespace QGlip
 			void resize(void);
 
 		public :
-			Gallery(QObject* parent=NULL);
+			Gallery(const bool& _canBeClosed=true, QObject* parent=NULL);
 			virtual ~Gallery(void);
-			void addView(TextureResource* resource, const bool& allowDuplicate=false);
+			void addView(const QPointer<TextureResource>& resource, const bool& allowDuplicate=false);
+			void addView(const QPointer<View>& original);
+			QString getTitle(void) const;
+			void setTitle(const QString& str);
+			QVector<QPointer<View> > getSelectedViews(void) const;
 			// From AbstractGLDrawableObject :
 			QGraphicsItem* getUnderlyingItem(void);
 			void populateTopBar(TopBar& bar);
@@ -324,15 +346,19 @@ namespace QGlip
 			void resizeEvent(QResizeEvent* event);
 
 		private slots :
+			void processGotoNextGallery(void);
+			void processGotoPreviousGallery(void);
+			void galleryClosed(void);
 			void galleryDestroyed(void);
+			void createSelectionGallery(void);
 
 		public :
 			Viewer(QWidget* parent=NULL);
 			virtual ~Viewer(void);
-			Gallery* createGallery(void);
+			QPointer<Gallery> createGallery(void);
 
 		public slots :
-			void addView(TextureResource* ptr, const bool allowDuplicate=false);
+			void addView(const QPointer<TextureResource> ptr, const bool allowDuplicate=false);
 	};
 }
 
