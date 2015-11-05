@@ -837,8 +837,8 @@ using namespace QGlip;
 				}
 				else if(remove)
 				{
-					selection.removeAt(id);
-					selectionViews.removeAt(id);
+					selection.remove(id);
+					selectionViews.remove(id);
 					it->second->enableSelectionHighlight(false);
 				}
 				else // Put at the back :
@@ -1153,7 +1153,7 @@ using namespace QGlip;
 		AbstractGLDrawableObject* ptr = reinterpret_cast<AbstractGLDrawableObject*>(QObject::sender());
 		const int id = objects.indexOf(ptr);
 		if(id>=0)
-			objects.removeAt(id);
+			objects.remove(id);
 	}	
 
 	const QColor& GLScene::getBackgroundColor(void) const
@@ -1259,7 +1259,7 @@ using namespace QGlip;
 		Gallery* gallery = reinterpret_cast<Gallery*>(QObject::sender());
 		const int k = galleries.indexOf(gallery);
 		if(k>=0)
-			galleries.removeAt(k);
+			galleries.remove(k);
 	}
 
 	Gallery* Viewer::createGallery(void)

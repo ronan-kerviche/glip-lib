@@ -18,6 +18,7 @@
 	#include <QLabel>
 	#include <QGraphicsSceneMouseEvent>
 	#include <QPushButton>
+	//#include <QPointF>
 
 namespace QGlip
 {
@@ -59,12 +60,12 @@ namespace QGlip
 	class ViewTransform : public QObject
 	{
 		Q_OBJECT
-		Q_PROPERTY(QPointF center MEMBER center READ getCenter WRITE setCenter)
-		Q_PROPERTY(float angle_rad MEMBER angle_rad READ getAngle_rad WRITE setAngle_rad)
-		Q_PROPERTY(float scale MEMBER scale READ getScale WRITE setScale)
-		Q_PROPERTY(bool verticalFlip MEMBER verticalFlip READ getVerticalFlip WRITE setVerticalFlip)
-		Q_PROPERTY(bool horizontalFlip MEMBER horizontalFlip READ getHorizontalFlip WRITE setHorizontalFlip)
-	
+		Q_PROPERTY(QPointF center READ getCenter WRITE setCenter)
+		Q_PROPERTY(float angle_rad READ getAngle_rad WRITE setAngle_rad)
+		Q_PROPERTY(float scale READ getScale WRITE setScale)
+		Q_PROPERTY(bool verticalFlip READ getVerticalFlip WRITE setVerticalFlip)
+		Q_PROPERTY(bool horizontalFlip READ getHorizontalFlip WRITE setHorizontalFlip)
+
 		private :
 			QPointF	center;
 			float	angle_rad,
@@ -186,11 +187,11 @@ namespace QGlip
 	class Vignette : public QObject, public QGraphicsItemGroup
 	{
 		Q_OBJECT
-		Q_PROPERTY(float frameWidth MEMBER frameWidth)
-		Q_PROPERTY(float frameHighlightedWidth MEMBER frameHighlightedWidth)
-		Q_PROPERTY(QColor frameColor MEMBER frameColor)
-		Q_PROPERTY(QColor frameHighlightedColor MEMBER frameHighlightedColor)
-		Q_PROPERTY(QColor titleBackgroundColor MEMBER titleBackgroundColor)
+		Q_PROPERTY(float frameWidth)
+		Q_PROPERTY(float frameHighlightedWidth)
+		Q_PROPERTY(QColor frameColor)
+		Q_PROPERTY(QColor frameHighlightedColor)
+		Q_PROPERTY(QColor titleBackgroundColor)
 
 		private :
 			View*			view;
@@ -282,8 +283,8 @@ namespace QGlip
 
 	class GLScene : public QGraphicsScene
 	{
-		Q_OBJECT	
-		Q_PROPERTY(QColor backgroundColor MEMBER backgroundColor READ getBackgroundColor WRITE setBackgroundColor)
+		Q_OBJECT
+		Q_PROPERTY(QColor backgroundColor READ getBackgroundColor WRITE setBackgroundColor)
 
 		private :
 			static const std::string		displayVertexShaderSource,

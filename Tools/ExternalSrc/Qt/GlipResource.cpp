@@ -188,10 +188,10 @@
 		const int index = managedMenus.indexOf(obj);
 		if(index>=0)
 		{
-			managedMenus.removeAt(index);
-			actions.removeAt(index);
+			managedMenus.remove(index);
+			actions.remove(index);
 			delete signalMappers[index];
-			signalMappers.removeAt(index);
+			signalMappers.remove(index);
 		}
 	}
 

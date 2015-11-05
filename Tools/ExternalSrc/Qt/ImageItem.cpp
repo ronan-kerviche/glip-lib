@@ -14,12 +14,14 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
+#include <cmath>
 #include "ImageItem.hpp"
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QDateTime>
 #include <QToolTip>
 #include <QMessageBox>
+#include <QCloseEvent>
 #include "QMenuTools.hpp"
 
 #ifdef __USE_NETPBM__
@@ -545,11 +547,11 @@ using namespace QGIC;
 				KB = 1024.0f;
 
 		if(size>=GB)
-			return tr("%1 GB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/GB)) );
+			return tr("%1 GB").arg( static_cast<unsigned int>(std::floor(static_cast<float>(size)/GB+0.5f)) );
 		else if(size>=MB)
-			return tr("%1 MB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/MB)) );
+			return tr("%1 MB").arg( static_cast<unsigned int>(std::floor(static_cast<float>(size)/MB+0.5f)) );
 		else if(size>=KB)
-			return tr("%1 KB").arg( static_cast<unsigned int>(std::ceil(static_cast<float>(size)/KB)) );
+			return tr("%1 KB").arg( static_cast<unsigned int>(std::floor(static_cast<float>(size)/KB+0.5f)) );
 		//else 
 			return tr("%1 B").arg( size );
 	}

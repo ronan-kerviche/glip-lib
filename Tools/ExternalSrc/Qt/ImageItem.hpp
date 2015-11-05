@@ -39,6 +39,8 @@
 	#include <QApplication>
 	#include <QClipboard> 
 	#include <QWidgetAction>
+	#include <QSpinBox>
+	#include <QLabel>
 
 	#ifdef __USE_QVGL__
 		#include "GLSceneWidget.hpp"
