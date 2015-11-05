@@ -74,12 +74,52 @@ using namespace QGlip;
 		// This will not delete a widget previously added at the same location.
 		takeWidget(p);
 		layout.addWidget(ptr, 0, static_cast<int>(p));
+		ptr->show();
 	}
 
 	int TopBar::getHeight(void)
 	{
 		return 24;
 	}
+
+// NavigationWidget :
+	NavigationWidget::NavigationWidget(const bool& hasParent, const bool& canBeClosed, QWidget* parent)
+	 : 	QWidget(parent),
+		layout(this)
+	{
+		setObjectName("NavigationWidget");
+		hide();
+				
+		previousButton.setObjectName("Previous");
+		previousButton.setToolTip("Previous");
+		layout.addWidget(&previousButton);
+		QObject::connect(&previousButton, SIGNAL(released()), this, SIGNAL(gotoPreviousObject()));
+
+		parentButton.setObjectName("Parent");
+		parentButton.setToolTip("Parent");
+		layout.addWidget(&parentButton);
+		QObject::connect(&parentButton, SIGNAL(released()), this, SIGNAL(gotoParentObject()));
+		parentButton.setEnabled(hasParent);
+
+		nextButton.setObjectName("Next");
+		nextButton.setToolTip("Next");
+		layout.addWidget(&nextButton);
+		QObject::connect(&nextButton, SIGNAL(released()), this, SIGNAL(gotoNextObject()));
+
+		closeButton.setObjectName("Close");
+		closeButton.setToolTip("Close");
+		layout.addWidget(&closeButton);
+		QObject::connect(&closeButton, SIGNAL(released()), this, SIGNAL(closed()));
+		closeButton.setEnabled(canBeClosed);
+
+		// Layout :
+		layout.setMargin(0);
+		layout.setSpacing(2);
+		setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+	}
+
+	NavigationWidget::~NavigationWidget(void)
+	{ }
 
 // ViewTransform :
 	ViewTransform::ViewTransform(void)
@@ -432,6 +472,16 @@ using namespace QGlip;
 			case Qt::Key_PageDown :
 				emit view->gotoPreviousObject();
 				break;
+			case Qt::Key_Return :
+				emit createSelectionGallery();
+				event->accept();
+				break;
+			case Qt::Key_Delete :
+				emit view->closed();
+				for(int k=0; k<numSubViews; k++)
+					emit subViews[k]->closed();
+				event->accept();
+				break;
 			default:
 				std::cerr << "View::keyPressEvent - Unknown key : " << event->key() << std::endl;
 				break;
@@ -451,25 +501,13 @@ using namespace QGlip;
 // View :
 	View::View(TextureResource* ptr, QObject* parent)
 	 :	AbstractGLDrawableObject(parent),
-		textureResource(ptr),
-		controlsLayout(&controlsWidget)
+		textureResource(ptr)
 	{
 		if(textureResource==NULL)
 			qFatal("View::View - Cannot create a NULL view.");
 		// Item :
 		QGraphicsItem::setFlag(QGraphicsItem::ItemIsFocusable, true);
 		QGraphicsItem::hide();
-		// Create controls :
-		controlsLayout.addWidget(&previousButton);
-		controlsLayout.addWidget(&parentButton);
-		controlsLayout.addWidget(&nextButton);
-		controlsLayout.addWidget(&closeButton);
-		previousButton.setText("Prev");
-		parentButton.setText("Parent");
-		nextButton.setText("Next");
-		closeButton.setText("Close");
-		controlsLayout.setMargin(0);
-		controlsLayout.setSpacing(0);
 		// Title :
 		updateTitle();
 		// Transform :
@@ -482,6 +520,11 @@ using namespace QGlip;
 		QObject::connect(textureResource, SIGNAL(textureChanged()), this, SLOT(updateTitle()));
 		QObject::connect(textureResource, SIGNAL(nameChanged()), this, SLOT(updateTitle()));
 		QObject::connect(textureResource, SIGNAL(informationChanged(const QString)), this, SLOT(updateTitle()));
+		// Buttons :
+		QObject::connect(&navigationWidget, SIGNAL(gotoPreviousObject()), this, SIGNAL(gotoPreviousObject()));
+		QObject::connect(&navigationWidget, SIGNAL(gotoNextObject()), this, SIGNAL(gotoNextObject()));
+		QObject::connect(&navigationWidget, SIGNAL(gotoParentObject()), this, SIGNAL(gotoParentObject()));
+		QObject::connect(&navigationWidget, SIGNAL(closed()), this, SIGNAL(closed()));
 	}
 	
 	View::~View(void)
@@ -502,6 +545,7 @@ using namespace QGlip;
 			title.setText("<Invalid View>");
 			title.setToolTip("");
 		}
+		title.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 	}
 
 	void View::resourceDestroyed(void)
@@ -598,7 +642,7 @@ using namespace QGlip;
 	void View::populateTopBar(TopBar& bar)
 	{
 		bar.setWidget(TopBar::Center, &title);
-		bar.setWidget(TopBar::Right, &controlsWidget);
+		bar.setWidget(TopBar::Right, &navigationWidget);
 	}
 
 	void View::drawBackground(const QRectF& rect, Glip::CoreGL::HdlProgram& program, Glip::CorePipeline::GeometryInstance& quad, ViewTransform* t)
@@ -688,7 +732,11 @@ using namespace QGlip;
 	{
 		if(view!=NULL && textureResource!=NULL)
 		{
-			title.setText(textureResource->getName());
+			// Truncate if necessary :
+			QFontMetrics metrics(title.font());
+			QString text = metrics.elidedText(textureResource->getName(), Qt::ElideRight, frame.rect().width());
+			// Set :
+			title.setText(text);
 			titleBar.setToolTip(textureResource->getHTMLInformation());
 		}
 	}
@@ -726,6 +774,7 @@ using namespace QGlip;
 		QRectF titleBarRect = titleBar.rect();
 		titleBarRect.setWidth(s.width());
 		titleBar.setRect(titleBarRect);
+		updateTitle();
 	}
 
 	void Vignette::enableSelectionHighlight(const bool& enable)
@@ -737,17 +786,25 @@ using namespace QGlip;
 	}
 
 // Gallery :
-	Gallery::Gallery(QObject* parent)
+	Gallery::Gallery(const bool& _canBeClosed, QObject* parent)
 	 :	AbstractGLDrawableObject(parent),
+		canBeClosed(_canBeClosed),
 		numColumns(1),
 		numRows(1),
 		vignetteSize(1,1),
 		horizontalSpacing(1.0f),
-		verticalSpacing(1.0f)
+		verticalSpacing(1.0f),
+		navigationWidget(false, canBeClosed)
 	{
 		QGraphicsItem::setFlag(QGraphicsItem::ItemIsFocusable, true);
 		QGraphicsItemGroup::hide();
-		std::cout << "Gallery : " << this << std::endl;
+		title.setText("Gallery");
+		title.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+		// Buttons :
+		QObject::connect(&navigationWidget, SIGNAL(gotoPreviousObject()), this, SIGNAL(gotoPreviousObject()));
+		QObject::connect(&navigationWidget, SIGNAL(gotoNextObject()), this, SIGNAL(gotoNextObject()));
+		QObject::connect(&navigationWidget, SIGNAL(gotoParentObject()), this, SIGNAL(gotoParentObject()));
+		QObject::connect(&navigationWidget, SIGNAL(closed()), this, SIGNAL(closed()));
 	}
 
 	Gallery::~Gallery(void)
@@ -866,10 +923,7 @@ using namespace QGlip;
 		for(QList<QPair<View*, Vignette*> >::iterator it=views.begin(); it!=views.end(); it++)
 		{
 			if(it->second->boundingRect().contains(event->scenePos()))
-			{
-				//hide();
 				it->first->showObject();
-			}
 		}
 	}
 
@@ -897,12 +951,37 @@ using namespace QGlip;
 	void Gallery::processGotoNextView(void)
 	{
 		View* view = reinterpret_cast<View*>(QObject::sender());
-		
+		for(QList<QPair<View*, Vignette*> >::iterator it=views.begin(); it!=views.end(); it++)
+		{
+			if(it->first==view)
+			{
+				it++;
+				if(it!=views.end())
+					it->first->showObject();
+				else
+					views.front().first->showObject();
+				break;
+			}
+		}
 	}
 
 	void Gallery::processGotoPreviousView(void)
 	{
 		View* view = reinterpret_cast<View*>(QObject::sender());
+		for(QList<QPair<View*, Vignette*> >::iterator it=views.begin(); it!=views.end(); it++)
+		{
+			if(it->first==view)
+			{
+				if(it!=views.begin())
+				{
+					it--;
+					it->first->showObject();
+				}
+				else
+					views.back().first->showObject();
+				break;
+			}
+		}
 	}
 
 	void Gallery::processGotoParentGallery(void)
@@ -917,10 +996,13 @@ using namespace QGlip;
 		QList<QPair<View*, Vignette*> >::iterator it = getIterator(view);
 		if(it!=views.end())
 		{
+			// If the view being closed is the one on screen at the moment, go back to this gallery :
+			if(view->getUnderlyingItem()->isVisible())
+				showObject();
 			Vignette* vignette = it->second;
 			views.erase(it);
-			delete view;
-			delete vignette;
+			view->deleteLater();
+			vignette->deleteLater();
 			// Remove from selection :
 			const int k = selection.indexOf(vignette);
 			if(k>=0)
@@ -930,6 +1012,9 @@ using namespace QGlip;
 			}
 			// Reform the array :
 			resize();
+			// Final test, close if empty :
+			if(views.empty() && canBeClosed)
+				emit closed();
 		}
 	}
 	
@@ -959,13 +1044,13 @@ using namespace QGlip;
 	{
 		if(scene()!=NULL)
 			resize(scene()->sceneRect());
-	}	
+	}		
 
-	void Gallery::addView(TextureResource* resource, const bool& allowDuplicate)
+	void Gallery::addView(const QPointer<TextureResource>& resource, const bool& allowDuplicate)
 	{
-		if(resource!=NULL && (!contains(resource) || allowDuplicate))
+		if(!resource.isNull() && (!contains(resource.data()) || allowDuplicate))
 		{
-			View* view = new View(resource);
+			View* view = new View(resource.data());
 			Vignette* vignette = new Vignette(view, this);
 			views.push_back(QPair<View*, Vignette*>(view, vignette));
 			addToGroup(vignette);
@@ -980,7 +1065,46 @@ using namespace QGlip;
 			resize();
 			view->resetTransform();
 		}
-	}	
+	}
+
+	void Gallery::addView(const QPointer<View>& original)
+	{
+		if(!original.isNull())
+		{
+			View* view = new View(original->getTextureResource());
+			Vignette* vignette = new Vignette(view, this);
+			views.push_back(QPair<View*, Vignette*>(view, vignette));
+			addToGroup(vignette);
+			vignette->show();
+			QObject::connect(view, SIGNAL(updateScene()), this, SIGNAL(updateScene()));
+			QObject::connect(view, SIGNAL(closed()), this, SLOT(viewClosed()));
+			QObject::connect(view, SIGNAL(gotoPreviousObject()), this, SLOT(processGotoPreviousView()));
+			QObject::connect(view, SIGNAL(gotoNextObject()), this, SLOT(processGotoNextView()));
+			QObject::connect(view, SIGNAL(gotoParentObject()), this, SLOT(processGotoParentGallery()));
+			emit addSubObject(view);
+			// Update the array :
+			resize();
+			view->transform = original->transform;
+		}
+	}
+
+	QString Gallery::getTitle(void) const
+	{
+		return title.text();
+	}
+
+	void Gallery::setTitle(const QString& str)
+	{
+		title.setText(str);
+	}
+
+	QVector<QPointer<View> > Gallery::getSelectedViews(void) const
+	{
+		QVector<QPointer<View> > selectionViewsList;
+		for(QVector<View*>::const_iterator it=selectionViews.begin(); it!=selectionViews.end(); it++)
+			selectionViewsList.push_back(QPointer<View>(*it));
+		return selectionViewsList;
+	}
 
 	QGraphicsItem* Gallery::getUnderlyingItem(void)
 	{
@@ -989,7 +1113,8 @@ using namespace QGlip;
 
 	void Gallery::populateTopBar(TopBar& bar)
 	{
-
+		bar.setWidget(TopBar::Center, &title); 
+		bar.setWidget(TopBar::Right, &navigationWidget);
 	}
 
 	void Gallery::drawBackground(const QRectF& rect, Glip::CoreGL::HdlProgram& program, Glip::CorePipeline::GeometryInstance& quad)
@@ -1074,8 +1199,8 @@ using namespace QGlip;
 									"uniform sampler2D t;\n"
 									"void main(void)\n"
 									"{\n"
-									//"	gl_FragColor = textureLod(t, gl_TexCoord[0].st, 0.0);\n"
-									"	gl_FragColor = 0.5*textureLod(t, gl_TexCoord[0].st, 0.0) + 0.5*vec4(gl_TexCoord[0].st, 0.0, 0.0);\n"
+									"	gl_FragColor = textureLod(t, gl_TexCoord[0].st, 0.0);\n"
+									//"	gl_FragColor = 0.5*textureLod(t, gl_TexCoord[0].st, 0.0) + 0.5*vec4(gl_TexCoord[0].st, 0.0, 0.0);\n"
 									"}\n";
 
 	GLScene::GLScene(QObject* parent)
@@ -1084,6 +1209,7 @@ using namespace QGlip;
 		program(NULL),
 		backgroundColor(32, 32, 64)
 	{
+		setObjectName("GLScene");
 		try
 		{
 			// Create Glip Resources :
@@ -1203,41 +1329,9 @@ using namespace QGlip;
 		setViewportUpdateMode(QGraphicsView::FullViewportUpdate); // Because GL has to redraw the complete area.
 
 		// Main gallery :
-		galleries.push_back(createGallery());
+		createGallery();
+		galleries.front()->setTitle("Main Gallery");
 		galleries.front()->showObject();
-
-		// TESTS :
-		/*TopBar* bar = new TopBar;
-		glScene->addItem(bar);	
-		bar->setWidget(TopBar::Left, new QLabel("Left"));
-		bar->setWidget(TopBar::Center, new QLabel("Center"));
-		bar->setWidget(TopBar::Right, new QLabel("Right"));*/
-
-		// More TESTS :
-		/*Glip::Modules::LayoutLoader loader;
-		Glip::Modules::LayoutLoaderModule::addBasicModules(loader);
-		Glip::CorePipeline::Pipeline* pipeline = loader.getPipeline("../Filters/glipLogo.ppl");
-		(*pipeline) << Glip::CorePipeline::Pipeline::Process;
-		TextureResource* rsc = new TextureResource(&pipeline->out(), "Test Texture");*/
-		
-		// Single View :
-		/*View* view = new View(rsc);
-		glScene->addItem(view);
-		view->resetTransform();
-		view->transform.setHorizontalFlip(true);
-		view->transform.setVerticalFlip(true);
-		view->show();
-		QObject::connect(view, SIGNAL(updateScene()), this, SLOT(updateScene()));*/
-
-		// Gallery :
-		/*Gallery* gallery = new Gallery(this);
-		gallery->addView(rsc, true);
-		gallery->addView(rsc, true);
-		gallery->addView(rsc, true);
-		glScene->addObject(gallery);
-		gallery->showObject();
-		//QObject::connect(gallery, SIGNAL(updateScene()), this, SLOT(updateScene()));
-		QObject::connect(gallery, SIGNAL(updateScene()), glScene, SLOT(update()));*/
 	}
 	
 	Viewer::~Viewer(void)
@@ -1254,6 +1348,55 @@ using namespace QGlip;
 		QGraphicsView::resizeEvent(event);
 	}
 	
+	void Viewer::processGotoNextGallery(void)
+	{
+		Gallery* gallery = reinterpret_cast<Gallery*>(QObject::sender());
+		for(QVector<Gallery*>::iterator it=galleries.begin(); it!=galleries.end(); it++)
+		{
+			if(*it==gallery)
+			{
+				it++;
+				if(it==galleries.end())
+					galleries.front()->showObject();
+				else
+					(*it)->showObject();
+				break;
+			}
+		}
+	}
+
+	void Viewer::processGotoPreviousGallery(void)
+	{
+		Gallery* gallery = reinterpret_cast<Gallery*>(QObject::sender());
+		for(QVector<Gallery*>::iterator it=galleries.begin(); it!=galleries.end(); it++)
+		{
+			if(*it==gallery)
+			{
+				if(it==galleries.begin())
+					galleries.back()->showObject();
+				else
+				{
+					it--;
+					(*it)->showObject();
+				}
+				break;
+			}
+		}
+	}
+
+	void Viewer::galleryClosed(void)
+	{
+		Gallery* gallery = reinterpret_cast<Gallery*>(QObject::sender());
+		const int k = galleries.indexOf(gallery);
+		if(k>=0)
+		{
+			galleries.removeAt(k);
+			gallery->deleteLater();
+			if(!galleries.empty())
+				galleries.front()->showObject();
+		}
+	}
+
 	void Viewer::galleryDestroyed(void)
 	{
 		Gallery* gallery = reinterpret_cast<Gallery*>(QObject::sender());
@@ -1262,18 +1405,36 @@ using namespace QGlip;
 			galleries.remove(k);
 	}
 
-	Gallery* Viewer::createGallery(void)
+	void Viewer::createSelectionGallery(void)
 	{
-		Gallery* gallery = new Gallery(this);
-		glScene->addObject(gallery);
-		QObject::connect(gallery, SIGNAL(updateScene()), glScene, SLOT(update()));
-		QObject::connect(gallery, SIGNAL(destroyed()), this, SLOT(galleryDestroyed()));
-		return gallery;
+		Gallery *parentGallery = reinterpret_cast<Gallery*>(QObject::sender()),
+			*gallery = createGallery();
+		const QVector<QPointer<View> > views = parentGallery->getSelectedViews();
+		for(QVector<QPointer<View> >::const_iterator it=views.begin(); it!=views.end(); it++)
+		{
+			if(!it->isNull())
+				gallery->addView(*it);
+		}
+		gallery->showObject();
 	}
 
-	void Viewer::addView(TextureResource* ptr, const bool allowDuplicate)
+	QPointer<Gallery> Viewer::createGallery(void)
 	{
-		if(!galleries.empty())
+		Gallery* gallery = new Gallery(!galleries.empty(), this); // The first Gallery is the main gallery, it cannot be closed.
+		glScene->addObject(gallery);
+		galleries.push_back(gallery);
+		QObject::connect(gallery, SIGNAL(updateScene()), glScene, SLOT(update()));
+		QObject::connect(gallery, SIGNAL(gotoPreviousObject()), this, SLOT(processGotoPreviousGallery()));
+		QObject::connect(gallery, SIGNAL(gotoNextObject()), this, SLOT(processGotoNextGallery()));
+		QObject::connect(gallery, SIGNAL(createSelectionGallery()), this, SLOT(createSelectionGallery()));
+		QObject::connect(gallery, SIGNAL(closed()), this, SLOT(galleryClosed()));
+		QObject::connect(gallery, SIGNAL(destroyed()), this, SLOT(galleryDestroyed()));
+		return QPointer<Gallery>(gallery);
+	}
+
+	void Viewer::addView(const QPointer<TextureResource> ptr, const bool allowDuplicate)
+	{
+		if(!galleries.empty() && !ptr.isNull())
 			galleries.front()->addView(ptr, allowDuplicate);
 	}
 

@@ -219,7 +219,7 @@ using namespace QGlip;
 		// Rebuild the menu :
 		clear();
 
-		if(fileInfo.fileName().isEmpty())
+		if(!fileInfo.fileName().isEmpty())
 		{
 			setTitle(fileInfo.fileName());
 			ptr = addAction(tr("Include %1").arg(fileInfo.fileName()), &signalMapper, SLOT(map()));
