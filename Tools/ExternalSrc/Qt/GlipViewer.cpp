@@ -1390,7 +1390,7 @@ using namespace QGlip;
 		const int k = galleries.indexOf(gallery);
 		if(k>=0)
 		{
-			galleries.removeAt(k);
+			galleries.remove(k);
 			gallery->deleteLater();
 			if(!galleries.empty())
 				galleries.front()->showObject();
