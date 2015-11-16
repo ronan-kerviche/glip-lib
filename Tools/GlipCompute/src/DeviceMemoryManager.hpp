@@ -17,8 +17,10 @@
 #ifndef __GLIPCOMPUTE_DEVICEMEMORYMANAGER__
 #define __GLIPCOMPUTE_DEVICEMEMORYMANAGER__
 
+	#include <string>
+	#include <map>
 	#include <list>
-	#include "FreeImagePlusInterface.hpp"
+	#include "GLIPLib.hpp"
 
 	class DeviceMemoryManager
 	{

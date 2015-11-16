@@ -15,6 +15,8 @@
 /* ************************************************************************************************************* */
 
 #include "DeviceMemoryManager.hpp"
+#include "FreeImagePlusInterface.hpp"
+#include "LibRawInterface.hpp"
 
 	DeviceMemoryManager::DeviceMemoryManager(const size_t& _maxMemory)
 	 : 	maxMemory(_maxMemory),
@@ -74,8 +76,26 @@
 
 		if(it==resources.end())
 		{
-			// Copy not found, need to load it.
-			Glip::CoreGL::HdlTexture* texture = loadImage(filename);
+			// Copy not found, need to load it. First get the extension : 
+			size_t dotPos = filename.find_last_of('.');
+			std::string ext = (dotPos==std::string::npos) ? "" : filename.substr(dotPos + 1);
+			std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
+
+			Glip::CoreGL::HdlTexture* texture = NULL;
+			Glip::Modules::ImageBuffer* imageBuffer = NULL;
+			if(ext=="GRW")
+				imageBuffer = Glip::Modules::ImageBuffer::load(filename);
+			else if(ext=="CRW" || ext=="CR2" || ext=="NEF")
+				//imageBuffer = LibRawInterface::loadImage(filename);
+				texture = LibRawInterface::loadTexture(filename);
+			else // Default, FreeImagePlus loading : 
+				texture = FreeImagePlusInterface::loadTexture(filename);
+			if(imageBuffer!=NULL)
+			{
+				texture = new Glip::CoreGL::HdlTexture(*imageBuffer);
+				(*imageBuffer) >> (*texture);
+				delete imageBuffer;
+			}
 
 			if((currentMemory + texture->getSize())>maxMemory && currentMemory>0)
 				forget( maxMemory - (currentMemory + texture->getSize()) );

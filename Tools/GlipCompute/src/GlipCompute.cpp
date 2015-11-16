@@ -16,6 +16,7 @@
 
 // Include : 
 	#include "GlipCompute.hpp"
+	#include "FreeImagePlusInterface.hpp"
 	#include <unistd.h>
 
 // Constants : 
@@ -932,7 +933,7 @@ Link : <http://glip-lib.net/>\
 				for(int k=0; k<pipeline->getNumOutputPort(); k++)
 				{
 					if(!outputsSorted[k].empty())
-						saveImage(pipeline->out(k), outputsSorted[k]);
+						FreeImagePlusInterface::saveTexture(pipeline->out(k), outputsSorted[k]);
 				}
 
 				// Clean : 

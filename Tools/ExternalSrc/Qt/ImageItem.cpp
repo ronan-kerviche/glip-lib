@@ -258,7 +258,7 @@ using namespace QGIC;
 		{
 			std::string comment;
 
-			imageBuffer 	= ImageBuffer::load(filename.toStdString(), &comment);
+			imageBuffer = ImageBuffer::load(filename.toStdString(), &comment);
 
 			if(!comment.empty())
 			{

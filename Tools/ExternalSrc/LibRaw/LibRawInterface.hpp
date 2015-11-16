@@ -19,7 +19,11 @@
 
 	#include "GLIPLib.hpp"
 
-	extern Glip::Modules::ImageBuffer* libRawLoadImage(const std::string& filename);
+namespace LibRawInterface
+{
+	extern Glip::Modules::ImageBuffer* loadImage(const std::string& filename);
+	extern Glip::CoreGL::HdlTexture* loadTexture(const std::string& filename);
+}
 
 #endif
 

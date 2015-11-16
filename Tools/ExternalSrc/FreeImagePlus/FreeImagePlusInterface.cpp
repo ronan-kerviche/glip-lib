@@ -14,14 +14,85 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#include "FreeImagePlusInterface.hpp"
+// Includes :
+	#include "FreeImagePlusInterface.hpp"
+	#include <FreeImagePlus.h>
 
 	// To be impletemented : read Bayer data directly from RAW files.
 	// See http://sourceforge.net/p/freeimage/discussion/36110/thread/2bd2ff7f/?limit=50
 
-	Glip::CoreGL::HdlTexture* loadImage(const std::string& filename)
+namespace FreeImagePlusInterface
+{
+	Glip::CoreGL::HdlTextureFormat loadFIPImage(fipImage& inputImage, GLenum& fipMode, const std::string& filename)
+	{
+		inputImage.load(filename.c_str());
+		if(!inputImage.isValid())
+			throw Glip::Exception("loadImage - Cannot load \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
+
+		FREE_IMAGE_COLOR_TYPE fipColorFormat = inputImage.getColorType();
+		GLenum 	mode 	= GL_NONE;
+			//fipMode	= GL_NONE;
+		int 	planes	= 0;
+		
+		switch(fipColorFormat)
+		{
+			case FIC_MINISBLACK :
+			case FIC_MINISWHITE :
+				mode 	= GL_LUMINANCE;
+				fipMode	= GL_LUMINANCE;
+				planes 	= 1;
+				break;
+			case FIC_RGB :
+				mode 	= GL_RGB;
+				fipMode	= GL_BGR;
+				planes 	= 3;
+				break;
+			case FIC_RGBALPHA :
+				mode 	= GL_RGBA;
+				fipMode	= GL_BGRA;
+				planes 	= 4;
+				break;
+			default : 
+				throw Glip::Exception("Unknown/Unsupported color format for \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
+		}
+
+		GLenum depth = GL_NONE;				
+		int bitsPerComponent = inputImage.getBitsPerPixel() / planes;
+
+		switch(bitsPerComponent)
+		{
+			case 1:
+				depth = GL_BOOL;
+				break;
+			case 8 :
+				depth = GL_UNSIGNED_BYTE;
+				break;
+			case 16 : 
+				depth = GL_UNSIGNED_SHORT;
+				break;
+			case 32 :
+	 			depth = GL_UNSIGNED_INT;
+				break;
+			default : 
+				throw Glip::Exception("Unknown/Unsupported bit depth for \"" + filename + "\" : " + Glip::toString(bitsPerComponent) + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
+		}
+		return Glip::CoreGL::HdlTextureFormat(inputImage.getWidth(), inputImage.getHeight(), mode, depth);
+	}
+
+	Glip::Modules::ImageBuffer* loadImage(const std::string& filename)
 	{
 		fipImage inputImage;
+		GLenum fipMode = GL_NONE;
+		Glip::CoreGL::HdlTextureFormat format = loadFIPImage(inputImage, fipMode, filename);
+		format.setGLMode(fipMode);
+		Glip::Modules::ImageBuffer* imageBuffer = new Glip::Modules::ImageBuffer(format, 4);
+		(*imageBuffer) << reinterpret_cast<void*>(inputImage.accessPixels());
+		return imageBuffer;
+	}
+
+	Glip::CoreGL::HdlTexture* loadTexture(const std::string& filename)
+	{
+		/*fipImage inputImage;
 
 		inputImage.load(filename.c_str());
 
@@ -83,10 +154,17 @@
 
 		texture->write(inputImage.accessPixels(), fipMode, GL_ZERO, 4);
 
+		return texture;*/
+
+		fipImage inputImage;
+		GLenum fipMode = GL_NONE;
+		Glip::CoreGL::HdlTextureFormat format = loadFIPImage(inputImage, fipMode, filename);
+		Glip::CoreGL::HdlTexture* texture = new Glip::CoreGL::HdlTexture(format);
+		texture->write(inputImage.accessPixels(), fipMode, GL_ZERO, 4);
 		return texture;
 	}
 
-	void saveImage(Glip::CoreGL::HdlTexture& texture, const std::string& filename)
+	void saveTexture(Glip::CoreGL::HdlTexture& texture, const std::string& filename)
 	{
 		const Glip::CoreGL::HdlTextureFormatDescriptor& descriptor = texture.getFormatDescriptor();
 		const GLenum depth = texture.getGLDepth();
@@ -152,4 +230,5 @@
 		if(!test)
 			throw Glip::Exception("Could not save image to \"" + filename + "\".", __FILE__, __LINE__, Glip::Exception::ClientException);
 	}
+}
 

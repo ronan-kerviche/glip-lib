@@ -17,11 +17,14 @@
 #ifndef __GLIPCOMPUTE_FREEIMAGEPLUSINTERFACE__
 #define __GLIPCOMPUTE_FREEIMAGEPLUSINTERFACE__
 
-	#include <FreeImagePlus.h>
 	#include "GLIPLib.hpp"
 
-	extern Glip::CoreGL::HdlTexture* loadImage(const std::string& filename);
-	extern void saveImage(Glip::CoreGL::HdlTexture& texture, const std::string& filename);
+namespace FreeImagePlusInterface
+{
+	extern Glip::Modules::ImageBuffer* loadImage(const std::string& filename);
+	extern Glip::CoreGL::HdlTexture* loadTexture(const std::string& filename);
+	extern void saveTexture(Glip::CoreGL::HdlTexture& texture, const std::string& filename);
+}
 
 #endif
 

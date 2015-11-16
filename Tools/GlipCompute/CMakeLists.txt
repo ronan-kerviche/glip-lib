@@ -15,6 +15,8 @@ find_package(OpenGL REQUIRED)
 include_directories(
 		./src/
 		../../GLIP-Lib/include/
+		../ExternalSrc/FreeImagePlus/
+		../ExternalSrc/LibRaw/
 		)
 
 # Link paths : 
@@ -27,6 +29,8 @@ file(
 		GLOB_RECURSE
 		source_files
 		src/*
+		../ExternalSrc/FreeImagePlus/*
+		../ExternalSrc/LibRaw/*
 )
 
 # Executable : 
