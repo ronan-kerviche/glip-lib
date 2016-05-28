@@ -20,6 +20,7 @@
 // Includes :
 	#include "GLIPLib.hpp"
 	#include <cmath>
+	#include <QPointer>
 	#include <QPlainTextEdit>
 	#include <QVector>
 	#include <QSyntaxHighlighter>
@@ -47,6 +48,9 @@
 	#include <QDialogButtonBox>
 	#include <QGridLayout>
 	#include <QTimer>
+	#include <QComboBox>
+	#include <QShortcut>
+	#include <QCompleter>
 
 namespace QGlip
 {
@@ -95,7 +99,17 @@ namespace QGlip
 
 			QTextCharFormat format(int position) const;
 			void updateSettings(const CodeEditorSettings& settings);
-	};	
+	};
+
+// Completer :
+	class Completer : public QCompleter
+	{
+		public :
+			Completer(QObject* parent=NULL);
+			virtual ~Completer(void);
+
+			static QStringList getKeywords(void);
+	};
 
 // LineNumberArea :
 	class LineNumberArea : public QWidget
@@ -131,6 +145,47 @@ namespace QGlip
 			void elementSelected(QString text);
 	};
 
+// SearchAndReplacePopup :
+	class SearchAndReplacePopup : public QFrame
+	{
+		Q_OBJECT
+		
+		private :
+			static const int	maxHistorySize;
+			static QStringList 	searchHistory,
+						replaceHistory;	
+
+			QVBoxLayout	layout;
+			QComboBox	searchPatternLine,
+					*replaceStringLine;	
+			QCheckBox	worldOnlyCheck,
+					matchCaseCheck,
+					backwardSearchCheck;
+			QPushButton	findButton,
+					*replaceButton,
+					*replaceAllButton,
+					clearHighlightButton,
+					closeButton;
+			QList<QWidget*>	focusChain;
+
+		protected :
+			void showEvent(QShowEvent* event);
+			void keyPressEvent(QKeyEvent* event);
+
+		private slots :
+			void prepareExpression(void);
+
+		public :
+			SearchAndReplacePopup(const QString& searchText, const bool withReplacement, QWidget* parent);
+			virtual ~SearchAndReplacePopup(void);
+
+		signals :
+			void search(QRegExp expression, QTextDocument::FindFlags flags);
+			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString text);
+			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text);
+			void clearSearch(void);	
+	};
+
 // CodeEditor :
 	class CodeEditor : public QPlainTextEdit
 	{
@@ -145,6 +200,9 @@ namespace QGlip
 			QWidget 				*lineNumberArea;
 			QColor					braceMatchingColor;
 			QList<QTextEdit::ExtraSelection>	bracesMatchExtraSelections;
+			QPointer<SearchAndReplacePopup>		searchAndReplacePopup;
+			QShortcut				searchShortcut,
+								replaceShortcut;
 			QRegExp 				searchExpression;
 			QColor					searchHighlightColor;
 			QList<QTextEdit::ExtraSelection>	searchExtraSelections;
@@ -152,14 +210,17 @@ namespace QGlip
 			QVector<QMenu*>				subContextMenus;
 			QVector<ElementsMenu*>			managedMenus;
 			QTimer					timer;
+			QPointer<QCompleter>			completer;
 	
 		protected :
 			int lineNumberAreaWidth(void) const;
 			void lineNumberAreaPaintEvent(QPaintEvent *event);
-			void resizeEvent(QResizeEvent *event);
-			void keyPressEvent(QKeyEvent* e);
+			void resizeEvent(QResizeEvent* event);
+			void keyPressEvent(QKeyEvent* event);
+			void focusInEvent(QFocusEvent* event);
 			void contextMenuEvent(QContextMenuEvent* event);
 			static void matchBraces(QTextCursor& current, bool& acceptableMatch, QTextCursor& result);
+			QString textUnderCursor(void) const;
 
 			friend class LineNumberArea;
 
@@ -174,6 +235,9 @@ namespace QGlip
 			void updateElements(void);
 			void subContextMenuDestroyed(void);
 			void elementsMenuDestroyed(void);
+			void openSearchAndReplace(const bool replace=false);
+			void openReplace(void);
+			void insertCompletion(const QString& completion);
 	
 		public :
 			CodeEditor(QWidget *parent=NULL);
@@ -190,12 +254,15 @@ namespace QGlip
 			ElementsMenu* createManagedMenu(void);
 			void updateSettings(const CodeEditorSettings& settings);
 			void gotoLine(int lineNumber);
+			void highlightErrorLines(const QVector<int>& lineNumbers);
+			void clearHighlightErrorLines(void);
+			void setCompleter(QCompleter* completer);
+
+		public slots :
 			void search(QRegExp expression, QTextDocument::FindFlags flags);
 			void replace(QRegExp expression, QTextDocument::FindFlags flags, QString text);
 			void replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text);
 			void clearSearch(void);
-			void highlightErrorLines(const QVector<int>& lineNumbers);
-			void clearHighlightErrorLines(void);
 
 		signals :
 			void fileInfoChanged(void);
@@ -224,7 +291,8 @@ namespace QGlip
 			int			tabNumberOfSpaces;
 			bool			enableHighlight,
 						highlightCurrentLine,
-						braceMatching;
+						braceMatching,
+						autoCompletion;
 			CodeEditorSettings(const int _defaultFontSize=8);
 			CodeEditorSettings(const CodeEditorSettings& c);
 			virtual ~CodeEditorSettings(void);
@@ -271,7 +339,8 @@ namespace QGlip
 			QDialogButtonBox	dialogButtons;
 			QCheckBox		highlightKeywordsCheck,
 						highlightCurrentLineCheck,
-						braceMatchingCheck;	
+						braceMatchingCheck,
+						autoCompletionCheck;
 			QComboBox		wrapModesBox;
 			QSpinBox		tabSpacesSpin;
 
