@@ -1442,28 +1442,28 @@
 					if(inputPorts>=0)
 					{
 						if(static_cast<int>(parser.elements[inputPorts].arguments.size())!=pipeline.getNumInputPort())
-							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumInputPort()) + " input ports while the declaration expects " + toString(parser.elements[inputPorts].arguments.size()) + " input ports.", parser.elements[inputPorts].sourceName, parser.elements[inputPorts].startLine, Exception::ClientScriptException);
+							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumInputPort()) + " input ports while the declaration of " + e.name + " expects " + toString(parser.elements[inputPorts].arguments.size()) + " input ports.", parser.elements[inputPorts].sourceName, parser.elements[inputPorts].startLine, Exception::ClientScriptException);
 
 						for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 							pipeline.setInputPortName(k, parser.elements[inputPorts].arguments[k]);
 					}
 					else
-						throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redefine its input port(s).", __FILE__, __LINE__, Exception::ClientScriptException);
+						throw Exception("The pipeline " + e.name + " inheriting from " + it->second.getFullName() + " does not redefine its input port(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 					// Tests inputs : 
 					if(outputPorts>=0)
 					{
 						if(static_cast<int>(parser.elements[outputPorts].arguments.size())!=pipeline.getNumOutputPort())
-							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumOutputPort()) + " output ports while the declaration expects " + toString(parser.elements[outputPorts].arguments.size()) + " output ports.", parser.elements[outputPorts].sourceName, parser.elements[outputPorts].startLine, Exception::ClientScriptException);
+							throw Exception("The pipeline " + pipeline.getFullName() + " has " + toString(pipeline.getNumOutputPort()) + " output ports while the declaration of " + e.name + " expects " + toString(parser.elements[outputPorts].arguments.size()) + " output ports.", parser.elements[outputPorts].sourceName, parser.elements[outputPorts].startLine, Exception::ClientScriptException);
 
 						for(unsigned int k=0; k<parser.elements[outputPorts].arguments.size(); k++)
 							pipeline.setOutputPortName(k, parser.elements[outputPorts].arguments[k]);
 					}
 					else
-						throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redefine its output port(s).", __FILE__, __LINE__, Exception::ClientScriptException);
+						throw Exception("The pipeline " + e.name + " inheriting from " + it->second.getFullName() + " does not redefine its output port(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 				}
 				else
-					throw Exception("The pipeline " + pipeline.getFullName() + " inheriting from " + it->second.getFullName() + " does not redeclare its input and output ports.", __FILE__, __LINE__, Exception::ClientScriptException);
+					throw Exception("The pipeline " + e.name + " inheriting from " + it->second.getFullName() + " does not redeclare its input and output port(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 				// Save :
 				pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, pipeline) );
