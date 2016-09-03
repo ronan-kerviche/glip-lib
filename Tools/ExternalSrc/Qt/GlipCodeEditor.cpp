@@ -21,7 +21,9 @@
 #include <QHeaderView>
 #include <QApplication>
 #include <QTextDocumentFragment>
-#include <QRegExp>
+#include <QLineEdit>
+#include <QToolTip>
+#include <QScrollBar>
 
 using namespace QGlip;
 
@@ -183,6 +185,43 @@ using namespace QGlip;
 		rehighlight();
 	}	
 
+// Completer :
+	Completer::Completer(QObject* parent)
+	 :	QCompleter(getKeywords(), parent)
+	{
+		setCaseSensitivity(Qt::CaseSensitive);
+	}
+
+	Completer::~Completer(void)
+	{ }
+
+	QStringList Completer::getKeywords(void)
+	{
+		QStringList keywords;
+	
+		// GLSL Keywords :
+		for(int i=0; i<GLSLLanguage::KW_END; i++)
+			keywords << QString(GLSLLanguage::GLSLKeywords[i]);
+
+		// GLSL Functions : 	
+		for(int i=0; i<GLSLLanguage::FN_END; i++)
+			keywords << QString(GLSLLanguage::GLSLFunctions[i]);
+
+		// GLSL Defines :
+		for(int i=0; i<GLSLLanguage::PP_END; i++)
+			keywords << QString(GLSLLanguage::GLSLPreprocessor[i]);
+
+		// GLIP LayoutLoader Keywords : 	
+		for(int i=0; i<Glip::Modules::LL_NumKeywords; i++)
+			keywords << QString(Glip::Modules::LayoutLoader::getKeyword(static_cast<Glip::Modules::LayoutLoaderKeyword>(i)));	
+
+		// GLIP Uniform Loader Keywords : 
+		for(int i=0; i<Glip::Modules::UL_NumKeywords; i++)
+			keywords << QString(Glip::Modules::UniformsLoader::getKeyword(static_cast<Glip::Modules::UniformsLoaderKeyword>(i)));
+		
+		return keywords;	
+	}
+
 // LineNumberArea :
 	LineNumberArea::LineNumberArea(CodeEditor *editor)
 	 : 	QWidget(editor), 
@@ -300,24 +339,221 @@ using namespace QGlip;
 		}
 	}
 
+// SearchAndReplacePopup :
+	const int	SearchAndReplacePopup::maxHistorySize = 16;
+	QStringList	SearchAndReplacePopup::searchHistory,
+			SearchAndReplacePopup::replaceHistory;
+
+	SearchAndReplacePopup::SearchAndReplacePopup(const QString& searchText, const bool withReplacement, QWidget* parent)
+	 :	QFrame(parent),
+		layout(this),
+		searchPatternLine(this),
+		replaceStringLine(NULL),
+		worldOnlyCheck("Word only", this),
+		matchCaseCheck("Match case", this),
+		backwardSearchCheck("Backward search", this),
+		findButton("Find", this),
+		replaceButton(NULL),
+		replaceAllButton(NULL),
+		clearHighlightButton("Clear highlight", this),
+		closeButton("Close", this)
+	{
+		setFrameShape(QFrame::StyledPanel);
+
+		searchPatternLine.setEditable(true);
+		searchPatternLine.setDuplicatesEnabled(false);
+		searchPatternLine.setInsertPolicy(QComboBox::NoInsert);
+		searchPatternLine.lineEdit()->setPlaceholderText("Search ...");
+		searchPatternLine.addItems(searchHistory);
+		if(!searchText.isEmpty())
+			searchPatternLine.setEditText(searchText);
+		else
+			searchPatternLine.setEditText("");
+
+		if(withReplacement)
+		{
+			replaceStringLine = new QComboBox(this);
+			replaceStringLine->setEditable(true);
+			replaceStringLine->setDuplicatesEnabled(false);
+			replaceStringLine->lineEdit()->setPlaceholderText("Replace ...");
+			replaceStringLine->addItems(replaceHistory);
+			replaceButton = new QPushButton("Replace", this);
+			replaceAllButton = new QPushButton("Replace all", this);
+			QObject::connect(replaceButton, SIGNAL(released(void)), this, SLOT(prepareExpression()));
+			QObject::connect(replaceAllButton, SIGNAL(released(void)), this, SLOT(prepareExpression()));
+		}
+
+		layout.addWidget(&searchPatternLine);
+		if(withReplacement)
+			layout.addWidget(replaceStringLine);
+		layout.addWidget(&worldOnlyCheck);
+		layout.addWidget(&matchCaseCheck);
+		layout.addWidget(&backwardSearchCheck);
+		layout.addWidget(&findButton);
+		if(withReplacement)
+		{
+			layout.addWidget(replaceButton);
+			layout.addWidget(replaceAllButton);
+		}
+		layout.addWidget(&clearHighlightButton);
+		layout.addWidget(&closeButton);
+		QObject::connect(&findButton, SIGNAL(released(void)), this, SLOT(prepareExpression()));
+		QObject::connect(&searchPatternLine, SIGNAL(currentIndexChanged(int)), this, SLOT(prepareExpression()));
+		QObject::connect(&clearHighlightButton, SIGNAL(released(void)), this, SIGNAL(clearSearch()));
+		QObject::connect(&closeButton, SIGNAL(released(void)), this, SLOT(deleteLater()));
+		
+		// Focus chain do not work for floatting widget? Reimplementing :
+		focusChain << reinterpret_cast<QWidget*>(&searchPatternLine);
+		if(withReplacement)
+			focusChain << reinterpret_cast<QWidget*>(replaceStringLine);
+		focusChain << reinterpret_cast<QWidget*>(&worldOnlyCheck)
+			   << reinterpret_cast<QWidget*>(&matchCaseCheck)
+			   << reinterpret_cast<QWidget*>(&backwardSearchCheck)
+			   << reinterpret_cast<QWidget*>(&findButton);
+		if(withReplacement)
+			focusChain << reinterpret_cast<QWidget*>(replaceButton)
+				   << reinterpret_cast<QWidget*>(replaceAllButton);
+		focusChain << reinterpret_cast<QWidget*>(&clearHighlightButton)
+			   << reinterpret_cast<QWidget*>(&closeButton);
+	}
+
+	SearchAndReplacePopup::~SearchAndReplacePopup(void)
+	{
+		delete replaceStringLine;
+		delete replaceButton;
+		delete replaceAllButton;
+		replaceStringLine = NULL;
+		replaceButton = NULL;
+		replaceAllButton = NULL;
+	}
+
+	void SearchAndReplacePopup::showEvent(QShowEvent *event)
+	{
+		QWidget::showEvent(event);
+		const int offset = 8;
+		if(parentWidget()!=NULL)
+			move(parentWidget()->width()-width()-offset, offset);
+		setFocus(Qt::PopupFocusReason);
+		searchPatternLine.setFocus(Qt::PopupFocusReason);
+	}
+
+	void SearchAndReplacePopup::keyPressEvent(QKeyEvent* event)
+	{
+		if(event->key()==Qt::Key_Tab || event->key()==Qt::Key_Backtab)
+		{
+			const bool backward = (event->key()==Qt::Key_Backtab);
+			QWidget *current = QWidget::focusWidget();
+			int idx = (focusChain.indexOf(current) + (backward ? -1 : 1)) % focusChain.size();
+			if(idx<0)
+				idx += focusChain.size();
+			QWidget *next = focusChain[idx];
+			if(current!=NULL && next!=NULL && current->hasFocus())
+				next->setFocus(Qt::TabFocusReason);
+		}
+		else if(event->key()==Qt::Key_Escape)
+			deleteLater();
+		else if(event->key()==Qt::Key_Return)
+			prepareExpression();
+		else
+			QFrame::keyPressEvent(event);
+	}
+
+	void SearchAndReplacePopup::prepareExpression(void)
+	{
+		QObject* emitter = QObject::sender();
+		QString expression = searchPatternLine.currentText();
+
+		if(!expression.isEmpty())
+		{
+			QRegExp regExpression(expression);
+			QTextDocument::FindFlags flags = 0;
+
+			if(matchCaseCheck.isChecked())
+			{
+				regExpression.setCaseSensitivity(Qt::CaseSensitive);
+				flags = flags | QTextDocument::FindCaseSensitively;     // actually, might be useless, see QTextDocument::find with QRegExp argument.
+			}                       
+			else
+				regExpression.setCaseSensitivity(Qt::CaseInsensitive);
+
+			if(worldOnlyCheck.isChecked())
+				flags = flags | QTextDocument::FindWholeWords;
+
+			if(backwardSearchCheck.isChecked())
+				flags = flags | QTextDocument::FindBackward;
+
+			if(regExpression.isValid())
+			{
+				int pos = 0;
+
+				// Save history :
+				searchHistory.prepend(expression);
+				if(searchHistory.size()>maxHistorySize)
+					searchHistory.erase(searchHistory.begin()+maxHistorySize, searchHistory.end());
+				searchHistory.removeDuplicates();
+				searchPatternLine.blockSignals(true);
+				while((pos = searchPatternLine.findText(expression))>=0)
+					searchPatternLine.removeItem(pos);
+				searchPatternLine.insertItem(0, expression);
+				searchPatternLine.setCurrentIndex(0);
+				searchPatternLine.blockSignals(false);
+
+				if(emitter!=NULL && (emitter==replaceButton || emitter==replaceAllButton))
+				{
+					replaceHistory.prepend(replaceStringLine->currentText());
+					if(replaceHistory.size()>maxHistorySize)
+						replaceHistory.erase(replaceHistory.begin()+maxHistorySize, replaceHistory.end());
+					replaceHistory.removeDuplicates();
+					replaceStringLine->blockSignals(true);
+					while((pos = replaceStringLine->findText(replaceStringLine->currentText()))>=0)
+						replaceStringLine->removeItem(pos);
+					replaceStringLine->insertItem(0, replaceStringLine->currentText());
+					replaceStringLine->setCurrentIndex(0);
+					replaceStringLine->blockSignals(false);
+				}
+
+				if(emitter!=NULL && emitter==replaceButton)
+					emit replace(regExpression, flags, replaceStringLine->currentText());
+				else if(emitter!=NULL && emitter==replaceAllButton)
+					emit replaceAll(regExpression, flags, replaceStringLine->currentText());
+				else // Default :
+					emit search(regExpression, flags);
+			}
+			else
+			{
+				QPalette palette = searchPatternLine.palette();
+				palette.setColor(QPalette::WindowText, Qt::red);
+				searchPatternLine.setPalette(palette);
+				QToolTip::showText(searchPatternLine.mapToGlobal(QPoint(0,0)), regExpression.errorString(), &searchPatternLine);
+			}
+		}
+	}
+
 // CodeEditor :
 	CodeEditor::CodeEditor(QWidget *parent)
 	 : 	QPlainTextEdit(parent),
 		highlightLine(false),
 		braceMatching(false),
 		highLighter(NULL),
-		lineNumberArea(NULL)
+		lineNumberArea(NULL),
+		searchAndReplacePopup(NULL),
+		searchShortcut(QKeySequence(Qt::CTRL + Qt::Key_F)/*QKeySequence::Find*/, this),
+		replaceShortcut(QKeySequence(Qt::CTRL + Qt::Key_H)/*QKeySequence::Replace*/, this)
 	{
 		lineNumberArea = new LineNumberArea(this);
 		updateLineNumberAreaWidth(0);
 		highLighter = new Highlighter(document());
-		QObject::connect(this, 		SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
-		QObject::connect(this,		SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
-		QObject::connect(this,		SIGNAL(cursorPositionChanged()),	this, SLOT(updateToCursorPosition(void)));
-		QObject::connect(document(),	SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
-		QObject::connect(document(), 	SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
-		QObject::connect(&timer, 	SIGNAL(timeout()),			this, SLOT(updateElements(void)));
-		timer.start(10000);
+		searchShortcut.setAutoRepeat(false);
+		replaceShortcut.setAutoRepeat(false);
+		QObject::connect(this, 			SIGNAL(blockCountChanged(int)), 	this, SLOT(updateLineNumberAreaWidth(int)));
+		QObject::connect(this,			SIGNAL(updateRequest(QRect,int)), 	this, SLOT(updateLineNumberArea(QRect,int)));
+		QObject::connect(this,			SIGNAL(cursorPositionChanged()),	this, SLOT(updateToCursorPosition(void)));
+		QObject::connect(document(),		SIGNAL(contentsChanged()),		this, SLOT(updateSearchExtraSelection(void)));
+		QObject::connect(document(), 		SIGNAL(modificationChanged(bool)), 	this, SIGNAL(modified(bool)));
+		QObject::connect(&searchShortcut, 	SIGNAL(activated(void)),		this, SLOT(openSearchAndReplace()));
+		QObject::connect(&replaceShortcut,	SIGNAL(activated(void)),		this, SLOT(openReplace(void)));
+		QObject::connect(&timer, 		SIGNAL(timeout()),			this, SLOT(updateElements(void)));
+		timer.start(10000); // 10 seconds.
 	}
 
 	CodeEditor::~CodeEditor(void)
@@ -328,6 +564,8 @@ using namespace QGlip;
 			delete subContextMenus.first();
 		delete highLighter;
 		delete lineNumberArea;
+		delete searchAndReplacePopup;
+		delete completer;
 	}	
 
 	int CodeEditor::lineNumberAreaWidth(void) const
@@ -353,8 +591,8 @@ using namespace QGlip;
 			bottom = top + (int) blockBoundingRect(block).height();
 
 		painter.setPen(color);
-		QFont 	painterFont	= painter.font();
-		QPen 	painterPen	= painter.pen();
+		QFont painterFont = painter.font();
+		QPen painterPen = painter.pen();
 
 		QFontMetrics metrics(painterFont);
 
@@ -428,19 +666,69 @@ using namespace QGlip;
 			updateLineNumberAreaWidth(0);
 	}
 
-	void CodeEditor::resizeEvent(QResizeEvent *e)
+	void CodeEditor::resizeEvent(QResizeEvent *event)
 	{
-		QPlainTextEdit::resizeEvent(e);
-
+		QPlainTextEdit::resizeEvent(event);
 		QRect cr = contentsRect();
 		lineNumberArea->setGeometry(QRect(cr.left(), cr.top(), lineNumberAreaWidth(), cr.height()));
+		if(searchAndReplacePopup!=NULL)
+		{
+			searchAndReplacePopup->deleteLater();
+			searchAndReplacePopup = NULL;
+		}
 	}
 
-	void CodeEditor::keyPressEvent(QKeyEvent* e)
+	void CodeEditor::focusInEvent(QFocusEvent* event)
 	{
+		if(completer!=NULL)
+			completer->setWidget(this);
+		QPlainTextEdit::focusInEvent(event);
+	}
+
+	void CodeEditor::keyPressEvent(QKeyEvent* event)
+	{
+		// Completer :
+		if(completer!=NULL && completer->popup()->isVisible())
+		{
+			switch(event->key())
+			{
+				case Qt::Key_Enter:
+				case Qt::Key_Return:
+				case Qt::Key_Escape:
+				case Qt::Key_Tab:
+				case Qt::Key_Backtab:
+					event->ignore();
+					return; // let the completer do default behavior
+				default:
+					break;
+			}
+		}
+	
+		const bool ctrlOrShift = event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier);
+		if(completer!=NULL && (!ctrlOrShift || !event->text().isEmpty()))
+		{
+			static QString eow("~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="); // end of word
+			bool hasModifier = (event->modifiers() != Qt::NoModifier) && !ctrlOrShift;
+			QString completionPrefix = textUnderCursor() + event->text();
+
+			if(hasModifier || event->text().isEmpty() || completionPrefix.length() < 3 || eow.contains(event->text().right(1)))
+				completer->popup()->hide();
+			else
+			{
+				if(completionPrefix!=completer->completionPrefix())
+				{
+					completer->setCompletionPrefix(completionPrefix);
+					completer->popup()->setCurrentIndex(completer->completionModel()->index(0, 0));
+				}
+				QRect cr = cursorRect();
+				cr.setWidth(completer->popup()->sizeHintForColumn(0) + completer->popup()->verticalScrollBar()->sizeHint().width());
+				completer->complete(cr); // popup it up!
+			}
+		}
+
 		// Test for (possibly multi-line) tabulations :
-		const bool tab = (e->key()==Qt::Key_Tab),
-			   btab = (e->key()==Qt::Key_Backtab);
+		const bool tab = (event->key()==Qt::Key_Tab),
+			   btab = (event->key()==Qt::Key_Backtab);
 		if(tab || btab)
 		{
 			QTextCursor cursor = textCursor();
@@ -459,7 +747,7 @@ using namespace QGlip;
 				}
 
 				QString text = cursor.selection().toPlainText(); // According to the doc, this avoid getting UTF end block characters.
-				if(e->key()==Qt::Key_Tab)
+				if(event->key()==Qt::Key_Tab)
 				{
 					// The beginning of the selection gets a tab, and all subsequent newlines :
 					text.prepend("\t");
@@ -485,15 +773,17 @@ using namespace QGlip;
 				setTextCursor(cursor);
 			}
 			else
-				QPlainTextEdit::keyPressEvent(e);
+				QPlainTextEdit::keyPressEvent(event);
 		}
 		else
-			QPlainTextEdit::keyPressEvent(e);
+			QPlainTextEdit::keyPressEvent(event);
 	}	
 
 	void CodeEditor::contextMenuEvent(QContextMenuEvent* event)
 	{
 		QMenu* menu = createStandardContextMenu();
+		menu->addAction("Search ...", this, SLOT(openSearchAndReplace()), searchShortcut.key());
+		menu->addAction("Replace ...", this, SLOT(openReplace()), replaceShortcut.key());
 		menu->addSeparator();
 		for(int k=0; k<subContextMenus.count(); k++)
 			duplicateMenu(menu, *subContextMenus[k]);
@@ -594,6 +884,13 @@ using namespace QGlip;
 
 		if(!result.isNull())
 			result.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
+	}
+
+	QString CodeEditor::textUnderCursor(void) const
+	{
+		QTextCursor cursor = textCursor();
+		cursor.select(QTextCursor::WordUnderCursor);
+		return cursor.selectedText();
 	}
 
 	void CodeEditor::updateBracesMatchExtraSelection(void)
@@ -744,6 +1041,35 @@ using namespace QGlip;
 			managedMenus.remove(index);
 	}
 
+	void CodeEditor::openSearchAndReplace(const bool replace)
+	{
+		if(searchAndReplacePopup!=NULL)
+			searchAndReplacePopup->deleteLater();
+		searchAndReplacePopup = new SearchAndReplacePopup(textCursor().selectedText(), replace, this);
+		QObject::connect(searchAndReplacePopup, SIGNAL(search(QRegExp, QTextDocument::FindFlags)), this, SLOT(search(QRegExp, QTextDocument::FindFlags)));
+		QObject::connect(searchAndReplacePopup, SIGNAL(replace(QRegExp, QTextDocument::FindFlags, QString)), this, SLOT(replace(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(searchAndReplacePopup, SIGNAL(replaceAll(QRegExp, QTextDocument::FindFlags, QString)), this, SLOT(replaceAll(QRegExp, QTextDocument::FindFlags, QString)));
+		QObject::connect(searchAndReplacePopup, SIGNAL(clearSearch(void)), this, SLOT(clearSearch(void)));
+		searchAndReplacePopup->show();
+	}
+
+	void CodeEditor::openReplace(void)
+	{
+		openSearchAndReplace(true);
+	}
+
+	void CodeEditor::insertCompletion(const QString& completion)
+	{
+		if (completer->widget()!=this)
+			return;
+		QTextCursor cursor = textCursor();
+		int extra = completion.length() - completer->completionPrefix().length();
+		cursor.movePosition(QTextCursor::Left);
+		cursor.movePosition(QTextCursor::EndOfWord);
+		cursor.insertText(completion.right(extra));
+		setTextCursor(cursor);
+	}
+
 	void CodeEditor::clearHighlightOfCurrentLine(void)
 	{
 		// Prevent clear, if it was not already in place.
@@ -873,17 +1199,21 @@ using namespace QGlip;
 
 		// Set line highlight :
 		highlightLine = settings.enableHighlight;
-
 		if(!highlightLine)
 			clearHighlightOfCurrentLine();
 
 		// Set brace matching : 
 		braceMatching = settings.braceMatching;
-
 		if(!braceMatching)
 			updateToCursorPosition();
 		else
 			braceMatchingColor = settings.braceMatchingColor;
+
+		// Auto-completion :
+		if(settings.autoCompletion)
+			setCompleter(new Completer());
+		else
+			setCompleter(NULL);
 
 		// Propagate : 
 		if(highLighter!=NULL)
@@ -922,18 +1252,23 @@ using namespace QGlip;
 
 	void CodeEditor::replace(QRegExp expression, QTextDocument::FindFlags flags, QString text)
 	{
+		if(document()==NULL)
+			return ;
+
 		searchExpression = expression;
 		updateSearchExtraSelection();
 
-		QTextCursor currentCursor = textCursor();
-		currentCursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::MoveAnchor);
-		QTextCursor cursor = document()->find(expression, currentCursor, flags);
+		QTextCursor cursor = textCursor();
+		cursor = document()->find(expression, cursor, flags);
 
-		// Not found, cycle around : 
-		if(cursor.isNull() && (flags & QTextDocument::FindBackward)>0)
-			cursor = document()->find(expression, document()->characterCount()-1, flags);
-		else
-			cursor = document()->find(expression, 0, flags);
+		// Not found, cycle around :
+		if(cursor.isNull())
+		{
+			if((flags & QTextDocument::FindBackward)>0)
+				cursor = document()->find(expression, document()->characterCount()-1, flags);
+			else
+				cursor = document()->find(expression, 0, flags);
+		}
 
 		if(!cursor.isNull())
 		{
@@ -948,25 +1283,33 @@ using namespace QGlip;
 
 	void CodeEditor::replaceAll(QRegExp expression, QTextDocument::FindFlags flags, QString text)
 	{
+		if(document()==NULL)
+			return ;
+
 		// Always forward :
 		flags = flags & ~QTextDocument::FindBackward;
-
-		QTextCursor currentCursor = textCursor();
-		currentCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-		QTextCursor cursor = document()->find(expression, currentCursor, flags);
-		
-		cursor.beginEditBlock();
+		// Start from the beginning of the document :
+		QTextCursor cursor = document()->find(expression, 0, flags);
+		bool first = true;
 		while(!cursor.isNull())
 		{
 			// Replace :
+			if(first)
+			{
+				cursor.beginEditBlock();
+				first = false;
+			}
+			else
+				cursor.joinPreviousEditBlock();
 			cursor.removeSelectedText();
 			cursor.insertText(text);
-			
+			cursor.endEditBlock();			
+
 			// Next :
 			cursor = document()->find(expression, cursor.position(), flags);
 		}
-		cursor.endEditBlock();
-		// Show remaining :
+
+		// Show future matches :
 		searchExpression = expression;
 		updateSearchExtraSelection();
 	}
@@ -990,6 +1333,19 @@ using namespace QGlip;
 		errorLineNumbers.clear();
 		// Force update :
 		repaint();
+	}
+
+	void CodeEditor::setCompleter(QCompleter* c)
+	{
+		if(completer!=NULL)
+			completer->deleteLater();
+		completer = c;
+		if(completer!=NULL)
+		{
+			completer->setWidget(this);
+			completer->setCompletionMode(QCompleter::PopupCompletion);
+			QObject::connect(completer, SIGNAL(activated(QString)), this, SLOT(insertCompletion(QString)));
+		}
 	}
 
 // CodeEditorContainer :
@@ -1384,7 +1740,8 @@ using namespace QGlip;
 		tabNumberOfSpaces(c.tabNumberOfSpaces),
 		enableHighlight(c.enableHighlight),
 		highlightCurrentLine(c.highlightCurrentLine),
-		braceMatching(c.braceMatching)
+		braceMatching(c.braceMatching),
+		autoCompletion(c.autoCompletion)
 	{ }
 
 	CodeEditorSettings::~CodeEditorSettings(void)
@@ -1403,10 +1760,10 @@ using namespace QGlip;
 		searchColor			= QColor(0,	192,	192);
 
 		// Fonts : 
-		QFontDatabase db;
-		editorFont = db.font("Source Code Pro", "Regular", defaultFontSize);
+		QFontDatabase db;	
+		editorFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 		editorFont.setFixedPitch(true);
-		keywordFont = db.font("Source Code Pro", "Bold", defaultFontSize);
+		keywordFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 		keywordFont.setFixedPitch(true);
 
 		// Set the tabulation length :
@@ -1419,11 +1776,12 @@ using namespace QGlip;
 		enableHighlight 	= true;
 		highlightCurrentLine	= true;
 		braceMatching		= true;
-	}	
+		autoCompletion		= true;
+	}
 
 	void CodeEditorSettings::loadSettings(void)
 	{
-		#define READ_SETTING(name, reader) if(settingsManager.contains("CodeEditorSettings/"#name)) name = settingsManager.value("CodeEditorSettings/"#name).reader;
+		#define READ_SETTING(name, reader) if(settingsManager.contains("QGlip/CodeEditorSettings/"#name)) name = settingsManager.value("QGlip/CodeEditorSettings/"#name).reader;
 		READ_SETTING(glslKeywordColor, value<QColor>() )
 		READ_SETTING(glslKeywordColor, value<QColor>() )
 		READ_SETTING(glslFunctionColor, value<QColor>() )
@@ -1435,31 +1793,33 @@ using namespace QGlip;
 		READ_SETTING(searchColor, value<QColor>() )
 		READ_SETTING(editorFont, value<QFont>() )
 		READ_SETTING(keywordFont, value<QFont>() )
-		if(settingsManager.contains("CodeEditorSettings/wrapMode")) wrapMode = static_cast<QTextOption::WrapMode>(settingsManager.value("CodeEditorSettings/wrapMode").toInt());
+		if(settingsManager.contains("QGlip/CodeEditorSettings/wrapMode")) wrapMode = static_cast<QTextOption::WrapMode>(settingsManager.value("QGlip/CodeEditorSettings/wrapMode").toInt());
 		READ_SETTING(tabNumberOfSpaces, toInt() )
 		READ_SETTING(enableHighlight, toBool() )
 		READ_SETTING(highlightCurrentLine, toBool() )
 		READ_SETTING(braceMatching, toBool() )
+		READ_SETTING(autoCompletion, toBool() )
 		#undef READ_SETTING
 	}
 
 	void CodeEditorSettings::saveSettings(void)
 	{
-		settingsManager.setValue("CodeEditorSettings/glslKeywordColor", glslKeywordColor);
-		settingsManager.setValue("CodeEditorSettings/glslFunctionColor", glslFunctionColor);
-		settingsManager.setValue("CodeEditorSettings/glslPreprocessorColor", glslPreprocessorColor);
-		settingsManager.setValue("CodeEditorSettings/glipLayoutLoaderKeywordColor", glipLayoutLoaderKeywordColor);
-		settingsManager.setValue("CodeEditorSettings/glipUniformLoaderKeywordColor", glipUniformLoaderKeywordColor);
-		settingsManager.setValue("CodeEditorSettings/commentsColor", commentsColor);
-		settingsManager.setValue("CodeEditorSettings/braceMatchingColor", braceMatchingColor);
-		settingsManager.setValue("CodeEditorSettings/searchColor", searchColor);
-		settingsManager.setValue("CodeEditorSettings/editorFont", editorFont);
-		settingsManager.setValue("CodeEditorSettings/keywordFont", keywordFont);
-		settingsManager.setValue("CodeEditorSettings/wrapMode", wrapMode);
-		settingsManager.setValue("CodeEditorSettings/tabNumberOfSpaces", tabNumberOfSpaces);
-		settingsManager.setValue("CodeEditorSettings/enableHighlight", enableHighlight);
-		settingsManager.setValue("CodeEditorSettings/highlightCurrentLine", highlightCurrentLine);
-		settingsManager.setValue("CodeEditorSettings/braceMatching", braceMatching);
+		settingsManager.setValue("QGlip/CodeEditorSettings/glslKeywordColor", glslKeywordColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/glslFunctionColor", glslFunctionColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/glslPreprocessorColor", glslPreprocessorColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/glipLayoutLoaderKeywordColor", glipLayoutLoaderKeywordColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/glipUniformLoaderKeywordColor", glipUniformLoaderKeywordColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/commentsColor", commentsColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/braceMatchingColor", braceMatchingColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/searchColor", searchColor);
+		settingsManager.setValue("QGlip/CodeEditorSettings/editorFont", editorFont);
+		settingsManager.setValue("QGlip/CodeEditorSettings/keywordFont", keywordFont);
+		settingsManager.setValue("QGlip/CodeEditorSettings/wrapMode", wrapMode);
+		settingsManager.setValue("QGlip/CodeEditorSettings/tabNumberOfSpaces", tabNumberOfSpaces);
+		settingsManager.setValue("QGlip/CodeEditorSettings/enableHighlight", enableHighlight);
+		settingsManager.setValue("QGlip/CodeEditorSettings/highlightCurrentLine", highlightCurrentLine);
+		settingsManager.setValue("QGlip/CodeEditorSettings/braceMatching", braceMatching);
+		settingsManager.setValue("QGlip/CodeEditorSettings/autoCompletion", autoCompletion);
 	}
 
 // CodeEditorSettingsWidget :
@@ -1494,6 +1854,7 @@ using namespace QGlip;
 		highlightKeywordsCheck("Highlight keywords", this),
 		highlightCurrentLineCheck("Highlight current line", this),
 		braceMatchingCheck("Enable brace matching", this),
+		autoCompletionCheck("Enable auto-completion", this),
 		wrapModesBox(this),
 		tabSpacesSpin(this)
 	{
@@ -1551,6 +1912,7 @@ using namespace QGlip;
 				layoutMisc.addWidget(&highlightKeywordsCheck);
 				layoutMisc.addWidget(&highlightCurrentLineCheck);
 				layoutMisc.addWidget(&braceMatchingCheck);
+				layoutMisc.addWidget(&autoCompletionCheck);
 				layoutMisc.addWidget(&wrapModesBox);
 				layoutMisc.addWidget(&tabSpacesSpin);
 				
@@ -1601,11 +1963,12 @@ using namespace QGlip;
 		keywordFontButton.setFont(settings.keywordFont);
 
 		// Misc : 
-		highlightKeywordsCheck.setChecked( settings.enableHighlight );
-		highlightCurrentLineCheck.setChecked( settings.highlightCurrentLine );
-		braceMatchingCheck.setChecked( settings.braceMatching );
-		wrapModesBox.setCurrentIndex( wrapModesBox.findData(QVariant(settings.wrapMode)) );
-		tabSpacesSpin.setValue( settings.tabNumberOfSpaces );
+		highlightKeywordsCheck.setChecked(settings.enableHighlight);
+		highlightCurrentLineCheck.setChecked(settings.highlightCurrentLine);
+		braceMatchingCheck.setChecked(settings.braceMatching);
+		autoCompletionCheck.setChecked(settings.autoCompletion);
+		wrapModesBox.setCurrentIndex(wrapModesBox.findData(QVariant(settings.wrapMode)));
+		tabSpacesSpin.setValue(settings.tabNumberOfSpaces);
 	}
 
 	void CodeEditorSettingsWidget::updateValues(void)
@@ -1630,6 +1993,7 @@ using namespace QGlip;
 		settings.enableHighlight		= highlightKeywordsCheck.isChecked();
 		settings.highlightCurrentLine		= highlightCurrentLineCheck.isChecked();
 		settings.braceMatching			= braceMatchingCheck.isChecked();
+		settings.autoCompletion			= autoCompletionCheck.isChecked();
 		settings.wrapMode			= static_cast<QTextOption::WrapMode>( wrapModesBox.itemData( wrapModesBox.currentIndex() ).toUInt() );
 		settings.tabNumberOfSpaces 		= tabSpacesSpin.value();
 

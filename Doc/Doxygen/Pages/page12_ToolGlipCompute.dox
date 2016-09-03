@@ -130,7 +130,7 @@ Example of processing commands, <i>commands.txt</i> :
 		{
 			PIPELINE:pipeline
 			{
-				SCRIPT:filter
+				FILTER:filter
 				{
 					GL_VEC2:someVariable(0.0, 1.0)
 				}
@@ -146,7 +146,7 @@ Example of processing commands, <i>commands.txt</i> :
 		{
 			PIPELINE:pipeline
 			{
-				SCRIPT:filter
+				FILTER:filter
 				{
 					GL_VEC2:someVariable(1.0, 2.0)
 				}
