@@ -74,7 +74,8 @@ using namespace QGlip;
 		// This will not delete a widget previously added at the same location.
 		takeWidget(p);
 		layout.addWidget(ptr, 0, static_cast<int>(p));
-		ptr->show();
+		if(ptr!=NULL)
+			ptr->show();
 	}
 
 	int TopBar::getHeight(void)
@@ -462,6 +463,7 @@ using namespace QGlip;
 						subViews[k]->transform.flipVertical();
 					event->accept();
 				}
+				break;
 			case Qt::Key_Backspace :
 				emit view->gotoParentObject();
 				event->accept();
@@ -509,6 +511,7 @@ using namespace QGlip;
 		QGraphicsItem::setFlag(QGraphicsItem::ItemIsFocusable, true);
 		QGraphicsItem::hide();
 		// Title :
+		title.setContextMenuPolicy(Qt::CustomContextMenu);
 		updateTitle();
 		// Transform :
 		QObject::connect(&transform, SIGNAL(transformModified()), this, SIGNAL(updateScene()));
@@ -525,6 +528,7 @@ using namespace QGlip;
 		QObject::connect(&navigationWidget, SIGNAL(gotoNextObject()), this, SIGNAL(gotoNextObject()));
 		QObject::connect(&navigationWidget, SIGNAL(gotoParentObject()), this, SIGNAL(gotoParentObject()));
 		QObject::connect(&navigationWidget, SIGNAL(closed()), this, SIGNAL(closed()));
+		QObject::connect(&title, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 	}
 	
 	View::~View(void)
@@ -554,6 +558,28 @@ using namespace QGlip;
 		emit closed();
 	}
 
+	void View::showContextMenu(const QPoint& pos)
+	{
+		if(textureResource!=NULL)
+		{
+			if(	title.parentWidget()!=NULL && title.parentWidget()->graphicsProxyWidget()!=NULL
+			    &&	title.parentWidget()->graphicsProxyWidget()->scene()!=NULL && !title.parentWidget()->graphicsProxyWidget()->scene()->views().isEmpty()
+			    &&	title.parentWidget()->graphicsProxyWidget()->scene()->views().first()!=NULL && title.parentWidget()->graphicsProxyWidget()->scene()->views().first()->viewport()!=NULL)
+			{
+				QMenu* menu = textureResource->createMenu();
+				if(menu!=NULL)
+				{
+					QObject::connect(menu, SIGNAL(aboutToHide()), menu, SLOT(deleteLater()));
+					QGraphicsView *v = title.parentWidget()->graphicsProxyWidget()->scene()->views().first();
+					QPointF scenePos = title.parentWidget()->graphicsProxyWidget()->mapToScene(pos);
+					QPoint  viewPos = v->mapFromScene(scenePos),
+						screenPos = v->viewport()->mapToGlobal(viewPos);
+					menu->popup(screenPos);
+				}
+			}
+		}	
+	}
+
 	void View::mousePressEvent(QGraphicsSceneMouseEvent* event)
 	{
 		if(scene()!=NULL)
@@ -576,7 +602,7 @@ using namespace QGlip;
 	{
 		if(scene()!=NULL)
 			processKeyPressEvent(scene()->sceneRect(), event, this);	
-	}
+	}	
 
 	const QSize View::getTextureSize(void) const
 	{
@@ -785,6 +811,24 @@ using namespace QGlip;
 			frame.setPen(QPen(frameColor, frameWidth));
 	}
 
+	void Vignette::processMouseEvent(QGraphicsSceneMouseEvent* event)
+	{
+		if((event->buttons() & Qt::RightButton)!=0 && view!=NULL && view->getTextureResource()!=NULL)
+		{
+			QRectF rect = titleBar.rect();
+			rect.moveTo(scenePos());
+			if(rect.contains(event->scenePos()))
+			{
+				QMenu* menu = view->getTextureResource()->createMenu();
+				if(menu!=NULL)
+				{
+					QObject::connect(menu, SIGNAL(aboutToHide()), menu, SLOT(deleteLater()));
+					menu->popup(event->screenPos());
+				}
+			}
+		}
+	}
+
 // Gallery :
 	Gallery::Gallery(const bool& _canBeClosed, QObject* parent)
 	 :	AbstractGLDrawableObject(parent),
@@ -873,7 +917,7 @@ using namespace QGlip;
 			return QGraphicsItem::itemChange(change, value);
 	}
 
-	void Gallery::updateSelection(const QPointF& pos, const bool& add, const bool& remove, const bool& clear)
+	void Gallery::updateSelection(const QPointF& pos, const bool& add, const bool& remove, const bool& clear, QGraphicsSceneMouseEvent* event)
 	{
 		if(!add && clear)
 		{
@@ -903,6 +947,9 @@ using namespace QGlip;
 					std::swap(selection[id], selection.back());
 					std::swap(selectionViews[id], selectionViews.back());
 				}
+				// Let the vignette process the event too if it is selected :
+				if(event!=NULL && (id<0 || !remove))
+					it->second->processMouseEvent(event);
 			}
 			else if(!add)
 				it->second->enableSelectionHighlight(false);
@@ -912,7 +959,7 @@ using namespace QGlip;
 	void Gallery::mousePressEvent(QGraphicsSceneMouseEvent* event)
 	{
 		const bool modifier = (event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier))!=0;
-		updateSelection(event->scenePos(), modifier, false, true);
+		updateSelection(event->scenePos(), modifier, false, true, event);
 	}
 
 	//void Gallery::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)

@@ -1,18 +1,51 @@
 #include "GlipResource.hpp"
 
 // TextureResource :
-	TextureResource::TextureResource(Glip::CoreGL::HdlTexture* _ptr, const QString& _name)
-	 :	ptr(_ptr),
+	TextureResource::TextureResource(Glip::CoreGL::HdlTexture* _ptr, const QString& _name, const int _flags)
+	 :	flags(_flags),
+		ptr(_ptr),
 		name(_name)
 	{ }
 
 	TextureResource::~TextureResource(void)
-	{ }
+	{
+		if((flags & Owned)!=0)
+			delete ptr;
+		ptr = NULL;
+	}
 
-	/*bool TextureResource::isValid(void) const
+	void TextureResource::changeFiltering(void)
+	{
+		QAction* a = reinterpret_cast<QAction*>(QObject::sender());
+		if(a!=NULL && ptr!=NULL && (flags & FormatModifiable)!=0)
+		{
+			const QPoint d = a->data().toPoint();
+			if(d.x()!=GL_NONE)
+				ptr->setMagFilter(d.x());
+			if(d.y()!=GL_NONE)
+				ptr->setMinFilter(d.y());
+			emit formatChanged();
+		}
+	}
+
+	void TextureResource::changeWrapping(void)
+	{
+		QAction* a = reinterpret_cast<QAction*>(QObject::sender());
+		if(a!=NULL && ptr!=NULL && (flags & FormatModifiable)!=0)
+		{
+			const QPoint d = a->data().toPoint();
+			if(d.x()!=GL_NONE)
+				ptr->setSWrapping(d.x());
+			if(d.y()!=GL_NONE)
+				ptr->setSWrapping(d.y());
+			emit formatChanged();
+		}
+	}
+
+	bool TextureResource::isValid(void) const
 	{
 		return ptr!=NULL;
-	}*/
+	}
 
 	Glip::CoreGL::HdlTexture* TextureResource::getTexture(void) const
 	{
@@ -21,8 +54,16 @@
 
 	void TextureResource::setTexture(Glip::CoreGL::HdlTexture* _ptr)
 	{
+		Glip::CoreGL::HdlTexture* old = ptr;
 		ptr = _ptr;
 		emit textureChanged();
+		if((flags & Owned)!=0)
+			delete old;
+	}
+
+	bool TextureResource::nameable(void) const
+	{
+		return (flags & Nameable)!=0;
 	}
 
 	const QString& TextureResource::getName(void) const
@@ -32,8 +73,11 @@
 
 	void TextureResource::setName(const QString& _name)
 	{
-		name = _name;
-		emit nameChanged();
+		if((flags & Nameable)!=0)
+		{
+			name = _name;
+			emit nameChanged();
+		}
 	}
 
 	const QMap<QString, QString>& TextureResource::getInformation(void) const
@@ -49,11 +93,22 @@
 	
 	void TextureResource::removeInformation(const QString& key)
 	{
-		QMap<QString, QString>::iterator it = information.find(key);
-		if(it!=information.end())
+		if(key.isEmpty())
 		{
-			information.erase(it);
-			emit informationChanged(key);
+			if(!information.isEmpty())
+			{
+				information.clear();
+				emit informationChanged(key);
+			}
+		}
+		else
+		{
+			QMap<QString, QString>::iterator it = information.find(key);
+			if(it!=information.end())
+			{
+				information.erase(it);
+				emit informationChanged(key);
+			}
 		}
 	}
 
@@ -108,6 +163,75 @@
 		for(QMap<const void*, unsigned int>::const_iterator it=users.begin(); it!=users.end(); it++)
 			count += it.value();
 		return count;
+	}
+
+	QMenu* TextureResource::createMenu(QWidget* parent)
+	{
+		const bool modifiable = (flags & FormatModifiable)!=0 && ptr!=NULL;
+
+		// Create the menu :
+		QMenu	*menu = new QMenu(parent),
+			*filtering = menu->addMenu("Filtering"),
+			*minFiltering = filtering->addMenu("Minification filter"),
+			*magFiltering = filtering->addMenu("Magnification filter"),
+			*wrapping = menu->addMenu("Wrapping"),
+			*sWrapping = wrapping->addMenu("S Wrapping"),
+			*tWrapping = wrapping->addMenu("T Wrapping");
+
+		const GLenum standardFilterEnums[] = {GL_NEAREST, GL_LINEAR};
+		for(unsigned int k=0; k<sizeof(standardFilterEnums)/sizeof(GLenum); k++)
+		{
+			QAction* a = minFiltering->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(standardFilterEnums[k])), this, SLOT(changeFiltering(void)));
+			a->setCheckable(true);
+			a->setChecked(ptr!=NULL && ptr->getMinFilter()==standardFilterEnums[k]);
+			a->setEnabled(modifiable);
+			a->setData(QVariant(QPoint(GL_NONE, standardFilterEnums[k])));
+	
+			QAction* b = magFiltering->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(standardFilterEnums[k])), this, SLOT(changeFiltering(void)));
+			b->setCheckable(true);
+			b->setChecked(ptr!=NULL && ptr->getMagFilter()==standardFilterEnums[k]);
+			b->setEnabled(modifiable);
+			b->setData(QVariant(QPoint(standardFilterEnums[k], GL_NONE)));
+
+			QAction* c = filtering->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(standardFilterEnums[k])), this, SLOT(changeFiltering(void)));
+			c->setCheckable(true);
+			c->setChecked(ptr!=NULL && ptr->getMagFilter()==standardFilterEnums[k] && ptr->getMinFilter()==standardFilterEnums[k]);
+			c->setEnabled(modifiable);
+			c->setData(QVariant(QPoint(standardFilterEnums[k], standardFilterEnums[k])));
+		}
+
+		const GLenum mipmapFilterEnums[] = {GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR};
+		for(unsigned int k=0; k<sizeof(mipmapFilterEnums)/sizeof(GLenum); k++)
+		{
+			QAction* a = minFiltering->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(mipmapFilterEnums[k])), this, SLOT(changeFiltering(void)));
+			a->setCheckable(true);
+			a->setChecked(ptr!=NULL && ptr->getMinFilter()==mipmapFilterEnums[k]);
+			a->setEnabled(modifiable && ptr!=NULL && ptr->getMaxLevel()>0);
+			a->setData(QVariant(QPoint(GL_NONE, mipmapFilterEnums[k])));
+		}
+
+		const GLenum wrappingEnums[] = {GL_CLAMP, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE, GL_REPEAT, GL_MIRRORED_REPEAT};
+		for(unsigned int k=0; k<sizeof(wrappingEnums)/sizeof(GLenum); k++)
+		{
+			QAction* a = sWrapping->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(wrappingEnums[k])), this, SLOT(changeWrapping(void)));
+			a->setCheckable(true);
+			a->setChecked(ptr!=NULL && ptr->getSWrapping()==wrappingEnums[k]);
+			a->setEnabled(modifiable);
+			a->setData(QVariant(QPoint(wrappingEnums[k], GL_NONE)));
+			
+			QAction* b = tWrapping->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(wrappingEnums[k])), this, SLOT(changeWrapping(void)));
+			b->setCheckable(true);
+			b->setChecked(ptr!=NULL && ptr->getTWrapping()==wrappingEnums[k]);
+			b->setEnabled(modifiable);
+			b->setData(QVariant(QPoint(GL_NONE, wrappingEnums[k])));
+			
+			QAction* c = wrapping->addAction(QString::fromStdString(Glip::CoreGL::getGLEnumName(wrappingEnums[k])), this, SLOT(changeWrapping(void)));
+			c->setCheckable(true);
+			c->setChecked(ptr!=NULL && ptr->getSWrapping()==wrappingEnums[k] && ptr->getTWrapping()==wrappingEnums[k]);
+			c->setEnabled(modifiable);
+			c->setData(QVariant(QPoint(wrappingEnums[k], wrappingEnums[k])));
+		}
+		return menu;
 	}
 
 // AbstractAvailableInput :

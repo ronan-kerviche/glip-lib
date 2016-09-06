@@ -26,7 +26,7 @@ namespace QGlip
 	// Objects :
 	class TopBar : public QGraphicsProxyWidget
 	{
-		Q_OBJECT	
+		Q_OBJECT
 
 		public :
 			enum Position
@@ -169,12 +169,14 @@ namespace QGlip
 		private slots :
 			void updateTitle(void);
 			void resourceDestroyed(void);		
+			void showContextMenu(const QPoint& pos);
 
 		private :	
 			void mousePressEvent(QGraphicsSceneMouseEvent* event);
 			void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
 			void wheelEvent(QGraphicsSceneWheelEvent* event);
 			void keyPressEvent(QKeyEvent* event);
+			//bool eventFilter(QObject* object, QEvent* event);
 
 		public :
 			ViewTransform transform;
@@ -233,6 +235,7 @@ namespace QGlip
 			QRectF boundingRect(void) const;
 			void resize(const QSize& s);
 			void enableSelectionHighlight(const bool& enable);
+			void processMouseEvent(QGraphicsSceneMouseEvent* event);
 	};
 
 	class Gallery : public AbstractGLDrawableObject, public QGraphicsItemGroup
@@ -256,7 +259,7 @@ namespace QGlip
 			bool contains(const TextureResource* resource) const;
 			void computeTableParameters(const QSize& size, int N=0);
 			QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value);
-			void updateSelection(const QPointF& pos, const bool& add, const bool& remove, const bool& clear);
+			void updateSelection(const QPointF& pos, const bool& add, const bool& remove, const bool& clear, QGraphicsSceneMouseEvent* event=NULL);
 			void mousePressEvent(QGraphicsSceneMouseEvent* event);
 			//void mouseReleaseEvent(QGraphicsSceneMouseEvent* event);
 			void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event);

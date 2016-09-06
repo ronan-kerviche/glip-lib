@@ -14,11 +14,24 @@
 	class AvailableInputsList;
 
 // TextureResource :
+/*
+	Act as a container for a HdlTexture. Can be replaced, modified...
+*/
 	class TextureResource : public QObject
 	{
 		Q_OBJECT
 
+		public :
+			enum Flags
+			{
+				Owned		 = 0x01,
+				Replaceable	 = 0x02,
+				Nameable	 = 0x04,
+				FormatModifiable = 0x08
+			};
+
 		private :
+			int				flags;
 			Glip::CoreGL::HdlTexture*	ptr;
 			QString				name;
 			QMap<QString, QString>		information;
@@ -26,21 +39,27 @@
 
 			TextureResource(const TextureResource&);
 
+		protected slots :
+			void changeFiltering(void);
+			void changeWrapping(void);
+
 		public :
-			TextureResource(Glip::CoreGL::HdlTexture* _ptr, const QString& _name="unnamed");
+			TextureResource(Glip::CoreGL::HdlTexture* _ptr, const QString& _name="unnamed", const int _flags=static_cast<int>(Owned | Replaceable | Nameable | FormatModifiable));
 			virtual ~TextureResource(void);
-			//bool isValid(void) const;
+			bool isValid(void) const;
 			Glip::CoreGL::HdlTexture* getTexture(void) const;
 			void setTexture(Glip::CoreGL::HdlTexture* _ptr);
+			bool nameable(void) const;
 			const QString& getName(void) const;
 			void setName(const QString& _name);
 			const QMap<QString, QString>& getInformation(void) const;
 			void setInformation(const QString& key, const QString& value);
-			void removeInformation(const QString& key);
+			void removeInformation(const QString& key="");
 			QString getHTMLInformation(void) const;
 			void addUser(const void* id);
 			void removeUser(const void* id);
 			unsigned int getUsersCount(void) const;
+			QMenu* createMenu(QWidget* parent=NULL);
 
 		signals :
 			void contentChanged(void);
