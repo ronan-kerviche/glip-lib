@@ -33,8 +33,7 @@ Description
 --------------
 Command line tool for image processing on GPU with GLIP-Lib. Requires cmake for building, X server and freeimage for reading and writing images.
 
-More on
-http://glip-lib.net/page12__tool_glip_compute.html
+More on [glip-lib.net](http://glip-lib.net/page12__tool_glip_compute.html)
 
 Requirements
 --------------
