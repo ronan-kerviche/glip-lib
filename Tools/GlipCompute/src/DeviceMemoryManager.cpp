@@ -18,6 +18,16 @@
 #include "FreeImagePlusInterface.hpp"
 #include "LibRawInterface.hpp"
 
+// Tool :
+	std::string getExtension(const std::string& filename)
+	{
+		const size_t dotPos = filename.find_last_of('.');
+		std::string ext = (dotPos==std::string::npos) ? "" : filename.substr(dotPos + 1);
+		std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
+		return ext;
+	}
+
+// DeviceMemoryManager :
 	DeviceMemoryManager::DeviceMemoryManager(const size_t& _maxMemory)
 	 : 	maxMemory(_maxMemory),
 		currentMemory(0)
@@ -77,16 +87,13 @@
 		if(it==resources.end())
 		{
 			// Copy not found, need to load it. First get the extension : 
-			size_t dotPos = filename.find_last_of('.');
-			std::string ext = (dotPos==std::string::npos) ? "" : filename.substr(dotPos + 1);
-			std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
-
+			const std::string ext = getExtension(filename);
+	
 			Glip::CoreGL::HdlTexture* texture = NULL;
 			Glip::Modules::ImageBuffer* imageBuffer = NULL;
 			if(ext=="GRW")
 				imageBuffer = Glip::Modules::ImageBuffer::load(filename);
 			else if(ext=="CRW" || ext=="CR2" || ext=="NEF")
-				//imageBuffer = LibRawInterface::loadImage(filename);
 				texture = LibRawInterface::loadTexture(filename);
 			else // Default, FreeImagePlus loading : 
 				texture = FreeImagePlusInterface::loadTexture(filename);
@@ -96,13 +103,10 @@
 				(*imageBuffer) >> (*texture);
 				delete imageBuffer;
 			}
-
 			if((currentMemory + texture->getSize())>maxMemory && currentMemory>0)
 				forget( maxMemory - (currentMemory + texture->getSize()) );
-
 			resources[filename] = texture;
 			remember(texture);
-
 			return texture;
 		}
 		else
@@ -113,6 +117,32 @@
 			remember(texture);
 
 			return texture;
+		}
+	}
+
+	void DeviceMemoryManager::write(Glip::CoreGL::HdlTexture& texture, const std::string& filename)
+	{
+		const std::string ext = getExtension(filename);
+		if(ext=="GRW")
+		{
+			Glip::Modules::ImageBuffer imageBuffer(texture);
+			imageBuffer.write(filename);
+		}	
+		else
+			FreeImagePlusInterface::saveTexture(texture, filename);
+		
+		// Update the cache if necessary :
+		std::map<std::string, Glip::CoreGL::HdlTexture*>::iterator it = resources.find(filename);
+		if(it!=resources.end())
+		{
+			// Check the memory :
+			if((currentMemory - it->second->getSize() + texture.getSize())>maxMemory && currentMemory>0)
+				forget(maxMemory - (currentMemory - it->second->getSize() + texture.getSize()));
+			Glip::CoreGL::HdlTexture* textureCopy = new Glip::CoreGL::HdlTexture(texture.format());
+			Glip::Modules::ImageBuffer imageBuffer(texture);
+			imageBuffer >> (*textureCopy);
+			resources[filename] = textureCopy;
+			remember(textureCopy);
 		}
 	}
 

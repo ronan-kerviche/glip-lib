@@ -78,9 +78,7 @@
 
 		// Read the header : 
 		std::string head(buffer, 2);
-
 		HdlTextureFormat format(0, 0, GL_NONE, GL_NONE);
-
 		if(head=="P5")
 			format.setGLMode(GL_LUMINANCE); //GL_LUMINANCE16_SNORM does not work, use GL_R16_SNORM instead.
 		else if(head=="P6")
@@ -148,7 +146,6 @@
 		if((*(char*)&n==1) && precision>8) // The machine is little endian and the data is on more than 8 bits.
 		{
 			unsigned short* tbytes = reinterpret_cast<unsigned short*>(buffer + p);
-
 			for(int k=0; k<format.getNumElements(); k++)
 				tbytes[k] = changeEndianness16(tbytes[k]);
 		}
@@ -158,20 +155,17 @@
 
 		// Clean : 
 		delete[] buffer;
-
 		return result;
 	}
 
 	void NetPBM::saveNetPBMToFile(const ImageBuffer& image, const std::string& filename)
 	{
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
-
 		if(!file.is_open())
 			throw Exception("NetPBM::saveNetPBMToFile - Cannot write file " + filename + ".", __FILE__, __LINE__);
 
 		// make header : 
 		std::string header;
-
 		if(image.getNumChannels()==1)
 			header += "P5\n";
 		else if(image.getNumChannels()==3)
@@ -184,18 +178,41 @@
 
 		header += "#GlipLib NetPBM Writer\n";
 		header += toString(image.getWidth()) + " " + toString(image.getHeight()) + "\n";
-
 		if(image.getChannelDepth()<=1)
 			header += "255\n";
 		else if(image.getChannelDepth()<=2)
 			header += "65535\n";
 		else
+		{
+			file.close();
 			throw Exception("NetPBM::saveNetPBMToFile - Incompatible depth : \"" + getGLEnumName(image.getGLDepth()) + "\".", __FILE__, __LINE__);
+		}
+
+		char* buffer = new char[image.getSize()];
+		int n = 1; 
+		if((*(char*)&n==1) && HdlTextureFormatDescriptor::getTypeSizeInBits(image.getGLDepth())>8) // The machine is little endian and the data is on more than 8 bits.
+		{
+			unsigned short* tbytes = reinterpret_cast<unsigned short*>(buffer);
+			const int numElementsPerRow = image.getNumChannels()*image.getWidth();
+			size_t p =0;
+			for(int i=0; i<image.getHeight(); i++)
+			{
+				const unsigned short* ptr = reinterpret_cast<const unsigned short*>(image.getPtr()) + i*image.getRowSize()/2;
+				for(int k=0; k<numElementsPerRow; k++, p++)
+					tbytes[p] = changeEndianness16(ptr[k]);
+			}
+		}
+		else
+		{
+			for(int i=0; i<image.getHeight(); i++)
+				std::memcpy(buffer + i*image.getWidth()*image.getPixelSize(), reinterpret_cast<const char*>(image.getPtr()) + i*image.getRowSize(), image.getRowSize());
+		}
 
 		// Write : 
 		file.write(header.c_str(), header.size());
 		file.write(reinterpret_cast<const char*>(image.getPtr()), image.getSize());
 	
 		file.close();
+		delete[] buffer;
 	}
 

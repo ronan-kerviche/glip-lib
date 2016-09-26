@@ -37,6 +37,7 @@
 			~DeviceMemoryManager(void);
 
 			Glip::CoreGL::HdlTexture* get(const std::string& filename);
+			void write(Glip::CoreGL::HdlTexture& texture, const std::string& filename);
 	};
 
 #endif

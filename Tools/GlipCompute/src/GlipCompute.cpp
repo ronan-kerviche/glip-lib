@@ -933,7 +933,7 @@ Link : <http://glip-lib.net/>\
 				for(int k=0; k<pipeline->getNumOutputPort(); k++)
 				{
 					if(!outputsSorted[k].empty())
-						FreeImagePlusInterface::saveTexture(pipeline->out(k), outputsSorted[k]);
+						deviceMemoryManager->write(pipeline->out(k), outputsSorted[k]);
 				}
 
 				// Clean : 
