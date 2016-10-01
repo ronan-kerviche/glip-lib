@@ -279,6 +279,7 @@
 			result.push_back( new FORMAT_SWAP_DIMENSIONS );
 			result.push_back( new IF_FORMAT_SETTING_MATCH );
 			result.push_back( new IF_FORMAT_SETTING_LARGERTHAN );
+			result.push_back( new OVERRIDE_REQUIRED_FORMAT );
 			result.push_back( new GENERATE_SAME_SIZE_2D_GRID );
 			result.push_back( new GENERATE_SAME_SIZE_3D_GRID );
 			result.push_back( new CHAIN_PIPELINES );
@@ -1935,6 +1936,54 @@
 					executionSource = falseCase;
 					executionStartLine = falseCaseStartLine;
 				}
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( OVERRIDE_REQUIRED_FORMAT, 3, 12, -1,	"DESCRIPTION{Override the selection of a required format if another format with higher priority is found.}"
+												"ARGUMENT:name{Name of the format to be created.}"
+												"ARGUMENT:overrideFormat{Name of the format which will be used first, if it exists.}"
+												"ARGUMENT:defaultFormat{Name of the default format to use}"
+												"ARGUMENT:remainingArguments{See REQUIRED_FORMAT arguments.}")
+			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(geometryList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
+
+				const std::string& overrideName = arguments[1],
+						   defaultName = arguments[2];
+				CONST_ITERATOR_TO_REQUIREDFORMAT( overrideRequiredIt, overrideName )
+				CONST_ITERATOR_TO_FORMAT( overrideIt, overrideName )
+				CONST_ITERATOR_TO_REQUIREDFORMAT( defaultRequiredIt, defaultName )
+				CONST_ITERATOR_TO_FORMAT( defaultIt, defaultName )
+
+				std::string formatTargetName;
+				if(overrideRequiredIt!=requiredFormatList.end() || overrideIt!=formatList.end())
+					formatTargetName = overrideName;
+				else if(defaultRequiredIt!=requiredFormatList.end() || defaultIt!=formatList.end())
+					formatTargetName = defaultName;
+				else
+					throw Exception("Neither formats " + overrideName + " or " + defaultName + " could be found.", sourceName, startLine, Exception::ClientScriptException);
+
+				executionSource = LayoutLoader::getKeyword(KW_LL_REQUIRED_FORMAT);
+				executionSource += ":" + arguments[0] + "(" + formatTargetName;
+				for(std::vector<std::string>::const_iterator it=arguments.begin()+3; it!=arguments.end(); it++)
+					executionSource += ", " + (*it);
+				executionSource += ')';
+				executionSourceName = sourceName;
+				executionStartLine = startLine;
 			}
 
 			LAYOUT_LOADER_MODULE_APPLY( GENERATE_SAME_SIZE_2D_GRID, 2, 4, -1,	"DESCRIPTION{Create a 2D grid geometry of the same size as the format in argument (width and height).}"

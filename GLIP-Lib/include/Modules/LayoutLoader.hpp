@@ -219,7 +219,7 @@ Define a texture format (Core::HdlTextureFormat). The first line shows the minim
 <b>REQUIRED_FORMAT</b>:<i>name</i>(<i>requiredFormatName</i>[, <i>newWidth</i>, <i>newHeight</i>, <i>newMode</i>, <i>newDepth</i>, <i>newMinFilter</i>, <i>newMagFilter</i>, <i>newSWrapping</i>, <i>newTWrapping</i>, <i>newMaxMipMapLevel</i>)
 </blockquote>
 
-Define a texture format from a required resource. This enables the script to receive data from the program, as a dynamic specification.
+Define a texture format from a required resource. This enables the script to receive data from the program, as a dynamic specification. The format is first searched into the list of the formats given by the program. Then, if none is found, it is searched in the list of existing formats.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>

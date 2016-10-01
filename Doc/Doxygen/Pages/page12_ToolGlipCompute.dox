@@ -116,7 +116,7 @@ To process an image :
 
 To process multiple images :
 \code
-	glip-compute -p script.ppl -i 0 input0.bmp -i 1 input1.jpg -i 2 input2.png -o 0 output0.bmp -1 output1.bmp
+	glip-compute -p script.ppl -i 0 input0.bmp -i 1 input1.jpg -i 2 input2.png -o 0 output0.bmp -o outputPortName outputName.bmp
 \endcode
 
 Example of processing commands, <i>commands.txt</i> :

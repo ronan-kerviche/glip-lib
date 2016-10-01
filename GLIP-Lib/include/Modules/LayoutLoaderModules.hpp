@@ -567,6 +567,21 @@ Match if a format setting is larger than a value (unsigned integer or GL keyword
 
 <b>Body</b> : Contains any or all of the blocks TRUE{...} and FALSE{...}. The right block will be exectuted following this test.
 
+### OVERRIDE_REQUIRED_FORMAT
+<blockquote>
+<b>CALL</b>:OVERRIDE_REQUIRED_FORMAT(name, overrideFormat, defaultFormat [, remainingArguments])<br>
+</blockquote>
+
+Override the selection of a required format if another format with higher priority is found.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td> <td>Name of the format to be created.</td></tr>
+<tr class="glipDescrRow"><td><i>overrideFormat</i></td> <td>Name of the format which will be used first, if it exists.</td></tr>
+<tr class="glipDescrRow"><td><i>defaultFormat</i></td> <td>Name of the default format to use</td></tr>
+<tr class="glipDescrRow"><td><i>remainingArguments</i></td> <td>See REQUIRED_FORMAT arguments.</td></tr>
+</table>
+
 ### GENERATE_SAME_SIZE_2D_GRID
 <blockquote>
 <b>CALL</b>:GENERATE_SAME_SIZE_2D_GRID(nameNewGeometry, nameFormat [, normalized])<br>
@@ -1036,7 +1051,8 @@ Load a geometry from a StereoLithography file (STL).
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_LARGER_POWER_OF_TWO )
 			LAYOUT_LOADER_MODULE_DEFINITION( FORMAT_SWAP_DIMENSIONS )
 			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_MATCH )
-			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_LARGERTHAN )
+			LAYOUT_LOADER_MODULE_DEFINITION( IF_FORMAT_SETTING_LARGERTHAN)	
+			LAYOUT_LOADER_MODULE_DEFINITION( OVERRIDE_REQUIRED_FORMAT )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_2D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( GENERATE_SAME_SIZE_3D_GRID )
 			LAYOUT_LOADER_MODULE_DEFINITION( CHAIN_PIPELINES )
