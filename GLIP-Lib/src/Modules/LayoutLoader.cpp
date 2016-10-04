@@ -1898,14 +1898,13 @@
 	**/
 	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
 	{
-		clean();
+		if(source.empty())
+			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
+		clean();
 		// Tell the modules : 
 		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 			it->second->beginLoadLayout();
-
-		if(source.empty())
-			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
 		bool 		isAFile = false;
 		std::string 	content;
@@ -1954,6 +1953,10 @@
 		}
 		catch(Exception& e)
 		{
+			// Tell the modules :
+			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+				it->second->endLoadLayout();
+
 			if(isAFile && currentPath.empty())
 			{
 				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, startLine, Exception::ClientScriptException);

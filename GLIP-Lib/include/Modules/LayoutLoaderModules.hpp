@@ -100,8 +100,8 @@ Example, creating a simple Module :
 			newFmt.setHeight( newFmt.getHeight() + delta );
 
 			// Check the size : 
-			if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0)
-				throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", __FILE__, __LINE__);
+			if(newFmt.getWidth()<=0 || newFmt.getHeight()<=0) // The following exception will retain the line and source name information :
+				throw Exception("The new format is not valid (size : " + toString(newFmt.getWidth()) + "x" + toString(newFmt.getHeight()) + ").", sourceName, startLine, Exception::ClientScriptException);
 
 			// Append the new format under the right name :
 			APPEND_NEW_FORMAT( arguments.back(), newFmt )

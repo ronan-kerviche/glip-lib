@@ -174,7 +174,14 @@ Include another file. All the elements declared after parsing this file becomes 
 }
 </blockquote>
 
-Enable the script to use predefined modules attached to this loader. These modules are implementing specific high-level functions. Each might request different arguments or some code in the body.
+<blockquote>
+<b>SAFE_CALL</b>:<i>moduleName</i>(<i>argument0</i>, <i>argument1</i>, [...])<br>
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp; <i>body</i><br>
+}
+</blockquote>
+
+Enable the script to use predefined modules attached to this loader. These modules are implementing specific high-level functions. Each might request different arguments and possibly some code in the body. A <i>safe</i> call will only be performed if the module is attached to the LayoutLoader. If there is a need to execute another operation in the case of a failure, report to the standard module IF_MODULE_AVAILABLE.
 
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
@@ -589,13 +596,13 @@ Define a pipeline layout from a required resource. This enables the script to re
 
 ### Main Pipeline
 <blockquote>
-<b>MAIN_PIPELINE</b>:<i>name</i><br>
+<b>PIPELINE_MAIN</b>:<i>name</i><br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>elements</i><br>
 }<br>
 </blockquote>
 <blockquote>
-<b>MAIN_PIPELINE</b>:<i>name</i>(<i>basePipelineLayoutName</i>)<br>
+<b>PIPELINE_MAIN</b>:<i>name</i>(<i>basePipelineLayoutName</i>)<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp; <i>ports</i><br>
 }
