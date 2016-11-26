@@ -257,9 +257,7 @@ using namespace QGIC;
 		if(QString::compare(path.completeSuffix(), "grw", Qt::CaseInsensitive)==0)
 		{
 			std::string comment;
-
 			imageBuffer = ImageBuffer::load(filename.toStdString(), &comment);
-
 			if(!comment.empty())
 			{
 				std::cout << "Comment in GLIP-RAW file \"" << _filename.toStdString() << "\" : " << std::endl;
@@ -277,11 +275,9 @@ using namespace QGIC;
 		else
 		{
 			QImage qimage(filename);
-
 			if(qimage.isNull())
 				throw Exception("Cannot load image \"" + filename.toStdString() + "\".", __FILE__, __LINE__);
-
-			 toImageBuffer(qimage, imageBuffer);
+			toImageBuffer(qimage, imageBuffer);
 		}
 	}
 

@@ -113,9 +113,7 @@
 		{
 			// Get the existing pre-loaded texture : 
 			Glip::CoreGL::HdlTexture* texture = resources[filename];
-
 			remember(texture);
-
 			return texture;
 		}
 	}

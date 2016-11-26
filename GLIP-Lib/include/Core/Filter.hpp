@@ -101,6 +101,7 @@
 					const GLenum& getDepthTestingFunction(void) const;
 					void enableDepthTesting(const GLenum& _depthTestingFunction = GL_LESS);
 					void disableDepthTesting(void);
+					const int& getNumIterations(void) const;
 			};
 
 			/**

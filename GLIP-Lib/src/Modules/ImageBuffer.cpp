@@ -447,6 +447,19 @@ using namespace Glip::Modules;
 		table->setNormalized(value, x, y, descriptor.getChannelIndex(channel));
 	}
 
+	/**
+	\fn void ImageBuffer::blit(const ImageBuffer& src, const int& xSrc, const int& ySrc, const int& xDst, const int& yDst, int _width, int _height, const bool xFlip, const bool yFlip)
+	\brief Copy a portion of image from a source to this buffer.
+	\param src Source image.
+	\param xSrc X-axis source coordinate.
+	\param ySrc Y-axis source coordinate.
+	\param xDst X-axis destination coordinate.
+	\param yDst Y-axis destination coordinate.
+	\param _width Copy width. If not provided, then all the remaining source is copied or until the destination border is encountered.
+	\param _height Copy height. If not provided, then all the remaining source is copied or until the destination border is encountered.
+	\param xFlip Flip the source along the X-axis (left becomes right and vice versa).
+	\param yFlip Flip the source along the Y-axis (up becomes down and vice versa).
+	**/
 	void ImageBuffer::blit(const ImageBuffer& src, const int& xSrc, const int& ySrc, const int& xDst, const int& yDst, int _width, int _height, const bool xFlip, const bool yFlip)
 	{
 		const int width = ((_width>0) ? _width : src.getWidth()),

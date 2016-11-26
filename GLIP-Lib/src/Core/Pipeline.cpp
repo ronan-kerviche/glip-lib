@@ -1113,10 +1113,9 @@
 			// Sanitize the localConnections : 
 			if(thisPipelineIdx==THIS_PIPELINE)
 			{
-				// This is made only at the tope level.
+				// This is made only at the top level.
 				// The main goal is to find remaining connections which are connected to the output port of a sub-pipeline
 				// but have prolongation. They must be forgotten (the data will not be used).
-
 				for(std::vector<Connection>::iterator it = localConnections.begin(); it!=localConnections.end(); )
 				{
 					// If the connection input is not a registered filter, then remove (C++03) : 
@@ -1142,7 +1141,6 @@
 			m << e;
 			throw m;
 		}
-
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "END BUILD" << std::endl;
 		#endif
@@ -1152,7 +1150,6 @@
 	{
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "ALLOCATE" << std::endl;
-
 			std::cout << "    Connections list : " << std::endl;
 			for(std::vector<Connection>::const_iterator it=connections.begin(); it!=connections.end(); it++)
 			{
@@ -1193,10 +1190,10 @@
 		try
 		{
 			// The input is a list of all the connections, untangle, where the ID -1 is reserved for this pipeline.
-			std::vector<Connection> 	remainingConnections = connections;	// The remaining (not processed) connections.
-			std::vector<int>		requestedInputConnections;		// The number of connections not satisfied for this filter.
-			std::vector<int>		bufferOccupancy;			// The number of filter which will use the buffer as inputs.
-			std::vector<ActionHub>		tmpActions;				// The temporary actions list.
+			std::vector<Connection> remainingConnections = connections;	// The remaining (not processed) connections.
+			std::vector<int>	requestedInputConnections;		// The number of connections not satisfied for this filter.
+			std::vector<int>	bufferOccupancy;			// The number of filter which will use the buffer as inputs.
+			std::vector<ActionHub>	tmpActions;				// The temporary actions list.
 			bool allProcessed = false;
 
 			// Initialize the outputs :
@@ -1210,10 +1207,10 @@
 			{
 				ActionHub hub;
 
-				hub.inputBufferIdx.assign( filtersList[k]->getNumInputPort(), -1);
-				hub.inputArgumentIdx.assign( filtersList[k]->getNumInputPort(), -1);
-				hub.bufferIdx		= -1;
-				hub.filterIdx 		= k;
+				hub.inputBufferIdx.assign(filtersList[k]->getNumInputPort(), -1);
+				hub.inputArgumentIdx.assign(filtersList[k]->getNumInputPort(), -1);
+				hub.bufferIdx = -1;
+				hub.filterIdx = k;
 
 				tmpActions.push_back(hub);
 
@@ -1229,8 +1226,8 @@
 					// Set up the links :
 					const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
 
-					tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= THIS_PIPELINE;
-					tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
+					tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] = THIS_PIPELINE;
+					tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ] = remainingConnections[k].portOut;
 					requestedInputConnections[fid]--;
 
 					// Remove :
@@ -1268,11 +1265,19 @@
 				// 3 - A filter that has the smallest format already allocated (but not available).
 				// 4 - (reserved)
 				// 5 - No decision.
+				enum Decisions
+				{
+					FilterWithSameFormat = 1,
+					FilterWithLargerFormat = 2,
+					FilterWithSmallerFormat = 3,
+					ReservedDecision = 4,
+					NoDecision = 5
+				};
 
 				HdlTextureFormat fmt(0,0,GL_RGB,GL_UNSIGNED_BYTE);	// A format (in case we need to create one).
 				int fIdx = -1;						// The index of the filter chosen.
 				int bIdx = -1;						// The buffer index (if one already exists).
-				int currentDecision = 5;				// No decision.
+				int currentDecision = NoDecision;			// No decision.
 
 				for(unsigned int k=0; k<candidatesIdx.size(); k++)
 				{
@@ -1289,33 +1294,33 @@
 							if(bufferOccupancy[l]==0)
 							{
 								// If the current choice is lower in priority or larger in buffer size :
-								if( currentDecision>1 || ((currentDecision==1) && fmt.getSize()<bufferFormats.formats[l].getSize()) )
+								if( currentDecision>FilterWithSameFormat || ((currentDecision==FilterWithSameFormat) && fmt.getSize()<bufferFormats.formats[l].getSize()) )
 								{
 									fIdx = candidatesIdx[k];
 									bIdx = l;
-									currentDecision = 1;
+									currentDecision = FilterWithSameFormat;
 									fmt = bufferFormats.formats[l];
 								}
 							}
 							else // The buffer is not free :
 							{
 								// If no other choices were made :
-								if(currentDecision>3 || ( (currentDecision==3) && (fmt.getSize()<bufferFormats.formats[l].getSize()) ) )
+								if(currentDecision>FilterWithSmallerFormat || ( (currentDecision==FilterWithSmallerFormat) && (fmt.getSize()<bufferFormats.formats[l].getSize()) ) )
 								{
 									fIdx = candidatesIdx[k];
 									bIdx = -1;
-									currentDecision = 3;
+									currentDecision = FilterWithSmallerFormat;
 									fmt = bufferFormats.formats[l];
 								}
 							}
 						}
 					}
 
-					if(noMatch && currentDecision>=2 && filtersList[ candidatesIdx[k] ]->getSize() > fmt.getSize())
+					if(noMatch && currentDecision>=FilterWithLargerFormat && filtersList[ candidatesIdx[k] ]->getSize() > fmt.getSize())
 					{
 						fIdx = candidatesIdx[k];
 						bIdx = -1;
-						currentDecision = 2;
+						currentDecision = FilterWithLargerFormat;
 						fmt = *filtersList[ candidatesIdx[k] ];
 					}
 				}
@@ -1326,31 +1331,31 @@
 					std::cout << "    Buffer   : " << bIdx << std::endl;
 				#endif
 
-				if(currentDecision>=5)
+				if(currentDecision>=NoDecision)
 					throw Exception("No correct decision was made.", __FILE__, __LINE__, Exception::CoreException);
 
 				// Create the action :
-				if(currentDecision==1)
+				if(currentDecision==FilterWithSameFormat)
 				{
-					tmpActions[ fIdx ].bufferIdx = bIdx;
+					tmpActions[fIdx].bufferIdx = bIdx;
 
 					// Push :
-					actionsList.push_back( tmpActions[ fIdx ] );
+					actionsList.push_back( tmpActions[fIdx] );
 				}
-				else if(currentDecision==2 || currentDecision==3)
+				else if(currentDecision==FilterWithLargerFormat || currentDecision==FilterWithSmallerFormat)
 				{
 					// Create a new buffer :
-					bufferFormats.append( fmt, filtersList[ fIdx ]->getNumOutputPort() );
+					bufferFormats.append( fmt, filtersList[fIdx]->getNumOutputPort() );
 					bufferOccupancy.push_back(0);
 
 					bIdx = bufferFormats.size()-1;
-					tmpActions[ fIdx ].bufferIdx = bIdx;
+					tmpActions[fIdx].bufferIdx = bIdx;
 
 					// Push :
-					actionsList.push_back( tmpActions[ fIdx ] );
+					actionsList.push_back( tmpActions[fIdx] );
 				}
 				else
-					throw Exception("Internal error : Unkown action decision (" + toString(currentDecision) + ").", __FILE__, __LINE__, Exception::CoreException);
+					throw Exception("Internal error : Unkown action decision (ID : " + toString(currentDecision) + ").", __FILE__, __LINE__, Exception::CoreException);
 
 				// Find all the buffers read by the current actions and decrease their occupancy :
 				for(unsigned int k=0; k<actionsList.back().inputBufferIdx.size(); k++)
@@ -1369,8 +1374,8 @@
 					{
 						if(remainingConnections[k].idIn==THIS_PIPELINE)
 						{
-							outputsList[ remainingConnections[k].portIn ].bufferIdx 	= bIdx;
-							outputsList[ remainingConnections[k].portIn ].outputIdx		= remainingConnections[k].portOut;
+							outputsList[ remainingConnections[k].portIn ].bufferIdx = bIdx;
+							outputsList[ remainingConnections[k].portIn ].outputIdx	= remainingConnections[k].portOut;
 
 							bufferOccupancy[bIdx] = std::numeric_limits<int>::max();
 						}
@@ -1379,8 +1384,8 @@
 							// Set up the links :
 							const int fid = filtersGlobalIDsList[remainingConnections[k].idIn];
 
-							tmpActions[fid].inputBufferIdx[ remainingConnections[k].portIn ] 	= bIdx;
-							tmpActions[fid].inputArgumentIdx[ remainingConnections[k].portIn ]	= remainingConnections[k].portOut;
+							tmpActions[fid].inputBufferIdx[remainingConnections[k].portIn] = bIdx;
+							tmpActions[fid].inputArgumentIdx[remainingConnections[k].portIn] = remainingConnections[k].portOut;
 							requestedInputConnections[fid]--;
 
 							// Remove :
@@ -1402,7 +1407,6 @@
 					if(requestedInputConnections[k]==0)
 						noNextStep = false;
 				}
-
 				if(noNextStep && !allProcessed)
 					throw Exception("The pipeline building process is stuck as some elements remains but cannot be integrated as they lack input.", __FILE__, __LINE__, Exception::CoreException);
 			}
@@ -1514,31 +1518,31 @@
 
 		for(unsigned int k=0; k<actionsList.size(); k++)
 		{
-			ActionHub* 	action 	= &actionsList[k];
-			Filter* 	f 	= filtersList[ action->filterIdx ];
-			HdlFBO* 	t 	= currentCell->buffersList[ action->bufferIdx ];
+			ActionHub& 	action 	= actionsList[k];
+			Filter& 	f 	= *filtersList[action.filterIdx];
+			HdlFBO& 	t 	= *currentCell->buffersList[action.bufferIdx];
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "    applying filter : " << f->getFullName() << "..." << std::endl;
+				std::cout << "    applying filter : " << f.getFullName() << "..." << std::endl;
 			#endif
 
-			for(int l=0; l<f->getNumInputPort(); l++)
+			for(int l=0; l<f.getNumInputPort(); l++)
 			{
-				int bufferID 	= action->inputBufferIdx[l];
-				int portID 	= action->inputArgumentIdx[l];
+				int bufferID 	= action.inputBufferIdx[l];
+				int portID 	= action.inputArgumentIdx[l];
 
 				#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 					std::cout << "        conecting buffer " << bufferID << " on port " << portID << std::endl;
 				#endif
 
 				if(bufferID==THIS_PIPELINE)
-					f->setInputForNextRendering(l, inputsList[portID]);
+					f.setInputForNextRendering(l, inputsList[portID]);
 				else
-					f->setInputForNextRendering(l, (*currentCell->buffersList[bufferID])[portID]);
+					f.setInputForNextRendering(l, (*currentCell->buffersList[bufferID])[portID]);
 			}
 
 			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "        Processing using buffer " << action->bufferIdx << "..." << std::endl;
+				std::cout << "        Processing using buffer " << action.bufferIdx << "..." << std::endl;
 			#endif
 
 			if(perfsMonitoring)
@@ -1557,7 +1561,7 @@
 			{
 				try
 				{
-					f->process(*t);
+					f.process(t);
 				}
 				catch(Exception& e)
 				{
@@ -1569,7 +1573,7 @@
 				}
 			}
 			else
-				f->process(*t);
+				f.process(t);
 
 			if(perfsMonitoring)
 			{
@@ -1616,7 +1620,6 @@
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "Pipeline::process - Done for pipeline : " << getFullName() << std::endl;
 		#endif
-
 		firstRun = false;
 	}
 

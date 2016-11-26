@@ -293,7 +293,7 @@
 	void AbstractFilterLayout::disableDepthTesting(void)
 	{
 		depthTesting = false;
-	}
+	}	
 
 // FilterLayout
 	/**
@@ -343,7 +343,7 @@
 	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
 	**/
 	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry)
-	 : 	AbstractComponentLayout(type),  
+	 : 	AbstractComponentLayout(type),
 		ComponentLayout(type),
 		HdlAbstractTextureFormat(fout),
 		AbstractFilterLayout(type, fout)
