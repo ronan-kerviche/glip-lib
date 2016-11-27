@@ -269,7 +269,7 @@ using namespace Glip::CoreGL;
 			attachedShaders[k] = false;
 
 			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-				OPENGL_ERROR_TRACKER("HdlProgram::update", "glDetachShader(program, attachedShaders[" + getGLEnumNameSafe(shaderType) + "])")
+				OPENGL_ERROR_TRACKER("HdlProgram::update", "glDetachShader(program, attachedShaders[" + getGLEnumNameSafe(shader.getType()) + "])")
 			#endif
 		}
 
@@ -277,7 +277,7 @@ using namespace Glip::CoreGL;
 		glAttachShader(program, attachedShaders[k]);
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedShaders[" + getGLEnumNameSafe(shaderType) + "])")
+			OPENGL_ERROR_TRACKER("HdlProgram::update", "glAttachShader(program, attachedShaders[" + getGLEnumNameSafe(shader.getType()) + "])")
 		#endif
 
 		// Link the program

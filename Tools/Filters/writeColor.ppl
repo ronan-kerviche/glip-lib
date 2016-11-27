@@ -12,6 +12,7 @@ SOURCE:WriteColorShader
 	out vec4 	outputTexture;
 	
 	uniform float 	digits = 6.0;			// Number of digits printed.
+	uniform int	opaque = 0;
 	uniform vec2 	charSize = vec2(16.0, 20.0),	// Size of the characters (in pixel)
 			VectorLastLeftPositionFragment;	// Left click to change the position.
 
@@ -36,7 +37,11 @@ SOURCE:WriteColorShader
 				c3 = printNumber(b.r, VectorLastLeftPositionFragment + 2.0*lineHeight, float(digits), charSize),
 				c4 = printNumber(b.g, VectorLastLeftPositionFragment + 1.0*lineHeight, float(digits), charSize),
 				c5 = printNumber(b.b, VectorLastLeftPositionFragment + 0.0*lineHeight, float(digits), charSize);
-			outputTexture.rgb = max(a.rgb/2.0, vec3(1.0, 1.0, 1.0) * max(c1, c2) + vec3(c3, c4, c5));
+			//outputTexture.rgb = max(a.rgb/2.0, vec3(1.0, 1.0, 1.0) * max(c1, c2) + vec3(c3, c4, c5));
+			if(opaque<=0)
+				outputTexture.rgb = max(a.rgb/2.0, vec3(1.0, 1.0, 1.0) * max(c1, c2) + vec3(c3, c4, c5));
+			else
+				outputTexture.rgb = vec3(1.0, 1.0, 1.0) * max(c1, c2) + vec3(c3, c4, c5);
 		}
 		else
 			outputTexture.rgb = a.rgb;
