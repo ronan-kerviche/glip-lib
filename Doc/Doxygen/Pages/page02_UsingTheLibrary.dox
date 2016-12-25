@@ -57,7 +57,7 @@ The previous section was limiting the pipeline to be with a static architecture.
 \code
 	try
 	{
-		HandleOpenGL::init();
+		Glip::HandleOpenGL::init();
 
 		// Create the loader : 
 		Glip::Modules::LayoutLoader layoutLoader;
