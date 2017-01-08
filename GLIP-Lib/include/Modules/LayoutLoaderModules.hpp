@@ -133,7 +133,7 @@ Check if the MODULE is available and can be used.
 
 ### IF_FORMAT_DEFINED
 <blockquote>
-<b>CALL</b>:IF_FORMAT_DEFINED(formatName)<br>
+<b>CALL</b>:IF_FORMAT_DEFINED(formatName [, includeRequiredFormats])<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<i>body</i><br>
 }<br>
@@ -144,6 +144,7 @@ Check if the FORMAT was defined.
 <table class="glipDescrTable">
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
 <tr class="glipDescrRow"><td><i>formatName</i></td> <td>Name of the format to test.</td></tr>
+<tr class="glipDescrRow"><td><i>includeRequiredFormats</i></td> <td>Optional, include the required formats. Either TRUE (default) or FALSE.</td></tr>
 </table>
 
 <b>Body</b> : Cases corresponding to the test : TRUE{...} FALSE{...}.
@@ -282,6 +283,37 @@ Change the size of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>heightNew</i></td> <td>New height.</td></tr>
 </table>
 
+
+### FORMAT_INCREASE_SIZE
+<blockquote>
+<b>CALL</b>:FORMAT_INCREASE_SIZE(nameNew, nameOriginal, increaseDelta)<br>
+</blockquote>
+
+Increase a format size by a scalar (or two), save as a new format. Will prevent to reach a 0x0 texture by ensuring that the size is at least 1 pixel in each dimension.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>increaseDelta</i></td> <td>Increase to be applied, can be splitted into X and Y. It can also be the name of an existing format.</td></tr>
+</table>
+
+
+### FORMAT_DECREASE_SIZE
+<blockquote>
+<b>CALL</b>:FORMAT_DECREASE_SIZE(nameNew, nameOriginal, increaseDelta)<br>
+</blockquote>
+
+Decrease a format size by a scalar (or two), save as a new format. Will prevent to reach a 0x0 texture by ensuring that the size is at least 1 pixel in each dimension.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>increaseDelta</i></td> <td>Decrease delta to be applied, can be splitted into X and Y. It can also be the name of an existing format.</td></tr>
+</table>
+
+
 ### FORMAT_SCALE_SIZE
 <blockquote>
 <b>CALL</b>:FORMAT_SCALE_SIZE(nameNew, nameOriginal, scaleFactor)<br>
@@ -293,8 +325,24 @@ Scale a format by a scalar (or two), save as a new format. Will prevent to reach
 <tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
 <tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
 <tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
-<tr class="glipDescrRow"><td><i>scaleFactor</i></td> <td>Scaling to be applied, can be splitted into X and Y.</td></tr>
+<tr class="glipDescrRow"><td><i>scaleFactor</i></td> <td>Scaling to be applied, can be splitted into X and Y. It can also be the name of an existing format.</td></tr>
 </table>
+
+
+### FORMAT_INVSCALE_SIZE
+<blockquote>
+<b>CALL</b>:FORMAT_INVSCALE_SIZE(nameNew, nameOriginal, scaleFactor)<br>
+</blockquote>
+
+Scale a format by the inverse of a scalar (or two), save as a new format. Will prevent to reach a 0x0 texture by ensuring that the size is at least 1 pixel in each dimension. The results is rounded to the floor.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
+<tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
+<tr class="glipDescrRow"><td><i>scaleFactor</i></td> <td>Inverse scaling to be applied, can be splitted into X and Y. It can also be the name of an existing format.</td></tr>
+</table>
+
 
 ### FORMAT_CHANGE_CHANNELS
 <blockquote>
@@ -310,6 +358,7 @@ Change the channels of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>channelNew</i></td> <td>New channel mode.</td></tr>
 </table>
 
+
 ### FORMAT_CHANGE_DEPTH
 <blockquote>
 <b>CALL</b>:FORMAT_CHANGE_DEPTH(nameNew, nameOriginal, depthNew)<br>
@@ -323,6 +372,7 @@ Change the depth of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
 <tr class="glipDescrRow"><td><i>depthNew</i></td> <td>New depth.</td></tr>
 </table>
+
 
 ### FORMAT_CHANGE_FILTERING
 <blockquote>
@@ -339,6 +389,7 @@ Change the filtering of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>magNew</i></td> <td>New magnification filter.</td></tr>
 </table>
 
+
 ### FORMAT_CHANGE_WRAPPING
 <blockquote>
 <b>CALL</b>:FORMAT_CHANGE_WRAPPING(nameNew, nameOriginal, sNew, tNew)<br>
@@ -354,6 +405,7 @@ Change the wrapping of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>tNew</i></td> <td>New T wrapping parameter.</td></tr>
 </table>
 
+
 ### FORMAT_CHANGE_MIPMAP
 <blockquote>
 <b>CALL</b>:FORMAT_CHANGE_MIPMAP(nameNew, nameOriginal, mNew)<br>
@@ -367,6 +419,7 @@ Change the mipmap level of a format, save as a new format.
 <tr class="glipDescrRow"><td><i>nameOriginal</i></td> <td>Name of the original format.</td></tr>
 <tr class="glipDescrRow"><td><i>mNew</i></td> <td>New maximum mipmap parameter.</td></tr>
 </table>
+
 
 ### FORMAT_MINIMUM_WIDTH
 <blockquote>
@@ -383,6 +436,7 @@ Find the format having the smallest width, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
 
+
 ### FORMAT_MAXIMUM_WIDTH
 <blockquote>
 <b>CALL</b>:FORMAT_MAXIMUM_WIDTH(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
@@ -397,6 +451,7 @@ Find the format having the largest width, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
+
 
 ### FORMAT_MINIMUM_HEIGHT
 <blockquote>
@@ -413,6 +468,7 @@ Find the format having the smallest height, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
 
+
 ### FORMAT_MAXIMUM_HEIGHT
 <blockquote>
 <b>CALL</b>:FORMAT_MAXIMUM_HEIGHT(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
@@ -427,6 +483,7 @@ Find the format having the largest height, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
+
 
 ### FORMAT_MINIMUM_PIXELS
 <blockquote>
@@ -443,6 +500,7 @@ Find the format having the smallest number of pixels, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
 
+
 ### FORMAT_MAXIMUM_PIXELS
 <blockquote>
 <b>CALL</b>:FORMAT_MAXIMUM_PIXELS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
@@ -457,6 +515,7 @@ Find the format having the largest number of pixels, save as a new format.
 <tr class="glipDescrRow"><td><i>nameFormat2</i></td> <td>Name of the second format.</td></tr>
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
+
 
 ### FORMAT_MINIMUM_ELEMENTS
 <blockquote>
@@ -473,6 +532,7 @@ Find the format having the smallest number of elements (pixels times channels co
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
 
+
 ### FORMAT_MAXIMUM_ELEMENTS
 <blockquote>
 <b>CALL</b>:FORMAT_MAXIMUM_ELEMENTS(nameNew, nameFormat1, nameFormat2 [, nameFormat3...])<br>
@@ -488,6 +548,7 @@ Find the format having the largest number of elements (pixels times channels cou
 <tr class="glipDescrRow"><td><i>nameFormat3...</i></td> <td>Other formats.</td></tr>
 </table>
 
+
 ### FORMAT_SMALLER_POWER_OF_TWO
 <blockquote>
 <b>CALL</b>:FORMAT_SMALLER_POWER_OF_TWO(nameNew, nameFormat [, strict])<br>
@@ -501,6 +562,7 @@ Generate a new format clamped to the closest smaller power of 2.
 <tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
 <tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE (default).</td></tr>
 </table>
+
 
 ### FORMAT_LARGER_POWER_OF_TWO
 <blockquote>
@@ -516,6 +578,7 @@ Generate a new format clamped to the closest larger power of 2.
 <tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE (default).</td></tr>
 </table>
 
+
 ### FORMAT_SWAP_DIMENSIONS
 <blockquote>
 <b>CALL</b>:FORMAT_SWAP_DIMENSIONS(nameNew, nameFormat)<br>
@@ -528,6 +591,7 @@ Swap the width and height values, save as a new format.
 <tr class="glipDescrRow"><td><i>nameNew</i></td> <td>Name of the new format.</td></tr>
 <tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
 </table>
+
 
 ### IF_FORMAT_SETTING_MATCH
 <blockquote>
@@ -582,6 +646,7 @@ Override the selection of a required format if another format with higher priori
 <tr class="glipDescrRow"><td><i>remainingArguments</i></td> <td>See REQUIRED_FORMAT arguments.</td></tr>
 </table>
 
+
 ### GENERATE_SAME_SIZE_2D_GRID
 <blockquote>
 <b>CALL</b>:GENERATE_SAME_SIZE_2D_GRID(nameNewGeometry, nameFormat [, normalized])<br>
@@ -596,6 +661,7 @@ Create a 2D grid geometry of the same size as the format in argument (width and 
 <tr class="glipDescrRow"><td><i>normalized</i></td> <td>Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].</td></tr>
 </table>
 
+
 ### GENERATE_SAME_SIZE_3D_GRID
 <blockquote>
 <b>CALL</b>:GENERATE_SAME_SIZE_3D_GRID(nameNewGeometry, nameFormat [, normalized])<br>
@@ -609,6 +675,7 @@ Create a 3D grid geometry of the same size as the format in argument (width, hei
 <tr class="glipDescrRow"><td><i>nameFormat</i></td> <td>Name of the original format.</td></tr>
 <tr class="glipDescrRow"><td><i>normalized</i></td> <td>Either TRUE or FALSE. If enabled, the vertices coordinates will be in the range [0,1].</td></tr>
 </table>
+
 
 ### CHAIN_PIPELINES
 <blockquote>
@@ -626,6 +693,7 @@ Create a pipeline by connecting the pipelines passed in arguments.
 <tr class="glipDescrRow"><td><i>namePipelineLayout3...</i></td> <td>Other pipelines.</td></tr>
 </table>
 
+
 ### FORMAT_TO_CONSTANT
 <blockquote>
 <b>CALL</b>:FORMAT_TO_CONSTANT(formatName [, sourceName])<br>
@@ -638,6 +706,7 @@ Create a SOURCE containing a const ivec2 declaration describing the size of the 
 <tr class="glipDescrRow"><td><i>formatName</i></td> <td>Name of the texture format to be used.</td></tr>
 <tr class="glipDescrRow"><td><i>sourceName</i></td> <td>Name of the source to be created. If not set, the name of the source will be the same as the name of the format.</td></tr>
 </table>
+
 
 ### SINGLE_FILTER_PIPELINE
 <blockquote>
@@ -744,6 +813,7 @@ Load a geometry from a Wavefront file (OBJ).
 <tr class="glipDescrRow"><td><i>strict</i></td> <td>Either TRUE or FALSE. If enabled, the loader will abort upon inding an unknown tag.</td></tr>
 </table>
 
+
 ### LOAD_STL_GEOMETRY
 <blockquote>
 <b>CALL</b>:LOAD_STL_GEOMETRY(filename, geometryName)<br>
@@ -756,7 +826,7 @@ Load a geometry from a StereoLithography file (STL).
 <tr class="glipDescrRow"><td><i>filename</i></td> <td>Name of the file to load</td></tr>
 <tr class="glipDescrRow"><td><i>geometryName</i></td> <td>Name of the new geometry.</td></tr>
 </table>
-	
+
 **/
 		class GLIP_API LayoutLoaderModule
 		{

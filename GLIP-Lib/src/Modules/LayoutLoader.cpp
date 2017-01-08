@@ -116,7 +116,7 @@
 		// Delete all modules if this is a root loader : 
 		if(!isSubLoader)
 		{
-			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+			for(std::map<std::string, LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 				delete it->second;
 		}
 		modules.clear();
@@ -330,8 +330,7 @@
 				const std::string sourceName = parser.elements.back().arguments[0];
 
 				// Get it from the list :
-				std::map<std::string,ShaderSource>::iterator it = sourceList.find(sourceName); 
-				
+				std::map<std::string, ShaderSource>::iterator it = sourceList.find(sourceName); 	
 				if(it==sourceList.end())
 				{
 					it = requiredSourceList.find(sourceName);
@@ -363,8 +362,7 @@
 
 		// Generate the final piece :
 		std::string content;
-		std::map<int,ShaderSource::LineInfo> linesInfo;
-
+		std::map<int, ShaderSource::LineInfo> linesInfo;
 		for(size_t k=0; k<lines.size(); k++)
 		{
 			content += lines[k] + '\n';
@@ -378,7 +376,7 @@
 	{
 		// Test for doubles :
 		#define TEST_FOR_DOUBLES( varName, typeName, type) \
-			for( std::map<std::string, type >::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
+			for(std::map<std::string, type >::iterator it = subLoader.varName.begin(); it!=subLoader.varName.end(); it++ ) \
 			{ \
 				if( varName.find( it->first ) != varName.end() ) \
 					throw Exception("The " + std::string(typeName) +  " \"" + it->first + "\" already exists in current script.", __FILE__, __LINE__, Exception::ClientScriptException); \
@@ -499,27 +497,22 @@
 		preliminaryTests(e, 1, 1, 10, -1, "RequiredFormat");
 
 		// Identify the target :
-		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(e.arguments[0]);
-
+		std::map<std::string, HdlTextureFormat>::iterator it = requiredFormatList.find(e.arguments[0]);
 		if(it==requiredFormatList.end())
 		{
 			// Try in the current format list also :
 			it = formatList.find(e.arguments[0]);
-
 			if(it==formatList.end())
 				throw Exception("The required format \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
-		std::map<std::string,HdlTextureFormat>::iterator it2 = formatList.find(e.name);
-
-		if(it2!=formatList.end())
+		if(formatList.find(e.name)!=formatList.end())
 			throw Exception("A Format Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Check for possible arguments, to modify the texture :
 		// Get the data :
 		int w, h, mipmap = 0;
 		GLenum mode, depth, minFilter, magFilter, sWrap, tWrap;
-
 		if(e.arguments.size()>1)
 		{
 			if(e.arguments[1]=="*")
@@ -636,8 +629,7 @@
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredSource");
 
 		// Identify the target :
-		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(e.arguments[0]);
-
+		std::map<std::string, ShaderSource>::iterator it = requiredSourceList.find(e.arguments[0]);
 		if(it==requiredSourceList.end())
 		{
 			// Try in the current source list also :
@@ -647,9 +639,7 @@
 				throw Exception("The required source \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
-		std::map<std::string,ShaderSource>::iterator it2 = sourceList.find(e.name);
-
-		if(it2!=sourceList.end())
+		if(sourceList.find(e.name)!=sourceList.end())
 			throw Exception("A ShaderSource Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
 			sourceList.insert( std::pair<std::string, ShaderSource>(e.name, it->second) );
@@ -661,8 +651,7 @@
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredGeometry");
 
 		// Identify the target :
-		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(e.arguments[0]);
-
+		std::map<std::string, GeometryModel>::iterator it = requiredGeometryList.find(e.arguments[0]);
 		if(it==requiredGeometryList.end())
 		{
 			// Try in the current geometry list also :
@@ -672,9 +661,7 @@
 				throw Exception("The required geometry \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
-		std::map<std::string,GeometryModel>::iterator it2 = geometryList.find(e.name);
-
-		if(it2!=geometryList.end())
+		if(geometryList.find(e.name)!=geometryList.end())
 			throw Exception("A GeometryModel Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
 			geometryList.insert( std::pair<std::string, GeometryModel>(e.name, it->second) );
@@ -686,8 +673,7 @@
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredPipeline");
 
 		// Identify the target :
-		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(e.arguments[0]);
-
+		std::map<std::string, PipelineLayout>::iterator it = requiredPipelineList.find(e.arguments[0]);
 		if(it==requiredPipelineList.end())
 		{
 			// Try in the current pipeline list also :
@@ -697,9 +683,7 @@
 				throw Exception("The required pipeline \"" + e.arguments[0] + "\" was not found.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		}
 
-		std::map<std::string,PipelineLayout>::iterator it2 = pipelineList.find(e.name);
-
-		if(it2!=pipelineList.end())
+		if(pipelineList.find(e.name)!=pipelineList.end())
 			throw Exception("A PipelineLayout Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
 			pipelineList.insert( std::pair<std::string, PipelineLayout>(e.name, it->second) );
@@ -710,8 +694,7 @@
 		// Find the name of the module : 
 		preliminaryTests(e, 1, -1, -1, 0, "ModuleCall");
 
-		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find( e.name );
-
+		std::map<std::string, LayoutLoaderModule*>::iterator it = modules.find( e.name );
 		if(it==modules.end())
 		{
 			if(!safe)
@@ -908,7 +891,6 @@
 			try
 			{
 				std::string content = e.body;
-
 				std::map<int, ShaderSource::LineInfo> extrasInfo;
 				ShaderSource s = enhanceShaderSource(content, e.sourceName, e.bodyLine);
 
@@ -1150,14 +1132,18 @@
 	{
 		// Preliminary tests :
 		preliminaryTests(e, 1, 1, 2, 0, "FilterLayout");
-		
+
+		// Duplicate test :	
+		if(filterList.find(e.name)!=filterList.end())
+			throw Exception("A Filter Layout with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
+	
 		// Find the format :
-		std::map<std::string,HdlTextureFormat>::iterator format = formatList.find(e.arguments[0]);
+		std::map<std::string, HdlTextureFormat>::iterator format = formatList.find(e.arguments[0]);
 		if(format==formatList.end())
 			throw Exception("No Format with name \"" + e.arguments[0] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Find the shaders, the geometry, the settings : 
-		std::map<GLenum,ShaderSource*> shaders;
+		std::map<GLenum, ShaderSource*> shaders;
 		GeometryModel *geometryPtr = NULL;
 		
 		bool clearingSet = false;
@@ -1172,7 +1158,7 @@
 		// If the fragment source name is provided in the arguments : 
 		if(e.arguments.size()>1)
 		{
-			std::map<std::string,ShaderSource>::iterator fragmentSource = sourceList.find(e.arguments[1]);
+			std::map<std::string, ShaderSource>::iterator fragmentSource = sourceList.find(e.arguments[1]);
 			if(fragmentSource==sourceList.end())
 				throw Exception("No ShaderSource with name \"" + e.arguments[1] + "\" was registered and can be use in Filter \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 			else
@@ -1212,7 +1198,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_VERTEX_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1227,7 +1213,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_FRAGMENT_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1242,7 +1228,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_COMPUTE_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1258,7 +1244,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_TESS_CONTROL_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1273,7 +1259,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_TESS_EVALUATION_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1288,7 +1274,7 @@
 		
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, ShaderSource>::iterator source = sourceList.find(parser.elements[k].arguments[0]);
 						if(source==sourceList.end())
 							throw Exception("No ShaderSource with name \"" + parser.elements[k].arguments[0] + "\" was registered for use as GL_GEOMETRY_SHADER.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1304,7 +1290,7 @@
 
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string,GeometryModel>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, GeometryModel>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
 						if(geometry==geometryList.end())
 							throw Exception("No Geometry with name \"" + parser.elements[k].arguments[0] + "\" was registered.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
@@ -1368,7 +1354,7 @@
 
 		// Construct : 
 		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, shaders, geometryPtr) ) );
-		std::map<std::string,FilterLayout>::iterator filterLayout = filterList.find(e.name);
+		std::map<std::string, FilterLayout>::iterator filterLayout = filterList.find(e.name);
 
 		// Apply the options, if needed : 
 		if(clearingSet)
@@ -1389,13 +1375,17 @@
 		// Main pipeline indirection :
 		if(e.strKeyword==getKeyword(KW_LL_PIPELINE_MAIN))
 		{
+			// Inheritance :
 			if(!e.noArgument)
 			{
 				preliminaryTests(e, 1, 1, 1, 0, "MainPipeline (indirection)");
 
-				// Check : 
-				std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(e.arguments.front());
+				// Duplicate test :	
+				if(pipelineList.find(e.name)!=pipelineList.end())
+					throw Exception("A Pipeline Layout with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
+				// Check : 
+				std::map<std::string, PipelineLayout>::iterator it = pipelineList.find(e.arguments.front());
 				if(it==pipelineList.end())
 					throw Exception("No PipelineLayout with name \"" + e.arguments.front() + "\" was registered and can be use as the Main Pipeline \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 				
@@ -1447,7 +1437,7 @@
 						for(unsigned int k=0; k<parser.elements[inputPorts].arguments.size(); k++)
 							pipeline.setInputPortName(k, parser.elements[inputPorts].arguments[k]);
 					}
-					else
+					else if(pipeline.getNumInputPort()>0) // Do not throw error if there is no inputs to consider ...
 						throw Exception("The pipeline " + e.name + " inheriting from " + it->second.getFullName() + " does not redefine its input port(s).", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 					// Tests inputs : 
@@ -1476,6 +1466,10 @@
 		{
 			// Preliminary tests :
 			preliminaryTests(e, 1, 0, 0, 1, "PipelineLayout");
+
+			// Duplicate test :	
+			if(pipelineList.find(e.name)!=pipelineList.end())
+				throw Exception("A Pipeline Layout with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 			// Load the content of the body :
 			VanillaParser parser(e.body, e.sourceName, e.bodyLine);
@@ -1520,10 +1514,6 @@
 				}
 			}
 
-			// This code was testing the presence of input ports. It was removed to allow for input-less pipeline.
-			//if(inputPorts<0)
-			//	throw Exception("From line " + toString(e.startLine) + " : The InputPorts are not declared for the PipelineLayout \"" + e.name + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
-
 			if(outputPorts<0)
 				throw Exception("The OutputPorts are not declared for the PipelineLayout \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
@@ -1549,8 +1539,8 @@
 				layout.addOutput(parser.elements[outputPorts].arguments[k]);
 
 			// Parse and add the Objects for the PipelineLayout :
-			std::map<std::string,FilterLayout>::iterator	filter;
-			std::map<std::string,PipelineLayout>::iterator	pipeline;
+			std::map<std::string, FilterLayout>::iterator	filter;
+			std::map<std::string, PipelineLayout>::iterator	pipeline;
 
 			for(unsigned int k=0; k<associatedKeywords.size(); k++)
 			{
@@ -1903,7 +1893,7 @@
 
 		clean();
 		// Tell the modules : 
-		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+		for(std::map<std::string, LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 			it->second->beginLoadLayout();
 
 		bool 		isAFile = false;
@@ -1940,13 +1930,13 @@
 			process(content, mainPipelineName, sourceName, startLine);
 
 			// Get the mainPipeline :
-			std::map<std::string,PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
+			std::map<std::string, PipelineLayout>::iterator it = pipelineList.find(mainPipelineName);
 
 			if(it==pipelineList.end())
 				throw Exception("Main pipeline \"" + mainPipelineName + "\" was not found.", sourceName, startLine, Exception::ClientScriptException);
 
 			// Tell the modules : 
-			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+			for(std::map<std::string, LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 				it->second->endLoadLayout();
 
 			return AbstractPipelineLayout(it->second);
@@ -1954,7 +1944,7 @@
 		catch(Exception& e)
 		{
 			// Tell the modules :
-			for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+			for(std::map<std::string, LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 				it->second->endLoadLayout();
 
 			if(isAFile && currentPath.empty())
@@ -2011,8 +2001,7 @@
 	**/
 	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace)
 	{
-		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
-
+		std::map<std::string, HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 		if(it!=requiredFormatList.end())
 		{
 			if(!replace)
@@ -2043,8 +2032,7 @@
 	**/
 	const HdlAbstractTextureFormat& LayoutLoader::getRequiredFormat(const std::string& name) const
 	{
-		std::map<std::string,HdlTextureFormat>::const_iterator it = requiredFormatList.find(name);
-		
+		std::map<std::string, HdlTextureFormat>::const_iterator it = requiredFormatList.find(name);	
 		if(it==requiredFormatList.end())
 			throw Exception("LayoutLoader::getRequiredFormat - Required format \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2059,7 +2047,7 @@
 	**/
 	int LayoutLoader::clearRequiredFormat(const std::string& name)
 	{
-		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
+		std::map<std::string, HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 		if(it!=requiredFormatList.end())
 		{
 			requiredFormatList.erase(it);
@@ -2078,11 +2066,11 @@
 	int LayoutLoader::clearRequiredFormat(bool (*filter)(const std::string&))
 	{
 		int count = 0;
-		for(std::map<std::string,HdlTextureFormat>::iterator it=requiredFormatList.begin(); it!=requiredFormatList.end(); )
+		for(std::map<std::string, HdlTextureFormat>::iterator it=requiredFormatList.begin(); it!=requiredFormatList.end(); )
 		{
 			if(filter(it->first))
 			{	
-				std::map<std::string,HdlTextureFormat>::iterator delIt = it;
+				std::map<std::string, HdlTextureFormat>::iterator delIt = it;
 				it++;
 				requiredFormatList.erase(delIt);
 				count++;
@@ -2105,7 +2093,7 @@
 	**/
 	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
 	{
-		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
+		std::map<std::string, ShaderSource>::iterator it = requiredSourceList.find(name);
 		
 		if(it!=requiredSourceList.end())
 		{
@@ -2137,7 +2125,7 @@
 	**/
 	const ShaderSource& LayoutLoader::getRequiredSource(const std::string& name) const
 	{
-		std::map<std::string,ShaderSource>::const_iterator it = requiredSourceList.find(name);
+		std::map<std::string, ShaderSource>::const_iterator it = requiredSourceList.find(name);
 
 		if(it==requiredSourceList.end())
 			throw Exception("LayoutLoader::getRequiredSource - Required source \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
@@ -2153,7 +2141,7 @@
 	**/
 	int LayoutLoader::clearRequiredSource(const std::string& name)
 	{
-		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
+		std::map<std::string, ShaderSource>::iterator it = requiredSourceList.find(name);
 		if(it!=requiredSourceList.end())
 		{
 			requiredSourceList.erase(it);
@@ -2172,11 +2160,11 @@
 	int LayoutLoader::clearRequiredSource(bool (*filter)(const std::string&))
 	{
 		int count = 0;
-		for(std::map<std::string,ShaderSource>::iterator it=requiredSourceList.begin(); it!=requiredSourceList.end(); )
+		for(std::map<std::string, ShaderSource>::iterator it=requiredSourceList.begin(); it!=requiredSourceList.end(); )
 		{
 			if(filter(it->first))
 			{
-				std::map<std::string,ShaderSource>::iterator delIt = it;
+				std::map<std::string, ShaderSource>::iterator delIt = it;
 				it++;
 				requiredSourceList.erase(delIt);
 				count++;
@@ -2199,8 +2187,7 @@
 	**/
 	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
 	{
-		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
-
+		std::map<std::string, GeometryModel>::iterator it = requiredGeometryList.find(name);
 		if(it!=requiredGeometryList.end())
 		{
 			if(!replace)
@@ -2231,8 +2218,7 @@
 	**/
 	const GeometryModel& LayoutLoader::getRequiredGeometry(const std::string& name) const
 	{
-		std::map<std::string,GeometryModel>::const_iterator it = requiredGeometryList.find(name);
-
+		std::map<std::string, GeometryModel>::const_iterator it = requiredGeometryList.find(name);
 		if(it==requiredGeometryList.end())
 			throw Exception("Layoutoader::getRequiredGeometry - Required geometry \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2266,11 +2252,11 @@
 	int LayoutLoader::clearRequiredGeometry(bool (*filter)(const std::string&))
 	{
 		int count = 0;
-		for(std::map<std::string,GeometryModel>::iterator it=requiredGeometryList.begin(); it!=requiredGeometryList.end(); )
+		for(std::map<std::string, GeometryModel>::iterator it=requiredGeometryList.begin(); it!=requiredGeometryList.end(); )
 		{
 			if(filter(it->first))
 			{
-				std::map<std::string,GeometryModel>::iterator delIt = it;
+				std::map<std::string, GeometryModel>::iterator delIt = it;
 				it++;
 				requiredGeometryList.erase(delIt);
 				count++;
@@ -2293,8 +2279,7 @@
 	**/
 	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace)
 	{
-		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
-
+		std::map<std::string, PipelineLayout>::iterator it = requiredPipelineList.find(name);
 		if(it!=requiredPipelineList.end())
 		{
 			if(!replace)
@@ -2325,8 +2310,7 @@
 	**/
 	const AbstractPipelineLayout& LayoutLoader::getRequiredPipelineLayout(const std::string& name) const
 	{
-		std::map<std::string,PipelineLayout>::const_iterator it = requiredPipelineList.find(name);
-
+		std::map<std::string, PipelineLayout>::const_iterator it = requiredPipelineList.find(name);
 		if(it==requiredPipelineList.end())
 			throw Exception("LayoutLoader::getRequiredipelineLayout - Required pipeline \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2341,7 +2325,7 @@
 	**/
 	int LayoutLoader::clearRequiredPipelineLayout(const std::string& name)
 	{
-		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
+		std::map<std::string, PipelineLayout>::iterator it = requiredPipelineList.find(name);
 		if(it!=requiredPipelineList.end())
 		{
 			requiredPipelineList.erase(it);
@@ -2360,11 +2344,11 @@
 	int LayoutLoader::clearRequiredPipelineLayout(bool (*filter)(const std::string&))
 	{
 		int count = 0;
-		for(std::map<std::string,PipelineLayout>::iterator it=requiredPipelineList.begin(); it!=requiredPipelineList.end(); )
+		for(std::map<std::string, PipelineLayout>::iterator it=requiredPipelineList.begin(); it!=requiredPipelineList.end(); )
 		{
 			if(filter(it->first))
 			{
-				std::map<std::string,PipelineLayout>::iterator delIt = it;
+				std::map<std::string, PipelineLayout>::iterator delIt = it;
 				it++;
 				requiredPipelineList.erase(delIt);
 				count++;
@@ -2576,8 +2560,7 @@
 	**/
 	void LayoutLoader::addModule(LayoutLoaderModule* m, bool replace)
 	{
-		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(m->getName());
-
+		std::map<std::string, LayoutLoaderModule*>::iterator it = modules.find(m->getName());
 		if(it==modules.end())
 			modules.insert( std::pair<std::string, LayoutLoaderModule*>( m->getName(), m ) );
 		else if(it!=modules.end() && replace)
@@ -2597,7 +2580,7 @@
 	**/
 	bool LayoutLoader::hasModule(const LayoutLoaderModule* module) const
 	{
-		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+		for(std::map<std::string, LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
 		{
 			if(it->second==module)
 				return true;
@@ -2624,11 +2607,9 @@
 	**/
 	std::vector<const LayoutLoaderModule*> LayoutLoader::listModules(void) const
 	{
-		std::vector<const LayoutLoaderModule*> modulesList;
-		
-		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+		std::vector<const LayoutLoaderModule*> modulesList;	
+		for(std::map<std::string, LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
 			modulesList.push_back(it->second);
-
 		return modulesList;
 	}
 
@@ -2639,11 +2620,9 @@
 	**/
 	std::vector<LayoutLoaderModule*> LayoutLoader::listModules(void)
 	{
-		std::vector<LayoutLoaderModule*> modulesList;
-		
-		for(std::map<std::string,LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
+		std::vector<LayoutLoaderModule*> modulesList;	
+		for(std::map<std::string, LayoutLoaderModule*>::const_iterator it=modules.begin(); it!=modules.end(); it++)
 			modulesList.push_back(it->second);
-
 		return modulesList;
 	}
 
@@ -2655,10 +2634,8 @@
 	std::vector<std::string> LayoutLoader::listModuleNames(void) const
 	{
 		std::vector<std::string> modulesNamesList;
-
-		for( std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.begin(); it!=modules.end(); it++)
+		for(std::map<std::string, LayoutLoaderModule*>::const_iterator it = modules.begin(); it!=modules.end(); it++)
 			modulesNamesList.push_back( it->first );
-
 		return modulesNamesList;
 	}	
 	
@@ -2670,8 +2647,7 @@
 	**/
 	const LayoutLoaderModule& LayoutLoader::module(const std::string& name) const
 	{
-		std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.find(name);
-
+		std::map<std::string, LayoutLoaderModule*>::const_iterator it = modules.find(name);
 		if(it==modules.end())
 			throw Exception("LayoutLoader::module - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2686,8 +2662,7 @@
 	**/
 	LayoutLoaderModule& LayoutLoader::module(const std::string& name)
 	{
-		std::map<std::string,LayoutLoaderModule*>::const_iterator it = modules.find(name);
-
+		std::map<std::string, LayoutLoaderModule*>::const_iterator it = modules.find(name);
 		if(it==modules.end())
 			throw Exception("LayoutLoader::module - No module with name \"" + name + " is not loaded for LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2703,8 +2678,7 @@
 	const LayoutLoaderModule* LayoutLoader::removeModule(const LayoutLoaderModule* module)
 	{
 		const LayoutLoaderModule* res = NULL;
-
-		for(std::map<std::string,LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
+		for(std::map<std::string, LayoutLoaderModule*>::iterator it=modules.begin(); it!=modules.end(); it++)
 		{
 			if(it->second==module)
 			{
@@ -2712,7 +2686,6 @@
 				res = module;
 			}
 		}
-
 		return res;
 	}
 
@@ -2724,8 +2697,7 @@
 	**/
 	LayoutLoaderModule* LayoutLoader::removeModule(const std::string& name)
 	{
-		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(name);
-
+		std::map<std::string, LayoutLoaderModule*>::iterator it = modules.find(name);
 		if(it==modules.end())
 			throw Exception("LayoutLoader::removeModule - No module with name \"" + name + " is used by this LayoutLoader object.", __FILE__, __LINE__, Exception::ModuleException);
 		else

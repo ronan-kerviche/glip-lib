@@ -449,8 +449,9 @@
 				}
 			}
  
-			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 1, 1,	"DESCRIPTION{Check if the FORMAT was defined.}"
+			LAYOUT_LOADER_MODULE_APPLY( IF_FORMAT_DEFINED, 1, 2, 1,	"DESCRIPTION{Check if the FORMAT was defined.}"
 										"ARGUMENT:formatName{Name of the format to test.}"
+										"ARGUMENT:includeRequiredFormats{Optional, include the required formats. Either TRUE (default) or FALSE.}"
 										"BODY_DESCRIPTION{Cases corresponding to the test : TRUE{...} FALSE{...}.}")
 			{
 				UNUSED_PARAMETER(currentPath)
@@ -473,11 +474,13 @@
 				int	trueCaseStartLine=1,
 					falseCaseStartLine=1;	
 				getCases(body, trueCase, trueCaseStartLine, falseCase, falseCaseStartLine, sourceName, bodyLine);
-				
-				CONST_ITERATOR_TO_FORMAT(it, arguments[0])
+
+				const bool includeRequiredFormats = (arguments.size()<=1) ? true : getBoolean(arguments[1], sourceName, startLine);
+				CONST_ITERATOR_TO_FORMAT(it1, arguments[0])
+				CONST_ITERATOR_TO_REQUIREDFORMAT(it2, arguments[0])
 
 				executionSourceName = sourceName;
-				if(it!=formatList.end())
+				if(VALID_ITERATOR_TO_FORMAT(it1) || (includeRequiredFormats && VALID_ITERATOR_TO_REQUIREDFORMAT(it2)))
 				{
 					executionSource = trueCase;
 					executionStartLine = trueCaseStartLine;
