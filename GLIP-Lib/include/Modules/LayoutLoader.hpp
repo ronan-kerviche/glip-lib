@@ -72,6 +72,7 @@ namespace Glip
 			KW_LL_GRID_3D,
 			KW_LL_CUSTOM_MODEL,
 			KW_LL_STANDARD_QUAD,
+			KW_LL_QUAD,
 			KW_LL_VERTEX,
 			KW_LL_ELEMENT,
 			KW_LL_ADD_PATH,
@@ -257,6 +258,47 @@ Define a model, which can be used as the base drawing in a filter.
 <tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the model.</td></tr>
 <tr class="glipDescrRow"><td><i>type</i></td>				<td>Type of the geometry. Can be GRID_2D, GRID_3D or CUSTOM_MODEL.</td></tr>
 <tr class="glipDescrRow"><td><i>argument_0</i></td>			<td>Argument, depending on the choice of the geometry.</td></tr>
+</table>
+
+#### Geometry List
+<blockquote>
+<b>GEOMETRY</b>:<i>name</i>(<i>geometryName0</i>, <i>geometryName1</i>)
+</blockquote>
+
+Create a geometry list by concatenating the arguments.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>				<td>Name of the model.</td></tr>
+<tr class="glipDescrRow"><td><i>geometryNamek...</i></td>		<td>Names of existing geometries (or required geometries) to be appended.</td></tr>
+</table>
+
+#### Standard Quad
+<blockquote>
+<b>GEOMETRY</b>:<i>name</i>(STANDARD_QUAD)
+</blockquote>
+
+Create a standard quad.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>                           <td>Name of the model.</td></tr>
+</table>
+
+#### Quad
+<blockquote>
+<b>GEOMETRY</b>:<i>name</i>(QUAD, <i>width</i>, <i>height</i>, <i>xCenter</i>, <i>yCenter</i>)
+</blockquote>
+
+Create a quad.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>name</i></td>                           <td>Name of the model.</td></tr>
+<tr class="glipDescrRow"><td><i>width</i></td>                          <td>Width.</td></tr>
+<tr class="glipDescrRow"><td><i>height</i></td>                         <td>Height.</td></tr>
+<tr class="glipDescrRow"><td><i>xCenter</i></td>                        <td>X coordinate of the center.</td></tr>
+<tr class="glipDescrRow"><td><i>yCenter</i></td>                        <td>Y coordinate of the center.</td></tr>
 </table>
 
 #### Grid2D
@@ -791,9 +833,7 @@ catch(Exception& e)
 
 				// Tools :
 				LayoutLoader(const LayoutLoader& master);
-
-				LayoutLoaderKeyword getKeyword(const std::string& str);
-
+	
 				void 	clean(void);
 				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords);
 				bool	fileExists(const std::string& filename, std::string& source, const bool test=false);
@@ -868,6 +908,7 @@ catch(Exception& e)
 				const LayoutLoaderModule* removeModule(const LayoutLoaderModule* module);
 				LayoutLoaderModule* removeModule(const std::string& name);
 
+				static LayoutLoaderKeyword getKeyword(const std::string& str);
 				static const char* getKeyword(LayoutLoaderKeyword k); 
 		};
 

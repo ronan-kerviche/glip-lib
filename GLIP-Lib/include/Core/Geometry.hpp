@@ -58,7 +58,9 @@
 						/// Standard quad, covering the area between (-1,-1) and (1,1).
 						StandardQuad,
 						/// Reversed quad, covering the area between (-1,-1) and (1,1).
-						ReversedQuad, 
+						ReversedQuad,
+						/// Unspecified quad.
+						Quad,
 						/// 2D grid of dots.
 						PointsGrid2D,
 						/// 3D grid of dots.
@@ -200,6 +202,23 @@
 					public :
 						ReversedQuad(void);
 						ReversedQuad(const ReversedQuad& mdl);
+				};
+
+				/**
+				\class Quad
+				\brief Geometry : an unspecified quad.
+				**/
+				class GLIP_API Quad : public GeometryModel
+				{
+					public :
+						const float 	width,
+								height,
+								xCenter,
+								yCenter;
+						Quad(const float& _width, const float& _height, const float& _xCenter, const float& _yCenter);
+						Quad(const Quad& mdl);
+
+						static Quad make(const float& x1, const float& y1, const float& x2, const float& y2);
 				};
 
 				/**

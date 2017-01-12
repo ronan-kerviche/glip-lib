@@ -26,6 +26,7 @@
 	#include <algorithm>
 	#include "Core/Exception.hpp"
 	#include "Modules/LayoutLoader.hpp"
+	#include "Modules/UniformsLoader.hpp"
 	#include "devDebugTools.hpp"
 
 	// Namespaces :
@@ -60,6 +61,7 @@
 										"GRID_3D",
 										"CUSTOM_MODEL",
 										"STANDARD_QUAD",
+										"QUAD",
 										"VERTEX",
 										"ELEMENT",
 										"ADD_PATH",
@@ -134,15 +136,7 @@
 		geometryList.clear();
 		filterList.clear();
 		pipelineList.clear();
-	}
-
-	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
-	{
-		for(int i=0; i<LL_NumKeywords; i++)
-			if(keywords[i]==str) return static_cast<LayoutLoaderKeyword>(i);
-
-		return LL_UnknownKeyword;
-	}
+	}	
 
 	void LayoutLoader::classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords)
 	{
@@ -265,6 +259,8 @@
 			throw Exception(objectName + " does not have a name.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else if((!e.noName || !e.name.empty()) && nameProperty<0)
 			throw Exception(objectName + nameDecorator + " should not have a name.", e.sourceName, e.startLine, Exception::ClientScriptException);
+		if(!e.name.empty() && (LayoutLoader::getKeyword(e.name)!=LL_UnknownKeyword || UniformsLoader::getKeyword(e.name)!=UL_UnknownKeyword))
+			throw Exception(objectName + nameDecorator + " has an illegal name.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		if(maxArguments==0 && !e.arguments.empty())
 			throw Exception(objectName + nameDecorator + " should not have arguments, but it has " + toString(e.arguments.size()) + ".", e.sourceName, e.startLine, Exception::ClientScriptException);
@@ -908,7 +904,7 @@
 	void LayoutLoader::buildGeometry(const VanillaParserSpace::Element& e)
 	{
 		// Preliminary tests :
-		preliminaryTests(e, 1, 1, 4, 0, "Geometry");
+		preliminaryTests(e, 1, 1, -1, 0, "Geometry");
 
 		// Test for duplicata :
 		if(geometryList.find(e.name)!=geometryList.end())
@@ -917,19 +913,47 @@
 		// Find the first argument :
 		if(e.arguments[0]==keywords[KW_LL_STANDARD_QUAD])
 		{
+			if(e.arguments.size()!=1)
+				throw Exception("The model \"" + std::string(keywords[KW_LL_STANDARD_QUAD]) + "\" requires to have exactly 1 argument in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+
 			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::StandardQuad()) ) );
+		}
+		else if(e.arguments[0]==keywords[KW_LL_QUAD])
+		{
+			if(e.arguments.size()!=5)
+				throw Exception("The model \"" + std::string(keywords[KW_LL_QUAD]) + "\" requires to have exactly 5 arguments (included) in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+			
+			float 	width = 0.0,
+				height = 0.0, 
+				xCenter = 0.0,
+				yCenter = 0.0;
+			
+			if(!fromString(e.arguments[1], width) || width<=0.0)
+				throw Exception("Cannot read width for quad geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
+
+			if(!fromString(e.arguments[2], height) || height<=0.0)
+				throw Exception("Cannot read height for quad geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
+
+			if(!fromString(e.arguments[3], xCenter))
+				throw Exception("Cannot read xCenter for quad geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
+		
+			if(!fromString(e.arguments[4], yCenter))
+				throw Exception("Cannot read yCenter for quad geometry \"" + e.name + "\". Token : \"" + e.arguments[4] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
+
+			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::Quad(width, height, xCenter, yCenter)) ) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_GRID_2D])
 		{
 			if(e.arguments.size()!=3)
 				throw Exception("The model \"" + std::string(keywords[KW_LL_GRID_2D]) + "\" requires to have exactly 3 arguments (included) in geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-			int w, h;
+			int 	w = 0,
+				h = 0;
 
-			if(!fromString(e.arguments[1], w))
+			if(!fromString(e.arguments[1], w) || w<=0)
 				throw Exception("Cannot read width for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[1] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
-			if(!fromString(e.arguments[2], h))
+			if(!fromString(e.arguments[2], h) || h<=0)
 				throw Exception("Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
 			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::PointsGrid2D(w,h)) ) );
@@ -1123,8 +1147,30 @@
 				throw m;
 			}
 		}
-		else
-			throw Exception("Unknown geometry argument \"" + e.arguments[0] + "\" (or not supported in current version) in Geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+		else // Link all the geometries in argument :
+		{
+			if(geometryList.find(e.name)!=geometryList.end())
+				throw Exception("A Geometry with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
+
+			if(e.arguments.size()<=1)
+				throw Exception("The model list must have two or more arguments in geometry \"" + e.name + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
+
+			GeometryModelList geometry;
+			for(std::vector<std::string>::const_iterator itArg=e.arguments.begin(); itArg!=e.arguments.end(); itArg++)
+			{
+				// Search for the corresponding geometry :
+				std::map<std::string, GeometryModelList>::const_iterator itGeometry = geometryList.find(*itArg);
+				if(itGeometry==geometryList.end())
+				{
+					itGeometry = requiredGeometryList.find(*itArg);
+					if(itGeometry==requiredGeometryList.end())
+						throw Exception("No geometry model with name \"" + (*itArg) + "\" was registered and can be use in Geometry \"" + e.name + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
+				}
+				// Append :
+				geometry.insert(geometry.end(), itGeometry->second.begin(), itGeometry->second.end());
+			}
+			geometryList.insert(std::pair<std::string, GeometryModelList>(e.name, geometry));
+		}
 	}
 
 	void LayoutLoader::buildFilter(const VanillaParserSpace::Element& e)
@@ -2719,6 +2765,19 @@
 			modules.erase(it);
 			return res;
 		}
+	}
+
+	/**
+	\fn LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
+	\brief Get the keyword symbol from a string.
+	\param str Input string.
+	\returns The corresponding keyword enum or LL_UnknownKeyword if none is found.
+	**/
+	LayoutLoaderKeyword LayoutLoader::getKeyword(const std::string& str)
+	{
+		for(int i=0; i<LL_NumKeywords; i++)
+			if(keywords[i]==str) return static_cast<LayoutLoaderKeyword>(i);
+		return LL_UnknownKeyword;
 	}
 
 	/**

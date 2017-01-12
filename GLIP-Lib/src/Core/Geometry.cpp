@@ -1207,7 +1207,7 @@
 		 : GeometryModel(GeometryModel::StandardQuad, 2, GL_TRIANGLES, false, true)
 		{
 			// Create the geometry :
-			reserveVertices(3);
+			reserveVertices(4);
 			addVertex2D(-1.0, -1.0, 0.0, 0.0, 0.0, 0.0);
 			addVertex2D(-1.0,  1.0, 0.0, 0.0, 0.0, 1.0);
 			addVertex2D( 1.0,  1.0, 0.0, 0.0, 1.0, 1.0);
@@ -1236,7 +1236,7 @@
 		 : GeometryModel(GeometryModel::ReversedQuad, 2, GL_TRIANGLES, false, true)
 		{
 			// Create the geometry :
-			reserveVertices(3);			
+			reserveVertices(4);
 			addVertex2D(-1.0,  1.0, 0.0, 0.0, 0.0, 0.0);
 			addVertex2D( 1.0,  1.0, 0.0, 0.0, 1.0, 0.0);
 			addVertex2D( 1.0, -1.0, 0.0, 0.0, 1.0, 1.0);
@@ -1256,7 +1256,65 @@
 		 : GeometryModel(mdl)
 		{ }
 
-	// 2D Grid of points
+	// Quad :
+		/**
+		\fn Quad::Quad(const float& _width, const float& _height, const float& _xCenter, const float& _yCenter)
+		\brief Quad constructor.
+		\param _width The width.
+		\param _height The height.
+		\param _xCenter The x coordinate of the center.
+		\param _yCenter The y coordinate of the center.
+		**/
+		Quad::Quad(const float& _width, const float& _height, const float& _xCenter, const float& _yCenter)
+		 :	GeometryModel(GeometryModel::Quad, 2, GL_TRIANGLES, false, true),
+			width(_width),
+			height(_height),
+			xCenter(_xCenter),
+			yCenter(_yCenter)
+		{
+			// Create the geometry :
+			const float	x1 = xCenter-width/2.0,
+					y1 = yCenter-height/2.0,
+					x2 = xCenter+width/2.0,
+					y2 = yCenter+height/2.0;
+			reserveVertices(4);
+			addVertex2D(x1, y2, 0.0, 0.0, 0.0, 0.0);
+			addVertex2D(x2, y2, 0.0, 0.0, 1.0, 0.0);
+			addVertex2D(x2, y1, 0.0, 0.0, 1.0, 1.0);
+			addVertex2D(x1, y1, 0.0, 0.0, 0.0, 1.0);
+
+			reserveElements(2);
+			addElement(0, 1, 3);
+			addElement(1, 2, 3);
+		}
+
+		/**
+		\fn Quad::Quad(const Quad& mdl)
+		\brief Copy constructor.
+		\param mdl Original model.
+		**/	
+		Quad::Quad(const Quad& mdl)
+		 : 	GeometryModel(mdl),
+			width(mdl.width),
+			height(mdl.height),
+			xCenter(mdl.xCenter),
+			yCenter(mdl.yCenter)
+		{ }
+
+		/**
+		\fn Quad::make(const float& x1, const float& y1, const float& x2, const float& y2)
+		\brief Quad constructor.
+		\param x1 Corner 1, x coordinate.
+		\param y1 Corner 1, y coordinate.
+		\param x2 Corner 2, x coordinate.
+		\param y2 Corner 2, y coordinate.
+		**/
+		Quad Quad::make(const float& x1, const float& y1, const float& x2, const float& y2)
+		{
+			return Quad(std::abs(x1-x2), std::abs(y1-y2), (x1+x2)/2.0, (y1+y2)/2.0);
+		}
+
+	// 2D Grid of points :
 		/**
 		\fn PointsGrid2D::PointsGrid2D(int w, int h, bool _normalized)
 		\brief PointsGrid2D constructor.
@@ -1300,7 +1358,7 @@
 			normalized(mdl.normalized)
 		{ }
 
-	// 3D Grid of points
+	// 3D Grid of points :
 		/**
 		\fn PointsGrid3D::PointsGrid3D(int w, int h, int d, bool _normalized)
 		\brief PointsGrid3D constructor.

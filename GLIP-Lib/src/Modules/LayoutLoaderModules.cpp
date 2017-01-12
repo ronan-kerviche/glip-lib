@@ -282,6 +282,7 @@
 			result.push_back( new OVERRIDE_REQUIRED_FORMAT );
 			result.push_back( new GENERATE_SAME_SIZE_2D_GRID );
 			result.push_back( new GENERATE_SAME_SIZE_3D_GRID );
+			result.push_back( new GENERATE_TILING );
 			result.push_back( new CHAIN_PIPELINES );
 			result.push_back( new FORMAT_TO_CONSTANT );
 			result.push_back( new SINGLE_FILTER_PIPELINE );
@@ -2057,7 +2058,50 @@
 				APPEND_NEW_GEOMETRY( arguments[0], std::list<GeometryModel>(1, GeometryPrimitives::PointsGrid3D(it->second.getWidth(), it->second.getHeight(), it->second.getNumChannels(), normalized)) )
 			}
 
-			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1,	"DESCRIPTION{Create a pipeline by connecting the pipelines passed in arguments.}\n"
+			LAYOUT_LOADER_MODULE_APPLY( GENERATE_TILING, 3, 3, -1,	"DESCRIPTION{Create a tiling : a list of quad tiles to be rendered successively.}"
+										"ARGUMENT:nameNewGeometry{Name of the new geometry.}"
+										"ARGUMENT:numberX{Number of tiles along the x direction.}"
+										"ARGUMENT:numberY{Number of tiles along the y direction.}")
+			{
+				UNUSED_PARAMETER(body)
+				UNUSED_PARAMETER(currentPath)
+				UNUSED_PARAMETER(dynamicPaths)
+				UNUSED_PARAMETER(sourceList)
+				UNUSED_PARAMETER(formatList)
+				UNUSED_PARAMETER(filterList)
+				UNUSED_PARAMETER(pipelineList)
+				UNUSED_PARAMETER(mainPipelineName)
+				UNUSED_PARAMETER(staticPaths)
+				UNUSED_PARAMETER(requiredFormatList)
+				UNUSED_PARAMETER(requiredSourceList)
+				UNUSED_PARAMETER(requiredGeometryList)
+				UNUSED_PARAMETER(requiredPipelineList)
+				UNUSED_PARAMETER(moduleList)
+				UNUSED_PARAMETER(bodyLine)
+				UNUSED_PARAMETER(executionSource)
+				UNUSED_PARAMETER(executionSourceName)
+				UNUSED_PARAMETER(executionStartLine)
+
+				GEOMETRY_MUST_NOT_EXIST( arguments[0] )
+
+				CAST_ARGUMENT( 1, int, nX)
+				CAST_ARGUMENT( 2, int, nY)
+
+				if(nX<=0 || nY<=0)
+					throw Exception("Invalid number of tiles : " + toString(nX) + "x" + toString(nY) + ".", sourceName, startLine, Exception::ClientScriptException);
+
+				const float 	tileWidth = 2.0f/static_cast<float>(nX),
+						tileHeight = 2.0f/static_cast<float>(nY);
+				std::list<GeometryModel> tiling;
+				for(int i=0; i<nY; i++)
+					for(int j=0; j<nX; j++)
+						tiling.push_back(GeometryPrimitives::Quad(tileWidth, tileHeight, (static_cast<float>(j)+0.5f)*tileWidth-1.0f, (static_cast<float>(i)+0.5f)*tileHeight-1.0f));
+
+				// Build the new geometry : 
+				APPEND_NEW_GEOMETRY( arguments[0], tiling )
+			}
+
+			LAYOUT_LOADER_MODULE_APPLY( CHAIN_PIPELINES, 4, -1, -1,	"DESCRIPTION{Create a pipeline by connecting the pipelines passed in arguments.}"
 										"ARGUMENT:nameNewPipelineLayout{Name of the new pipeline.}"
 										"ARGUMENT:isStrict{Either TRUE or FALSE. If enabled, the pipelines connection are enforced strictly (if outputs of the first pipeline are not equal to the number of input of the second pipeline, then the module will report an error.}"
 										"ARGUMENT:namePipelineLayout1{Name of the first pipeline in the chain.}"

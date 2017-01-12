@@ -287,6 +287,7 @@ Note that each UniformsLoader will index the pipelines by their layout name (see
 				std::string getCode(const std::string& name) const;
 				void writeToFile(const std::string& filename) const;
 
+				static UniformsLoaderKeyword getKeyword(const std::string& str);
 				static const char* getKeyword(UniformsLoaderKeyword k);
 		};
 	}
