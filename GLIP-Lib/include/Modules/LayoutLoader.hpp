@@ -24,6 +24,7 @@
 #ifndef __LAYOUT_LOADER_INCLUDE__
 #define __LAYOUT_LOADER_INCLUDE__
 
+	#include <list>
 	#include <map>
 	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
@@ -757,7 +758,12 @@ catch(Exception& e)
 					std::vector<std::string> 			mainPipelineInputs,	
 											/// List of the output ports for the main pipeline contained in the script.
 											mainPipelineOutputs;	
-				};	
+				};
+
+				/**
+				\brief List of geometry models.
+				**/
+				typedef std::list<GeometryModel> GeometryModelList;
 
 			private :
 				static const char* keywords[LL_NumKeywords];
@@ -771,7 +777,7 @@ catch(Exception& e)
 				std::vector<std::string>			uniqueList;
 				std::map<std::string, HdlTextureFormat> 	formatList;
 				std::map<std::string, ShaderSource> 		sourceList;
-				std::map<std::string, GeometryModel>		geometryList;
+				std::map<std::string, GeometryModelList>	geometryList;
 				std::map<std::string, FilterLayout> 		filterList;
 				std::map<std::string, PipelineLayout> 		pipelineList;
 
@@ -779,7 +785,7 @@ catch(Exception& e)
 				std::vector<std::string>			staticPaths;
 				std::map<std::string, HdlTextureFormat>		requiredFormatList;
 				std::map<std::string, ShaderSource> 		requiredSourceList;
-				std::map<std::string, GeometryModel>		requiredGeometryList;
+				std::map<std::string, GeometryModelList>	requiredGeometryList;
 				std::map<std::string, PipelineLayout>		requiredPipelineList;
 				std::map<std::string, LayoutLoaderModule*>	modules;		// Using pointers to avoid conflict between polymorphism and object slicing.
 
@@ -835,9 +841,10 @@ catch(Exception& e)
 				const ShaderSource& getRequiredSource(const std::string& name) const;
 				int clearRequiredSource(const std::string& name="");
 				int clearRequiredSource(bool (*filter)(const std::string&));
+				void addRequiredElement(const std::string& name, const GeometryModelList& mdl, bool replace=true);
 				void addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace=true);
 				bool hasRequiredGeometry(const std::string& name) const;
-				const GeometryModel& getRequiredGeometry(const std::string& name) const;
+				const GeometryModelList& getRequiredGeometry(const std::string& name) const;
 				int clearRequiredGeometry(const std::string& name="");
 				int clearRequiredGeometry(bool (*filter)(const std::string&));
 				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace=true);
@@ -864,7 +871,7 @@ catch(Exception& e)
 				static const char* getKeyword(LayoutLoaderKeyword k); 
 		};
 
-/**
+/*
 \class LayoutWriter
 \brief Get equivalent pipeline code from a pipeline layout.
 
@@ -877,8 +884,8 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 	// Or directly to the disk : 
 	writer.writeToFile(mainPipeline, "./myPipeline.ppl");
 \endcode
-**/
-		class GLIP_API LayoutWriter
+*/
+		/*class GLIP_API LayoutWriter
 		{
 			public :
 				static VanillaParserSpace::Element write(const HdlAbstractTextureFormat& format, const std::string& name);
@@ -897,7 +904,7 @@ The layout writer enables you to write a pipeline to a Pipeline Script file. Not
 
 				std::string getCode(const AbstractPipelineLayout& pipelineLayout);
 				void writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename);
-		};
+		};*/
 	}
 }
 

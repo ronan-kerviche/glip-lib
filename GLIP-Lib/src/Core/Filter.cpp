@@ -46,7 +46,6 @@
 	AbstractFilterLayout::AbstractFilterLayout(const std::string& type, const HdlAbstractTextureFormat& f)
 	 : 	AbstractComponentLayout(type), 
 		HdlAbstractTextureFormat(f),
-		geometryModel(NULL), 
 		clearing(true),
 		blending(false),
 		depthTesting(false),
@@ -68,7 +67,6 @@
 	AbstractFilterLayout::AbstractFilterLayout(const AbstractFilterLayout& c)
 	 :	AbstractComponentLayout(c), 
 		HdlAbstractTextureFormat(c),
-		geometryModel(NULL), 
 		clearing(c.clearing),
 		blending(c.blending), 
 		depthTesting(c.depthTesting),
@@ -89,23 +87,17 @@
 					shaderSources[k] = new ShaderSource(*c.shaderSources[k]);
 			}
 
-			if(c.geometryModel!=NULL)
-				geometryModel = new GeometryModel(*c.geometryModel);
+			if(!c.geometryModelsList.empty())
+			{
+				for(std::list<GeometryModel>::const_iterator it=c.geometryModelsList.begin(); it!=c.geometryModelsList.end(); it++)
+					geometryModelsList.push_back(*it);
+			}
 			else
-				throw Exception("AbstractFilterLayout::AbstractFilterLayout - geometryModel is NULL for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
+				throw Exception("AbstractFilterLayout::AbstractFilterLayout - No geometry models registered for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 		}
 		catch(Exception& e)
 		{
-			// Clean : 
-			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
-			{
-				delete shaderSources[k];
-				shaderSources[k] = NULL;
-			}
-
-			delete geometryModel;
-			geometryModel	= NULL;
-
+			clean();
 			throw e;
 		}
 		
@@ -113,9 +105,17 @@
 
 	AbstractFilterLayout::~AbstractFilterLayout(void)
 	{
+		clean();
+	}
+
+	void AbstractFilterLayout::clean(void)
+	{
 		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+		{
 			delete shaderSources[k];
-		delete geometryModel;
+			shaderSources[k] = NULL;
+		}
+		geometryModelsList.clear();
 	}
 
 	/**
@@ -130,17 +130,34 @@
 	}
 
 	/**
-	\fn GeometryModel& AbstractFilterLayout::getGeometryModel(void) const
-	\brief Get the GeometryModel used by the filter.
-	\return GeometryModel object reference.
+	\fn unsigned int AbstractFilterLayout::getNumGeometryModels(void) const
+	\brief Get the number of geometry models to be rendered.
+	\return The number of geometry models contained.
 	**/
-	GeometryModel& AbstractFilterLayout::getGeometryModel(void) const
+	unsigned int AbstractFilterLayout::getNumGeometryModels(void) const
 	{
-		if(geometryModel==NULL)
-			throw Exception("FilterLayout::getGeometryModel - The geometry has not been defined yet for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
-
-		return *geometryModel;
+		return geometryModelsList.size();
 	}
+
+	/**
+	\fn std::list<GeometryModel>::const_iterator AbstractFilterLayout::modelsListBegin(void) const
+	\brief Get the beginning iterator of the models list.
+	\return The constant iterator at the beginning of the models list.
+	**/
+	std::list<GeometryModel>::const_iterator AbstractFilterLayout::modelsListBegin(void) const
+	{
+		return geometryModelsList.begin();	
+	}
+
+	/**
+	\fn std::list<GeometryModel>::const_iterator AbstractFilterLayout::modelsListEnd(void) const
+	\brief Get the ending iterator of the models list.
+	\return The constant iterator at the end of the models list.
+	**/
+	std::list<GeometryModel>::const_iterator AbstractFilterLayout::modelsListEnd(void) const
+	{
+		return geometryModelsList.end();
+	}	
 
 	/**
 	\fn bool AbstractFilterLayout::isStandardGeometryModel(void) const
@@ -302,10 +319,10 @@
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
 	\param fragmentSource The ShaderSource of the fragement shader.
-	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
+	\param geometries The list of geometry models to use in this filter (if left empty, the standard quad will be used).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry)
-	 : 	AbstractComponentLayout(type),  
+	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, const std::list<GeometryModel>& geometries)
+	 : 	AbstractComponentLayout(type),
 		ComponentLayout(type),
 		HdlAbstractTextureFormat(fout),
 		AbstractFilterLayout(type, fout)
@@ -322,15 +339,17 @@
 		for(std::vector<std::string>::const_iterator it=varsOut.begin(); it!=varsOut.end(); it++)
 			addOutputPort(*it);
 
-		if(geometry!=NULL)
+		// Add the geometries :
+		if(geometries.empty())
 		{
-			geometryModel = new GeometryModel(*geometry);
-			isStandardGeometry = false;
+			geometryModelsList.push_back(GeometryPrimitives::StandardQuad());
+			isStandardGeometry = true;
 		}
 		else
 		{
-			geometryModel = new GeometryPrimitives::StandardQuad;
-			isStandardGeometry = true;
+			for(std::list<GeometryModel>::const_iterator it=geometries.begin(); it!=geometries.end(); it++)
+				geometryModelsList.push_back(*it);
+			isStandardGeometry = false;
 		}
 	}
 
@@ -340,9 +359,9 @@
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
 	\param sources List of all the sources, map to their respective types (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER), the objects will be copied.
-	\param geometry The geometry model to use in this filter (if left to NULL, the standard quad will be used, otherwise the object will be copied).
+	\param geometries The list of geometry models to use in this filter (if left empty, the standard quad will be used).
 	**/
-	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry)
+	FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, const std::list<GeometryModel>& geometries)
 	 : 	AbstractComponentLayout(type),
 		ComponentLayout(type),
 		HdlAbstractTextureFormat(fout),
@@ -351,7 +370,7 @@
 		if(sources.empty())
 			throw Exception("FilterLayout::FilterLayout - No ShaderSource provided.", __FILE__, __LINE__, Exception::CoreException);
 
-		// Copy the sources, and the find the input/output variables : 
+		// Copy the sources, and the find the input/output variables :
 		std::set<std::string>	varsIn,
 					varsOut;
 		for(std::map<GLenum, ShaderSource*>::const_iterator it=sources.begin(); it!=sources.end(); it++)
@@ -373,16 +392,17 @@
 		for(std::set<std::string>::const_iterator it=varsOut.begin(); it!=varsOut.end(); it++)
 			addOutputPort(*it);
 
-		// Add the geometry : 
-		if(geometry!=NULL)
+		// Add the geometries :
+		if(geometries.empty())
 		{
-			geometryModel = new GeometryModel(*geometry);
-			isStandardGeometry = false;
+			geometryModelsList.push_back(GeometryPrimitives::StandardQuad());
+			isStandardGeometry = true;
 		}
 		else
 		{
-			geometryModel = new GeometryPrimitives::StandardQuad;
-			isStandardGeometry = true;
+			for(std::list<GeometryModel>::const_iterator it=geometries.begin(); it!=geometries.end(); it++)
+				geometryModelsList.push_back(*it);
+			isStandardGeometry = false;
 		}
 	}
 
@@ -398,8 +418,7 @@
 		Component(c, name),
 		HdlAbstractTextureFormat(c), 
 		AbstractFilterLayout(c),
-		prgm(NULL), 
-		geometry(NULL) 
+		prgm(NULL) 
 	{
 		const int 	limInput  = HdlTexture::getMaxImageUnits(),
 				limOutput = HdlFBO::getMaximumColorAttachment();
@@ -419,7 +438,6 @@
 
 		// Build arguments table :
 		arguments.assign(getNumInputPort(), reinterpret_cast<HdlTexture*>(NULL));
-
 		try
 		{
 			// Build the shaders and the program : 
@@ -443,15 +461,7 @@
 		}
 		catch(Exception& e)
 		{
-			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
-			{
-				delete shaders[k];
-				shaders[k] = NULL;
-			}
-
-			delete prgm;
-			prgm = NULL;
-
+			clean();
 			Exception m("Filter::Filter - Caught an exception while creating the shaders for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			m << e;
 			throw m;
@@ -481,22 +491,15 @@
 		}
 		catch(Exception& e)
 		{
-			for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
-			{
-				delete shaders[k];
-				shaders[k] = NULL;
-			}
-
-			delete prgm;
-			prgm = NULL;
-
+			clean();
 			Exception m("Filter::Filter - Caught an exception while editing the samplers for " + getFullName(), __FILE__, __LINE__, Exception::CoreException);
 			m << e;
 			throw m;
 		}
 
-		// Build the geometry :
-		geometry = new GeometryInstance( getGeometryModel(), GL_STATIC_DRAW );
+		// Build the geometries :
+		for(std::list<GeometryModel>::const_iterator it=modelsListBegin(); it!=modelsListEnd(); it++)
+			geometries.push_back(new GeometryInstance(*it, GL_STATIC_DRAW));
 
 		// Finally : 
 		broken = false;
@@ -504,10 +507,21 @@
 
 	Filter::~Filter(void)
 	{
+		clean();
+	}
+
+	void Filter::clean(void)
+	{
 		delete prgm;
+		prgm = NULL;
 		for(unsigned int k=0; k<HandleOpenGL::numShaderTypes; k++)
+		{
 			delete shaders[k];
-		delete geometry;
+			shaders[k] = NULL;
+		}
+		for(std::vector<GeometryInstance*>::iterator it=geometries.begin(); it!=geometries.end(); it++)
+			delete *it;
+		geometries.clear();
 	}
 
 	/**
@@ -537,10 +551,10 @@
 			if(isDepthTestingEnabled() && !renderer.hasDepthBuffer())
 				renderer.addDepthBuffer();
 
-		// Prepare the renderer	
+		// Prepare the renderer :
 			renderer.beginRendering(getNumOutputPort(), isDepthTestingEnabled());
 	
-		// Enable states
+		// Enable states :
 			if(isDepthTestingEnabled())
 			{
 				glEnable(GL_DEPTH_TEST);
@@ -564,16 +578,16 @@
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			}
 
-		// Link the textures
+		// Link the textures :
 			for(int i=0; i<getNumInputPort(); i++)
 				arguments[i]->bind(i);
 
-		// Prepare geometry
+		// Prepare the transform :
 		#ifdef GLIP_USE_GL
 			glLoadIdentity();
 		#endif
 
-		// Load the shader
+		// Load the shader :
 			prgm->use();
 			
 		// Test on first run : 
@@ -593,10 +607,11 @@
 				}
 			}
 
-		// Draw
-			geometry->draw();
+		// Draw :
+			for(std::vector<GeometryInstance*>::iterator it=geometries.begin(); it!=geometries.end(); it++)
+				(*it)->draw();
 
-		// Test on first run ; 
+		// Test on first run :
 			if(firstRun)
 			{
 				const GLenum err = glGetError();
@@ -613,28 +628,27 @@
 				}
 			}
 
-		// Stop using the shader
+		// Stop using the shader :
 			HdlProgram::stopProgram();
 
-		// Remove from stack
+		// Remove from stack :
 			if(isDepthTestingEnabled())
 				glDisable(GL_DEPTH_TEST);
 
 			if(isBlendingEnabled())
 				glDisable(GL_BLEND);
 
-		// Unload
+		// Unload :
 			for(int i=0; i<getNumInputPort(); i++)
 				HdlTexture::unbind(i);
 
-		// End rendering
+		// End rendering :
 			renderer.endRendering();
 
-		// Test on first run ; 
+		// Test on first run : 
 			if(firstRun)
 			{
 				const GLenum err = glGetError();
-
 				if(err!=GL_NO_ERROR)
 				{
 					firstRun 	= false;

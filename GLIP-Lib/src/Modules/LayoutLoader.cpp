@@ -384,7 +384,7 @@
 
 			TEST_FOR_DOUBLES( formatList,		"Format", 		HdlTextureFormat)
 			TEST_FOR_DOUBLES( sourceList,		"ShaderSource", 	ShaderSource)
-			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryModel)
+			TEST_FOR_DOUBLES( geometryList,		"Geometry",		GeometryModelList)
 			TEST_FOR_DOUBLES( filterList,		"FilterLayout", 	FilterLayout)
 			TEST_FOR_DOUBLES( pipelineList,		"PipelineLayout",	PipelineLayout)
 
@@ -651,7 +651,7 @@
 		preliminaryTests(e, 1, 1, 1, -1, "RequiredGeometry");
 
 		// Identify the target :
-		std::map<std::string, GeometryModel>::iterator it = requiredGeometryList.find(e.arguments[0]);
+		std::map<std::string, GeometryModelList>::iterator it = requiredGeometryList.find(e.arguments[0]);
 		if(it==requiredGeometryList.end())
 		{
 			// Try in the current geometry list also :
@@ -664,7 +664,7 @@
 		if(geometryList.find(e.name)!=geometryList.end())
 			throw Exception("A GeometryModel Object with the name \"" + e.name + "\" was already registered.", e.sourceName, e.startLine, Exception::ClientScriptException);
 		else
-			geometryList.insert( std::pair<std::string, GeometryModel>(e.name, it->second) );
+			geometryList.insert( std::pair<std::string, GeometryModelList>(e.name, it->second) );
 	}
 
 	void LayoutLoader::buildRequiredPipeline(const VanillaParserSpace::Element& e)
@@ -917,7 +917,7 @@
 		// Find the first argument :
 		if(e.arguments[0]==keywords[KW_LL_STANDARD_QUAD])
 		{
-			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::StandardQuad() ) );
+			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::StandardQuad()) ) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_GRID_2D])
 		{
@@ -932,7 +932,7 @@
 			if(!fromString(e.arguments[2], h))
 				throw Exception("Cannot read height for 2D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[2] + "\".", __FILE__, __LINE__, Exception::ClientScriptException);
 
-			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid2D(w,h) ) );
+			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::PointsGrid2D(w,h)) ) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_GRID_3D])
 		{
@@ -950,7 +950,7 @@
 			if(!fromString(e.arguments[3], z))
 				throw Exception("Cannot read height for 3D grid geometry \"" + e.name + "\". Token : \"" + e.arguments[3] + "\".", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-			geometryList.insert( std::pair<std::string, GeometryModel>( e.name, GeometryPrimitives::PointsGrid3D(w,h,z)) );
+			geometryList.insert( std::pair<std::string, GeometryModelList>( e.name, GeometryModelList(1, GeometryPrimitives::PointsGrid3D(w,h,z)) ) );
 		}
 		else if(e.arguments[0]==keywords[KW_LL_CUSTOM_MODEL])
 		{
@@ -1112,8 +1112,7 @@
 				if(!g->testIndices())
 					throw Exception("Data parsing failed.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
-				geometryList.insert(std::pair<std::string, GeometryModel>(e.name, *g));
-
+				geometryList.insert(std::pair<std::string, GeometryModelList>(e.name, GeometryModelList(1, *g)));
 				delete g;
 			}
 			catch(Exception& ex)
@@ -1144,7 +1143,7 @@
 
 		// Find the shaders, the geometry, the settings : 
 		std::map<GLenum, ShaderSource*> shaders;
-		GeometryModel *geometryPtr = NULL;
+		std::map<std::string, GeometryModelList>::iterator geometryIt = geometryList.end();
 		
 		bool clearingSet = false;
 			bool enableClearing = false;
@@ -1290,12 +1289,11 @@
 
 						preliminaryTests(parser.elements[k], -1, 1, 1, -1, e.name);
 
-						std::map<std::string, GeometryModel>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
+						std::map<std::string, GeometryModelList>::iterator geometry = geometryList.find(parser.elements[k].arguments[0]);
 						if(geometry==geometryList.end())
 							throw Exception("No Geometry with name \"" + parser.elements[k].arguments[0] + "\" was registered.", parser.elements[k].sourceName, parser.elements[k].startLine, Exception::ClientScriptException);
 						else
-							geometryPtr = &geometry->second;
-		
+							geometryIt = geometry;	
 						setParametersTest[GL_RENDER] = true;
 					}
 					else if(glId==GL_CLEAR)
@@ -1353,7 +1351,7 @@
 		}
 
 		// Construct : 
-		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, shaders, geometryPtr) ) );
+		filterList.insert( std::pair<std::string, FilterLayout>( e.name, FilterLayout(e.name, format->second, shaders, (geometryIt==geometryList.end() ? GeometryModelList() : geometryIt->second)) ) );
 		std::map<std::string, FilterLayout>::iterator filterLayout = filterList.find(e.name);
 
 		// Apply the options, if needed : 
@@ -2176,8 +2174,8 @@
 	}
 	
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
-	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name.
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModelList& mdl, bool replace)
+	\brief Add a GeometryModelList to do the possibly required elements, along with its name.
 
 	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
 
@@ -2185,9 +2183,9 @@
 	\param mdl The element to be associated.
 	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModelList& mdl, bool replace)
 	{
-		std::map<std::string, GeometryModel>::iterator it = requiredGeometryList.find(name);
+		std::map<std::string, GeometryModelList>::iterator it = requiredGeometryList.find(name);
 		if(it!=requiredGeometryList.end())
 		{
 			if(!replace)
@@ -2196,7 +2194,22 @@
 				requiredGeometryList.erase(it);
 		}
 		// Then :
-		requiredGeometryList.insert( std::pair<std::string, GeometryModel>(name, mdl) );
+		requiredGeometryList.insert( std::pair<std::string, GeometryModelList>(name, mdl) );
+	}
+
+	/**
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	\brief Add a GeometryModel to do the possibly required elements, along with its name.
+
+	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
+	
+	\param name The name of the element.
+	\param mdl The element to be associated.
+	\param replace Enable replacement.
+	**/
+	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	{
+		addRequiredElement(name, std::list<GeometryModel>(1, mdl), replace);
 	}
 
 	/**
@@ -2211,14 +2224,14 @@
 	}
 
 	/**
-	\fn const GeometryModel& LayoutLoader::getRequiredGeometry(const std::string& name) const
-	\brief Get the required geometry.
-	\param name Name of the required geometry.
-	\return A constant reference to the corresponding geometry or raise and exception if it does not exist.
+	\fn const GeometryModelList& LayoutLoader::getRequiredGeometry(const std::string& name) const
+	\brief Get the required geometry list.
+	\param name Name of the required geometry list.
+	\return A constant reference to the corresponding geometry list or raise and exception if it does not exist.
 	**/
-	const GeometryModel& LayoutLoader::getRequiredGeometry(const std::string& name) const
+	const LayoutLoader::GeometryModelList& LayoutLoader::getRequiredGeometry(const std::string& name) const
 	{
-		std::map<std::string, GeometryModel>::const_iterator it = requiredGeometryList.find(name);
+		std::map<std::string, GeometryModelList>::const_iterator it = requiredGeometryList.find(name);
 		if(it==requiredGeometryList.end())
 			throw Exception("Layoutoader::getRequiredGeometry - Required geometry \"" + name + "\" does not exist.", __FILE__, __LINE__, Exception::ModuleException);
 		else
@@ -2233,7 +2246,7 @@
 	**/
 	int LayoutLoader::clearRequiredGeometry(const std::string& name)
 	{
-		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
+		std::map<std::string,GeometryModelList>::iterator it = requiredGeometryList.find(name);
 		if(it!=requiredGeometryList.end())
 		{
 			requiredGeometryList.erase(it);
@@ -2252,11 +2265,11 @@
 	int LayoutLoader::clearRequiredGeometry(bool (*filter)(const std::string&))
 	{
 		int count = 0;
-		for(std::map<std::string, GeometryModel>::iterator it=requiredGeometryList.begin(); it!=requiredGeometryList.end(); )
+		for(std::map<std::string, GeometryModelList>::iterator it=requiredGeometryList.begin(); it!=requiredGeometryList.end(); )
 		{
 			if(filter(it->first))
 			{
-				std::map<std::string, GeometryModel>::iterator delIt = it;
+				std::map<std::string, GeometryModelList>::iterator delIt = it;
 				it++;
 				requiredGeometryList.erase(delIt);
 				count++;
@@ -2725,26 +2738,26 @@
 	}
 
 // LayoutWriter 
-	/**
+	/*
 	\fn LayoutWriter::LayoutWriter(void)
 	\brief LayoutWriter constructor.
-	**/
-	LayoutWriter::LayoutWriter(void)
+	*/
+	/*LayoutWriter::LayoutWriter(void)
 	{ }
 
 	LayoutWriter::~LayoutWriter(void)
 	{
 		code.clear();
-	}
+	}*/
 
-	/** 
+	/* 
 	\fn VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& format, const std::string& name)
 	\brief Generate the code element for a particular format.
 	\param format Format object.
 	\param name Name of the object.
 	\return A coded element containing all format data.
-	**/
-	VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& format, const std::string& name)
+	*/
+	/*VanillaParserSpace::Element LayoutWriter::write(const HdlAbstractTextureFormat& format, const std::string& name)
 	{
 		if(name.empty())
 			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_FORMAT )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
@@ -2771,16 +2784,16 @@
 		e.arguments.push_back( toString( format.getMaxLevel() ) );
 
 		return e;
-	}
+	}*/
  
-	/**
+	/*
 	\fn VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	\brief Generate the code element for a particular source.
 	\param source Source object.
 	\param name Name of the source.
 	\return A coded element containing all source data.
-	**/
-	VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
+	*/
+	/*VanillaParserSpace::Element LayoutWriter::write(const ShaderSource& source, const std::string& name)
 	{
 		if(name.empty())
 			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_SOURCE )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
@@ -2794,16 +2807,16 @@
 		e.noArgument	= true;
 
 		return e;
-	}
+	}*/
 
-	/**
+	/*
 	\fn VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
 	\brief Generate the code element for a particular geometry.
 	\param mdl Geometry model object.
 	\param name Name of teh geometry.
 	\return A coded element containing all geometry data.
-	**/
-	VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
+	*/
+	/*VanillaParserSpace::Element LayoutWriter::write(const GeometryModel& mdl, const std::string& name)
 	{
 		if(name.empty())
 			throw Exception("LayoutWriter - Writing " + std::string(LayoutLoader::getKeyword( KW_LL_GEOMETRY )) + " : name cannot be empty.", __FILE__, __LINE__, Exception::ModuleException);
@@ -3121,29 +3134,29 @@
 		}
 
 		return e;
-	}
+	}*/
 
-	/**
+	/*
 	\fn std::string LayoutWriter::getCode(const AbstractPipelineLayout& pipelineLayout)
 	\brief Build the human-readable code for the given AbstractPipelineLayout object.
 	\param pipelineLayout The pipeline layout to convert.
 	\return A standard string containing the full pipeline layout description. 
-	**/
-	std::string LayoutWriter::getCode(const AbstractPipelineLayout& pipelineLayout)
+	*/
+	/*std::string LayoutWriter::getCode(const AbstractPipelineLayout& pipelineLayout)
 	{
 		code.clear();
 		VanillaParserSpace::Element e = write(pipelineLayout, true);
 		code += e.getCode() + "\n";
 		return code;
-	}
+	}*/
 
-	/**
+	/*
 	\fn void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
 	\brief Build the human-readable code for the given AbstractPipelineLayout object and write it to a file. WARNING : it will discard all previous content.
 	\param pipelineLayout The pipeline layout to convert.
 	\param filename The filename to write to (Warning : discard all previous content).
-	**/
-	void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
+	*/
+	/*void LayoutWriter::writeToFile(const AbstractPipelineLayout& pipelineLayout, const std::string& filename)
 	{
 		std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::trunc);
 		if(!file.is_open())
@@ -3151,5 +3164,5 @@
 
 		file << getCode(pipelineLayout);
 		file.close();
-	}
+	}*/
 

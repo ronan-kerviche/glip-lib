@@ -496,7 +496,7 @@
 			throw ex;
 		}	
 
-		APPEND_NEW_GEOMETRY(arguments[1], load(possibleFilenames.front(), strict))
+		APPEND_NEW_GEOMETRY(arguments[1], std::list<GeometryModel>(1, load(possibleFilenames.front(), strict)))
 	}
 
 	/**
@@ -640,7 +640,7 @@
 			throw ex;
 		}	
 
-		APPEND_NEW_GEOMETRY(arguments[1], load(possibleFilenames.front()))
+		APPEND_NEW_GEOMETRY(arguments[1], std::list<GeometryModel>(1, load(possibleFilenames.front())))
 	}
 
 	/**

@@ -25,11 +25,13 @@
 #define __GLIPLIB_FILTER__
 
 	// Includes
+	#include <list>
 	#include <map>
 	#include "devDebugTools.hpp"
 	#include "Core/LibTools.hpp"
         #include "Core/Component.hpp"
         #include "Core/HdlTexture.hpp"
+	#include "Core/Geometry.hpp"
 
 	namespace Glip
 	{
@@ -48,8 +50,8 @@
 			// Prototypes
 			class Pipeline;
 			class FilterLayout;
-			class GeometryModel;
-			class GeometryInstance;
+			//class GeometryModel;
+			//class GeometryInstance;
 
 			// Objects
 			/**
@@ -60,16 +62,19 @@
 			{
 				private :
 					// Data
-					ShaderSource 	*shaderSources[HandleOpenGL::numShaderTypes];
-					GeometryModel	*geometryModel;
-					bool		clearing,
-							blending,
-							depthTesting, 
-							isStandardGeometry;
-					GLenum		sFactor,
-							dFactor,
-							blendingEquation,
-							depthTestingFunction;
+					ShaderSource 			*shaderSources[HandleOpenGL::numShaderTypes];
+					std::list<GeometryModel>	geometryModelsList;
+					bool				clearing,
+									blending,
+									depthTesting, 
+									isStandardGeometry;
+					GLenum				sFactor,
+									dFactor,
+									blendingEquation,
+									depthTestingFunction;
+
+					// Tools	
+					void clean(void);
 
 					// Friends
 					friend class FilterLayout;
@@ -83,7 +88,9 @@
 					AbstractFilterLayout(const AbstractFilterLayout&);
 					virtual ~AbstractFilterLayout(void);
 					const ShaderSource* getShaderSource(GLenum shaderType) const;
-					GeometryModel& getGeometryModel(void) const;
+					unsigned int getNumGeometryModels(void) const;
+					std::list<GeometryModel>::const_iterator modelsListBegin(void) const;
+					std::list<GeometryModel>::const_iterator modelsListEnd(void) const;
 
 					bool isStandardVertexSource(void) const;
 					bool isStandardGeometryModel(void) const;
@@ -114,8 +121,8 @@
 					void scanPorts(void);
 				public :
 					// Tools
-					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry = NULL);
-					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry = NULL);
+					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, const std::list<GeometryModel>& geometries = std::list<GeometryModel>());
+					FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, const std::list<GeometryModel>& geometries = std::list<GeometryModel>());
 			};
 
 			/**
@@ -128,10 +135,13 @@
 					// Data
 					HdlShader  			*shaders[HandleOpenGL::numShaderTypes];
 					HdlProgram 			*prgm;
-					GeometryInstance		*geometry;
+					std::vector<GeometryInstance*>	geometries;
 					bool				firstRun,
 									broken;
 					std::vector<HdlTexture*>	arguments;
+
+					// Tools
+					void clean(void);
 
 				protected :
 					// Tools
