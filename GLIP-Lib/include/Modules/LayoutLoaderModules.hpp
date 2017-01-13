@@ -677,6 +677,21 @@ Create a 3D grid geometry of the same size as the format in argument (width, hei
 </table>
 
 
+### GENERATE_TILING
+<blockquote>
+<b>CALL</b>:GENERATE_TILING(nameNewGeometry, numberX, numberY)<br>
+</blockquote>
+
+Create a tiling : a list of quad tiles to be rendered successively.
+
+<table class="glipDescrTable">
+<tr class="glipDescrHeaderRow"><th class="glipDescrHeaderFirstColumn">Argument</th><th>Description</th></tr>
+<tr class="glipDescrRow"><td><i>nameNewGeometry</i></td> <td>Name of the new geometry.</td></tr>
+<tr class="glipDescrRow"><td><i>numberX</i></td> <td>Number of tiles along the x direction.</td></tr>
+<tr class="glipDescrRow"><td><i>numberY</i></td> <td>Number of tiles along the y direction.</td></tr>
+</table>
+
+
 ### CHAIN_PIPELINES
 <blockquote>
 <b>CALL</b>:CHAIN_PIPELINES(nameNewPipelineLayout, isStrict, namePipelineLayout1, namePipelineLayout2 [, namePipelineLayout3...])<br>

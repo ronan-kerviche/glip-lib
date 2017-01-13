@@ -314,7 +314,7 @@
 
 // FilterLayout
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, GeometryModel* geometry)
+	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const ShaderSource& fragmentSource, const std::list<GeometryModel>& geometries)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
@@ -354,7 +354,7 @@
 	}
 
 	/**
-	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, GeometryModel* geometry)
+	\fn FilterLayout::FilterLayout(const std::string& type, const HdlAbstractTextureFormat& fout, const std::map<GLenum, ShaderSource*>& sources, const std::list<GeometryModel>& geometries)
 	\brief FilterLayout constructor.
 	\param type The typename of the filter layout.
 	\param fout The texture format of all the outputs.
@@ -608,8 +608,14 @@
 			}
 
 		// Draw :
+			int renderingCount = 0;
 			for(std::vector<GeometryInstance*>::iterator it=geometries.begin(); it!=geometries.end(); it++)
+			{
 				(*it)->draw();
+				renderingCount = (renderingCount+1) % 16;
+				if(renderingCount==0)
+					glFinish(); // Wait for all operations to complete in order to appease the watchdog from time to time.
+			}
 
 		// Test on first run :
 			if(firstRun)

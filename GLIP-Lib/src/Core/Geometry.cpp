@@ -1302,7 +1302,7 @@
 		{ }
 
 		/**
-		\fn Quad::make(const float& x1, const float& y1, const float& x2, const float& y2)
+		\fn Quad Quad::make(const float& x1, const float& y1, const float& x2, const float& y2)
 		\brief Quad constructor.
 		\param x1 Corner 1, x coordinate.
 		\param y1 Corner 1, y coordinate.

@@ -1360,7 +1360,7 @@
 	}
 
 	/**
-	\fn LayoutLoaderKeyword UniformLoader::getKeyword(const std::string& str)
+	\fn UniformsLoaderKeyword UniformLoader::getKeyword(const std::string& str)
 	\brief Get the keyword symbol from a string.
 	\param str Input string.
 	\returns The corresponding keyword enum or LL_UnknownKeyword if none is found.
