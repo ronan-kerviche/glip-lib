@@ -26,6 +26,7 @@
 
 	#include <list>
 	#include <map>
+	#include <set>
 	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"
@@ -814,9 +815,9 @@ catch(Exception& e)
 
 				// Reading dynamic :
 				std::string					currentPath;
-				std::vector<std::string>			dynamicPaths;
+				std::set<std::string>				dynamicPaths;
 				std::vector<LayoutLoaderKeyword>		associatedKeyword;
-				std::vector<std::string>			uniqueList;
+				std::set<std::string>				uniqueList;
 				std::map<std::string, HdlTextureFormat> 	formatList;
 				std::map<std::string, ShaderSource> 		sourceList;
 				std::map<std::string, GeometryModelList>	geometryList;
@@ -824,7 +825,7 @@ catch(Exception& e)
 				std::map<std::string, PipelineLayout> 		pipelineList;
 
 				// Static :
-				std::vector<std::string>			staticPaths;
+				std::set<std::string>				staticPaths;
 				std::map<std::string, HdlTextureFormat>		requiredFormatList;
 				std::map<std::string, ShaderSource> 		requiredSourceList;
 				std::map<std::string, GeometryModelList>	requiredGeometryList;
@@ -835,9 +836,10 @@ catch(Exception& e)
 				LayoutLoader(const LayoutLoader& master);
 	
 				void 	clean(void);
-				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords);
-				bool	fileExists(const std::string& filename, std::string& source, const bool test=false);
-				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
+				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords) const;
+				std::pair<std::string, std::string> splitPath(const std::string& filename) const;
+				bool	fileExists(const std::string& filename, std::string& source, const bool test=false) const;
+				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath) const;
 				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
 				ShaderSource enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine=1);
 				void	append(LayoutLoader& subLoader);
@@ -855,7 +857,6 @@ catch(Exception& e)
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
 				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, int startLine=1);
-
 				void	listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs);
 
 			public :

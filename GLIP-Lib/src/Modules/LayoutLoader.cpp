@@ -138,27 +138,29 @@
 		pipelineList.clear();
 	}	
 
-	void LayoutLoader::classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords)
+	void LayoutLoader::classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords) const
 	{
 		associatedKeywords.clear();
-
 		for(std::vector<VanillaParserSpace::Element>::const_iterator it = elements.begin(); it!=elements.end(); it++)
 			associatedKeywords.push_back( getKeyword( (*it).strKeyword ) );
 	}
 
-	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool test)
+	std::pair<std::string, std::string> LayoutLoader::splitPath(const std::string& filename) const
 	{
-		std::ifstream file;
-	
-		file.open(filename.c_str());
+		const size_t section = filename.find_last_of("/");
+		return std::pair<std::string, std::string>(filename.substr(0, section+1), filename.substr(section+1));
+	}
 
+	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool test) const
+	{
+		std::cout << "LayoutLoader::fileExists - Testing : " << filename << std::endl;
+		std::ifstream file;
+		file.open(filename.c_str());
 		if(file.is_open() && file.good() && !file.fail())
 		{
 			std::string 	buffer,	
 					line;
-
 			file.seekg(0, std::ios::beg);
-
 			while(std::getline(file,line))
 			{
 				buffer += line;
@@ -179,28 +181,30 @@
 			return false;
 	}
 
-	void LayoutLoader::loadFile(const std::string& filename, std::string& content, std::string& usedPath)
+	void LayoutLoader::loadFile(const std::string& filename, std::string& content, std::string& usedPath) const
 	{
 		bool oneLoaded = false;
+		const std::pair<std::string, std::string> splittedPath = splitPath(filename);
 		std::string source;
-
-		// Check all path :
 		std::vector<std::string> possiblePaths;
-
-		// Blank :
-		if( fileExists( filename, source, oneLoaded ) )
+		// Blank path :
+		if(fileExists(filename, source, oneLoaded))
 		{
-			possiblePaths.push_back("");
+			possiblePaths.push_back(splittedPath.first);
 			oneLoaded = true;
-		}
-
-		// From dynamic path (which already include static path) :
-		for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+		}	
+		// From dynamic path (which already include static path and currentPath) :
+		for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 		{
-			if( fileExists( *it + filename, source, oneLoaded ) )
+			if(fileExists(*it + filename, source, oneLoaded))
 			{
-				possiblePaths.push_back(*it);
+				possiblePaths.push_back(*it + splittedPath.first);
 				oneLoaded = true;
+			}
+			// Relative :
+			if(!it->empty() && (*it)[0]=='.' && fileExists(currentPath + (*it) + filename, source, oneLoaded))
+			{
+				possiblePaths.push_back(currentPath + *it + splittedPath.first);
 			}
 		}
 
@@ -211,34 +215,29 @@
 			else
 			{			
 				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", "", 1, Exception::ClientScriptException);
-
-				for(std::vector<std::string>::iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 				{
 					if(it->empty())
 						ex << Exception("-> [./]", "", 1, Exception::ClientScriptException);
 					else
 						ex << Exception("-> " + *it, "", 1, Exception::ClientScriptException);
-				}
-				
+				}		
 				throw ex;
 			}
 		}
 		else if(possiblePaths.size()>1)
 		{
 			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different content : ", "", 1, Exception::ClientScriptException);
-
-			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
+			for(std::vector<std::string>::const_iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
 				ex << Exception("-> " + *it, "", 1, Exception::ClientScriptException);
-
 			throw ex;
 		}
-		//else
-
-		usedPath = possiblePaths.front();
-		//std::string realFilename = usedPath + filename;
-		
-		content.clear();
-		content = source;
+		else
+		{
+			usedPath = possiblePaths.front();
+			content.clear();
+			content = source;
+		}
 	}
 
 	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
@@ -397,30 +396,28 @@
 
 		#undef INSERTION
 
-		// Others : 
-		for(std::vector<std::string>::const_iterator it=subLoader.uniqueList.begin(); it!=subLoader.uniqueList.end(); it++)
+		// Others :
+		for(std::vector<std::string>::const_iterator it=subLoader.dynamicPaths.begin(); it!=subLoader.dynamicPaths.end(); it++)
 		{
-			if(std::find(uniqueList.begin(), uniqueList.end(), *it)==uniqueList.end())
-				uniqueList.push_back(*it);
-		}
+			if(std::find(dynamicPaths.begin(), dynamicPaths.end(), *it)==dynamicPaths.end())
+				dynamicPaths.push_back(*it);
+		} 
+		uniqueList.insert(subLoader.uniqueList.begin(), subLoader.uniqueList.end());	
 	}
 
 	void LayoutLoader::appendPath(const VanillaParserSpace::Element& e)
 	{
 		preliminaryTests(e, -1, 1, 1, -1, "AppendPath");
-
 		std::string resultingPath = currentPath + e.arguments[0];
-
-		if( e.arguments[0].empty() )
+		if(e.arguments[0].empty())
 			throw Exception("Path is empty.", e.sourceName, e.startLine, Exception::ClientScriptException);
 
 		// Force delimiter :
-		if( resultingPath[resultingPath.size()-1]!='/' )
+		if(resultingPath[resultingPath.size()-1]!='/')
 			resultingPath.push_back('/');
 
 		// Test if it is already in the dynamic path list :
 		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
-
 		if(it==dynamicPaths.end())
 			dynamicPaths.push_back(resultingPath);
 		// else : ignore.
@@ -440,16 +437,17 @@
 
 		// Load the file :
 		std::string content;
-
+		std::pair<std::string, std::string> splittedPath = splitPath(e.arguments[0]);
 		loadFile(e.arguments[0], content, subLoader.currentPath);
 		std::string filename = subLoader.currentPath + e.arguments[0];
-
+		// Add the loading path :
+		if(!subLoader.currentPath.empty())
+			subLoader.dynamicPaths.push_back(subLoader.currentPath);
 		try
 		{
 			// Build all the elements :
 			std::string dummyMainPipelineName;
 			subLoader.process(content, dummyMainPipelineName, filename);
-
 			// Append :
 			append(subLoader);
 		}
@@ -457,13 +455,13 @@
 		{
 			if(!subLoader.currentPath.empty())
 			{
-				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" (path : \"" + subLoader.currentPath + "\") : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while loading file \"" + splittedPath.second + "\" (path : \"" + subLoader.currentPath + "\") : ", e.sourceName, e.startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
 			else
 			{
-				Exception m("Exception caught while loading file \"" + e.arguments[0] + "\" : ", e.sourceName, e.startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while loading file \"" + splittedPath.second + "\" : ", e.sourceName, e.startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
@@ -474,17 +472,7 @@
 	{
 		// Preliminary tests :
 		preliminaryTests(e, -1, 1, 1, -1, "Unique");
-
-		// Test if the unique qlreqdy exists : 
-		std::vector<std::string>::const_iterator it = std::find(uniqueList.begin(), uniqueList.end(), e.arguments[0]);
-
-		if(it==uniqueList.end())
-		{
-			uniqueList.push_back(e.arguments[0]);
-			return true;
-		}
-		else
-			return false;
+		return uniqueList.insert(e.arguments[0]).second;
 	}
 
 	void LayoutLoader::buildRequiredFormat(const VanillaParserSpace::Element& e)
@@ -747,7 +735,6 @@
 
 				// Copy this path to the inner version :
 				subLoader.dynamicPaths = dynamicPaths;
-
 				try
 				{
 					// Build all the elements :
@@ -1932,6 +1919,7 @@
 	**/
 	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
 	{
+		std::pair<std::string, std::string> splittedPath;
 		if(source.empty())
 			throw Exception("LayoutLoader::operator() - The source is empty.", __FILE__, __LINE__, Exception::ModuleException);
 
@@ -1949,20 +1937,14 @@
 		// Is it a filename or the content :
 		if(source.find('\n')==std::string::npos)
 		{
-			// Split :
-			size_t section = source.find_last_of("/");
-			std::string filename = source.substr(section+1);
-			currentPath = source.substr(0, section+1);
-
+			splittedPath = splitPath(source);
 			// Add to the path :
+			currentPath = splittedPath.first;
 			if(!currentPath.empty())
 				dynamicPaths.push_back(currentPath);
-
-			loadFile(filename, content, currentPath);
-
+			loadFile(splittedPath.second, content, currentPath);
 			if(sourceName.empty())
-				sourceName = currentPath + filename;
-			
+				sourceName = currentPath + splittedPath.second;
 			isAFile = true;
 		}
 		else
@@ -1993,13 +1975,13 @@
 
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + splittedPath.second + "\" : ", sourceName, startLine, Exception::ClientScriptException);
 				m << e;
 				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + splittedPath.second + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
 				m << e;
 				throw m;
 			}
@@ -2460,6 +2442,7 @@
 	**/
 	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)
 	{
+		std::pair<std::string, std::string> splittedPath;
 		PipelineScriptElements result;
 
 		clean();
@@ -2476,20 +2459,14 @@
 		// Is it a filename or the content :
 		if(source.find('\n')==std::string::npos)
 		{
-			// Split :
-			size_t section = source.find_last_of("/");
-			std::string filename = source.substr(section+1);
-			currentPath = source.substr(0, section+1);
-
+			splittedPath = splitPath(source);
 			// Add to the path :
+			currentPath = splittedPath.first;
 			if(!currentPath.empty())
 				dynamicPaths.push_back(currentPath);
-
-			loadFile(filename, content, currentPath);
-	
+			loadFile(splittedPath.second, content, currentPath);
 			if(sourceName.empty())
-				sourceName = currentPath + filename;
-
+				sourceName = currentPath + splittedPath.second;
 			isAFile = true;
 		}
 		else
@@ -2586,13 +2563,13 @@
 		{
 			if(isAFile && currentPath.empty())
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" : ", sourceName, startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + splittedPath.second + "\" : ", sourceName, startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
 			else if(isAFile)
 			{
-				Exception m("Exception caught while processing file \"" + source + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
+				Exception m("Exception caught while processing file \"" + splittedPath.second + "\" (path : \"" + currentPath + "\") : ", sourceName, startLine, Exception::ClientScriptException);
 				m << ex;
 				throw m;
 			}
