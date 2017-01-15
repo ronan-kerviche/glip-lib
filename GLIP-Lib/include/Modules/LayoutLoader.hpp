@@ -863,7 +863,7 @@ catch(Exception& e)
 				LayoutLoader(void);
 				virtual ~LayoutLoader(void);
 
-				const std::vector<std::string>& paths(void) const;
+				const std::set<std::string>& paths(void) const;
 				void clearPaths(void);
 				void addToPaths(std::string p);
 				void addToPaths(const std::vector<std::string>& paths);

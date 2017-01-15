@@ -270,7 +270,7 @@ using namespace QGIC;
 		#endif
 		#ifdef __USE_LIBRAW__
 		else if(QString::compare(path.completeSuffix(), "cr2", Qt::CaseInsensitive)==0 || QString::compare(path.completeSuffix(), "nef", Qt::CaseInsensitive)==0)
-			imageBuffer	= libRawLoadImage(filename.toStdString());
+			imageBuffer	= LibRawInterface::loadImage(filename.toStdString());
 		#endif
 		else
 		{

@@ -442,7 +442,6 @@
 
 	void OBJLoader::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
-		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(formatList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(filterList)
@@ -463,38 +462,19 @@
 		GEOMETRY_MUST_NOT_EXIST(arguments[1])
 
 		bool strict = false;
-
 		if(arguments.size()>=3)
 			strict = LayoutLoaderModule::getBoolean(arguments[2], sourceName, startLine);
-
 		const std::string& filename = arguments[0];
-		std::vector<std::string> possibleFilenames = findFile(filename, dynamicPaths);
+		std::vector<std::string> possibleFilenames = findFile(filename, currentPath, dynamicPaths, true, sourceName, startLine);
 
 		// Show some error : 
-		if(possibleFilenames.empty())
-		{
-			if(dynamicPaths.empty())
-				throw Exception("Unable to load file \"" + filename + "\" from the current location.", sourceName, startLine, Exception::ClientScriptException);
-			else
-			{			
-				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", sourceName, startLine, Exception::ClientScriptException);
-				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
-				{
-					if(it->empty())
-						ex << Exception("-> [./]", sourceName, startLine, Exception::ClientScriptException);
-					else
-						ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
-				}
-				throw ex;
-			}
-		}
-		else if(possibleFilenames.size()>1)
+		/*if(possibleFilenames.size()>1)
 		{
 			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", sourceName, startLine, Exception::ClientScriptException);
 			for(std::vector<std::string>::const_iterator it=possibleFilenames.begin(); it!=possibleFilenames.end(); it++)
 				ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
 			throw ex;
-		}	
+		}*/
 
 		APPEND_NEW_GEOMETRY(arguments[1], std::list<GeometryModel>(1, load(possibleFilenames.front(), strict)))
 	}
@@ -591,7 +571,6 @@
 
 	void STLLoader::apply(LAYOUT_LOADER_ARGUMENTS_LIST)
 	{
-		UNUSED_PARAMETER(currentPath)
 		UNUSED_PARAMETER(formatList)
 		UNUSED_PARAMETER(sourceList)
 		UNUSED_PARAMETER(filterList)
@@ -612,33 +591,16 @@
 		GEOMETRY_MUST_NOT_EXIST(arguments[1])
 
 		const std::string& filename = arguments[0];
-		std::vector<std::string> possibleFilenames = findFile(filename, dynamicPaths);
+		std::vector<std::string> possibleFilenames = findFile(filename, currentPath, dynamicPaths, true, sourceName, startLine);
 
 		// Show some error : 
-		if(possibleFilenames.empty())
-		{
-			if(dynamicPaths.empty())
-				throw Exception("Unable to load file \"" + filename + "\" from the current location.", sourceName, startLine, Exception::ClientScriptException);
-			else
-			{			
-				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", sourceName, startLine, Exception::ClientScriptException);
-				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
-				{
-					if(it->empty())
-						ex << Exception("-> [./]", sourceName, startLine, Exception::ClientScriptException);
-					else
-						ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
-				}
-				throw ex;
-			}
-		}
-		else if(possibleFilenames.size()>1)
+		/*if(possibleFilenames.size()>1)
 		{
 			Exception ex("Ambiguous link : file \"" + filename + "\" was found in multiple locations, with different sources : ", sourceName, startLine, Exception::ClientScriptException);
 			for(std::vector<std::string>::const_iterator it=possibleFilenames.begin(); it!=possibleFilenames.end(); it++)
 				ex << Exception("-> " + *it, sourceName, startLine, Exception::ClientScriptException);
 			throw ex;
-		}	
+		}*/
 
 		APPEND_NEW_GEOMETRY(arguments[1], std::list<GeometryModel>(1, load(possibleFilenames.front())))
 	}

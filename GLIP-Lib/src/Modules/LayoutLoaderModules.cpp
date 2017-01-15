@@ -297,14 +297,14 @@
 		}
 
 		/**
-		\fn bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)
+		\fn bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, const int& line)
 		\brief Convert a keyword to a boolean.
 		\param arg The keyword (expected to be either TRUE or FALSE).
 		\param sourceName Name of the source.
 		\param line Corresponding line number in the source.
 		\return True or false depending on the content of arg or raise an exception if the value is not any of these two symbols.
 		**/
-		bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, int line)
+		bool LayoutLoaderModule::getBoolean(const std::string& arg, const std::string& sourceName, const int& line)
 		{
 			if(arg==LayoutLoader::getKeyword(KW_LL_FALSE))
 				return false;
@@ -315,7 +315,7 @@
 		}
 
 		/**
-		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, int bodyLine)
+		\fn void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, const int& bodyLine)
 		\brief Get true and false cases out of a body.
 	
 		In a if-statement you can write : 
@@ -341,7 +341,7 @@
 		\param sourceName Name of the source.
 		\param bodyLine Line counter start index.
 		**/
-		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, int bodyLine)
+		void LayoutLoaderModule::getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName, const int& bodyLine)
 		{
 			VanillaParser parser(body, sourceName, bodyLine);
 			bool 	trueCaseAlreadySet = false,
@@ -372,41 +372,70 @@
 			}
 		}
 
+		bool fileExists(const std::string& filename)
+		{
+			std::ifstream file;
+			file.open(filename.c_str());
+			if(file.is_open() && file.good() && !file.fail())
+			{
+				file.close();
+				return true;
+			}
+			else
+				return false;
+		}
+
 		/**
-		\fn std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths)
+		\fn std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::string& currentPath, const std::set<std::string>& dynamicPaths, const bool throwException, const std::string& sourceName, const int& line)
 		\brief Find in which path a file can be found.
 		\param filename File name to be searched.
 		\param dynamicPaths List of paths in which to search.
+		\param throwException Throw an exception if no corresponding file is found.
 		\return A list of paths in which the file was found (possibly empty).
 		**/
-		std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths)
+		std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::string& currentPath, const std::set<std::string>& dynamicPaths, const bool& throwException, const std::string& sourceName, const int& line)
 		{
+			// Split :
+			const size_t section = filename.find_last_of("/");
+			const std::string filePath = filename.substr(0, section+1);
+
 			// Check all path :
 			std::vector<std::string> possiblePaths;
 
 			// Blank :
-			{
-				std::ifstream file;
-				file.open(filename.c_str());
-				if(file.is_open() && file.good() && !file.fail())
-					possiblePaths.push_back("");
-				file.close();
-			}
+			if(fileExists(filename))
+				possiblePaths.push_back(filename);
 
 			// From dynamic path (which already include static path) :
-			for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+			for(std::set<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 			{
-				const std::string currentFilename = (*it) + filename;
-				std::ifstream file;
-				file.open(currentFilename.c_str());
-				if(file.is_open() && file.good() && !file.fail())
-					possiblePaths.push_back(*it);
-				file.close();
+				const std::string a = (*it)+filename;
+				if(std::find(possiblePaths.begin(), possiblePaths.end(), a)==possiblePaths.end() && fileExists(a))
+					possiblePaths.push_back(a);
+				const std::string b = currentPath + (*it) + filename;
+				if(!it->empty() && (*it)[0]=='.' && std::find(possiblePaths.begin(), possiblePaths.end(), b)==possiblePaths.end() && fileExists(b))
+					possiblePaths.push_back(b);
 			}
 
-			for(std::vector<std::string>::iterator it=possiblePaths.begin(); it!=possiblePaths.end(); it++)
-				(*it) += filename;
-			return possiblePaths;
+			if(throwException && possiblePaths.empty())
+			{
+				if(dynamicPaths.empty())
+					throw Exception("Unable to load file \"" + filename + "\" from the current location.", sourceName, line, Exception::ClientScriptException);
+				else
+				{
+					Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", sourceName, line, Exception::ClientScriptException);
+					for(std::set<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+					{
+						if(it->empty())
+							ex << Exception("-> [./]", sourceName, line, Exception::ClientScriptException);
+						else
+							ex << Exception("-> " + *it, sourceName, line, Exception::ClientScriptException);
+					}
+					throw ex;
+				}
+			}
+			else
+				return possiblePaths;
 		}
 
 	// Simple modules : 

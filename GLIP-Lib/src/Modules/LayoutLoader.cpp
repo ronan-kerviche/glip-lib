@@ -153,7 +153,6 @@
 
 	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool test) const
 	{
-		std::cout << "LayoutLoader::fileExists - Testing : " << filename << std::endl;
 		std::ifstream file;
 		file.open(filename.c_str());
 		if(file.is_open() && file.good() && !file.fail())
@@ -194,7 +193,7 @@
 			oneLoaded = true;
 		}	
 		// From dynamic path (which already include static path and currentPath) :
-		for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+		for(std::set<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 		{
 			if(fileExists(*it + filename, source, oneLoaded))
 			{
@@ -215,7 +214,7 @@
 			else
 			{			
 				Exception ex("Unable to load file \"" + filename + "\" from the following locations : ", "", 1, Exception::ClientScriptException);
-				for(std::vector<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
+				for(std::set<std::string>::const_iterator it=dynamicPaths.begin(); it!=dynamicPaths.end(); it++)
 				{
 					if(it->empty())
 						ex << Exception("-> [./]", "", 1, Exception::ClientScriptException);
@@ -397,11 +396,7 @@
 		#undef INSERTION
 
 		// Others :
-		for(std::vector<std::string>::const_iterator it=subLoader.dynamicPaths.begin(); it!=subLoader.dynamicPaths.end(); it++)
-		{
-			if(std::find(dynamicPaths.begin(), dynamicPaths.end(), *it)==dynamicPaths.end())
-				dynamicPaths.push_back(*it);
-		} 
+		dynamicPaths.insert(subLoader.dynamicPaths.begin(), subLoader.dynamicPaths.end());
 		uniqueList.insert(subLoader.uniqueList.begin(), subLoader.uniqueList.end());	
 	}
 
@@ -411,16 +406,11 @@
 		std::string resultingPath = currentPath + e.arguments[0];
 		if(e.arguments[0].empty())
 			throw Exception("Path is empty.", e.sourceName, e.startLine, Exception::ClientScriptException);
-
 		// Force delimiter :
 		if(resultingPath[resultingPath.size()-1]!='/')
 			resultingPath.push_back('/');
-
-		// Test if it is already in the dynamic path list :
-		std::vector<std::string>::iterator it = std::find(dynamicPaths.begin(), dynamicPaths.end(), resultingPath);
-		if(it==dynamicPaths.end())
-			dynamicPaths.push_back(resultingPath);
-		// else : ignore.
+		// Test if it is already in the dynamic path list and if not, add it (via sdt::set) :
+		dynamicPaths.insert(resultingPath);
 	}
 
 	void LayoutLoader::includeFile(const VanillaParserSpace::Element& e)
@@ -442,7 +432,7 @@
 		std::string filename = subLoader.currentPath + e.arguments[0];
 		// Add the loading path :
 		if(!subLoader.currentPath.empty())
-			subLoader.dynamicPaths.push_back(subLoader.currentPath);
+			subLoader.dynamicPaths.insert(subLoader.currentPath);
 		try
 		{
 			// Build all the elements :
@@ -1843,11 +1833,11 @@
 	}
 
 	/**
-	\fn const std::vector<std::string>& LayoutLoader::paths(void) const
+	\fn const std::set<std::string>& LayoutLoader::paths(void) const
 	\brief Access the list of paths.
 	\return A read-only access to the list of paths.
 	**/
-	const std::vector<std::string>& LayoutLoader::paths(void) const
+	const std::set<std::string>& LayoutLoader::paths(void) const
 	{
 		return staticPaths;
 	}
@@ -1873,9 +1863,7 @@
 			// Force the folder delimiter : 
 			if(p[p.size()-1]!='/')
 				p.push_back('/');
-
-			removeFromPaths(p);
-			staticPaths.push_back(p);
+			staticPaths.insert(p);
 		}
 	}
 
@@ -1894,19 +1882,15 @@
 	\fn bool LayoutLoader::removeFromPaths(const std::string& p)
 	\brief Remove an entity from the paths.
 	\param p The path to remove.
-	\return True if a path was remove; false otherwise.
+	\return True if a path was removed; false otherwise.
 	**/
 	bool LayoutLoader::removeFromPaths(const std::string& p)
 	{
-		std::vector<std::string>::iterator it = std::find(staticPaths.begin(), staticPaths.end(), p);
-
-		if(it!=staticPaths.end())
-		{
+		std::set<std::string>::iterator it = staticPaths.find(p);
+		const bool test = (it!=staticPaths.find(p));
+		if(test)
 			staticPaths.erase(it);
-			return true;
-		}
-		else
-			return false;
+		return test;
 	}
 
 	/**
@@ -1941,7 +1925,7 @@
 			// Add to the path :
 			currentPath = splittedPath.first;
 			if(!currentPath.empty())
-				dynamicPaths.push_back(currentPath);
+				dynamicPaths.insert(currentPath);
 			loadFile(splittedPath.second, content, currentPath);
 			if(sourceName.empty())
 				sourceName = currentPath + splittedPath.second;
@@ -2463,7 +2447,7 @@
 			// Add to the path :
 			currentPath = splittedPath.first;
 			if(!currentPath.empty())
-				dynamicPaths.push_back(currentPath);
+				dynamicPaths.insert(currentPath);
 			loadFile(splittedPath.second, content, currentPath);
 			if(sourceName.empty())
 				sourceName = currentPath + splittedPath.second;

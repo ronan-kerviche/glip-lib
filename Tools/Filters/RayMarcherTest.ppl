@@ -1,10 +1,10 @@
 INCLUDE(RayMarcherUtils.ppl)
-TEXTURE_FORMAT:outputFormat(1920,1200, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST)
+TEXTURE_FORMAT:outputFormat(1920, 1200, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST)
 CALL:FORMAT_TO_CONSTANT(outputFormat, outputFormatSize)
 
 SOURCE:rayMarcherTestShader
 {
-	#version 330
+	#version 130
 
 	#define RM_USE_ABSORPTION
 	#define RM_USE_SCATTERING
@@ -98,7 +98,14 @@ SOURCE:rayMarcherTestShader
 	}
 }
 
+// If the computation is too heavy to run on the full image, we can tile the rendering with a new geometry :
+CALL:GENERATE_TILING(tiling, 16, 16)
+
 FILTER_LAYOUT:rayMarcherTestFilter(outputFormat, rayMarcherTestShader)
+/*{
+	// To enable tiling :
+	GL_RENDER(tiling)
+}*/
 
 PIPELINE_MAIN:rayMarcherTestPipeline
 {

@@ -25,6 +25,7 @@
 #define __LAYOUT_LOADER_MODULES_INCLUDE__
 
 	#include <vector>
+	#include <set>
 	#include "Core/LibTools.hpp"
 	#include "Core/HdlTexture.hpp"
 	#include "Core/Geometry.hpp"
@@ -902,14 +903,14 @@ Load a geometry from a StereoLithography file (STL).
 				virtual void apply(	const std::vector<std::string>& 			arguments, 
 							const std::string&					body, 
 							const std::string&					currentPath,
-							std::vector<std::string>&				dynamicPaths,
+							std::set<std::string>&					dynamicPaths,
 							std::map<std::string, HdlTextureFormat>& 		formatList,
 							std::map<std::string, ShaderSource>& 			sourceList,
 							std::map<std::string, std::list<GeometryModel> >&	geometryList,
 							std::map<std::string, FilterLayout>& 			filterList,
 							std::map<std::string, PipelineLayout>&			pipelineList,
 							std::string&						mainPipelineName, 
-							const std::vector<std::string>&				staticPaths,
+							const std::set<std::string>&				staticPaths,
 							const std::map<std::string, HdlTextureFormat>&		requiredFormatList,
 							const std::map<std::string, ShaderSource>&		requiredSourceList,
 							const std::map<std::string, std::list<GeometryModel> >&	requiredGeometryList,
@@ -938,9 +939,9 @@ Load a geometry from a StereoLithography file (STL).
 				// Static tools : 
 				static void addBasicModules(LayoutLoader& loader);
 				static std::vector<LayoutLoaderModule*> getBasicModulesList(void);
-				static bool getBoolean(const std::string& arg, const std::string& sourceName="", int line=1);
-				static void getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName="", int bodyLine=1);
-				static std::vector<std::string> findFile(const std::string& filename, const std::vector<std::string>& dynamicPaths);
+				static bool getBoolean(const std::string& arg, const std::string& sourceName="", const int& line=1);
+				static void getCases(const std::string& body, std::string& trueCase, int& trueCaseStartLine, std::string& falseCase, int& falseCaseStartLine, const std::string& sourceName="", const int& bodyLine=1);
+				static std::vector<std::string> findFile(const std::string& filename, const std::string& currentPath, const std::set<std::string>& dynamicPaths, const bool& throwException=false, const std::string& sourceName="", const int& line=1);
 		};
 
 		// Simple MACROS : 
@@ -949,14 +950,14 @@ Load a geometry from a StereoLithography file (STL).
 					const std::vector<std::string>& 						arguments,  \
 					const std::string&								body, \
 					const std::string&								currentPath, \
-					std::vector<std::string>&							dynamicPaths, \
+					std::set<std::string>&								dynamicPaths, \
 					std::map<std::string, Glip::CoreGL::HdlTextureFormat>& 				formatList, \
 					std::map<std::string, Glip::CoreGL::ShaderSource>& 				sourceList, \
 					std::map<std::string, std::list<Glip::CorePipeline::GeometryModel> >&		geometryList, \
 					std::map<std::string, Glip::CorePipeline::FilterLayout>& 			filterList, \
 					std::map<std::string, Glip::CorePipeline::PipelineLayout>&			pipelineList, \
 					std::string&									mainPipelineName, \
-					const std::vector<std::string>&							staticPaths, \
+					const std::set<std::string>&							staticPaths, \
 					const std::map<std::string, Glip::CoreGL::HdlTextureFormat>&			requiredFormatList, \
 					const std::map<std::string, Glip::CoreGL::ShaderSource>&			requiredSourceList, \
 					const std::map<std::string, std::list<Glip::CorePipeline::GeometryModel> >&	requiredGeometryList, \

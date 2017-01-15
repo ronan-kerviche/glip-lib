@@ -13,10 +13,10 @@ SOURCE:vertexShader
 {
 	#version 130
 	out vec3 outN;	// the normal going to the fragment shader.
-	uniform float	ax = 0.0,	// angle x.
-			ay = 0.0,	// angle y.
-			s = 1.0;	// scale.
-	uniform vec3 offset = vec3(0.0);// offset.
+	uniform float	ax = -0.4,			// angle x.
+			ay = 4.0,			// angle y.
+			s = 1.0;			// scale.
+	uniform vec3 offset = vec3(0.0, 0.5, -0.1);	// offset.
 
 	void main()
 	{
