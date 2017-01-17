@@ -389,8 +389,11 @@
 		\fn std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::string& currentPath, const std::set<std::string>& dynamicPaths, const bool throwException, const std::string& sourceName, const int& line)
 		\brief Find in which path a file can be found.
 		\param filename File name to be searched.
+		\param currentPath Current main path.
 		\param dynamicPaths List of paths in which to search.
 		\param throwException Throw an exception if no corresponding file is found.
+		\param sourceName Name of the source.
+		\param line Line index.
 		\return A list of paths in which the file was found (possibly empty).
 		**/
 		std::vector<std::string> LayoutLoaderModule::findFile(const std::string& filename, const std::string& currentPath, const std::set<std::string>& dynamicPaths, const bool& throwException, const std::string& sourceName, const int& line)

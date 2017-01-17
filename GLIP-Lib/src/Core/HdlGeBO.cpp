@@ -26,20 +26,19 @@
 
 using namespace Glip::CoreGL;
 
-// Data
-	bool HdlGeBO::binding[4] = {false, false, false, false};
-	bool HdlGeBO::mapping[4] = {false, false, false, false};
-
-// Functions
+// HdlGeBO :
 	/**
-	\fn HdlGeBO::HdlGeBO(GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage)
+	\fn HdlGeBO::HdlGeBO(const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage)
 	\brief HdlGeBO Construtor.
 	\param _size Size of the buffer, in bytes.
 	\param infoTarget Target kind, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
 	\param infoUsage Usage kind among GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, GL_DYNAMIC_COPY, GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY.
 	**/
-	HdlGeBO::HdlGeBO(GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage)
-	 : size(_size)
+	HdlGeBO::HdlGeBO(const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage)
+	 :	bufferId(0),
+		target(_target),
+		usage(_usage),
+		size(_size)
 	{
 		#ifdef GLIP_USE_GL
 		NEED_EXTENSION(GLEW_VERSION_1_5)
@@ -54,146 +53,148 @@ using namespace Glip::CoreGL;
 		FIX_MISSING_GLEW_CALL(glUnmapBuffer, glUnmapBufferARB)
 		#endif
 
-		// Generate the buffer
+		// Generate the buffer :
 		glGenBuffers(1, &bufferId);
-
 		if(bufferId==0)
 		{
 			GLenum err = glGetError();
 			throw Exception("HdlGeBO::HdlGeBO - Buffer Object can't be created. OpenGL error " + getGLEnumNameSafe(err) + " : " + getGLErrorDescription(err), __FILE__, __LINE__, Exception::GLException);
 		}
 
-		// Bind it
-		glBindBuffer(infoTarget, bufferId);
-
-		// Allocate some space
-		glBufferData(infoTarget, size, NULL, infoUsage);
-
+		// Bind it and allocate some space :
+		bind();
+		glBufferData(target, size, NULL, usage);
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlGeBO::HdlGeBO", "glBufferData()")
 		#endif
 
-		// Release point
-		HdlGeBO::unbind(infoTarget);
-
-		buildTarget = infoTarget;
-		buildUsage  = infoUsage;
-
+		// Release :
+		unbind();
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "HdlGeBO::HdlGeBO - New GeBO : " << getGLErrorDescription(glGetError()) << std::endl;
 		#endif
 	}
 
 	/**
-	\fn HdlGeBO::HdlGeBO(GLuint id, GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage)
+	\fn HdlGeBO::HdlGeBO(const GLuint& id, const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage)
 	\brief HdlGeBO Construtor.
 	\param id GL id of the Buffer Object to be mapped in.
 	\param _size Size of the buffer, in bytes.
-	\param infoTarget Target kind, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
-	\param infoUsage  Usage kind among GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, GL_DYNAMIC_COPY, GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY.
+	\param _target Target kind, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
+	\param _usage  Usage kind among GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, GL_DYNAMIC_COPY, GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY.
 	**/
-	HdlGeBO::HdlGeBO(GLuint id, GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage)
-	 : size(_size)
-	{
-		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cerr << "HdlGeBO::HdlGeBO ERROR : a copy was made" << std::endl;
-		#endif
-
-		// Just copy the link
-		bufferId = id;
-
-		// And data
-		buildTarget = infoTarget;
-		buildUsage  = infoUsage;
-	}
+	HdlGeBO::HdlGeBO(const GLuint& id, const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage)
+	 :	bufferId(id),
+		target(_target),
+		usage(_usage),
+		size(_size)
+	{ }
 
 	HdlGeBO::~HdlGeBO(void)
 	{
 		// Delete the object
 		glDeleteBuffers(1, &bufferId);
-
+		bufferId = 0;
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlGeBO::~HdlGeBO", "glDeleteBuffers()")
 		#endif
 	}
 
 	/**
-	\fn GLsizeiptr HdlGeBO::getSize(void)
+	\fn GLsizeiptr HdlGeBO::getSize(void) const
 	\brief Get the size of the Buffer Object.
 
 	\return Size of the BO in bytes.
 	**/
-	GLsizeiptr HdlGeBO::getSize(void)
+	GLsizeiptr HdlGeBO::getSize(void) const
 	{
 		return size;
 	}
 
 	/**
-	\fn GLuint HdlGeBO::getID(void)
+	\fn GLuint HdlGeBO::getID(void) const
 	\brief Get the ID of the Buffer Object.
 	\return ID of the Buffer Object
 	**/
-	GLuint HdlGeBO::getID(void)
+	GLuint HdlGeBO::getID(void) const
 	{
 		return bufferId;
 	}
 
 	/**
-	\fn GLenum HdlGeBO::getTarget(void)
+	\fn GLenum HdlGeBO::getTarget(void) const
 	\brief Get the target of the Buffer Object.
 	\return Target of the Buffer Object, among : GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
 	**/
-	GLenum HdlGeBO::getTarget(void)
+	GLenum HdlGeBO::getTarget(void) const
 	{
-		return buildTarget;
+		return target;
 	}
 
 	/**
-	\fn GLenum HdlGeBO::getUsage(void)
+	\fn GLenum HdlGeBO::getUsage(void) const
 	\brief Get the usage of the Buffer Object.
 	\return ID of the usage, among : GL_STATIC_DRAW, GL_STATIC_READ, GL_STATIC_COPY, GL_DYNAMIC_DRAW, GL_DYNAMIC_READ, GL_DYNAMIC_COPY, GL_STREAM_DRAW, GL_STREAM_READ, GL_STREAM_COPY.
 	**/
-	GLenum HdlGeBO::getUsage(void)
+	GLenum HdlGeBO::getUsage(void) const
 	{
-		return buildUsage;
+		return usage;
 	}
 
 	/**
-	\fn void HdlGeBO::bind(GLenum target)
+	\fn void HdlGeBO::bind(GLenum tgt)
 	\brief Bind the Buffer Object to target.
+	\param tgt The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER), default is the target specified for this object.
+	**/
+	void HdlGeBO::bind(GLenum tgt)
+	{
+		if(tgt==GL_NONE)
+			tgt = getTarget();
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+		std::cout << "HdlGeBO::bind - Binding " << bufferId << " to " << getGLEnumNameSafe(tgt) << "." << std::endl;
+		#endif
+		glBindBuffer(tgt, bufferId);
+	}
+
+	/**
+	\fn void HdlGeBO::unbind(GLenum tgt)
+	\brief Unbind the Buffer Object from target.
 	\param target The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER), default is the target specified for this object.
 	**/
-	void HdlGeBO::bind(GLenum target)
+	void HdlGeBO::unbind(GLenum tgt)
 	{
-		if(target==GL_NONE) target = getTarget();
-
+		if(tgt==GL_NONE)
+			tgt = getTarget();
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			if(binding[getIDTarget(target)])
-				std::cout << "HdlGeBO::bind - Rebinding over : " << getGLEnumNameSafe(target) << std::endl;
+		std::cout << "HdlGeBO::bind - Unbinding " << bufferId << " from " << getGLEnumNameSafe(tgt) << "." << std::endl;
 		#endif
-
-		glBindBuffer(target, bufferId);
-		binding[getIDTarget(target)] = true;
+		glBindBuffer(tgt, 0);
 	}
 
 	/**
-	\fn void* HdlGeBO::map(GLenum target, GLenum access)
-	\brief Map the Buffer Object into the CPU memory.
+	\fn void* HdlGeBO::map(GLenum access, GLenum tgt)
+	\brief Map the Buffer Object into the host memory.
 	\param access Kind of access, among GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE, default can be used is target is GL_PIXEL_UNPACK_BUFFER or GL_PIXEL_PACK_BUFFER (will use respectively GL_WRITE_ONLY or GL_READ_ONLY). Will raise an exception otherwise.
-	\param target Target mapping point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER, default is the target specified for this object.
-	\return Pointer in CPU memory.
+	\param tgt Target mapping point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER, default is the target specified for this object.
+	\return A pointer in host memory.
 	**/
-	void* HdlGeBO::map(GLenum access, GLenum target)
+	void* HdlGeBO::map(GLenum access, GLenum tgt)
 	{
-		if(target==GL_NONE) target = getTarget();
+		if(tgt==GL_NONE)
+			tgt = getTarget();
 		if(access==GL_NONE)
 		{
-			if(target==GL_PIXEL_UNPACK_BUFFER)
-				access = GL_WRITE_ONLY;
-			else if(target==GL_PIXEL_PACK_BUFFER)
-				access = GL_READ_ONLY;
-			else
-				throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + getGLEnumNameSafe(target), __FILE__, __LINE__, Exception::GLException);
+			switch(tgt)
+			{
+				case GL_PIXEL_UNPACK_BUFFER :
+					access = GL_WRITE_ONLY;
+					break;
+				case GL_PIXEL_PACK_BUFFER :
+					access = GL_READ_ONLY;
+					break;
+				default :
+					throw Exception("HdlGeBO::map - You must provide an acces type (R/W) for target " + getGLEnumNameSafe(tgt), __FILE__, __LINE__, Exception::GLException);
+			}
 		}
 
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
@@ -201,32 +202,44 @@ using namespace Glip::CoreGL;
 			std::cout << "    glDebug : " << std::endl;
 			debugGL();
 		#endif
-
-		HdlGeBO::unmap(target);
-
+		glUnmapBuffer(tgt);
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Unmap - target : " << getGLEnumNameSafe(target) << " access : " << getGLEnumNameSafe(access) << " : " << getGLErrorDescription(glGetError()) << std::endl;
+			std::cout << "    Unmap - target : " << getGLEnumNameSafe(tgt) << " access : " << getGLEnumNameSafe(access) << " : " << getGLErrorDescription(glGetError()) << std::endl;
 		#endif
-
-		bind(target);
-
+		bind(tgt);
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
 			std::cout << "    Bind : " << getGLErrorDescription(glGetError()) << std::endl;
 			std::cout << "HdlGeBO::map - Done." << std::endl;
 		#endif
 
-		mapping[getIDTarget(target)] = true;
 		#ifdef GLIP_USE_GL
-			void* ptr = glMapBuffer(target, access);
+			void* ptr = glMapBuffer(tgt, access);
 		#else
-			void* ptr = glMapBufferRange(target, 0, 0, access);
+			void* ptr = glMapBufferRange(tgt, 0, 0, access);
 		#endif
 
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlGeBO::map", "glMapBuffer()")
 		#endif
-
 		return ptr;
+	}
+
+	/**
+	\fn void HdlGeBO::unmap(GLenum tgt=GL_NONE)
+	\brief Map the Buffer Object into the host memory.
+	\param tgt Target mapping point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER, default is the target specified for this object.
+	**/
+	void HdlGeBO::unmap(GLenum tgt)
+	{
+		if(tgt==GL_NONE)
+			tgt = getTarget();
+		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
+			std::cout << "HdlGeBO::unmap : Unmapping buffer " << getID() << " from " << getGLEnumNameSafe(tgt) << std::endl;
+		#endif
+		glUnmapBuffer(tgt);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::unmap", "glUnmapBuffer()")
+		#endif
 	}
 
 	/**
@@ -264,8 +277,30 @@ using namespace Glip::CoreGL;
 	}
 
 
-// Static tools
-	int HdlGeBO::getIDTarget(GLenum target)
+// Static tools :
+	void HdlGeBO::unbindAll()
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::unbindall", "glBindBuffer()")
+		#endif
+	}
+
+	void HdlGeBO::unmapAll()
+	{
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::unbindall", "glBindBuffer()")
+		#endif
+	}
+
+	/*int HdlGeBO::getIDTarget(GLenum target)
 	{
 		switch(target)
 		{
@@ -278,22 +313,22 @@ using namespace Glip::CoreGL;
 		}
 	}
 
-	/**
+	**
 	\fn void HdlGeBO::unbind(GLenum target)
 	\brief Unbind any Buffer Object.
 	\param target Target binding point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
-	**/
+	**
 	void HdlGeBO::unbind(GLenum target)
 	{
 		glBindBuffer(target, 0);
 		binding[getIDTarget(target)] = false;
 	}
 
-	/**
+	**
 	\fn void HdlGeBO::unmap(GLenum target)
 	\brief Unmap any Buffer Object.
 	\param target Target binding point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
-	**/
+	**
 	void HdlGeBO::unmap(GLenum target)
 	{
 		if(isMapped(target))
@@ -315,25 +350,25 @@ using namespace Glip::CoreGL;
 		}
 	}
 
-	/**
-	\fn bool HdlGeBO::isBound(GLenum target)
+	**
+	\fn bool HdlGeBO::isBound(GLenum tgt)
 	\brief Test if the target is bound.
-	\param target The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
+	\param tgt The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
 	\return true if the target is bound.
-	**/
+	**
 	bool HdlGeBO::isBound(GLenum target)
 	{
 		return binding[getIDTarget(target)];
 	}
 
-	/**
+	**
 	\fn bool HdlGeBO::isMapped(GLenum target)
 	\brief Test if the target is mapped.
 	\param target The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
 	\return true if the target is mapped.
-	**/
+	**
 	bool HdlGeBO::isMapped(GLenum target)
 	{
 		return mapping[getIDTarget(target)];
-	}
+	}*/
 

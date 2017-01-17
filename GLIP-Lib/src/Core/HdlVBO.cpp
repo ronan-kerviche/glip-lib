@@ -162,8 +162,11 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlVBO::unbind(void)
 	{
-		HdlGeBO::unbind(GL_ARRAY_BUFFER);
-		HdlGeBO::unbind(GL_ELEMENT_ARRAY_BUFFER);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlVBO::unbind", "glBindBuffer()")
+		#endif
 	}
 
 	/**
@@ -172,7 +175,10 @@ using namespace Glip::CoreGL;
 	**/
 	void HdlVBO::unmap(void)
 	{
-		HdlGeBO::unmap(GL_ARRAY_BUFFER);
-		HdlGeBO::unmap(GL_ELEMENT_ARRAY_BUFFER);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlVBO::unmap", "glUnmapBuffer()")
+		#endif
 	}
 

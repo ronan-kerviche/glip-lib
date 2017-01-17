@@ -58,21 +58,33 @@ How to use a PBO to upload data to a texture :
 	HdlPBO pbo(fmt, GL_PIXEL_UNPACK_BUFFER_ARB, GL_STREAM_DRAW_ARB);
 
 	unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo.map());
-
-	memcpy(ptr, yourBuffer, fmt.getNumPixels()*fmt.getNumChannels());
-
-	HdlPBO::unmap(GL_PIXEL_UNPACK_BUFFER_ARB);
-
-	pbo.copyToTexture(someTexture);
+	memcpy(ptr, yourBuffer, fmt.getSize());
+	pbo.unmap();
+	pbo.writeTexture(someTexture);
 \endcode
 
-For reading operations, use Glip::Modules::PBOTextureReader.
+For reading operations, use :
+\code
+	HdlTextureFormat fmt(...);
+	HdlTexture someTexture(fmt);
+
+	HdlPBO pbo(fmt, GL_PIXEL_PACK_BUFFER_ARB, GL_STREAM_READ_ARB);
+
+	pbo.readTexture(someTexture);
+	unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo.map());
+	memcpy(yourBuffer, ptr, fmt.getSize());
+	pbo.unmap();
+\endcode
 **/
 			class GLIP_API HdlPBO : public HdlGeBO
 			{
 				private :
 					// Data
-					int w, h, c, cs;
+					int 	width,
+						height,
+						channelCount,
+						channelSize,
+						alignment;
 
 					// No copy :
 					HdlPBO(const HdlPBO&);
@@ -80,21 +92,21 @@ For reading operations, use Glip::Modules::PBOTextureReader.
 
 				public :
 					// Tools
-					HdlPBO(int _w, int _h, int _c, int _cs, GLenum aim, GLenum freq, int size=-1);
+					HdlPBO(const int& _width, const int& _height, const int& _channelCount, const int& _channelSize, const GLenum& aim, const GLenum& freq, const int& _alignment=1);
 					HdlPBO(const HdlAbstractTextureFormat& fmt, GLenum aim, GLenum freq);
 					~HdlPBO(void);
 
-					int  getWidth(void);
-					int  getHeight(void);
-					int  getChannelCount(void);
-					int  getChannelSize(void);
-					void copyToTexture(HdlTexture& texture, int oX=0, int oY=0, int w=-1, int h=-1, GLenum mode=GL_NONE, GLenum depth=GL_NONE);
-					void bindAsPack(void);
-					void bindAsUnpack(void);
+					int  getWidth(void) const;
+					int  getHeight(void) const;
+					int  getChannelCount(void) const;
+					int  getChannelSize(void) const;
+					void writeTexture(HdlTexture& texture, int oX=0, int oY=0, int w=-1, int h=-1, GLenum mode=GL_NONE, GLenum depth=GL_NONE);
+					void readTexture(HdlTexture& texture);
 
 					//Static tools
-					static void unbind(GLenum target=0);
-					static void unmap(GLenum target=0);
+					static size_t computeSize(const int& _width, const int& _height, const int& _channelCount, const int& _channelSize, const int& _alignment=1);
+					//static void unbind(GLenum target=0);
+					//static void unmap(GLenum target=0);
 			};
 		}
 	}

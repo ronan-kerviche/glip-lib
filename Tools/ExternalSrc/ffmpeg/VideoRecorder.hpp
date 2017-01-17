@@ -33,15 +33,13 @@
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
-	class VideoRecorder : public InterfaceFFMPEG, public OutputDevice
+	class VideoRecorder : public HdlAbstractTextureFormat, public InterfaceFFMPEG
 	{
 		private :
-
 			int				numEncodedFrame,
 							frameRate;
-
-			// libav*/ffmpeg data :
-			AVOutputFormat 			*fmt;		// Proxy (?)
+			// libav/ffmpeg data :
+			AVOutputFormat 			*fmt;		// Proxy
 			AVFormatContext 		*oc;
 			AVCodec				*video_codec;
 			AVCodecContext 			*c;		// Proxy
@@ -51,31 +49,19 @@
 							dst_picture,
 							*buffer;	// Proxy
 			SwsContext			*swsContext;
-
 			#ifdef __FFMPEG_VX1__
 				uint8_t 		*video_outbuf;
 				int 			video_outbuf_size;
 			#endif
-
 			// From GLIP lib :
-			#ifndef __USE_PBO__
-				TextureReader		textureReader;
-			#else
-				PBOTextureReader	textureReader;
-			#endif
-
-			 OutputDevice::OutputDeviceLayout declareLayout(void);
-		
-			// Inherited from OutputDevice :
-			void process(void);
+			HdlPBO				pboReader;
 
 		public :
-			VideoRecorder(const std::string& filename, const __ReadOnly_HdlTextureFormat &format, int _frameRate, int videoBitRate_BitPerSec=400000, PixelFormat pixFormat=PIX_FMT_YUV420P);
+			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, int _frameRate, int videoBitRate_BitPerSec=400000, PixelFormat pixFormat=PIX_FMT_YUV420P);
 			~VideoRecorder(void);
-
-			const __ReadOnly_HdlTextureFormat& format(void);
 			unsigned int getNumEncodedFrames(void) const;
 			float getTotalVideoDurationSec(void) const;
+			void record(HdlTexture& newFrame);
 	};
 
 #endif

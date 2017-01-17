@@ -40,40 +40,40 @@
 			class GLIP_API HdlGeBO
 			{
 				private :
-					// Data
-					GLuint 		bufferId;
-					GLenum		buildTarget,
-							buildUsage;
-					GLsizeiptr 	size;
-					static bool 	binding[4];
-					static bool 	mapping[4];	// VS/CL will complain if these two are not splitted.
+					// Data :
+					GLuint 			bufferId;
+					const GLenum		target,
+								usage;
+					const GLsizeiptr 	size;
 
-					// No copy constructor
+					// No copy constructor :
 					HdlGeBO(const HdlGeBO&);
 
-					// Tools
+					// Tools :
 					static int getIDTarget(GLenum target);
 
 				public :
-					// Tools
-					HdlGeBO(GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage);
-					HdlGeBO(GLuint id, GLsizeiptr _size, GLenum infoTarget, GLenum infoUsage);
+					// Tools :
+					HdlGeBO(const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage);
+					HdlGeBO(const GLuint& id, const GLsizeiptr& _size, const GLenum& _target, const GLenum& _usage);
 					~HdlGeBO(void);
 
-					GLsizeiptr getSize(void);
-					GLuint getID(void);
-					GLenum getTarget(void);
-					GLenum getUsage(void);
-					void bind(GLenum target = GL_NONE);
-					void* map(GLenum access = GL_NONE, GLenum target = GL_NONE);
+					GLsizeiptr getSize(void) const;
+					GLuint getID(void) const;
+					GLenum getTarget(void) const;
+					GLenum getUsage(void) const;
+					void bind(GLenum tgt=GL_NONE);
+					void unbind(GLenum tgt=GL_NONE);
+					void* map(GLenum access = GL_NONE, GLenum tgt=GL_NONE);
+					void unmap(GLenum tgt=GL_NONE);
 					void write(const void* data);
 					void subWrite(const void* data, GLsizeiptr size, GLintptr offset);
 
 					// Static tools
-					static void unbind(GLenum target);
-					static void unmap(GLenum target);
-					static bool isBound(GLenum target);
-					static bool isMapped(GLenum target);
+					static void unbindAll(void);
+					static void unmapAll(void);
+					/*static bool isBound(const GLenum& tgt);
+					static bool isMapped(const GLenum& tgt);*/
 			};
 
 			/*
