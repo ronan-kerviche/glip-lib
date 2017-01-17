@@ -151,9 +151,12 @@ using namespace Glip::CoreGL;
 		if(tgt==GL_NONE)
 			tgt = getTarget();
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-		std::cout << "HdlGeBO::bind - Binding " << bufferId << " to " << getGLEnumNameSafe(tgt) << "." << std::endl;
+			std::cout << "HdlGeBO::bind - Binding " << bufferId << " to " << getGLEnumNameSafe(tgt) << "." << std::endl;
 		#endif
 		glBindBuffer(tgt, bufferId);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::bind", "glBindBuffer()")
+		#endif
 	}
 
 	/**
@@ -166,9 +169,12 @@ using namespace Glip::CoreGL;
 		if(tgt==GL_NONE)
 			tgt = getTarget();
 		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-		std::cout << "HdlGeBO::bind - Unbinding " << bufferId << " from " << getGLEnumNameSafe(tgt) << "." << std::endl;
+			std::cout << "HdlGeBO::bind - Unbinding " << bufferId << " from " << getGLEnumNameSafe(tgt) << "." << std::endl;
 		#endif
 		glBindBuffer(tgt, 0);
+		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+			OPENGL_ERROR_TRACKER("HdlGeBO::unbind", "glBindBuffer()")
+		#endif
 	}
 
 	/**
@@ -202,16 +208,15 @@ using namespace Glip::CoreGL;
 			std::cout << "    glDebug : " << std::endl;
 			debugGL();
 		#endif
-		glUnmapBuffer(tgt);
-		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Unmap - target : " << getGLEnumNameSafe(tgt) << " access : " << getGLEnumNameSafe(access) << " : " << getGLErrorDescription(glGetError()) << std::endl;
-		#endif
-		bind(tgt);
-		#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-			std::cout << "    Bind : " << getGLErrorDescription(glGetError()) << std::endl;
-			std::cout << "HdlGeBO::map - Done." << std::endl;
-		#endif
+		if(isMapped(tgt))
+		{
+			glUnmapBuffer(tgt);
+			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
+				OPENGL_ERROR_TRACKER("HdlGeBO::map", "glUnmapBuffer()")
+			#endif
+		}	
 
+		bind(tgt);
 		#ifdef GLIP_USE_GL
 			void* ptr = glMapBuffer(tgt, access);
 		#else
@@ -250,9 +255,7 @@ using namespace Glip::CoreGL;
 	void HdlGeBO::write(const void* data)
 	{
 		bind();
-
 		glBufferData(getTarget(), static_cast<GLsizeiptr>(size), reinterpret_cast<const GLvoid *>(data), getUsage());
-
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlGeBO::write", "glBufferData()")
 		#endif
@@ -268,9 +271,7 @@ using namespace Glip::CoreGL;
 	void HdlGeBO::subWrite(const void* data, GLsizeiptr size, GLintptr offset)
 	{
 		bind();
-
 		glBufferSubData(getTarget(), offset, size,  reinterpret_cast<const GLvoid *>(data));
-
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
 			OPENGL_ERROR_TRACKER("HdlGeBO::subWrite", "glBufferSubData()")
 		#endif
@@ -278,97 +279,89 @@ using namespace Glip::CoreGL;
 
 
 // Static tools :
-	void HdlGeBO::unbindAll()
+	/**
+	\fn GLenum HdlGeBO::getBindingEnum(const GLenum& tgt)
+	\brief Get the binding enum corresponding to a given target enum.
+	\param tgt The target enum, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER.
+	\return The corresponding binding enum.
+	\throw Throw an Exception if the enum is not a valid enum.
+	**/
+	GLenum HdlGeBO::getBindingEnum(const GLenum& tgt)
+	{
+		switch(tgt)
+		{
+			case GL_ARRAY_BUFFER :		return GL_ARRAY_BUFFER_BINDING;
+			case GL_ELEMENT_ARRAY_BUFFER :	return GL_ELEMENT_ARRAY_BUFFER_BINDING;
+			case GL_PIXEL_PACK_BUFFER :	return GL_PIXEL_PACK_BUFFER_BINDING;
+			case GL_PIXEL_UNPACK_BUFFER :	return GL_PIXEL_UNPACK_BUFFER_BINDING;
+			default :
+				throw Exception("HdlGeBO::getBindingEnum - No binding enum corresponding to " + getGLEnumNameSafe(tgt) + ".", __FILE__, __LINE__, Exception::GLException);
+		}
+	}
+
+	/**
+	\fn bool HdlGeBO::isBound(const GLenum& tgt)
+	\brief Test if a target is bound.
+	\param tgt The target enum, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER.
+	\return True if the target is bound, false otherwise.
+	**/
+	bool HdlGeBO::isBound(const GLenum& tgt)
+	{
+		GLint paramInt = GL_FALSE;
+		glGetIntegerv(getBindingEnum(tgt), &paramInt);
+		return paramInt!=0;
+	}
+
+	/**
+	\fn bool HdlGeBO::isMapped(const GLenum& tgt)
+	\brief Test if a target is mapped.
+	\param tgt The target enum, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER.
+	\return True if the target is mapped, false otherwise.
+	**/
+	bool HdlGeBO::isMapped(const GLenum& tgt)
+	{
+		GLint paramInt = GL_FALSE;
+		glGetIntegerv(getBindingEnum(tgt), &paramInt);
+		if(paramInt!=0)
+		{
+			glGetBufferParameteriv(tgt, GL_BUFFER_MAPPED, &paramInt);
+			return paramInt!=GL_FALSE;
+		}
+		return false;
+	}
+
+	/**
+	void HdlGeBO::unbindAll(void)
+	\brief Unbind all the buffers.
+	**/
+	void HdlGeBO::unbindAll(void)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlGeBO::unbindall", "glBindBuffer()")
+			OPENGL_ERROR_TRACKER("HdlGeBO::unbindAll", "glBindBuffer()")
 		#endif
 	}
 
-	void HdlGeBO::unmapAll()
+	/**
+	\fn void HdlGeBO::unmapAll(void)
+	\brief Unmap all the buffers.
+	**/
+	void HdlGeBO::unmapAll(void)
 	{
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		// We must test here to avoid GL errors :
+		if(isMapped(GL_ARRAY_BUFFER))
+			glUnmapBuffer(GL_ARRAY_BUFFER);
+		if(isMapped(GL_ELEMENT_ARRAY_BUFFER))
+			glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+		if(isMapped(GL_PIXEL_UNPACK_BUFFER))
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		if(isMapped(GL_PIXEL_PACK_BUFFER))
+			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 		#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-			OPENGL_ERROR_TRACKER("HdlGeBO::unbindall", "glBindBuffer()")
+			OPENGL_ERROR_TRACKER("HdlGeBO::unmapAll", "glUnmapBuffer()")
 		#endif
 	}
-
-	/*int HdlGeBO::getIDTarget(GLenum target)
-	{
-		switch(target)
-		{
-			case GL_ARRAY_BUFFER :		return 0;
-			case GL_ELEMENT_ARRAY_BUFFER :	return 1;
-			case GL_PIXEL_UNPACK_BUFFER :	return 2;
-			case GL_PIXEL_PACK_BUFFER :	return 3;
-			default :
-				throw Exception("HdlGeBO::getIDTarget - Unknown target : " + getGLEnumNameSafe(target), __FILE__, __LINE__, Exception::GLException);
-		}
-	}
-
-	**
-	\fn void HdlGeBO::unbind(GLenum target)
-	\brief Unbind any Buffer Object.
-	\param target Target binding point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
-	**
-	void HdlGeBO::unbind(GLenum target)
-	{
-		glBindBuffer(target, 0);
-		binding[getIDTarget(target)] = false;
-	}
-
-	**
-	\fn void HdlGeBO::unmap(GLenum target)
-	\brief Unmap any Buffer Object.
-	\param target Target binding point, among GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER.
-	**
-	void HdlGeBO::unmap(GLenum target)
-	{
-		if(isMapped(target))
-		{
-			glUnmapBuffer(target);
-
-			#ifdef __GLIPLIB_TRACK_GL_ERRORS__
-				OPENGL_ERROR_TRACKER("HdlGeBO::unmap", "glUnmapBuffer()")
-			#endif
-
-			mapping[getIDTarget(target)] = false;
-
-
-			#ifdef __GLIPLIB_DEVELOPMENT_VERBOSE__
-				std::cout << "HdlGeBO::unmap - Infos : " << std::endl;
-				debugGL();
-				std::cout << "    " << getGLErrorDescription(glGetError()) << std::endl;
-			#endif
-		}
-	}
-
-	**
-	\fn bool HdlGeBO::isBound(GLenum tgt)
-	\brief Test if the target is bound.
-	\param tgt The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
-	\return true if the target is bound.
-	**
-	bool HdlGeBO::isBound(GLenum target)
-	{
-		return binding[getIDTarget(target)];
-	}
-
-	**
-	\fn bool HdlGeBO::isMapped(GLenum target)
-	\brief Test if the target is mapped.
-	\param target The target (GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_UNPACK_BUFFER, GL_PIXEL_PACK_BUFFER).
-	\return true if the target is mapped.
-	**
-	bool HdlGeBO::isMapped(GLenum target)
-	{
-		return mapping[getIDTarget(target)];
-	}*/
 

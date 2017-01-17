@@ -239,7 +239,13 @@
 		// Read texture and copy to the buffer :
 		pboReader.readTexture(newFrame);
 		unsigned char* ptr = reinterpret_cast<unsigned char*>(pboReader.map());
-		memcpy(buffer->data[0], ptr, getSize());
+		// Without Y-flip :
+		// memcpy(buffer->data[0], ptr, getSize());
+		// With Y-flip :
+		const int height = getHeight();
+		const size_t rowSize = getRowSize();
+		for(int y=0; y<height; y++)
+			memcpy(buffer->data[0]+y*rowSize, ptr+(height-y-1)*rowSize, rowSize);
 		pboReader.unmap();
 
 		// Convert from RGB24 if needed :

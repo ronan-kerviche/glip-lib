@@ -300,7 +300,6 @@ using namespace Glip::CoreGL;
 	void Glip::CoreGL::debugGL(void)
 	{
 		GLint param;
-
 		std::cout << "OpenGL DEBUG Tool" << std::endl;
 
 		// Test if a texture is bound
@@ -308,38 +307,52 @@ using namespace Glip::CoreGL;
 		glGetIntegerv(GL_TEXTURE_BINDING_1D, &param);
 		if(param!=0) std::cout << "  Binding - Texture 1D     : " << param << std::endl;
 		#endif
-
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &param);
 		if(param!=0) std::cout << "  Binding - Texture 2D     : " << param << std::endl;
-
 		glGetIntegerv(GL_TEXTURE_BINDING_3D, &param);
 		if(param!=0) std::cout << "  Binding - Texture 3D     : " << param << std::endl;
-
 		// Test if a Buffer is bound
 		glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &param);
-		if(param!=0) std::cout << "  Binding - Buffer array   : " << param << std::endl;
-
+		if(param!=0)
+		{
+			std::cout << "  Binding - Buffer array   : " << param << std::endl;
+			glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_MAPPED, &param);
+			if(param!=GL_FALSE)
+				std::cout << "  Mapping - GL_ARRAY_BUFFER         : Yes" << std::endl;	
+		}
 		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &param);
-		if(param!=0) std::cout << "  Binding - Element array  : " << param << std::endl;
-
+		if(param!=0)
+		{
+			std::cout << "  Binding - Element array  : " << param << std::endl;
+			glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_MAPPED, &param);
+			if(param!=GL_FALSE)
+				std::cout << "  Mapping - GL_ELEMENT_ARRAY_BUFFER : Yes" << std::endl;
+		}
 		glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &param);
-		if(param!=0) std::cout << "  Binding - PACK buffer    : " << param << std::endl;
-
+		if(param!=0)
+		{
+			std::cout << "  Binding - PACK buffer    : " << param << std::endl;
+			glGetBufferParameteriv(GL_PIXEL_PACK_BUFFER, GL_BUFFER_MAPPED, &param);
+			if(param!=GL_FALSE)
+				std::cout << "  Mapping - GL_PIXEL_PACK_BUFFER    : Yes" << std::endl;
+		}
 		glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &param);
-		if(param!=0) std::cout << "  Binding - UNPACK buffer  : " << param << std::endl;
-
+		if(param!=0)
+		{
+			std::cout << "  Binding - UNPACK buffer  : " << param << std::endl;
+			glGetBufferParameteriv(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_MAPPED, &param);
+			if(param!=GL_FALSE)
+				std::cout << "  Mapping - GL_PIXEL_PACK_BUFFER    : Yes" << std::endl;	
+		}
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &param);
 		if(param!=0) std::cout << "  Binding - Frame buffer   : " << param << std::endl;
-
 		#ifdef GLIP_USE_GL
 		glGetIntegerv(GL_TEXTURE_BUFFER_EXT, &param);
 		if(param!=0) std::cout << "  Binding - Texture buffer : " << param << std::endl;
 		#endif
-
 		// Shaders
 		glGetIntegerv(GL_CURRENT_PROGRAM, &param);
 		if(param!=0) std::cout << "  Binding - program        : " << param << std::endl;
-
 		std::cout << "End DEBUG" << std::endl;
 	}
 

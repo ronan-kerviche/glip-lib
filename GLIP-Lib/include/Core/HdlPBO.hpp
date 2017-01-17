@@ -105,8 +105,6 @@ For reading operations, use :
 
 					//Static tools
 					static size_t computeSize(const int& _width, const int& _height, const int& _channelCount, const int& _channelSize, const int& _alignment=1);
-					//static void unbind(GLenum target=0);
-					//static void unmap(GLenum target=0);
 			};
 		}
 	}

@@ -158,36 +158,4 @@ using namespace Glip::CoreGL;
 				paddedRowSize = rowSize + ((static_cast<size_t>(_alignment) - (rowSize & (static_cast<size_t>(_alignment)-1))) & (static_cast<size_t>(_alignment-1)));
 		return static_cast<size_t>(_height)*paddedRowSize;
 	}
-
-	/**
-	\fn void HdlPBO::unbind(GLenum target)
-	\brief Unbind the PBO bound to target.
-	\param target The target binding point.
-	**
-	void HdlPBO::unbind(GLenum target)
-	{
-		if(target==0)
-		{
-			HdlGeBO::unbind(GL_PIXEL_UNPACK_BUFFER);
-			HdlGeBO::unbind(GL_PIXEL_PACK_BUFFER);
-		}
-		else
-			HdlGeBO::unbind(target);
-	}
-
-	**
-	\fn void HdlPBO::unmap(GLenum target)
-	\brief Unmap the PBO mapped from/to target.
-	\param target The target binding point.
-	**
-	void HdlPBO::unmap(GLenum target)
-	{
-		if(target==0)
-		{
-			HdlGeBO::unmap(GL_PIXEL_UNPACK_BUFFER);
-			HdlGeBO::unmap(GL_PIXEL_PACK_BUFFER);
-		}
-		else
-			HdlGeBO::unmap(target);
-	}*/
-
+	

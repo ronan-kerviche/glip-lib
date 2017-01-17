@@ -69,11 +69,12 @@
 					void write(const void* data);
 					void subWrite(const void* data, GLsizeiptr size, GLintptr offset);
 
-					// Static tools
+					// Static tools :
+					static GLenum getBindingEnum(const GLenum& tgt);
+					static bool isBound(const GLenum& tgt);
+					static bool isMapped(const GLenum& tgt);
 					static void unbindAll(void);
 					static void unmapAll(void);
-					/*static bool isBound(const GLenum& tgt);
-					static bool isMapped(const GLenum& tgt);*/
 			};
 
 			/*
