@@ -33,15 +33,15 @@ namespace FFMPEGInterface
 		private :
 
 			// libav*/ffmpeg data :
-			AVFormatContext 		*pFormatCtx;
-			AVCodecContext 			*pCodecCtx;
-			AVCodec 			*pCodec;
-			AVFrame 			*pFrame,
-							*pFrameRGB;
+			AVFormatContext 		*formatContext;
+			AVCodecContext 			*codecContext;
+			AVCodec 			*codec;
+			AVFrame 			*frameDecoded,
+							*frameRGB;
 			uint8_t 			*buffer;
 			unsigned int			idVideoStream,
 							bufferSizeBytes;
-			SwsContext 			*pSWSCtx;
+			SwsContext 			*SWSContext;
 
 			// glip-lib data :
 			unsigned int			idCurrentBufferForWritting;

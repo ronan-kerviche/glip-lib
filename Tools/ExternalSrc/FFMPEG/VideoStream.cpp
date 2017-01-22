@@ -20,56 +20,56 @@
 namespace FFMPEGInterface
 {
 	VideoStream::VideoStream(const std::string& filename, unsigned int numFrameBuffered, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
-	 : 	idVideoStream(0),
-		readFrameCount(0),
-		timeStampFrameRate(1.0f),
-		timeStampOffset(0),
-		timeStampOfLastFrameRead(0),
+	 : 	formatContext(NULL),
+		codecContext(NULL),
+		codec(NULL),
+		frameDecoded(NULL),
+		frameRGB(NULL),
+		buffer(NULL),
+		idVideoStream(0),
+		bufferSizeBytes(0),
+		SWSContext(NULL),
+		idCurrentBufferForWritting(0),
 		pboWriter(NULL),
 		endReached(false),
-	   	pFormatCtx(NULL),
-		pCodecCtx(NULL),
-		pCodec(NULL),
-		pFrame(NULL),
-		pFrameRGB(NULL),
-		buffer(NULL),
-		pSWSCtx(NULL),
-		idCurrentBufferForWritting(0)
+		timeStampFrameRate(1.0f),
+		timeStampOffset(0),
+		timeStampOfLastFrameRead(0)
 	{
 		int retCode = 0;
 		// Open stream :
-		retCode = avformat_open_input(&pFormatCtx, filename.c_str(), NULL, NULL);
+		retCode = avformat_open_input(&formatContext, filename.c_str(), NULL, NULL);
 		if(retCode!=0)
 			throw Exception("VideoStream::VideoStream - Failed to open stream (at av_open_input_file) : " + filename + ".", __FILE__, __LINE__);
 
 		// Find stream information :
-		retCode = avformat_find_stream_info(pFormatCtx, NULL);
+		retCode = avformat_find_stream_info(formatContext, NULL);
 		if(retCode<0)
 			throw Exception("VideoStream::VideoStream - Failed to open stream (at av_find_stream_info) : " + filename + ".", __FILE__, __LINE__);
 
-		// Walk through pFormatCtx->nb_streams to find a/the first video stream :
-		for(idVideoStream=0; idVideoStream<pFormatCtx->nb_streams; idVideoStream++)
-			if(pFormatCtx->streams[idVideoStream]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
+		// Walk through formatContext->nb_streams to find a/the first video stream :
+		for(idVideoStream=0; idVideoStream<formatContext->nb_streams; idVideoStream++)
+			if(formatContext->streams[idVideoStream]->codec->codec_type==AVMEDIA_TYPE_VIDEO)
 				break;
-		if(idVideoStream>=pFormatCtx->nb_streams)
+		if(idVideoStream>=formatContext->nb_streams)
 			throw Exception("VideoStream::VideoStream - Failed to find video stream (at streams[idVideoStream]->codec->codec_type==CODEC_TYPE_VIDEO).", __FILE__, __LINE__);
 
 		// Get a pointer to the codec context for the video stream :
-		pCodecCtx = pFormatCtx->streams[idVideoStream]->codec;
+		codecContext = formatContext->streams[idVideoStream]->codec;
 		// Find the decoder for the video stream :
-		pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-		if(pCodec==NULL)
+		codec = avcodec_find_decoder(codecContext->codec_id);
+		if(codec==NULL)
 			throw Exception("VideoStream::VideoStream - No suitable codec found (at avcodec_find_decoder).", __FILE__, __LINE__);
 
 		// Open codec :
-		retCode = avcodec_open2(pCodecCtx, pCodec, NULL);
+		retCode = avcodec_open2(codecContext, codec, NULL);
 		if(retCode<0)
 			throw Exception("VideoStream::VideoStream - Could not open codec (at avcodec_open).", __FILE__, __LINE__);
 
 		// Get the framerate :
-		timeStampFrameRate = static_cast<float>(pFormatCtx->streams[idVideoStream]->time_base.den)/static_cast<float>(pFormatCtx->streams[idVideoStream]->time_base.num);
+		timeStampFrameRate = static_cast<float>(formatContext->streams[idVideoStream]->time_base.den)/static_cast<float>(formatContext->streams[idVideoStream]->time_base.num);
 		// Get the duration :
-		duration_sec = pFormatCtx->duration / AV_TIME_BASE;
+		duration_sec = formatContext->duration / AV_TIME_BASE;
 		#ifdef __FFMPEG_VERBOSE__
 			std::cout << "VideoStream::VideoStream" << std::endl;
 			std::cout << "    Filename   : " << filename << std::endl;
@@ -77,27 +77,27 @@ namespace FFMPEGInterface
 			std::cout << "    Duration   : " << duration_sec << " second(s)" << std::endl;
 		#endif
 		// Allocate video frame :
-		pFrame = av_frame_alloc();
+		frameDecoded = av_frame_alloc();
 		// Allocate an AVFrame structure :
-		pFrameRGB = av_frame_alloc();
-		if(pFrameRGB==NULL)
+		frameRGB = av_frame_alloc();
+		if(frameRGB==NULL)
 			throw Exception("VideoStream::VideoStream - Failed to open stream (at avcodec_alloc_frame).", __FILE__, __LINE__);
 
 		// Determine required buffer size and allocate buffer :
-		bufferSizeBytes = avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
+		bufferSizeBytes = avpicture_get_size(PIX_FMT_RGB24, codecContext->width, codecContext->height);
 		buffer = (uint8_t *)av_malloc(bufferSizeBytes*sizeof(uint8_t));
 		#ifdef __FFMPEG_VERBOSE__
-			std::cout << "VideoStream::VideoStream - Frame size : " << pCodecCtx->width << "x" << pCodecCtx->height << std::endl;
+			std::cout << "VideoStream::VideoStream - Frame size : " << codecContext->width << "x" << codecContext->height << std::endl;
 		#endif
 		if(buffer==NULL)
 			throw Exception("VideoStream::VideoStream - Unable to allocate video frame buffer.", __FILE__, __LINE__);
 
-		// Assign appropriate parts of buffer to image planes in pFrameRGB (Note that pFrameRGB is an AVFrame, but AVFrame is a superset of AVPicture) :
-		avpicture_fill( (AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
+		// Assign appropriate parts of buffer to image planes in frameRGB (Note that frameRGB is an AVFrame, but AVFrame is a superset of AVPicture) :
+		avpicture_fill( (AVPicture *)frameRGB, buffer, PIX_FMT_RGB24, codecContext->width, codecContext->height);
 		// Initialize libswscale :
-		pSWSCtx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, PIX_FMT_RGB24, SWS_POINT, NULL, NULL, NULL);
+		SWSContext = sws_getContext(codecContext->width, codecContext->height, codecContext->pix_fmt, codecContext->width, codecContext->height, PIX_FMT_RGB24, SWS_POINT, NULL, NULL, NULL);
 		// Create format :
-		HdlTextureFormat frameFormat(pCodecCtx->width, pCodecCtx->height, GL_RGB, GL_UNSIGNED_BYTE, minFilter, magFilter, sWrapping, tWrapping, 0, maxLevel);
+		HdlTextureFormat frameFormat(codecContext->width, codecContext->height, GL_RGB, GL_UNSIGNED_BYTE, minFilter, magFilter, sWrapping, tWrapping, 0, maxLevel);
 
 		// Create the texture :
 		textureLinks.assign(numFrameBuffered, NULL);
@@ -124,16 +124,16 @@ namespace FFMPEGInterface
 			delete *it;
 		textureBuffers.clear();
 		textureLinks.clear();
-		sws_freeContext(pSWSCtx);
+		sws_freeContext(SWSContext);
 		// Free the RGB image
 		av_free(buffer);
-		av_frame_free(&pFrameRGB);
+		av_frame_free(&frameRGB);
 		// Free the YUV frame
-		av_frame_free(&pFrame);
+		av_frame_free(&frameDecoded);
 		// Close the codec
-		avcodec_close(pCodecCtx);
+		avcodec_close(codecContext);
 		// Close the video file
-		avformat_close_input(&pFormatCtx);
+		avformat_close_input(&formatContext);
 	}	
 
 	int VideoStream::getReadFrameCount(void) const
@@ -166,29 +166,27 @@ namespace FFMPEGInterface
 			return ;
 		while(!foundNewFrame)
 		{
-			retCode = av_read_frame(pFormatCtx, &packet);
+			retCode = av_read_frame(formatContext, &packet);
 			if(retCode==0)
 			{
 				// Is this a packet from the video stream?
 				if(static_cast<unsigned int>(packet.stream_index)==idVideoStream)
 				{
 					// Decode video frame
-					avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+					avcodec_decode_video2(codecContext, frameDecoded, &frameFinished, &packet);
 
 					// Did we get a video frame?
 					if(frameFinished>0)
 					{
 						// Convert the image from its native format to RGB
-						sws_scale(pSWSCtx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
+						sws_scale(SWSContext, frameDecoded->data, frameDecoded->linesize, 0, codecContext->height, frameRGB->data, frameRGB->linesize);
 						unsigned char* ptr = reinterpret_cast<unsigned char*>(pboWriter->map());
-						memcpy(ptr, pFrameRGB->data[0], textureBuffers.front()->getNumPixels()*3);
+						memcpy(ptr, frameRGB->data[0], textureBuffers.front()->getNumPixels()*3);
 						pboWriter->unmap();
 						pboWriter->writeTexture(*textureBuffers[idCurrentBufferForWritting]);
 
 						// Change links :
-						//for(int k=0; k<textureBuffers.size(); k++)
-						//	setTextureLink(textureBuffers[(idCurrentBufferForWritting+k)%textureBuffers.size()], k);
-						for(int k=0; k<textureBuffers.size(); k++)
+						for(unsigned int k=0; k<textureBuffers.size(); k++)
 							textureLinks[k] = textureBuffers[(idCurrentBufferForWritting+k)%textureBuffers.size()];
 
 						// Update count :
@@ -198,7 +196,7 @@ namespace FFMPEGInterface
 						// Add frame :
 						readFrameCount++;
 						// Save DTS (which is not exactly PTS) :
-						if(packet.pts!=AV_NOPTS_VALUE)
+						if(packet.pts!=static_cast<int>(AV_NOPTS_VALUE))
 						{
 							if(timeStampOfLastFrameRead==0)
 								timeStampOffset = packet.pts;
@@ -226,10 +224,10 @@ namespace FFMPEGInterface
 		int flags = 0;
 		endReached = false;
 		int64_t timestamp = static_cast<int64_t>(time_sec)*timeStampFrameRate;
-		retCode = av_seek_frame(pFormatCtx, idVideoStream, timestamp, flags);
+		retCode = av_seek_frame(formatContext, idVideoStream, timestamp, flags);
 		if(retCode<0)
 			throw Exception("VideoStream::seek - Seek operation failed (at av_seek_frame).", __FILE__, __LINE__);
-		avcodec_flush_buffers(pCodecCtx);
+		avcodec_flush_buffers(codecContext);
 	}
 
 	HdlTexture& VideoStream::frame(const int& id)
