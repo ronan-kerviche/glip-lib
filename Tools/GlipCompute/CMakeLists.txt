@@ -15,6 +15,7 @@ find_package(OpenGL REQUIRED)
 include_directories(
 		./src/
 		../../GLIP-Lib/include/
+		../ExternalSrc/X/
 		../ExternalSrc/FreeImagePlus/
 		../ExternalSrc/LibRaw/
 		)
@@ -29,6 +30,7 @@ file(
 		GLOB_RECURSE
 		source_files
 		src/*
+		../ExternalSrc/X/*
 		../ExternalSrc/FreeImagePlus/*
 		../ExternalSrc/LibRaw/*
 )

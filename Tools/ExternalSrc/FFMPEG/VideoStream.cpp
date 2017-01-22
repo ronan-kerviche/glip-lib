@@ -17,12 +17,15 @@
 #include "VideoStream.hpp"
 #include <cstring>
 
+namespace FFMPEGInterface
+{
 	VideoStream::VideoStream(const std::string& filename, unsigned int numFrameBuffered, GLenum minFilter, GLenum magFilter, GLenum sWrapping, GLenum tWrapping, int maxLevel)
 	 : 	idVideoStream(0),
 		readFrameCount(0),
 		timeStampFrameRate(1.0f),
 		timeStampOffset(0),
 		timeStampOfLastFrameRead(0),
+		pboWriter(NULL),
 		endReached(false),
 	   	pFormatCtx(NULL),
 		pCodecCtx(NULL),
@@ -33,17 +36,6 @@
 		pSWSCtx(NULL),
 		idCurrentBufferForWritting(0)
 	{
-		#ifdef __USE_PBO__
-			#ifdef __VIDEO_STREAM_VERBOSE__
-				std::cout << "VideoStream::VideoStream - Using PBO for uploading data to the GPU." << std::endl;
-			#endif
-			pbo = NULL;
-		#else
-			#ifdef __VIDEO_STREAM_VERBOSE__
-				std::cout << "VideoStream::VideoStream - Using standard method HdlTexture::write for uploading data to the GPU." << std::endl;
-			#endif
-		#endif
-
 		int retCode = 0;
 		// Open stream :
 		retCode = avformat_open_input(&pFormatCtx, filename.c_str(), NULL, NULL);
@@ -78,22 +70,23 @@
 		timeStampFrameRate = static_cast<float>(pFormatCtx->streams[idVideoStream]->time_base.den)/static_cast<float>(pFormatCtx->streams[idVideoStream]->time_base.num);
 		// Get the duration :
 		duration_sec = pFormatCtx->duration / AV_TIME_BASE;
-		#ifdef __VIDEO_STREAM_VERBOSE__
+		#ifdef __FFMPEG_VERBOSE__
 			std::cout << "VideoStream::VideoStream" << std::endl;
+			std::cout << "    Filename   : " << filename << std::endl;
 			std::cout << "    Frame rate : " << timeStampFrameRate << " frames per second (for time stamps)" << std::endl;
 			std::cout << "    Duration   : " << duration_sec << " second(s)" << std::endl;
 		#endif
 		// Allocate video frame :
-		pFrame = avcodec_alloc_frame();
+		pFrame = av_frame_alloc();
 		// Allocate an AVFrame structure :
-		pFrameRGB = avcodec_alloc_frame();
+		pFrameRGB = av_frame_alloc();
 		if(pFrameRGB==NULL)
 			throw Exception("VideoStream::VideoStream - Failed to open stream (at avcodec_alloc_frame).", __FILE__, __LINE__);
 
 		// Determine required buffer size and allocate buffer :
 		bufferSizeBytes = avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height);
 		buffer = (uint8_t *)av_malloc(bufferSizeBytes*sizeof(uint8_t));
-		#ifdef __VIDEO_STREAM_VERBOSE__
+		#ifdef __FFMPEG_VERBOSE__
 			std::cout << "VideoStream::VideoStream - Frame size : " << pCodecCtx->width << "x" << pCodecCtx->height << std::endl;
 		#endif
 		if(buffer==NULL)
@@ -115,11 +108,8 @@
 			// We are also doing this to prevent reading from an empty (not-yet-allocated) texture.
 			textureBuffers.back()->fill(0);
 		}
-
-		#ifdef __USE_PBO__
-			// Create PBO for uplodaing data to GPU :
-			pbo = new HdlPBO(frameFormat, GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
-		#endif
+		// Create PBO for uplodaing data to GPU :
+		pboWriter = new HdlPBO(frameFormat, GL_PIXEL_UNPACK_BUFFER_ARB,GL_STREAM_DRAW_ARB);
 
 		// Finish by forcing read of first frame :
 		readNextFrame();
@@ -127,10 +117,9 @@
 
 	VideoStream::~VideoStream(void)
 	{
-		#ifdef __USE_PBO__
-			pbo->unmap();
-			delete pbo;
-		#endif
+		pboWriter->unmap();
+		delete pboWriter;
+		pboWriter = NULL;
 		for(std::vector<HdlTexture*>::iterator it=textureBuffers.begin(); it!=textureBuffers.end(); it++)
 			delete *it;
 		textureBuffers.clear();
@@ -138,9 +127,9 @@
 		sws_freeContext(pSWSCtx);
 		// Free the RGB image
 		av_free(buffer);
-		av_free(pFrameRGB);
+		av_frame_free(&pFrameRGB);
 		// Free the YUV frame
-		av_free(pFrame);
+		av_frame_free(&pFrame);
 		// Close the codec
 		avcodec_close(pCodecCtx);
 		// Close the video file
@@ -191,14 +180,10 @@
 					{
 						// Convert the image from its native format to RGB
 						sws_scale(pSWSCtx, pFrame->data, pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
-						#ifndef __USE_PBO__
-							textureBuffers[idCurrentBufferForWritting]->write(pFrameRGB->data[0]);
-						#else
-							unsigned char* ptr = reinterpret_cast<unsigned char*>(pbo->map());
-							memcpy(ptr, pFrameRGB->data[0], textureBuffers.front()->getNumPixels()*3);
-							pbo->unmap();
-							pbo->writeTexture(*textureBuffers[idCurrentBufferForWritting]);
-						#endif
+						unsigned char* ptr = reinterpret_cast<unsigned char*>(pboWriter->map());
+						memcpy(ptr, pFrameRGB->data[0], textureBuffers.front()->getNumPixels()*3);
+						pboWriter->unmap();
+						pboWriter->writeTexture(*textureBuffers[idCurrentBufferForWritting]);
 
 						// Change links :
 						//for(int k=0; k<textureBuffers.size(); k++)
@@ -251,3 +236,5 @@
 	{
 		return *textureLinks[id];
 	}
+}
+

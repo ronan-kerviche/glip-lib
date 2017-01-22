@@ -18,35 +18,31 @@
 #ifndef __GLIP_VIDEO_RECORDER__
 #define __GLIP_VIDEO_RECORDER__
 
-	// Display messages on std::cout :
-	//#define __VIDEO_RECORDER_VERBOSE__
-
-	// Use PBOs for uploading data to the GPU :
-	#define __USE_PBO__
-
 	#include "GLIPLib.hpp"
-	#include "InterfaceFFMPEG.hpp"
+	#include "FFMPEGInterface.hpp"
 
+namespace FFMPEGInterface
+{
 	// Namespaces
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 	using namespace Glip::Modules;
 
-	class VideoRecorder : public HdlAbstractTextureFormat, public InterfaceFFMPEG
+	class VideoRecorder : public HdlAbstractTextureFormat, public FFMPEGContext
 	{
 		private :
 			int				numEncodedFrame,
 							frameRate;
 			// libav/ffmpeg data :
-			AVOutputFormat 			*fmt;		// Proxy
-			AVFormatContext 		*oc;
-			AVCodec				*video_codec;
-			AVCodecContext 			*c;		// Proxy
-			AVStream 			*video_stream;
+			AVOutputFormat 			*outputFormat;	// Proxy
+			AVFormatContext 		*formatContext;
+			AVCodec				*videoCodec;
+			AVCodecContext 			*codecContext;	// Proxy
+			AVStream 			*videoStream;
 			AVFrame 			*frame;
-			AVPicture 			src_picture,
-							dst_picture,
+			AVPicture 			srcPicture,
+							dstPicture,
 							*buffer;	// Proxy
 			SwsContext			*swsContext;
 			#ifdef __FFMPEG_VX1__
@@ -63,5 +59,6 @@
 			float getTotalVideoDurationSec(void) const;
 			void record(HdlTexture& newFrame);
 	};
+}
 
 #endif

@@ -18,21 +18,17 @@
 #ifndef __GLIP_VIDEO_STREAM__
 #define __GLIP_VIDEO_STREAM__
 
-	// Display messages on std::cout :
-	//#define __VIDEO_STREAM_VERBOSE__
-
-	// Use PBOs for uploading data to the GPU :
-	#define __USE_PBO__
-
 	#include "GLIPLib.hpp"
-	#include "InterfaceFFMPEG.hpp"
+	#include "FFMPEGInterface.hpp"
 
+namespace FFMPEGInterface
+{
 	// Namespaces
 	using namespace Glip;
 	using namespace Glip::CoreGL;
 	using namespace Glip::CorePipeline;
 
-	class VideoStream : public InterfaceFFMPEG
+	class VideoStream : public FFMPEGContext
 	{
 		private :
 
@@ -47,13 +43,11 @@
 							bufferSizeBytes;
 			SwsContext 			*pSWSCtx;
 
-			// gliplib data :
+			// glip-lib data :
 			unsigned int			idCurrentBufferForWritting;
 			std::vector<HdlTexture*>	textureBuffers,
 							textureLinks;
-			#ifdef __USE_PBO__
-				HdlPBO 			*pbo;
-			#endif
+			HdlPBO				*pboWriter;
 
 			// Misc :
 			bool				endReached;
@@ -74,5 +68,6 @@
 			void		seek(float time_sec);
 			HdlTexture&	frame(const int& id);
 	};
+}
 
 #endif

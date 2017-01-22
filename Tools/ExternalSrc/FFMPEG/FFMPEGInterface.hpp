@@ -7,43 +7,68 @@
 /*     LICENSE       : MIT License                                                                               */
 /*     Website       : glip-lib.net                                                                              */
 /*                                                                                                               */
-/*     File          : InterfqceFFMPEG.cpp                                                                       */
+/*     File          : InterfqceFFMPEG.hpp                                                                       */
 /*     Original Date : December 28th 2012                                                                        */
 /*                                                                                                               */
 /*     Description   : Interface to FFMPEG library                                                               */
+/*                     Compile with the following libraries :                                                    */
+/*                      -lavutil -lavformat -lavcodec -lavutil -lswscale                                         */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#include "InterfaceFFMPEG.hpp"
+#ifndef __GLIP_INTERFACE_FFMPEG__
+#define __GLIP_INTERFACE_FFMPEG__
 
-	bool InterfaceFFMPEG::initOnce = true;
+	#include <utility>
+	#include <string>
+	#include <vector>
 
-	InterfaceFFMPEG::InterfaceFFMPEG(void)
+	// FFMPEG version (VX1/VX2) :
+	#define __FFMPEG_VX1__
+	
+	// Include FFMPEG (which is a pure C project, protect with : )
+	extern "C"
 	{
-		if(initOnce)
-		{
-			av_register_all();
+		// Fix lacking definition in common.h
+		#ifndef INT64_C
+			#define INT64_C(c) (c ## LL)
+			#define UINT64_C(c) (c ## ULL)
+		#endif
 
-			initOnce = false;
-		}
+		#include <libavcodec/avcodec.h>
+		#include <libavformat/avformat.h>
+		#include <libswscale/swscale.h>
+		#include <libavutil/mathematics.h>
 	}
 
-	InterfaceFFMPEG::~InterfaceFFMPEG(void)
-	{ }
+	// Display messages on std::cout :
+	#define __FFMPEG_VERBOSE__
 
-	std::string InterfaceFFMPEG::getPixFormatName(PixelFormat pixFmt)
+namespace FFMPEGInterface
+{
+	class FFMPEGContext
 	{
-		// A list of formats can be found at : http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
-		switch(pixFmt)
-		{
-			case PIX_FMT_YUV410P :	return "PIX_FMT_YUV410P";
-			case PIX_FMT_YUV411P :	return "PIX_FMT_YUV411P";
-			case PIX_FMT_YUV420P :	return "PIX_FMT_YUV420P";
-			case PIX_FMT_YUV422P :	return "PIX_FMT_YUV422P";
-			case PIX_FMT_YUV440P :	return "PIX_FMT_YUV440P";
-			case PIX_FMT_YUV444P :	return "PIX_FMT_YUV444P";
-			case PIX_FMT_RGB32 : 	return "PIX_FMT_RGB32";
-			case PIX_FMT_BGR32 : 	return "PIX_FMT_BGR32";
-			default :		return "(Unknown pixel format)";
-		}
-	}
+		public :
+			struct Format
+			{
+				const PixelFormat format;
+				const std::string name;
+			};
+			static const Format formatsList[];
+
+		private :
+			static bool initOnce;
+
+		public :
+			FFMPEGContext(void);
+			~FFMPEGContext(void);
+
+			// Tools :
+			static std::string getPixFormatName(const PixelFormat& pixFmt);
+			static std::string getSafePixFormatName(const PixelFormat& pixFmt);
+			static PixelFormat getPixFormat(const std::string& name);
+	};
+}
+
+#endif
+

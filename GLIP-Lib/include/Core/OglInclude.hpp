@@ -333,7 +333,7 @@
 					// OpenGL keyword :
 					struct GLIP_API KeywordPair
 					{
-						GLenum 			value;
+						const GLenum 		value;
 						const std::string 	name;
 					};
 
