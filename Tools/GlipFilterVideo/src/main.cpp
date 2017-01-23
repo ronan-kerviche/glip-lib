@@ -1,12 +1,24 @@
-#include <iostream>
-#include "GLIPLib.hpp"
-#include "CreateWindowlessContext.hpp"
-#include "VideoStream.hpp"
-#include "VideoRecorder.hpp"
+#include "GlipFilterVideo.hpp"
+//#include <iostream>
+//#include "GLIPLib.hpp"
+//#include "CreateWindowlessContext.hpp"
+//#include "VideoStream.hpp"
+//#include "VideoRecorder.hpp"
 
 int main(int argc, char** argv)
 {
-	if(argc!=2)
+	int 		returnCode = 0;
+	std::string 	pipelineFilename,
+			inputFormatString,
+			displayName;
+	ProcessCommand 	command;
+	returnCode = parseArguments(argc, argv, pipelineFilename, inputFormatString, displayName, command);
+	if(returnCode==0)
+		returnCode = compute(pipelineFilename, inputFormatString, displayName, command);
+	return returnCode;
+}
+
+	/*if(argc!=2)
 	{
 		std::cerr << "Invalid/missing argument." << std::endl;
 		std::cerr << argv[0] << " videoFilename" << std::endl;
@@ -80,5 +92,4 @@ int main(int argc, char** argv)
 		delete pipeline;
 		pipeline = NULL;
 		return 0;
-	}
-}
+	}*/

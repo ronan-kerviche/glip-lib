@@ -10,7 +10,7 @@
 /*     File          : GlipCompute.hpp                                                                           */
 /*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : FreeImage3 interface for image input/output.                                              */
+/*     Description   : glip-compute utility. Command-line tool for image filtering and processing.               */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
@@ -18,8 +18,8 @@
 #define __GLIPCOMPUTE__
 
 	// Includes : 
-	#include "CreateWindowlessContext.hpp"
-	#include "DeviceMemoryManager.hpp"
+	#include <string>
+	#include <vector>
 
 	enum GCFlags
 	{
@@ -44,7 +44,7 @@
 		void setSafeParameterSettings(void);
 	};
 
-extern int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands);
+	extern int parseArguments(const int& argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands);
 	extern int compute(const std::string& pipelineFilename, const size_t& memorySize, const GCFlags& flags, const std::string& inputFormatString, const std::string& displayName, std::vector<ProcessCommand>& commands);
 
 #endif

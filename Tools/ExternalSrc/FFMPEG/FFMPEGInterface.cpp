@@ -374,7 +374,7 @@ namespace FFMPEGInterface
 		}
 		while(formatsList[k].format!=AV_PIX_FMT_NONE);
 		// Else :
-		throw Glip::Exception("FFMPEGContext::getSafePixFormatName - Unknown pixel format : " + Glip::toString(pixFmt) + ".", __FILE__, __LINE__);
+		throw Glip::Exception("FFMPEGContext::getSafePixFormatName - Unknown pixel format : " + Glip::toString(pixFmt) + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
 	}
 
 	std::string FFMPEGContext::getSafePixFormatName(const PixelFormat& pixFmt)

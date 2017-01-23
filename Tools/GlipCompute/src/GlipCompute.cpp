@@ -10,24 +10,26 @@
 /*     File          : GlipCompute.cpp                                                                           */
 /*     Original Date : August 18th 2014                                                                          */
 /*                                                                                                               */
-/*     Description   : FreeImage3 interface for image input/output.                                              */
+/*     Description   : glip-compute utility. Command-line tool for image filtering and processing.               */
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-// Include : 
+// Includes : 
+	#include "CreateWindowlessContext.hpp"
+	#include "DeviceMemoryManager.hpp"
 	#include "GlipCompute.hpp"
-	#include "FreeImagePlusInterface.hpp"
 	#include <unistd.h>
 
 // Constants : 
 	const std::string versionString = 
 	"GLIP-COMPUTE V1.0, Built on " __DATE__ ".";
 
-	const std::string helpString = 
+	const std::string helpString =
+//  ----    ----    ----    ----    ----    ----    ----    ----    ----    ----    ----<- 80 
 "GLIP-COMPUTE\n\
 Use GLIP-Lib from the command line to process or generate images.\n\
-glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, 3, ...} FILENAME]\n\
-	     [-o {1, 2, 3, ...} FILENAME] [-r FILENAME]\n\
+glip-compute [-p FILENAME] [-u FILENAME] [-i {1, 2, portName, ...} FILENAME]\n\
+	     [-o {1, 2, portName, ...} FILENAME] [-r FILENAME]\n\
 \n\
 Mandatory arguments :\n\
 -p, --pipeline	Pipeline filename. See the online documentation for more\n\
@@ -138,7 +140,7 @@ EXAMPLE\n\
      glip-compute -p myPipeline.ppl -i 0 inputImage.png -o 0 outputImage.png\n\
 \n\
 glip-compute is part of the GLIP-Lib project.\n\
-Link : <http://glip-lib.net/>\
+Link : http://glip-lib.net/\
 ";
 
 	const std::string templateString = 
@@ -536,7 +538,7 @@ Link : <http://glip-lib.net/>\
 		return ((fp != NULL) && isatty(fileno(fp)));
 	}
 
-	int parseArguments(int argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands)
+	int parseArguments(const int& argc, char** argv, std::string& pipelineFilename, size_t& memorySize, GCFlags& flags, std::string& inputFormatString, std::string& displayName, std::vector<ProcessCommand>& commands)
 	{
 		#define RETURN_ERROR( code, str ) { std::cerr << str << std::endl; return code ; }
 
@@ -593,7 +595,7 @@ Link : <http://glip-lib.net/>\
 			{
 				it++;
 				if(!pipelineFilename.empty())
-					RETURN_ERROR(-1, "Pipeline was already declared.")	
+					RETURN_ERROR(-1, "Pipeline was already declared.")
 				else if(it!=arguments.end())
 					pipelineFilename = *it;
 				else
@@ -613,20 +615,16 @@ Link : <http://glip-lib.net/>\
 			{
 				std::string 	name,
 						filename;
-
 				it++;
-
 				if(it!=arguments.end())
 					name = *it;
 				else
-					RETURN_ERROR(-1, "Missing name for argument " << arg << ".")
-
+					RETURN_ERROR(-1, "Missing port name for argument " << arg << ".")
 				it++;
-
 				if(it!=arguments.end())
 					filename = *it;
 				else
-					RETURN_ERROR(-1, "Missing name for argument " << arg << ".")
+					RETURN_ERROR(-1, "Missing file name for argument " << arg << ".")
 
 				if(arg=="-i" || arg=="--input")
 					singleCommand.inputFilenames.push_back( std::pair<std::string, std::string>(name, filename) );
@@ -714,13 +712,14 @@ Link : <http://glip-lib.net/>\
 			}
 		}
 
-		if(!singleCommand.inputFilenames.empty() || !singleCommand.outputFilenames.empty())
+		if(!singleCommand.outputFilenames.empty())
 			commands.push_back(singleCommand);
 
-		// Test : 
+		// Test :
+		if(pipelineFilename.empty())
+			RETURN_ERROR(-1, "No pipeline was defined.")
 		if(commands.empty())
 			RETURN_ERROR(-1, "No commands were defined.")
-
 		if(inputFormatString.find("%s")==std::string::npos && inputFormatString.find("%d")==std::string::npos)
 			RETURN_ERROR(-1, "Input format string format is invalid (missing %s or %d) : \"" << inputFormatString << "\".")	
 		else if(inputFormatString.find("%s")!=std::string::npos && inputFormatString.find("%d")!=std::string::npos)
@@ -740,7 +739,7 @@ Link : <http://glip-lib.net/>\
 			return -1;
 	}
 
-	void sortPorts(const Glip::Modules::LayoutLoader::PipelineScriptElements& elements, const ProcessCommand& command,  std::vector<std::string>& inputsSorted, std::vector<std::string>& outputsSorted)
+	void sortPorts(const Glip::Modules::LayoutLoader::PipelineScriptElements& elements, const ProcessCommand& command, std::vector<std::string>& inputsSorted, std::vector<std::string>& outputsSorted)
 	{
 		// Init : 
 		inputsSorted.assign(elements.mainPipelineInputs.size(), "");
@@ -949,6 +948,7 @@ Link : <http://glip-lib.net/>\
 
 		delete deviceMemoryManager;
 		delete pipeline;
+		deviceMemoryManager = NULL;
 		pipeline = NULL;
 
 		return returnCode;

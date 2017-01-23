@@ -51,22 +51,28 @@ namespace FFMPEGInterface
 
 			// Misc :
 			bool				endReached;
-			float 				timeStampFrameRate,
+			float 				frameRate,
 							duration_sec;
 			int64_t 			readFrameCount,
 							timeStampOffset,
-							timeStampOfLastFrameRead;
+							timeStampOfLastFrameRead,
+							lastTimeStampDelta;
+
+			VideoStream(const VideoStream&);
 		public :
 			VideoStream(const std::string& filename, unsigned int numFrameBuffered = 1, GLenum minFilter=GL_NEAREST, GLenum magFilter=GL_NEAREST, GLenum sWrapping=GL_CLAMP, GLenum tWrapping=GL_CLAMP, int maxLevel=0);
 			~VideoStream(void);
 
-			int  		getReadFrameCount(void) const;
-			float		getVideoDurationSec(void) const;
-			float  		getCurrentTimeSec(void) const;
-			bool		isOver(void) const;
-			void 		readNextFrame(void);
-			void		seek(float time_sec);
-			HdlTexture&	frame(const int& id);
+			const int64_t& getReadFrameCount(void) const;
+			const float& getVideoDurationSec(void) const;
+			const float& getFrameRate(void) const;
+			float getCurrentTimeSec(void) const;
+			float getEstimatedNextFrameTimeSec(void) const;
+			bool isOver(void) const;
+			void readNextFrame(void);
+			void seek(float time_sec);
+			const HdlTextureFormat format(void) const;
+			HdlTexture& frame(const int& id);
 	};
 }
 

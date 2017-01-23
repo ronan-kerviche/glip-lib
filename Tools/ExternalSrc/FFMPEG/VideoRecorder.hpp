@@ -52,8 +52,9 @@ namespace FFMPEGInterface
 			// From GLIP lib :
 			HdlPBO				pboReader;
 
+			VideoRecorder(const VideoRecorder&);
 		public :
-			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, int _frameRate, int videoBitRate_BitPerSec=400000, PixelFormat pixFormat=PIX_FMT_YUV420P);
+			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const int& _frameRate, const int& videoBitRate_BitPerSec=400000, const PixelFormat& pixFormat=PIX_FMT_YUV420P);
 			~VideoRecorder(void);
 			unsigned int getNumEncodedFrames(void) const;
 			float getTotalVideoDurationSec(void) const;

@@ -20,7 +20,7 @@
 namespace FFMPEGInterface
 {
 	// Find options for argument pixFormat at http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
-	VideoRecorder::VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, int _frameRate, int videoBitRate_BitPerSec, PixelFormat pixFormat)
+	VideoRecorder::VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const int& _frameRate, const int& videoBitRate_BitPerSec, const PixelFormat& pixFormat)
 	 : 	HdlAbstractTextureFormat(format),
 		numEncodedFrame(0),
 		frameRate(_frameRate),
@@ -36,9 +36,9 @@ namespace FFMPEGInterface
 	{
 		int retCode = 0;
 		if(format.getWidth()%2!=0 || format.getHeight()%2!=0)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Stream width and height must be a multiple of 2).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Stream width and height must be a multiple of 2).", __FILE__, __LINE__, Glip::Exception::ClientException);
 		else if(format.getGLMode()!=GL_RGB || format.getGLDepth()!=GL_UNSIGNED_BYTE)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB + GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB + GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// allocate the output media context
 		#if defined(__FFMPEG_VX1__)
@@ -50,7 +50,7 @@ namespace FFMPEGInterface
 				outputFormat = av_guess_format("mpeg", NULL, NULL);
 			}
 			if(!outputFormat)
-				throw Exception("VideoRecorder::VideoRecorder - Could not find suitable output format", __FILE__, __LINE__);
+				throw Exception("VideoRecorder::VideoRecorder - Could not find suitable output format", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 			formatContext = avformat_alloc_context();
 			formatContext->oformat = outputFormat;
@@ -65,26 +65,26 @@ namespace FFMPEGInterface
 			}
 		#endif
 		if(!formatContext)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		outputFormat = formatContext->oformat;
 		if(outputFormat->video_codec==AV_CODEC_ID_NONE)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Add an output stream :
 		// Find the encoder :
 		videoCodec 	= avcodec_find_encoder(outputFormat->video_codec);
 		if(!videoCodec)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (No suitable codec found).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (No suitable codec found).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		videoStream 	= avformat_new_stream(formatContext, videoCodec);
 		if (!videoStream)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate stream).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate stream).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		videoStream->id= formatContext->nb_streams-1;
 		codecContext = videoStream->codec;
 		if(videoCodec->type!=AVMEDIA_TYPE_VIDEO)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Codec is not of video type).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Codec is not of video type).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		avcodec_get_context_defaults3(codecContext, videoCodec);
 		codecContext->codec_id = outputFormat->video_codec;
@@ -120,17 +120,17 @@ namespace FFMPEGInterface
 		// Open the codec :
 		retCode = avcodec_open2(codecContext, videoCodec, NULL);
 		if(retCode<0)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not open video codec).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not open video codec).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Allocate and init a re-usable frame :
 		frame = av_frame_alloc();
 		if (!frame)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate video frame).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate video frame).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Allocate the encoded raw picture :
 		retCode = avpicture_alloc(&dstPicture, codecContext->pix_fmt, codecContext->width, codecContext->height);
 		if(retCode<0)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate picture).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate picture).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// If the output format is not AV_PIX_FMT_RGB24, then a temporary AV_PIX_FMT_RGB24
 		// picture is needed too. It is then converted to the required
@@ -139,7 +139,7 @@ namespace FFMPEGInterface
 		{
 			retCode = avpicture_alloc(&srcPicture, PIX_FMT_RGB24, codecContext->width, codecContext->height);
 			if(retCode<0)
-				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate temporary picture).", __FILE__, __LINE__);
+				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate temporary picture).", __FILE__, __LINE__, Glip::Exception::ClientException);
 			buffer = &srcPicture;
 		}
 		else
@@ -154,13 +154,13 @@ namespace FFMPEGInterface
 		{
 			retCode = avio_open(&formatContext->pb, filename.c_str(), AVIO_FLAG_WRITE);
 			if(retCode<0)
-				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not open file " + filename + ").", __FILE__, __LINE__);
+				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not open file " + filename + ").", __FILE__, __LINE__, Glip::Exception::ClientException);
 		}
 
 		// Write the stream header, if any :
 		retCode = avformat_write_header(formatContext, NULL);
 		if(retCode<0)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Error occurred when opening output file).", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Error occurred when opening output file).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Set first PTS to zero :
 		frame->pts = 0;
@@ -263,7 +263,7 @@ namespace FFMPEGInterface
 			//retCode = avcodec_encode_video(c, &pkt, frame, &got_output);
 			retCode = avcodec_encode_video2(codecContext, &pkt, frame, &got_output);
 			if(retCode<0)
-				throw Exception("VideoRecorder::VideoRecorder - Error encoding video frame.", __FILE__, __LINE__);
+				throw Exception("VideoRecorder::VideoRecorder - Error encoding video frame.", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 			// If size is zero, it means the image was buffered :
 			if(got_output)
@@ -279,7 +279,7 @@ namespace FFMPEGInterface
 		}
 
 		if(retCode!= 0)
-			throw Exception("VideoRecorder::VideoRecorder - Error while writing video frame.", __FILE__, __LINE__);
+			throw Exception("VideoRecorder::VideoRecorder - Error while writing video frame.", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Update next time stamp :
 		frame->pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);

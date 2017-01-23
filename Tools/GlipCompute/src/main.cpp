@@ -20,20 +20,16 @@
 // Main :
 	int main(int argc, char** argv)
 	{
-		int returnCode = 0;
-
-		size_t				memorySize;	
+		int				returnCode = 0;
+		size_t				memorySize = 0;	
 		GCFlags				flags;
 		std::string 			pipelineFilename,
 						inputFormatString,
 						displayName;
 		std::vector<ProcessCommand> 	commands;
-
-		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, flags, inputFormatString, displayName, commands);
-	
+		returnCode = parseArguments(argc, argv, pipelineFilename, memorySize, flags, inputFormatString, displayName, commands);	
 		if(returnCode==0)
 			returnCode = compute(pipelineFilename, memorySize, flags, inputFormatString, displayName, commands);
-
 		return returnCode;
 	}
 
