@@ -14,7 +14,7 @@
 /*                                                                                                               */
 /* ************************************************************************************************************* */
 
-#include <iostream>
+#include <cmath>
 #include "FFMPEGInterface.hpp"
 #include "GLIPLib.hpp"
 
@@ -400,6 +400,11 @@ namespace FFMPEGInterface
 			k++;
 		}
 		return AV_PIX_FMT_NONE;
+	}
+	
+	float FFMPEGContext::roundFrameRate(const float& frameRate)
+	{
+		return std::floor(frameRate*100.0f)/100.0f;
 	}
 }
 

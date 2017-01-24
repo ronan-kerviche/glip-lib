@@ -144,7 +144,7 @@ namespace FFMPEGInterface
 		return readFrameCount;
 	}
 
-	const float& VideoStream::getVideoDurationSec(void) const
+	const float& VideoStream::getDurationSec(void) const
 	{
 		return duration_sec;
 	}

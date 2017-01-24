@@ -67,6 +67,7 @@ namespace FFMPEGInterface
 			static std::string getPixFormatName(const PixelFormat& pixFmt);
 			static std::string getSafePixFormatName(const PixelFormat& pixFmt);
 			static PixelFormat getPixFormat(const std::string& name);
+			static float roundFrameRate(const float& frameRate);
 	};
 }
 

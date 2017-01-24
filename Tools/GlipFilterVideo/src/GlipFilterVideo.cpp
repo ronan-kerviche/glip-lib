@@ -80,31 +80,101 @@ Link : http://glip-lib.net/\
 
 #define RETURN_ERROR( code, str ) { std::cerr << str << std::endl; return code ; }
 
-// StreamData :
+// StreamData and derivatives :
 	StreamData::StreamData(void)
-	 :	isInput(false),
-		maxMipMapLevel(0),
-		bitRate(400000),
-		frameRate(0),
-		minFilter(GL_NEAREST),
-		magFilter(GL_NEAREST),
-		sWrapping(GL_CLAMP),
-		tWrapping(GL_CLAMP),
-		pixelFormat(PIX_FMT_YUV420P),
-		seek(0.0),
+	 :	seek(0.0),
 		time(0.0),
 		duration(0.0)
 	{ }
 
+	StreamData::StreamData(const StreamData& c)
+	 :	seek(c.seek),
+		time(c.time),
+		duration(c.duration),
+		filename(c.filename),
+		timeUniform(c.timeUniform),
+		seekUniform(c.seekUniform),
+		frameRateUniform(c.frameRateUniform),
+		durationUniform(c.durationUniform)
+	{ }
+
+	StreamData::~StreamData(void)
+	{ }
+
+	InputStreamData::InputStreamData(void)
+	 :	maxMipMapLevel(0),
+		minFilter(GL_NEAREST),
+		magFilter(GL_NEAREST),
+		sWrapping(GL_CLAMP),
+		tWrapping(GL_CLAMP),
+		stream(NULL)
+	{ }
+
+	InputStreamData::InputStreamData(const InputStreamData& c)
+	 :	StreamData(c),
+		maxMipMapLevel(c.maxMipMapLevel),
+		minFilter(c.minFilter),
+		magFilter(c.magFilter),
+		sWrapping(c.sWrapping),
+		tWrapping(c.tWrapping),
+		ports(c.ports),
+		stream(NULL)
+	{
+		if(c.stream!=NULL)
+			throw Glip::Exception("InputStreamData::InputStreamData - Internal error, stream attached to the original object.", __FILE__, __LINE__, Glip::Exception::ClientException);
+	}
+
+	InputStreamData::~InputStreamData(void)
+	{
+		delete stream;
+		stream = NULL;
+	}
+
+	void InputStreamData::openStreamAtSeek(void)
+	{
+		stream = new FFMPEGInterface::VideoStream(filename, ports.size(), minFilter, magFilter, sWrapping, tWrapping, maxMipMapLevel);
+		stream->seek(seek);
+	}
+
+	OutputStreamData::OutputStreamData(void)
+	 :	bitRate(400000),
+		pixelFormat(PIX_FMT_YUV420P),
+		frameRate(0.0),
+		recorder(NULL)
+	{ }
+
+	OutputStreamData::OutputStreamData(const OutputStreamData& c)
+	 :	StreamData(c),
+		bitRate(c.bitRate),
+		pixelFormat(c.pixelFormat),
+		port(c.port),	
+		recorder(NULL)
+	{
+		if(c.recorder!=NULL)
+			throw Glip::Exception("OutputStreamData::OutputStreamData - Internal error, recorder attached to the original object.", __FILE__, __LINE__, Glip::Exception::ClientException);
+	}
+
+	OutputStreamData::~OutputStreamData(void)
+	{
+		delete recorder;
+		recorder = NULL;
+	}
+
+	void OutputStreamData::startRecorder(const Glip::CoreGL::HdlAbstractTextureFormat& fmt)
+	{
+		frameRate = FFMPEGInterface::FFMPEGContext::roundFrameRate(frameRate);
+		recorder = new FFMPEGInterface::VideoRecorder(filename, fmt, frameRate, bitRate, pixelFormat);
+		if(frameRate!=recorder->getFrameRate())
+			throw Glip::Exception("OutputStreamData::startRecorder - Internal error, framerate rounding failed.", __FILE__, __LINE__, Glip::Exception::ClientException);
+	}
+	
 // ProcessCommand :
 	int ProcessCommand::readInput(const std::string& portStr, const std::string& str)
 	{
 		const std::string dArg = "*";
 		try
 		{
-			StreamData inputData;
-			inputData.isInput = true;
-
+			InputStreamData inputData;
 			// Read the ports :
 			Glip::Modules::VanillaParserSpace::VanillaParser portParser(portStr);
 			if(portParser.elements.size()!=1)
@@ -134,8 +204,7 @@ Link : http://glip-lib.net/\
 					inputData. member = defaultValue;
 
 			READ_SCALAR(0, seek, 0.0f, 0.0f)
-			READ_SCALAR(1, frameRate, 1, 0)
-			READ_SCALAR(10, maxMipMapLevel, 0, 0)
+			READ_SCALAR(9, maxMipMapLevel, 0, 0)
 			#undef READ_SCALAR
 
 			#define READ_TEXT(argId, member, defaultValue) \
@@ -148,10 +217,10 @@ Link : http://glip-lib.net/\
 				else \
 					inputData. member = defaultValue;
 			
-			READ_TEXT(2, timeUniform, 	"time_" + inputData.ports.front())
-			READ_TEXT(3, seekUniform, 	"seek_" + inputData.ports.front())
-			READ_TEXT(4, frameRateUniform, 	"framerate_" + inputData.ports.front())
-			READ_TEXT(5, durationUniform, 	"duration_" + inputData.ports.front())
+			READ_TEXT(1, timeUniform, 	"time_" + inputData.ports.front())
+			READ_TEXT(2, seekUniform, 	"seek_" + inputData.ports.front())
+			READ_TEXT(3, frameRateUniform, 	"framerate_" + inputData.ports.front())
+			READ_TEXT(4, durationUniform, 	"duration_" + inputData.ports.front())
 			#undef READ_TEXT
 
 			#define READ_GLENUM(argId, member, defaultValue) \
@@ -162,10 +231,10 @@ Link : http://glip-lib.net/\
 				else \
 					inputData. member = defaultValue;
 
-			READ_GLENUM(8, minFilter, GL_NEAREST)
-			READ_GLENUM(7, magFilter, GL_NEAREST)
-			READ_GLENUM(8, sWrapping, GL_CLAMP)
-			READ_GLENUM(9, tWrapping, GL_CLAMP)
+			READ_GLENUM(5, minFilter, GL_NEAREST)
+			READ_GLENUM(6, magFilter, GL_NEAREST)
+			READ_GLENUM(7, sWrapping, GL_CLAMP)
+			READ_GLENUM(8, tWrapping, GL_CLAMP)
 			#undef READ_GLENUM
 			// Save :
 			inputs.push_back(inputData);
@@ -188,9 +257,8 @@ Link : http://glip-lib.net/\
 				RETURN_ERROR( -1, "Too many elements in argument " << str << ".")
 			const Glip::Modules::VanillaParserSpace::Element& e = parser.elements.front();
 			const std::vector<std::string>& arguments = e.arguments;
-			StreamData outputData;
-			outputData.isInput = false;
-			outputData.ports.push_back(portName);
+			OutputStreamData outputData;
+			outputData.port = portName;
 			outputData.filename = e.strKeyword;
 
 			#define READ_SCALAR(argId, member, testValue, defaultValue) \
@@ -205,6 +273,7 @@ Link : http://glip-lib.net/\
 			READ_SCALAR(0, duration, 0.0f, 0.0f)
 			READ_SCALAR(1, seek, 0.0f, 0.0f)
 			READ_SCALAR(2, frameRate, 1, 0)
+			outputData.frameRate = FFMPEGInterface::FFMPEGContext::roundFrameRate(outputData.frameRate);
 			READ_SCALAR(7, bitRate, 1, 400000)
 			#undef READ_POSITIVE_SCALAR	
 
@@ -427,7 +496,28 @@ Link : http://glip-lib.net/\
 		return -1;
 	}
 
-	int compute(const std::string& pipelineFilename, const std::string& inputFormatString, const std::string& displayName, const ProcessCommand& command)
+	std::vector<Glip::CorePipeline::Filter*> getFiltersDependentOnUniform(Glip::CorePipeline::Pipeline& pipeline, const std::string& name, const GLenum& type)
+	{
+		std::vector<Glip::CorePipeline::Filter*> filters;
+		if(!name.empty())
+		{
+			for(int f=0; f<pipeline.getNumElements(); f++)
+			{
+				if(pipeline.getElementKind(f)==Glip::CorePipeline::AbstractPipelineLayout::FILTER)
+				{
+					Glip::CorePipeline::Filter* ptr = &pipeline[pipeline.getElementID(f)];
+					const std::vector<std::string>& uniformsNames = ptr->program().getUniformsNames();
+					const std::vector<GLenum>& uniformsTypes = ptr->program().getUniformsTypes();
+					std::vector<std::string>::const_iterator it = std::find(uniformsNames.begin(), uniformsNames.end(), name);
+					if(it!=uniformsNames.end() && uniformsTypes[std::distance(uniformsNames.begin(), uniformsNames.end())]!=type)
+						filters.push_back(ptr);
+				}
+			}
+		}
+		return filters;	
+	}
+
+	int compute(const std::string& pipelineFilename, const std::string& inputFormatString, const std::string& displayName, ProcessCommand& command)
 	{
 		int returnCode = 0;
 		try
@@ -447,15 +537,13 @@ Link : http://glip-lib.net/\
 
 			// Map the inputs :
 			std::vector<std::pair<int,int> > inputSourcesMap(elements.mainPipelineInputs.size(), std::pair<int,int>(-1,-1));
-			for(std::vector<StreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
+			for(int streamId=0; streamId<static_cast<int>(command.inputs.size()); streamId++)
 			{
-				for(std::vector<std::string>::const_iterator itPort=it->ports.begin(); itPort!=it->ports.end(); itPort++)
+				for(int ageId=0; ageId<static_cast<int>(command.inputs[streamId].ports.size()); ageId++)
 				{
-					const int 	inputPortId = findPort(*itPort, elements.mainPipelineInputs),
-							streamId = std::distance(command.inputs.begin(), it),
-							ageId = std::distance(it->ports.begin(), itPort);
+					const int inputPortId = findPort(command.inputs[streamId].ports[ageId], elements.mainPipelineInputs);
 					if(inputPortId<0)
-						throw Glip::Exception("The input port " + *itPort + " for the stream " + it->filename + " does not exist in the pipeline " + elements.mainPipeline + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
+						throw Glip::Exception("The input port " + command.inputs[streamId].ports[ageId] + " for the stream " + command.inputs[streamId].filename + " does not exist in the pipeline " + elements.mainPipeline + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
 					else
 						inputSourcesMap[inputPortId] = std::pair<int,int>(streamId, ageId);
 				}
@@ -469,12 +557,11 @@ Link : http://glip-lib.net/\
 	
 			// Map the outputs :
 			std::vector<int> outputStreamsMap(elements.mainPipelineOutputs.size(), -1);
-			for(std::vector<StreamData>::const_iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
+			for(int streamId=0; streamId<static_cast<int>(command.outputs.size()); streamId++)
 			{
-				const int 	outputPortId = findPort(it->ports.front(), elements.mainPipelineOutputs),
-						streamId = std::distance(command.outputs.begin(), it);
+				const int outputPortId = findPort(command.outputs[streamId].port, elements.mainPipelineOutputs);
 				if(outputPortId<0)
-					throw Glip::Exception("The input port " + it->ports.front() + " for the stream " + it->filename + " does not exist in the pipeline " + elements.mainPipeline + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
+					throw Glip::Exception("The input port " + command.outputs[streamId].port + " for the stream " + command.outputs[streamId].filename + " does not exist in the pipeline " + elements.mainPipeline + ".", __FILE__, __LINE__, Glip::Exception::ClientException);
 				else
 					outputStreamsMap[outputPortId] = streamId;
 			}
@@ -486,13 +573,9 @@ Link : http://glip-lib.net/\
 			}
 
 			// Load/open all the input sources :
-			AutoVector<FFMPEGInterface::VideoStream> inputSources;
-			for(std::vector<StreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
-			{
-				inputSources.push_back(new FFMPEGInterface::VideoStream(it->filename, it->ports.size(), it->minFilter, it->magFilter, it->sWrapping, it->tWrapping, it->maxMipMapLevel));
-				inputSources.back()->seek(it->seek);
-			}
-						
+			for(std::vector<InputStreamData>::iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
+				it->openStreamAtSeek();
+	
 			// Specify the required format data :
 			for(int k=0; k<static_cast<int>(elements.mainPipelineInputs.size()); k++)
 			{
@@ -512,19 +595,77 @@ Link : http://glip-lib.net/\
 
 				// Set the required value :
 				const std::string name(buffer, actualLength);
-				lloader.addRequiredElement(name, inputSources[k]->format());
+				const std::pair<int, int>& mapPair = inputSourcesMap[k];
+				lloader.addRequiredElement(name, command.inputs[mapPair.first].stream->format());
 			}
 
 			// Load the pipeline :
 			Glip::CorePipeline::AbstractPipelineLayout pLayout = lloader.getPipelineLayout(pipelineFilename);
 			Glip::CorePipeline::Pipeline pipeline(pLayout, "GlipComputePipeline");
 
+			// Find the master duration and framerate :
+			float 	masterFrameRate = 24.0f,
+				masterDuration = 0.0f;
+			for(std::vector<InputStreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
+			{
+				masterFrameRate = std::max(masterFrameRate, it->stream->getFrameRate());
+				masterDuration = std::max(masterDuration, it->stream->getDurationSec());
+			}
+			for(std::vector<OutputStreamData>::const_iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
+			{
+				masterFrameRate = std::max(masterFrameRate, static_cast<float>(it->frameRate));
+				masterDuration = std::max(masterDuration, it->duration);
+			}
+			std::cout << "Master framerate : " << masterFrameRate << std::endl;
+			std::cout << "Master duration  : " << masterDuration << std::endl;
+			// Complete the output streams durations and framerate :
+			for(std::vector<OutputStreamData>::iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
+			{
+				if(it->duration<=0.0f)
+					it->duration = masterDuration;
+				if(it->frameRate<=0)
+					it->frameRate = masterFrameRate;
+			}
+
 			// Create the destination files :
-			AutoVector<FFMPEGInterface::VideoRecorder> outputStreams;
-			for(std::vector<int>::const_iterator it=outputStreamsMap.begin(); it!=outputStreamsMap.end(); it++)
-				outputStreams.push_back(new FFMPEGInterface::VideoRecorder(command.outputs[*it].filename, pipeline.out(*it).format(), command.outputs[*it].frameRate, command.outputs[*it].bitRate, command.outputs[*it].pixelFormat));
+			for(std::vector<int>::iterator it=outputStreamsMap.begin(); it!=outputStreamsMap.end(); it++)
+				command.outputs[*it].startRecorder(pipeline.out(*it).format());
+	
+			// Set the static uniforms data (seek, duration, frameRate, etc.) :
+			std::vector<Glip::CorePipeline::Filter*> filters;
+			std::vector<std::vector<Glip::CorePipeline::Filter*> > 	inputsTimeDependentFilters,
+										outputsTimeDependentFilters;
+			for(std::vector<InputStreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
+			{
+				#define SET_UNIFORM(uniformString, value) \
+					filters = getFiltersDependentOnUniform(pipeline, uniformString, GL_FLOAT); \
+					for(std::vector<Glip::CorePipeline::Filter*>::iterator itPtr=filters.begin(); itPtr!=filters.end(); itPtr++) \
+						(*itPtr)->program().setVar(uniformString, GL_FLOAT, value);
+				
+				SET_UNIFORM(it->seekUniform, it->seek)
+				SET_UNIFORM(it->frameRateUniform, it->stream->getFrameRate())
+				SET_UNIFORM(it->durationUniform, it->stream->getDurationSec())
+				SET_UNIFORM(it->timeUniform, it->stream->getCurrentTimeSec())
+				inputsTimeDependentFilters.push_back(filters);
+				#undef SET_UNIFORM
+			}
+			for(std::vector<OutputStreamData>::const_iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
+			{
+				#define SET_UNIFORM(uniformString, value) \
+					filters = getFiltersDependentOnUniform(pipeline, uniformString, GL_FLOAT); \
+					for(std::vector<Glip::CorePipeline::Filter*>::iterator itPtr=filters.begin(); itPtr!=filters.end(); itPtr++) \
+						(*itPtr)->program().setVar(uniformString, GL_FLOAT, value);
+				
+				SET_UNIFORM(it->seekUniform, it->seek)
+				SET_UNIFORM(it->frameRateUniform, it->recorder->getFrameRate())
+				SET_UNIFORM(it->durationUniform, it->duration)
+				SET_UNIFORM(it->timeUniform, 0.0f)
+				outputsTimeDependentFilters.push_back(filters);
+				#undef SET_UNIFORM
+			}
 
 			// Process :
+			float masterClock = 0.0f;
 		}
 		catch(Glip::Exception& e)
 		{

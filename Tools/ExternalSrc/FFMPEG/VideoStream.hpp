@@ -64,7 +64,7 @@ namespace FFMPEGInterface
 			~VideoStream(void);
 
 			const int64_t& getReadFrameCount(void) const;
-			const float& getVideoDurationSec(void) const;
+			const float& getDurationSec(void) const;
 			const float& getFrameRate(void) const;
 			float getCurrentTimeSec(void) const;
 			float getEstimatedNextFrameTimeSec(void) const;

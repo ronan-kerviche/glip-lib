@@ -20,10 +20,10 @@
 namespace FFMPEGInterface
 {
 	// Find options for argument pixFormat at http://ffmpeg.org/doxygen/trunk/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5a1aa7677092740d8def31655b5d7f0cc2
-	VideoRecorder::VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const int& _frameRate, const int& videoBitRate_BitPerSec, const PixelFormat& pixFormat)
+	VideoRecorder::VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const float& _frameRate, const int& videoBitRate_BitPerSec, const PixelFormat& pixFormat)
 	 : 	HdlAbstractTextureFormat(format),
-		numEncodedFrame(0),
-		frameRate(_frameRate),
+		numEncodedFrames(0),
+		frameRate(FFMPEGContext::roundFrameRate(_frameRate)),
 		outputFormat(NULL),
 		formatContext(NULL),
 		videoCodec(NULL),
@@ -96,8 +96,8 @@ namespace FFMPEGInterface
 		// 		of which frame timestamps are represented. For fixed-fps content,
 		// 		timebase should be 1/framerate and timestamp increments should be
 		// 		identical to 1.
-		codecContext->time_base.den = frameRate;
-		codecContext->time_base.num = 1;
+		codecContext->time_base.den = static_cast<int>(frameRate*100.0f);
+		codecContext->time_base.num = 100;
 		codecContext->gop_size = 12; // emit one intra frame every twelve frames at most.
 		codecContext->pix_fmt = pixFormat; //or PIX_FMT_YUV420P;
 
@@ -216,6 +216,21 @@ namespace FFMPEGInterface
 		//AVCodec *videoCodec; // Not destroyed in the example
 	}
 
+	const float& VideoRecorder::getFrameRate(void) const
+	{
+		return frameRate;
+	}
+
+	unsigned int VideoRecorder::getNumEncodedFrames(void) const
+	{
+		return numEncodedFrames;
+	}
+
+	float VideoRecorder::getTotalVideoDurationSec(void) const
+	{
+		return static_cast<float>(getNumEncodedFrames())/frameRate;
+	}
+
 	void VideoRecorder::record(HdlTexture& newFrame)
 	{
 		int 		retCode = 0;
@@ -283,17 +298,7 @@ namespace FFMPEGInterface
 
 		// Update next time stamp :
 		frame->pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
-		numEncodedFrame++;
-	}
-
-	unsigned int VideoRecorder::getNumEncodedFrames(void) const
-	{
-		return numEncodedFrame;
-	}
-
-	float VideoRecorder::getTotalVideoDurationSec(void) const
-	{
-		return static_cast<float>(getNumEncodedFrames())/static_cast<float>(frameRate);
+		numEncodedFrames++;
 	}
 }
 

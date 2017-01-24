@@ -32,8 +32,8 @@ namespace FFMPEGInterface
 	class VideoRecorder : public HdlAbstractTextureFormat, public FFMPEGContext
 	{
 		private :
-			int				numEncodedFrame,
-							frameRate;
+			int				numEncodedFrames;
+			float				frameRate;
 			// libav/ffmpeg data :
 			AVOutputFormat 			*outputFormat;	// Proxy
 			AVFormatContext 		*formatContext;
@@ -54,8 +54,9 @@ namespace FFMPEGInterface
 
 			VideoRecorder(const VideoRecorder&);
 		public :
-			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const int& _frameRate, const int& videoBitRate_BitPerSec=400000, const PixelFormat& pixFormat=PIX_FMT_YUV420P);
+			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const float& _frameRate, const int& videoBitRate_BitPerSec=400000, const PixelFormat& pixFormat=PIX_FMT_YUV420P);
 			~VideoRecorder(void);
+			const float& getFrameRate(void) const;
 			unsigned int getNumEncodedFrames(void) const;
 			float getTotalVideoDurationSec(void) const;
 			void record(HdlTexture& newFrame);
