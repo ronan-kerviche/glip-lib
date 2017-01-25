@@ -621,7 +621,7 @@ Link : http://glip-lib.net/\
 				masterDuration = std::max(masterDuration, it->duration);
 			}
 			if(masterFrameRate<=0.0f)
-				masterFrameRate = 24.0f; // 24 FPS default.
+				masterFrameRate = 25.0f; // 25 FPS default.
 			if(masterDuration<=0.0f)
 				masterDuration = 10.0f; // 10 Seconds default.
 			std::cout << "Master framerate : " << masterFrameRate << " FPS." << std::endl;

@@ -45,10 +45,10 @@ namespace FFMPEGInterface
 							dstPicture,
 							*buffer;	// Proxy
 			SwsContext			*swsContext;
-			#ifdef __FFMPEG_VX1__
+			/*#ifdef __FFMPEG_VX1__
 				uint8_t 		*video_outbuf;
 				int 			video_outbuf_size;
-			#endif
+			#endif*/
 			// From GLIP lib :
 			HdlPBO				pboReader;
 
@@ -56,6 +56,8 @@ namespace FFMPEGInterface
 		public :
 			VideoRecorder(const std::string& filename, const HdlAbstractTextureFormat& format, const float& _frameRate, const int& videoBitRate_BitPerSec=400000, const PixelFormat& pixFormat=PIX_FMT_YUV420P);
 			~VideoRecorder(void);
+			std::string getOutputFormatName(void) const;
+			std::string getOutputMimeType(void) const;
 			const float& getFrameRate(void) const;
 			unsigned int getNumEncodedFrames(void) const;
 			float getTotalVideoDurationSec(void) const;
