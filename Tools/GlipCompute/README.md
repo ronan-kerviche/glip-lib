@@ -31,13 +31,13 @@ THE SOFTWARE.
 
 Description
 --------------
-Command line tool for image processing on GPU with GLIP-Lib. Requires cmake for building, X server and freeimage for reading and writing images.
+Command line tool for image processing on GPU with GLIP-Lib.
 
 More on [glip-lib.net](http://glip-lib.net/page12__tool_glip_compute.html)
 
 Requirements
 --------------
-Requires the FreeImage library and its C++ binding : freeimageplus.
+Requires cmake for building, X server and freeimage and its C++ binding freeimageplus to read and write images.
 
 Compiling
 --------------

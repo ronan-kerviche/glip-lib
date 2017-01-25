@@ -15,6 +15,7 @@
 /* ************************************************************************************************************* */
 
 // Includes :
+	#include <cmath>
 	#include "CreateWindowlessContext.hpp"
 	#include "GlipFilterVideo.hpp"
 	#include "VideoStream.hpp"
@@ -134,6 +135,8 @@ Link : http://glip-lib.net/\
 	{
 		stream = new FFMPEGInterface::VideoStream(filename, ports.size(), minFilter, magFilter, sWrapping, tWrapping, maxMipMapLevel);
 		stream->seek(seek);
+		stream->readNextFrame();
+		time = 0.0f;
 	}
 
 	OutputStreamData::OutputStreamData(void)
@@ -217,10 +220,10 @@ Link : http://glip-lib.net/\
 				else \
 					inputData. member = defaultValue;
 			
-			READ_TEXT(1, timeUniform, 	"time_" + inputData.ports.front())
-			READ_TEXT(2, seekUniform, 	"seek_" + inputData.ports.front())
-			READ_TEXT(3, frameRateUniform, 	"framerate_" + inputData.ports.front())
-			READ_TEXT(4, durationUniform, 	"duration_" + inputData.ports.front())
+			READ_TEXT(1, timeUniform, 	"")
+			READ_TEXT(2, seekUniform, 	"")
+			READ_TEXT(3, frameRateUniform, 	"")
+			READ_TEXT(4, durationUniform, 	"")
 			#undef READ_TEXT
 
 			#define READ_GLENUM(argId, member, defaultValue) \
@@ -287,13 +290,13 @@ Link : http://glip-lib.net/\
 				else \
 					outputData. member = defaultValue;
 			
-			READ_TEXT(3, timeUniform, 	"time_" + portName)
-			READ_TEXT(4, seekUniform, 	"seek_" + portName)
-			READ_TEXT(5, frameRateUniform, 	"framerate_" + portName)
-			READ_TEXT(6, durationUniform, 	"duration_" + portName)
+			READ_TEXT(3, timeUniform, 	"")
+			READ_TEXT(4, seekUniform, 	"")
+			READ_TEXT(5, frameRateUniform, 	"")
+			READ_TEXT(6, durationUniform, 	"")
 			#undef READ_TEXT
 
-			const int argId = 7;
+			const int argId = 8;
 			if(arguments.size()>argId && arguments[argId]!=dArg)
 			{
 				outputData.pixelFormat = FFMPEGInterface::FFMPEGContext::getPixFormat(arguments[argId]);
@@ -425,6 +428,7 @@ Link : http://glip-lib.net/\
 					singleCommand.uniformVariables = loadUniforms(*it);
 				else
 					RETURN_ERROR(-1, "Missing filename for argument " << arg << ".")*/
+				RETURN_ERROR(-1, "Not Supported.")
 			}
 			else if(arg=="-i" || arg=="--input" || arg=="-o" || arg=="--output")
 			{
@@ -604,7 +608,7 @@ Link : http://glip-lib.net/\
 			Glip::CorePipeline::Pipeline pipeline(pLayout, "GlipComputePipeline");
 
 			// Find the master duration and framerate :
-			float 	masterFrameRate = 24.0f,
+			float 	masterFrameRate = 0.0f,
 				masterDuration = 0.0f;
 			for(std::vector<InputStreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
 			{
@@ -616,8 +620,12 @@ Link : http://glip-lib.net/\
 				masterFrameRate = std::max(masterFrameRate, static_cast<float>(it->frameRate));
 				masterDuration = std::max(masterDuration, it->duration);
 			}
-			std::cout << "Master framerate : " << masterFrameRate << std::endl;
-			std::cout << "Master duration  : " << masterDuration << std::endl;
+			if(masterFrameRate<=0.0f)
+				masterFrameRate = 24.0f; // 24 FPS default.
+			if(masterDuration<=0.0f)
+				masterDuration = 10.0f; // 10 Seconds default.
+			std::cout << "Master framerate : " << masterFrameRate << " FPS." << std::endl;
+			std::cout << "Master duration  : " << masterDuration << " seconds." << std::endl;
 			// Complete the output streams durations and framerate :
 			for(std::vector<OutputStreamData>::iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
 			{
@@ -632,13 +640,15 @@ Link : http://glip-lib.net/\
 				command.outputs[*it].startRecorder(pipeline.out(*it).format());
 	
 			// Set the static uniforms data (seek, duration, frameRate, etc.) :
-			std::vector<Glip::CorePipeline::Filter*> filters;
-			std::vector<std::vector<Glip::CorePipeline::Filter*> > 	inputsTimeDependentFilters,
-										outputsTimeDependentFilters;
+			std::vector<std::pair<std::string, std::vector<Glip::CorePipeline::Filter*> > > inputsTimeDependentFilters,
+													outputsTimeDependentFilters;
 			for(std::vector<InputStreamData>::const_iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
 			{
+				std::vector<Glip::CorePipeline::Filter*> filters;
 				#define SET_UNIFORM(uniformString, value) \
 					filters = getFiltersDependentOnUniform(pipeline, uniformString, GL_FLOAT); \
+					if(!uniformString.empty() && filters.empty()) \
+						std::cout << "[WARNING] Could not find variable " << uniformString << " for input " << it->filename << " in any of the filter(s) in pipeline " << pipeline.getLayoutName() << "." << std::endl; \
 					for(std::vector<Glip::CorePipeline::Filter*>::iterator itPtr=filters.begin(); itPtr!=filters.end(); itPtr++) \
 						(*itPtr)->program().setVar(uniformString, GL_FLOAT, value);
 				
@@ -646,13 +656,16 @@ Link : http://glip-lib.net/\
 				SET_UNIFORM(it->frameRateUniform, it->stream->getFrameRate())
 				SET_UNIFORM(it->durationUniform, it->stream->getDurationSec())
 				SET_UNIFORM(it->timeUniform, it->stream->getCurrentTimeSec())
-				inputsTimeDependentFilters.push_back(filters);
+				inputsTimeDependentFilters.push_back(std::pair<std::string, std::vector<Glip::CorePipeline::Filter*> >(it->timeUniform, filters));
 				#undef SET_UNIFORM
 			}
 			for(std::vector<OutputStreamData>::const_iterator it=command.outputs.begin(); it!=command.outputs.end(); it++)
 			{
+				std::vector<Glip::CorePipeline::Filter*> filters;
 				#define SET_UNIFORM(uniformString, value) \
 					filters = getFiltersDependentOnUniform(pipeline, uniformString, GL_FLOAT); \
+					if(!uniformString.empty() && filters.empty()) \
+						std::cout << "[WARNING] Could not find variable " << uniformString << " for output " << it->filename << " in any of the filter(s) in pipeline " << pipeline.getLayoutName() << "." << std::endl; \
 					for(std::vector<Glip::CorePipeline::Filter*>::iterator itPtr=filters.begin(); itPtr!=filters.end(); itPtr++) \
 						(*itPtr)->program().setVar(uniformString, GL_FLOAT, value);
 				
@@ -660,18 +673,63 @@ Link : http://glip-lib.net/\
 				SET_UNIFORM(it->frameRateUniform, it->recorder->getFrameRate())
 				SET_UNIFORM(it->durationUniform, it->duration)
 				SET_UNIFORM(it->timeUniform, 0.0f)
-				outputsTimeDependentFilters.push_back(filters);
+				outputsTimeDependentFilters.push_back(std::pair<std::string, std::vector<Glip::CorePipeline::Filter*> >(it->timeUniform, filters));
 				#undef SET_UNIFORM
 			}
 
 			// Process :
 			float masterClock = 0.0f;
+			while(masterClock<=masterDuration)
+			{
+				for(std::vector<InputStreamData>::iterator it=command.inputs.begin(); it!=command.inputs.end(); it++)
+				{
+					while(!it->stream->isOver() && masterClock-it->time>0.5f/it->stream->getFrameRate())
+					{
+						it->stream->readNextFrame();
+						it->time += 1.0f/it->stream->getFrameRate();
+					}
+					// Set time :
+					std::pair<std::string, std::vector<Glip::CorePipeline::Filter*> >& filters = inputsTimeDependentFilters[std::distance(command.inputs.begin(), it)];
+					for(std::vector<Glip::CorePipeline::Filter*>::iterator itF=filters.second.begin(); itF!=filters.second.end(); itF++)
+						(*itF)->program().setVar(filters.first, GL_FLOAT, it->time);
+				}
+				// Set the outputs uniform timing :
+				for(std::vector<std::pair<std::string, std::vector<Glip::CorePipeline::Filter*> > >::iterator it=outputsTimeDependentFilters.begin(); it!=outputsTimeDependentFilters.end(); it++)
+					for(std::vector<Glip::CorePipeline::Filter*>::iterator itF=it->second.begin(); itF!=it->second.end(); itF++)
+						(*itF)->program().setVar(it->first, GL_FLOAT, command.outputs[std::distance(it->second.begin(), itF)].time);
+
+				// Connect and render :
+				for(int k=0; k<pipeline.getNumInputPort(); k++)
+				{
+					const std::pair<int, int>& p = inputSourcesMap[k];
+					pipeline << command.inputs[p.first].stream->frame(p.second);
+				}
+				pipeline << Glip::CorePipeline::Pipeline::Process;
+
+				// Save the streams for the correct clocks and update the time :
+				for(int k=0; k<pipeline.getNumOutputPort(); k++)
+				{
+					OutputStreamData& output = command.outputs[outputStreamsMap[k]];
+					const int 	k1 = static_cast<int>(output.time*output.recorder->getFrameRate()),
+							k2 = static_cast<int>((output.time+1.0f/masterFrameRate)*output.recorder->getFrameRate());
+					if(k1!=k2)
+						output.recorder->record(pipeline.out(k));
+					output.time += 1.0f/masterFrameRate;
+				}
+
+				if(static_cast<int>(masterClock/10.0f)!=static_cast<int>((masterClock+1.0f/masterFrameRate)/10.0f))
+					std::cout << "Time : " << (std::floor(masterClock/10.0f)*10.0f+10.0f) << " seconds ..." << std::endl;
+				// Move on :
+				masterClock += 1.0f/masterFrameRate;
+			}
 		}
 		catch(Glip::Exception& e)
 		{
 			std::cerr << e.what() << std::endl;
 			returnCode = -1;
 		}
+		// Close all streams :
+
 		return returnCode;
 	}
 

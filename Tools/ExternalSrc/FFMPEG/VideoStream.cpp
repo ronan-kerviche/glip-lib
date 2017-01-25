@@ -187,7 +187,6 @@ namespace FFMPEGInterface
 				{
 					// Decode video frame
 					avcodec_decode_video2(codecContext, frameDecoded, &frameFinished, &packet);
-
 					// Did we get a video frame?
 					if(frameFinished>0)
 					{

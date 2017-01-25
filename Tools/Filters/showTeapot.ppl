@@ -15,18 +15,21 @@ SOURCE:vertexShader
 	out vec3 outN;	// the normal going to the fragment shader.
 	uniform float	ax = -0.4,			// angle x.
 			ay = 4.0,			// angle y.
+			time = 0.0,			// for the animation.
 			s = 1.0;			// scale.
 	uniform vec3 offset = vec3(0.0, 0.5, -0.1);	// offset.
 
 	void main()
 	{
+		// Allow rotation animation :
+		float by = ay + 0.2*time;
 		// Rotation matrices :
 		mat3 Mx = mat3(	1.0, 0.0, 0.0,
 				0.0, cos(ax), sin(ax),
 				0.0, -sin(ax), cos(ax));
-		mat3 My = mat3(	cos(ay), 0.0, sin(ay),
+		mat3 My = mat3(	cos(by), 0.0, sin(by),
 				0.0, 1.0, 0.0,
-				-sin(ay), 0.0, cos(ay));
+				-sin(by), 0.0, cos(by));
 		// Transformation of the vertices :
 		gl_Position = vec4(Mx*My*s*gl_Vertex.xyz - offset, 1);
 		// Pass the normals :
