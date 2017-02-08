@@ -852,13 +852,13 @@ Load a geometry from a StereoLithography file (STL).
 											bodyDescription;
 				std::vector<std::pair<std::string,std::string> >	argumentsDescriptions;
 				const int						minNumArguments,
-											maxNumArguments;
-				const char 						bodyPresence;
+											maxNumArguments,
+											bodyPresence;
 
 				void initManual(const std::string& _manual);
 
 			protected :
-				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence);
+				LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const int& _bodyPresence);
 
 			public :
 				LayoutLoaderModule(const LayoutLoaderModule& m);
@@ -926,7 +926,7 @@ Load a geometry from a StereoLithography file (STL).
 				const std::string& getName(void) const;
 				const int& getMinNumArguments(void) const;
 				const int& getMaxNumArguments(void) const;
-				const char& bodyPresenceTest(void) const;
+				const int& bodyPresenceTest(void) const;
 				const std::string& getDescription(void) const;
 				const std::string& getBodyDescription(void) const;
 				const std::vector<std::pair<std::string,std::string> >& getArgumentsDescriptions(void) const;

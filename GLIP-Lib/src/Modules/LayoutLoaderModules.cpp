@@ -38,7 +38,7 @@
 
 	// Modules tools : 
 		/**
-		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
+		\fn LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const int& _bodyPresence)
 		\brief LayoutLoaderModule constructor. For simple modules you can just use the macro LAYOUT_LOADER_MODULE_APPLY.
 		\param _name Name of the module.
 		\param _manual Manual of the module, see extended description for formanting.
@@ -55,7 +55,7 @@
 		\endcode
 		With this specific formating the documentation will be automatically generated in various formats (HTML, Command Line Help, etc.) with a coherent layout.
 		**/
-		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const char& _bodyPresence)
+		LayoutLoaderModule::LayoutLoaderModule( const std::string& _name, const std::string& _manual, const int& _minNumArguments, const int& _maxNumArguments, const int& _bodyPresence)
 		 : 	name(_name), 
 			minNumArguments(_minNumArguments), 
 			maxNumArguments(_maxNumArguments), 
@@ -145,11 +145,11 @@
 		}
 
 		/**
-		\fn const char& LayoutLoaderModule::bodyPresenceTest(void) const
+		\fn const int& LayoutLoaderModule::bodyPresenceTest(void) const
 		\brief Get the requirement on the body.
 		\return A byte containing the requirement as -1 for no body, 0 for indifferent and 1 for needed.
 		**/
-		const char& LayoutLoaderModule::bodyPresenceTest(void) const
+		const int& LayoutLoaderModule::bodyPresenceTest(void) const
 		{
 			return bodyPresence;
 		}	
