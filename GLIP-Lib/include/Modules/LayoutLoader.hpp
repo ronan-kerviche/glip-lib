@@ -783,10 +783,10 @@ catch(Exception& e)
 
 				void 	clean(void);
 				void	classify(const std::vector<VanillaParserSpace::Element>& elements, std::vector<LayoutLoaderKeyword>& associatedKeywords);
-				bool	fileExists(const std::string& filename, std::string& source, const bool test=false);
+				bool	fileExists(const std::string& filename, std::string& source, const bool& test=false);
 				void	loadFile(const std::string& filename, std::string& content, std::string& usedPath);
-				void	preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName);
-				ShaderSource enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine=1);
+				void	preliminaryTests(const VanillaParserSpace::Element& e, const int& nameProperty, const int& minArguments, const int& maxArguments, const int& bodyProperty, const std::string& objectName);
+				ShaderSource enhanceShaderSource(const std::string& str, const std::string& sourceName, const int& startLine=1);
 				void	append(LayoutLoader& subLoader);
 				void 	appendPath(const VanillaParserSpace::Element& e);
 				void	includeFile(const VanillaParserSpace::Element& e);
@@ -801,7 +801,7 @@ catch(Exception& e)
 				void	buildGeometry(const VanillaParserSpace::Element& e);
 				void	buildFilter(const VanillaParserSpace::Element& e);
 				void	buildPipeline(const VanillaParserSpace::Element& e);
-				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, int startLine=1);
+				void	process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, const int& startLine=1);
 
 				void	listPipelinePorts(const VanillaParserSpace::Element& e, std::vector<std::string>& inputs, std::vector<std::string>& outputs);
 
@@ -815,25 +815,25 @@ catch(Exception& e)
 				void addToPaths(const std::vector<std::string>& paths);
 				bool removeFromPaths(const std::string& p);
 
-				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName="", int startLine=1);
-				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="", int startLine=1);
+				AbstractPipelineLayout getPipelineLayout(const std::string& source, std::string sourceName="", const int& startLine=1);
+				Pipeline* getPipeline(const std::string& source, std::string pipelineName="", std::string sourceName="", const int& startLine=1);
 
-				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace=true);
+				void addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, const bool& replace=true);
 				bool hasRequiredFormat(const std::string& name) const;
 				const HdlAbstractTextureFormat& getRequiredFormat(const std::string& name) const;
 				int clearRequiredFormat(const std::string& name="");
 				int clearRequiredFormat(bool (*filter)(const std::string&));
-				void addRequiredElement(const std::string& name, const ShaderSource& src, bool replace=true);
+				void addRequiredElement(const std::string& name, const ShaderSource& src, const bool& replace=true);
 				bool hasRequiredSource(const std::string& name) const;
 				const ShaderSource& getRequiredSource(const std::string& name) const;
 				int clearRequiredSource(const std::string& name="");
 				int clearRequiredSource(bool (*filter)(const std::string&));
-				void addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace=true);
+				void addRequiredElement(const std::string& name, const GeometryModel& mdl, const bool& replace=true);
 				bool hasRequiredGeometry(const std::string& name) const;
 				const GeometryModel& getRequiredGeometry(const std::string& name) const;
 				int clearRequiredGeometry(const std::string& name="");
 				int clearRequiredGeometry(bool (*filter)(const std::string&));
-				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace=true);
+				void addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, const bool& replace=true);
 				bool hasRequiredPipeline(const std::string& name) const;
 				const AbstractPipelineLayout& getRequiredPipelineLayout(const std::string& name) const;
 				int clearRequiredPipelineLayout(const std::string& name="");
@@ -841,9 +841,9 @@ catch(Exception& e)
 				int clearRequiredElements(const std::string& name="");
 				int clearRequiredElements(bool (*filter)(const std::string&));
 
-				PipelineScriptElements listElements(const std::string& source, std::string sourceName="", int startLine=1);
+				PipelineScriptElements listElements(const std::string& source, std::string sourceName="", const int& startLine=1);
 
-				void addModule(LayoutLoaderModule* module, bool replace=false);
+				void addModule(LayoutLoaderModule* module, const bool& replace=false);
 				bool hasModule(const LayoutLoaderModule* module) const;
 				bool hasModule(const std::string& name) const;
 				std::vector<const LayoutLoaderModule*> listModules(void) const;

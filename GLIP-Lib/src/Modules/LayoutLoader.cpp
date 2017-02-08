@@ -152,7 +152,7 @@
 			associatedKeywords.push_back( getKeyword( (*it).strKeyword ) );
 	}
 
-	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool test)
+	bool LayoutLoader::fileExists(const std::string& filename, std::string& source, const bool& test)
 	{
 		std::ifstream file;
 	
@@ -247,7 +247,7 @@
 		content = source;
 	}
 
-	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, char nameProperty, int minArguments, int maxArguments, char bodyProperty, const std::string& objectName)
+	void LayoutLoader::preliminaryTests(const VanillaParserSpace::Element& e, const int& nameProperty, const int& minArguments, const int& maxArguments, const int& bodyProperty, const std::string& objectName)
 	{
 		// xxxProperty :
 		//	1  : Must have.
@@ -287,7 +287,7 @@
 			throw Exception(objectName + nameDecorator + " should not have a body.", e.sourceName, e.startLine, Exception::ClientScriptException);
 	}
 
-	ShaderSource LayoutLoader::enhanceShaderSource(const std::string& str, const std::string& sourceName, int startLine)
+	ShaderSource LayoutLoader::enhanceShaderSource(const std::string& str, const std::string& sourceName, const int& startLine)
 	{
 		const std::string keyword = keywords[KW_LL_INSERT],
 				  glslPragma = "#pragma";
@@ -1638,7 +1638,7 @@
 		}
 	}
 
-	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, int startLine)
+	void LayoutLoader::process(const std::string& code, std::string& mainPipelineName, const std::string& sourceName, const int& startLine)
 	{
 		try
 		{
@@ -1889,14 +1889,14 @@
 	}
 
 	/**
-	\fn AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
+	\fn AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, const int& startLine)
 	\brief Loads a pipeline layout from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
 	\param startLine The number of the first line in the source (only informational).
 	\return The newly loaded layout or raise an exception if any errors occur.
 	**/
-	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, int startLine)
+	AbstractPipelineLayout LayoutLoader::getPipelineLayout(const std::string& source, std::string sourceName, const int& startLine)
 	{
 		clean();
 
@@ -1976,7 +1976,7 @@
 	}
 
 	/**
-	\fn Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, int startLine)
+	\fn Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, const int& startLine)
 	\brief Loads a pipeline from a file (see the script language description for more information).
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param pipelineName The name of the unique instance created (or take the type name if left empty).
@@ -1984,7 +1984,7 @@
 	\param startLine The number of the first line in the source (only informational).
 	\return A pointer to the unique instance built on the newly loaded layout or raise an exception if any errors occur. You have the charge to delete the newly created object.
 	**/
-	Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, int startLine)
+	Pipeline* LayoutLoader::getPipeline(const std::string& source, std::string pipelineName, std::string sourceName, const int& startLine)
 	{
 		AbstractPipelineLayout layout = getPipelineLayout(source, sourceName, startLine);
 
@@ -1997,7 +1997,7 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace)
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, const bool& replace)
 	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name. 
 
 	Will raise an exception if an elemient with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_FORMAT:someName(name); will use this format.
@@ -2006,7 +2006,7 @@
 	\param fmt The element to be associated.
 	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, bool replace)
+	void LayoutLoader::addRequiredElement(const std::string& name, const HdlAbstractTextureFormat& fmt, const bool& replace)
 	{
 		std::map<std::string,HdlTextureFormat>::iterator it = requiredFormatList.find(name);
 
@@ -2091,7 +2091,7 @@
 	}
 	
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, const bool& replace)
 	\brief Add a ShaderSource to do the possibly required elements, along with its name. 
 
 	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_SOURCE:someName(name); will use this format.
@@ -2100,7 +2100,7 @@
 	\param src The element to be associated.
 	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, bool replace)
+	void LayoutLoader::addRequiredElement(const std::string& name, const ShaderSource& src, const bool& replace)
 	{
 		std::map<std::string,ShaderSource>::iterator it = requiredSourceList.find(name);
 		
@@ -2185,7 +2185,7 @@
 	}
 	
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, const bool& replace)
 	\brief Add a HdlAbstractTextureFormat to do the possibly required elements, along with its name.
 
 	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_GEOMETRY:someName(name); will use this geometry model.
@@ -2194,7 +2194,7 @@
 	\param mdl The element to be associated.
 	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, bool replace)
+	void LayoutLoader::addRequiredElement(const std::string& name, const GeometryModel& mdl, const bool& replace)
 	{
 		std::map<std::string,GeometryModel>::iterator it = requiredGeometryList.find(name);
 
@@ -2279,7 +2279,7 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace)
+	\fn void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, const bool& replace)
 	\brief Add a AbstractPipelineLayout to do the possibly required elements, along with its name. 
 
 	Will raise an exception if an element with the same name already exists and the replacement flag is set to false. All the following pipelines loaded and containing a call REQUIRED_PIPELINE:someName(name); will use this pipeline layout.
@@ -2288,7 +2288,7 @@
 	\param layout The element to be associated.
 	\param replace Enable replacement.
 	**/
-	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, bool replace)
+	void LayoutLoader::addRequiredElement(const std::string& name, AbstractPipelineLayout& layout, const bool& replace)
 	{
 		std::map<std::string,PipelineLayout>::iterator it = requiredPipelineList.find(name);
 
@@ -2405,14 +2405,14 @@
 	} 
 
 	/**
-	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)
+	\fn LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, const int& startLine)
 	\brief List the resources contained in a script.
 	\param source The source to load. It is considered as a filename if it doesn't contain '\\n'.
 	\param sourceName Specify a particular source name (for instance, a filename, an url, etc.).
 	\param startLine The number of the first line in the source (only informational).
 	\return A LayoutLoader::PipelineScriptElements object containing all informations.
 	**/
-	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, int startLine)
+	LayoutLoader::PipelineScriptElements LayoutLoader::listElements(const std::string& source, std::string sourceName, const int& startLine)
 	{
 		PipelineScriptElements result;
 
@@ -2564,14 +2564,14 @@
 	}
 
 	/**
-	\fn void LayoutLoader::addModule(const LayoutLoaderModule& m, bool replace)
+	\fn void LayoutLoader::addModule(const LayoutLoaderModule& m, const bool& replace)
 	\brief Add a module which can be called from a script to generate dynamic data.
 	\param module The module to add. See LayoutLoaderModule documentation for more information. The memory will be safely releaed by the destructor of LayoutLoader, the user shall not release it.
 	\param replace Set to true if any module having similar name must be replaced. Raise an exception otherwise.
 
 	If the replace flag is set, any existing module with this name will be deleted.
 	**/
-	void LayoutLoader::addModule(LayoutLoaderModule* m, bool replace)
+	void LayoutLoader::addModule(LayoutLoaderModule* m, const bool& replace)
 	{
 		std::map<std::string,LayoutLoaderModule*>::iterator it = modules.find(m->getName());
 
