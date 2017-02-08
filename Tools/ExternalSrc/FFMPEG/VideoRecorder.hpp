@@ -35,7 +35,6 @@ namespace FFMPEGInterface
 			int				numEncodedFrames;
 			float				frameRate;
 			// libav/ffmpeg data :
-			AVOutputFormat 			*outputFormat;	// Proxy
 			AVFormatContext 		*formatContext;
 			AVCodec				*videoCodec;
 			AVCodecContext 			*codecContext;	// Proxy
@@ -45,10 +44,6 @@ namespace FFMPEGInterface
 							dstPicture,
 							*buffer;	// Proxy
 			SwsContext			*swsContext;
-			/*#ifdef __FFMPEG_VX1__
-				uint8_t 		*video_outbuf;
-				int 			video_outbuf_size;
-			#endif*/
 			// From GLIP lib :
 			HdlPBO				pboReader;
 

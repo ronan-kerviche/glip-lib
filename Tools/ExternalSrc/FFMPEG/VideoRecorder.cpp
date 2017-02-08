@@ -24,7 +24,7 @@ namespace FFMPEGInterface
 	 : 	HdlAbstractTextureFormat(format),
 		numEncodedFrames(0),
 		frameRate(FFMPEGContext::roundFrameRate(_frameRate)),
-		outputFormat(NULL),
+		//outputFormat(NULL),
 		formatContext(NULL),
 		videoCodec(NULL),
 		codecContext(NULL),
@@ -38,9 +38,10 @@ namespace FFMPEGInterface
 		if(format.getWidth()%2!=0 || format.getHeight()%2!=0)
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Stream width and height must be a multiple of 2).", __FILE__, __LINE__, Glip::Exception::ClientException);
 		else if(format.getGLMode()!=GL_RGB || format.getGLDepth()!=GL_UNSIGNED_BYTE)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB + GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__, Glip::Exception::ClientException);
+			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Texture format must be GL_RGB, GL_UNSIGNED_BYTE (24 bits RGB)).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
-		// allocate the output media context
+		// allocate the output media context :
+		AVOutputFormat* outputFormat = NULL;
 		#if defined(__FFMPEG_VX1__)
 			// Auto detect the output format from the name, default is MPEG :
 			outputFormat = av_guess_format(NULL, filename.c_str(), NULL);
@@ -54,7 +55,7 @@ namespace FFMPEGInterface
 			formatContext = avformat_alloc_context();
 			formatContext->oformat = outputFormat;
 		#elif defined(__FFMPEG_VX2__)
-			avformat_alloc_output_context(&formatContext, NULL, NULL, filename.c_str());
+			avformat_alloc_output_context2(&formatContext, NULL, NULL, filename.c_str());
 			if(formatContext==NULL)
 			{
 				#ifdef __VIDEO_FFMPEG_VERBOSE__
@@ -62,16 +63,16 @@ namespace FFMPEGInterface
 				#endif
 				avformat_alloc_output_context2(&formatContext, NULL, "mpeg", filename.c_str());
 			}
+			if(formatContext==NULL)
+				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context).", __FILE__, __LINE__, Glip::Exception::ClientException);
+			outputFormat = formatContext->oformat;
 		#endif
-		if(formatContext==NULL)
-			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (at avformat_alloc_output_context).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
-		outputFormat = formatContext->oformat;
 		if(outputFormat->video_codec==AV_CODEC_ID_NONE)
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (no video codec selected).", __FILE__, __LINE__, Glip::Exception::ClientException);
+		std::cout << "Output format, audio codec : " << outputFormat->audio_codec << " (none : " << AV_CODEC_ID_NONE << ")" << std::endl;
 
-		// Add an output stream :
-		// Find the encoder :
+		// Add an output stream, find the encoder :
 		videoCodec = avcodec_find_encoder(outputFormat->video_codec);
 		if(videoCodec==NULL)
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (No suitable codec found).", __FILE__, __LINE__, Glip::Exception::ClientException);
@@ -88,7 +89,6 @@ namespace FFMPEGInterface
 		avcodec_get_context_defaults3(codecContext, videoCodec);
 		codecContext->codec_id = outputFormat->video_codec;
 		codecContext->bit_rate = videoBitRate_BitPerSec;
-		// Resolution must be a multiple of two :
 		codecContext->width = format.getWidth();
 		codecContext->height = format.getHeight();
 		// timebase: 	This is the fundamental unit of time (in seconds) in terms
@@ -97,18 +97,18 @@ namespace FFMPEGInterface
 		// 		identical to 1.
 		codecContext->time_base.den = static_cast<int>(frameRate*100.0f);
 		codecContext->time_base.num = 100;
-		codecContext->gop_size = 50; // emit one intra frame every fifty frames at most.
-		codecContext->pix_fmt = pixFormat; //or PIX_FMT_YUV420P;
+		codecContext->gop_size = 50; // emit one intra frame every gop_size frames at most.
+		codecContext->pix_fmt = pixFormat; // usually PIX_FMT_YUV420P;
 		// Just for testing, we also add B frames :
-		if (codecContext->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+		if(codecContext->codec_id == AV_CODEC_ID_MPEG2VIDEO)
 			codecContext->max_b_frames = 2;
 		// Needed to avoid using macroblocks in which some coeffs overflow.
 		// This does not happen with normal video, it just happens here as
 		// the motion of the chroma plane does not match the luma plane.
-		if(codecContext->codec_id == AV_CODEC_ID_MPEG1VIDEO)
-			codecContext->mb_decision = 2;
+		//if(codecContext->codec_id == AV_CODEC_ID_MPEG1VIDEO)
+		//	codecContext->mb_decision = 2;
 		// Some formats want stream headers to be separate :
-		if (formatContext->oformat->flags & AVFMT_GLOBALHEADER)
+		if(formatContext->oformat->flags & AVFMT_GLOBALHEADER)
 			codecContext->flags |= CODEC_FLAG_GLOBAL_HEADER;
 		// Now that all the parameters are set, we can open the audio and
 		// video codecs and allocate the necessary encode buffers.
@@ -119,7 +119,7 @@ namespace FFMPEGInterface
 
 		// Allocate and init a re-usable frame :
 		frame = av_frame_alloc();
-		if (!frame)
+		if(frame==NULL)
 			throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate video frame).", __FILE__, __LINE__, Glip::Exception::ClientException);
 
 		// Allocate the encoded raw picture :
@@ -135,13 +135,14 @@ namespace FFMPEGInterface
 			returnCode = avpicture_alloc(&srcPicture, PIX_FMT_RGB24, codecContext->width, codecContext->height);
 			if(returnCode<0)
 				throw Exception("VideoRecorder::VideoRecorder - Failed to start recorder (Could not allocate temporary picture).", __FILE__, __LINE__, Glip::Exception::ClientException);
+			swsContext = sws_getContext(format.getWidth(), format.getHeight(), PIX_FMT_RGB24, format.getWidth(), format.getHeight(), codecContext->pix_fmt, SWS_POINT, NULL, NULL, NULL);
 			buffer = &srcPicture;
 		}
 		else
 			buffer = &dstPicture;
 
 		// copy data and linesize picture pointers to frame :
-		*((AVPicture *)frame) = dstPicture;
+		*reinterpret_cast<AVPicture*>(frame) = dstPicture;
 		av_dump_format(formatContext, 0, filename.c_str(), 1);
 
 		 // open the output file, if needed :
@@ -161,10 +162,8 @@ namespace FFMPEGInterface
 		frame->pts = 0;
 
 		// Allocate scaling/conversion context :
-		if(codecContext->pix_fmt!=PIX_FMT_RGB24)
-		{
-			swsContext = sws_getContext( format.getWidth(), format.getHeight(), PIX_FMT_RGB24, format.getWidth(), format.getHeight(), codecContext->pix_fmt, SWS_POINT, NULL, NULL, NULL);
-		}
+		//if(codecContext->pix_fmt!=PIX_FMT_RGB24)
+			//swsContext = sws_getContext(format.getWidth(), format.getHeight(), PIX_FMT_RGB24, format.getWidth(), format.getHeight(), codecContext->pix_fmt, SWS_POINT, NULL, NULL, NULL);
 
 		/*#if defined(__FFMPEG_VX1__)
 			video_outbuf_size 	= format.getSize();
@@ -174,7 +173,17 @@ namespace FFMPEGInterface
 
 	VideoRecorder::~VideoRecorder(void)
 	{
-		// Write the trailer, if any. The trailer must be written before you
+		av_write_trailer(formatContext);
+		avcodec_close(videoStream->codec);
+		av_frame_free(&frame);
+		avpicture_free(&srcPicture);
+		avpicture_free(&dstPicture);
+		sws_freeContext(swsContext);
+		if(!(formatContext->oformat->flags & AVFMT_NOFILE))
+			avio_close(formatContext->pb);
+		avformat_free_context(formatContext);
+
+		/*// Write the trailer, if any. The trailer must be written before you
 		// close the CodecContexts open when you wrote the header; otherwise
 		// av_write_trailer() may try to use memory that was freed on
 		// av_codec_close().
@@ -194,33 +203,30 @@ namespace FFMPEGInterface
 			av_freep(&formatContext->streams[i]);
 		}
 		// Close the output file :
-		if(!(outputFormat->flags & AVFMT_NOFILE))
+		if(!(formatContext->oformat->flags & AVFMT_NOFILE))
 			avio_close(formatContext->pb);
 		// free the stream :
 		av_free(formatContext);
 		sws_freeContext(swsContext);
-		/*#ifdef __FFMPEG_VX1__
-			av_free(video_outbuf);
-		#endif*/
 		avcodec_close(codecContext); // Take care of the attached videoCodec I suppose.
 		//av_free(codecContext); // ?
-		// Missing : buffer
+		// Missing : buffer*/
 	}
 
 	std::string VideoRecorder::getOutputFormatName(void) const
 	{
-		if(outputFormat==NULL)
+		if(formatContext==NULL || formatContext->oformat==NULL)
 			return "N.A.";
 		else
-			return std::string(outputFormat->name);
+			return std::string(formatContext->oformat->name);
 	}
 
 	std::string VideoRecorder::getOutputMimeType(void) const
 	{
-		if(outputFormat==NULL)
+		if(formatContext==NULL || formatContext->oformat==NULL)
 			return "N.A.";
 		else
-			return std::string(outputFormat->mime_type);
+			return std::string(formatContext->oformat->mime_type);
 	}
 	const float& VideoRecorder::getFrameRate(void) const
 	{
@@ -259,6 +265,7 @@ namespace FFMPEGInterface
 		// Push data to encoding queue :
 		if(formatContext->oformat->flags & AVFMT_RAWPICTURE)
 		{
+			std::cout << "Raw : " << frame->pts << std::endl;
 			// Raw video case - directly store the picture in the packet :
 			AVPacket pkt;
 			av_init_packet(&pkt);
@@ -282,8 +289,12 @@ namespace FFMPEGInterface
 			// If size is zero, it means the image was buffered :
 			if(gotOutput>0)
 			{
-				if(codecContext->coded_frame->key_frame)
-					pkt.flags |= AV_PKT_FLAG_KEY;
+				//if(codecContext->coded_frame->key_frame && numEncodedFrames%24==0)
+				//{
+				//	std::cout << "Key frame pts : " << frame->pts << "; id : " << numEncodedFrames << std::endl;
+				//	pkt.flags |= AV_PKT_FLAG_KEY;
+				//}
+				av_packet_rescale_ts(&pkt, videoStream->codec->time_base, videoStream->time_base);
 				pkt.stream_index = videoStream->index;
 				// Write the compressed frame to the media file :
 				returnCode = av_interleaved_write_frame(formatContext, &pkt);
@@ -292,7 +303,7 @@ namespace FFMPEGInterface
 		if(returnCode!=0)
 			throw Exception("VideoRecorder::VideoRecorder - Error while writing video frame.", __FILE__, __LINE__, Glip::Exception::ClientException);
 		// Update next time stamp :
-		frame->pts += av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
+		frame->pts++; //+= av_rescale_q(1, videoStream->codec->time_base, videoStream->time_base);
 		numEncodedFrames++;
 	}
 }
