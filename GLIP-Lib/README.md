@@ -39,33 +39,47 @@ Compiling
 --------------
 Using cmake, cmake-gui or equivalent generate the Makefile or SLN file for building the project :
 
-> cmake . -DCMAKE_BUILD_TYPE=release
+```
+cmake . -DCMAKE_BUILD_TYPE=release
+```
 
 Then compile with Make or via Visual Studio depending on the platform :
 
-> make
+```
+make
+```
 
 And install :
 
-> make install
+```
+make install
+```
 
 To generate the source package, use :
 
-> make package_source
+```
+make package_source
+```
 
 To generate packages (on *NIX, DEB and RPM), use :
 
-> make package
+```
+make package
+```
 
 By default, the library ships with embedded GLEW. To use global GLEW instead, use :
 
-> rm CMakeCache.txt && make clean
-> cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_EXTERNAL_GLEW=1
-> make
+```
+rm CMakeCache.txt && make clean
+cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_EXTERNAL_GLEW=1
+make
+```
 
 To compile against GLES (3.1, experimental), use :
 
-> rm CMakeCache.txt && make clean
-> cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_GLES3=1
-> make
+```
+rm CMakeCache.txt && make clean
+cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_GLES3=1
+make
+```
 
