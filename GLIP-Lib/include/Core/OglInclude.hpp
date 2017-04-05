@@ -63,8 +63,13 @@
 		#ifndef GLIP_USE_GL
 			#define GLIP_USE_GL
 		#endif
-		#define GLEW_STATIC
-		#include "glew.h"
+		#ifdef GLIP_USE_EXTERNAL_GLEW
+			// Can only be set when compiling the library.
+			#include <glew.h>
+		#else
+			#define GLEW_STATIC
+			#include "glew.h"
+		#endif
 		#include <GL/gl.h>
 	#endif
 

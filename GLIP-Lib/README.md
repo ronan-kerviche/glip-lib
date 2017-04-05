@@ -33,7 +33,7 @@ Description
 --------------
 GLIP-Lib is a C++ cross-platform library for image processing on GPU with OpenGL (and the GLSL language).
 
-More on http://glip-lib.net
+Complete documentation can be found at http://glip-lib.net
 
 Compiling
 --------------
@@ -57,11 +57,15 @@ To generate packages (on *NIX, DEB and RPM), use :
 
 > make package
 
-Compiling against GLES (3.1, experimental) : first remove the existing cache :
+By default, the library ships with embedded GLEW. To use global GLEW instead, use :
 
 > rm CMakeCache.txt && make clean
+> cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_EXTERNAL_GLEW=1
+> make
 
-Regenerate the Makefile, before recompiling, as usual :
+To compile against GLES (3.1, experimental), use :
 
+> rm CMakeCache.txt && make clean
 > cmake . -DCMAKE_BUILD_TYPE=release -DGLIP_USE_GLES3=1
+> make
 
