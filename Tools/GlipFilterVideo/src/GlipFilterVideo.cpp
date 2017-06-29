@@ -32,6 +32,7 @@ const std::string helpString =
 Use GLIP-Lib from the command line to process or generate videos.\n\
 glip-filtervideo [-p FILENAME] [-u FILENAME] [-i {1, 2, portName, ...} FILENAME]\n\
 		 [-o {1, 2, portName, ...} FILENAME] [-r FILENAME]\n\
+ -p, --pipeline	Filename of the processing pipeline to user.\n\
  -i, --input	Input to the pipeline, can be indexed by a number or by the\n\
 		name of the input port (they do not need to be in the\n\
 		correct order), followed by a filename. All the input\n\
