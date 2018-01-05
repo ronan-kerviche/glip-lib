@@ -1,6 +1,10 @@
 GLIP-LIB - OpenGL Image Processing Library
 ==============
 
+License
+--------------
+MIT License. See the attached file.
+
 Author
 --------------
 Ronan Kerviche
